@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { Link, useLocation } from "wouter";
 import { 
   Home, 
   Inbox, 
@@ -20,9 +21,14 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user } = useAuth();
+  const [location] = useLocation();
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
+  };
+
+  const isActive = (path: string) => {
+    return location === path;
   };
 
   return (
@@ -64,35 +70,60 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="p-4 space-y-2">
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 bg-purple-50 text-purple-700 rounded-lg font-medium">
+          <Link href="/" onClick={onClose} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors",
+            isActive("/") 
+              ? "bg-purple-50 text-purple-700" 
+              : "text-gray-600 hover:bg-gray-50"
+          )}>
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+          </Link>
+          <Link href="/enquiries" onClick={onClose} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/enquiries") 
+              ? "bg-purple-50 text-purple-700 font-medium" 
+              : "text-gray-600 hover:bg-gray-50"
+          )}>
             <Inbox className="w-5 h-5" />
             <span>Enquiries</span>
-            <span className="ml-auto bg-orange-500 text-white text-xs px-2 py-1 rounded-full">12</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+          </Link>
+          <Link href="/contracts" onClick={onClose} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/contracts") 
+              ? "bg-purple-50 text-purple-700 font-medium" 
+              : "text-gray-600 hover:bg-gray-50"
+          )}>
             <FileText className="w-5 h-5" />
             <span>Contracts</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+          </Link>
+          <Link href="/invoices" onClick={onClose} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/invoices") 
+              ? "bg-purple-50 text-purple-700 font-medium" 
+              : "text-gray-600 hover:bg-gray-50"
+          )}>
             <DollarSign className="w-5 h-5" />
             <span>Invoices</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+          </Link>
+          <Link href="/calendar" onClick={onClose} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/calendar") 
+              ? "bg-purple-50 text-purple-700 font-medium" 
+              : "text-gray-600 hover:bg-gray-50"
+          )}>
             <Calendar className="w-5 h-5" />
             <span>Calendar</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+          </Link>
+          <Link href="/compliance" onClick={onClose} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/compliance") 
+              ? "bg-purple-50 text-purple-700 font-medium" 
+              : "text-gray-600 hover:bg-gray-50"
+          )}>
             <Shield className="w-5 h-5" />
             <span>Compliance</span>
-          </a>
-          <a href="#" className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-            <BarChart3 className="w-5 h-5" />
-            <span>Analytics</span>
-          </a>
+          </Link>
         </nav>
 
         {/* User Profile */}
