@@ -31,6 +31,7 @@ export default function Invoices() {
   useEffect(() => {
     const params = new URLSearchParams(location.split('?')[1] || '');
     if (params.get('action') === 'new') {
+      console.log('Opening invoice dialog from URL parameter');
       setIsDialogOpen(true);
     }
   }, [location]);
@@ -382,7 +383,10 @@ export default function Invoices() {
                 <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No invoices found</p>
                 <p className="text-gray-400">Create your first invoice from a signed contract</p>
-                <Button className="mt-4 bg-purple-600 hover:bg-purple-700">
+                <Button 
+                  className="mt-4 bg-purple-600 hover:bg-purple-700"
+                  onClick={() => setIsDialogOpen(true)}
+                >
                   <DollarSign className="w-4 h-4 mr-2" />
                   Create Invoice
                 </Button>
