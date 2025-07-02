@@ -550,15 +550,18 @@ export default function Invoices() {
                       </div>
                       
                       <div className="flex flex-col items-end space-y-2">
-                        <Badge 
-                          variant={
-                            invoice.status === "paid" ? "default" : 
-                            invoice.status === "sent" ? "secondary" :
-                            invoice.status === "overdue" ? "destructive" : "outline"
-                          }
-                        >
-                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                        </Badge>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 mb-1">Status</p>
+                          <Badge 
+                            variant={
+                              invoice.status === "paid" ? "default" : 
+                              invoice.status === "sent" ? "secondary" :
+                              invoice.status === "overdue" ? "destructive" : "outline"
+                            }
+                          >
+                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
