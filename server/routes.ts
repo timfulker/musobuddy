@@ -62,7 +62,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/enquiries', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const enquiryData = insertEnquirySchema.parse({ ...req.body, userId });
+      const data = { ...req.body, userId };
+      
+      // Convert eventDate string to Date if present
+      if (data.eventDate && typeof data.eventDate === 'string') {
+        data.eventDate = new Date(data.eventDate);
+      }
+      
+      const enquiryData = insertEnquirySchema.parse(data);
       const enquiry = await storage.createEnquiry(enquiryData);
       res.status(201).json(enquiry);
     } catch (error) {
@@ -117,7 +124,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const contractData = insertContractSchema.parse({ ...req.body, userId });
+      const data = { ...req.body, userId };
+      
+      // Convert eventDate string to Date if present
+      if (data.eventDate && typeof data.eventDate === 'string') {
+        data.eventDate = new Date(data.eventDate);
+      }
+      
+      const contractData = insertContractSchema.parse(data);
       const contract = await storage.createContract(contractData);
       res.status(201).json(contract);
     } catch (error) {
@@ -176,7 +190,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const bookingData = insertBookingSchema.parse({ ...req.body, userId });
+      const data = { ...req.body, userId };
+      
+      // Convert eventDate string to Date if present
+      if (data.eventDate && typeof data.eventDate === 'string') {
+        data.eventDate = new Date(data.eventDate);
+      }
+      
+      const bookingData = insertBookingSchema.parse(data);
       const booking = await storage.createBooking(bookingData);
       res.status(201).json(booking);
     } catch (error) {
