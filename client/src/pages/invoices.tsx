@@ -399,7 +399,7 @@ export default function Invoices() {
 
   const sendInvoiceMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
-      return apiRequest(`/api/invoices/send-email`, "POST", { invoiceId: invoice.id });
+      return apiRequest("POST", `/api/invoices/send-email`, { invoiceId: invoice.id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
