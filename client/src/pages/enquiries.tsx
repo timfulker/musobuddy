@@ -13,8 +13,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar } from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar, ArrowLeft } from "lucide-react";
 import { z } from "zod";
+import { Link } from "wouter";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
@@ -160,9 +161,17 @@ export default function Enquiries() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Enquiries</h1>
-            <p className="text-gray-600">Manage your client enquiries and track your pipeline</p>
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Enquiries</h1>
+              <p className="text-gray-600">Manage your client enquiries and track your pipeline</p>
+            </div>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

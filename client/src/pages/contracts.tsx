@@ -12,10 +12,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User } from "lucide-react";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, ArrowLeft } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
+import { Link } from "wouter";
 
 const contractFormSchema = insertContractSchema.extend({
   eventDate: z.string().optional(),
@@ -43,10 +44,20 @@ export default function Contracts() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'new') {
       setIsDialogOpen(true);
-      // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
+
+  // Clean up URL when dialog closes
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      // Clean up URL when closing dialog
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'new') {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  };
 
   const createContractMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contractFormSchema>) => {
@@ -70,7 +81,7 @@ export default function Contracts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      setIsDialogOpen(false);
+      handleDialogClose(false);
       form.reset();
       toast({
         title: "Success",
@@ -147,12 +158,20 @@ export default function Contracts() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Contracts</h1>
-            <p className="text-gray-600">Manage your performance contracts and agreements</p>
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Contracts</h1>
+              <p className="text-gray-600">Manage your performance contracts and agreements</p>
+            </div>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
               <Button className="bg-purple-600 hover:bg-purple-700">
                 <FileText className="w-4 h-4 mr-2" />
@@ -281,7 +300,7 @@ export default function Contracts() {
                   />
 
                   <div className="flex justify-end space-x-3">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
                       Cancel
                     </Button>
                     <Button type="submit" disabled={createContractMutation.isPending}>
