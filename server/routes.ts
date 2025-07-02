@@ -269,6 +269,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User settings routes
+  app.get('/api/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const settings = await storage.getUserSettings(userId);
+      res.json(settings || {});
+    } catch (error) {
+      console.error("Error fetching user settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.post('/api/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const settingsData = { ...req.body, userId };
+      const settings = await storage.upsertUserSettings(settingsData);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving user settings:", error);
+      res.status(500).json({ message: "Failed to save settings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

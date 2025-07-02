@@ -5,6 +5,7 @@ import {
   invoices,
   bookings,
   complianceDocuments,
+  userSettings,
   type User,
   type UpsertUser,
   type Enquiry,
@@ -17,6 +18,8 @@ import {
   type InsertBooking,
   type ComplianceDocument,
   type InsertComplianceDocument,
+  type UserSettings,
+  type InsertUserSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
@@ -65,6 +68,10 @@ export interface IStorage {
     pendingInvoices: number;
     conversionRate: number;
   }>;
+  
+  // User settings operations
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -353,6 +360,30 @@ export class DatabaseStorage implements IStorage {
       pendingInvoices,
       conversionRate: Math.round(conversionRate),
     };
+  }
+
+  // User settings operations
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId));
+    return settings;
+  }
+
+  async upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
+    const [upsertedSettings] = await db
+      .insert(userSettings)
+      .values(settings)
+      .onConflictDoUpdate({
+        target: userSettings.userId,
+        set: {
+          ...settings,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return upsertedSettings;
   }
 }
 

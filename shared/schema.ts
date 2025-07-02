@@ -247,3 +247,5 @@ export type InsertBooking = z.infer<typeof insertBookingSchema>;
 export type Booking = typeof bookings.$inferSelect;
 export type InsertComplianceDocument = z.infer<typeof insertComplianceDocumentSchema>;
 export type ComplianceDocument = typeof complianceDocuments.$inferSelect;
+export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
+export type UserSettings = typeof userSettings.$inferSelect;
