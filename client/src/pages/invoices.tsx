@@ -550,26 +550,15 @@ export default function Invoices() {
                       </div>
                       
                       <div className="flex flex-col items-end space-y-2">
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                        
-                        {invoice.status === "draft" && (
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                            Send Invoice
-                          </Button>
-                        )}
-                        
-                        {invoice.status === "sent" && (
-                          <Button size="sm" variant="outline">
-                            Send Reminder
-                          </Button>
-                        )}
-                        
-                        <Button size="sm" variant="outline">
-                          <Download className="w-4 h-4 mr-1" />
-                          Download
-                        </Button>
+                        <Badge 
+                          variant={
+                            invoice.status === "paid" ? "default" : 
+                            invoice.status === "sent" ? "secondary" :
+                            invoice.status === "overdue" ? "destructive" : "outline"
+                          }
+                        >
+                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </Badge>
                       </div>
                     </div>
                   </CardContent>

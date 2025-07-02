@@ -144,6 +144,11 @@ Changelog:
   * Fixed settings save operation with proper API request format
   * Updated bank details section to structured table format with visible field labels
   * Added "Back to Dashboard" navigation button for improved user experience
+- July 02, 2025. Invoice creation functionality fixed:
+  * Resolved API request format issue preventing invoice creation
+  * Removed redundant action buttons (send, download, menu) from invoice cards
+  * Replaced non-functional buttons with clean status badges showing invoice state
+  * Invoice creation now works seamlessly with contract data integration
 ```
 
 ## User Preferences
