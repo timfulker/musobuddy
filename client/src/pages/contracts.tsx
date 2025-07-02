@@ -560,45 +560,64 @@ One copy to be retained by the Hirer and one copy by the Musician.
                     </div>
                     
                     <div className="flex flex-col items-end space-y-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handlePreviewContract(contract)}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Preview Contract
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSendEmail(contract)}>
-                            <Mail className="w-4 h-4 mr-2" />
-                            Send via Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDownloadContract(contract)}>
-                            <Download className="w-4 h-4 mr-2" />
-                            Download
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="text-right mb-2">
+                        <p className="text-xs text-gray-500 mb-1">Status</p>
+                        <Badge 
+                          variant={
+                            contract.status === "signed" ? "default" : 
+                            contract.status === "sent" ? "secondary" :
+                            contract.status === "completed" ? "default" : "outline"
+                          }
+                        >
+                          {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
+                        </Badge>
+                      </div>
                       
-                      {contract.status === "draft" && (
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                          Send Contract
-                        </Button>
-                      )}
-                      
-                      {contract.status === "sent" && (
-                        <Button size="sm" variant="outline">
-                          View Status
-                        </Button>
-                      )}
-                      
-                      {contract.status === "signed" && (
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                          Download PDF
-                        </Button>
-                      )}
+                      <div className="flex flex-col space-y-1">
+                        {contract.status === "draft" && (
+                          <>
+                            <Button size="sm" variant="outline" className="text-xs">
+                              Edit
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewContract(contract)}>
+                              Preview
+                            </Button>
+                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs" onClick={() => handleSendEmail(contract)}>
+                              Send
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 text-xs">
+                              Delete
+                            </Button>
+                          </>
+                        )}
+                        
+                        {contract.status === "sent" && (
+                          <>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewContract(contract)}>
+                              Preview
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadContract(contract)}>
+                              <Download className="w-3 h-3 mr-1" />
+                              Download
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handleSendEmail(contract)}>
+                              Resend
+                            </Button>
+                          </>
+                        )}
+                        
+                        {contract.status === "signed" && (
+                          <>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewContract(contract)}>
+                              Preview
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadContract(contract)}>
+                              <Download className="w-3 h-3 mr-1" />
+                              Download
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

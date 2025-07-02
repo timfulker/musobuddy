@@ -550,7 +550,7 @@ export default function Invoices() {
                       </div>
                       
                       <div className="flex flex-col items-end space-y-2">
-                        <div className="text-right">
+                        <div className="text-right mb-2">
                           <p className="text-xs text-gray-500 mb-1">Status</p>
                           <Badge 
                             variant={
@@ -561,6 +561,47 @@ export default function Invoices() {
                           >
                             {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                           </Badge>
+                        </div>
+                        
+                        <div className="flex flex-col space-y-1">
+                          {invoice.status === "draft" && (
+                            <>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Edit
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Preview
+                              </Button>
+                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs">
+                                Send
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 text-xs">
+                                Delete
+                              </Button>
+                            </>
+                          )}
+                          
+                          {invoice.status === "sent" && (
+                            <>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Preview
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                <Download className="w-3 h-3 mr-1" />
+                                Download
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Reminder
+                              </Button>
+                            </>
+                          )}
+                          
+                          {invoice.status === "paid" && (
+                            <Button size="sm" variant="outline" className="text-xs">
+                              <Download className="w-3 h-3 mr-1" />
+                              Download
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>

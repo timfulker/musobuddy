@@ -149,6 +149,12 @@ Changelog:
   * Removed redundant action buttons (send, download, menu) from invoice cards
   * Replaced non-functional buttons with clean status badges showing invoice state
   * Invoice creation now works seamlessly with contract data integration
+- July 02, 2025. Added comprehensive action buttons for contracts and invoices:
+  * Draft status: Edit, Preview, Send, Delete buttons
+  * Sent status: Preview, Download, Resend/Reminder buttons  
+  * Paid/Signed status: Preview, Download buttons
+  * Status badges with clear labels to distinguish from clickable actions
+  * Consistent UI design across both contracts and invoices pages
 ```
 
 ## User Preferences
