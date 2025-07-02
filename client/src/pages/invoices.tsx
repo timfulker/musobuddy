@@ -20,6 +20,7 @@ const invoiceFormSchema = insertInvoiceSchema.extend({
   dueDate: z.string(),
   performanceDate: z.string().optional(),
   clientAddress: z.string().optional(),
+  contractId: z.number().or(z.string().transform(val => parseInt(val))),
 });
 
 export default function Invoices() {
@@ -49,7 +50,7 @@ export default function Invoices() {
       amount: "",
       dueDate: "",
       performanceDate: "",
-      contractId: 0,
+      contractId: undefined,
       invoiceNumber: `INV-${Date.now()}`,
     },
   });
@@ -239,7 +240,10 @@ export default function Invoices() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Contract</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value?.toString()}>
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value))} 
+                          value={field.value?.toString() || ""}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a contract" />
