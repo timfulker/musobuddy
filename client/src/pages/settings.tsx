@@ -52,11 +52,7 @@ export default function Settings() {
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
-      return await apiRequest("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/settings", data);
     },
     onSuccess: () => {
       toast({
