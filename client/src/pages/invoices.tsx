@@ -16,11 +16,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
-const invoiceFormSchema = insertInvoiceSchema.extend({
-  dueDate: z.string(),
-  performanceDate: z.string().optional(),
+const invoiceFormSchema = z.object({
+  invoiceNumber: z.string().min(1, "Invoice number is required"),
+  contractId: z.number().min(1, "Please select a contract"),
+  clientName: z.string().min(1, "Client name is required"),
   clientAddress: z.string().optional(),
-  contractId: z.number().or(z.string().transform(val => parseInt(val))),
+  amount: z.string().min(1, "Amount is required"),
+  dueDate: z.string().min(1, "Due date is required"),
+  performanceDate: z.string().optional(),
 });
 
 export default function Invoices() {
@@ -45,13 +48,13 @@ export default function Invoices() {
   const form = useForm<z.infer<typeof invoiceFormSchema>>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
+      invoiceNumber: `INV-${Date.now()}`,
+      contractId: 0,
       clientName: "",
       clientAddress: "",
       amount: "",
       dueDate: "",
       performanceDate: "",
-      contractId: undefined,
-      invoiceNumber: `INV-${Date.now()}`,
     },
   });
 
@@ -127,20 +130,19 @@ export default function Invoices() {
   });
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
+    console.log("Form submission triggered");
     console.log("Form data:", data);
     console.log("Form errors:", form.formState.errors);
+    console.log("Selected contract ID:", selectedContractId);
     
-    // Ensure contractId is a number
-    if (!data.contractId) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a contract",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Create the final payload with the selected contract
+    const finalData = {
+      ...data,
+      contractId: selectedContractId || 1, // Use the watched contract ID
+    };
     
-    createInvoiceMutation.mutate(data);
+    console.log("Final data being submitted:", finalData);
+    createInvoiceMutation.mutate(finalData);
   };
 
   const handleDialogClose = () => {
