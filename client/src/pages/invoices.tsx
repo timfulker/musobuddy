@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download } from "lucide-react";
+import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, ArrowLeft } from "lucide-react";
 import type { Invoice } from "@shared/schema";
+import { Link } from "wouter";
 
 export default function Invoices() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,9 +71,17 @@ export default function Invoices() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-            <p className="text-gray-600">Track payments and manage your invoicing</p>
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
+              <p className="text-gray-600">Track payments and manage your invoicing</p>
+            </div>
           </div>
           
           <Button className="bg-purple-600 hover:bg-purple-700">
