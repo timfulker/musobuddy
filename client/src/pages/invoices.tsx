@@ -66,6 +66,10 @@ export default function Invoices() {
     queryKey: ["/api/contracts"],
   });
 
+  const { data: userSettings = {} } = useQuery({
+    queryKey: ["/api/settings"],
+  });
+
   // Watch for contract selection changes to autofill fields
   const selectedContractId = form.watch("contractId");
   const selectedContract = contracts.find((c: any) => c.id === parseInt(selectedContractId?.toString() || "0"));
@@ -78,7 +82,6 @@ export default function Invoices() {
       const amountDue = fee - deposit;
       
       form.setValue("clientName", selectedContract.clientName);
-      form.setValue("businessAddress", ""); // To be entered by the musician
       form.setValue("amount", amountDue.toString());
       form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
       
@@ -89,6 +92,13 @@ export default function Invoices() {
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
     }
   }, [selectedContract, form]);
+
+  // Auto-populate business address from user settings
+  useEffect(() => {
+    if (userSettings.businessAddress) {
+      form.setValue("businessAddress", userSettings.businessAddress);
+    }
+  }, [userSettings, form]);
 
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: z.infer<typeof invoiceFormSchema>) => {
