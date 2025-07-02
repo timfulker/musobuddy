@@ -10,7 +10,7 @@ export default function QuickActions() {
         <CardTitle>Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Link href="/enquiries">
+        <Link href="/enquiries?action=new">
           <Button 
             variant="outline" 
             className="w-full justify-start bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"

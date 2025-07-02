@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bell, Search, Plus } from "lucide-react";
+import { Link } from "wouter";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -40,10 +41,12 @@ export default function DashboardHeader() {
           </button>
           
           {/* Quick Actions */}
-          <Button className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="w-4 h-4 mr-2" />
-            New Enquiry
-          </Button>
+          <Link href="/enquiries?action=new">
+            <Button className="bg-purple-600 hover:bg-purple-700">
+              <Plus className="w-4 h-4 mr-2" />
+              New Enquiry
+            </Button>
+          </Link>
         </div>
       </div>
     </header>
