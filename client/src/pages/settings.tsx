@@ -17,6 +17,12 @@ const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true });
 
 export default function Settings() {
   const { toast } = useToast();
+  const [bankDetails, setBankDetails] = useState({
+    bankName: "",
+    accountName: "",
+    sortCode: "",
+    accountNumber: ""
+  });
 
   const { data: settings = {}, isLoading } = useQuery({
     queryKey: ["/api/settings"],
@@ -47,6 +53,27 @@ export default function Settings() {
       bankDetails: settings.bankDetails || "",
       defaultTerms: settings.defaultTerms || "",
     });
+    
+    // Parse bank details from stored string format
+    const bankDetailsString = settings.bankDetails || "";
+    const parsedBankDetails = {
+      bankName: "",
+      accountName: "",
+      sortCode: "",
+      accountNumber: ""
+    };
+    
+    if (bankDetailsString) {
+      const lines = bankDetailsString.split('\n');
+      lines.forEach(line => {
+        if (line.includes('Bank Name:')) parsedBankDetails.bankName = line.split('Bank Name:')[1]?.trim() || "";
+        if (line.includes('Account Name:')) parsedBankDetails.accountName = line.split('Account Name:')[1]?.trim() || "";
+        if (line.includes('Sort Code:')) parsedBankDetails.sortCode = line.split('Sort Code:')[1]?.trim() || "";
+        if (line.includes('Account Number:')) parsedBankDetails.accountNumber = line.split('Account Number:')[1]?.trim() || "";
+      });
+    }
+    
+    setBankDetails(parsedBankDetails);
     setHasInitialized(true);
   }
 
@@ -71,7 +98,20 @@ export default function Settings() {
   });
 
   const onSubmit = (data: z.infer<typeof settingsFormSchema>) => {
-    saveSettingsMutation.mutate(data);
+    // Convert bank details table format back to string for storage
+    const bankDetailsString = [
+      bankDetails.bankName ? `Bank Name: ${bankDetails.bankName}` : '',
+      bankDetails.accountName ? `Account Name: ${bankDetails.accountName}` : '',
+      bankDetails.sortCode ? `Sort Code: ${bankDetails.sortCode}` : '',
+      bankDetails.accountNumber ? `Account Number: ${bankDetails.accountNumber}` : ''
+    ].filter(line => line.length > 0).join('\n');
+    
+    const updatedData = {
+      ...data,
+      bankDetails: bankDetailsString
+    };
+    
+    saveSettingsMutation.mutate(updatedData);
   };
 
   if (isLoading) {
@@ -200,23 +240,59 @@ export default function Settings() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="bankDetails"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bank Details for Invoices</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Bank Name: Your Bank&#10;Account Name: Your Business Name&#10;Sort Code: 12-34-56&#10;Account Number: 12345678"
-                        className="min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <FormLabel className="text-base font-medium">Bank Details for Invoices</FormLabel>
+                <div className="mt-2 border rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="px-3 py-2 bg-muted/50 font-medium text-sm w-32">Bank Name</td>
+                        <td className="px-3 py-2">
+                          <Input 
+                            placeholder="Your Bank"
+                            value={bankDetails.bankName}
+                            onChange={(e) => setBankDetails(prev => ({ ...prev, bankName: e.target.value }))}
+                            className="border-0 focus-visible:ring-0 p-0 h-auto"
+                          />
+                        </td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="px-3 py-2 bg-muted/50 font-medium text-sm">Account Name</td>
+                        <td className="px-3 py-2">
+                          <Input 
+                            placeholder="Your Business Name"
+                            value={bankDetails.accountName}
+                            onChange={(e) => setBankDetails(prev => ({ ...prev, accountName: e.target.value }))}
+                            className="border-0 focus-visible:ring-0 p-0 h-auto"
+                          />
+                        </td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="px-3 py-2 bg-muted/50 font-medium text-sm">Sort Code</td>
+                        <td className="px-3 py-2">
+                          <Input 
+                            placeholder="12-34-56"
+                            value={bankDetails.sortCode}
+                            onChange={(e) => setBankDetails(prev => ({ ...prev, sortCode: e.target.value }))}
+                            className="border-0 focus-visible:ring-0 p-0 h-auto"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-3 py-2 bg-muted/50 font-medium text-sm">Account Number</td>
+                        <td className="px-3 py-2">
+                          <Input 
+                            placeholder="12345678"
+                            value={bankDetails.accountNumber}
+                            onChange={(e) => setBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))}
+                            className="border-0 focus-visible:ring-0 p-0 h-auto"
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
