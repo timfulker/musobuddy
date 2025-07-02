@@ -239,10 +239,10 @@ export default function Contracts() {
                     />
                     <FormField
                       control={form.control}
-                      name="amount"
+                      name="fee"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Contract Amount (£)</FormLabel>
+                          <FormLabel>Performance Fee (£)</FormLabel>
                           <FormControl>
                             <Input type="number" placeholder="1500" {...field} value={field.value || ""} />
                           </FormControl>
@@ -254,12 +254,12 @@ export default function Contracts() {
 
                   <FormField
                     control={form.control}
-                    name="services"
+                    name="deposit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Services Description</FormLabel>
+                        <FormLabel>Deposit Amount (£)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Live music performance for wedding reception..." {...field} value={field.value || ""} />
+                          <Input type="number" placeholder="500" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -330,11 +330,7 @@ export default function Contracts() {
               <CardContent className="p-12 text-center">
                 <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No contracts found</p>
-                <p className="text-gray-400">Generate your first contract from an enquiry</p>
-                <Button className="mt-4 bg-purple-600 hover:bg-purple-700">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Generate Contract
-                </Button>
+                <p className="text-gray-400">Generate your first contract using the button above</p>
               </CardContent>
             </Card>
           ) : (
