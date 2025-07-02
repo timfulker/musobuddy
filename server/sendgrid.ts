@@ -7,12 +7,20 @@ if (!process.env.SENDGRID_API_KEY) {
 const mailService = new MailService();
 mailService.setApiKey(process.env.SENDGRID_API_KEY);
 
+interface EmailAttachment {
+  content: string; // Base64 encoded content
+  filename: string;
+  type: string;
+  disposition: string;
+}
+
 interface EmailParams {
   to: string;
   from: string;
   subject: string;
   text?: string;
   html?: string;
+  attachments?: EmailAttachment[];
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
@@ -22,20 +30,28 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       from: params.from,
       subject: params.subject,
       hasText: !!params.text,
-      hasHtml: !!params.html
+      hasHtml: !!params.html,
+      hasAttachments: !!params.attachments?.length
     });
     
-    const result = await mailService.send({
+    const emailData: any = {
       to: params.to,
       from: params.from,
       subject: params.subject,
       text: params.text,
       html: params.html,
-    });
+    };
+
+    // Add attachments if provided
+    if (params.attachments && params.attachments.length > 0) {
+      emailData.attachments = params.attachments;
+    }
+    
+    const result = await mailService.send(emailData);
     
     console.log('SendGrid response:', result);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('SendGrid email error:', error);
     if (error.response && error.response.body) {
       console.error('SendGrid error details:', error.response.body);

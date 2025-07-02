@@ -165,106 +165,33 @@ export default function Contracts() {
     }
   };
 
-  const handleDownloadContract = (contract: Contract) => {
-    // Create comprehensive contract document
-    const contractData = `
-LIVE ENGAGEMENT CONTRACT
-Solo Musician Performance Agreement
-Contract #${contract.contractNumber}
-
-═══════════════════════════════════════════════════════════════
-
-AGREEMENT DETAILS
-
-An agreement made on ${formatDate(new Date())} between the Hirer and the Musician 
-for the performance engagement detailed below.
-
-═══════════════════════════════════════════════════════════════
-
-THE HIRER
-Name: ${contract.clientName}
-Address: [To be completed]
-Phone: [To be completed]
-Email: [To be completed]
-
-THE MUSICIAN
-Name: Tim Fulker
-Address: 59 Gloucester Road, Bournemouth, Dorset BH7 6JA
-Phone: 07764190034
-Email: timfulkermusic@gmail.com
-
-═══════════════════════════════════════════════════════════════
-
-ENGAGEMENT DETAILS
-
-Date: ${formatDate(contract.eventDate)}
-Start Time: ${contract.eventTime}
-Venue: ${contract.venue}
-Performance Fee: £${contract.fee}
-${contract.deposit ? `Deposit Required: £${contract.deposit} (payable upon signing)` : ''}
-
-═══════════════════════════════════════════════════════════════
-
-TERMS & CONDITIONS
-
-• The fee listed above is payable on the date of performance.
-
-• The Hirer and Musician agree that equipment and instruments are not available 
-  for use by others without specific permission of the Musician.
-
-• The Hirer shall ensure safe electricity supply and security of the Musician 
-  and property at the venue.
-
-• No audio/visual recording or transmission permitted without prior written 
-  consent of the Musician.
-
-• This agreement may only be modified or cancelled by mutual written consent 
-  of both parties.
-
-${contract.terms ? `
-ADDITIONAL TERMS:
-${contract.terms}
-` : ''}
-
-═══════════════════════════════════════════════════════════════
-
-SIGNATURES
-
-HIRER SIGNATURE
-Signature: _________________________________
-Print Name: ${contract.clientName}
-Phone: _________________________________
-Email: _________________________________
-Date: _________________________________
-
-MUSICIAN SIGNATURE
-Signature: _________________________________
-Print Name: Tim Fulker
-Phone: 07764190034
-Email: timfulkermusic@gmail.com
-Date: _________________________________
-
-═══════════════════════════════════════════════════════════════
-
-CONTRACT STATUS: ${contract.status.toUpperCase()}
-Created: ${formatDate(contract.createdAt!)}
-${contract.signedAt ? `Signed: ${formatDate(contract.signedAt)}` : ''}
-
-One copy to be retained by the Hirer and one copy by the Musician.
-    `;
-    
-    const blob = new Blob([contractData], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `live-engagement-contract-${contract.contractNumber}.txt`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Success",
-      description: "Professional contract downloaded successfully!",
-    });
+  const handleDownloadContract = async (contract: Contract) => {
+    try {
+      const response = await fetch(`/api/contracts/${contract.id}/pdf`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Contract-${contract.contractNumber}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Success",
+        description: "Contract PDF downloaded successfully!",
+      });
+    } catch (error) {
+      console.error('Error downloading contract:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download contract PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {

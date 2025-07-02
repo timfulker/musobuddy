@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, FileText, Calendar, MapPin, Clock, DollarSign } from "lucide-react";
+import { CheckCircle, FileText, Calendar, MapPin, Clock, DollarSign, Download } from "lucide-react";
 
 interface Contract {
   id: number;
@@ -169,13 +169,63 @@ export default function SignContract() {
   }
 
   if (contract.status === 'signed') {
+    const handleDownloadPDF = async () => {
+      try {
+        const response = await fetch(`/api/contracts/public/${contractId}/pdf`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Contract-${contract.contractNumber}-Signed.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Success",
+          description: "Signed contract PDF downloaded successfully!",
+        });
+      } catch (error) {
+        console.error('Error downloading contract:', error);
+        toast({
+          title: "Error",
+          description: "Failed to download contract PDF",
+          variant: "destructive",
+        });
+      }
+    };
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-6">
-            <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Contract Already Signed</h2>
-            <p className="text-gray-600">This contract was signed on {new Date(contract.signedAt || '').toLocaleDateString('en-GB')}.</p>
+        <Card className="w-full max-w-lg">
+          <CardContent className="text-center py-8">
+            <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-6" />
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Contract Successfully Signed!</h2>
+            <p className="text-gray-600 mb-6">
+              This contract was signed on {new Date(contract.signedAt || '').toLocaleDateString('en-GB')}.
+            </p>
+            
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <p className="text-green-800 text-sm">
+                📧 Confirmation emails with the signed contract have been sent to both parties.
+              </p>
+            </div>
+            
+            <Button 
+              onClick={handleDownloadPDF}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              size="lg"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Signed Contract (PDF)
+            </Button>
+            
+            <p className="text-xs text-gray-500 mt-4">
+              Keep this copy for your records
+            </p>
           </CardContent>
         </Card>
       </div>
