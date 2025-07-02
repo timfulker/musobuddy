@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, ArrowLeft } from "lucide-react";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, ArrowLeft, Eye, Mail, Download } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
@@ -29,6 +30,8 @@ export default function Contracts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [previewContract, setPreviewContract] = useState<Contract | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: contracts = [], isLoading } = useQuery<Contract[]>({
@@ -112,6 +115,71 @@ export default function Contracts() {
       status: "draft",
     },
   });
+
+  // Email sending mutation
+  const sendEmailMutation = useMutation({
+    mutationFn: async (contract: Contract) => {
+      return fetch("/api/contracts/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contractId: contract.id }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Contract sent to client successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send contract email",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePreviewContract = (contract: Contract) => {
+    setPreviewContract(contract);
+    setIsPreviewOpen(true);
+  };
+
+  const handleSendEmail = (contract: Contract) => {
+    sendEmailMutation.mutate(contract);
+  };
+
+  const handleDownloadContract = (contract: Contract) => {
+    // Create a simple PDF-like view in a new window
+    const contractData = `
+      CONTRACT #${contract.contractNumber}
+      
+      Client: ${contract.clientName}
+      Event Date: ${formatDate(contract.eventDate)}
+      Event Time: ${contract.eventTime}
+      Venue: ${contract.venue}
+      Fee: £${contract.fee}
+      ${contract.deposit ? `Deposit: £${contract.deposit}` : ''}
+      
+      Terms & Conditions:
+      ${contract.terms || 'Standard terms apply'}
+      
+      Status: ${contract.status.toUpperCase()}
+    `;
+    
+    const blob = new Blob([contractData], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contract-${contract.contractNumber}.txt`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Success",
+      description: "Contract downloaded successfully!",
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -422,9 +490,27 @@ export default function Contracts() {
                     </div>
                     
                     <div className="flex flex-col items-end space-y-2">
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handlePreviewContract(contract)}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Preview Contract
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSendEmail(contract)}>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send via Email
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownloadContract(contract)}>
+                            <Download className="w-4 h-4 mr-2" />
+                            Download
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       
                       {contract.status === "draft" && (
                         <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
@@ -450,6 +536,84 @@ export default function Contracts() {
             ))
           )}
         </div>
+
+        {/* Contract Preview Dialog */}
+        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Contract Preview</DialogTitle>
+            </DialogHeader>
+            {previewContract && (
+              <div className="space-y-6 p-4">
+                <div className="text-center border-b pb-4">
+                  <h2 className="text-2xl font-bold">PERFORMANCE CONTRACT</h2>
+                  <p className="text-lg text-gray-600">#{previewContract.contractNumber}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Client Information</h3>
+                    <p className="text-gray-700">{previewContract.clientName}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Contract Status</h3>
+                    <Badge className={getStatusColor(previewContract.status)}>
+                      {previewContract.status.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Event Date</h3>
+                    <p className="text-gray-700">{formatDate(previewContract.eventDate)}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Event Time</h3>
+                    <p className="text-gray-700">{previewContract.eventTime}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Venue</h3>
+                  <p className="text-gray-700">{previewContract.venue}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Performance Fee</h3>
+                    <p className="text-2xl font-bold text-green-600">£{previewContract.fee}</p>
+                  </div>
+                  
+                  {previewContract.deposit && (
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Deposit Required</h3>
+                      <p className="text-xl font-semibold text-blue-600">£{previewContract.deposit}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {previewContract.terms && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Terms & Conditions</h3>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-gray-700 whitespace-pre-wrap">{previewContract.terms}</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="border-t pt-4 text-center text-sm text-gray-500">
+                  <p>Created: {formatDate(previewContract.createdAt!)}</p>
+                  {previewContract.signedAt && (
+                    <p>Signed: {formatDate(previewContract.signedAt)}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
