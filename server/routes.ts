@@ -287,6 +287,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send contract email
+  app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { contractId } = req.body;
+      
+      // Get the contract details
+      const contract = await storage.getContract(contractId, userId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+
+      // Get user settings for business details
+      const userSettings = await storage.getUserSettings(userId);
+
+      if (!contract?.clientEmail) {
+        return res.status(400).json({ message: "Client email not found. Please add client email to the contract." });
+      }
+
+      // Import SendGrid functions
+      const { sendEmail, generateContractHtml } = await import('./sendgrid');
+      
+      // Generate HTML content
+      const htmlContent = generateContractHtml(contract, userSettings);
+      
+      // Send email using SendGrid
+      const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
+      const emailSent = await sendEmail({
+        to: contract.clientEmail,
+        from: fromEmail,
+        subject: `Performance Contract ${contract.contractNumber} from ${userSettings?.businessName || 'MusoBuddy'}`,
+        html: htmlContent,
+        text: `Please find attached your performance contract ${contract.contractNumber}. Event date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}. Fee: £${contract.fee}.`
+      });
+
+      if (emailSent) {
+        // Update contract status to sent
+        await storage.updateContract(contractId, { status: "sent" }, userId);
+        console.log(`Contract ${contract.contractNumber} sent successfully to ${contract.clientEmail}`);
+        res.json({ message: "Contract sent successfully via email" });
+      } else {
+        res.status(500).json({ message: "Failed to send email. Please check your email settings." });
+      }
+    } catch (error) {
+      console.error("Error sending contract email:", error);
+      res.status(500).json({ message: "Failed to send contract email" });
+    }
+  });
+
   // Booking routes
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {

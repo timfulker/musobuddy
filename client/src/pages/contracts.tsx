@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, ArrowLeft, Eye, Mail, Download } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
@@ -119,22 +119,19 @@ export default function Contracts() {
   // Email sending mutation
   const sendEmailMutation = useMutation({
     mutationFn: async (contract: Contract) => {
-      return fetch("/api/contracts/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contractId: contract.id }),
-      });
+      return apiRequest("POST", "/api/contracts/send-email", { contractId: contract.id });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
         title: "Success",
         description: "Contract sent to client successfully!",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to send contract email",
+        description: error.message || "Failed to send contract email",
         variant: "destructive",
       });
     },

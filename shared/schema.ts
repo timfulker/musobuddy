@@ -51,6 +51,8 @@ export const contracts = pgTable("contracts", {
   enquiryId: integer("enquiry_id").notNull(),
   contractNumber: varchar("contract_number").notNull().unique(),
   clientName: varchar("client_name").notNull(),
+  clientEmail: varchar("client_email"),
+  clientPhone: varchar("client_phone"),
   eventDate: timestamp("event_date").notNull(),
   eventTime: varchar("event_time").notNull(),
   venue: varchar("venue").notNull(),

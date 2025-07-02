@@ -33,6 +33,7 @@ export default function Settings() {
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       businessName: settings.businessName || "",
+      businessEmail: settings.businessEmail || "",
       businessAddress: settings.businessAddress || "",
       phone: settings.phone || "",
       website: settings.website || "",
@@ -166,6 +167,20 @@ export default function Settings() {
                     <FormLabel>Business Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Your Music Services" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="businessEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="your@email.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
