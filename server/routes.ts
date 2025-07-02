@@ -184,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         invoiceNumber: req.body.invoiceNumber,
         contractId: parseInt(req.body.contractId.toString()),
         clientName: req.body.clientName,
-        clientAddress: req.body.clientAddress || null,
+        businessAddress: req.body.businessAddress || null,
         amount: req.body.amount.toString(),
         dueDate: new Date(req.body.dueDate),
         performanceDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,

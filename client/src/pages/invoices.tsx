@@ -20,7 +20,7 @@ const invoiceFormSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
   contractId: z.number().min(1, "Please select a contract"),
   clientName: z.string().min(1, "Client name is required"),
-  clientAddress: z.string().optional(),
+  businessAddress: z.string().optional(),
   amount: z.string().min(1, "Amount is required"),
   dueDate: z.string().min(1, "Due date is required"),
   performanceDate: z.string().optional(),
@@ -51,7 +51,7 @@ export default function Invoices() {
       invoiceNumber: `INV-${Date.now()}`,
       contractId: 0,
       clientName: "",
-      clientAddress: "",
+      businessAddress: "",
       amount: "",
       dueDate: "",
       performanceDate: "",
@@ -78,7 +78,7 @@ export default function Invoices() {
       const amountDue = fee - deposit;
       
       form.setValue("clientName", selectedContract.clientName);
-      form.setValue("clientAddress", "[To be completed]"); // Placeholder for now
+      form.setValue("businessAddress", ""); // To be entered by the musician
       form.setValue("amount", amountDue.toString());
       form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
       
@@ -293,12 +293,12 @@ export default function Invoices() {
 
                   <FormField
                     control={form.control}
-                    name="clientAddress"
+                    name="businessAddress"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Address</FormLabel>
+                        <FormLabel>Your Business Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="123 Main Street, City, Postcode" {...field} />
+                          <Input placeholder="Your business address for the invoice header" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
