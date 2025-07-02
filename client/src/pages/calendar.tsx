@@ -347,6 +347,126 @@ export default function Calendar() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Block Time Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Block Time</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Event Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Wedding Reception, Private Party" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="clientName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Client Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter client name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="eventDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="eventTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Time</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="venue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Venue</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter venue address" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="fee"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fee (£)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="0.00" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => handleDialogClose(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="bg-purple-600 hover:bg-purple-700"
+                  disabled={createBookingMutation.isPending}
+                >
+                  {createBookingMutation.isPending ? "Blocking..." : "Block Time"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

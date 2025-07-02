@@ -31,7 +31,7 @@ export default function QuickActions() {
             Create Invoice
           </Button>
         </Link>
-        <Link href="/calendar">
+        <Link href="/calendar?action=block">
           <Button variant="outline" className="w-full justify-start hover:bg-gray-50">
             <CalendarPlus className="w-4 h-4 mr-3" />
             Block Calendar
