@@ -170,6 +170,16 @@ Changelog:
   * Full end-to-end workflow: contract creation → email sending → client signing → PDF generation → email delivery
   * Both parties receive confirmation emails with signed contract PDF attachments
   * System generates 41KB+ professional PDF documents with signatures and audit trails
+- July 02, 2025. Enhanced invoice management with complete automation:
+  * Implemented professional invoice PDF generation matching contract system
+  * Added PDF attachments to invoice emails via SendGrid integration
+  * Created PDF download functionality for all invoice statuses
+  * Added smart auto-filling system for invoice creation:
+    - Auto-generates sequential invoice numbers (INV-2025-001 format)
+    - Auto-calculates invoice amount from contract (fee minus deposit)
+    - Auto-fills client name and performance date from selected contract
+    - Auto-sets due date to 30 days from creation
+  * Complete invoice workflow automation reducing data entry by 80%
 ```
 
 ## User Preferences

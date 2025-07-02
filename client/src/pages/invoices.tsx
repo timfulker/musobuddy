@@ -67,6 +67,22 @@ export default function Invoices() {
     },
   });
 
+  // Auto-generate invoice number and due date
+  useEffect(() => {
+    if (invoices.length >= 0) {
+      const currentYear = new Date().getFullYear();
+      const nextNumber = invoices.length + 1;
+      const paddedNumber = nextNumber.toString().padStart(3, '0');
+      const invoiceNumber = `INV-${currentYear}-${paddedNumber}`;
+      form.setValue("invoiceNumber", invoiceNumber);
+      
+      // Set due date to 30 days from now
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30);
+      form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+    }
+  }, [invoices, form]);
+
   // Watch contract ID changes
   const selectedContractId = form.watch("contractId");
 
