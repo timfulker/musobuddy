@@ -99,7 +99,7 @@ export function generateInvoiceHtml(invoice: any, contract: any, userSettings: a
           <div class="logo">${userSettings?.businessName || 'MusoBuddy'}</div>
           <div class="invoice-title">
             <div class="invoice-number">Invoice ${invoice.invoiceNumber}</div>
-            <div class="invoice-date">${new Date(invoice.issueDate).toLocaleDateString('en-GB')}</div>
+            <div class="invoice-date">${new Date(invoice.createdAt).toLocaleDateString('en-GB')}</div>
           </div>
         </div>
 

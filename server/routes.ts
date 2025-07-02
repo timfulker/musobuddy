@@ -177,6 +177,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invoice PDF download route
+  app.get('/api/invoices/:id/pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const invoiceId = parseInt(req.params.id);
+      
+      const invoice = await storage.getInvoice(invoiceId, userId);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      // Get related contract for client details
+      let contract = null;
+      if (invoice.contractId) {
+        contract = await storage.getContract(invoice.contractId, userId);
+      }
+      
+      const userSettings = await storage.getUserSettings(userId);
+      const { generateInvoicePDF } = await import('./pdf-generator');
+      
+      const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error("Error generating invoice PDF:", error);
+      res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
   // Contract routes
   app.get('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
@@ -306,11 +338,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Client email not found. Please add client email to the contract." });
       }
 
-      // Import SendGrid functions
+      // Import SendGrid functions and PDF generator
       const { sendEmail, generateInvoiceHtml } = await import('./sendgrid');
+      const { generateInvoicePDF } = await import('./pdf-generator');
       
       // Generate HTML content
       const htmlContent = generateInvoiceHtml(invoice, contract, userSettings);
+      
+      // Generate PDF attachment
+      const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+      const pdfBase64 = pdfBuffer.toString('base64');
       
       // Send email using SendGrid
       const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
@@ -321,7 +358,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         from: `${fromName} <${fromEmail}>`,
         subject: `Invoice ${invoice.invoiceNumber} from ${fromName}`,
         html: htmlContent,
-        text: `Please find attached your invoice ${invoice.invoiceNumber}. Amount: £${invoice.amount}. Due date: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}.`
+        text: `Please find attached your invoice ${invoice.invoiceNumber}. Amount: £${invoice.amount}. Due date: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}.`,
+        attachments: [{
+          content: pdfBase64,
+          filename: `Invoice-${invoice.invoiceNumber}.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }]
       });
 
       if (emailSent) {

@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import type { Contract, UserSettings } from '@shared/schema';
+import type { Contract, UserSettings, Invoice } from '@shared/schema';
 
 export async function generateContractPDF(
   contract: Contract,
@@ -48,6 +48,299 @@ export async function generateContractPDF(
   } finally {
     await browser.close();
   }
+}
+
+export async function generateInvoicePDF(
+  invoice: Invoice,
+  contract: Contract | null,
+  userSettings: UserSettings | null
+): Promise<Buffer> {
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    args: [
+      '--no-sandbox', 
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process'
+    ]
+  });
+  
+  try {
+    const page = await browser.newPage();
+    
+    // Generate HTML content for the invoice
+    const html = generateInvoiceHTML(invoice, contract, userSettings);
+    
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    // Generate PDF
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20px',
+        right: '20px',
+        bottom: '20px',
+        left: '20px'
+      }
+    });
+    
+    return Buffer.from(pdf);
+  } finally {
+    await browser.close();
+  }
+}
+
+function generateInvoiceHTML(
+  invoice: Invoice,
+  contract: Contract | null,
+  userSettings: UserSettings | null
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Invoice ${invoice.invoiceNumber}</title>
+      <style>
+        body {
+          font-family: 'Arial', sans-serif;
+          margin: 0;
+          padding: 20px;
+          color: #333;
+          line-height: 1.6;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 40px;
+          border-bottom: 3px solid #0EA5E9;
+          padding-bottom: 20px;
+        }
+        .logo {
+          font-size: 32px;
+          font-weight: bold;
+          color: #0EA5E9;
+        }
+        .invoice-details {
+          text-align: right;
+        }
+        .invoice-number {
+          font-size: 24px;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 5px;
+        }
+        .invoice-date {
+          color: #666;
+          font-size: 14px;
+        }
+        .billing-section {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 40px;
+        }
+        .billing-info {
+          width: 45%;
+        }
+        .billing-info h3 {
+          color: #333;
+          margin-bottom: 15px;
+          font-size: 16px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .billing-info p {
+          margin: 5px 0;
+          color: #666;
+        }
+        .billing-info strong {
+          color: #333;
+        }
+        .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 30px;
+        }
+        .items-table th {
+          background-color: #f8f9fa;
+          padding: 15px;
+          text-align: left;
+          border-bottom: 2px solid #dee2e6;
+          font-weight: bold;
+          color: #333;
+        }
+        .items-table td {
+          padding: 15px;
+          border-bottom: 1px solid #dee2e6;
+        }
+        .items-table .amount {
+          text-align: right;
+          font-weight: bold;
+        }
+        .total-section {
+          text-align: right;
+          margin-top: 30px;
+        }
+        .total-row {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 8px;
+        }
+        .total-label {
+          width: 150px;
+          text-align: right;
+          padding-right: 20px;
+          color: #666;
+        }
+        .total-amount {
+          width: 100px;
+          text-align: right;
+          font-weight: bold;
+        }
+        .grand-total {
+          font-size: 20px;
+          color: #0EA5E9;
+          border-top: 2px solid #0EA5E9;
+          padding-top: 15px;
+          margin-top: 15px;
+        }
+        .payment-info {
+          margin-top: 40px;
+          padding: 20px;
+          background-color: #f8f9fa;
+          border-radius: 8px;
+        }
+        .payment-info h3 {
+          color: #333;
+          margin-bottom: 15px;
+        }
+        .payment-info p {
+          margin: 5px 0;
+          color: #666;
+        }
+        .terms {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #dee2e6;
+        }
+        .terms h3 {
+          color: #333;
+          margin-bottom: 10px;
+        }
+        .terms p {
+          color: #666;
+          line-height: 1.5;
+        }
+        .status-badge {
+          display: inline-block;
+          padding: 5px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .status-draft {
+          background-color: #fef3c7;
+          color: #92400e;
+        }
+        .status-sent {
+          background-color: #dbeafe;
+          color: #1e40af;
+        }
+        .status-paid {
+          background-color: #d1fae5;
+          color: #065f46;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">${businessName}</div>
+        <div class="invoice-details">
+          <div class="invoice-number">Invoice ${invoice.invoiceNumber}</div>
+          <div class="invoice-date">${new Date(invoice.createdAt || '').toLocaleDateString('en-GB')}</div>
+          <div style="margin-top: 10px;">
+            <span class="status-badge status-${invoice.status}">${invoice.status}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="billing-section">
+        <div class="billing-info">
+          <h3>From:</h3>
+          <p><strong>${businessName}</strong></p>
+          ${userSettings?.businessAddress ? `<p>${userSettings.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
+          ${userSettings?.phone ? `<p>Phone: ${userSettings.phone}</p>` : ''}
+          ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
+          ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
+        </div>
+        <div class="billing-info">
+          <h3>Bill To:</h3>
+          <p><strong>${invoice.clientName}</strong></p>
+          ${contract?.clientEmail ? `<p>${contract.clientEmail}</p>` : ''}
+          ${contract?.clientPhone ? `<p>${contract.clientPhone}</p>` : ''}
+          ${invoice.businessAddress ? `<p>${invoice.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
+        </div>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Event Date</th>
+            <th>Performance Fee</th>
+            <th>Deposit Paid</th>
+            <th class="amount">Amount Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Music Performance - ${invoice.clientName}</td>
+            <td>${invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : 'TBD'}</td>
+            <td>£${parseFloat(invoice.performanceFee || '0').toFixed(2)}</td>
+            <td>£${parseFloat(invoice.depositPaid || '0').toFixed(2)}</td>
+            <td class="amount">£${parseFloat(invoice.amount).toFixed(2)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="total-section">
+        <div class="total-row">
+          <div class="total-label">Performance Fee:</div>
+          <div class="total-amount">£${parseFloat(invoice.performanceFee || '0').toFixed(2)}</div>
+        </div>
+        <div class="total-row">
+          <div class="total-label">Deposit Paid:</div>
+          <div class="total-amount">-£${parseFloat(invoice.depositPaid || '0').toFixed(2)}</div>
+        </div>
+        <div class="total-row grand-total">
+          <div class="total-label">Total Due:</div>
+          <div class="total-amount">£${parseFloat(invoice.amount).toFixed(2)}</div>
+        </div>
+      </div>
+
+      <div class="payment-info">
+        <h3>Payment Information</h3>
+        <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</p>
+        ${userSettings?.bankDetails ? `<p><strong>Bank Details:</strong><br>${userSettings.bankDetails.replace(/\n/g, '<br>')}</p>` : ''}
+      </div>
+
+      <div class="terms">
+        <h3>Terms & Conditions</h3>
+        <p>${userSettings?.defaultTerms || 'Payment is due within 30 days of the invoice date. Thank you for your business!'}</p>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
 function generateContractHTML(
