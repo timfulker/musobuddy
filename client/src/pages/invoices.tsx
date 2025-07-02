@@ -24,6 +24,8 @@ const invoiceFormSchema = z.object({
   amount: z.string().min(1, "Amount is required"),
   dueDate: z.string().min(1, "Due date is required"),
   performanceDate: z.string().optional(),
+  performanceFee: z.string().optional(),
+  depositPaid: z.string().optional(),
 });
 
 export default function Invoices() {
@@ -64,6 +66,8 @@ export default function Invoices() {
       amount: "",
       dueDate: "",
       performanceDate: "",
+      performanceFee: "",
+      depositPaid: "",
     },
   });
 
@@ -96,11 +100,14 @@ export default function Invoices() {
           form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
         }
         if (selectedContract.fee) {
-          // Calculate amount due (fee minus any deposit)
+          // Set the performance fee and calculate amount due (fee minus any deposit)
           const fee = Number(selectedContract.fee);
           const deposit = Number(selectedContract.deposit) || 0;
           const amountDue = fee - deposit;
           form.setValue("amount", amountDue.toString());
+          // Store fee and deposit for backend
+          form.setValue("performanceFee", fee.toString());
+          form.setValue("depositPaid", deposit.toString());
         }
       }
     }
