@@ -112,13 +112,32 @@ export const complianceDocuments = pgTable("compliance_documents", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User settings/profile table for business details
+export const userSettings = pgTable("user_settings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().unique(),
+  businessName: varchar("business_name"),
+  businessAddress: text("business_address"),
+  phone: varchar("phone"),
+  website: varchar("website"),
+  taxNumber: varchar("tax_number"),
+  bankDetails: text("bank_details"),
+  defaultTerms: text("default_terms"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   enquiries: many(enquiries),
   contracts: many(contracts),
   invoices: many(invoices),
   bookings: many(bookings),
   complianceDocuments: many(complianceDocuments),
+  settings: one(userSettings, {
+    fields: [users.id],
+    references: [userSettings.userId],
+  }),
 }));
 
 export const enquiriesRelations = relations(enquiries, ({ one, many }) => ({
@@ -171,6 +190,13 @@ export const complianceDocumentsRelations = relations(complianceDocuments, ({ on
   }),
 }));
 
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [userSettings.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertEnquirySchema = createInsertSchema(enquiries).omit({
   id: true,
@@ -197,6 +223,12 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
 });
 
 export const insertComplianceDocumentSchema = createInsertSchema(complianceDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
