@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText } from "lucide-react";
+import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 import { insertUserSettingsSchema, type UserSettings } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -126,6 +127,16 @@ export default function Settings() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Back Button */}
+      <div className="mb-6">
+        <Link href="/">
+          <Button variant="outline" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
+
       <div className="flex items-center gap-3 mb-8">
         <SettingsIcon className="h-8 w-8 text-blue-600" />
         <div>

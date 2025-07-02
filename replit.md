@@ -141,6 +141,9 @@ Changelog:
   * Connected invoice auto-fill to use business address from user settings
   * Added API routes for saving/loading user business preferences
   * Settings include: business name, address, phone, website, tax number, bank details, default terms
+  * Fixed settings save operation with proper API request format
+  * Updated bank details section to structured table format with visible field labels
+  * Added "Back to Dashboard" navigation button for improved user experience
 ```
 
 ## User Preferences
