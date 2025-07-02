@@ -140,26 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { contractId } = req.body;
-      
-      const contract = await storage.getContract(contractId, userId);
-      if (!contract) {
-        return res.status(404).json({ message: "Contract not found" });
-      }
-      
-      // In a real app, you would send email here using a service like SendGrid
-      // For now, just simulate sending and update status
-      const updatedContract = await storage.updateContract(contractId, { status: 'sent' }, userId);
-      
-      res.json({ message: "Contract sent successfully", contract: updatedContract });
-    } catch (error) {
-      console.error("Error sending contract email:", error);
-      res.status(500).json({ message: "Failed to send contract email" });
-    }
-  });
+
 
   // Invoice routes
   app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
