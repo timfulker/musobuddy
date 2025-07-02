@@ -26,6 +26,124 @@ const invoiceFormSchema = z.object({
   performanceDate: z.string().optional(),
 });
 
+// Edit Invoice Form Component
+function EditInvoiceForm({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
+  const { toast } = useToast();
+  
+  const form = useForm<z.infer<typeof invoiceFormSchema>>({
+    resolver: zodResolver(invoiceFormSchema),
+    defaultValues: {
+      invoiceNumber: invoice.invoiceNumber,
+      contractId: invoice.contractId,
+      clientName: invoice.clientName,
+      businessAddress: invoice.businessAddress || "",
+      amount: invoice.amount,
+      dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
+      performanceDate: invoice.performanceDate ? new Date(invoice.performanceDate).toISOString().split('T')[0] : "",
+    },
+  });
+
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof invoiceFormSchema>) => {
+      return await apiRequest(`/api/invoices/${invoice.id}`, "PATCH", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      onClose();
+      toast({
+        title: "Success",
+        description: "Invoice updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update invoice",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
+    updateInvoiceMutation.mutate(data);
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="invoiceNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Invoice Number</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="clientName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Client Name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount (£)</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="dueDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Due Date</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button variant="outline" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={updateInvoiceMutation.isPending}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            {updateInvoiceMutation.isPending ? "Updating..." : "Update Invoice"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 export default function Invoices() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -175,12 +293,12 @@ export default function Invoices() {
   };
 
   // Invoice action handlers
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const handleEditInvoice = (invoice: Invoice) => {
-    // TODO: Implement edit functionality
-    toast({
-      title: "Edit Invoice",
-      description: "Edit functionality will be implemented soon",
-    });
+    setEditingInvoice(invoice);
+    setIsEditDialogOpen(true);
   };
 
   const handlePreviewInvoice = (invoice: Invoice) => {
@@ -281,11 +399,7 @@ export default function Invoices() {
 
   const sendInvoiceMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
-      return apiRequest(`/api/invoices/send-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceId: invoice.id }),
-      });
+      return apiRequest(`/api/invoices/send-email`, "POST", { invoiceId: invoice.id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
@@ -585,6 +699,16 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
                   </div>
                 </form>
               </Form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Invoice Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Edit Invoice</DialogTitle>
+              </DialogHeader>
+              {editingInvoice && <EditInvoiceForm invoice={editingInvoice} onClose={() => setIsEditDialogOpen(false)} />}
             </DialogContent>
           </Dialog>
         </div>

@@ -214,6 +214,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update invoice
+  app.patch('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const invoiceId = parseInt(req.params.id);
+      
+      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body, userId);
+      if (!updatedInvoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      res.json(updatedInvoice);
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      res.status(500).json({ message: "Failed to update invoice" });
+    }
+  });
+
   // Send invoice email
   app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
     try {
