@@ -174,6 +174,57 @@ export default function Invoices() {
     return new Date(dateString).toLocaleDateString("en-GB");
   };
 
+  // Invoice action handlers
+  const handleEditInvoice = (invoice: Invoice) => {
+    // TODO: Implement edit functionality
+    toast({
+      title: "Edit Invoice",
+      description: "Edit functionality will be implemented soon",
+    });
+  };
+
+  const handlePreviewInvoice = (invoice: Invoice) => {
+    // TODO: Implement preview functionality
+    toast({
+      title: "Preview Invoice",
+      description: "Preview functionality will be implemented soon",
+    });
+  };
+
+  const handleSendInvoice = (invoice: Invoice) => {
+    // TODO: Implement send functionality
+    toast({
+      title: "Send Invoice",
+      description: "Send functionality will be implemented soon",
+    });
+  };
+
+  const handleDeleteInvoice = (invoice: Invoice) => {
+    if (confirm(`Are you sure you want to delete invoice ${invoice.invoiceNumber}?`)) {
+      // TODO: Implement delete functionality
+      toast({
+        title: "Delete Invoice",
+        description: "Delete functionality will be implemented soon",
+      });
+    }
+  };
+
+  const handleDownloadInvoice = (invoice: Invoice) => {
+    // TODO: Implement download functionality
+    toast({
+      title: "Download Invoice",
+      description: "Download functionality will be implemented soon",
+    });
+  };
+
+  const handleSendReminder = (invoice: Invoice) => {
+    // TODO: Implement reminder functionality
+    toast({
+      title: "Send Reminder",
+      description: "Reminder functionality will be implemented soon",
+    });
+  };
+
   const getDaysUntilDue = (dueDateString: string) => {
     if (!dueDateString) return null;
     const dueDate = new Date(dueDateString);
@@ -566,16 +617,16 @@ export default function Invoices() {
                         <div className="flex flex-col space-y-1">
                           {invoice.status === "draft" && (
                             <>
-                              <Button size="sm" variant="outline" className="text-xs">
+                              <Button size="sm" variant="outline" className="text-xs" onClick={() => handleEditInvoice(invoice)}>
                                 Edit
                               </Button>
-                              <Button size="sm" variant="outline" className="text-xs">
+                              <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewInvoice(invoice)}>
                                 Preview
                               </Button>
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs">
+                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs" onClick={() => handleSendInvoice(invoice)}>
                                 Send
                               </Button>
-                              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 text-xs">
+                              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 text-xs" onClick={() => handleDeleteInvoice(invoice)}>
                                 Delete
                               </Button>
                             </>
@@ -583,21 +634,21 @@ export default function Invoices() {
                           
                           {invoice.status === "sent" && (
                             <>
-                              <Button size="sm" variant="outline" className="text-xs">
+                              <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewInvoice(invoice)}>
                                 Preview
                               </Button>
-                              <Button size="sm" variant="outline" className="text-xs">
+                              <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadInvoice(invoice)}>
                                 <Download className="w-3 h-3 mr-1" />
                                 Download
                               </Button>
-                              <Button size="sm" variant="outline" className="text-xs">
+                              <Button size="sm" variant="outline" className="text-xs" onClick={() => handleSendReminder(invoice)}>
                                 Reminder
                               </Button>
                             </>
                           )}
                           
                           {invoice.status === "paid" && (
-                            <Button size="sm" variant="outline" className="text-xs">
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadInvoice(invoice)}>
                               <Download className="w-3 h-3 mr-1" />
                               Download
                             </Button>

@@ -149,6 +149,25 @@ export default function Contracts() {
     sendEmailMutation.mutate(contract);
   };
 
+  // Additional contract action handlers
+  const handleEditContract = (contract: Contract) => {
+    // TODO: Implement edit functionality
+    toast({
+      title: "Edit Contract",
+      description: "Edit functionality will be implemented soon",
+    });
+  };
+
+  const handleDeleteContract = (contract: Contract) => {
+    if (confirm(`Are you sure you want to delete contract ${contract.contractNumber}?`)) {
+      // TODO: Implement delete functionality
+      toast({
+        title: "Delete Contract",
+        description: "Delete functionality will be implemented soon",
+      });
+    }
+  };
+
   const handleDownloadContract = (contract: Contract) => {
     // Create comprehensive contract document
     const contractData = `
@@ -576,7 +595,7 @@ One copy to be retained by the Hirer and one copy by the Musician.
                       <div className="flex flex-col space-y-1">
                         {contract.status === "draft" && (
                           <>
-                            <Button size="sm" variant="outline" className="text-xs">
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handleEditContract(contract)}>
                               Edit
                             </Button>
                             <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewContract(contract)}>
@@ -585,7 +604,7 @@ One copy to be retained by the Hirer and one copy by the Musician.
                             <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs" onClick={() => handleSendEmail(contract)}>
                               Send
                             </Button>
-                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 text-xs">
+                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 text-xs" onClick={() => handleDeleteContract(contract)}>
                               Delete
                             </Button>
                           </>
