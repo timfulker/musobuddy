@@ -54,6 +54,14 @@ export default function Invoices() {
     },
   });
 
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ["/api/invoices"],
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ["/api/contracts"],
+  });
+
   // Watch for contract selection changes to autofill fields
   const selectedContractId = form.watch("contractId");
   const selectedContract = contracts.find((c: any) => c.id === parseInt(selectedContractId?.toString() || "0"));
@@ -77,14 +85,6 @@ export default function Invoices() {
       form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
     }
   }, [selectedContract, form]);
-
-  const { data: invoices = [], isLoading } = useQuery({
-    queryKey: ["/api/invoices"],
-  });
-
-  const { data: contracts = [] } = useQuery({
-    queryKey: ["/api/contracts"],
-  });
 
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: z.infer<typeof invoiceFormSchema>) => {
