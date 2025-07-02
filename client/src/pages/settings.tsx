@@ -48,6 +48,7 @@ export default function Settings() {
   if (settings.businessName && !hasInitialized) {
     form.reset({
       businessName: settings.businessName || "",
+      businessEmail: settings.businessEmail || "",
       businessAddress: settings.businessAddress || "",
       phone: settings.phone || "",
       website: settings.website || "",
