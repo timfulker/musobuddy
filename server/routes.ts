@@ -284,11 +284,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log("Saving settings for user:", userId);
+      console.log("Request body:", req.body);
+      
       const settingsData = { ...req.body, userId };
+      console.log("Settings data to save:", settingsData);
+      
       const settings = await storage.upsertUserSettings(settingsData);
+      console.log("Settings saved successfully:", settings);
       res.json(settings);
     } catch (error) {
       console.error("Error saving user settings:", error);
+      console.error("Error details:", error.message);
+      console.error("Error stack:", error.stack);
       res.status(500).json({ message: "Failed to save settings" });
     }
   });
