@@ -127,6 +127,19 @@ export default function Invoices() {
   });
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
+    console.log("Form data:", data);
+    console.log("Form errors:", form.formState.errors);
+    
+    // Ensure contractId is a number
+    if (!data.contractId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a contract",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createInvoiceMutation.mutate(data);
   };
 
