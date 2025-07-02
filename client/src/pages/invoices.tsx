@@ -174,10 +174,7 @@ export default function Invoices() {
           
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button 
-                className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => setIsDialogOpen(true)}
-              >
+              <Button className="bg-purple-600 hover:bg-purple-700">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Invoice
               </Button>
