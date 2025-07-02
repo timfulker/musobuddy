@@ -12,7 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertComplianceDocumentSchema, type ComplianceDocument } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Shield, Zap, Music, Upload, Download, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Plus, Search, Shield, Zap, Music, Upload, Download, AlertTriangle, CheckCircle, Clock, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 import { z } from "zod";
 
 const complianceFormSchema = insertComplianceDocumentSchema.extend({
@@ -152,9 +153,17 @@ export default function Compliance() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Compliance</h1>
-            <p className="text-gray-600">Manage your insurance, licenses, and certifications</p>
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <Button variant="outline" size="sm" className="bg-white border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Compliance</h1>
+              <p className="text-gray-600">Manage your insurance, licenses, and certifications</p>
+            </div>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -163,7 +163,7 @@ export default function Enquiries() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/">
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+              <Button variant="outline" size="sm" className="bg-white border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Dashboard
               </Button>

@@ -66,9 +66,17 @@ export default function Calendar() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
-            <p className="text-gray-600">View and manage your performance schedule</p>
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <Button variant="outline" size="sm" className="bg-white border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
+              <p className="text-gray-600">View and manage your performance schedule</p>
+            </div>
           </div>
           
           <div className="flex items-center space-x-3">
