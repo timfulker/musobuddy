@@ -19,7 +19,7 @@ export default function QuickActions() {
             New Enquiry
           </Button>
         </Link>
-        <Link href="/contracts">
+        <Link href="/contracts?action=new">
           <Button variant="outline" className="w-full justify-start hover:bg-gray-50">
             <FileText className="w-4 h-4 mr-3" />
             Generate Contract
