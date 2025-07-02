@@ -18,6 +18,8 @@ import { z } from "zod";
 
 const invoiceFormSchema = insertInvoiceSchema.extend({
   dueDate: z.string(),
+  performanceDate: z.string().optional(),
+  clientAddress: z.string().optional(),
 });
 
 export default function Invoices() {
@@ -43,12 +45,38 @@ export default function Invoices() {
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       clientName: "",
+      clientAddress: "",
       amount: "",
       dueDate: "",
+      performanceDate: "",
       contractId: 0,
       invoiceNumber: `INV-${Date.now()}`,
     },
   });
+
+  // Watch for contract selection changes to autofill fields
+  const selectedContractId = form.watch("contractId");
+  const selectedContract = contracts.find((c: any) => c.id === parseInt(selectedContractId?.toString() || "0"));
+
+  // Autofill form when contract is selected
+  useEffect(() => {
+    if (selectedContract) {
+      const deposit = selectedContract.deposit ? parseFloat(selectedContract.deposit) : 0;
+      const fee = parseFloat(selectedContract.fee);
+      const amountDue = fee - deposit;
+      
+      form.setValue("clientName", selectedContract.clientName);
+      form.setValue("clientAddress", "[To be completed]"); // Placeholder for now
+      form.setValue("amount", amountDue.toString());
+      form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
+      
+      // Set due date to 30 days after event date
+      const eventDate = new Date(selectedContract.eventDate);
+      const dueDate = new Date(eventDate);
+      dueDate.setDate(dueDate.getDate() + 30);
+      form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+    }
+  }, [selectedContract, form]);
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["/api/invoices"],
@@ -242,10 +270,48 @@ export default function Invoices() {
 
                   <FormField
                     control={form.control}
+                    name="clientAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123 Main Street, City, Postcode" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="performanceDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Performance Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {selectedContract && (
+                    <div className="bg-blue-50 p-3 rounded-lg space-y-2 text-sm">
+                      <p><strong>Performance Fee:</strong> £{selectedContract.fee}</p>
+                      {selectedContract.deposit && (
+                        <p><strong>Deposit Paid:</strong> £{selectedContract.deposit}</p>
+                      )}
+                      <p><strong>Amount Due:</strong> £{(parseFloat(selectedContract.fee) - (selectedContract.deposit ? parseFloat(selectedContract.deposit) : 0)).toFixed(2)}</p>
+                    </div>
+                  )}
+
+                  <FormField
+                    control={form.control}
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Amount (£)</FormLabel>
+                        <FormLabel>Amount Due (£)</FormLabel>
                         <FormControl>
                           <Input placeholder="500.00" {...field} />
                         </FormControl>

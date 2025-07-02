@@ -70,7 +70,11 @@ export const invoices = pgTable("invoices", {
   contractId: integer("contract_id").notNull(),
   invoiceNumber: varchar("invoice_number").notNull().unique(),
   clientName: varchar("client_name").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  clientAddress: varchar("client_address"),
+  performanceDate: timestamp("performance_date"),
+  performanceFee: decimal("performance_fee", { precision: 10, scale: 2 }),
+  depositPaid: decimal("deposit_paid", { precision: 10, scale: 2 }).default("0"),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Amount due (fee minus deposit)
   dueDate: timestamp("due_date").notNull(),
   status: varchar("status").notNull().default("draft"), // draft, sent, paid, overdue
   paidAt: timestamp("paid_at"),
