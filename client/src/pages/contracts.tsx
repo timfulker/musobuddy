@@ -349,7 +349,14 @@ export default function Contracts() {
               <CardContent className="p-12 text-center">
                 <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No contracts found</p>
-                <p className="text-gray-400">Generate your first contract using the button above</p>
+                <p className="text-gray-400">Generate your first contract from a qualified enquiry</p>
+                <Button 
+                  className="mt-4 bg-purple-600 hover:bg-purple-700"
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Generate Contract
+                </Button>
               </CardContent>
             </Card>
           ) : (

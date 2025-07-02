@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar, ArrowLeft } from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar, ArrowLeft, User } from "lucide-react";
 import { z } from "zod";
 import { Link } from "wouter";
 
@@ -375,8 +375,16 @@ export default function Enquiries() {
           {filteredEnquiries.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
+                <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">No enquiries found</p>
                 <p className="text-gray-400">Create your first enquiry to get started</p>
+                <Button 
+                  className="mt-4 bg-purple-600 hover:bg-purple-700"
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Enquiry
+                </Button>
               </CardContent>
             </Card>
           ) : (
