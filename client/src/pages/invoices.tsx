@@ -91,8 +91,12 @@ export default function Invoices() {
       const payload = {
         ...data,
         dueDate: new Date(data.dueDate),
+        performanceDate: data.performanceDate ? new Date(data.performanceDate) : undefined,
         amount: data.amount,
         contractId: parseInt(data.contractId.toString()),
+        // Add professional invoice fields with contract data
+        performanceFee: selectedContract?.fee || "0",
+        depositPaid: selectedContract?.deposit || "0",
       };
       return await apiRequest("/api/invoices", {
         method: "POST",

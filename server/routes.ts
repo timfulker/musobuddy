@@ -176,7 +176,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const invoiceData = insertInvoiceSchema.parse({ ...req.body, userId });
+      const data = { ...req.body, userId };
+      
+      // Convert date strings to Date objects if present
+      if (data.dueDate && typeof data.dueDate === 'string') {
+        data.dueDate = new Date(data.dueDate);
+      }
+      if (data.performanceDate && typeof data.performanceDate === 'string') {
+        data.performanceDate = new Date(data.performanceDate);
+      }
+      
+      const invoiceData = insertInvoiceSchema.parse(data);
       const invoice = await storage.createInvoice(invoiceData);
       res.status(201).json(invoice);
     } catch (error) {
