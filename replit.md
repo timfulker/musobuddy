@@ -134,6 +134,13 @@ Changelog:
   * Implemented complete Create Invoice dialog with form validation
   * Added proper dialog state management for all invoice creation buttons
   * Contract selection dropdown integration for invoice-contract linking
+- July 02, 2025. Business settings system completed:
+  * Created comprehensive settings page with professional form layout
+  * Added user_settings database table for storing business details
+  * Implemented Settings navigation link in sidebar
+  * Connected invoice auto-fill to use business address from user settings
+  * Added API routes for saving/loading user business preferences
+  * Settings include: business name, address, phone, website, tax number, bank details, default terms
 ```
 
 ## User Preferences
