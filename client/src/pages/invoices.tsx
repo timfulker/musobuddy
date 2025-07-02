@@ -29,12 +29,13 @@ export default function Invoices() {
 
   // Check URL parameters to auto-open dialog
   useEffect(() => {
-    console.log('Invoice page location changed:', location);
-    const params = new URLSearchParams(location.split('?')[1] || '');
-    console.log('URL params:', params.toString());
-    if (params.get('action') === 'new') {
-      console.log('Opening invoice dialog from URL parameter');
+    // Use window.location.search for more reliable parameter detection
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'new') {
       setIsDialogOpen(true);
+      // Clean up URL after opening dialog
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
     }
   }, [location]);
 
@@ -98,8 +99,10 @@ export default function Invoices() {
 
   const handleDialogClose = () => {
     setIsDialogOpen(false);
-    const cleanUrl = location.split('?')[0];
-    navigate(cleanUrl, { replace: true });
+    // Clean up URL if there are parameters
+    if (window.location.search) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   };
 
   const getStatusColor = (status: string) => {
