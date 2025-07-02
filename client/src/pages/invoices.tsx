@@ -70,7 +70,7 @@ export default function Invoices() {
   // Watch contract ID changes
   const selectedContractId = form.watch("contractId");
 
-  // Auto-fill client name when contract is selected
+  // Auto-fill client name and amount when contract is selected
   useEffect(() => {
     if (selectedContractId && contracts.length > 0) {
       const selectedContract = contracts.find((c: any) => c.id === selectedContractId);
@@ -78,6 +78,13 @@ export default function Invoices() {
         form.setValue("clientName", selectedContract.clientName);
         if (selectedContract.eventDate) {
           form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
+        }
+        if (selectedContract.fee) {
+          // Calculate amount due (fee minus any deposit)
+          const fee = Number(selectedContract.fee);
+          const deposit = Number(selectedContract.deposit) || 0;
+          const amountDue = fee - deposit;
+          form.setValue("amount", amountDue.toString());
         }
       }
     }
