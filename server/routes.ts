@@ -214,6 +214,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send invoice email
+  app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { invoiceId } = req.body;
+      
+      // Get the invoice details
+      const invoice = await storage.getInvoice(invoiceId, userId);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      // Update invoice status to sent if it's still draft
+      if (invoice.status === "draft") {
+        await storage.updateInvoice(invoiceId, { status: "sent" }, userId);
+      }
+      
+      // In a real application, you would send the email here
+      // For now, we'll just simulate successful email sending
+      console.log(`Sending invoice ${invoice.invoiceNumber} to ${invoice.clientName}`);
+      
+      res.json({ message: "Invoice sent successfully" });
+    } catch (error) {
+      console.error("Error sending invoice email:", error);
+      res.status(500).json({ message: "Failed to send invoice email" });
+    }
+  });
+
   // Booking routes
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {

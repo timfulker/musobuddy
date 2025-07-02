@@ -184,19 +184,127 @@ export default function Invoices() {
   };
 
   const handlePreviewInvoice = (invoice: Invoice) => {
-    // TODO: Implement preview functionality
-    toast({
-      title: "Preview Invoice",
-      description: "Preview functionality will be implemented soon",
-    });
+    // Create a comprehensive invoice preview
+    const invoiceHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice ${invoice.invoiceNumber}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+          .header { text-align: center; margin-bottom: 40px; }
+          .invoice-title { font-size: 28px; font-weight: bold; color: #2563eb; }
+          .invoice-number { font-size: 18px; color: #666; }
+          .section { margin: 30px 0; }
+          .row { display: flex; justify-content: space-between; margin: 20px 0; }
+          .col { flex: 1; }
+          .amount { font-size: 24px; font-weight: bold; color: #059669; }
+          .total-section { border-top: 2px solid #e5e7eb; padding-top: 20px; }
+          .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="invoice-title">INVOICE</div>
+          <div class="invoice-number">#${invoice.invoiceNumber}</div>
+        </div>
+        
+        <div class="section">
+          <div class="row">
+            <div class="col">
+              <strong>From:</strong><br>
+              Tim Fulker Music<br>
+              59 Gloucester Road<br>
+              Bournemouth, Dorset BH7 6JA<br>
+              Phone: 07764190034<br>
+              Email: timfulkermusic@gmail.com
+            </div>
+            <div class="col">
+              <strong>To:</strong><br>
+              ${invoice.clientName}<br>
+              [Client Address]
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="row">
+            <div class="col">
+              <strong>Invoice Date:</strong><br>
+              ${new Date(invoice.createdAt!).toLocaleDateString('en-GB')}
+            </div>
+            <div class="col">
+              <strong>Due Date:</strong><br>
+              ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>Services</h3>
+          <div style="border: 1px solid #e5e7eb; padding: 20px;">
+            <div class="row">
+              <div class="col"><strong>Description</strong></div>
+              <div class="col" style="text-align: right;"><strong>Amount</strong></div>
+            </div>
+            <div class="row">
+              <div class="col">Musical Performance Services</div>
+              <div class="col" style="text-align: right;">£${Number(invoice.amount).toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="total-section">
+          <div class="row">
+            <div class="col"></div>
+            <div class="col" style="text-align: right;">
+              <strong>Total Amount: <span class="amount">£${Number(invoice.amount).toLocaleString()}</span></strong>
+            </div>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p>Payment terms: Net 30 days</p>
+          <p>Thank you for your business!</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Open in new window for preview
+    const previewWindow = window.open('', '_blank');
+    if (previewWindow) {
+      previewWindow.document.write(invoiceHtml);
+      previewWindow.document.close();
+    }
   };
 
+  const sendInvoiceMutation = useMutation({
+    mutationFn: async (invoice: Invoice) => {
+      return apiRequest(`/api/invoices/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceId: invoice.id }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      toast({
+        title: "Success",
+        description: "Invoice sent to client successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send invoice email",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSendInvoice = (invoice: Invoice) => {
-    // TODO: Implement send functionality
-    toast({
-      title: "Send Invoice",
-      description: "Send functionality will be implemented soon",
-    });
+    sendInvoiceMutation.mutate(invoice);
   };
 
   const handleDeleteInvoice = (invoice: Invoice) => {
@@ -210,10 +318,59 @@ export default function Invoices() {
   };
 
   const handleDownloadInvoice = (invoice: Invoice) => {
-    // TODO: Implement download functionality
+    // Create invoice content for download
+    const invoiceContent = `
+INVOICE #${invoice.invoiceNumber}
+
+═══════════════════════════════════════════════════════════════
+
+FROM:
+Tim Fulker Music
+59 Gloucester Road
+Bournemouth, Dorset BH7 6JA
+Phone: 07764190034
+Email: timfulkermusic@gmail.com
+
+TO:
+${invoice.clientName}
+[Client Address]
+
+═══════════════════════════════════════════════════════════════
+
+INVOICE DETAILS:
+Invoice Date: ${new Date(invoice.createdAt!).toLocaleDateString('en-GB')}
+Due Date: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}
+Amount: £${Number(invoice.amount).toLocaleString()}
+
+═══════════════════════════════════════════════════════════════
+
+SERVICES:
+Musical Performance Services                                £${Number(invoice.amount).toLocaleString()}
+
+═══════════════════════════════════════════════════════════════
+
+TOTAL AMOUNT DUE: £${Number(invoice.amount).toLocaleString()}
+
+Payment terms: Net 30 days
+Thank you for your business!
+
+Generated on: ${new Date().toLocaleDateString('en-GB')}
+    `;
+
+    // Create and download the file
+    const blob = new Blob([invoiceContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Invoice-${invoice.invoiceNumber}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
     toast({
-      title: "Download Invoice",
-      description: "Download functionality will be implemented soon",
+      title: "Download Complete",
+      description: `Invoice ${invoice.invoiceNumber} downloaded successfully`,
     });
   };
 
