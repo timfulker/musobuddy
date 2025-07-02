@@ -124,6 +124,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Shield className="w-5 h-5" />
             <span>Compliance</span>
           </Link>
+          <Link href="/settings" onClick={onClose} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/settings") 
+              ? "bg-purple-50 text-purple-700 font-medium" 
+              : "text-gray-600 hover:bg-gray-50"
+          )}>
+            <Settings className="w-5 h-5" />
+            <span>Settings</span>
+          </Link>
         </nav>
 
         {/* User Profile */}

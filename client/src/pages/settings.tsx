@@ -52,11 +52,11 @@ export default function Settings() {
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
-      return await apiRequest({
+      return await apiRequest("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      }, "/api/settings");
+      });
     },
     onSuccess: () => {
       toast({
@@ -91,7 +91,7 @@ export default function Settings() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center gap-3 mb-8">
-        <Settings className="h-8 w-8 text-blue-600" />
+        <SettingsIcon className="h-8 w-8 text-blue-600" />
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Business Settings</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
