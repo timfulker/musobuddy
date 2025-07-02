@@ -144,10 +144,23 @@ export default function Invoices() {
   });
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
+    console.log("Form submission data:", data);
+    console.log("Selected contract ID:", selectedContractId);
+    
+    // Send data exactly as expected by the API
     const finalData = {
-      ...data,
       contractId: selectedContractId || 1,
+      invoiceNumber: data.invoiceNumber,
+      clientName: data.clientName,
+      businessAddress: data.businessAddress,
+      amount: data.amount,
+      dueDate: data.dueDate, // Keep as string - server will convert
+      performanceDate: data.performanceDate,
+      performanceFee: data.performanceFee,
+      depositPaid: data.depositPaid,
     };
+    
+    console.log("Final data being sent:", finalData);
     createInvoiceMutation.mutate(finalData);
   };
 
