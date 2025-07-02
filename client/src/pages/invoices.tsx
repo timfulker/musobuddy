@@ -29,7 +29,9 @@ export default function Invoices() {
 
   // Check URL parameters to auto-open dialog
   useEffect(() => {
+    console.log('Invoice page location changed:', location);
     const params = new URLSearchParams(location.split('?')[1] || '');
+    console.log('URL params:', params.toString());
     if (params.get('action') === 'new') {
       console.log('Opening invoice dialog from URL parameter');
       setIsDialogOpen(true);
@@ -169,7 +171,10 @@ export default function Invoices() {
           
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button className="bg-purple-600 hover:bg-purple-700">
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700"
+                onClick={() => setIsDialogOpen(true)}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Invoice
               </Button>
