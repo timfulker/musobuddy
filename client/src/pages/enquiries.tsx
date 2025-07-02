@@ -18,6 +18,8 @@ import { z } from "zod";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
+}).omit({
+  userId: true,
 });
 
 export default function Enquiries() {
@@ -34,13 +36,20 @@ export default function Enquiries() {
     mutationFn: async (data: z.infer<typeof enquiryFormSchema>) => {
       const enquiryData = {
         ...data,
-        eventDate: data.eventDate ? new Date(data.eventDate) : null,
+        eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
       };
-      return await apiRequest("/api/enquiries", {
+      
+      const response = await fetch("/api/enquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(enquiryData),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/enquiries"] });
