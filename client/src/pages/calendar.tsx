@@ -1,20 +1,101 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, ArrowLeft } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import type { Booking } from "@shared/schema";
-import { Link } from "wouter";
+import { insertBookingSchema, type Booking } from "@shared/schema";
+import { Link, useLocation } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+const bookingFormSchema = insertBookingSchema.extend({
+  eventDate: z.string(),
+});
 
 export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [location, navigate] = useLocation();
+  const { toast } = useToast();
+
+  // Check URL parameters to auto-open dialog
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'block') {
+      setIsDialogOpen(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location]);
+
+  const form = useForm<z.infer<typeof bookingFormSchema>>({
+    resolver: zodResolver(bookingFormSchema),
+    defaultValues: {
+      title: "",
+      clientName: "",
+      eventDate: "",
+      eventTime: "",
+      venue: "",
+      fee: "",
+      contractId: 0,
+    },
+  });
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["/api/bookings"],
   });
+
+  const createBookingMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof bookingFormSchema>) => {
+      const bookingData = {
+        ...data,
+        eventDate: new Date(data.eventDate).toISOString(),
+        fee: parseFloat(data.fee) || 0,
+        contractId: data.contractId === 0 ? null : data.contractId,
+      };
+      return apiRequest("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      toast({
+        title: "Success",
+        description: "Time blocked successfully",
+      });
+      setIsDialogOpen(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to block time. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      form.reset();
+    }
+  };
+
+  const onSubmit = (data: z.infer<typeof bookingFormSchema>) => {
+    createBookingMutation.mutate(data);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -104,7 +185,10 @@ export default function Calendar() {
               </Button>
             </div>
             
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button 
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={() => setIsDialogOpen(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Block Time
             </Button>
