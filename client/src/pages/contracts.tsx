@@ -1,19 +1,105 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User } from "lucide-react";
-import type { Contract } from "@shared/schema";
+import type { Contract, Enquiry } from "@shared/schema";
+import { insertContractSchema } from "@shared/schema";
+import { z } from "zod";
+
+const contractFormSchema = insertContractSchema.extend({
+  eventDate: z.string().optional(),
+}).omit({
+  userId: true,
+  signedAt: true,
+});
 
 export default function Contracts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const { data: contracts = [], isLoading } = useQuery({
+  const { data: contracts = [], isLoading } = useQuery<Contract[]>({
     queryKey: ["/api/contracts"],
+  });
+
+  const { data: enquiries = [] } = useQuery<Enquiry[]>({
+    queryKey: ["/api/enquiries"],
+  });
+
+  // Check URL params to auto-open form dialog
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'new') {
+      setIsDialogOpen(true);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  const createContractMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof contractFormSchema>) => {
+      const contractData = {
+        ...data,
+        eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
+        enquiryId: 1, // Default enquiry ID for now
+      };
+      
+      const response = await fetch("/api/contracts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contractData),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      setIsDialogOpen(false);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "Contract generated successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to generate contract: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const form = useForm<z.infer<typeof contractFormSchema>>({
+    resolver: zodResolver(contractFormSchema),
+    defaultValues: {
+      enquiryId: 0,
+      contractNumber: "",
+      clientName: "",
+      eventDate: "",
+      eventTime: "",
+      venue: "",
+      fee: "",
+      deposit: "",
+      terms: "",
+      status: "draft",
+    },
   });
 
   const getStatusColor = (status: string) => {
@@ -66,10 +152,146 @@ export default function Contracts() {
             <p className="text-gray-600">Manage your performance contracts and agreements</p>
           </div>
           
-          <Button className="bg-purple-600 hover:bg-purple-700">
-            <FileText className="w-4 h-4 mr-2" />
-            Generate Contract
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <FileText className="w-4 h-4 mr-2" />
+                Generate Contract
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Generate New Contract</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => createContractMutation.mutate(data))} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="contractNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contract Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="CT-2024-001" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="clientName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John Smith" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="eventTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Time</FormLabel>
+                          <FormControl>
+                            <Input placeholder="7:00 PM" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="eventDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="venue"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Venue</FormLabel>
+                          <FormControl>
+                            <Input placeholder="The Grand Hotel, London" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contract Amount (£)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="1500" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="services"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Services Description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Live music performance for wedding reception..." {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="terms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Terms & Conditions</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Payment terms, cancellation policy, etc..." {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end space-x-3">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createContractMutation.isPending}>
+                      {createContractMutation.isPending ? "Generating..." : "Generate Contract"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Filters */}
