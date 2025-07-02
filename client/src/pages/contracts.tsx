@@ -150,34 +150,104 @@ export default function Contracts() {
   };
 
   const handleDownloadContract = (contract: Contract) => {
-    // Create a simple PDF-like view in a new window
+    // Create comprehensive contract document
     const contractData = `
-      CONTRACT #${contract.contractNumber}
-      
-      Client: ${contract.clientName}
-      Event Date: ${formatDate(contract.eventDate)}
-      Event Time: ${contract.eventTime}
-      Venue: ${contract.venue}
-      Fee: £${contract.fee}
-      ${contract.deposit ? `Deposit: £${contract.deposit}` : ''}
-      
-      Terms & Conditions:
-      ${contract.terms || 'Standard terms apply'}
-      
-      Status: ${contract.status.toUpperCase()}
+LIVE ENGAGEMENT CONTRACT
+Solo Musician Performance Agreement
+Contract #${contract.contractNumber}
+
+═══════════════════════════════════════════════════════════════
+
+AGREEMENT DETAILS
+
+An agreement made on ${formatDate(new Date())} between the Hirer and the Musician 
+for the performance engagement detailed below.
+
+═══════════════════════════════════════════════════════════════
+
+THE HIRER
+Name: ${contract.clientName}
+Address: [To be completed]
+Phone: [To be completed]
+Email: [To be completed]
+
+THE MUSICIAN
+Name: Tim Fulker
+Address: 59 Gloucester Road, Bournemouth, Dorset BH7 6JA
+Phone: 07764190034
+Email: timfulkermusic@gmail.com
+
+═══════════════════════════════════════════════════════════════
+
+ENGAGEMENT DETAILS
+
+Date: ${formatDate(contract.eventDate)}
+Start Time: ${contract.eventTime}
+Venue: ${contract.venue}
+Performance Fee: £${contract.fee}
+${contract.deposit ? `Deposit Required: £${contract.deposit} (payable upon signing)` : ''}
+
+═══════════════════════════════════════════════════════════════
+
+TERMS & CONDITIONS
+
+• The fee listed above is payable on the date of performance.
+
+• The Hirer and Musician agree that equipment and instruments are not available 
+  for use by others without specific permission of the Musician.
+
+• The Hirer shall ensure safe electricity supply and security of the Musician 
+  and property at the venue.
+
+• No audio/visual recording or transmission permitted without prior written 
+  consent of the Musician.
+
+• This agreement may only be modified or cancelled by mutual written consent 
+  of both parties.
+
+${contract.terms ? `
+ADDITIONAL TERMS:
+${contract.terms}
+` : ''}
+
+═══════════════════════════════════════════════════════════════
+
+SIGNATURES
+
+HIRER SIGNATURE
+Signature: _________________________________
+Print Name: ${contract.clientName}
+Phone: _________________________________
+Email: _________________________________
+Date: _________________________________
+
+MUSICIAN SIGNATURE
+Signature: _________________________________
+Print Name: Tim Fulker
+Phone: 07764190034
+Email: timfulkermusic@gmail.com
+Date: _________________________________
+
+═══════════════════════════════════════════════════════════════
+
+CONTRACT STATUS: ${contract.status.toUpperCase()}
+Created: ${formatDate(contract.createdAt!)}
+${contract.signedAt ? `Signed: ${formatDate(contract.signedAt)}` : ''}
+
+One copy to be retained by the Hirer and one copy by the Musician.
     `;
     
     const blob = new Blob([contractData], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `contract-${contract.contractNumber}.txt`;
+    a.download = `live-engagement-contract-${contract.contractNumber}.txt`;
     a.click();
     window.URL.revokeObjectURL(url);
     
     toast({
       title: "Success",
-      description: "Contract downloaded successfully!",
+      description: "Professional contract downloaded successfully!",
     });
   };
 
@@ -545,70 +615,198 @@ export default function Contracts() {
             </DialogHeader>
             {previewContract && (
               <div className="space-y-6 p-4">
-                <div className="text-center border-b pb-4">
-                  <h2 className="text-2xl font-bold">PERFORMANCE CONTRACT</h2>
-                  <p className="text-lg text-gray-600">#{previewContract.contractNumber}</p>
+                {/* Contract Header */}
+                <div className="text-center border-b-2 border-gray-200 pb-6">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-1">LIVE ENGAGEMENT CONTRACT</h1>
+                  <p className="text-lg text-gray-600">Solo Musician Performance Agreement</p>
+                  <p className="text-sm text-gray-500 mt-2">Contract #{previewContract.contractNumber}</p>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Client Information</h3>
-                    <p className="text-gray-700">{previewContract.clientName}</p>
+
+                {/* Agreement Statement */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-800 leading-relaxed">
+                    An agreement made on <strong>{formatDate(new Date())}</strong> between the Hirer and the Musician 
+                    for the performance engagement detailed below.
+                  </p>
+                </div>
+
+                {/* Party Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                      THE HIRER
+                    </h3>
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900">{previewContract.clientName}</p>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Address:</strong> [To be completed]</p>
+                        <p><strong>Phone:</strong> [To be completed]</p>
+                        <p><strong>Email:</strong> [To be completed]</p>
+                      </div>
+                    </div>
                   </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                      THE MUSICIAN
+                    </h3>
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900">Tim Fulker</p>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Address:</strong> 59 Gloucester Road, Bournemouth, Dorset BH7 6JA</p>
+                        <p><strong>Phone:</strong> 07764190034</p>
+                        <p><strong>Email:</strong> timfulkermusic@gmail.com</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Engagement Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                    ENGAGEMENT DETAILS
+                  </h3>
                   
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Contract Status</h3>
-                    <Badge className={getStatusColor(previewContract.status)}>
-                      {previewContract.status.toUpperCase()}
-                    </Badge>
+                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Date</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Start Time</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Venue</th>
+                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Fee</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-t border-gray-200">
+                          <td className="px-4 py-3 text-sm text-gray-900">{formatDate(previewContract.eventDate)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{previewContract.eventTime}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{previewContract.venue}</td>
+                          <td className="px-4 py-3 text-sm font-semibold text-green-600">£{previewContract.fee}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Event Date</h3>
-                    <p className="text-gray-700">{formatDate(previewContract.eventDate)}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Event Time</h3>
-                    <p className="text-gray-700">{previewContract.eventTime}</p>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Venue</h3>
-                  <p className="text-gray-700">{previewContract.venue}</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Performance Fee</h3>
-                    <p className="text-2xl font-bold text-green-600">£{previewContract.fee}</p>
-                  </div>
-                  
+
                   {previewContract.deposit && (
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Deposit Required</h3>
-                      <p className="text-xl font-semibold text-blue-600">£{previewContract.deposit}</p>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Deposit Required:</strong> £{previewContract.deposit} (payable upon signing)
+                      </p>
                     </div>
                   )}
                 </div>
-                
-                {previewContract.terms && (
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Terms & Conditions</h3>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-gray-700 whitespace-pre-wrap">{previewContract.terms}</p>
+
+                {/* Terms and Conditions */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                    TERMS & CONDITIONS
+                  </h3>
+                  
+                  <div className="space-y-3 text-sm text-gray-700">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-400 mt-1">•</span>
+                      <p>The fee listed above is payable on the date of performance.</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-400 mt-1">•</span>
+                      <p>The Hirer and Musician agree that equipment and instruments are not available for use by others without specific permission.</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-400 mt-1">•</span>
+                      <p>The Hirer shall ensure safe electricity supply and security of the Musician and property at the venue.</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-400 mt-1">•</span>
+                      <p>No audio/visual recording or transmission permitted without prior written consent.</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-400 mt-1">•</span>
+                      <p>This agreement may only be modified or cancelled by mutual written consent.</p>
                     </div>
                   </div>
-                )}
-                
-                <div className="border-t pt-4 text-center text-sm text-gray-500">
+
+                  {previewContract.terms && (
+                    <div className="mt-4">
+                      <h4 className="font-medium text-gray-900 mb-2">Additional Terms:</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{previewContract.terms}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Signature Section */}
+                <div className="space-y-6 border-t-2 border-gray-200 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900">SIGNATURES</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">HIRER SIGNATURE</h4>
+                      <div className="space-y-3">
+                        <div className="border-b border-gray-300 pb-1">
+                          <p className="text-xs text-gray-500 mb-1">Signature</p>
+                          <div className="h-8"></div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Print Name</p>
+                          <p className="text-sm text-gray-700">{previewContract.clientName}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Phone</p>
+                            <p className="text-sm text-gray-700">[To be completed]</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Email</p>
+                            <p className="text-sm text-gray-700">[To be completed]</p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Date</p>
+                          <div className="border-b border-gray-300 h-6"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">MUSICIAN SIGNATURE</h4>
+                      <div className="space-y-3">
+                        <div className="border-b border-gray-300 pb-1">
+                          <p className="text-xs text-gray-500 mb-1">Signature</p>
+                          <div className="h-8"></div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Print Name</p>
+                          <p className="text-sm text-gray-700">Tim Fulker</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Phone</p>
+                            <p className="text-sm text-gray-700">07764190034</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Email</p>
+                            <p className="text-sm text-gray-700">timfulkermusic@gmail.com</p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Date</p>
+                          <div className="border-b border-gray-300 h-6"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="text-center text-xs text-gray-500 border-t border-gray-200 pt-4">
+                  <p className="mb-2">Contract Status: <Badge className={getStatusColor(previewContract.status)}>{previewContract.status.toUpperCase()}</Badge></p>
                   <p>Created: {formatDate(previewContract.createdAt!)}</p>
                   {previewContract.signedAt && (
-                    <p>Signed: {formatDate(previewContract.signedAt)}</p>
+                    <p className="text-green-600 font-medium">Signed: {formatDate(previewContract.signedAt)}</p>
                   )}
+                  <p className="mt-2 italic">One copy to be retained by the Hirer and one copy by the Musician.</p>
                 </div>
               </div>
             )}
