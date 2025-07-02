@@ -155,6 +155,13 @@ Changelog:
   * Paid/Signed status: Preview, Download buttons
   * Status badges with clear labels to distinguish from clickable actions
   * Consistent UI design across both contracts and invoices pages
+- July 02, 2025. Implemented SaaS-friendly email system:
+  * Centralized SendGrid integration using platform owner's account
+  * Removed requirement for individual subscriber SendGrid subscriptions
+  * Added customizable "Email From Name" field in user settings
+  * Updated email sending to use format: "Custom Name <business@email.com>"
+  * Enhanced email personalization while maintaining centralized service delivery
+  * Users can now brand emails with their business identity without needing external accounts
 ```
 
 ## User Preferences

@@ -246,10 +246,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send email using SendGrid
       const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+      
       const emailSent = await sendEmail({
         to: contract.clientEmail,
-        from: fromEmail,
-        subject: `Invoice ${invoice.invoiceNumber} from ${userSettings?.businessName || 'MusoBuddy'}`,
+        from: `${fromName} <${fromEmail}>`,
+        subject: `Invoice ${invoice.invoiceNumber} from ${fromName}`,
         html: htmlContent,
         text: `Please find attached your invoice ${invoice.invoiceNumber}. Amount: £${invoice.amount}. Due date: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}.`
       });
@@ -295,10 +297,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send email using SendGrid
       const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+      
       const emailSent = await sendEmail({
         to: contract.clientEmail,
-        from: fromEmail,
-        subject: `Performance Contract ${contract.contractNumber} from ${userSettings?.businessName || 'MusoBuddy'}`,
+        from: `${fromName} <${fromEmail}>`,
+        subject: `Performance Contract ${contract.contractNumber} from ${fromName}`,
         html: htmlContent,
         text: `Please find attached your performance contract ${contract.contractNumber}. Event date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}. Fee: £${contract.fee}.`
       });

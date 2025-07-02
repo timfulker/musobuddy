@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, ArrowLeft } from "lucide-react";
+import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, ArrowLeft, Mail, Key } from "lucide-react";
 import { Link } from "wouter";
 import { insertUserSettingsSchema, type UserSettings } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -40,6 +40,7 @@ export default function Settings() {
       taxNumber: settings.taxNumber || "",
       bankDetails: settings.bankDetails || "",
       defaultTerms: settings.defaultTerms || "",
+      emailFromName: settings.emailFromName || "",
     },
   });
 
@@ -55,6 +56,7 @@ export default function Settings() {
       taxNumber: settings.taxNumber || "",
       bankDetails: settings.bankDetails || "",
       defaultTerms: settings.defaultTerms || "",
+      emailFromName: settings.emailFromName || "",
     });
     
     // Parse bank details from stored string format
@@ -345,6 +347,42 @@ export default function Settings() {
                         {...field} 
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Email Settings */}
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                <Mail className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <CardTitle>Email Settings</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Customize how your emails appear to clients
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="emailFromName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email From Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Sarah Johnson Music, DJ Mike Events"
+                        {...field}
+                      />
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      This name will appear in the "From" field when clients receive your contracts and invoices
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}

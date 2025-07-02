@@ -126,6 +126,7 @@ export const userSettings = pgTable("user_settings", {
   taxNumber: varchar("tax_number"),
   bankDetails: text("bank_details"),
   defaultTerms: text("default_terms"),
+  emailFromName: varchar("email_from_name"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
