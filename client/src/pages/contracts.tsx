@@ -412,6 +412,35 @@ One copy to be retained by the Hirer and one copy by the Musician.
                     />
                     <FormField
                       control={form.control}
+                      name="clientEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="client@example.com" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="clientPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Phone</FormLabel>
+                          <FormControl>
+                            <Input placeholder="07123 456789" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                       name="fee"
                       render={({ field }) => (
                         <FormItem>
