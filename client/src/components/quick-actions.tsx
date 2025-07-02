@@ -25,7 +25,7 @@ export default function QuickActions() {
             Generate Contract
           </Button>
         </Link>
-        <Link href="/invoices">
+        <Link href="/invoices?action=new">
           <Button variant="outline" className="w-full justify-start hover:bg-gray-50">
             <DollarSign className="w-4 h-4 mr-3" />
             Create Invoice

@@ -1,21 +1,103 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, ArrowLeft } from "lucide-react";
-import type { Invoice } from "@shared/schema";
-import { Link } from "wouter";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, ArrowLeft, Plus } from "lucide-react";
+import { insertInvoiceSchema, type Invoice } from "@shared/schema";
+import { Link, useLocation } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+const invoiceFormSchema = insertInvoiceSchema.extend({
+  dueDate: z.string(),
+});
 
 export default function Invoices() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [location, navigate] = useLocation();
+  const { toast } = useToast();
+
+  // Check URL parameters to auto-open dialog
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    if (params.get('action') === 'new') {
+      setIsDialogOpen(true);
+    }
+  }, [location]);
+
+  const form = useForm<z.infer<typeof invoiceFormSchema>>({
+    resolver: zodResolver(invoiceFormSchema),
+    defaultValues: {
+      clientName: "",
+      amount: "",
+      dueDate: "",
+      contractId: 0,
+      invoiceNumber: `INV-${Date.now()}`,
+    },
+  });
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["/api/invoices"],
   });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ["/api/contracts"],
+  });
+
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof invoiceFormSchema>) => {
+      const payload = {
+        ...data,
+        dueDate: new Date(data.dueDate),
+        amount: data.amount,
+        contractId: parseInt(data.contractId.toString()),
+      };
+      return await apiRequest("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      setIsDialogOpen(false);
+      form.reset();
+      // Clean up URL parameters
+      const cleanUrl = location.split('?')[0];
+      navigate(cleanUrl, { replace: true });
+      toast({
+        title: "Success",
+        description: "Invoice created successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create invoice. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
+    createInvoiceMutation.mutate(data);
+  };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    const cleanUrl = location.split('?')[0];
+    navigate(cleanUrl, { replace: true });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -84,10 +166,116 @@ export default function Invoices() {
             </div>
           </div>
           
-          <Button className="bg-purple-600 hover:bg-purple-700">
-            <DollarSign className="w-4 h-4 mr-2" />
-            Create Invoice
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+            <DialogTrigger asChild>
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Invoice
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Create New Invoice</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="invoiceNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Invoice Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="INV-001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="contractId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contract</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value?.toString()}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a contract" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {(contracts as any[]).map((contract: any) => (
+                              <SelectItem key={contract.id} value={contract.id.toString()}>
+                                {contract.clientName} - {contract.eventTitle}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clientName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Smith" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Amount (£)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="500.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Due Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button variant="outline" type="button" onClick={handleDialogClose}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={createInvoiceMutation.isPending}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {createInvoiceMutation.isPending ? "Creating..." : "Create Invoice"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Summary Cards */}
