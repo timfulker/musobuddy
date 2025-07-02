@@ -321,6 +321,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public contract routes for signing (no authentication required)
+  app.get('/api/contracts/public/:id', async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      
+      // Get contract without user authentication
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      // Only return contracts that are sent (ready for signing)
+      if (contract.status !== 'sent') {
+        return res.status(404).json({ message: "Contract not available for signing" });
+      }
+      
+      res.json(contract);
+    } catch (error) {
+      console.error("Error fetching public contract:", error);
+      res.status(500).json({ message: "Failed to fetch contract" });
+    }
+  });
+
+  app.get('/api/settings/public/:userId', async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const settings = await storage.getUserSettings(userId);
+      
+      // Return only business-facing settings for contract display
+      const publicSettings = settings ? {
+        businessName: settings.businessName,
+        businessEmail: settings.businessEmail,
+        businessAddress: settings.businessAddress,
+        phone: settings.phone,
+        website: settings.website
+      } : null;
+      
+      res.json(publicSettings);
+    } catch (error) {
+      console.error("Error fetching public settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.post('/api/contracts/sign/:id', async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const { signatureName } = req.body;
+      
+      if (!signatureName || !signatureName.trim()) {
+        return res.status(400).json({ message: "Signature name is required" });
+      }
+      
+      // Get contract
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      if (contract.status !== 'sent') {
+        return res.status(400).json({ message: "Contract is not available for signing" });
+      }
+      
+      // Get client IP for audit trail
+      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      
+      // Update contract with signature
+      const signedContract = await storage.signContract(contractId, {
+        signatureName: signatureName.trim(),
+        clientIP,
+        signedAt: new Date()
+      });
+      
+      if (!signedContract) {
+        return res.status(500).json({ message: "Failed to sign contract" });
+      }
+      
+      // Send confirmation email to both parties
+      try {
+        const userSettings = await storage.getUserSettings(contract.userId);
+        const { sendEmail } = await import('./sendgrid');
+        const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
+        const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+        
+        // Email to client
+        await sendEmail({
+          to: contract.clientEmail,
+          from: `${fromName} <${fromEmail}>`,
+          subject: `Contract ${contract.contractNumber} Successfully Signed`,
+          html: `
+            <h2>Contract Signed Successfully</h2>
+            <p>Dear ${contract.clientName},</p>
+            <p>Your performance contract ${contract.contractNumber} has been successfully signed.</p>
+            <p><strong>Event Details:</strong></p>
+            <ul>
+              <li>Date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
+              <li>Time: ${contract.eventTime}</li>
+              <li>Venue: ${contract.venue}</li>
+              <li>Fee: £${contract.fee}</li>
+            </ul>
+            <p>We look forward to performing at your event!</p>
+            <p>Best regards,<br>${userSettings?.businessName || 'MusoBuddy'}</p>
+          `,
+          text: `Contract ${contract.contractNumber} has been successfully signed. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}.`
+        });
+        
+        // Email to performer (business owner)
+        if (userSettings?.businessEmail) {
+          await sendEmail({
+            to: userSettings.businessEmail,
+            from: `${fromName} <${fromEmail}>`,
+            subject: `Contract ${contract.contractNumber} Signed by Client`,
+            html: `
+              <h2>Contract Signed</h2>
+              <p>Great news! Contract ${contract.contractNumber} has been signed by ${contract.clientName}.</p>
+              <p><strong>Event Details:</strong></p>
+              <ul>
+                <li>Date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
+                <li>Time: ${contract.eventTime}</li>
+                <li>Venue: ${contract.venue}</li>
+                <li>Fee: £${contract.fee}</li>
+              </ul>
+              <p>Signed by: ${signatureName}</p>
+              <p>Time: ${new Date().toLocaleString('en-GB')}</p>
+            `,
+            text: `Contract ${contract.contractNumber} signed by ${signatureName} on ${new Date().toLocaleString('en-GB')}.`
+          });
+        }
+      } catch (emailError) {
+        console.error("Error sending confirmation emails:", emailError);
+        // Don't fail the signing process if email fails
+      }
+      
+      res.json({ 
+        message: "Contract signed successfully",
+        contract: signedContract 
+      });
+      
+    } catch (error) {
+      console.error("Error signing contract:", error);
+      res.status(500).json({ message: "Failed to sign contract" });
+    }
+  });
+
   // Booking routes
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {

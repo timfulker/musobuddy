@@ -13,12 +13,16 @@ import Invoices from "@/pages/invoices";
 import Calendar from "@/pages/calendar";
 import Compliance from "@/pages/compliance";
 import Settings from "@/pages/settings";
+import SignContract from "@/pages/sign-contract";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
+      {/* Public contract signing route - no authentication required */}
+      <Route path="/sign-contract/:id" component={SignContract} />
+      
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (

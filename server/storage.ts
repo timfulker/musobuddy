@@ -39,8 +39,10 @@ export interface IStorage {
   // Contract operations
   getContracts(userId: string): Promise<Contract[]>;
   getContract(id: number, userId: string): Promise<Contract | undefined>;
+  getContractById(id: number): Promise<Contract | undefined>; // Public access for signing
   createContract(contract: InsertContract): Promise<Contract>;
   updateContract(id: number, contract: Partial<InsertContract>, userId: string): Promise<Contract | undefined>;
+  signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date }): Promise<Contract | undefined>;
   
   // Invoice operations
   getInvoices(userId: string): Promise<Invoice[]>;
@@ -169,6 +171,27 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(contracts.id, id), eq(contracts.userId, userId)))
       .returning();
     return updatedContract;
+  }
+
+  async getContractById(id: number): Promise<Contract | undefined> {
+    const [contract] = await db
+      .select()
+      .from(contracts)
+      .where(eq(contracts.id, id));
+    return contract;
+  }
+
+  async signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date }): Promise<Contract | undefined> {
+    const [signedContract] = await db
+      .update(contracts)
+      .set({
+        status: 'signed',
+        signedAt: signatureData.signedAt,
+        updatedAt: new Date()
+      })
+      .where(eq(contracts.id, id))
+      .returning();
+    return signedContract;
   }
 
   // Invoice operations
