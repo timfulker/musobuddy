@@ -176,22 +176,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const data = { ...req.body, userId };
+      console.log("Received invoice data:", req.body);
       
-      // Convert date strings to Date objects if present
-      if (data.dueDate && typeof data.dueDate === 'string') {
-        data.dueDate = new Date(data.dueDate);
-      }
-      if (data.performanceDate && typeof data.performanceDate === 'string') {
-        data.performanceDate = new Date(data.performanceDate);
-      }
+      // Prepare the invoice data with all required fields
+      const invoiceData = {
+        userId,
+        invoiceNumber: req.body.invoiceNumber,
+        contractId: parseInt(req.body.contractId.toString()),
+        clientName: req.body.clientName,
+        clientAddress: req.body.clientAddress || null,
+        amount: req.body.amount.toString(),
+        dueDate: new Date(req.body.dueDate),
+        performanceDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
+        performanceFee: req.body.performanceFee || "0",
+        depositPaid: req.body.depositPaid || "0",
+        status: "draft",
+      };
       
-      const invoiceData = insertInvoiceSchema.parse(data);
+      console.log("Processed invoice data:", invoiceData);
+      
       const invoice = await storage.createInvoice(invoiceData);
       res.status(201).json(invoice);
     } catch (error) {
       console.error("Error creating invoice:", error);
-      res.status(500).json({ message: "Failed to create invoice" });
+      res.status(500).json({ message: "Failed to create invoice", error: error.message });
     }
   });
 
