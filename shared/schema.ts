@@ -117,6 +117,7 @@ export const userSettings = pgTable("user_settings", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().unique(),
   businessName: varchar("business_name"),
+  businessEmail: varchar("business_email"),
   businessAddress: text("business_address"),
   phone: varchar("phone"),
   website: varchar("website"),

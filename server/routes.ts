@@ -243,17 +243,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!invoice) {
         return res.status(404).json({ message: "Invoice not found" });
       }
-      
-      // Update invoice status to sent if it's still draft
-      if (invoice.status === "draft") {
-        await storage.updateInvoice(invoiceId, { status: "sent" }, userId);
+
+      // Get related contract for client email
+      let contract = null;
+      if (invoice.contractId) {
+        contract = await storage.getContract(invoice.contractId, userId);
       }
+
+      // Get user settings for business details
+      const userSettings = await storage.getUserSettings(userId);
+
+      if (!contract?.clientEmail) {
+        return res.status(400).json({ message: "Client email not found. Please add client email to the contract." });
+      }
+
+      // Import SendGrid functions
+      const { sendEmail, generateInvoiceHtml } = await import('./sendgrid');
       
-      // In a real application, you would send the email here
-      // For now, we'll just simulate successful email sending
-      console.log(`Sending invoice ${invoice.invoiceNumber} to ${invoice.clientName}`);
+      // Generate HTML content
+      const htmlContent = generateInvoiceHtml(invoice, contract, userSettings);
       
-      res.json({ message: "Invoice sent successfully" });
+      // Send email using SendGrid
+      const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
+      const emailSent = await sendEmail({
+        to: contract.clientEmail,
+        from: fromEmail,
+        subject: `Invoice ${invoice.invoiceNumber} from ${userSettings?.businessName || 'MusoBuddy'}`,
+        html: htmlContent,
+        text: `Please find attached your invoice ${invoice.invoiceNumber}. Amount: £${invoice.amount}. Due date: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}.`
+      });
+
+      if (emailSent) {
+        // Update invoice status to sent
+        await storage.updateInvoice(invoiceId, { status: "sent" }, userId);
+        console.log(`Invoice ${invoice.invoiceNumber} sent successfully to ${contract.clientEmail}`);
+        res.json({ message: "Invoice sent successfully via email" });
+      } else {
+        res.status(500).json({ message: "Failed to send email. Please check your email settings." });
+      }
     } catch (error) {
       console.error("Error sending invoice email:", error);
       res.status(500).json({ message: "Failed to send invoice email" });
