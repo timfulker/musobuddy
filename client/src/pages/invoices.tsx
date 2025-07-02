@@ -104,19 +104,15 @@ export default function Invoices() {
     mutationFn: async (data: z.infer<typeof invoiceFormSchema>) => {
       const payload = {
         ...data,
-        dueDate: new Date(data.dueDate),
-        performanceDate: data.performanceDate ? new Date(data.performanceDate) : undefined,
+        dueDate: data.dueDate, // Keep as string
+        performanceDate: data.performanceDate || null, // Keep as string or null
         amount: data.amount,
         contractId: parseInt(data.contractId.toString()),
         // Add professional invoice fields with contract data
         performanceFee: selectedContract?.fee || "0",
         depositPaid: selectedContract?.deposit || "0",
       };
-      return await apiRequest("/api/invoices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      return await apiRequest("POST", "/api/invoices", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
