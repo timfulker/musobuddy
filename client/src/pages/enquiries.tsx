@@ -28,7 +28,7 @@ export default function Enquiries() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const { data: enquiries = [], isLoading } = useQuery({
+  const { data: enquiries = [], isLoading } = useQuery<Enquiry[]>({
     queryKey: ["/api/enquiries"],
   });
 
@@ -229,7 +229,7 @@ export default function Enquiries() {
                         <FormItem>
                           <FormLabel>Client Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="john@example.com" {...field} />
+                            <Input type="email" placeholder="john@example.com" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -258,7 +258,7 @@ export default function Enquiries() {
                         <FormItem>
                           <FormLabel>Event Time</FormLabel>
                           <FormControl>
-                            <Input placeholder="7:00 PM" {...field} />
+                            <Input placeholder="7:00 PM" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -271,7 +271,7 @@ export default function Enquiries() {
                         <FormItem>
                           <FormLabel>Estimated Value (£)</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="500" {...field} />
+                            <Input type="number" placeholder="500" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -286,7 +286,7 @@ export default function Enquiries() {
                       <FormItem>
                         <FormLabel>Venue</FormLabel>
                         <FormControl>
-                          <Input placeholder="The Grand Hotel, London" {...field} />
+                          <Input placeholder="The Grand Hotel, London" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -300,7 +300,7 @@ export default function Enquiries() {
                       <FormItem>
                         <FormLabel>Notes</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Additional details about the enquiry..." {...field} />
+                          <Textarea placeholder="Additional details about the enquiry..." {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
