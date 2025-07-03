@@ -122,7 +122,9 @@ export default function Invoices() {
 
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: z.infer<typeof invoiceFormSchema>) => {
-      return await apiRequest('/api/invoices', 'POST', data);
+      console.log("Making API request with data:", data);
+      const response = await apiRequest('POST', '/api/invoices', data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
