@@ -14,14 +14,16 @@ import Calendar from "@/pages/calendar";
 import Compliance from "@/pages/compliance";
 import Settings from "@/pages/settings";
 import SignContract from "@/pages/sign-contract";
+import QuickAdd from "@/pages/quick-add";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
-      {/* Public contract signing route - no authentication required */}
+      {/* Public routes - no authentication required */}
       <Route path="/sign-contract/:id" component={SignContract} />
+      <Route path="/quick-add" component={QuickAdd} />
       
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />

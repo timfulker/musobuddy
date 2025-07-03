@@ -196,6 +196,14 @@ Changelog:
   * Created bank account monitoring documentation covering Open Banking APIs, payment processors
   * Overdue invoices display with red background and bold white text for visibility
   * Complete payment tracking workflow from creation to collection
+- July 03, 2025. Manual booking enquiry intake system created:
+  * Built Quick Add form accessible at /quick-add for mobile enquiry entry
+  * Created email forwarding system for leads@musobuddy.app with intelligent parsing
+  * Added source tracking (WhatsApp, SMS, Phone, Email, etc.) for lead attribution
+  * Email parser extracts client details, event dates, venues automatically from forwarded messages
+  * Mobile-optimized form designed for home screen shortcuts on iOS/Android
+  * Complete instructions provided for both manual form entry and email forwarding workflows
+  * System processes voice notes, in-person conversations, and digital message forwards seamlessly
 ```
 
 ## User Preferences

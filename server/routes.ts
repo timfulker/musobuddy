@@ -682,6 +682,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email enquiry intake route
+  app.post('/api/enquiries/email-intake', async (req, res) => {
+    try {
+      const { from, subject, body, receivedAt } = req.body;
+      
+      // Extract key information from email
+      const { parseEmailEnquiry } = await import('./email-parser');
+      const enquiryData = await parseEmailEnquiry(from, subject, body);
+      
+      // Create enquiry with extracted data
+      const enquiry = await storage.createEnquiry({
+        title: enquiryData.title,
+        clientName: enquiryData.clientName,
+        clientEmail: enquiryData.clientEmail || null,
+        clientPhone: enquiryData.clientPhone || null,
+        eventDate: enquiryData.eventDate || new Date(),
+        venue: enquiryData.venue || null,
+        notes: enquiryData.message,
+        userId: 'system', // System-generated enquiry
+        status: 'new',
+      });
+      
+      res.json({ message: "Email enquiry processed successfully", enquiry });
+    } catch (error) {
+      console.error("Error processing email enquiry:", error);
+      res.status(500).json({ message: "Failed to process email enquiry" });
+    }
+  });
+
   // Booking routes
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {

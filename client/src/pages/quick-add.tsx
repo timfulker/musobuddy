@@ -14,8 +14,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
-const quickAddFormSchema = insertEnquirySchema.extend({
+const quickAddFormSchema = z.object({
+  clientName: z.string().min(1, "Client name is required"),
+  clientEmail: z.string().email().optional().or(z.literal("")),
+  clientPhone: z.string().optional(),
   eventDate: z.string().min(1, "Event date is required"),
+  venue: z.string().optional(),
+  notes: z.string().optional(),
   source: z.string().min(1, "Source is required"),
   contactMethod: z.string().min(1, "Contact method is required"),
 });
@@ -34,20 +39,23 @@ export default function QuickAddPage() {
       clientPhone: "",
       eventDate: "",
       venue: "",
-      message: "",
+      notes: "",
       source: "",
       contactMethod: "",
-      status: "new",
     },
   });
 
   const createEnquiryMutation = useMutation({
     mutationFn: async (data: QuickAddFormData) => {
       const enquiryData = {
-        ...data,
+        title: `Enquiry from ${data.clientName}`,
+        clientName: data.clientName,
+        clientEmail: data.clientEmail || null,
+        clientPhone: data.clientPhone || null,
         eventDate: new Date(data.eventDate),
-        // Add source and contact method to the message for tracking
-        message: `${data.message}\n\n--- Contact Details ---\nSource: ${data.source}\nContact Method: ${data.contactMethod}`,
+        venue: data.venue || null,
+        notes: `${data.notes || ''}\n\n--- Contact Details ---\nSource: ${data.source}\nContact Method: ${data.contactMethod}`,
+        status: "new" as const,
       };
       const response = await apiRequest('POST', '/api/enquiries', enquiryData);
       return response.json();
@@ -260,7 +268,7 @@ export default function QuickAddPage() {
 
                 <FormField
                   control={form.control}
-                  name="message"
+                  name="notes"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Message / Notes</FormLabel>
