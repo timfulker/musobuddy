@@ -186,6 +186,8 @@ Changelog:
   * Corrected invoice email sending endpoint routing (send-email vs send)
   * Invoice creation now works with complete validation and error handling
   * Email sending functionality operational with PDF attachments and professional formatting
+  * Fixed PDF status consistency - email attachments now show "sent" instead of "draft"
+  * Implemented proper status update sequence: update to "sent" → generate PDF → send email
 ```
 
 ## User Preferences

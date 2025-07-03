@@ -340,15 +340,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Client email not found. Please add client email to the contract." });
       }
 
+      // First update invoice status to sent
+      const updatedInvoice = await storage.updateInvoice(invoiceId, { status: "sent" }, userId);
+      if (!updatedInvoice) {
+        return res.status(404).json({ message: "Failed to update invoice status" });
+      }
+
       // Import SendGrid functions and PDF generator
       const { sendEmail, generateInvoiceHtml } = await import('./sendgrid');
       const { generateInvoicePDF } = await import('./pdf-generator');
       
-      // Generate HTML content
-      const htmlContent = generateInvoiceHtml(invoice, contract, userSettings);
+      // Generate HTML content with updated invoice
+      const htmlContent = generateInvoiceHtml(updatedInvoice, contract, userSettings);
       
-      // Generate PDF attachment
-      const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+      // Generate PDF attachment with updated invoice (now shows "sent" status)
+      const pdfBuffer = await generateInvoicePDF(updatedInvoice, contract, userSettings);
       const pdfBase64 = pdfBuffer.toString('base64');
       
       // Send email using SendGrid
@@ -358,23 +364,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailSent = await sendEmail({
         to: contract.clientEmail,
         from: `${fromName} <${fromEmail}>`,
-        subject: `Invoice ${invoice.invoiceNumber} from ${fromName}`,
+        subject: `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`,
         html: htmlContent,
-        text: `Please find attached your invoice ${invoice.invoiceNumber}. Amount: £${invoice.amount}. Due date: ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}.`,
+        text: `Please find attached your invoice ${updatedInvoice.invoiceNumber}. Amount: £${updatedInvoice.amount}. Due date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}.`,
         attachments: [{
           content: pdfBase64,
-          filename: `Invoice-${invoice.invoiceNumber}.pdf`,
+          filename: `Invoice-${updatedInvoice.invoiceNumber}.pdf`,
           type: 'application/pdf',
           disposition: 'attachment'
         }]
       });
 
       if (emailSent) {
-        // Update invoice status to sent
-        await storage.updateInvoice(invoiceId, { status: "sent" }, userId);
-        console.log(`Invoice ${invoice.invoiceNumber} sent successfully to ${contract.clientEmail}`);
+        console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${contract.clientEmail}`);
         res.json({ message: "Invoice sent successfully via email" });
       } else {
+        // If email failed, revert status back to draft
+        await storage.updateInvoice(invoiceId, { status: "draft" }, userId);
         res.status(500).json({ message: "Failed to send email. Please check your email settings." });
       }
     } catch (error) {
