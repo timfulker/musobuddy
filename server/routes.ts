@@ -276,9 +276,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Processed invoice data:", invoiceData);
       
-      // Temporarily skip validation to test database insertion
-      console.log("Skipping validation temporarily...");
-      const validatedData = invoiceData;
+      // Validate against schema
+      console.log("Validating invoice data...");
+      const validatedData = insertInvoiceSchema.parse(invoiceData);
+      console.log("Validation successful:", validatedData);
       
       const invoice = await storage.createInvoice(validatedData);
       console.log("Invoice created successfully:", invoice);

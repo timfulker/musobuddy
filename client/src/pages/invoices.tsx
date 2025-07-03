@@ -191,7 +191,8 @@ export default function Invoices() {
   // Invoice action handlers
   const sendInvoiceMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
-      return await apiRequest(`/api/invoices/${invoice.id}/send`, 'POST');
+      const response = await apiRequest('POST', '/api/invoices/send-email', { invoiceId: invoice.id });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });

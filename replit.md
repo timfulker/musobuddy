@@ -180,6 +180,12 @@ Changelog:
     - Auto-fills client name and performance date from selected contract
     - Auto-sets due date to 30 days from creation
   * Complete invoice workflow automation reducing data entry by 80%
+- July 03, 2025. Fixed invoice creation and email sending functionality:
+  * Resolved API request parameter order issue preventing invoice creation
+  * Fixed validation schema integration for proper data transformation
+  * Corrected invoice email sending endpoint routing (send-email vs send)
+  * Invoice creation now works with complete validation and error handling
+  * Email sending functionality operational with PDF attachments and professional formatting
 ```
 
 ## User Preferences
