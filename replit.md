@@ -188,6 +188,14 @@ Changelog:
   * Email sending functionality operational with PDF attachments and professional formatting
   * Fixed PDF status consistency - email attachments now show "sent" instead of "draft"
   * Implemented proper status update sequence: update to "sent" → generate PDF → send email
+- July 03, 2025. Comprehensive invoice management system implemented:
+  * Created automated overdue invoice detection with 3-day working grace period
+  * Added professional overdue reminder emails with urgent red styling and legal warnings
+  * Implemented "Mark as Paid" functionality for sent and overdue invoices
+  * Enhanced UI with status-specific action buttons (Mark Paid, Send Reminder, Download)
+  * Created bank account monitoring documentation covering Open Banking APIs, payment processors
+  * Overdue invoices display with red background and bold white text for visibility
+  * Complete payment tracking workflow from creation to collection
 ```
 
 ## User Preferences

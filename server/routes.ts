@@ -631,6 +631,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invoice management routes
+  app.post('/api/invoices/:id/mark-paid', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const invoiceId = parseInt(req.params.id);
+      const { paidDate } = req.body;
+      
+      const { invoiceManager } = await import('./invoice-manager');
+      const success = await invoiceManager.markInvoiceAsPaid(invoiceId, userId, paidDate ? new Date(paidDate) : undefined);
+      
+      if (success) {
+        res.json({ message: "Invoice marked as paid successfully" });
+      } else {
+        res.status(404).json({ message: "Invoice not found or could not be updated" });
+      }
+    } catch (error) {
+      console.error("Error marking invoice as paid:", error);
+      res.status(500).json({ message: "Failed to mark invoice as paid" });
+    }
+  });
+
+  app.post('/api/invoices/:id/send-reminder', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const invoiceId = parseInt(req.params.id);
+      
+      const { invoiceManager } = await import('./invoice-manager');
+      const success = await invoiceManager.generateOverdueReminder(invoiceId, userId);
+      
+      if (success) {
+        res.json({ message: "Overdue reminder sent successfully" });
+      } else {
+        res.status(400).json({ message: "Could not send reminder. Invoice may not be overdue or client email missing." });
+      }
+    } catch (error) {
+      console.error("Error sending overdue reminder:", error);
+      res.status(500).json({ message: "Failed to send overdue reminder" });
+    }
+  });
+
+  app.post('/api/invoices/check-overdue', isAuthenticated, async (req: any, res) => {
+    try {
+      const { invoiceManager } = await import('./invoice-manager');
+      await invoiceManager.updateOverdueInvoices();
+      res.json({ message: "Overdue invoices updated successfully" });
+    } catch (error) {
+      console.error("Error checking overdue invoices:", error);
+      res.status(500).json({ message: "Failed to update overdue invoices" });
+    }
+  });
+
   // Booking routes
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {

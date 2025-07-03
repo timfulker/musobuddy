@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, ArrowLeft, Plus, Send, Edit } from "lucide-react";
+import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, ArrowLeft, Plus, Send, Edit, CheckCircle, AlertTriangle } from "lucide-react";
 import { insertInvoiceSchema, type Invoice } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -178,7 +178,7 @@ export default function Invoices() {
       case "draft": return "bg-gray-100 text-gray-800";
       case "sent": return "bg-blue-100 text-blue-800";
       case "paid": return "bg-green-100 text-green-800";
-      case "overdue": return "bg-red-100 text-red-800";
+      case "overdue": return "bg-red-500 text-white font-bold";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -212,6 +212,57 @@ export default function Invoices() {
 
   const handleSendInvoice = (invoice: Invoice) => {
     sendInvoiceMutation.mutate(invoice);
+  };
+
+  // Mark invoice as paid mutation
+  const markPaidMutation = useMutation({
+    mutationFn: async (invoice: Invoice) => {
+      const response = await apiRequest('POST', `/api/invoices/${invoice.id}/mark-paid`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({
+        title: "Success",
+        description: "Invoice marked as paid successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to mark invoice as paid",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Send overdue reminder mutation
+  const sendReminderMutation = useMutation({
+    mutationFn: async (invoice: Invoice) => {
+      const response = await apiRequest('POST', `/api/invoices/${invoice.id}/send-reminder`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Overdue reminder sent successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send overdue reminder",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleMarkAsPaid = (invoice: Invoice) => {
+    markPaidMutation.mutate(invoice);
+  };
+
+  const handleSendReminder = (invoice: Invoice) => {
+    sendReminderMutation.mutate(invoice);
   };
 
   const handleDownloadInvoice = async (invoice: Invoice) => {
@@ -587,11 +638,52 @@ export default function Invoices() {
                           </>
                         )}
                         
-                        {(invoice.status === "sent" || invoice.status === "overdue") && (
-                          <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadInvoice(invoice)}>
-                            <Download className="w-3 h-3 mr-1" />
-                            Download
-                          </Button>
+                        {invoice.status === "sent" && (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-green-600 hover:text-green-700" 
+                              onClick={() => handleMarkAsPaid(invoice)}
+                              disabled={markPaidMutation.isPending}
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Mark Paid
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadInvoice(invoice)}>
+                              <Download className="w-3 h-3 mr-1" />
+                              Download
+                            </Button>
+                          </>
+                        )}
+                        
+                        {invoice.status === "overdue" && (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-green-600 hover:text-green-700" 
+                              onClick={() => handleMarkAsPaid(invoice)}
+                              disabled={markPaidMutation.isPending}
+                            >
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Mark Paid
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-red-600 hover:text-red-700" 
+                              onClick={() => handleSendReminder(invoice)}
+                              disabled={sendReminderMutation.isPending}
+                            >
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              Send Reminder
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadInvoice(invoice)}>
+                              <Download className="w-3 h-3 mr-1" />
+                              Download
+                            </Button>
+                          </>
                         )}
                         
                         {invoice.status === "paid" && (
