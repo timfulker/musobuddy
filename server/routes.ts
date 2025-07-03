@@ -278,8 +278,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate against schema
       console.log("Validating invoice data...");
+      try {
+        const validatedData = insertInvoiceSchema.parse(invoiceData);
+        console.log("Validation successful:", validatedData);
+      } catch (validationError) {
+        console.error("Detailed validation error:", JSON.stringify(validationError, null, 2));
+        throw validationError;
+      }
       const validatedData = insertInvoiceSchema.parse(invoiceData);
-      console.log("Validation successful:", validatedData);
       
       const invoice = await storage.createInvoice(validatedData);
       console.log("Invoice created successfully:", invoice);
