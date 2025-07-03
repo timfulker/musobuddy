@@ -682,7 +682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Email enquiry intake route
+  // Email enquiry intake route (manual testing)
   app.post('/api/enquiries/email-intake', async (req, res) => {
     try {
       const { from, subject, body, receivedAt } = req.body;
@@ -708,6 +708,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing email enquiry:", error);
       res.status(500).json({ message: "Failed to process email enquiry" });
+    }
+  });
+
+  // SendGrid Email Webhook (for leads@musobuddy.app)
+  app.post('/api/webhook/sendgrid', async (req, res) => {
+    try {
+      const { handleSendGridWebhook } = await import('./email-webhook');
+      await handleSendGridWebhook(req, res);
+    } catch (error) {
+      console.error("Error in SendGrid webhook:", error);
+      res.status(500).json({ message: "Failed to process SendGrid webhook" });
+    }
+  });
+
+  // Mailgun Email Webhook (alternative)
+  app.post('/api/webhook/mailgun', async (req, res) => {
+    try {
+      const { handleMailgunWebhook } = await import('./email-webhook');
+      await handleMailgunWebhook(req, res);
+    } catch (error) {
+      console.error("Error in Mailgun webhook:", error);
+      res.status(500).json({ message: "Failed to process Mailgun webhook" });
     }
   });
 
