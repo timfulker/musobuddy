@@ -527,8 +527,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Contract not found" });
       }
       
-      // Only return contracts that are sent (ready for signing)
-      if (contract.status !== 'sent') {
+      // Only return contracts that are sent (ready for signing) or already signed (for confirmation)
+      if (contract.status !== 'sent' && contract.status !== 'signed') {
         return res.status(404).json({ message: "Contract not available for signing" });
       }
       
