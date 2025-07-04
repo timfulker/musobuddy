@@ -381,23 +381,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import SendGrid functions
       const { sendEmail } = await import('./sendgrid');
       
-      // Send simple email first (without PDF to isolate the issue)
-      // Force use of authenticated domain instead of Gmail
-      const fromEmail = 'tim@saxweddings.com'; // Use authenticated domain
-      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'Tim Fulker';
+      // Smart email handling - use authenticated domain for sending, Gmail for replies
+      const userBusinessEmail = userSettings?.businessEmail;
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
+      
+      // Always use authenticated domain for FROM to avoid SPF issues
+      const fromEmail = 'noreply@musobuddy.com';
+      
+      // If user has Gmail (or other non-authenticated domain), use it as reply-to
+      const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
       
       console.log('=== EMAIL DETAILS ===');
       console.log('To:', contract.clientEmail);
       console.log('From:', `${fromName} <${fromEmail}>`);
+      console.log('Reply-To:', replyToEmail);
       console.log('Subject:', `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`);
       
-      const emailSent = await sendEmail({
+      const emailData: any = {
         to: contract.clientEmail,
         from: `${fromName} <${fromEmail}>`,
         subject: `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`,
         html: `<h1>Invoice ${updatedInvoice.invoiceNumber}</h1><p>Amount: £${updatedInvoice.amount}</p><p>Due Date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}</p>`,
         text: `Invoice ${updatedInvoice.invoiceNumber}. Amount: £${updatedInvoice.amount}. Due date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}.`
-      });
+      };
+      
+      // Add reply-to if user has Gmail or other external email
+      if (replyToEmail) {
+        emailData.replyTo = replyToEmail;
+      }
+      
+      const emailSent = await sendEmail(emailData);
 
       if (emailSent) {
         console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${contract.clientEmail}`);

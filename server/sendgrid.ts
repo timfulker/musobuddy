@@ -21,6 +21,7 @@ interface EmailParams {
   text?: string;
   html?: string;
   attachments?: EmailAttachment[];
+  replyTo?: string;
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
@@ -48,6 +49,12 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       text: params.text,
       html: params.html,
     };
+
+    // Add reply-to if provided
+    if (params.replyTo) {
+      emailData.replyTo = params.replyTo;
+      console.log('Setting reply-to:', params.replyTo);
+    }
 
     // Add attachments if provided
     if (params.attachments && params.attachments.length > 0) {
