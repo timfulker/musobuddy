@@ -409,11 +409,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (emailSent) {
         console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${contract.clientEmail}`);
-        res.json({ message: "Invoice sent successfully via email" });
+        res.json({ 
+          message: "Invoice sent successfully via email",
+          debug: {
+            invoiceId: invoiceId,
+            clientEmail: contract.clientEmail,
+            invoiceNumber: updatedInvoice.invoiceNumber,
+            emailSent: true
+          }
+        });
       } else {
         // If email failed, revert status back to draft
         await storage.updateInvoice(invoiceId, { status: "draft" }, userId);
-        res.status(500).json({ message: "Failed to send email. Please check your email settings." });
+        res.status(500).json({ 
+          message: "Failed to send email. Please check your email settings.",
+          debug: {
+            invoiceId: invoiceId,
+            clientEmail: contract.clientEmail,
+            invoiceNumber: updatedInvoice.invoiceNumber,
+            emailSent: false
+          }
+        });
       }
     } catch (error) {
       console.error("Error sending invoice email:", error);
