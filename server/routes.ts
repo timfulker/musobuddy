@@ -1003,6 +1003,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test performer email specifically
+  app.post('/api/test-performer-email', async (req, res) => {
+    try {
+      console.log('=== TESTING PERFORMER EMAIL ===');
+      
+      const userSettings = await storage.getUserSettings("43963086");
+      console.log('User settings:', userSettings);
+      
+      if (!userSettings?.businessEmail) {
+        return res.json({
+          message: 'No business email configured for performer',
+          userSettings: userSettings
+        });
+      }
+      
+      const { sendEmail } = await import('./sendgrid');
+      
+      console.log('Sending email to:', userSettings.businessEmail);
+      
+      const emailSuccess = await sendEmail({
+        to: userSettings.businessEmail,
+        from: 'Tim Fulker <noreply@musobuddy.com>',
+        subject: 'TEST - Performer Email Test',
+        html: '<h1>Performer Email Test</h1><p>This is a test email sent directly to the performer.</p>',
+        text: 'Test email for performer'
+      });
+      
+      console.log('Email sent to performer:', emailSuccess);
+      
+      res.json({
+        message: 'Performer email test completed',
+        emailSent: emailSuccess,
+        performerEmail: userSettings.businessEmail
+      });
+      
+    } catch (error) {
+      console.error('Performer email test failed:', error);
+      res.status(500).json({ 
+        message: 'Test failed', 
+        error: error.message 
+      });
+    }
+  });
+
   // Test contract signing email process
   app.post('/api/test-contract-signing-email', async (req, res) => {
     try {
@@ -1062,20 +1106,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailParams.replyTo = replyToEmail;
       }
       
-      console.log('Sending test email...');
-      const emailSuccess = await sendEmail(emailParams);
-      console.log('Email sent successfully:', emailSuccess);
+      console.log('Sending test email to client...');
+      const clientEmailSuccess = await sendEmail(emailParams);
+      console.log('Client email sent successfully:', clientEmailSuccess);
+      
+      // Send test email to performer as well
+      let performerEmailSuccess = false;
+      if (userSettings?.businessEmail) {
+        const performerEmailParams = {
+          ...emailParams,
+          to: userSettings.businessEmail,
+          subject: `TEST - Contract ${contract.contractNumber} Signed by Client - Copy Attached`,
+          html: '<h1>Test Performer Email</h1><p>This is a test of the contract signing email system for the performer.</p>',
+          text: 'Test performer email for contract signing system'
+        };
+        
+        console.log('Sending test email to performer...');
+        performerEmailSuccess = await sendEmail(performerEmailParams);
+        console.log('Performer email sent successfully:', performerEmailSuccess);
+      }
       
       res.json({ 
         message: 'Contract signing email test completed',
         pdfGenerated: true,
         pdfSize: pdfBuffer.length,
-        emailSent: emailSuccess,
-        emailConfig: { fromName, fromEmail, replyToEmail }
+        clientEmailSent: clientEmailSuccess,
+        performerEmailSent: performerEmailSuccess,
+        emailConfig: { fromName, fromEmail, replyToEmail, performerEmail: userSettings?.businessEmail }
       });
       
     } catch (error) {
       console.error('Contract signing email test failed:', error);
+      res.status(500).json({ 
+        message: 'Test failed', 
+        error: error.message 
+      });
+    }
+  });
+
+  // Test the complete contract signing process with background emails
+  app.post('/api/test-full-contract-signing', async (req, res) => {
+    try {
+      console.log('=== TESTING FULL CONTRACT SIGNING PROCESS ===');
+      
+      // Get existing contract for testing
+      const contract = await storage.getContractById(30);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      console.log('Contract found:', contract.contractNumber);
+      
+      // Simulate the signing process
+      const signatureName = 'Test Signer';
+      const clientIP = '127.0.0.1';
+      
+      // Update contract status to signed
+      const signedContract = await storage.updateContract(contract.id, {
+        status: 'signed',
+        signatureName: signatureName,
+        clientIpAddress: clientIP,
+        signedAt: new Date()
+      });
+      
+      console.log('Contract updated to signed status');
+      
+      // Trigger background email process immediately (not with setImmediate)
+      try {
+        const userSettings = await storage.getUserSettings(contract.userId);
+        const { sendEmail } = await import('./sendgrid');
+        const { generateContractPDF } = await import('./pdf-generator');
+        
+        const userBusinessEmail = userSettings?.businessEmail;
+        const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+        const fromEmail = 'noreply@musobuddy.com';
+        const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
+        
+        console.log('=== GENERATING PDF AND SENDING EMAILS ===');
+        
+        // Generate signed contract PDF with signature details
+        const signatureDetails = {
+          signedAt: new Date(),
+          signatureName: signatureName.trim(),
+          clientIpAddress: clientIP
+        };
+        
+        const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
+        const pdfBase64 = pdfBuffer.toString('base64');
+        console.log('PDF generated successfully, size:', pdfBuffer.length);
+      
+        const signedDate = new Date().toLocaleDateString('en-GB');
+        const signedTime = new Date().toLocaleTimeString('en-GB');
+        
+        const emailsSent = [];
+        
+        // Email to client with PDF attachment
+        if (contract.clientEmail) {
+          const clientEmailParams: any = {
+            to: contract.clientEmail,
+            from: `${fromName} <${fromEmail}>`,
+            subject: `TEST - Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #4CAF50;">Contract Signed Successfully ✓</h2>
+                <p>Dear ${contract.clientName},</p>
+                <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed.</p>
+                
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #333;">Event Details</h3>
+                  <ul style="list-style: none; padding: 0;">
+                    <li><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
+                    <li><strong>Time:</strong> ${contract.eventTime}</li>
+                    <li><strong>Venue:</strong> ${contract.venue}</li>
+                    <li><strong>Fee:</strong> £${contract.fee}</li>
+                  </ul>
+                </div>
+                
+                <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
+                  <p style="margin: 0;"><strong>Signature Details:</strong></p>
+                  <p style="margin: 5px 0;">Signed by: ${signatureName.trim()}</p>
+                  <p style="margin: 5px 0;">Date & Time: ${signedDate} at ${signedTime}</p>
+                </div>
+                
+                <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                  📎 <strong>Your signed contract is attached as a PDF for your records.</strong>
+                </p>
+                
+                <p>We look forward to performing at your event!</p>
+                <p>Best regards,<br><strong>${userSettings?.businessName || 'MusoBuddy'}</strong></p>
+              </div>
+            `,
+            text: `Contract ${contract.contractNumber} has been successfully signed on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Signed contract PDF is attached.`,
+            attachments: [{
+              content: pdfBase64,
+              filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+              type: 'application/pdf',
+              disposition: 'attachment'
+            }]
+          };
+          
+          if (replyToEmail) {
+            clientEmailParams.replyTo = replyToEmail;
+          }
+          
+          await sendEmail(clientEmailParams);
+          emailsSent.push('client');
+          console.log('Client email sent successfully');
+        }
+      
+        // Email to performer (business owner) with PDF attachment
+        if (userSettings?.businessEmail) {
+          const performerEmailParams: any = {
+            to: userSettings.businessEmail,
+            from: `${fromName} <${fromEmail}>`,
+            subject: `TEST - Contract ${contract.contractNumber} Signed by ${contract.clientName} - Copy Attached`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #4CAF50;">Contract Signed Successfully! ✓</h2>
+                <p>Great news! Your contract has been signed.</p>
+                
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #333;">Contract Details</h3>
+                  <ul style="list-style: none; padding: 0;">
+                    <li><strong>Contract:</strong> ${contract.contractNumber}</li>
+                    <li><strong>Client:</strong> ${contract.clientName}</li>
+                    <li><strong>Event Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
+                    <li><strong>Venue:</strong> ${contract.venue}</li>
+                    <li><strong>Fee:</strong> £${contract.fee}</li>
+                  </ul>
+                </div>
+                
+                <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
+                  <p style="margin: 0;"><strong>Signature Details:</strong></p>
+                  <p style="margin: 5px 0;">Signed by: ${signatureName.trim()}</p>
+                  <p style="margin: 5px 0;">Date & Time: ${signedDate} at ${signedTime}</p>
+                </div>
+                
+                <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                  📎 <strong>Signed contract PDF is attached for your records.</strong>
+                </p>
+                
+                <p>Time to prepare for the performance!</p>
+              </div>
+            `,
+            text: `Contract ${contract.contractNumber} signed by ${contract.clientName} on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. Signed contract PDF is attached.`,
+            attachments: [{
+              content: pdfBase64,
+              filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+              type: 'application/pdf',
+              disposition: 'attachment'
+            }]
+          };
+          
+          await sendEmail(performerEmailParams);
+          emailsSent.push('performer');
+          console.log('Performer email sent successfully');
+        }
+        
+        console.log('=== EMAIL SENDING COMPLETED ===');
+        console.log('Both confirmation emails sent successfully with PDF attachments');
+        
+        res.json({
+          message: 'Full contract signing test completed successfully',
+          emailsSent,
+          pdfSize: pdfBuffer.length,
+          emailConfig: { fromName, fromEmail, replyToEmail, performerEmail: userSettings?.businessEmail }
+        });
+        
+      } catch (emailError) {
+        console.error('Error in email processing:', emailError);
+        res.status(500).json({ 
+          message: 'Contract signed but email failed', 
+          error: emailError.message 
+        });
+      }
+      
+    } catch (error) {
+      console.error('Full contract signing test failed:', error);
       res.status(500).json({ 
         message: 'Test failed', 
         error: error.message 
