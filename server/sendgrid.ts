@@ -25,7 +25,8 @@ interface EmailParams {
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
-    console.log('Sending email with params:', {
+    console.log('=== SENDING EMAIL ===');
+    console.log('Email params:', {
       to: params.to,
       from: params.from,
       subject: params.subject,
@@ -33,6 +34,12 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       hasHtml: !!params.html,
       hasAttachments: !!params.attachments?.length
     });
+    
+    // Validate required parameters
+    if (!params.to || !params.from || !params.subject) {
+      console.error('Missing required email parameters:', { to: !!params.to, from: !!params.from, subject: !!params.subject });
+      return false;
+    }
     
     const emailData: any = {
       to: params.to,
@@ -45,17 +52,26 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     // Add attachments if provided
     if (params.attachments && params.attachments.length > 0) {
       emailData.attachments = params.attachments;
+      console.log(`Adding ${params.attachments.length} attachments`);
     }
     
+    console.log('Calling SendGrid API...');
     const result = await mailService.send(emailData);
     
     console.log('SendGrid response:', result);
+    console.log('=== EMAIL SENT SUCCESSFULLY ===');
     return true;
   } catch (error: any) {
+    console.error('=== EMAIL SENDING FAILED ===');
     console.error('SendGrid email error:', error);
-    if (error.response && error.response.body) {
-      console.error('SendGrid error details:', error.response.body);
+    if (error.response) {
+      console.error('SendGrid error status:', error.response.status);
+      console.error('SendGrid error body:', error.response.body);
     }
+    if (error.message) {
+      console.error('Error message:', error.message);
+    }
+    console.error('=== END EMAIL ERROR ===');
     return false;
   }
 }
