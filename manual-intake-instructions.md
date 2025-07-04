@@ -7,7 +7,7 @@ When you receive a booking enquiry via WhatsApp, SMS, or text, follow these step
 ## ✅ If the message can be forwarded (recommended)
 1. Long-press the message (in WhatsApp, iMessage, or SMS)
 2. Tap **Forward** or **Share**
-3. Send it to: **leads@musobuddy.app**
+3. Send it to: **leads@musobuddy.com**
 4. That's it — the system will extract key details automatically
 
 ---

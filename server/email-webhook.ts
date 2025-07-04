@@ -1,6 +1,6 @@
 /**
  * SendGrid Email Webhook Handler
- * Processes incoming emails sent to leads@musobuddy.app
+ * Processes incoming emails sent to leads@musobuddy.com
  */
 
 import { Request, Response } from 'express';
@@ -41,8 +41,8 @@ export async function handleSendGridWebhook(req: Request, res: Response) {
     } = req.body;
 
     // Validate this is for our leads email
-    if (!to || !to.includes('leads@musobuddy.app')) {
-      console.log('Email not for leads@musobuddy.app, ignoring');
+    if (!to || !to.includes('leads@musobuddy.com')) {
+      console.log('Email not for leads@musobuddy.com, ignoring');
       return res.status(200).json({ message: 'Email ignored - not for leads' });
     }
 
