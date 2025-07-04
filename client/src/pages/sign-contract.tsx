@@ -120,18 +120,21 @@ export default function SignContract() {
         body: JSON.stringify({
           signatureName: signatureName.trim(),
         }),
+      }).catch(networkError => {
+        console.error('Network error during signing:', networkError);
+        throw new Error('Network error: Unable to reach the server. Please check your connection and try again.');
       });
 
       console.log('Sign response status:', response.status);
       console.log('Sign response ok:', response.ok);
 
       if (!response.ok) {
-        const errorData = await response.text();
+        const errorData = await response.text().catch(() => 'Unknown error');
         console.error('Sign error response:', errorData);
         throw new Error(`Failed to sign contract: ${response.status} - ${errorData}`);
       }
 
-      const responseData = await response.json();
+      const responseData = await response.json().catch(() => ({}));
       console.log('Sign success response:', responseData);
 
       // Update local contract state
