@@ -457,9 +457,19 @@ export default function Enquiries() {
                             let mainNotes = notes;
                             let metadata = '';
                             
-                            // Check for old format with "Source:" and "Contact:"
-                            if (notes.includes('Source:')) {
-                              const sourceMatch = notes.match(/Source: ([^•\n]+)/);
+                            // Check for old format with "--- Contact Details ---"
+                            if (notes.includes('--- Contact Details ---')) {
+                              const sourceMatch = notes.match(/Source: ([^\n]+)/);
+                              const contactMatch = notes.match(/Contact Method: ([^\n]+)/);
+                              mainNotes = notes.replace(/\n*--- Contact Details ---[\s\S]*$/, '').trim();
+                              
+                              if (sourceMatch && contactMatch) {
+                                metadata = `${sourceMatch[1]} • ${contactMatch[1]}`;
+                              }
+                            }
+                            // Check for simple "Source:" format without header
+                            else if (notes.includes('Source:')) {
+                              const sourceMatch = notes.match(/Source: ([^\n•]+)/);
                               const contactMatch = notes.match(/Contact: ([^\n]+)/);
                               mainNotes = notes.replace(/\n\nSource:.*$/, '').trim();
                               
