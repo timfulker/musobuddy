@@ -191,17 +191,21 @@ export default function Invoices() {
   // Invoice action handlers
   const sendInvoiceMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
+      console.log('Sending invoice:', invoice.id);
       const response = await apiRequest('POST', '/api/invoices/send-email', { invoiceId: invoice.id });
+      console.log('Send response:', response);
       return response.json();
     },
     onSuccess: () => {
+      console.log('Invoice sent successfully');
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
       toast({
         title: "Success",
         description: "Invoice sent successfully with PDF attachment!",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Invoice send error:', error);
       toast({
         title: "Error",
         description: "Failed to send invoice email",
