@@ -452,19 +452,45 @@ export default function Enquiries() {
                         <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                           {(() => {
                             const notes = enquiry.notes || '';
-                            const sourceMatch = notes.match(/Source: ([^•\n]+)/);
-                            const contactMatch = notes.match(/Contact: ([^\n]+)/);
-                            const mainNotes = notes.replace(/\n\nSource:.*$/, '').trim();
+                            
+                            // Handle both old and new format
+                            let mainNotes = notes;
+                            let metadata = '';
+                            
+                            // Check for old format with "Source:" and "Contact:"
+                            if (notes.includes('Source:')) {
+                              const sourceMatch = notes.match(/Source: ([^•\n]+)/);
+                              const contactMatch = notes.match(/Contact: ([^\n]+)/);
+                              mainNotes = notes.replace(/\n\nSource:.*$/, '').trim();
+                              
+                              if (sourceMatch && contactMatch) {
+                                metadata = `${sourceMatch[1]} • ${contactMatch[1]}`;
+                              }
+                            }
+                            // Check for new simple format (just "Email • Phone")
+                            else {
+                              const parts = notes.split('\n\n');
+                              if (parts.length > 1) {
+                                const lastPart = parts[parts.length - 1];
+                                if (lastPart.includes('•')) {
+                                  mainNotes = parts.slice(0, -1).join('\n\n').trim();
+                                  metadata = lastPart;
+                                }
+                              } else if (notes.includes('•') && !notes.includes('\n')) {
+                                // If it's just metadata without main notes
+                                mainNotes = '';
+                                metadata = notes;
+                              }
+                            }
                             
                             return (
                               <div className="space-y-2">
                                 {mainNotes && (
                                   <p className="text-sm text-gray-700">{mainNotes}</p>
                                 )}
-                                {(sourceMatch || contactMatch) && (
-                                  <div className="flex items-center space-x-4 text-xs text-gray-500 border-t pt-2">
-                                    {sourceMatch && <span>Source: {sourceMatch[1]}</span>}
-                                    {contactMatch && <span>Contact: {contactMatch[1]}</span>}
+                                {metadata && (
+                                  <div className="text-xs text-gray-500 border-t pt-2">
+                                    <span>{metadata}</span>
                                   </div>
                                 )}
                               </div>

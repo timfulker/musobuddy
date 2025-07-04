@@ -54,7 +54,7 @@ export default function QuickAddPage() {
         clientPhone: data.clientPhone || null,
         eventDate: new Date(data.eventDate),
         venue: data.venue || null,
-        notes: data.notes ? `${data.notes}\n\nSource: ${data.source} • Contact: ${data.contactMethod}` : `Source: ${data.source} • Contact: ${data.contactMethod}`,
+        notes: data.notes ? `${data.notes}\n\n${data.source} • ${data.contactMethod}` : `${data.source} • ${data.contactMethod}`,
         status: "new" as const,
       };
       const response = await apiRequest('POST', '/api/enquiries/quick-add', enquiryData);
