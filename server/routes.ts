@@ -381,8 +381,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pdfBuffer = await generateInvoicePDF(updatedInvoice, contract, userSettings);
       const pdfBase64 = pdfBuffer.toString('base64');
       
-      // Send email using SendGrid - always use authenticated domain
-      const fromEmail = 'noreply@musobuddy.com';
+      // Send email using SendGrid
+      const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
       const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
       
       const emailSent = await sendEmail({
@@ -438,8 +438,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate HTML content
       const htmlContent = generateContractHtml(contract, userSettings);
       
-      // Send email using SendGrid - always use authenticated domain
-      const fromEmail = 'noreply@musobuddy.com'; // Always use authenticated domain
+      // Send email using SendGrid
+      const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
       const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
       
       const emailSent = await sendEmail({
@@ -547,7 +547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { sendEmail } = await import('./sendgrid');
         const { generateContractPDF } = await import('./pdf-generator');
         
-        const fromEmail = 'noreply@musobuddy.com'; // Always use authenticated domain
+        const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
         const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
         
         // Generate signed contract PDF
