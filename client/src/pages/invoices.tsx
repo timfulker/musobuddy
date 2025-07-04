@@ -192,9 +192,18 @@ export default function Invoices() {
   const sendInvoiceMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
       console.log('Sending invoice:', invoice.id);
-      const response = await apiRequest('POST', '/api/invoices/send-email', { invoiceId: invoice.id });
-      console.log('Send response:', response);
-      return response.json();
+      console.log('API URL:', window.location.origin + '/api/invoices/send-email');
+      try {
+        const response = await apiRequest('POST', '/api/invoices/send-email', { invoiceId: invoice.id });
+        console.log('Send response status:', response.status);
+        console.log('Send response:', response);
+        const result = await response.json();
+        console.log('Send result:', result);
+        return result;
+      } catch (error) {
+        console.error('Send API error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       console.log('Invoice sent successfully');
