@@ -612,7 +612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Smart email handling - use authenticated domain for sending, Gmail for replies
         const userBusinessEmail = userSettings?.businessEmail;
-        const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
+        const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
         
         // Always use authenticated domain for FROM to avoid SPF issues
         const fromEmail = 'noreply@musobuddy.com';
@@ -623,7 +623,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('=== CONTRACT SIGNING EMAIL DETAILS ===');
         console.log('To:', contract.clientEmail);
         console.log('From:', `${fromName} <${fromEmail}>`);
-        console.log('Reply-To:', replyToEmail);
         console.log('Subject:', `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`);
         
         // Generate signed contract PDF
@@ -637,7 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const pdfBase64 = pdfBuffer.toString('base64');
         
         // Email to client with PDF attachment
-        const clientEmailData: any = {
+        const clientEmailParams: any = {
           to: contract.clientEmail,
           from: `${fromName} <${fromEmail}>`,
           subject: `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
@@ -676,14 +675,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Add reply-to if user has Gmail or other external email
         if (replyToEmail) {
-          clientEmailData.replyTo = replyToEmail;
+          clientEmailParams.replyTo = replyToEmail;
         }
         
-        await sendEmail(clientEmailData);
+        await sendEmail(clientEmailParams);
         
         // Email to performer (business owner) with PDF attachment
         if (userSettings?.businessEmail) {
-          const performerEmailData: any = {
+          const performerEmailParams: any = {
             to: userSettings.businessEmail,
             from: `${fromName} <${fromEmail}>`,
             subject: `Contract ${contract.contractNumber} Signed by Client - Copy Attached`,
@@ -840,6 +839,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in SendGrid webhook:", error);
       res.status(500).json({ message: "Failed to process SendGrid webhook" });
+    }
+  });
+
+  // Test contract signing email process
+  app.post('/api/test-contract-signing-email', async (req, res) => {
+    try {
+      console.log('=== TESTING CONTRACT SIGNING EMAIL PROCESS ===');
+      
+      const contract = await storage.getContractById(28);
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      console.log('Contract found:', contract.contractNumber);
+      
+      const userSettings = await storage.getUserSettings(contract.userId);
+      console.log('User settings found:', !!userSettings);
+      
+      const { sendEmail } = await import('./sendgrid');
+      const { generateContractPDF } = await import('./pdf-generator');
+      
+      // Use same email logic as actual signing
+      const userBusinessEmail = userSettings?.businessEmail;
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+      const fromEmail = 'noreply@musobuddy.com';
+      const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
+      
+      console.log('Email config:', { fromName, fromEmail, replyToEmail });
+      
+      // Test PDF generation with signature
+      const signatureDetails = {
+        signedAt: new Date(),
+        signatureName: 'Test Signature',
+        clientIpAddress: '127.0.0.1'
+      };
+      
+      console.log('Generating PDF...');
+      const pdfBuffer = await generateContractPDF(contract, userSettings || null, signatureDetails);
+      console.log('PDF generated successfully, size:', pdfBuffer.length);
+      
+      const pdfBase64 = pdfBuffer.toString('base64');
+      console.log('PDF base64 length:', pdfBase64.length);
+      
+      // Test email sending with attachment
+      const emailParams: any = {
+        to: contract.clientEmail,
+        from: `${fromName} <${fromEmail}>`,
+        subject: `TEST - Contract ${contract.contractNumber} Successfully Signed`,
+        html: '<h1>Test Email</h1><p>This is a test of the contract signing email system.</p>',
+        text: 'Test email for contract signing system',
+        attachments: [{
+          content: pdfBase64,
+          filename: `Contract-${contract.contractNumber}-Signed-TEST.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }]
+      };
+      
+      if (replyToEmail) {
+        emailParams.replyTo = replyToEmail;
+      }
+      
+      console.log('Sending test email...');
+      const emailSuccess = await sendEmail(emailParams);
+      console.log('Email sent successfully:', emailSuccess);
+      
+      res.json({ 
+        message: 'Contract signing email test completed',
+        pdfGenerated: true,
+        pdfSize: pdfBuffer.length,
+        emailSent: emailSuccess,
+        emailConfig: { fromName, fromEmail, replyToEmail }
+      });
+      
+    } catch (error) {
+      console.error('Contract signing email test failed:', error);
+      res.status(500).json({ 
+        message: 'Test failed', 
+        error: error.message 
+      });
     }
   });
 
