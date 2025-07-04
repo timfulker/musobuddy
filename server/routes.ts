@@ -565,18 +565,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contractId = parseInt(req.params.id);
       const { signatureName } = req.body;
       
+      console.log('=== CONTRACT SIGNING ATTEMPT ===');
+      console.log('Contract ID:', contractId);
+      console.log('Signature name:', signatureName);
+      
       if (!signatureName || !signatureName.trim()) {
+        console.log('ERROR: Missing signature name');
         return res.status(400).json({ message: "Signature name is required" });
       }
       
       // Get contract
       const contract = await storage.getContractById(contractId);
+      console.log('Contract found:', contract ? 'YES' : 'NO');
+      console.log('Contract status:', contract?.status);
+      console.log('Contract data:', contract);
+      
       if (!contract) {
+        console.log('ERROR: Contract not found');
         return res.status(404).json({ message: "Contract not found" });
       }
       
       if (contract.status !== 'sent') {
-        return res.status(400).json({ message: "Contract is not available for signing" });
+        console.log('ERROR: Contract not in sent status. Current status:', contract.status);
+        return res.status(400).json({ message: `Contract is not available for signing. Current status: ${contract.status}` });
       }
       
       // Get client IP for audit trail
@@ -817,11 +828,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // SendGrid Email Webhook (for leads@musobuddy.com)
   app.post('/api/webhook/sendgrid', async (req, res) => {
     try {
+      console.log('=== SENDGRID WEBHOOK RECEIVED ===');
+      console.log('Request method:', req.method);
+      console.log('Request URL:', req.url);
+      console.log('Request headers:', req.headers);
+      console.log('Request body:', req.body);
+      
       const { handleSendGridWebhook } = await import('./email-webhook');
       await handleSendGridWebhook(req, res);
     } catch (error) {
       console.error("Error in SendGrid webhook:", error);
       res.status(500).json({ message: "Failed to process SendGrid webhook" });
+    }
+  });
+
+  // Test endpoint to simulate email forwarding
+  app.post('/api/test-email-forwarding', async (req, res) => {
+    try {
+      console.log('=== TESTING EMAIL FORWARDING ===');
+      
+      // Simulate SendGrid webhook payload
+      const testPayload = {
+        to: 'leads@musobuddy.com',
+        from: 'potential.client@gmail.com',
+        subject: 'Wedding Booking Inquiry',
+        text: `Hi there,
+        
+I'm interested in booking you for my wedding on September 15th, 2025. 
+The venue is The Grand Hotel in Manchester. 
+We're looking for acoustic guitar performance for the ceremony and reception.
+
+Please let me know your availability and rates.
+
+Best regards,
+Sarah Johnson
+Phone: 07123456789
+Email: sarah.johnson@gmail.com`,
+        html: null,
+        envelope: {
+          to: ['leads@musobuddy.com'],
+          from: 'potential.client@gmail.com'
+        },
+        headers: {
+          'Content-Type': 'text/plain'
+        }
+      };
+      
+      const { handleSendGridWebhook } = await import('./email-webhook');
+      
+      // Create a mock request/response to test the webhook handler
+      const mockReq = {
+        body: testPayload,
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+        url: '/api/webhook/sendgrid'
+      } as any;
+      
+      const mockRes = {
+        status: (code: number) => ({
+          json: (data: any) => {
+            console.log('Mock response:', code, data);
+            return { status: code, data };
+          }
+        })
+      } as any;
+      
+      await handleSendGridWebhook(mockReq, mockRes);
+      
+      res.json({ message: 'Email forwarding test completed - check logs for results' });
+    } catch (error) {
+      console.error("Error testing email forwarding:", error);
+      res.status(500).json({ message: "Failed to test email forwarding" });
     }
   });
 

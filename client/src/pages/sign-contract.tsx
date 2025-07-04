@@ -59,6 +59,8 @@ export default function SignContract() {
         const contractData = await response.json();
         console.log('Contract data loaded:', contractData);
         console.log('Contract status:', contractData.status);
+        console.log('Contract ID:', contractData.id);
+        console.log('Contract client name:', contractData.clientName);
         setContract(contractData);
         
         // Get business settings for the contract owner
@@ -107,6 +109,9 @@ export default function SignContract() {
 
     setSigning(true);
     try {
+      console.log('Attempting to sign contract:', contractId);
+      console.log('Signature name:', signatureName.trim());
+      
       const response = await fetch(`/api/contracts/sign/${contractId}`, {
         method: 'POST',
         headers: {
@@ -117,9 +122,17 @@ export default function SignContract() {
         }),
       });
 
+      console.log('Sign response status:', response.status);
+      console.log('Sign response ok:', response.ok);
+
       if (!response.ok) {
-        throw new Error('Failed to sign contract');
+        const errorData = await response.text();
+        console.error('Sign error response:', errorData);
+        throw new Error(`Failed to sign contract: ${response.status} - ${errorData}`);
       }
+
+      const responseData = await response.json();
+      console.log('Sign success response:', responseData);
 
       // Update local contract state
       setContract(prev => prev ? {
@@ -137,7 +150,7 @@ export default function SignContract() {
       console.error("Error signing contract:", error);
       toast({
         title: "Error",
-        description: "Failed to sign contract. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to sign contract. Please try again.",
         variant: "destructive",
       });
     } finally {
