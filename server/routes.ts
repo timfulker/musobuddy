@@ -32,6 +32,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public quick-add endpoint for mobile access (no auth required) - MUST BE FIRST
+  app.post('/api/enquiries/quick-add', async (req: any, res) => {
+    try {
+      console.log("Quick-add endpoint hit with data:", req.body);
+      // For quick-add, we need to associate with the account owner
+      // In a real app, this would be configurable or have a different approach
+      const userId = "43963086"; // Your user ID from auth logs
+      const data = { ...req.body, userId };
+      
+      // Convert eventDate string to Date if present
+      if (data.eventDate && typeof data.eventDate === 'string') {
+        data.eventDate = new Date(data.eventDate);
+      }
+      
+      const enquiryData = insertEnquirySchema.parse(data);
+      const enquiry = await storage.createEnquiry(enquiryData);
+      console.log("Quick-add enquiry created:", enquiry);
+      res.status(201).json(enquiry);
+    } catch (error) {
+      console.error("Error creating enquiry via quick-add:", error);
+      res.status(500).json({ message: "Failed to create enquiry", error: error.message });
+    }
+  });
+
   // Enquiry routes
   app.get('/api/enquiries', isAuthenticated, async (req: any, res) => {
     try {
@@ -56,28 +80,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching enquiry:", error);
       res.status(500).json({ message: "Failed to fetch enquiry" });
-    }
-  });
-
-  // Public quick-add endpoint for mobile access (no auth required)
-  app.post('/api/enquiries/quick-add', async (req: any, res) => {
-    try {
-      // For quick-add, we need to associate with the account owner
-      // In a real app, this would be configurable or have a different approach
-      const userId = "43963086"; // Your user ID from auth logs
-      const data = { ...req.body, userId };
-      
-      // Convert eventDate string to Date if present
-      if (data.eventDate && typeof data.eventDate === 'string') {
-        data.eventDate = new Date(data.eventDate);
-      }
-      
-      const enquiryData = insertEnquirySchema.parse(data);
-      const enquiry = await storage.createEnquiry(enquiryData);
-      res.status(201).json(enquiry);
-    } catch (error) {
-      console.error("Error creating enquiry via quick-add:", error);
-      res.status(500).json({ message: "Failed to create enquiry" });
     }
   });
 

@@ -58,7 +58,7 @@ export default function QuickAddPage() {
         status: "new" as const,
       };
       const response = await apiRequest('POST', '/api/enquiries/quick-add', enquiryData);
-      return response.json();
+      return await response.json();
     },
     onSuccess: () => {
       setIsSubmitted(true);
@@ -67,7 +67,8 @@ export default function QuickAddPage() {
         description: "Enquiry has been added to your system",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Quick Add Error:", error);
       toast({
         title: "Error",
         description: "Failed to add enquiry. Please try again.",
