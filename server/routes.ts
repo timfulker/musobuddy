@@ -471,17 +471,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate HTML content
       const htmlContent = generateContractHtml(contract, userSettings);
       
-      // Send email using SendGrid
-      const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
-      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+      // Smart email handling - use authenticated domain for sending, Gmail for replies
+      const userBusinessEmail = userSettings?.businessEmail;
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
       
-      const emailSent = await sendEmail({
+      // Always use authenticated domain for FROM to avoid SPF issues
+      const fromEmail = 'noreply@musobuddy.com';
+      
+      // If user has Gmail (or other non-authenticated domain), use it as reply-to
+      const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
+      
+      console.log('=== CONTRACT EMAIL DETAILS ===');
+      console.log('To:', contract.clientEmail);
+      console.log('From:', `${fromName} <${fromEmail}>`);
+      console.log('Reply-To:', replyToEmail);
+      console.log('Subject:', `Performance Contract ${contract.contractNumber} from ${fromName}`);
+      
+      const emailData: any = {
         to: contract.clientEmail,
         from: `${fromName} <${fromEmail}>`,
         subject: `Performance Contract ${contract.contractNumber} from ${fromName}`,
         html: htmlContent,
         text: `Please find attached your performance contract ${contract.contractNumber}. Event date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}. Fee: £${contract.fee}.`
-      });
+      };
+      
+      // Add reply-to if user has Gmail or other external email
+      if (replyToEmail) {
+        emailData.replyTo = replyToEmail;
+      }
+      
+      const emailSent = await sendEmail(emailData);
 
       if (emailSent) {
         // Update contract status to sent
