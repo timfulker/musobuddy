@@ -599,8 +599,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { sendEmail } = await import('./sendgrid');
         const { generateContractPDF } = await import('./pdf-generator');
         
-        const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
-        const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+        // Smart email handling - use authenticated domain for sending, Gmail for replies
+        const userBusinessEmail = userSettings?.businessEmail;
+        const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
+        
+        // Always use authenticated domain for FROM to avoid SPF issues
+        const fromEmail = 'noreply@musobuddy.com';
+        
+        // If user has Gmail (or other non-authenticated domain), use it as reply-to
+        const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
+        
+        console.log('=== CONTRACT SIGNING EMAIL DETAILS ===');
+        console.log('To:', contract.clientEmail);
+        console.log('From:', `${fromName} <${fromEmail}>`);
+        console.log('Reply-To:', replyToEmail);
+        console.log('Subject:', `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`);
         
         // Generate signed contract PDF
         const signatureDetails = {
@@ -609,11 +622,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clientIpAddress: clientIP
         };
         
-        const pdfBuffer = await generateContractPDF(signedContract, userSettings, signatureDetails);
+        const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
         const pdfBase64 = pdfBuffer.toString('base64');
         
         // Email to client with PDF attachment
-        await sendEmail({
+        const clientEmailData: any = {
           to: contract.clientEmail,
           from: `${fromName} <${fromEmail}>`,
           subject: `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
@@ -648,11 +661,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'application/pdf',
             disposition: 'attachment'
           }]
-        });
+        };
+        
+        // Add reply-to if user has Gmail or other external email
+        if (replyToEmail) {
+          clientEmailData.replyTo = replyToEmail;
+        }
+        
+        await sendEmail(clientEmailData);
         
         // Email to performer (business owner) with PDF attachment
         if (userSettings?.businessEmail) {
-          await sendEmail({
+          const performerEmailData: any = {
             to: userSettings.businessEmail,
             from: `${fromName} <${fromEmail}>`,
             subject: `Contract ${contract.contractNumber} Signed by Client - Copy Attached`,
@@ -689,7 +709,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               type: 'application/pdf',
               disposition: 'attachment'
             }]
-          });
+          };
+          
+          // Add reply-to for performer email too
+          if (replyToEmail) {
+            performerEmailData.replyTo = replyToEmail;
+          }
+          
+          await sendEmail(performerEmailData);
         }
       } catch (emailError) {
         console.error("Error sending confirmation emails:", emailError);
