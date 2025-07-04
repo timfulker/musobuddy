@@ -206,9 +206,10 @@ export default function Invoices() {
     },
     onError: (error) => {
       console.error('Invoice send error:', error);
+      console.error('Error details:', error.message);
       toast({
         title: "Error",
-        description: "Failed to send invoice email",
+        description: `Failed to send invoice email: ${error.message}`,
         variant: "destructive",
       });
     },
