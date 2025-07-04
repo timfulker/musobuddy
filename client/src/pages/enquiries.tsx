@@ -227,7 +227,7 @@ export default function Enquiries() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="clientName"
@@ -249,6 +249,19 @@ export default function Enquiries() {
                           <FormLabel>Client Email</FormLabel>
                           <FormControl>
                             <Input type="email" placeholder="john@example.com" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="clientPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Phone</FormLabel>
+                          <FormControl>
+                            <Input placeholder="07123 456 789" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -405,6 +418,7 @@ export default function Enquiries() {
                           <p className="font-medium">Client</p>
                           <p>{enquiry.clientName}</p>
                           {enquiry.clientEmail && <p className="text-xs">{enquiry.clientEmail}</p>}
+                          {enquiry.clientPhone && <p className="text-xs">{enquiry.clientPhone}</p>}
                         </div>
                         
                         <div>
