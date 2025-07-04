@@ -731,7 +731,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (emailError) {
         console.error("Error sending confirmation emails:", emailError);
-        // Don't fail the signing process if email fails
+        console.error("Full error details:", emailError);
+        // Continue with success - signing worked, email issue is separate
       }
       
       res.json({ 
