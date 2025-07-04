@@ -855,6 +855,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manually trigger background email for signed contract
+  app.post('/api/send-signed-contract-emails/:contractId', async (req, res) => {
+    try {
+      console.log('=== MANUAL TRIGGER FOR SIGNED CONTRACT EMAILS ===');
+      
+      const contractId = parseInt(req.params.contractId);
+      const contract = await storage.getContractById(contractId);
+      
+      if (!contract || contract.status !== 'signed') {
+        return res.status(404).json({ message: 'Signed contract not found' });
+      }
+      
+      const userSettings = await storage.getUserSettings(contract.userId);
+      const { sendEmail } = await import('./sendgrid');
+      const { generateContractPDF } = await import('./pdf-generator');
+      
+      // Use same email logic as signing process
+      const userBusinessEmail = userSettings?.businessEmail;
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+      const fromEmail = 'noreply@musobuddy.com';
+      const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
+      
+      // Generate PDF with signature details
+      const signatureDetails = {
+        signedAt: new Date(contract.signedAt || new Date()),
+        signatureName: req.body.signatureName || 'Contract Signer',
+        clientIpAddress: req.ip || '127.0.0.1'
+      };
+      
+      console.log('Generating PDF...');
+      const pdfBuffer = await generateContractPDF(contract, userSettings || null, signatureDetails);
+      const pdfBase64 = pdfBuffer.toString('base64');
+      console.log('PDF generated, size:', pdfBuffer.length);
+      
+      const signedDate = new Date(contract.signedAt || new Date()).toLocaleDateString('en-GB');
+      const signedTime = new Date(contract.signedAt || new Date()).toLocaleTimeString('en-GB');
+      
+      // Send emails with PDF attachments
+      const emailsSent = [];
+      
+      // Email to client
+      if (contract.clientEmail) {
+        await sendEmail({
+          to: contract.clientEmail,
+          from: `${fromName} <${fromEmail}>`,
+          subject: `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #4CAF50;">Contract Signed Successfully ✓</h2>
+              <p>Dear ${contract.clientName},</p>
+              <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed.</p>
+              
+              <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #333;">Event Details</h3>
+                <ul style="list-style: none; padding: 0;">
+                  <li><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
+                  <li><strong>Time:</strong> ${contract.eventTime}</li>
+                  <li><strong>Venue:</strong> ${contract.venue}</li>
+                  <li><strong>Fee:</strong> £${contract.fee}</li>
+                </ul>
+              </div>
+              
+              <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
+                <p style="margin: 0;"><strong>Signature Details:</strong></p>
+                <p style="margin: 5px 0;">Signed on: ${signedDate} at ${signedTime}</p>
+              </div>
+              
+              <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                📎 <strong>Your signed contract is attached as a PDF for your records.</strong>
+              </p>
+              
+              <p>We look forward to performing at your event!</p>
+              <p>Best regards,<br><strong>${userSettings?.businessName || 'MusoBuddy'}</strong></p>
+            </div>
+          `,
+          text: `Contract ${contract.contractNumber} has been successfully signed on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Signed contract PDF is attached.`,
+          attachments: [{
+            content: pdfBase64,
+            filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+            type: 'application/pdf',
+            disposition: 'attachment'
+          }],
+          ...(replyToEmail && { replyTo: replyToEmail })
+        });
+        emailsSent.push('client');
+      }
+      
+      // Email to performer
+      if (userSettings?.businessEmail) {
+        await sendEmail({
+          to: userSettings.businessEmail,
+          from: `${fromName} <${fromEmail}>`,
+          subject: `Contract ${contract.contractNumber} Signed by ${contract.clientName} - Copy Attached`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #4CAF50;">Contract Signed Successfully! ✓</h2>
+              <p>Great news! Your contract has been signed.</p>
+              
+              <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #333;">Contract Details</h3>
+                <ul style="list-style: none; padding: 0;">
+                  <li><strong>Contract:</strong> ${contract.contractNumber}</li>
+                  <li><strong>Client:</strong> ${contract.clientName}</li>
+                  <li><strong>Event Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
+                  <li><strong>Venue:</strong> ${contract.venue}</li>
+                  <li><strong>Fee:</strong> £${contract.fee}</li>
+                </ul>
+              </div>
+              
+              <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
+                <p style="margin: 0;"><strong>Signature Details:</strong></p>
+                <p style="margin: 5px 0;">Signed on: ${signedDate} at ${signedTime}</p>
+              </div>
+              
+              <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                📎 <strong>Signed contract PDF is attached for your records.</strong>
+              </p>
+              
+              <p>Time to prepare for the performance!</p>
+            </div>
+          `,
+          text: `Contract ${contract.contractNumber} signed by ${contract.clientName} on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. Signed contract PDF is attached.`,
+          attachments: [{
+            content: pdfBase64,
+            filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+            type: 'application/pdf',
+            disposition: 'attachment'
+          }]
+        });
+        emailsSent.push('performer');
+      }
+      
+      console.log('=== MANUAL EMAIL SENDING COMPLETED ===');
+      res.json({ 
+        message: 'Signed contract emails sent successfully',
+        emailsSent,
+        pdfSize: pdfBuffer.length
+      });
+      
+    } catch (error) {
+      console.error('Manual email sending failed:', error);
+      res.status(500).json({ 
+        message: 'Failed to send emails', 
+        error: error.message 
+      });
+    }
+  });
+
   // Test contract signing email process
   app.post('/api/test-contract-signing-email', async (req, res) => {
     try {
