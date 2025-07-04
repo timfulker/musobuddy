@@ -378,18 +378,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Failed to update invoice status" });
       }
 
-      // Import SendGrid functions and PDF generator
-      const { sendEmail, generateInvoiceHtml } = await import('./sendgrid');
-      const { generateInvoicePDF } = await import('./pdf-generator');
+      // Import SendGrid functions
+      const { sendEmail } = await import('./sendgrid');
       
-      // Generate HTML content with updated invoice
-      const htmlContent = generateInvoiceHtml(updatedInvoice, contract, userSettings);
-      
-      // Generate PDF attachment with updated invoice (now shows "sent" status)
-      const pdfBuffer = await generateInvoicePDF(updatedInvoice, contract, userSettings);
-      const pdfBase64 = pdfBuffer.toString('base64');
-      
-      // Send email using SendGrid
+      // Send simple email first (without PDF to isolate the issue)
       const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
       const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
       
@@ -397,14 +389,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         to: contract.clientEmail,
         from: `${fromName} <${fromEmail}>`,
         subject: `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`,
-        html: htmlContent,
-        text: `Please find attached your invoice ${updatedInvoice.invoiceNumber}. Amount: £${updatedInvoice.amount}. Due date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}.`,
-        attachments: [{
-          content: pdfBase64,
-          filename: `Invoice-${updatedInvoice.invoiceNumber}.pdf`,
-          type: 'application/pdf',
-          disposition: 'attachment'
-        }]
+        html: `<h1>Invoice ${updatedInvoice.invoiceNumber}</h1><p>Amount: £${updatedInvoice.amount}</p><p>Due Date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}</p>`,
+        text: `Invoice ${updatedInvoice.invoiceNumber}. Amount: £${updatedInvoice.amount}. Due date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}.`
       });
 
       if (emailSent) {
@@ -431,9 +417,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending invoice email:", error);
-      res.status(500).json({ message: "Failed to send invoice email" });
+      res.status(500).json({ 
+        message: "Failed to send invoice email", 
+        error: error.message || "Unknown error",
+        debug: { invoiceId: req.body.invoiceId }
+      });
     }
   });
 
