@@ -735,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SendGrid Email Webhook (for leads@musobuddy.app)
+  // SendGrid Email Webhook (for leads@musobuddy.com)
   app.post('/api/webhook/sendgrid', async (req, res) => {
     try {
       const { handleSendGridWebhook } = await import('./email-webhook');

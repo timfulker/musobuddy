@@ -193,7 +193,7 @@ function cleanEmailBody(body: string): string {
 
 /**
  * Webhook endpoint for email service providers (like SendGrid, Mailgun)
- * This would be called when emails are sent to leads@musobuddy.app
+ * This would be called when emails are sent to leads@musobuddy.com
  */
 export interface EmailWebhookPayload {
   from: string;

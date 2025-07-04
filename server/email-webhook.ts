@@ -24,11 +24,15 @@ export interface SendGridWebhookPayload {
 
 /**
  * SendGrid Inbound Email Webhook Handler
- * Receives emails sent to leads@musobuddy.app and processes them
+ * Receives emails sent to leads@musobuddy.com and processes them
  */
 export async function handleSendGridWebhook(req: Request, res: Response) {
   try {
-    console.log('Received SendGrid webhook:', req.body);
+    console.log('=== SENDGRID WEBHOOK RECEIVED ===');
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
     
     // SendGrid sends email data as form data
     const {
@@ -92,8 +96,8 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
     } = req.body;
 
     // Validate this is for our leads email
-    if (!recipient || !recipient.includes('leads@musobuddy.app')) {
-      console.log('Email not for leads@musobuddy.app, ignoring');
+    if (!recipient || !recipient.includes('leads@musobuddy.com')) {
+      console.log('Email not for leads@musobuddy.com, ignoring');
       return res.status(200).json({ message: 'Email ignored - not for leads' });
     }
 
