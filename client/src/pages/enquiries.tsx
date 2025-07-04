@@ -450,7 +450,26 @@ export default function Enquiries() {
                       
                       {enquiry.notes && (
                         <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-700">{enquiry.notes}</p>
+                          {(() => {
+                            const notes = enquiry.notes || '';
+                            const sourceMatch = notes.match(/Source: ([^•\n]+)/);
+                            const contactMatch = notes.match(/Contact: ([^\n]+)/);
+                            const mainNotes = notes.replace(/\n\nSource:.*$/, '').trim();
+                            
+                            return (
+                              <div className="space-y-2">
+                                {mainNotes && (
+                                  <p className="text-sm text-gray-700">{mainNotes}</p>
+                                )}
+                                {(sourceMatch || contactMatch) && (
+                                  <div className="flex items-center space-x-4 text-xs text-gray-500 border-t pt-2">
+                                    {sourceMatch && <span>Source: {sourceMatch[1]}</span>}
+                                    {contactMatch && <span>Contact: {contactMatch[1]}</span>}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
