@@ -842,6 +842,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to create a fresh contract for testing
+  app.post('/api/test-create-contract', async (req, res) => {
+    try {
+      console.log('=== CREATING TEST CONTRACT ===');
+      
+      // Create a fresh contract for testing
+      const testContract = {
+        userId: "43963086",
+        enquiryId: 1,
+        contractNumber: `TEST-${Date.now()}`,
+        clientName: "Test Client",
+        clientEmail: "test@example.com",
+        clientPhone: "07123456789",
+        eventDate: new Date("2025-12-01"),
+        eventTime: "7pm",
+        venue: "Test Venue",
+        fee: "500.00",
+        deposit: "100.00",
+        terms: "Test terms and conditions",
+        status: "sent"
+      };
+      
+      const contract = await storage.createContract(testContract);
+      console.log('Test contract created:', contract);
+      
+      res.json({ 
+        message: 'Test contract created successfully', 
+        contractId: contract.id,
+        signingUrl: `https://musobuddy.replit.app/sign-contract/${contract.id}`
+      });
+      
+    } catch (error) {
+      console.error("Error creating test contract:", error);
+      res.status(500).json({ message: "Failed to create test contract" });
+    }
+  });
+
   // Test endpoint to simulate email forwarding
   app.post('/api/test-email-forwarding', async (req, res) => {
     try {
