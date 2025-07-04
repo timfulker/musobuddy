@@ -604,11 +604,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      // Generate PDF and send confirmation emails with attachments
+      // Send confirmation emails immediately (without PDF attachments to avoid timeout)
       try {
         const userSettings = await storage.getUserSettings(contract.userId);
         const { sendEmail } = await import('./sendgrid');
-        const { generateContractPDF } = await import('./pdf-generator');
         
         // Smart email handling - use authenticated domain for sending, Gmail for replies
         const userBusinessEmail = userSettings?.businessEmail;
@@ -623,28 +622,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('=== CONTRACT SIGNING EMAIL DETAILS ===');
         console.log('To:', contract.clientEmail);
         console.log('From:', `${fromName} <${fromEmail}>`);
-        console.log('Subject:', `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`);
+        console.log('Subject:', `Contract ${contract.contractNumber} Successfully Signed`);
         
-        // Generate signed contract PDF
-        const signatureDetails = {
-          signedAt: new Date(),
-          signatureName: signatureName.trim(),
-          clientIpAddress: clientIP
-        };
+        // Send immediate confirmation emails (without PDF to prevent timeout)
+        const signedDate = new Date().toLocaleDateString('en-GB');
+        const signedTime = new Date().toLocaleTimeString('en-GB');
         
-        const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
-        const pdfBase64 = pdfBuffer.toString('base64');
-        
-        // Email to client with PDF attachment
+        // Email to client (immediate confirmation without PDF)
         const clientEmailParams: any = {
           to: contract.clientEmail,
           from: `${fromName} <${fromEmail}>`,
-          subject: `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
+          subject: `Contract ${contract.contractNumber} Successfully Signed ✓`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #4CAF50;">Contract Signed Successfully ✓</h2>
               <p>Dear ${contract.clientName},</p>
-              <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed.</p>
+              <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed on ${signedDate} at ${signedTime}.</p>
               
               <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0; color: #333;">Event Details</h3>
@@ -656,21 +649,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </ul>
               </div>
               
+              <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
+                <p style="margin: 0;"><strong>Signature Details:</strong></p>
+                <p style="margin: 5px 0;">Signed by: ${signatureName.trim()}</p>
+                <p style="margin: 5px 0;">Date & Time: ${signedDate} at ${signedTime}</p>
+              </div>
+              
               <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
-                📎 <strong>Your signed contract is attached as a PDF for your records.</strong>
+                📄 <strong>A PDF copy of your signed contract will be emailed to you within the next few minutes.</strong>
               </p>
               
               <p>We look forward to performing at your event!</p>
               <p>Best regards,<br><strong>${userSettings?.businessName || 'MusoBuddy'}</strong></p>
             </div>
           `,
-          text: `Contract ${contract.contractNumber} has been successfully signed. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Signed contract PDF is attached.`,
-          attachments: [{
-            content: pdfBase64,
-            filename: `Contract-${contract.contractNumber}-Signed.pdf`,
-            type: 'application/pdf',
-            disposition: 'attachment'
-          }]
+          text: `Contract ${contract.contractNumber} signed successfully by ${signatureName.trim()} on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. PDF available for download.`
         };
         
         // Add reply-to if user has Gmail or other external email
@@ -680,12 +673,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         await sendEmail(clientEmailParams);
         
-        // Email to performer (business owner) with PDF attachment
+        // Email to performer (business owner) 
         if (userSettings?.businessEmail) {
           const performerEmailParams: any = {
             to: userSettings.businessEmail,
             from: `${fromName} <${fromEmail}>`,
-            subject: `Contract ${contract.contractNumber} Signed by Client - Copy Attached`,
+            subject: `Contract ${contract.contractNumber} Signed by ${contract.clientName}`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #4CAF50;">Contract Signed! ✓</h2>
@@ -703,31 +696,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
                   <p style="margin: 0;"><strong>Signature Details:</strong></p>
-                  <p style="margin: 5px 0;">Signed by: ${signatureName}</p>
-                  <p style="margin: 5px 0;">Time: ${new Date().toLocaleString('en-GB')}</p>
+                  <p style="margin: 5px 0;">Signed by: ${signatureName.trim()}</p>
+                  <p style="margin: 5px 0;">Date & Time: ${signedDate} at ${signedTime}</p>
                 </div>
                 
                 <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
-                  📎 <strong>The signed contract PDF is attached for your records.</strong>
+                  📄 <strong>A PDF copy of the signed contract will be emailed to you within the next few minutes.</strong>
                 </p>
+                
+                <p>Time to prepare for the performance!</p>
               </div>
             `,
-            text: `Contract ${contract.contractNumber} signed by ${signatureName} on ${new Date().toLocaleString('en-GB')}. Signed contract PDF is attached.`,
-            attachments: [{
-              content: pdfBase64,
-              filename: `Contract-${contract.contractNumber}-Signed.pdf`,
-              type: 'application/pdf',
-              disposition: 'attachment'
-            }]
+            text: `Contract ${contract.contractNumber} signed by ${contract.clientName} on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. PDF will be emailed shortly.`
           };
           
-          // Add reply-to for performer email too
-          if (replyToEmail) {
-            performerEmailData.replyTo = replyToEmail;
-          }
-          
-          await sendEmail(performerEmailData);
+          await sendEmail(performerEmailParams);
         }
+        
+        console.log('=== IMMEDIATE EMAIL CONFIRMATIONS SENT ===');
+        console.log('Both confirmation emails sent successfully');
+        
+        // Background PDF generation and delivery (non-blocking)
+        setImmediate(async () => {
+          try {
+            console.log('=== STARTING BACKGROUND PDF GENERATION ===');
+            const { generateContractPDF } = await import('./pdf-generator');
+            
+            const signatureDetails = {
+              signedAt: new Date(),
+              signatureName: signatureName.trim(),
+              clientIpAddress: clientIP
+            };
+            
+            const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
+            const pdfBase64 = pdfBuffer.toString('base64');
+            
+            console.log('PDF generated successfully, size:', pdfBuffer.length);
+            
+            // Send PDF to client
+            await sendEmail({
+              to: contract.clientEmail,
+              from: `${fromName} <${fromEmail}>`,
+              subject: `Contract ${contract.contractNumber} - Signed PDF Copy`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #4CAF50;">Your Signed Contract PDF</h2>
+                  <p>Dear ${contract.clientName},</p>
+                  <p>As promised, here is your signed contract PDF for your records.</p>
+                  
+                  <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="margin-top: 0; color: #333;">Contract: ${contract.contractNumber}</h3>
+                    <p><strong>Event:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}</p>
+                    <p><strong>Signed by:</strong> ${signatureName.trim()}</p>
+                    <p><strong>Date & Time:</strong> ${signedDate} at ${signedTime}</p>
+                  </div>
+                  
+                  <p>Please keep this PDF for your records.</p>
+                  <p>Best regards,<br><strong>${userSettings?.businessName || 'MusoBuddy'}</strong></p>
+                </div>
+              `,
+              text: `Your signed contract PDF for ${contract.contractNumber}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Signed by ${signatureName.trim()} on ${signedDate} at ${signedTime}.`,
+              attachments: [{
+                content: pdfBase64,
+                filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+                type: 'application/pdf',
+                disposition: 'attachment'
+              }],
+              ...(replyToEmail && { replyTo: replyToEmail })
+            });
+            
+            // Send PDF to performer
+            if (userSettings?.businessEmail) {
+              await sendEmail({
+                to: userSettings.businessEmail,
+                from: `${fromName} <${fromEmail}>`,
+                subject: `Contract ${contract.contractNumber} - Signed PDF Copy`,
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #4CAF50;">Signed Contract PDF</h2>
+                    <p>Here is the signed contract PDF for your records.</p>
+                    
+                    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                      <h3 style="margin-top: 0; color: #333;">Contract: ${contract.contractNumber}</h3>
+                      <p><strong>Client:</strong> ${contract.clientName}</p>
+                      <p><strong>Event:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}</p>
+                      <p><strong>Fee:</strong> £${contract.fee}</p>
+                      <p><strong>Signed by:</strong> ${signatureName.trim()}</p>
+                      <p><strong>Date & Time:</strong> ${signedDate} at ${signedTime}</p>
+                    </div>
+                    
+                    <p>Contract successfully signed and documented!</p>
+                  </div>
+                `,
+                text: `Signed contract PDF for ${contract.contractNumber}. Client: ${contract.clientName}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. Signed by ${signatureName.trim()} on ${signedDate} at ${signedTime}.`,
+                attachments: [{
+                  content: pdfBase64,
+                  filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+                  type: 'application/pdf',
+                  disposition: 'attachment'
+                }]
+              });
+            }
+            
+            console.log('=== BACKGROUND PDF EMAILS SENT SUCCESSFULLY ===');
+            
+          } catch (error) {
+            console.error('Error in background PDF generation:', error);
+          }
+        });
       } catch (emailError) {
         console.error("Error sending confirmation emails:", emailError);
         console.error("Full error details:", emailError);
