@@ -431,7 +431,7 @@ export default function Enquiries() {
                         </div>
                         
                         <div>
-                          <p className="font-medium">Value</p>
+                          <p className="font-medium">Price quoted</p>
                           <p className="flex items-center">
                             <DollarSign className="w-3 h-3 mr-1" />
                             £{enquiry.estimatedValue || "TBC"}
@@ -463,8 +463,17 @@ export default function Enquiries() {
                               const contactMatch = notes.match(/Contact Method: ([^\n]+)/);
                               mainNotes = notes.replace(/\n*--- Contact Details ---[\s\S]*$/, '').trim();
                               
-                              if (sourceMatch && contactMatch) {
-                                metadata = `${sourceMatch[1]} • ${contactMatch[1]}`;
+                              if (contactMatch) {
+                                metadata = `Contact Method - ${contactMatch[1]}`;
+                              }
+                            }
+                            // Check for new "Contact Method - Phone" format
+                            else if (notes.includes('Contact Method -')) {
+                              const contactMatch = notes.match(/Contact Method - ([^\n]+)/);
+                              mainNotes = notes.replace(/\n\nContact Method -.*$/, '').trim();
+                              
+                              if (contactMatch) {
+                                metadata = `Contact Method - ${contactMatch[1]}`;
                               }
                             }
                             // Check for simple "Source:" format without header
@@ -473,8 +482,8 @@ export default function Enquiries() {
                               const contactMatch = notes.match(/Contact: ([^\n]+)/);
                               mainNotes = notes.replace(/\n\nSource:.*$/, '').trim();
                               
-                              if (sourceMatch && contactMatch) {
-                                metadata = `${sourceMatch[1]} • ${contactMatch[1]}`;
+                              if (contactMatch) {
+                                metadata = `Contact Method - ${contactMatch[1]}`;
                               }
                             }
                             // Check for new simple format (just "Email • Phone")

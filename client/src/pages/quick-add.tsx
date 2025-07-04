@@ -20,6 +20,7 @@ const quickAddFormSchema = z.object({
   clientPhone: z.string().optional(),
   eventDate: z.string().min(1, "Event date is required"),
   venue: z.string().optional(),
+  estimatedValue: z.string().optional(),
   notes: z.string().optional(),
   source: z.string().min(1, "Source is required"),
   contactMethod: z.string().min(1, "Contact method is required"),
@@ -39,6 +40,7 @@ export default function QuickAddPage() {
       clientPhone: "",
       eventDate: "",
       venue: "",
+      estimatedValue: "",
       notes: "",
       source: "",
       contactMethod: "",
@@ -54,7 +56,8 @@ export default function QuickAddPage() {
         clientPhone: data.clientPhone || null,
         eventDate: new Date(data.eventDate),
         venue: data.venue || null,
-        notes: data.notes ? `${data.notes}\n\n${data.source} • ${data.contactMethod}` : `${data.source} • ${data.contactMethod}`,
+        estimatedValue: data.estimatedValue ? parseFloat(data.estimatedValue) : null,
+        notes: data.notes ? `${data.notes}\n\nContact Method - ${data.contactMethod}` : `Contact Method - ${data.contactMethod}`,
         status: "new" as const,
       };
       const response = await apiRequest('POST', '/api/enquiries/quick-add', enquiryData);
@@ -237,7 +240,7 @@ export default function QuickAddPage() {
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="eventDate"
@@ -260,6 +263,25 @@ export default function QuickAddPage() {
                         <FormLabel>Venue</FormLabel>
                         <FormControl>
                           <Input placeholder="Enter venue name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="estimatedValue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price Quoted</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="£0" 
+                            step="0.01"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
