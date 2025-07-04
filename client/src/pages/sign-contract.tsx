@@ -57,6 +57,8 @@ export default function SignContract() {
           throw new Error('Contract not found');
         }
         const contractData = await response.json();
+        console.log('Contract data loaded:', contractData);
+        console.log('Contract status:', contractData.status);
         setContract(contractData);
         
         // Get business settings for the contract owner
