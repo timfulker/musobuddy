@@ -53,7 +53,7 @@ export async function handleSendGridWebhook(req: Request, res: Response) {
     // Parse the email content
     const enquiryData = await parseEmailEnquiry(from, subject, text || html || '');
     
-    // Create enquiry in system
+    // Create enquiry in system - assign to main account owner
     const enquiry = await storage.createEnquiry({
       title: enquiryData.title,
       clientName: enquiryData.clientName,
@@ -62,7 +62,7 @@ export async function handleSendGridWebhook(req: Request, res: Response) {
       eventDate: enquiryData.eventDate || new Date(),
       venue: enquiryData.venue || null,
       notes: enquiryData.message,
-      userId: 'system', // System-generated enquiry
+      userId: "43963086", // Main account owner
       status: 'new',
     });
 
@@ -104,7 +104,7 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
     // Parse the email content
     const enquiryData = await parseEmailEnquiry(sender, subject, bodyPlain || bodyHtml || '');
     
-    // Create enquiry in system
+    // Create enquiry in system - assign to main account owner
     const enquiry = await storage.createEnquiry({
       title: enquiryData.title,
       clientName: enquiryData.clientName,
@@ -113,7 +113,7 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
       eventDate: enquiryData.eventDate || new Date(),
       venue: enquiryData.venue || null,
       notes: enquiryData.message,
-      userId: 'system', // System-generated enquiry
+      userId: "43963086", // Main account owner
       status: 'new',
     });
 

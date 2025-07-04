@@ -724,7 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         eventDate: enquiryData.eventDate || new Date(),
         venue: enquiryData.venue || null,
         notes: enquiryData.message,
-        userId: 'system', // System-generated enquiry
+        userId: "43963086", // Main account owner
         status: 'new',
       });
       
