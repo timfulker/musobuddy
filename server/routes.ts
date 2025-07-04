@@ -385,6 +385,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
       const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
       
+      console.log('=== EMAIL DETAILS ===');
+      console.log('To:', contract.clientEmail);
+      console.log('From:', `${fromName} <${fromEmail}>`);
+      console.log('Subject:', `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`);
+      
       const emailSent = await sendEmail({
         to: contract.clientEmail,
         from: `${fromName} <${fromEmail}>`,
