@@ -382,8 +382,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { sendEmail } = await import('./sendgrid');
       
       // Send simple email first (without PDF to isolate the issue)
-      const fromEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
-      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
+      // Force use of authenticated domain instead of Gmail
+      const fromEmail = 'tim@saxweddings.com'; // Use authenticated domain
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'Tim Fulker';
       
       console.log('=== EMAIL DETAILS ===');
       console.log('To:', contract.clientEmail);
