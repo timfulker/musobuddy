@@ -112,6 +112,9 @@ export default function SignContract() {
       console.log('Attempting to sign contract:', contractId);
       console.log('Signature name:', signatureName.trim());
       
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
       const response = await fetch(`/api/contracts/sign/${contractId}`, {
         method: 'POST',
         headers: {
@@ -120,10 +123,17 @@ export default function SignContract() {
         body: JSON.stringify({
           signatureName: signatureName.trim(),
         }),
+        signal: controller.signal
       }).catch(networkError => {
+        clearTimeout(timeoutId);
         console.error('Network error during signing:', networkError);
+        if (networkError.name === 'AbortError') {
+          throw new Error('Request timed out. The contract may have been signed successfully. Please refresh the page to check the status.');
+        }
         throw new Error('Network error: Unable to reach the server. Please check your connection and try again.');
       });
+      
+      clearTimeout(timeoutId);
 
       console.log('Sign response status:', response.status);
       console.log('Sign response ok:', response.ok);
