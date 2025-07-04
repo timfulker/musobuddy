@@ -57,7 +57,7 @@ export default function QuickAddPage() {
         notes: `${data.notes || ''}\n\n--- Contact Details ---\nSource: ${data.source}\nContact Method: ${data.contactMethod}`,
         status: "new" as const,
       };
-      const response = await apiRequest('POST', '/api/enquiries', enquiryData);
+      const response = await apiRequest('POST', '/api/enquiries/quick-add', enquiryData);
       return response.json();
     },
     onSuccess: () => {
