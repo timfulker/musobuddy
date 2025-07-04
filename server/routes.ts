@@ -346,11 +346,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send invoice email
-  app.post('/api/invoices/send-email', async (req: any, res) => {
+  app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
     try {
       console.log('=== INVOICE EMAIL SEND REQUEST ===');
       console.log('Request body:', req.body);
-      const userId = "43963086"; // Temporary hardcoded for testing
+      const userId = req.user.claims.sub;
       const { invoiceId } = req.body;
       
       // Get the invoice details
