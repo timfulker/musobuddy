@@ -52,7 +52,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(enquiry);
     } catch (error) {
       console.error("Error creating enquiry via quick-add:", error);
-      res.status(500).json({ message: "Failed to create enquiry", error: error.message });
+      res.status(500).json({ 
+        message: "Failed to create enquiry", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
@@ -153,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientIpAddress: 'Digital signature'
       } : undefined;
       
-      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      const pdfBuffer = await generateContractPDF(contract, userSettings || null, signatureDetails);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber}.pdf"`);
@@ -189,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientIpAddress: 'Digital signature'
       } : undefined;
       
-      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      const pdfBuffer = await generateContractPDF(contract, userSettings || null, signatureDetails);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber}.pdf"`);
@@ -221,7 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userSettings = await storage.getUserSettings(userId);
       const { generateInvoicePDF } = await import('./pdf-generator');
       
-      const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+      const pdfBuffer = await generateInvoicePDF(invoice, contract || null, userSettings || null);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
@@ -264,7 +267,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
+  app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contractId = parseInt(req.params.id);
+      
+      const success = await storage.deleteContract(contractId, userId);
+      if (!success) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      res.json({ message: "Contract deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting contract:", error);
+      res.status(500).json({ message: "Failed to delete contract" });
+    }
+  });
 
   // Invoice routes
   app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
@@ -1001,7 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Manual email sending failed:', error);
       res.status(500).json({ 
         message: 'Failed to send emails', 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
@@ -1045,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Performer email test failed:', error);
       res.status(500).json({ 
         message: 'Test failed', 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
@@ -1164,11 +1182,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const signatureName = 'Test Signer';
       const clientIP = '127.0.0.1';
       
-      // Update contract status to signed
-      const signedContract = await storage.updateContract(contract.id, {
-        status: 'signed',
+      // Update contract status to signed using the proper signContract method
+      const signedContract = await storage.signContract(contract.id, {
         signatureName: signatureName,
-        clientIpAddress: clientIP,
+        clientIP: clientIP,
         signedAt: new Date()
       });
       
@@ -1193,6 +1210,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           signatureName: signatureName.trim(),
           clientIpAddress: clientIP
         };
+        
+        if (!signedContract) {
+          throw new Error('Failed to update contract status');
+        }
         
         const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
         const pdfBase64 = pdfBuffer.toString('base64');
