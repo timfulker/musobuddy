@@ -622,7 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      // Send immediate response to prevent timeout
+      // Send immediate response to prevent timeout, then trigger emails
       res.json({ 
         message: "Contract signed successfully",
         contract: signedContract,
@@ -630,49 +630,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailStatus: 'processing'
       });
       
-      // Process emails in background using Promise (not setImmediate)
-      Promise.resolve().then(async () => {
+      // Use the proven manual email trigger approach for reliability
+      setTimeout(async () => {
         try {
-          console.log('=== STARTING BACKGROUND EMAIL PROCESSING ===');
+          console.log('=== TRIGGERING CONFIRMED EMAIL PROCESS ===');
+          console.log(`Sending emails for contract ${contractId} signed by ${signatureName.trim()}`);
+          
           const userSettings = await storage.getUserSettings(contract.userId);
           const { sendEmail } = await import('./sendgrid');
           const { generateContractPDF } = await import('./pdf-generator');
           
-          // Smart email handling - use authenticated domain for sending, Gmail for replies
+          // Use same logic as manual trigger endpoint (which works perfectly)
           const userBusinessEmail = userSettings?.businessEmail;
           const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
-          
-          // Always use authenticated domain for FROM to avoid SPF issues
           const fromEmail = 'noreply@musobuddy.com';
-          
-          // If user has Gmail (or other non-authenticated domain), use it as reply-to
           const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
           
-          console.log('=== CONTRACT SIGNING EMAIL PROCESS (BACKGROUND) ===');
-          console.log('To:', contract.clientEmail);
-          console.log('From:', `${fromName} <${fromEmail}>`);
-          console.log('Subject:', `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`);
-          
-          // Generate signed contract PDF with signature details
+          console.log('=== GENERATING SIGNED CONTRACT PDF ===');
           const signatureDetails = {
-            signedAt: new Date(),
+            signedAt: new Date(signedContract.signedAt || new Date()),
             signatureName: signatureName.trim(),
             clientIpAddress: clientIP
           };
           
-          console.log('Generating PDF with signature details...');
           const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
           const pdfBase64 = pdfBuffer.toString('base64');
-          console.log('PDF generated successfully, size:', pdfBuffer.length);
-        
+          console.log('PDF generated, size:', pdfBuffer.length);
+          
           const signedDate = new Date().toLocaleDateString('en-GB');
           const signedTime = new Date().toLocaleTimeString('en-GB');
           
-          // Email to client with PDF attachment
+          // Send to client
           const clientEmailParams: any = {
             to: contract.clientEmail,
             from: `${fromName} <${fromEmail}>`,
-            subject: `✅ Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
+            subject: `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #4CAF50;">Contract Signed Successfully ✓</h2>
@@ -712,16 +704,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }]
           };
           
-          // Add reply-to if user has Gmail or other external email
           if (replyToEmail) {
             clientEmailParams.replyTo = replyToEmail;
           }
           
-          console.log('Sending email to client...');
+          console.log('=== SENDING CLIENT EMAIL ===');
           await sendEmail(clientEmailParams);
-          console.log('Client email sent successfully');
-        
-          // Email to performer (business owner) with PDF attachment
+          console.log('✓ Client email sent successfully');
+          
+          // Send to performer
           if (userSettings?.businessEmail) {
             const performerEmailParams: any = {
               to: userSettings.businessEmail,
@@ -765,21 +756,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }]
             };
             
-            console.log('Sending email to performer...');
+            console.log('=== SENDING PERFORMER EMAIL ===');
             await sendEmail(performerEmailParams);
-            console.log('Performer email sent successfully');
+            console.log('✓ Performer email sent successfully');
           }
           
-          console.log('=== BACKGROUND EMAIL PROCESSING COMPLETED ===');
-          console.log('Both confirmation emails sent successfully with PDF attachments');
+          console.log('=== EMAIL SENDING PROCESS COMPLETED ===');
+          console.log('✓ Both confirmation emails sent with PDF attachments');
           
-        } catch (emailError) {
-          console.error('Error in background email processing:', emailError);
-          // Contract is already signed, emails are just notifications
+        } catch (error) {
+          console.error('Email sending failed:', error instanceof Error ? error.message : String(error));
         }
-      }).catch(error => {
-        console.error('Background email processing failed:', error);
-      });
+      }, 100); // Very short delay to ensure response is sent first
       
     } catch (error) {
       console.error("Error signing contract:", error);
