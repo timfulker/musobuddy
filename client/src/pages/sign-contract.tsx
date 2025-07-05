@@ -200,7 +200,7 @@ export default function SignContract() {
     const handleDownloadPDF = async () => {
       try {
         console.log('Downloading PDF for contract:', contractId);
-        const response = await fetch(`/api/public/contracts/${contractId}/pdf`);
+        const response = await fetch(`/api/contracts/public/${contractId}/pdf`);
         console.log('PDF response status:', response.status);
         
         if (!response.ok) {
