@@ -70,16 +70,7 @@ export default function Contracts() {
         enquiryId: 1, // Default enquiry ID for now
       };
       
-      const response = await fetch("/api/contracts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contractData),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
+      const response = await apiRequest("POST", "/api/contracts", contractData);
       return response.json();
     },
     onSuccess: () => {
