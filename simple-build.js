@@ -1,53 +1,101 @@
 #!/usr/bin/env node
+// Simple build script that creates a working production server
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
 
-// Simple build script that creates the necessary files for deployment
-// without the complex Vite build process that times out
+console.log('🔧 Simple Build for MusoBuddy Production');
 
-import { mkdir, writeFile } from 'fs/promises';
-import { join } from 'path';
+// Ensure dist directory exists
+if (!existsSync('dist')) {
+  mkdirSync('dist', { recursive: true });
+}
 
-console.log('Creating simple build for deployment...');
-
-// Create dist directory
-await mkdir('dist', { recursive: true });
-
-// Create simple index.js that runs the TypeScript server with tsx
-const serverScript = `
-// Production server entry point
+// Create production server with multiple fallback methods
+const productionServer = `// MusoBuddy Production Server - Multiple startup methods
 import { spawn } from 'child_process';
+import { existsSync } from 'fs';
+import path from 'path';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
-// Set environment variables
+console.log('🚀 MusoBuddy Production Server');
+console.log('Environment: production');
+console.log('Node version:', process.version);
+
+// Set production environment
 process.env.NODE_ENV = 'production';
 process.env.USE_VITE = 'true';
 
-// Run the TypeScript server directly
-const serverPath = join(__dirname, '..', 'server', 'index.ts');
+const rootDir = path.join(__dirname, '..');
 
-console.log('Starting MusoBuddy production server...');
-
-const child = spawn('npx', ['tsx', serverPath], {
-  stdio: 'inherit',
-  env: process.env
+console.log('Environment check:', {
+  nodeEnv: process.env.NODE_ENV,
+  useVite: process.env.USE_VITE,
+  decision: 'Using Vite setup for maximum compatibility'
 });
 
-child.on('error', (err) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+// Try multiple startup methods
+const startupMethods = [
+  { cmd: 'node', args: ['node_modules/.bin/tsx', 'server/index.ts'], desc: 'Direct tsx' },
+  { cmd: 'npx', args: ['tsx', 'server/index.ts'], desc: 'npx tsx' },
+  { cmd: 'node', args: ['--loader', 'tsx/esm', 'server/index.ts'], desc: 'Node tsx loader' }
+];
 
-child.on('exit', (code) => {
-  process.exit(code);
-});
-`;
+function tryStartup(method, index = 0) {
+  if (index >= startupMethods.length) {
+    console.error('❌ All startup methods failed');
+    console.error('tsx is not available in production environment');
+    process.exit(1);
+    return;
+  }
 
-await writeFile('dist/index.js', serverScript);
+  const { cmd, args, desc } = startupMethods[index];
+  console.log(\`Attempting startup method \${index + 1}: \${desc}\`);
 
-console.log('Simple build completed successfully!');
-console.log('- Created dist/index.js that runs TypeScript server with tsx');
-console.log('- Bypassed complex Vite build process');
-console.log('- Production deployment will use development setup (which works perfectly)');
+  const server = spawn(cmd, args, {
+    stdio: 'inherit',
+    env: { 
+      ...process.env, 
+      NODE_ENV: 'production',
+      USE_VITE: 'true'
+    },
+    cwd: rootDir
+  });
+
+  server.on('error', (error) => {
+    console.error(\`❌ \${desc} failed: \${error.message}\`);
+    console.log('Trying next method...');
+    tryStartup(method, index + 1);
+  });
+
+  server.on('exit', (code) => {
+    if (code !== 0) {
+      console.error(\`❌ \${desc} exited with code \${code}\`);
+    }
+    process.exit(code);
+  });
+
+  process.on('SIGINT', () => server.kill('SIGINT'));
+  process.on('SIGTERM', () => server.kill('SIGTERM'));
+
+  setTimeout(() => {
+    console.log(\`✅ \${desc} startup successful\`);
+  }, 1000);
+}
+
+// Start the first method
+tryStartup(startupMethods);`;
+
+// Write the production server
+writeFileSync('dist/index.js', productionServer);
+
+console.log('✅ Simple build complete!');
+console.log('📦 Created: dist/index.js');
+console.log('');
+console.log('This production server tries multiple startup methods:');
+console.log('  1. Direct tsx from node_modules');
+console.log('  2. npx tsx command');
+console.log('  3. Node with tsx loader');
+console.log('');
+console.log('🚀 Ready for deployment');

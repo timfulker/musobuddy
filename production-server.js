@@ -1,43 +1,39 @@
-// Emergency production server that bypasses all build issues
-// This file uses a simple approach to start the server with tsx
+// MusoBuddy Production Server - Direct TypeScript Import
+import { register } from 'tsx/esm';
+import { pathToFileURL } from 'url';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const { spawn } = require('child_process');
-const path = require('path');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-console.log('🚀 MusoBuddy Emergency Production Server');
-console.log('Bypassing build issues by running TypeScript directly with tsx');
+console.log('🚀 MusoBuddy Production Server Starting...');
+console.log('Environment: production');
 
-// Set environment to production
+// Register tsx to handle TypeScript imports
+register();
+
+// Set production environment
 process.env.NODE_ENV = 'production';
+process.env.USE_VITE = 'true';
 
-// Start the server using tsx directly
-const server = spawn('node', ['node_modules/.bin/tsx', 'server/index.ts'], {
-  stdio: 'inherit',
-  env: {
-    ...process.env,
-    NODE_ENV: 'production'
-  }
+console.log('Environment check:', {
+  nodeEnv: process.env.NODE_ENV,
+  useVite: process.env.USE_VITE,
+  decision: 'Using Vite setup for maximum compatibility'
 });
 
-server.on('error', (error) => {
-  console.error('❌ Failed to start server:', error);
+// Import and run the TypeScript server directly
+const serverPath = path.join(__dirname, 'server', 'index.ts');
+const serverUrl = pathToFileURL(serverPath).href;
+
+console.log('Loading server from:', serverPath);
+
+try {
+  // Dynamically import the TypeScript server
+  await import(serverUrl);
+  console.log('✅ Production server loaded successfully');
+} catch (error) {
+  console.error('❌ Failed to load production server:', error);
   process.exit(1);
-});
-
-server.on('exit', (code) => {
-  console.log(`Server exited with code ${code}`);
-  process.exit(code);
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('Shutting down gracefully...');
-  server.kill('SIGINT');
-});
-
-process.on('SIGTERM', () => {
-  console.log('Shutting down gracefully...');
-  server.kill('SIGTERM');
-});
-
-console.log('✅ Production server started successfully');
+}
