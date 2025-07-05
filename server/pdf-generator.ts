@@ -10,9 +10,39 @@ export async function generateContractPDF(
     clientIpAddress?: string;
   }
 ): Promise<Buffer> {
+  // Try to detect the correct Chromium path for both development and production
+  let executablePath;
+  try {
+    // Check if development path exists
+    const devPath = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+    const fs = await import('fs');
+    if (fs.existsSync(devPath)) {
+      executablePath = devPath;
+    } else {
+      // Try to find chromium in common locations
+      const possiblePaths = [
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable'
+      ];
+      
+      for (const path of possiblePaths) {
+        if (fs.existsSync(path)) {
+          executablePath = path;
+          break;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking Chromium paths:', error);
+  }
+  
+  console.log('Using Chromium executable:', executablePath || 'default');
+  
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    executablePath: executablePath,
     args: [
       '--no-sandbox', 
       '--disable-setuid-sandbox',
