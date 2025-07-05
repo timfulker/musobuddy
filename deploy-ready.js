@@ -1,50 +1,92 @@
 #!/usr/bin/env node
-// Clean deployment-ready startup script
+// MusoBuddy - Complete Deployment Ready Script
 import { spawn } from 'child_process';
 import { existsSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-console.log('🚀 MusoBuddy Clean Deployment');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.join(__dirname);
+
+console.log('🚀 MusoBuddy - Production Deployment Ready');
 console.log('Environment: production');
+console.log('Current directory:', process.cwd());
 
-// Set environment for production with Vite compatibility
+// Set production environment with Vite compatibility
 process.env.NODE_ENV = 'production';
 process.env.USE_VITE = 'true';
 
-// Check for tsx
-const tsxExists = existsSync('./node_modules/.bin/tsx');
-console.log('tsx available:', tsxExists);
+// Change to root directory
+process.chdir(rootDir);
 
-if (!tsxExists) {
-  console.error('❌ tsx not found - deployment requires tsx');
-  process.exit(1);
+// Check for tsx
+const tsxPath = path.join(rootDir, 'node_modules', '.bin', 'tsx');
+console.log('tsx path:', tsxPath);
+console.log('tsx exists:', existsSync(tsxPath));
+
+if (!existsSync(tsxPath)) {
+  console.error('❌ tsx not found - installing dependencies...');
+  
+  // Try to install dependencies if tsx is missing
+  const install = spawn('npm', ['install'], {
+    stdio: 'inherit',
+    cwd: rootDir
+  });
+  
+  install.on('exit', (code) => {
+    if (code === 0) {
+      console.log('✅ Dependencies installed successfully');
+      startServer();
+    } else {
+      console.error('❌ Failed to install dependencies');
+      process.exit(1);
+    }
+  });
+} else {
+  startServer();
 }
 
-// Start server with tsx directly
-const server = spawn('./node_modules/.bin/tsx', ['server/index.ts'], {
-  stdio: 'inherit',
-  env: {
-    ...process.env,
-    NODE_ENV: 'production',
-    USE_VITE: 'true'
-  }
-});
-
-server.on('error', (error) => {
-  console.error('❌ Server startup failed:', error.message);
-  process.exit(1);
-});
-
-server.on('exit', (code) => {
-  console.log(`Server exited with code ${code}`);
-  process.exit(code || 0);
-});
-
-// Handle shutdown
-['SIGINT', 'SIGTERM'].forEach(signal => {
-  process.on(signal, () => {
-    console.log(`Received ${signal}, shutting down...`);
-    server.kill(signal);
+function startServer() {
+  console.log('Starting production server with tsx...');
+  console.log('Server configuration:');
+  console.log('- Host: 0.0.0.0');
+  console.log('- Port: 5000');
+  console.log('- Environment: production');
+  console.log('- Vite compatibility: enabled');
+  
+  // Start server with tsx directly - same as development
+  const server = spawn('node', [tsxPath, 'server/index.ts'], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
+      USE_VITE: 'true',
+      HOST: '0.0.0.0',
+      PORT: '5000'
+    },
+    cwd: rootDir
   });
-});
 
-console.log('✅ Clean deployment server started');
+  server.on('error', (error) => {
+    console.error('❌ Production server startup failed:', error.message);
+    process.exit(1);
+  });
+
+  server.on('exit', (code) => {
+    if (code && code !== 0) {
+      console.error(`❌ Production server exited with code ${code}`);
+    }
+    process.exit(code || 0);
+  });
+
+  // Handle shutdown gracefully
+  ['SIGINT', 'SIGTERM'].forEach(signal => {
+    process.on(signal, () => {
+      console.log(`Received ${signal}, shutting down gracefully...`);
+      server.kill(signal);
+    });
+  });
+
+  console.log('✅ Production server startup initiated');
+}
