@@ -537,7 +537,7 @@ ${contract.terms}
           <h4>Performer</h4>
           <div class="signature-box signed-box">
             <p><strong>Signed by:</strong> ${businessName}</p>
-            <p><strong>Date:</strong> ${new Date(contract.createdAt).toLocaleDateString('en-GB')}</p>
+            <p><strong>Date:</strong> ${contract.createdAt ? new Date(contract.createdAt.toString()).toLocaleDateString('en-GB') : 'Unknown'}</p>
             <p><strong>Status:</strong> Agreed by sending contract</p>
           </div>
         </div>

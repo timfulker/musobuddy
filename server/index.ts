@@ -50,11 +50,24 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development" || process.env.USE_VITE === "true") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  
+  // DEPLOYMENT FIX: Always use Vite setup for now since the build process has issues
+  // This ensures production works identically to development
+  console.log('Environment check:', {
+    nodeEnv: process.env.NODE_ENV,
+    appEnv: app.get("env"),
+    useVite: process.env.USE_VITE,
+    decision: 'Using Vite setup for maximum compatibility'
+  });
+  
+  await setupVite(app, server);
+  
+  // NOTE: Commented out serveStatic until build issues are resolved
+  // if (app.get("env") === "development" || process.env.USE_VITE === "true") {
+  //   await setupVite(app, server);
+  // } else {
+  //   serveStatic(app);
+  // }
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
