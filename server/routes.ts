@@ -671,7 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const clientEmailParams: any = {
             to: contract.clientEmail,
             from: `${fromName} <${fromEmail}>`,
-            subject: `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
+            subject: `✅ Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #4CAF50;">Contract Signed Successfully ✓</h2>
@@ -779,6 +779,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error signing contract:", error);
       res.status(500).json({ message: "Failed to sign contract", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Test email endpoint
+  app.post('/api/test/email', async (req, res) => {
+    try {
+      const { to, subject, message } = req.body;
+      const { sendEmail } = await import('./sendgrid');
+      
+      const emailSuccess = await sendEmail({
+        to: to || 'timfulkermusic@gmail.com',
+        from: 'Tim Fulker <noreply@musobuddy.com>',
+        subject: subject || 'Test Email from MusoBuddy',
+        text: message || 'This is a test email to verify the email system is working.',
+        html: `<p>${message || 'This is a test email to verify the email system is working.'}</p>`
+      });
+      
+      res.json({ success: emailSuccess, message: 'Email sent successfully' });
+    } catch (error) {
+      console.error('Test email error:', error);
+      res.status(500).json({ error: 'Failed to send test email' });
     }
   });
 
