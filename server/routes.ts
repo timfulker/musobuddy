@@ -604,9 +604,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      // Generate PDF and send confirmation emails with attachments (immediate process)
-      console.log('=== STARTING EMAIL PROCESS IMMEDIATELY ===');
-      try {
+      // Send immediate response to prevent timeout
+      res.json({ 
+        message: "Contract signed successfully",
+        contract: signedContract 
+      });
+      
+      // Process emails in background without blocking response
+      setImmediate(async () => {
+        try {
+          console.log('=== STARTING BACKGROUND EMAIL PROCESS ===');
           const userSettings = await storage.getUserSettings(contract.userId);
           const { sendEmail } = await import('./sendgrid');
           const { generateContractPDF } = await import('./pdf-generator');
@@ -741,18 +748,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log('=== EMAIL SENDING COMPLETED ===');
           console.log('Both confirmation emails sent successfully with PDF attachments');
+          console.log('=== BACKGROUND EMAIL PROCESS COMPLETED ===');
           
-      } catch (error) {
-        console.error('Error in email processing:', error);
-      }
-      
-      // Send response immediately to prevent timeout
-      res.json({ 
-        message: "Contract signed successfully",
-        contract: signedContract 
+        } catch (error) {
+          console.error('Error in background email processing:', error);
+        }
       });
-      
-      // Continue email processing in background after response is sent
       
     } catch (error) {
       console.error("Error signing contract:", error);
