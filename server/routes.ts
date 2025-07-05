@@ -622,7 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      // Send immediate response to prevent timeout, then trigger emails
+      // Send immediate response to prevent timeout
       res.json({ 
         message: "Contract signed successfully",
         contract: signedContract,
@@ -630,17 +630,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailStatus: 'processing'
       });
       
-      // Use the proven manual email trigger approach for reliability
-      setTimeout(async () => {
+      // Send response immediately, then process emails
+      res.on('finish', async () => {
         try {
-          console.log('=== TRIGGERING CONFIRMED EMAIL PROCESS ===');
-          console.log(`Sending emails for contract ${contractId} signed by ${signatureName.trim()}`);
+          console.log('=== RESPONSE SENT - STARTING EMAIL PROCESSING ===');
+          console.log(`Processing emails for contract ${contractId} signed by ${signatureName.trim()}`);
           
           const userSettings = await storage.getUserSettings(contract.userId);
           const { sendEmail } = await import('./sendgrid');
           const { generateContractPDF } = await import('./pdf-generator');
           
-          // Use same logic as manual trigger endpoint (which works perfectly)
           const userBusinessEmail = userSettings?.businessEmail;
           const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
           const fromEmail = 'noreply@musobuddy.com';
@@ -761,13 +760,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('✓ Performer email sent successfully');
           }
           
-          console.log('=== EMAIL SENDING PROCESS COMPLETED ===');
+          console.log('=== EMAIL PROCESSING COMPLETED ===');
           console.log('✓ Both confirmation emails sent with PDF attachments');
           
         } catch (error) {
-          console.error('Email sending failed:', error instanceof Error ? error.message : String(error));
+          console.error('Email processing failed:', error instanceof Error ? error.message : String(error));
         }
-      }, 100); // Very short delay to ensure response is sent first
+      });
       
     } catch (error) {
       console.error("Error signing contract:", error);
