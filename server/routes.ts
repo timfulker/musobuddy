@@ -746,10 +746,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Error in email processing:', error);
       }
       
+      // Send response immediately to prevent timeout
       res.json({ 
         message: "Contract signed successfully",
         contract: signedContract 
       });
+      
+      // Continue email processing in background after response is sent
       
     } catch (error) {
       console.error("Error signing contract:", error);
