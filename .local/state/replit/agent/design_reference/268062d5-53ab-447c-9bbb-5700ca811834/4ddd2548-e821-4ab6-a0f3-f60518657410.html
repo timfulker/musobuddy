@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusoBuddy - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'sans': ['Inter', 'system-ui', 'sans-serif'],
+                },
+                colors: {
+                    primary: {
+                        50: '#faf5ff',
+                        500: '#8b5cf6',
+                        600: '#7c3aed',
+                        700: '#6d28d9',
+                        900: '#4c1d95'
+                    },
+                    accent: {
+                        500: '#f59e0b',
+                        600: '#d97706'
+                    }
+                }
+            }
+        }
+    };
+    </script>
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar-hidden {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Mobile Menu Toggle -->
+    <div class="md:hidden fixed top-4 left-4 z-50">
+        <button id="mobile-menu-toggle" class="bg-white p-2 rounded-lg shadow-lg">
+            <i class="fas fa-bars text-gray-600"></i>
+        </button>
+    </div>
+
+    <!-- @COMPONENT: Sidebar [Navigation menu with links and user profile] -->
+    <div id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white shadow-xl z-40 sidebar-transition md:translate-x-0 sidebar-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-music text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">MusoBuddy</h1>
+                    <p class="text-sm text-gray-500">Admin made easy</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="p-4 space-y-2">
+            <a href="#" class="flex items-center space-x-3 px-4 py-3 bg-primary-50 text-primary-700 rounded-lg font-medium">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                <i class="fas fa-inbox"></i>
+                <span>Enquiries</span>
+                <span class="ml-auto bg-accent-500 text-white text-xs px-2 py-1 rounded-full">12</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                <i class="fas fa-file-contract"></i>
+                <span>Contracts</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Invoices</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendar</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                <i class="fas fa-shield-alt"></i>
+                <span>Compliance</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analytics</span>
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+            <div class="flex items-center space-x-3">
+                <!-- Professional headshot of a musician with guitar -->
+                <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&h=150" alt="User profile" class="w-10 h-10 rounded-full object-cover" data-bind="user.profileImage">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900" data-bind="user.name">Sarah Johnson</p>
+                    <p class="text-xs text-gray-500" data-bind="user.role">Wedding Saxophonist</p>
+                </div>
+                <button class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: Sidebar -->
+
+    <!-- Main Content -->
+    <div class="md:ml-64 min-h-screen">
+        <!-- @COMPONENT: Header [Top navigation with search and notifications] -->
+        <header class="bg-white border-b border-gray-200 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                    <div class="hidden md:flex items-center space-x-2 text-sm text-gray-500">
+                        <span>Welcome back, <span class="font-medium text-gray-900" data-bind="user.firstName">Sarah</span></span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <div class="hidden md:block relative">
+                        <input type="text" placeholder="Search enquiries..." class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <button class="relative p-2 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    
+                    <!-- Quick Actions -->
+                    <button class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                        <i class="fas fa-plus mr-2"></i>
+                        New Enquiry
+                    </button>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <main class="p-6 space-y-6">
+            <!-- @COMPONENT: StatsCards [Overview metrics cards] -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">This Month</p>
+                            <p class="text-3xl font-bold text-gray-900" data-bind="stats.monthlyRevenue">£3,240</p>
+                            <p class="text-sm text-green-600 mt-1">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                12% vs last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-pound-sign text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Active Bookings</p>
+                            <p class="text-3xl font-bold text-gray-900" data-bind="stats.activeBookings">18</p>
+                            <p class="text-sm text-blue-600 mt-1">
+                                <i class="fas fa-calendar mr-1"></i>
+                                Next: Tomorrow
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Pending Invoices</p>
+                            <p class="text-3xl font-bold text-gray-900" data-bind="stats.pendingInvoices">£1,820</p>
+                            <p class="text-sm text-orange-600 mt-1">
+                                <i class="fas fa-clock mr-1"></i>
+                                5 overdue
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-invoice text-orange-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Conversion Rate</p>
+                            <p class="text-3xl font-bold text-gray-900" data-bind="stats.conversionRate">73%</p>
+                            <p class="text-sm text-green-600 mt-1">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                Above target (70%)
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: StatsCards -->
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <!-- @COMPONENT: KanbanBoard [Main enquiry management board] -->
+                <div class="xl:col-span-2">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Enquiry Pipeline</h3>
+                                <div class="flex items-center space-x-2">
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-filter"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 overflow-x-auto">
+                            <div class="flex space-x-6 min-w-max">
+                                <!-- New Enquiries Column -->
+                                <div class="w-80">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="font-medium text-gray-900">New Enquiries</h4>
+                                        <span class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">8</span>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <!-- @MAP: newEnquiries.map(enquiry => ( -->
+                                        <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300 hover:shadow-md transition-shadow cursor-pointer" data-mock="true">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <h5 class="font-medium text-gray-900">Summer Wedding - June 15th</h5>
+                                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">NEW</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-2">Sarah & James - Countryside Venue</p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                                <span><i class="fas fa-pound-sign mr-1"></i>£450</span>
+                                                <span><i class="fas fa-clock mr-1"></i>2 hours ago</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300 hover:shadow-md transition-shadow cursor-pointer" data-mock="true">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <h5 class="font-medium text-gray-900">Corporate Event - May 22nd</h5>
+                                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">NEW</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-2">Tech Company Launch Event</p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                                <span><i class="fas fa-pound-sign mr-1"></i>£650</span>
+                                                <span><i class="fas fa-clock mr-1"></i>5 hours ago</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300 hover:shadow-md transition-shadow cursor-pointer" data-mock="true">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <h5 class="font-medium text-gray-900">Birthday Party - April 8th</h5>
+                                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">NEW</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-2">50th Birthday Celebration</p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                                <span><i class="fas fa-pound-sign mr-1"></i>£300</span>
+                                                <span><i class="fas fa-clock mr-1"></i>1 day ago</span>
+                                            </div>
+                                        </div>
+                                        <!-- @END_MAP )) -->
+                                    </div>
+                                </div>
+
+                                <!-- Qualified Column -->
+                                <div class="w-80">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="font-medium text-gray-900">Qualified</h4>
+                                        <span class="bg-blue-100 text-blue-600 text-sm px-2 py-1 rounded-full">5</span>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400 hover:shadow-md transition-shadow cursor-pointer" data-mock="true">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <h5 class="font-medium text-gray-900">Anniversary Dinner - March 25th</h5>
+                                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">QUALIFIED</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-2">25th Anniversary - Romantic Setting</p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                                <span><i class="fas fa-pound-sign mr-1"></i>£380</span>
+                                                <span><i class="fas fa-clock mr-1"></i>3 days ago</span>
+                                            </div>
+                                            <div class="mt-2 flex items-center text-xs text-blue-600">
+                                                <i class="fas fa-user mr-1"></i>
+                                                Follow-up scheduled for tomorrow
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400 hover:shadow-md transition-shadow cursor-pointer" data-mock="true">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <h5 class="font-medium text-gray-900">Graduation Party - July 10th</h5>
+                                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">QUALIFIED</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-2">Medical School Graduation</p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                                <span><i class="fas fa-pound-sign mr-1"></i>£420</span>
+                                                <span><i class="fas fa-clock mr-1"></i>1 week ago</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Contract Sent Column -->
+                                <div class="w-80">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="font-medium text-gray-900">Contract Sent</h4>
+                                        <span class="bg-purple-100 text-purple-600 text-sm px-2 py-1 rounded-full">3</span>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-400 hover:shadow-md transition-shadow cursor-pointer" data-mock="true">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <h5 class="font-medium text-gray-900">Charity Gala - April 15th</h5>
+                                                <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">PENDING</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-2">Children's Hospital Fundraiser</p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                                <span><i class="fas fa-pound-sign mr-1"></i>£750</span>
+                                                <span><i class="fas fa-clock mr-1"></i>2 days ago</span>
+                                            </div>
+                                            <div class="mt-2 flex items-center text-xs text-purple-600">
+                                                <i class="fas fa-file-contract mr-1"></i>
+                                                Contract sent, awaiting signature
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Confirmed Column -->
+                                <div class="w-80">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="font-medium text-gray-900">Confirmed</h4>
+                                        <span class="bg-green-100 text-green-600 text-sm px-2 py-1 rounded-full">12</span>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-400 hover:shadow-md transition-shadow cursor-pointer" data-mock="true">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <h5 class="font-medium text-gray-900">Wedding - Tomorrow</h5>
+                                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">CONFIRMED</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-2">Emma & David - Garden Venue</p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                                <span><i class="fas fa-pound-sign mr-1"></i>£500</span>
+                                                <span><i class="fas fa-map-marker-alt mr-1"></i>Kew Gardens</span>
+                                            </div>
+                                            <div class="mt-2 flex items-center text-xs text-green-600">
+                                                <i class="fas fa-check-circle mr-1"></i>
+                                                All documents signed, ready to perform
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-400 hover:shadow-md transition-shadow cursor-pointer" data-mock="true">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <h5 class="font-medium text-gray-900">Corporate Event - Next Week</h5>
+                                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">CONFIRMED</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-2">Annual Awards Ceremony</p>
+                                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                                <span><i class="fas fa-pound-sign mr-1"></i>£850</span>
+                                                <span><i class="fas fa-map-marker-alt mr-1"></i>The Shard</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: KanbanBoard -->
+
+                <!-- Right Sidebar -->
+                <div class="space-y-6">
+                    <!-- @COMPONENT: CalendarWidget [Mini calendar showing upcoming gigs] -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Upcoming Gigs</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                                <div class="text-center">
+                                    <div class="text-xs font-medium text-green-600">MAR</div>
+                                    <div class="text-lg font-bold text-green-900">23</div>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-900">Emma & David's Wedding</h4>
+                                    <p class="text-sm text-gray-600">Kew Gardens • 3:00 PM</p>
+                                    <p class="text-xs text-green-600">£500 • Confirmed</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                <div class="text-center">
+                                    <div class="text-xs font-medium text-blue-600">MAR</div>
+                                    <div class="text-lg font-bold text-blue-900">28</div>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-900">Corporate Awards</h4>
+                                    <p class="text-sm text-gray-600">The Shard • 7:00 PM</p>
+                                    <p class="text-xs text-blue-600">£850 • Confirmed</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
+                                <div class="text-center">
+                                    <div class="text-xs font-medium text-purple-600">APR</div>
+                                    <div class="text-lg font-bold text-purple-900">05</div>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-gray-900">Birthday Celebration</h4>
+                                    <p class="text-sm text-gray-600">Private Residence • 6:00 PM</p>
+                                    <p class="text-xs text-purple-600">£300 • Pending Contract</p>
+                                </div>
+                            </div>
+
+                            <button class="w-full text-center py-2 text-primary-600 hover:text-primary-700 font-medium text-sm">
+                                View Full Calendar <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: CalendarWidget -->
+
+                    <!-- @COMPONENT: QuickActions [Action buttons for common tasks] -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            <button class="w-full flex items-center space-x-3 p-3 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors">
+                                <i class="fas fa-plus"></i>
+                                <span class="font-medium">New Enquiry</span>
+                            </button>
+                            <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-file-contract"></i>
+                                <span class="font-medium">Generate Contract</span>
+                            </button>
+                            <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-file-invoice"></i>
+                                <span class="font-medium">Create Invoice</span>
+                            </button>
+                            <button class="w-full flex items-center space-x-3 p-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-calendar-plus"></i>
+                                <span class="font-medium">Block Calendar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: QuickActions -->
+
+                    <!-- @COMPONENT: ComplianceAlerts [Compliance document status] -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Compliance Status</h3>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-shield-alt text-green-600"></i>
+                                    <span class="font-medium text-gray-900">Public Liability</span>
+                                </div>
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Valid</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-plug text-orange-600"></i>
+                                    <span class="font-medium text-gray-900">PAT Testing</span>
+                                </div>
+                                <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">30 days</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-music text-green-600"></i>
+                                    <span class="font-medium text-gray-900">Music License</span>
+                                </div>
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Valid</span>
+                            </div>
+
+                            <button class="w-full text-center py-2 text-primary-600 hover:text-primary-700 font-medium text-sm">
+                                Manage Documents <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: ComplianceAlerts -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-40">
+        <div class="flex justify-around">
+            <button class="flex flex-col items-center space-y-1 py-2 text-primary-600">
+                <i class="fas fa-home text-xl"></i>
+                <span class="text-xs font-medium">Dashboard</span>
+            </button>
+            <button class="flex flex-col items-center space-y-1 py-2 text-gray-400">
+                <i class="fas fa-inbox text-xl"></i>
+                <span class="text-xs">Enquiries</span>
+            </button>
+            <button class="flex flex-col items-center space-y-1 py-2 text-gray-400">
+                <i class="fas fa-calendar text-xl"></i>
+                <span class="text-xs">Calendar</span>
+            </button>
+            <button class="flex flex-col items-center space-y-1 py-2 text-gray-400">
+                <i class="fas fa-file-invoice text-xl"></i>
+                <span class="text-xs">Invoices</span>
+            </button>
+            <button class="flex flex-col items-center space-y-1 py-2 text-gray-400">
+                <i class="fas fa-user text-xl"></i>
+                <span class="text-xs">Profile</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Mobile menu toggle functionality
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            
+            mobileMenuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('sidebar-hidden');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth < 768) {
+                    if (!sidebar.contains(event.target) && !mobileMenuToggle.contains(event.target)) {
+                        sidebar.classList.add('sidebar-hidden');
+                    }
+                }
+            });
+
+            // TODO: Implement drag and drop functionality for Kanban cards
+            // TODO: Implement real-time notifications
+            // TODO: Implement calendar integration
+            // TODO: Implement search functionality
+            // TODO: Add form validation for new enquiries
+            // TODO: Implement PDF generation for contracts and invoices
+            // TODO: Add payment status tracking
+            // TODO: Implement automated reminder system
+        })();
+    </script>
+</body>
+</html>

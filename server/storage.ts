@@ -43,6 +43,7 @@ export interface IStorage {
   createContract(contract: InsertContract): Promise<Contract>;
   updateContract(id: number, contract: Partial<InsertContract>, userId: string): Promise<Contract | undefined>;
   signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date }): Promise<Contract | undefined>;
+  deleteContract(id: number, userId: string): Promise<boolean>;
   
   // Invoice operations
   getInvoices(userId: string): Promise<Invoice[]>;
@@ -136,7 +137,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(enquiries)
       .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // Contract operations
@@ -187,11 +188,19 @@ export class DatabaseStorage implements IStorage {
       .set({
         status: 'signed',
         signedAt: signatureData.signedAt,
+        signatureName: signatureData.signatureName,
         updatedAt: new Date()
       })
       .where(eq(contracts.id, id))
       .returning();
     return signedContract;
+  }
+
+  async deleteContract(id: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(contracts)
+      .where(and(eq(contracts.id, id), eq(contracts.userId, userId)));
+    return (result.rowCount || 0) > 0;
   }
 
   // Invoice operations
