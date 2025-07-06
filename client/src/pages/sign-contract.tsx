@@ -171,29 +171,11 @@ export default function SignContract() {
   }
 
   if (contract.status === 'signed') {
-    const handleDownloadPDF = async () => {
+    const handleDownloadPDF = () => {
       try {
-        console.log('Downloading PDF for contract:', contractId);
-        const response = await fetch(`/api/contracts/public/${contractId}/pdf`);
-        console.log('PDF response status:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('PDF download error:', errorText);
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const blob = await response.blob();
-        console.log('PDF blob size:', blob.size);
-        
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Contract-${contract.contractNumber}-Signed.pdf`;
-        document.body.appendChild(a); // Ensure element is in DOM
-        a.click();
-        document.body.removeChild(a); // Clean up
-        window.URL.revokeObjectURL(url);
+        const downloadUrl = `/api/contracts/public/${contractId}/pdf`;
+        // Simple and reliable: open PDF in new tab for viewing/download
+        window.open(downloadUrl, '_blank');
         
         toast({
           title: "Success",
