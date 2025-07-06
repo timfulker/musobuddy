@@ -630,10 +630,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailStatus: 'processing'
       });
       
-      // Process emails after response using setImmediate - direct processing
-      setImmediate(async () => {
+      // Process emails after response is sent to prevent browser timeouts
+      res.on('finish', async () => {
         try {
-          console.log('=== DIRECT EMAIL PROCESSING STARTED ===');
+          console.log('=== RESPONSE FINISHED - STARTING EMAIL PROCESSING ===');
           console.log(`Processing emails for contract ${contractId} signed by ${signatureName.trim()}`);
           
           const userSettings = await storage.getUserSettings(contract.userId);
@@ -760,11 +760,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('✓ Performer email sent successfully');
           }
           
-          console.log('=== DIRECT EMAIL PROCESSING COMPLETED ===');
+          console.log('=== RESPONSE FINISHED EMAIL PROCESSING COMPLETED ===');
           console.log('✓ Both confirmation emails sent with PDF attachments');
           
         } catch (error) {
-          console.error('Direct email processing failed:', error instanceof Error ? error.message : String(error));
+          console.error('Response finished email processing failed:', error instanceof Error ? error.message : String(error));
         }
       });
       
