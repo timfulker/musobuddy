@@ -603,7 +603,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      // Generate PDF and send confirmation emails with attachments
+      // INSTANT RESPONSE - NO EMAIL PROCESSING
+      res.json({
+        message: "Contract signed successfully!",
+        contract: signedContract,
+        status: 'signed'
+      });
+      
+      return; // Exit here for instant response
+      
+      // EMAIL PROCESSING (DISABLED FOR INSTANT RESPONSE)
       try {
         const userSettings = await storage.getUserSettings(contract.userId);
         const { sendEmail } = await import('./sendgrid');
