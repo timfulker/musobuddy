@@ -248,6 +248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log("Creating contract with data:", req.body);
+      
       const data = { ...req.body, userId };
       
       // Convert eventDate string to Date if present
@@ -255,12 +257,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data.eventDate = new Date(data.eventDate);
       }
       
+      // If no enquiry ID provided, default to 1 (or create a default enquiry)
+      if (!data.enquiryId) {
+        data.enquiryId = 1;
+      }
+      
+      console.log("Processed contract data:", data);
+      
       const contractData = insertContractSchema.parse(data);
       const contract = await storage.createContract(contractData);
       res.status(201).json(contract);
     } catch (error) {
       console.error("Error creating contract:", error);
-      res.status(500).json({ message: "Failed to create contract" });
+      console.error("Error details:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to create contract", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
