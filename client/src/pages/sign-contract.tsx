@@ -51,8 +51,12 @@ export default function SignContract() {
     
     const loadContract = async () => {
       try {
+        // Use absolute URL for deployment compatibility
+        const apiBase = import.meta.env.VITE_API_BASE_URL || "";
+        console.log('Loading contract with API Base:', apiBase);
+        
         // Get contract details (public endpoint, no auth needed)
-        const response = await fetch(`/api/contracts/public/${contractId}`);
+        const response = await fetch(`${apiBase}/api/contracts/public/${contractId}`);
         if (!response.ok) {
           throw new Error('Contract not found');
         }
@@ -64,7 +68,7 @@ export default function SignContract() {
         setContract(contractData);
         
         // Get business settings for the contract owner
-        const settingsResponse = await fetch(`/api/settings/public/${contractData.userId}`);
+        const settingsResponse = await fetch(`${apiBase}/api/settings/public/${contractData.userId}`);
         if (settingsResponse.ok) {
           const settingsData = await settingsResponse.json();
           setUserSettings(settingsData);
@@ -115,7 +119,12 @@ export default function SignContract() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
       
-      const response = await fetch(`/api/contracts/sign/${contractId}`, {
+      // Use absolute URL for deployment compatibility
+      const apiBase = import.meta.env.VITE_API_BASE_URL || "";
+      console.log('API Base URL:', apiBase);
+      console.log('Full URL:', `${apiBase}/api/contracts/sign/${contractId}`);
+      
+      const response = await fetch(`${apiBase}/api/contracts/sign/${contractId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

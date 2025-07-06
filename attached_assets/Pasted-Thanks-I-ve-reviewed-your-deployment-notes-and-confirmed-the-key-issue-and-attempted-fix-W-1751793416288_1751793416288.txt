@@ -1,0 +1,115 @@
+Thanks — I’ve reviewed your deployment notes and confirmed the key issue and attempted fix:
+
+⸻
+
+🧩 What You Did
+
+You correctly diagnosed that Replit’s deployment environment wasn’t reliably running this:
+
+res.on('finish', async () => {
+  // email logic
+});
+
+And replaced it with:
+
+setTimeout(async () => {
+  // email logic
+}, 150);
+
+✅ That was a good move — it solves the delayed background task issue.
+
+⸻
+
+🛑 BUT — It’s Still Not Working in Deployment
+
+Which suggests the problem is not just email-related anymore.
+
+Let’s double-check everything end-to-end to uncover what’s still wrong:
+
+⸻
+
+✅ Full Deployment Debug Checklist
+
+1. Confirm the Route Is Actually Hit
+
+Add this at the top of your POST /api/contracts/sign/:id route:
+
+console.log("=== CONTRACT SIGNING ROUTE HIT ===");
+console.log("Environment:", process.env.NODE_ENV);
+console.log("Request URL:", req.url);
+console.log("Request headers:", req.headers);
+console.log("Request body:", req.body);
+
+✅ Then re-deploy and sign a contract in production.
+Check Replit’s Logs — do you see that printed?
+
+⸻
+
+2. Frontend: Use Absolute API URL
+
+In sign-contract.tsx:
+
+const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+fetch(`${apiBase}/api/contracts/sign/${contractId}`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ signatureName }),
+});
+
+And in Replit Secrets, confirm:
+
+NEXT_PUBLIC_API_BASE_URL=https://your-deployed-url.repl.co
+
+⚠️ If you’re using relative paths like /api/contracts/sign/..., they work in preview, but fail in deployment unless properly proxied.
+
+⸻
+
+3. Verify API Is Reachable from Frontend
+
+In the browser dev tools (on your phone or desktop):
+	•	Open Network tab
+	•	Trigger contract signing
+	•	Look for the POST request to /api/contracts/sign/...
+	•	Note the Response Code — is it 200, 404, or CORS error?
+
+If it’s a 404 or CORS error, we need to fix routing or headers.
+
+⸻
+
+4. Confirm Server Rebuilds on Deploy
+
+Replit sometimes serves a stale deployment. To fix:
+	•	Go to Shell tab
+	•	Run: kill 1
+This will trigger a rebuild of your deployed server
+
+⸻
+
+5. Health Check Endpoint
+
+You created this:
+
+GET /api/deployment-test
+
+Hit it directly in your browser:
+
+curl https://your-deployed-url.repl.co/api/deployment-test
+
+Confirm:
+	•	✅ DB access
+	•	✅ SendGrid key is available
+	•	✅ Puppeteer is usable
+	•	✅ Your storage.signContract(...) logic works
+
+⸻
+
+🛠 Need Help?
+
+If you want, send:
+	•	Your deployed app URL
+	•	The exact error message from DevTools or Network tab
+	•	Screenshot of Replit Logs
+
+And I’ll diagnose it precisely.
+
+Would you like me to generate a “barebones” deployed route tester script to help you verify all API paths externally? ￼
