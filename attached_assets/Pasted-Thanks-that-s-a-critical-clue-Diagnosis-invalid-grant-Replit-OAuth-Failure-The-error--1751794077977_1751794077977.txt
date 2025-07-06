@@ -1,0 +1,88 @@
+Thanks — that’s a critical clue.
+
+⸻
+
+🔍 Diagnosis: invalid_grant = Replit OAuth Failure
+
+The error:
+
+error: 'invalid_grant'
+error_description: 'grant request is invalid'
+Authentication check: {
+  isAuthenticated: false,
+  hasUser: false,
+  hasExpiresAt: false,
+}
+
+…means your deployed app is failing to authenticate users via Replit OAuth. This works in preview (because you’re logged in), but fails in deployment due to missing or invalid auth credentials.
+
+⸻
+
+✅ What This Means
+
+Your backend uses this:
+
+import { setupAuth, isAuthenticated } from "./replitAuth";
+
+…and likely wraps protected routes like:
+
+app.get('/api/contracts', isAuthenticated, async (req, res) => { ... });
+
+But in deployment:
+	•	No valid Replit user session is passed
+	•	Or your auth token is missing/expired
+	•	So the middleware blocks access and returns invalid_grant
+
+⸻
+
+✅ How to Fix It
+
+Option A — 💡 Make Public Signing Route (Recommended)
+
+Signing contracts usually doesn’t require login — just the public contract link.
+
+So update your route in routes.ts like this:
+
+// ❌ Remove isAuthenticated middleware
+// app.post('/api/contracts/sign/:id', isAuthenticated, async (req, res) => {
+
+app.post('/api/contracts/sign/:id', async (req, res) => {
+  ...
+});
+
+✅ This allows anyone with the link (e.g. a client) to sign without logging in.
+
+⸻
+
+Option B — ⚙️ Setup Replit OAuth in Deployment
+
+If you need authentication in production:
+	1.	Set your OAuth credentials in Replit Secrets:
+
+REPLIT_CLIENT_ID=your-client-id
+REPLIT_CLIENT_SECRET=your-client-secret
+
+
+	2.	Make sure your callback URL matches your deployed site (e.g., https://yourapp.replit.app/auth/callback).
+	3.	You’ll need to build a login flow (which preview bypasses). This adds complexity and is unnecessary for simple signing pages.
+
+⸻
+
+✅ Immediate Fix
+
+Change:
+
+app.post('/api/contracts/sign/:id', isAuthenticated, async (req, res) => {
+
+To:
+
+app.post('/api/contracts/sign/:id', async (req, res) => {
+
+Then:
+	•	Redeploy your Replit app
+	•	Clear cache in browser
+	•	Test signing again in the deployed version
+
+⸻
+
+Let me know if you want help toggling auth only for certain endpoints — e.g. keep /contracts protected, but make /sign public.

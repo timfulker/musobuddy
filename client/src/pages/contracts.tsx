@@ -70,16 +70,7 @@ export default function Contracts() {
         enquiryId: 1, // Default enquiry ID for now
       };
       
-      const response = await fetch("/api/contracts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contractData),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
+      const response = await apiRequest("POST", "/api/contracts", contractData);
       return response.json();
     },
     onSuccess: () => {
@@ -148,20 +139,47 @@ export default function Contracts() {
 
   // Additional contract action handlers
   const handleEditContract = (contract: Contract) => {
-    // TODO: Implement edit functionality
-    toast({
-      title: "Edit Contract",
-      description: "Edit functionality will be implemented soon",
+    // Pre-fill form with contract data
+    form.reset({
+      enquiryId: contract.enquiryId,
+      contractNumber: contract.contractNumber,
+      clientName: contract.clientName,
+      clientEmail: contract.clientEmail || "",
+      clientPhone: contract.clientPhone || "",
+      eventDate: new Date(contract.eventDate).toISOString().split('T')[0],
+      eventTime: contract.eventTime,
+      venue: contract.venue,
+      fee: contract.fee.toString(),
+      deposit: contract.deposit?.toString() || "",
+      terms: contract.terms || "",
+      status: contract.status,
     });
+    setIsDialogOpen(true);
   };
+
+  const deleteContractMutation = useMutation({
+    mutationFn: async (contractId: number) => {
+      return apiRequest("DELETE", `/api/contracts/${contractId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      toast({
+        title: "Success",
+        description: "Contract deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete contract",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleDeleteContract = (contract: Contract) => {
     if (confirm(`Are you sure you want to delete contract ${contract.contractNumber}?`)) {
-      // TODO: Implement delete functionality
-      toast({
-        title: "Delete Contract",
-        description: "Delete functionality will be implemented soon",
-      });
+      deleteContractMutation.mutate(contract.id);
     }
   };
 
@@ -496,7 +514,7 @@ export default function Contracts() {
                         <div className="flex items-center space-x-2 text-gray-600">
                           <Calendar className="w-4 h-4" />
                           <div>
-                            <p className="font-medium">{formatDate(contract.eventDate)}</p>
+                            <p className="font-medium">{formatDate(contract.eventDate.toString())}</p>
                             <p className="text-xs text-gray-500">{contract.eventTime}</p>
                           </div>
                         </div>
@@ -524,9 +542,9 @@ export default function Contracts() {
                       )}
                       
                       <div className="mt-3 flex items-center space-x-4 text-xs text-gray-500">
-                        <span>Created: {formatDate(contract.createdAt!)}</span>
+                        <span>Created: {formatDate(contract.createdAt!.toString())}</span>
                         {contract.signedAt && (
-                          <span>Signed: {formatDate(contract.signedAt)}</span>
+                          <span>Signed: {formatDate(contract.signedAt.toString())}</span>
                         )}
                       </div>
                     </div>
@@ -616,7 +634,7 @@ export default function Contracts() {
                 {/* Agreement Statement */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-gray-800 leading-relaxed">
-                    An agreement made on <strong>{formatDate(new Date())}</strong> between the Hirer and the Musician 
+                    An agreement made on <strong>{formatDate(new Date().toString())}</strong> between the Hirer and the Musician 
                     for the performance engagement detailed below.
                   </p>
                 </div>
@@ -670,7 +688,7 @@ export default function Contracts() {
                       </thead>
                       <tbody>
                         <tr className="border-t border-gray-200">
-                          <td className="px-4 py-3 text-sm text-gray-900">{formatDate(previewContract.eventDate)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{formatDate(previewContract.eventDate.toString())}</td>
                           <td className="px-4 py-3 text-sm text-gray-900">{previewContract.eventTime}</td>
                           <td className="px-4 py-3 text-sm text-gray-900">{previewContract.venue}</td>
                           <td className="px-4 py-3 text-sm font-semibold text-green-600">£{previewContract.fee}</td>
@@ -793,9 +811,9 @@ export default function Contracts() {
                 {/* Footer */}
                 <div className="text-center text-xs text-gray-500 border-t border-gray-200 pt-4">
                   <p className="mb-2">Contract Status: <Badge className={getStatusColor(previewContract.status)}>{previewContract.status.toUpperCase()}</Badge></p>
-                  <p>Created: {formatDate(previewContract.createdAt!)}</p>
+                  <p>Created: {formatDate(previewContract.createdAt!.toString())}</p>
                   {previewContract.signedAt && (
-                    <p className="text-green-600 font-medium">Signed: {formatDate(previewContract.signedAt)}</p>
+                    <p className="text-green-600 font-medium">Signed: {formatDate(previewContract.signedAt.toString())}</p>
                   )}
                   <p className="mt-2 italic">One copy to be retained by the Hirer and one copy by the Musician.</p>
                 </div>
