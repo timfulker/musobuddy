@@ -603,16 +603,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      // INSTANT RESPONSE - NO EMAIL PROCESSING
+      // INSTANT RESPONSE - Continue with background email processing
       res.json({
         message: "Contract signed successfully!",
         contract: signedContract,
         status: 'signed'
       });
       
-      return; // Exit here for instant response
+      // Continue with email processing in background
+      console.log('Starting background email processing...');
       
-      // EMAIL PROCESSING (DISABLED FOR INSTANT RESPONSE)
+      // EMAIL PROCESSING (ENABLED FOR PDF GENERATION)
       try {
         const userSettings = await storage.getUserSettings(contract.userId);
         const { sendEmail } = await import('./sendgrid');
@@ -742,14 +743,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the signing process if email fails
       }
       
-      res.json({ 
-        message: "Contract signed successfully",
-        contract: signedContract 
-      });
-      
     } catch (error) {
       console.error("Error signing contract:", error);
       res.status(500).json({ message: "Failed to sign contract" });
+    }
+  });
+
+  // Manual contract email sending route
+  app.post('/api/contracts/:id/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contractId = parseInt(req.params.id);
+      
+      const contract = await storage.getContract(contractId, userId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      const userSettings = await storage.getUserSettings(userId);
+      const { sendEmail } = await import('./sendgrid');
+      
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
+      const fromEmail = 'noreply@musobuddy.com';
+      const replyToEmail = userSettings?.businessEmail;
+      
+      const contractUrl = `https://musobuddy.replit.app/sign-contract/${contractId}`;
+      
+      const emailData = {
+        to: contract.clientEmail || '',
+        from: `${fromName} <${fromEmail}>`,
+        subject: `Contract ${contract.contractNumber} - Please Review and Sign`,
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2c3e50;">Contract for Review</h2>
+            <p>Dear ${contract.clientName},</p>
+            <p>Please review and sign the attached contract for your upcoming performance:</p>
+            
+            <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #333;">Event Details</h3>
+              <ul style="list-style: none; padding: 0;">
+                <li><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
+                <li><strong>Time:</strong> ${contract.eventTime}</li>
+                <li><strong>Venue:</strong> ${contract.venue}</li>
+                <li><strong>Fee:</strong> £${contract.fee}</li>
+              </ul>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${contractUrl}" style="background-color: #3498db; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Review and Sign Contract
+              </a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">
+              This link will take you to a secure page where you can review the contract terms and provide your digital signature.
+            </p>
+          </div>
+        `,
+        text: `Contract ${contract.contractNumber} - Please review and sign at: ${contractUrl}`,
+        replyTo: replyToEmail
+      };
+      
+      await sendEmail(emailData);
+      res.json({ message: "Contract email sent successfully" });
+      
+    } catch (error) {
+      console.error("Error sending contract email:", error);
+      res.status(500).json({ message: "Failed to send contract email" });
     }
   });
 

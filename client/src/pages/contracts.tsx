@@ -119,7 +119,7 @@ export default function Contracts() {
   // Email sending mutation
   const sendEmailMutation = useMutation({
     mutationFn: async (contract: Contract) => {
-      return apiRequest("POST", "/api/contracts/send-email", { contractId: contract.id });
+      return apiRequest("POST", `/api/contracts/${contract.id}/send-email`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
