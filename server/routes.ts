@@ -669,9 +669,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             clientIpAddress: clientIP
           };
           
-          const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
-          const pdfBase64 = pdfBuffer.toString('base64');
-          console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+          let pdfBuffer = null;
+          let pdfBase64 = null;
+          
+          try {
+            pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
+            pdfBase64 = pdfBuffer.toString('base64');
+            console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+          } catch (pdfError) {
+            console.error('PDF generation failed (deployment environment):', pdfError.message);
+            console.log('Continuing with email delivery without PDF attachment...');
+          }
           
           const signedDate = new Date().toLocaleDateString('en-GB');
           const signedTime = new Date().toLocaleTimeString('en-GB');
@@ -703,31 +711,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   <p style="margin: 5px 0;">Date & Time: ${signedDate} at ${signedTime}</p>
                 </div>
                 
+                ${pdfBase64 ? `
                 <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
                   📎 <strong>Your signed contract is attached as a PDF for your records.</strong>
                 </p>
+                ` : `
+                <p style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #856404;">
+                  📋 <strong>Contract signed successfully. PDF copy will be provided separately.</strong>
+                </p>
+                `}
                 
                 <p>We look forward to performing at your event!</p>
                 <p>Best regards,<br><strong>${userSettings?.businessName || 'MusoBuddy'}</strong></p>
               </div>
             `,
-            text: `Contract ${contract.contractNumber} has been successfully signed by ${signatureName.trim()} on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Signed contract PDF is attached.`,
-            attachments: [{
-              content: pdfBase64,
-              filename: `Contract-${contract.contractNumber}-Signed.pdf`,
-              type: 'application/pdf',
-              disposition: 'attachment'
-            }]
+            text: `Contract ${contract.contractNumber} has been successfully signed by ${signatureName.trim()} on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}.${pdfBase64 ? ' Signed contract PDF is attached.' : ' PDF copy will be provided separately.'}`
           };
           
           if (replyToEmail) {
             clientEmailParams.replyTo = replyToEmail;
           }
           
+          // Add PDF attachment if generation was successful
+          if (pdfBase64) {
+            clientEmailParams.attachments = [{
+              content: pdfBase64,
+              filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+              type: 'application/pdf',
+              disposition: 'attachment'
+            }];
+          }
+          
           console.log('=== SENDING CLIENT EMAIL ===');
           console.log('Client email recipient:', contract.clientEmail);
           console.log('Client email subject:', `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`);
-          console.log('PDF attachment size:', pdfBase64.length, 'characters (base64)');
+          console.log('PDF attachment size:', pdfBase64 ? pdfBase64.length + ' characters (base64)' : 'No PDF attachment - generation failed');
           
           const clientEmailResult = await sendEmail(clientEmailParams);
           console.log('Client email result:', clientEmailResult);
@@ -773,14 +791,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   <p>Time to prepare for the performance!</p>
                 </div>
               `,
-              text: `Contract ${contract.contractNumber} signed by ${contract.clientName} on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. Signed contract PDF is attached.`,
-              attachments: [{
+              text: `Contract ${contract.contractNumber} signed by ${contract.clientName} on ${signedDate} at ${signedTime}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}.${pdfBase64 ? ' Signed contract PDF is attached.' : ' PDF copy will be provided separately.'}`
+            };
+            
+            // Add PDF attachment if generation was successful
+            if (pdfBase64) {
+              performerEmailParams.attachments = [{
                 content: pdfBase64,
                 filename: `Contract-${contract.contractNumber}-Signed.pdf`,
                 type: 'application/pdf',
                 disposition: 'attachment'
-              }]
-            };
+              }];
+            }
             
             console.log('=== SENDING PERFORMER EMAIL ===');
             console.log('Performer email recipient:', userSettings.businessEmail);
