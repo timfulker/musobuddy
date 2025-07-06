@@ -580,6 +580,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/contracts/sign/:id', async (req, res) => {
     try {
+      console.log('=== CONTRACT SIGNING ROUTE HIT ===');
+      console.log('Environment:', process.env.NODE_ENV);
+      console.log('Request URL:', req.url);
+      console.log('Request method:', req.method);
+      console.log('Request headers:', req.headers);
+      console.log('Request body:', req.body);
+      
       const contractId = parseInt(req.params.id);
       const { signatureName } = req.body;
       
@@ -630,10 +637,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailStatus: 'processing'
       });
       
-      // Process emails after response is sent to prevent browser timeouts
-      res.on('finish', async () => {
+      // DEPLOYMENT-COMPATIBLE EMAIL PROCESSING
+      // Use setTimeout instead of res.on('finish') for deployment compatibility
+      setTimeout(async () => {
         try {
-          console.log('=== RESPONSE FINISHED - STARTING EMAIL PROCESSING ===');
+          console.log('=== DEPLOYMENT EMAIL PROCESSING STARTED ===');
           console.log(`Processing emails for contract ${contractId} signed by ${signatureName.trim()}`);
           
           // Get user settings with error handling
@@ -790,22 +798,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('⚠ Performer email not sent - no business email configured');
           }
           
-          console.log('=== RESPONSE FINISHED EMAIL PROCESSING COMPLETED ===');
+          console.log('=== DEPLOYMENT EMAIL PROCESSING COMPLETED ===');
           console.log('✓ Email processing completed');
           
         } catch (error) {
-          console.error('=== EMAIL PROCESSING ERROR ===');
+          console.error('=== DEPLOYMENT EMAIL PROCESSING ERROR ===');
           console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
           console.error('Error message:', error instanceof Error ? error.message : String(error));
           console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
           console.error('Contract ID:', contractId);
           console.error('Signature name:', signatureName.trim());
         }
-      });
+      }, 150); // 150ms delay to ensure response is sent before email processing
       
     } catch (error) {
       console.error("Error signing contract:", error);
       res.status(500).json({ message: "Failed to sign contract", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Deployment health check endpoint
+  app.get('/api/deployment-test', async (req, res) => {
+    try {
+      const tests = {
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'unknown',
+        database: false,
+        sendgrid: false,
+        puppeteer: false,
+        storage: false,
+        errors: []
+      };
+      
+      // Test database connection
+      try {
+        const { db } = await import('./db');
+        await db.query('SELECT 1');
+        tests.database = true;
+      } catch (e) {
+        tests.errors.push(`Database test failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      
+      // Test SendGrid API key
+      try {
+        tests.sendgrid = !!process.env.SENDGRID_API_KEY;
+        if (!tests.sendgrid) {
+          tests.errors.push('SENDGRID_API_KEY not found in environment');
+        }
+      } catch (e) {
+        tests.errors.push(`SendGrid test failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      
+      // Test Puppeteer/PDF generation
+      try {
+        const puppeteer = await import('puppeteer');
+        const browser = await puppeteer.launch({ 
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        await browser.close();
+        tests.puppeteer = true;
+      } catch (e) {
+        tests.errors.push(`Puppeteer test failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      
+      // Test storage functions
+      try {
+        const testContracts = await storage.getAllContracts('test-user');
+        tests.storage = true;
+      } catch (e) {
+        tests.errors.push(`Storage test failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      
+      res.json(tests);
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
