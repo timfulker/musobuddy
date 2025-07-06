@@ -188,6 +188,7 @@ export class DatabaseStorage implements IStorage {
       .set({
         status: 'signed',
         signedAt: signatureData.signedAt,
+        signatureName: signatureData.signatureName,
         updatedAt: new Date()
       })
       .where(eq(contracts.id, id))

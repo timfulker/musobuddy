@@ -61,6 +61,7 @@ export const contracts = pgTable("contracts", {
   terms: text("terms"),
   status: varchar("status").notNull().default("draft"), // draft, sent, signed, completed
   signedAt: timestamp("signed_at"),
+  signatureName: varchar("signature_name"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
