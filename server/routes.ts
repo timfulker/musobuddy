@@ -636,7 +636,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('=== RESPONSE FINISHED - STARTING EMAIL PROCESSING ===');
           console.log(`Processing emails for contract ${contractId} signed by ${signatureName.trim()}`);
           
+          // Get user settings with error handling
           const userSettings = await storage.getUserSettings(contract.userId);
+          console.log('User settings loaded:', userSettings ? 'SUCCESS' : 'FAILED');
+          
           const { sendEmail } = await import('./sendgrid');
           const { generateContractPDF } = await import('./pdf-generator');
           
@@ -644,6 +647,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy';
           const fromEmail = 'noreply@musobuddy.com';
           const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
+          
+          console.log('=== EMAIL CONFIGURATION ===');
+          console.log('From name:', fromName);
+          console.log('From email:', fromEmail);
+          console.log('Reply to email:', replyToEmail);
+          console.log('User business email:', userBusinessEmail);
           
           console.log('=== GENERATING PDF FOR EMAILS ===');
           const signatureDetails = {
@@ -654,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
           const pdfBase64 = pdfBuffer.toString('base64');
-          console.log('PDF generated, size:', pdfBuffer.length);
+          console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
           
           const signedDate = new Date().toLocaleDateString('en-GB');
           const signedTime = new Date().toLocaleTimeString('en-GB');
@@ -708,8 +717,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           console.log('=== SENDING CLIENT EMAIL ===');
-          await sendEmail(clientEmailParams);
-          console.log('✓ Client email sent successfully');
+          console.log('Client email recipient:', contract.clientEmail);
+          console.log('Client email subject:', `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`);
+          console.log('PDF attachment size:', pdfBase64.length, 'characters (base64)');
+          
+          const clientEmailResult = await sendEmail(clientEmailParams);
+          console.log('Client email result:', clientEmailResult);
+          
+          if (clientEmailResult) {
+            console.log('✓ Client email sent successfully');
+          } else {
+            console.error('✗ Client email failed to send');
+          }
           
           // Send performer email
           if (userSettings?.businessEmail) {
@@ -756,15 +775,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
             
             console.log('=== SENDING PERFORMER EMAIL ===');
-            await sendEmail(performerEmailParams);
-            console.log('✓ Performer email sent successfully');
+            console.log('Performer email recipient:', userSettings.businessEmail);
+            console.log('Performer email subject:', `Contract ${contract.contractNumber} Signed by ${contract.clientName} - Copy Attached`);
+            
+            const performerEmailResult = await sendEmail(performerEmailParams);
+            console.log('Performer email result:', performerEmailResult);
+            
+            if (performerEmailResult) {
+              console.log('✓ Performer email sent successfully');
+            } else {
+              console.error('✗ Performer email failed to send');
+            }
+          } else {
+            console.log('⚠ Performer email not sent - no business email configured');
           }
           
           console.log('=== RESPONSE FINISHED EMAIL PROCESSING COMPLETED ===');
-          console.log('✓ Both confirmation emails sent with PDF attachments');
+          console.log('✓ Email processing completed');
           
         } catch (error) {
-          console.error('Response finished email processing failed:', error instanceof Error ? error.message : String(error));
+          console.error('=== EMAIL PROCESSING ERROR ===');
+          console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+          console.error('Error message:', error instanceof Error ? error.message : String(error));
+          console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+          console.error('Contract ID:', contractId);
+          console.error('Signature name:', signatureName.trim());
         }
       });
       

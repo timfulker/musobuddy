@@ -200,26 +200,40 @@ export default function SignContract() {
     const handleDownloadPDF = async () => {
       try {
         console.log('Downloading PDF for contract:', contractId);
+        
+        // Create the download link first to ensure it's user-initiated
+        const link = document.createElement('a');
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
         const response = await fetch(`/api/contracts/public/${contractId}/pdf`);
         console.log('PDF response status:', response.status);
         
         if (!response.ok) {
           const errorText = await response.text();
           console.error('PDF download error:', errorText);
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`Failed to download PDF: ${response.status} - ${errorText}`);
         }
         
         const blob = await response.blob();
         console.log('PDF blob size:', blob.size);
         
+        if (blob.size === 0) {
+          throw new Error('PDF file is empty');
+        }
+        
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Contract-${contract.contractNumber}-Signed.pdf`;
-        document.body.appendChild(a); // Ensure element is in DOM
-        a.click();
-        document.body.removeChild(a); // Clean up
-        window.URL.revokeObjectURL(url);
+        link.href = url;
+        link.download = `Contract-${contract.contractNumber}-Signed.pdf`;
+        
+        // Force download with user interaction context
+        link.click();
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
         
         toast({
           title: "Success",
@@ -229,7 +243,7 @@ export default function SignContract() {
         console.error('Error downloading contract:', error);
         toast({
           title: "Error",
-          description: "Failed to download contract PDF. Please try again.",
+          description: error instanceof Error ? error.message : "Failed to download contract PDF. Please try again.",
           variant: "destructive",
         });
       }
