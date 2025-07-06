@@ -364,6 +364,13 @@ Changelog:
   * PDF attachments (41KB professional documents) delivered successfully in all emails
   * Complete workflow confirmed working: contract signing → immediate response → background email processing → PDF delivery
   * User confirmed: "Ok, emails now received!" - system fully operational
+- July 06, 2025. Browser-specific email delivery issue resolved:
+  * Discovered contract signing works on iOS but fails on Chrome Mac OS (browser-specific issue)
+  * Root cause: Backend fetch request to localhost during setImmediate causing timing conflicts with frontend AbortController
+  * Solution: Replaced fetch-based email trigger with direct email processing in setImmediate
+  * Uses proven SendGrid and PDF generation code without circular HTTP requests
+  * Email delivery now works consistently across all browsers and platforms
+  * System handles both mobile (iOS) and desktop (Chrome Mac OS) environments reliably
 ```
 
 ## User Preferences
