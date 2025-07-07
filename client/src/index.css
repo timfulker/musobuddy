@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Primary colors for MusoBuddy */
+  --primary: 220 70% 50%; /* Professional blue */
+  --primary-foreground: 0 0% 98%;
+  
+  /* Secondary colors */
+  --secondary: 220 14.3% 95.9%;
+  --secondary-foreground: 220 9% 46%;
+  
+  /* Muted colors */
+  --muted: 220 14.3% 95.9%;
+  --muted-foreground: 220 9% 46%;
+  
+  /* Accent colors */
+  --accent: 220 14.3% 95.9%;
+  --accent-foreground: 220 9% 46%;
+  
+  /* Background colors */
+  --background: 0 0% 100%;
+  --foreground: 224 71.4% 4.1%;
+  
+  /* Card colors */
+  --card: 0 0% 100%;
+  --card-foreground: 224 71.4% 4.1%;
+  
+  /* Border and input colors */
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 220 70% 50%;
+  
+  /* Success/warning/error colors for musician business context */
+  --success: 142 76% 36%; /* Green for completed gigs */
+  --warning: 38 92% 50%; /* Orange for pending items */
+  --destructive: 0 72% 51%; /* Red for overdue/cancelled */
+  --destructive-foreground: 0 0% 98%;
+}
+
+.dark {
+  --background: 224 71.4% 4.1%;
+  --foreground: 0 0% 98%;
+  
+  --card: 224 71.4% 4.1%;
+  --card-foreground: 0 0% 98%;
+  
+  --primary: 220 70% 50%;
+  --primary-foreground: 0 0% 98%;
+  
+  --secondary: 215 27.9% 16.9%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --muted: 215 27.9% 16.9%;
+  --muted-foreground: 217.9 10.6% 64.9%;
+  
+  --accent: 215 27.9% 16.9%;
+  --accent-foreground: 0 0% 98%;
+  
+  --border: 215 27.9% 16.9%;
+  --input: 215 27.9% 16.9%;
+  --ring: 220 70% 50%;
+  
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Custom utility classes for MusoBuddy */
+.status-new { @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200; }
+.status-qualified { @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200; }
+.status-quoted { @apply bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200; }
+.status-won { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; }
+.status-lost { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200; }
+.status-draft { @apply bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200; }
+.status-sent { @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200; }
+.status-signed { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; }
+.status-confirmed { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; }
+.status-completed { @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200; }
+.status-cancelled { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200; }
+.status-paid { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; }
+.status-overdue { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200; }
