@@ -259,18 +259,18 @@ export default function Contracts() {
                 Generate Contract
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader className="pb-4">
                 <DialogTitle>Generate New Contract</DialogTitle>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => createContractMutation.mutate(data))} className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={form.handleSubmit((data) => createContractMutation.mutate(data))} className="space-y-6 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="contractNumber"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                           <FormLabel>Contract Number</FormLabel>
                           <FormControl>
                             <Input placeholder="CT-2024-001" {...field} value={field.value || ""} />
@@ -283,7 +283,7 @@ export default function Contracts() {
                       control={form.control}
                       name="clientName"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                           <FormLabel>Client Name</FormLabel>
                           <FormControl>
                             <Input placeholder="John Smith" {...field} value={field.value || ""} />
@@ -294,12 +294,12 @@ export default function Contracts() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="eventTime"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                           <FormLabel>Event Time</FormLabel>
                           <FormControl>
                             <Input placeholder="7:00 PM" {...field} value={field.value || ""} />
@@ -312,7 +312,7 @@ export default function Contracts() {
                       control={form.control}
                       name="eventDate"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                           <FormLabel>Event Date</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} value={field.value || ""} />
@@ -323,12 +323,12 @@ export default function Contracts() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="venue"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                           <FormLabel>Venue</FormLabel>
                           <FormControl>
                             <Input placeholder="The Grand Hotel, London" {...field} value={field.value || ""} />
@@ -341,7 +341,7 @@ export default function Contracts() {
                       control={form.control}
                       name="clientEmail"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                           <FormLabel>Client Email</FormLabel>
                           <FormControl>
                             <Input type="email" placeholder="client@example.com" {...field} value={field.value || ""} />
@@ -352,12 +352,12 @@ export default function Contracts() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="clientPhone"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                           <FormLabel>Client Phone</FormLabel>
                           <FormControl>
                             <Input placeholder="07123 456789" {...field} value={field.value || ""} />
@@ -370,7 +370,7 @@ export default function Contracts() {
                       control={form.control}
                       name="fee"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                           <FormLabel>Performance Fee (£)</FormLabel>
                           <FormControl>
                             <Input type="number" placeholder="1500" {...field} value={field.value || ""} />
@@ -381,35 +381,43 @@ export default function Contracts() {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="deposit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Deposit Amount (£)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="500" {...field} value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="deposit"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Deposit Amount (£)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="500" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
                     name="terms"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="space-y-2">
                         <FormLabel>Terms & Conditions</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Payment terms, cancellation policy, etc..." {...field} value={field.value || ""} />
+                          <Textarea 
+                            placeholder="Payment terms, cancellation policy, etc..." 
+                            {...field} 
+                            value={field.value || ""} 
+                            rows={4}
+                            className="min-h-[100px]"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="flex justify-end space-x-3">
+                  <div className="flex justify-end space-x-3 pt-4 border-t">
                     <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
                       Cancel
                     </Button>
