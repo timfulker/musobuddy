@@ -1,231 +1,429 @@
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
-import { eq, desc, and, or } from 'drizzle-orm';
-import * as schema from '../shared/schema.js';
-import type { 
-  User, InsertUser, 
-  Enquiry, InsertEnquiry,
-  Contract, InsertContract,
-  Invoice, InsertInvoice,
-  Booking, InsertBooking,
-  Compliance, InsertCompliance
-} from '../shared/schema.js';
-
-// Database connection
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql, { schema });
+import {
+  users,
+  enquiries,
+  contracts,
+  invoices,
+  bookings,
+  complianceDocuments,
+  userSettings,
+  type User,
+  type UpsertUser,
+  type Enquiry,
+  type InsertEnquiry,
+  type Contract,
+  type InsertContract,
+  type Invoice,
+  type InsertInvoice,
+  type Booking,
+  type InsertBooking,
+  type ComplianceDocument,
+  type InsertComplianceDocument,
+  type UserSettings,
+  type InsertUserSettings,
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations
-  createUser(user: InsertUser): Promise<User>;
-  getUserByEmail(email: string): Promise<User | null>;
-  getUserById(id: string): Promise<User | null>;
-  updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
-
+  // User operations - mandatory for Replit Auth
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  
   // Enquiry operations
+  getEnquiries(userId: string): Promise<Enquiry[]>;
+  getEnquiry(id: number, userId: string): Promise<Enquiry | undefined>;
   createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry>;
-  getEnquiriesByUser(userId: string): Promise<Enquiry[]>;
-  getEnquiryById(id: string): Promise<Enquiry | null>;
-  updateEnquiry(id: string, updates: Partial<InsertEnquiry>): Promise<Enquiry>;
-  deleteEnquiry(id: string): Promise<void>;
-
+  updateEnquiry(id: number, enquiry: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | undefined>;
+  deleteEnquiry(id: number, userId: string): Promise<boolean>;
+  
   // Contract operations
+  getContracts(userId: string): Promise<Contract[]>;
+  getContract(id: number, userId: string): Promise<Contract | undefined>;
+  getContractById(id: number): Promise<Contract | undefined>; // Public access for signing
   createContract(contract: InsertContract): Promise<Contract>;
-  getContractsByUser(userId: string): Promise<Contract[]>;
-  getContractById(id: string): Promise<Contract | null>;
-  updateContract(id: string, updates: Partial<InsertContract>): Promise<Contract>;
-  deleteContract(id: string): Promise<void>;
-
+  updateContract(id: number, contract: Partial<InsertContract>, userId: string): Promise<Contract | undefined>;
+  signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date }): Promise<Contract | undefined>;
+  
   // Invoice operations
+  getInvoices(userId: string): Promise<Invoice[]>;
+  getInvoice(id: number, userId: string): Promise<Invoice | undefined>;
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
-  getInvoicesByUser(userId: string): Promise<Invoice[]>;
-  getInvoiceById(id: string): Promise<Invoice | null>;
-  updateInvoice(id: string, updates: Partial<InsertInvoice>): Promise<Invoice>;
-  deleteInvoice(id: string): Promise<void>;
-
+  updateInvoice(id: number, invoice: Partial<InsertInvoice>, userId: string): Promise<Invoice | undefined>;
+  
   // Booking operations
+  getBookings(userId: string): Promise<Booking[]>;
+  getUpcomingBookings(userId: string): Promise<Booking[]>;
+  getBooking(id: number, userId: string): Promise<Booking | undefined>;
   createBooking(booking: InsertBooking): Promise<Booking>;
-  getBookingsByUser(userId: string): Promise<Booking[]>;
-  getBookingById(id: string): Promise<Booking | null>;
-  updateBooking(id: string, updates: Partial<InsertBooking>): Promise<Booking>;
-  deleteBooking(id: string): Promise<void>;
-
+  updateBooking(id: number, booking: Partial<InsertBooking>, userId: string): Promise<Booking | undefined>;
+  
   // Compliance operations
-  createCompliance(compliance: InsertCompliance): Promise<Compliance>;
-  getComplianceByUser(userId: string): Promise<Compliance[]>;
-  getComplianceById(id: string): Promise<Compliance | null>;
-  updateCompliance(id: string, updates: Partial<InsertCompliance>): Promise<Compliance>;
-  deleteCompliance(id: string): Promise<void>;
+  getComplianceDocuments(userId: string): Promise<ComplianceDocument[]>;
+  getComplianceDocument(id: number, userId: string): Promise<ComplianceDocument | undefined>;
+  createComplianceDocument(document: InsertComplianceDocument): Promise<ComplianceDocument>;
+  updateComplianceDocument(id: number, document: Partial<InsertComplianceDocument>, userId: string): Promise<ComplianceDocument | undefined>;
+  
+  // Dashboard stats
+  getDashboardStats(userId: string): Promise<{
+    monthlyRevenue: number;
+    activeBookings: number;
+    pendingInvoices: number;
+    conversionRate: number;
+  }>;
+  
+  // User settings operations
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
   // User operations
-  async createUser(user: InsertUser): Promise<User> {
-    const [created] = await db.insert(schema.users).values(user).returning();
-    return created;
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
-  async getUserByEmail(email: string): Promise<User | null> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email));
-    return user || null;
-  }
-
-  async getUserById(id: string): Promise<User | null> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
-    return user || null;
-  }
-
-  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User> {
-    const [updated] = await db.update(schema.users)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(schema.users.id, id))
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
       .returning();
-    return updated;
+    return user;
   }
 
   // Enquiry operations
+  async getEnquiries(userId: string): Promise<Enquiry[]> {
+    return await db
+      .select()
+      .from(enquiries)
+      .where(eq(enquiries.userId, userId))
+      .orderBy(desc(enquiries.createdAt));
+  }
+
+  async getEnquiry(id: number, userId: string): Promise<Enquiry | undefined> {
+    const [enquiry] = await db
+      .select()
+      .from(enquiries)
+      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
+    return enquiry;
+  }
+
   async createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry> {
-    const [created] = await db.insert(schema.enquiries).values(enquiry).returning();
-    return created;
-  }
-
-  async getEnquiriesByUser(userId: string): Promise<Enquiry[]> {
-    return await db.select().from(schema.enquiries)
-      .where(eq(schema.enquiries.userId, userId))
-      .orderBy(desc(schema.enquiries.createdAt));
-  }
-
-  async getEnquiryById(id: string): Promise<Enquiry | null> {
-    const [enquiry] = await db.select().from(schema.enquiries).where(eq(schema.enquiries.id, id));
-    return enquiry || null;
-  }
-
-  async updateEnquiry(id: string, updates: Partial<InsertEnquiry>): Promise<Enquiry> {
-    const [updated] = await db.update(schema.enquiries)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(schema.enquiries.id, id))
+    const [newEnquiry] = await db
+      .insert(enquiries)
+      .values(enquiry)
       .returning();
-    return updated;
+    return newEnquiry;
   }
 
-  async deleteEnquiry(id: string): Promise<void> {
-    await db.delete(schema.enquiries).where(eq(schema.enquiries.id, id));
+  async updateEnquiry(id: number, enquiry: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | undefined> {
+    const [updatedEnquiry] = await db
+      .update(enquiries)
+      .set({ ...enquiry, updatedAt: new Date() })
+      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)))
+      .returning();
+    return updatedEnquiry;
+  }
+
+  async deleteEnquiry(id: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(enquiries)
+      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
+    return result.rowCount > 0;
   }
 
   // Contract operations
+  async getContracts(userId: string): Promise<Contract[]> {
+    return await db
+      .select()
+      .from(contracts)
+      .where(eq(contracts.userId, userId))
+      .orderBy(desc(contracts.createdAt));
+  }
+
+  async getContract(id: number, userId: string): Promise<Contract | undefined> {
+    const [contract] = await db
+      .select()
+      .from(contracts)
+      .where(and(eq(contracts.id, id), eq(contracts.userId, userId)));
+    return contract;
+  }
+
   async createContract(contract: InsertContract): Promise<Contract> {
-    const [created] = await db.insert(schema.contracts).values(contract).returning();
-    return created;
-  }
-
-  async getContractsByUser(userId: string): Promise<Contract[]> {
-    return await db.select().from(schema.contracts)
-      .where(eq(schema.contracts.userId, userId))
-      .orderBy(desc(schema.contracts.createdAt));
-  }
-
-  async getContractById(id: string): Promise<Contract | null> {
-    const [contract] = await db.select().from(schema.contracts).where(eq(schema.contracts.id, id));
-    return contract || null;
-  }
-
-  async updateContract(id: string, updates: Partial<InsertContract>): Promise<Contract> {
-    const [updated] = await db.update(schema.contracts)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(schema.contracts.id, id))
+    const [newContract] = await db
+      .insert(contracts)
+      .values(contract)
       .returning();
-    return updated;
+    return newContract;
   }
 
-  async deleteContract(id: string): Promise<void> {
-    await db.delete(schema.contracts).where(eq(schema.contracts.id, id));
+  async updateContract(id: number, contract: Partial<InsertContract>, userId: string): Promise<Contract | undefined> {
+    const [updatedContract] = await db
+      .update(contracts)
+      .set({ ...contract, updatedAt: new Date() })
+      .where(and(eq(contracts.id, id), eq(contracts.userId, userId)))
+      .returning();
+    return updatedContract;
+  }
+
+  async getContractById(id: number): Promise<Contract | undefined> {
+    const [contract] = await db
+      .select()
+      .from(contracts)
+      .where(eq(contracts.id, id));
+    return contract;
+  }
+
+  async signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date }): Promise<Contract | undefined> {
+    const [signedContract] = await db
+      .update(contracts)
+      .set({
+        status: 'signed',
+        signedAt: signatureData.signedAt,
+        updatedAt: new Date()
+      })
+      .where(eq(contracts.id, id))
+      .returning();
+    return signedContract;
   }
 
   // Invoice operations
+  async getInvoices(userId: string): Promise<Invoice[]> {
+    return await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.userId, userId))
+      .orderBy(desc(invoices.createdAt));
+  }
+
+  async getInvoice(id: number, userId: string): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
+    return invoice;
+  }
+
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
-    const [created] = await db.insert(schema.invoices).values(invoice).returning();
-    return created;
-  }
-
-  async getInvoicesByUser(userId: string): Promise<Invoice[]> {
-    return await db.select().from(schema.invoices)
-      .where(eq(schema.invoices.userId, userId))
-      .orderBy(desc(schema.invoices.createdAt));
-  }
-
-  async getInvoiceById(id: string): Promise<Invoice | null> {
-    const [invoice] = await db.select().from(schema.invoices).where(eq(schema.invoices.id, id));
-    return invoice || null;
-  }
-
-  async updateInvoice(id: string, updates: Partial<InsertInvoice>): Promise<Invoice> {
-    const [updated] = await db.update(schema.invoices)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(schema.invoices.id, id))
+    const [newInvoice] = await db
+      .insert(invoices)
+      .values(invoice)
       .returning();
-    return updated;
+    return newInvoice;
   }
 
-  async deleteInvoice(id: string): Promise<void> {
-    await db.delete(schema.invoices).where(eq(schema.invoices.id, id));
+  async updateInvoice(id: number, invoice: Partial<InsertInvoice>, userId: string): Promise<Invoice | undefined> {
+    const [updatedInvoice] = await db
+      .update(invoices)
+      .set({ ...invoice, updatedAt: new Date() })
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
+      .returning();
+    return updatedInvoice;
   }
 
   // Booking operations
+  async getBookings(userId: string): Promise<Booking[]> {
+    return await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.userId, userId))
+      .orderBy(desc(bookings.eventDate));
+  }
+
+  async getUpcomingBookings(userId: string): Promise<Booking[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(bookings)
+      .where(and(eq(bookings.userId, userId), gte(bookings.eventDate, now)))
+      .orderBy(bookings.eventDate)
+      .limit(10);
+  }
+
+  async getBooking(id: number, userId: string): Promise<Booking | undefined> {
+    const [booking] = await db
+      .select()
+      .from(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
+    return booking;
+  }
+
   async createBooking(booking: InsertBooking): Promise<Booking> {
-    const [created] = await db.insert(schema.bookings).values(booking).returning();
-    return created;
-  }
-
-  async getBookingsByUser(userId: string): Promise<Booking[]> {
-    return await db.select().from(schema.bookings)
-      .where(eq(schema.bookings.userId, userId))
-      .orderBy(desc(schema.bookings.eventDate));
-  }
-
-  async getBookingById(id: string): Promise<Booking | null> {
-    const [booking] = await db.select().from(schema.bookings).where(eq(schema.bookings.id, id));
-    return booking || null;
-  }
-
-  async updateBooking(id: string, updates: Partial<InsertBooking>): Promise<Booking> {
-    const [updated] = await db.update(schema.bookings)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(schema.bookings.id, id))
+    const [newBooking] = await db
+      .insert(bookings)
+      .values(booking)
       .returning();
-    return updated;
+    return newBooking;
   }
 
-  async deleteBooking(id: string): Promise<void> {
-    await db.delete(schema.bookings).where(eq(schema.bookings.id, id));
+  async updateBooking(id: number, booking: Partial<InsertBooking>, userId: string): Promise<Booking | undefined> {
+    const [updatedBooking] = await db
+      .update(bookings)
+      .set({ ...booking, updatedAt: new Date() })
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
+      .returning();
+    return updatedBooking;
   }
 
   // Compliance operations
-  async createCompliance(compliance: InsertCompliance): Promise<Compliance> {
-    const [created] = await db.insert(schema.compliance).values(compliance).returning();
-    return created;
+  async getComplianceDocuments(userId: string): Promise<ComplianceDocument[]> {
+    return await db
+      .select()
+      .from(complianceDocuments)
+      .where(eq(complianceDocuments.userId, userId))
+      .orderBy(complianceDocuments.expiryDate);
   }
 
-  async getComplianceByUser(userId: string): Promise<Compliance[]> {
-    return await db.select().from(schema.compliance)
-      .where(eq(schema.compliance.userId, userId))
-      .orderBy(desc(schema.compliance.expiryDate));
+  async getComplianceDocument(id: number, userId: string): Promise<ComplianceDocument | undefined> {
+    const [document] = await db
+      .select()
+      .from(complianceDocuments)
+      .where(and(eq(complianceDocuments.id, id), eq(complianceDocuments.userId, userId)));
+    return document;
   }
 
-  async getComplianceById(id: string): Promise<Compliance | null> {
-    const [compliance] = await db.select().from(schema.compliance).where(eq(schema.compliance.id, id));
-    return compliance || null;
-  }
-
-  async updateCompliance(id: string, updates: Partial<InsertCompliance>): Promise<Compliance> {
-    const [updated] = await db.update(schema.compliance)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(schema.compliance.id, id))
+  async createComplianceDocument(document: InsertComplianceDocument): Promise<ComplianceDocument> {
+    const [newDocument] = await db
+      .insert(complianceDocuments)
+      .values(document)
       .returning();
-    return updated;
+    return newDocument;
   }
 
-  async deleteCompliance(id: string): Promise<void> {
-    await db.delete(schema.compliance).where(eq(schema.compliance.id, id));
+  async updateComplianceDocument(id: number, document: Partial<InsertComplianceDocument>, userId: string): Promise<ComplianceDocument | undefined> {
+    const [updatedDocument] = await db
+      .update(complianceDocuments)
+      .set({ ...document, updatedAt: new Date() })
+      .where(and(eq(complianceDocuments.id, id), eq(complianceDocuments.userId, userId)))
+      .returning();
+    return updatedDocument;
+  }
+
+  // Dashboard stats
+  async getDashboardStats(userId: string): Promise<{
+    monthlyRevenue: number;
+    activeBookings: number;
+    pendingInvoices: number;
+    conversionRate: number;
+  }> {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // Monthly revenue from paid invoices
+    const monthlyInvoices = await db
+      .select()
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.userId, userId),
+          eq(invoices.status, "paid"),
+          gte(invoices.paidAt, firstDayOfMonth),
+          lte(invoices.paidAt, lastDayOfMonth)
+        )
+      );
+
+    const monthlyRevenue = monthlyInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+
+    // Active bookings (upcoming)
+    const activeBookingsCount = await db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.userId, userId),
+          eq(bookings.status, "confirmed"),
+          gte(bookings.eventDate, now)
+        )
+      );
+
+    // Pending invoices
+    const pendingInvoicesData = await db
+      .select()
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.userId, userId),
+          eq(invoices.status, "sent")
+        )
+      );
+
+    const pendingInvoices = pendingInvoicesData.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+
+    // Conversion rate (confirmed bookings / total enquiries)
+    const totalEnquiries = await db
+      .select()
+      .from(enquiries)
+      .where(eq(enquiries.userId, userId));
+
+    const confirmedBookingsCount = await db
+      .select()
+      .from(enquiries)
+      .where(
+        and(
+          eq(enquiries.userId, userId),
+          eq(enquiries.status, "confirmed")
+        )
+      );
+
+    const conversionRate = totalEnquiries.length > 0 
+      ? (confirmedBookingsCount.length / totalEnquiries.length) * 100 
+      : 0;
+
+    return {
+      monthlyRevenue,
+      activeBookings: activeBookingsCount.length,
+      pendingInvoices,
+      conversionRate: Math.round(conversionRate),
+    };
+  }
+
+  // User settings operations
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId));
+    return settings;
+  }
+
+  async upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
+    // First try to find existing settings
+    const [existingSettings] = await db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, settings.userId));
+
+    if (existingSettings) {
+      // Update existing settings
+      const [updatedSettings] = await db
+        .update(userSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date(),
+        })
+        .where(eq(userSettings.userId, settings.userId))
+        .returning();
+      return updatedSettings;
+    } else {
+      // Insert new settings
+      const [newSettings] = await db
+        .insert(userSettings)
+        .values({
+          ...settings,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      return newSettings;
+    }
   }
 }
 
