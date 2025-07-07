@@ -79,15 +79,15 @@ export default function KanbanBoard() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3 md:pb-6">
         <div className="flex items-center justify-between">
-          <CardTitle>Enquiry Pipeline</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm">
-              <Filter className="w-4 h-4" />
+          <CardTitle className="text-base md:text-lg">Enquiry Pipeline</CardTitle>
+          <div className="flex items-center space-x-1 md:space-x-2">
+            <Button variant="ghost" size="sm" className="h-8 w-8 md:h-10 md:w-10">
+              <Filter className="w-3 h-3 md:w-4 md:h-4" />
             </Button>
-            <Button variant="ghost" size="sm">
-              <MoreHorizontal className="w-4 h-4" />
+            <Button variant="ghost" size="sm" className="h-8 w-8 md:h-10 md:w-10">
+              <MoreHorizontal className="w-3 h-3 md:w-4 md:h-4" />
             </Button>
           </div>
         </div>
@@ -95,21 +95,21 @@ export default function KanbanBoard() {
       
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="flex space-x-6 min-w-max">
+          <div className="flex space-x-3 md:space-x-6 min-w-max">
             {/* New Enquiries Column */}
-            <div className="w-80">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-medium text-gray-900">New Enquiries</h4>
+            <div className="w-64 md:w-80">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <h4 className="font-medium text-gray-900 text-sm md:text-base">New Enquiries</h4>
                 <Badge variant="secondary">{groupedEnquiries.new.length}</Badge>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {groupedEnquiries.new.map((enquiry: Enquiry) => (
-                  <div key={enquiry.id} className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
+                  <div key={enquiry.id} className={`p-3 md:p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
+                    <div className="flex items-start justify-between mb-1 md:mb-2">
+                      <h5 className="font-medium text-gray-900 text-sm md:text-base">{enquiry.title}</h5>
                       {getStatusBadge(enquiry.status)}
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
+                    <p className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">{enquiry.clientName}</p>
                     <div className="flex items-center justify-between text-xs text-gray-500">
                       <span className="flex items-center">
                         <DollarSign className="w-3 h-3 mr-1" />
@@ -123,8 +123,8 @@ export default function KanbanBoard() {
                   </div>
                 ))}
                 {groupedEnquiries.new.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No new enquiries</p>
+                  <div className="text-center py-4 md:py-8 text-gray-500">
+                    <p className="text-sm">No new enquiries</p>
                   </div>
                 )}
               </div>

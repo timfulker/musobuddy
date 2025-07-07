@@ -13,7 +13,8 @@ export default function DashboardHeader() {
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+          {/* Add left margin on mobile to make room for hamburger menu */}
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 ml-12 md:ml-0">Dashboard</h2>
           <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
             <span>Welcome back, <span className="font-medium text-gray-900">{user?.firstName || "User"}</span></span>
           </div>
@@ -44,7 +45,8 @@ export default function DashboardHeader() {
           <Link href="/enquiries?action=new">
             <Button className="bg-purple-600 hover:bg-purple-700">
               <Plus className="w-4 h-4 mr-2" />
-              New Enquiry
+              <span className="hidden sm:inline">New Enquiry</span>
+              <span className="sm:hidden">New</span>
             </Button>
           </Link>
         </div>

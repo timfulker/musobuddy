@@ -62,15 +62,15 @@ export default function Dashboard() {
       <div className="md:ml-64 min-h-screen">
         <DashboardHeader />
         
-        <main className="p-6 space-y-6">
+        <main className="p-3 md:p-6 space-y-3 md:space-y-6">
           <StatsCards />
           
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 md:gap-6">
             <div className="xl:col-span-2">
               <KanbanBoard />
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-3 md:space-y-6">
               <CalendarWidget />
               <QuickActions />
               <ComplianceAlerts />

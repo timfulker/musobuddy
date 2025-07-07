@@ -238,6 +238,18 @@ Changelog:
   * Professional email delivery: clients see business name, replies go to user's inbox
   * Applied solution to both invoice and contract email sending workflows
   * Eliminated email authentication barriers for all users regardless of email provider
+- July 07, 2025. Enhanced invoice system with standalone functionality:
+  * Added clientEmail field directly to invoices table for independent email sending
+  * Made contract selection optional - serves as convenient auto-fill feature for form completion
+  * Invoices can now be created and sent completely independently without requiring contracts
+  * Contract dropdown auto-fills all fields including client email when selected for speed
+  * Updated form validation to support standalone invoice creation with proper email handling
+- July 07, 2025. Mobile dashboard optimization completed:
+  * Fixed header layout conflict where hamburger menu overlapped with "Dashboard" title
+  * Added proper spacing (ml-12 md:ml-0) to accommodate mobile navigation button
+  * Optimized stats cards for mobile: reduced padding, responsive text sizes, compact layout
+  * Enhanced mobile experience with smaller gaps and responsive design across all components
+  * Dashboard now displays perfectly on mobile devices with proper element positioning
 ```
 
 ## User Preferences
