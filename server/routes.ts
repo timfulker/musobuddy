@@ -359,17 +359,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Invoice not found" });
       }
 
-      // Get related contract for client email
+      // Get client email from invoice or related contract
+      let clientEmail = invoice.clientEmail;
       let contract = null;
-      if (invoice.contractId) {
+      
+      if (!clientEmail && invoice.contractId) {
         contract = await storage.getContract(invoice.contractId, userId);
+        clientEmail = contract?.clientEmail;
       }
 
       // Get user settings for business details
       const userSettings = await storage.getUserSettings(userId);
 
-      if (!contract?.clientEmail) {
-        return res.status(400).json({ message: "Client email not found. Please add client email to the contract." });
+      if (!clientEmail) {
+        return res.status(400).json({ message: "Client email not found. Please add client email to the invoice or contract." });
       }
 
       // First update invoice status to sent
@@ -392,13 +395,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
       
       console.log('=== EMAIL DETAILS ===');
-      console.log('To:', contract.clientEmail);
+      console.log('To:', clientEmail);
       console.log('From:', `${fromName} <${fromEmail}>`);
       console.log('Reply-To:', replyToEmail);
       console.log('Subject:', `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`);
       
       const emailData: any = {
-        to: contract.clientEmail,
+        to: clientEmail,
         from: `${fromName} <${fromEmail}>`,
         subject: `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`,
         html: `<h1>Invoice ${updatedInvoice.invoiceNumber}</h1><p>Amount: £${updatedInvoice.amount}</p><p>Due Date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}</p>`,
@@ -413,12 +416,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailSent = await sendEmail(emailData);
 
       if (emailSent) {
-        console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${contract.clientEmail}`);
+        console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${clientEmail}`);
         res.json({ 
           message: "Invoice sent successfully via email",
           debug: {
             invoiceId: invoiceId,
-            clientEmail: contract.clientEmail,
+            clientEmail: clientEmail,
             invoiceNumber: updatedInvoice.invoiceNumber,
             emailSent: true
           }
@@ -430,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Failed to send email. Please check your email settings.",
           debug: {
             invoiceId: invoiceId,
-            clientEmail: contract.clientEmail,
+            clientEmail: clientEmail,
             invoiceNumber: updatedInvoice.invoiceNumber,
             emailSent: false
           }

@@ -18,8 +18,9 @@ import { z } from "zod";
 
 const invoiceFormSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
-  contractId: z.number().min(1, "Please select a contract"),
+  contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
   clientName: z.string().min(1, "Client name is required"),
+  clientEmail: z.string().email("Please enter a valid email address").optional(),
   businessAddress: z.string().optional(),
   amount: z.string().min(1, "Amount is required"),
   dueDate: z.string().min(1, "Due date is required"),
@@ -60,8 +61,9 @@ export default function Invoices() {
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       invoiceNumber: "",
-      contractId: 1,
+      contractId: undefined, // Optional contract selection
       clientName: "", 
+      clientEmail: "",
       businessAddress: userSettings?.businessAddress || "",
       amount: "",
       dueDate: "",
@@ -90,12 +92,13 @@ export default function Invoices() {
   // Watch contract ID changes
   const selectedContractId = form.watch("contractId");
 
-  // Auto-fill client name and amount when contract is selected
+  // Auto-fill fields when contract is selected (for convenience)
   useEffect(() => {
     if (selectedContractId && contracts.length > 0) {
       const selectedContract = contracts.find((c: any) => c.id === selectedContractId);
       if (selectedContract) {
         form.setValue("clientName", selectedContract.clientName);
+        form.setValue("clientEmail", selectedContract.clientEmail || "");
         if (selectedContract.eventDate) {
           form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
         }
@@ -149,11 +152,22 @@ export default function Invoices() {
     console.log("Form submission data:", data);
     console.log("Selected contract ID:", selectedContractId);
     
+    // Warn if no client email provided
+    if (!data.clientEmail) {
+      toast({
+        title: "Warning",
+        description: "No client email provided. You won't be able to send this invoice via email until you add one.",
+        variant: "destructive",
+      });
+      // Still allow creation but warn the user
+    }
+    
     // Send data exactly as expected by the API
     const finalData = {
-      contractId: selectedContractId || 1,
+      contractId: selectedContractId || null, // Can be null for standalone invoices
       invoiceNumber: data.invoiceNumber,
       clientName: data.clientName,
+      clientEmail: data.clientEmail || null,
       businessAddress: data.businessAddress,
       amount: data.amount,
       dueDate: data.dueDate, // Keep as string - server will convert
@@ -381,20 +395,25 @@ export default function Invoices() {
                         name="contractId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Select Contract</FormLabel>
+                            <FormLabel>Select Contract (optional - for auto-fill)</FormLabel>
                             <Select 
                               value={field.value?.toString()} 
                               onValueChange={(value) => field.onChange(parseInt(value))}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Choose a contract" />
+                                  <SelectValue placeholder="Choose a contract to auto-fill fields" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
                                 {contracts.map((contract: any) => (
                                   <SelectItem key={contract.id} value={contract.id.toString()}>
-                                    {contract.clientName} - {formatDate(contract.eventDate)}
+                                    <div className="flex items-center justify-between w-full">
+                                      <span>{contract.clientName} - {formatDate(contract.eventDate)}</span>
+                                      {!contract.clientEmail && (
+                                        <span className="text-xs text-red-500 ml-2">⚠ No email</span>
+                                      )}
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -413,6 +432,20 @@ export default function Invoices() {
                           <FormLabel>Client Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Client name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="clientEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="client@example.com" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

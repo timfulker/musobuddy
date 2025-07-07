@@ -69,9 +69,10 @@ export const contracts = pgTable("contracts", {
 export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
-  contractId: integer("contract_id").notNull(),
+  contractId: integer("contract_id"), // Made optional - can be null for standalone invoices
   invoiceNumber: varchar("invoice_number").notNull().unique(),
   clientName: varchar("client_name").notNull(),
+  clientEmail: varchar("client_email"), // Added client email directly to invoice
   businessAddress: varchar("business_address"), // Musician's business address
   performanceDate: timestamp("performance_date"),
   performanceFee: decimal("performance_fee", { precision: 10, scale: 2 }),
