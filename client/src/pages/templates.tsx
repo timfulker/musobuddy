@@ -44,18 +44,33 @@ export default function Templates() {
     queryKey: ['/api/templates'],
     queryFn: async () => {
       try {
-        const response = await apiRequest('GET', '/api/templates');
-        console.log('Templates API response:', response);
-        console.log('Templates is array:', Array.isArray(response));
-        console.log('Templates length:', response?.length);
-        return Array.isArray(response) ? response : [];
-      } catch (error: any) {
-        console.error('Templates API error:', error);
-        if (error.status === 401) {
-          // Authentication failed - redirect to login
-          window.location.href = '/';
-          return [];
+        console.log('🔥 Making templates API request...');
+        const response = await fetch('/api/templates', {
+          method: 'GET',
+          credentials: 'include', // Include cookies for authentication
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        console.log('🔥 Templates response status:', response.status);
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.log('🔥 401 - redirecting to login');
+            window.location.href = '/';
+            return [];
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const data = await response.json();
+        console.log('🔥 Templates API response:', data);
+        console.log('🔥 Templates is array:', Array.isArray(data));
+        console.log('🔥 Templates length:', data?.length);
+        return Array.isArray(data) ? data : [];
+      } catch (error: any) {
+        console.error('🔥 Templates API error:', error);
         throw error;
       }
     },
@@ -227,6 +242,11 @@ export default function Templates() {
   if (!isLoading && !error && Array.isArray(templates) && templates.length > 0) {
     console.log('CONDITIONS MET - Should show templates!');
   }
+  
+  // Force a re-render when templates change
+  React.useEffect(() => {
+    console.log('Templates state changed:', templates);
+  }, [templates]);
 
 
 
@@ -426,6 +446,9 @@ export default function Templates() {
           <div className="col-span-2 text-center py-8 text-gray-500">
             <p>No templates found. Create your first template to get started!</p>
             <p className="text-sm mt-2">Debug: templates={JSON.stringify(templates)}</p>
+            <p className="text-sm mt-1">Loading: {isLoading ? 'true' : 'false'}</p>
+            <p className="text-sm mt-1">Error: {error ? JSON.stringify(error) : 'none'}</p>
+            <p className="text-sm mt-1">Query status: {templatesQuery.status}</p>
           </div>
         )}
       </div>
