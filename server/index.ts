@@ -6,6 +6,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Enable extended URL encoding for webhook data
 
+// Webhook routes handled in routes.ts
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -124,6 +126,27 @@ app.all('/webhook/sendgrid', async (req, res) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
+  
+  // Add middleware to prevent vite from intercepting webhook routes
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/webhook/')) {
+      console.log('🔥 WEBHOOK REQUEST DETECTED - bypassing vite middleware');
+      // Find and call the webhook handler directly
+      const webhookHandler = app._router.stack.find(layer => {
+        return layer.route && layer.route.path === '/webhook/sendgrid';
+      });
+      
+      if (webhookHandler) {
+        console.log('✅ Found webhook handler, calling directly');
+        return webhookHandler.route.stack[0].handle(req, res, next);
+      } else {
+        console.log('❌ No webhook handler found');
+        return res.status(404).json({ error: 'Webhook handler not found' });
+      }
+    }
+    next();
+  });
+  
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
