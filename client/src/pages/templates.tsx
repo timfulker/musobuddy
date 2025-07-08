@@ -40,11 +40,13 @@ export default function Templates() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  const { data: templates = [], isLoading } = useQuery({
+  const { data: templates = [], isLoading, error } = useQuery({
     queryKey: ['/api/templates'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/templates');
       console.log('Templates response:', response);
+      console.log('Templates response type:', typeof response);
+      console.log('Templates response length:', response?.length);
       return Array.isArray(response) ? response : [];
     }
   });
@@ -108,6 +110,24 @@ export default function Templates() {
     }
   });
 
+  const setDefaultMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('PATCH', `/api/templates/${id}`, { isDefault: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/templates'] });
+      toast({
+        title: "Success",
+        description: "Template set as default successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to set template as default. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleCreateTemplate = () => {
     if (!formData.name.trim() || !formData.subject.trim() || !formData.emailBody.trim()) {
       toast({
@@ -158,10 +178,30 @@ export default function Templates() {
     }
   };
 
+  const handleSetDefault = (template: EmailTemplate) => {
+    if (template.isDefault) {
+      toast({
+        title: "Info",
+        description: "This template is already set as default.",
+      });
+      return;
+    }
+    
+    if (window.confirm(`Set "${template.name}" as default template?`)) {
+      setDefaultMutation.mutate(template.id);
+    }
+  };
+
   const resetForm = () => {
     setFormData({ name: '', subject: '', emailBody: '', smsBody: '', isAutoRespond: false });
     setEditingTemplate(null);
   };
+
+  // Debug logging to understand template loading issues
+  console.log('Templates data:', templates);
+  console.log('Templates length:', templates?.length);
+  console.log('Is loading:', isLoading);
+  console.log('Error:', error);
 
   if (isLoading) {
     return (
@@ -274,6 +314,8 @@ export default function Templates() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
+        {isLoading && <div className="col-span-2 text-center py-8">Loading templates...</div>}
+        {error && <div className="col-span-2 text-center py-8 text-red-500">Error loading templates: {error.message}</div>}
         {templates && templates.length > 0 ? (
           templates.map((template: EmailTemplate) => (
             <Card key={template.id} className="h-fit">
@@ -296,6 +338,16 @@ export default function Templates() {
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
+                    {!template.isDefault && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSetDefault(template)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        Set Default
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -342,9 +394,11 @@ export default function Templates() {
             </Card>
           ))
         ) : (
-          <div className="col-span-2 text-center py-8 text-gray-500">
-            <p>No templates found. Create your first template to get started!</p>
-          </div>
+          !isLoading && (
+            <div className="col-span-2 text-center py-8 text-gray-500">
+              <p>No templates found. Create your first template to get started!</p>
+            </div>
+          )
         )}
       </div>
 

@@ -25,7 +25,7 @@ import {
   type InsertEmailTemplate,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, ne } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - mandatory for Replit Auth
@@ -561,6 +561,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateEmailTemplate(id: number, updates: Partial<EmailTemplate>, userId: string): Promise<EmailTemplate | undefined> {
+    // If setting as default, first unset all other templates as default
+    if (updates.isDefault === true) {
+      await db
+        .update(emailTemplates)
+        .set({ isDefault: false, updatedAt: new Date() })
+        .where(and(eq(emailTemplates.userId, userId), ne(emailTemplates.id, id)));
+    }
+    
     const result = await db
       .update(emailTemplates)
       .set({ ...updates, updatedAt: new Date() })
