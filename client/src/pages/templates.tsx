@@ -40,7 +40,7 @@ export default function Templates() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  const { data: templates = [], isLoading, error } = useQuery({
+  const templatesQuery = useQuery({
     queryKey: ['/api/templates'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/templates');
@@ -50,8 +50,12 @@ export default function Templates() {
       return Array.isArray(response) ? response : [];
     },
     staleTime: 0, // Always refetch
-    cacheTime: 0  // Don't cache
+    gcTime: 0  // Don't cache (React Query v5 uses gcTime instead of cacheTime)
   });
+
+  const templates = templatesQuery.data || [];
+  const isLoading = templatesQuery.isLoading;
+  const error = templatesQuery.error;
 
   const createTemplateMutation = useMutation({
     mutationFn: (data: typeof formData) => apiRequest('POST', '/api/templates', data),
@@ -200,10 +204,14 @@ export default function Templates() {
   };
 
   // Debug logging for templates display
+  console.log('=== TEMPLATES DEBUG ===');
   console.log('Render check - templates:', templates);
   console.log('Render check - templates.length:', templates?.length);
   console.log('Render check - isLoading:', isLoading);
   console.log('Render check - error:', error);
+  console.log('Render check - templates type:', typeof templates);
+  console.log('Render check - templates is array:', Array.isArray(templates));
+  console.log('=== END DEBUG ===');
 
 
 
@@ -320,7 +328,7 @@ export default function Templates() {
       <div className="grid gap-4 md:grid-cols-2">
         {isLoading && <div className="col-span-2 text-center py-8">Loading templates...</div>}
         {error && <div className="col-span-2 text-center py-8 text-red-500">Error loading templates: {error.message}</div>}
-        {templates && templates.length > 0 ? (
+        {Array.isArray(templates) && templates.length > 0 ? (
           templates.map((template: EmailTemplate) => (
             <Card key={template.id} className="h-fit">
               <CardHeader className="pb-3">
