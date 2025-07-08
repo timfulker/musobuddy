@@ -102,13 +102,20 @@ export class InvoiceManager {
         return false;
       }
       
-      // Get related contract for client details
+      // Get client email from invoice or related contract
+      let clientEmail = invoice.clientEmail;
       let contract = null;
+      
       if (invoice.contractId) {
         contract = await storage.getContract(invoice.contractId, userId);
       }
       
-      if (!contract?.clientEmail) {
+      // Use contract email if invoice email is not available
+      if (!clientEmail && contract?.clientEmail) {
+        clientEmail = contract.clientEmail;
+      }
+      
+      if (!clientEmail) {
         console.log('No client email found for overdue reminder');
         return false;
       }
@@ -131,8 +138,9 @@ export class InvoiceManager {
       const daysOverdue = Math.ceil((Date.now() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24));
       
       const emailSent = await sendEmail({
-        to: contract.clientEmail,
-        from: `${fromName} <${fromEmail}>`,
+        to: clientEmail,
+        from: `${fromName} <business@musobuddy.com>`,
+        replyTo: fromEmail,
         subject: `OVERDUE: Invoice ${invoice.invoiceNumber} - Payment Required`,
         html: this.generateOverdueEmailHtml(invoice, contract, userSettings, daysOverdue),
         text: `PAYMENT OVERDUE: Invoice ${invoice.invoiceNumber} for £${invoice.amount} was due ${daysOverdue} days ago. Please arrange payment immediately to avoid further action.`,
@@ -185,7 +193,7 @@ export class InvoiceManager {
         </div>
         
         <div class="content">
-          <p>Dear ${contract.clientName},</p>
+          <p>Dear ${contract?.clientName || invoice.clientName},</p>
           
           <div class="warning">
             <strong>⚠️ URGENT ACTION REQUIRED</strong><br>
