@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit3, Trash2, MessageSquare, Mail, Phone, ArrowLeft } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Plus, Edit3, Trash2, ArrowLeft, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { useLocation } from 'wouter';
 
 interface EmailTemplate {
   id: number;
@@ -26,8 +22,14 @@ interface EmailTemplate {
 }
 
 export default function Templates() {
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const { toast } = useToast();
+
+  // Form state
   const [formData, setFormData] = useState({
     name: '',
     subject: '',
@@ -35,152 +37,148 @@ export default function Templates() {
     smsBody: '',
     isAutoRespond: false
   });
-  
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
 
-  const templatesQuery = useQuery({
-    queryKey: ['/api/templates'],
-    queryFn: async () => {
-      try {
-        console.log('🔥 Making templates API request...');
-        const response = await fetch('/api/templates', {
-          method: 'GET',
-          credentials: 'include', // Include cookies for authentication
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-        
-        console.log('🔥 Templates response status:', response.status);
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            console.log('🔥 401 - redirecting to login');
-            window.location.href = '/';
-            return [];
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/templates', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/';
+          return;
         }
-        
-        const data = await response.json();
-        console.log('🔥 Templates API response:', data);
-        console.log('🔥 Templates is array:', Array.isArray(data));
-        console.log('🔥 Templates length:', data?.length);
-        return Array.isArray(data) ? data : [];
-      } catch (error: any) {
-        console.error('🔥 Templates API error:', error);
-        throw error;
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    },
-    staleTime: 0, // Always refetch
-    gcTime: 0  // Don't cache (React Query v5 uses gcTime instead of cacheTime)
-  });
 
-  const templates = templatesQuery.data || [];
-  const isLoading = templatesQuery.isLoading;
-  const error = templatesQuery.error;
-
-  const createTemplateMutation = useMutation({
-    mutationFn: (data: typeof formData) => apiRequest('POST', '/api/templates', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/templates'] });
-      setIsCreateDialogOpen(false);
-      setFormData({ name: '', subject: '', emailBody: '', smsBody: '', isAutoRespond: false });
-      toast({
-        title: "Success",
-        description: "Template created successfully!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create template. Please try again.",
-        variant: "destructive",
-      });
+      const data = await response.json();
+      setTemplates(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  });
-
-  const updateTemplateMutation = useMutation({
-    mutationFn: (data: { id: number } & typeof formData) => 
-      apiRequest('PATCH', `/api/templates/${data.id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/templates'] });
-      setEditingTemplate(null);
-      setFormData({ name: '', subject: '', emailBody: '', smsBody: '', isAutoRespond: false });
-      toast({
-        title: "Success",
-        description: "Template updated successfully!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update template. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const deleteTemplateMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('DELETE', `/api/templates/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/templates'] });
-      toast({
-        title: "Success",
-        description: "Template deleted successfully!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete template. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const setDefaultMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('PATCH', `/api/templates/${id}`, { isDefault: true }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/templates'] });
-      toast({
-        title: "Success",
-        description: "Template set as default successfully!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to set template as default. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleCreateTemplate = () => {
-    if (!formData.name.trim() || !formData.subject.trim() || !formData.emailBody.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-    createTemplateMutation.mutate(formData);
   };
 
-  const handleUpdateTemplate = () => {
-    if (!editingTemplate || !formData.name.trim() || !formData.subject.trim() || !formData.emailBody.trim()) {
+  const handleCreateTemplate = async () => {
+    try {
+      const response = await fetch('/api/templates', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchTemplates();
+      setIsCreateDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Success",
+        description: "Template created successfully",
+      });
+    } catch (err: any) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields.",
+        description: err.message,
         variant: "destructive",
       });
-      return;
     }
-    updateTemplateMutation.mutate({ id: editingTemplate.id, ...formData });
+  };
+
+  const handleUpdateTemplate = async () => {
+    if (!editingTemplate) return;
+
+    try {
+      const response = await fetch(`/api/templates/${editingTemplate.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchTemplates();
+      setEditingTemplate(null);
+      resetForm();
+      toast({
+        title: "Success",
+        description: "Template updated successfully",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTemplate = async (template: EmailTemplate) => {
+    if (!confirm(`Are you sure you want to delete "${template.name}"?`)) return;
+
+    try {
+      const response = await fetch(`/api/templates/${template.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchTemplates();
+      toast({
+        title: "Success",
+        description: "Template deleted successfully",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSetDefault = async (template: EmailTemplate) => {
+    try {
+      const response = await fetch(`/api/templates/${template.id}/set-default`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchTemplates();
+      toast({
+        title: "Success",
+        description: `"${template.name}" set as default template`,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEdit = (template: EmailTemplate) => {
@@ -190,181 +188,50 @@ export default function Templates() {
       subject: template.subject,
       emailBody: template.emailBody,
       smsBody: template.smsBody,
-      isAutoRespond: template.isAutoRespond || false
+      isAutoRespond: template.isAutoRespond
     });
   };
 
-  const handleDelete = (template: EmailTemplate) => {
-    if (template.isDefault) {
-      toast({
-        title: "Error",
-        description: "Cannot delete default templates.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (window.confirm(`Are you sure you want to delete the template "${template.name}"?`)) {
-      deleteTemplateMutation.mutate(template.id);
-    }
-  };
-
-  const handleSetDefault = (template: EmailTemplate) => {
-    if (template.isDefault) {
-      toast({
-        title: "Info",
-        description: "This template is already set as default.",
-      });
-      return;
-    }
-    
-    if (window.confirm(`Set "${template.name}" as default template?`)) {
-      setDefaultMutation.mutate(template.id);
-    }
-  };
-
   const resetForm = () => {
-    setFormData({ name: '', subject: '', emailBody: '', smsBody: '', isAutoRespond: false });
-    setEditingTemplate(null);
+    setFormData({
+      name: '',
+      subject: '',
+      emailBody: '',
+      smsBody: '',
+      isAutoRespond: false
+    });
   };
-
-  // Debug logging for templates display
-  console.log('=== TEMPLATES DEBUG ===');
-  console.log('Render check - templates:', templates);
-  console.log('Render check - templates.length:', templates?.length);
-  console.log('Render check - isLoading:', isLoading);
-  console.log('Render check - error:', error);
-  console.log('Render check - templates type:', typeof templates);
-  console.log('Render check - templates is array:', Array.isArray(templates));
-  console.log('=== END DEBUG ===');
-
-  // Force templates to display for debugging
-  if (!isLoading && !error && Array.isArray(templates) && templates.length > 0) {
-    console.log('CONDITIONS MET - Should show templates!');
-  }
-  
-  // Force a re-render when templates change
-  console.log('Templates state changed:', templates);
-
-
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading templates...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <div className="flex items-center space-x-4 mb-2">
-            <Button
-              variant="ghost"
-              onClick={() => setLocation('/')}
-              className="text-blue-600 hover:text-blue-800"
-            >
+            <Button variant="ghost" size="sm" onClick={() => window.location.href = '/'}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Email Templates</h1>
-          <p className="text-gray-600">Manage your automated response templates for enquiries</p>
+          <h1 className="text-3xl font-bold text-gray-900">Email Templates</h1>
+          <p className="text-gray-600 mt-2">
+            Manage your automated response templates for enquiries
+          </p>
         </div>
-        
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Template</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Template Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Polite Decline, Request Info"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="subject">Email Subject *</Label>
-                <Input
-                  id="subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  placeholder="e.g., Re: Your Enquiry - Unfortunately Not Available"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="emailBody">Email Body *</Label>
-                <Textarea
-                  id="emailBody"
-                  value={formData.emailBody}
-                  onChange={(e) => setFormData({ ...formData, emailBody: e.target.value })}
-                  placeholder="Use {clientName} for the client's name and {title} for the enquiry title"
-                  rows={8}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="smsBody">SMS Version (Optional)</Label>
-                <Textarea
-                  id="smsBody"
-                  value={formData.smsBody}
-                  onChange={(e) => setFormData({ ...formData, smsBody: e.target.value })}
-                  placeholder="Shorter version for SMS (160 characters recommended)"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="autoRespond"
-                  checked={formData.isAutoRespond}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isAutoRespond: checked })}
-                />
-                <Label htmlFor="autoRespond" className="text-sm">
-                  Show in auto-respond options
-                </Label>
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button variant="outline" onClick={() => { setIsCreateDialogOpen(false); resetForm(); }}>
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleCreateTemplate}
-                  disabled={createTemplateMutation.isPending}
-                >
-                  {createTemplateMutation.isPending ? 'Creating...' : 'Create Template'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Template
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {isLoading ? (
+        {loading ? (
           <div className="col-span-2 text-center py-8">Loading templates...</div>
         ) : error ? (
-          <div className="col-span-2 text-center py-8 text-red-500">Error loading templates: {error.message}</div>
-        ) : Array.isArray(templates) && templates.length > 0 ? (
-          templates.map((template: EmailTemplate) => (
+          <div className="col-span-2 text-center py-8 text-red-500">
+            Error loading templates: {error}
+          </div>
+        ) : templates.length > 0 ? (
+          templates.map((template) => (
             <Card key={template.id} className="h-fit">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -385,71 +252,123 @@ export default function Templates() {
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
-                    {!template.isDefault && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSetDefault(template)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        Set Default
-                      </Button>
-                    )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(template)}
-                      disabled={template.isDefault}
+                      onClick={() => handleDeleteTemplate(template)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    <span className="font-medium text-sm">Subject:</span>
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Subject</p>
+                    <p className="text-sm text-gray-600">{template.subject}</p>
                   </div>
-                  <p className="text-sm text-gray-600">{template.subject}</p>
-                </div>
-                
-                <Separator />
-                
-                <div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <MessageSquare className="w-4 h-4 text-gray-500" />
-                    <span className="font-medium text-sm">Email Body:</span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Email Body</p>
+                    <p className="text-sm text-gray-600 line-clamp-3">{template.emailBody}</p>
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-3">{template.emailBody}</p>
-                </div>
-                
-                {template.smsBody && (
-                  <>
-                    <Separator />
+                  {template.smsBody && (
                     <div>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Phone className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium text-sm">SMS Version:</span>
-                      </div>
-                      <p className="text-sm text-gray-600">{template.smsBody}</p>
+                      <p className="text-sm font-medium text-gray-700 mb-1">SMS Body</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">{template.smsBody}</p>
                     </div>
-                  </>
-                )}
+                  )}
+                  <div className="flex justify-between items-center pt-2">
+                    <div className="flex space-x-2">
+                      {!template.isDefault && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSetDefault(template)}
+                        >
+                          <Star className="w-4 h-4 mr-1" />
+                          Set as Default
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))
         ) : (
           <div className="col-span-2 text-center py-8 text-gray-500">
             <p>No templates found. Create your first template to get started!</p>
-            <p className="text-sm mt-2">Debug: templates={JSON.stringify(templates)}</p>
-            <p className="text-sm mt-1">Loading: {isLoading ? 'true' : 'false'}</p>
-            <p className="text-sm mt-1">Error: {error ? JSON.stringify(error) : 'none'}</p>
-            <p className="text-sm mt-1">Query status: {templatesQuery.status}</p>
           </div>
         )}
       </div>
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Template Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                placeholder="e.g., Polite Decline"
+              />
+            </div>
+            <div>
+              <Label htmlFor="subject">Email Subject</Label>
+              <Input
+                id="subject"
+                value={formData.subject}
+                onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                placeholder="e.g., Thank you for your enquiry"
+              />
+            </div>
+            <div>
+              <Label htmlFor="emailBody">Email Body</Label>
+              <Textarea
+                id="emailBody"
+                value={formData.emailBody}
+                onChange={(e) => setFormData({...formData, emailBody: e.target.value})}
+                placeholder="Your email message here..."
+                rows={6}
+              />
+            </div>
+            <div>
+              <Label htmlFor="smsBody">SMS Body (Optional)</Label>
+              <Textarea
+                id="smsBody"
+                value={formData.smsBody}
+                onChange={(e) => setFormData({...formData, smsBody: e.target.value})}
+                placeholder="Your SMS message here..."
+                rows={3}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="autoRespond"
+                checked={formData.isAutoRespond}
+                onCheckedChange={(checked) => setFormData({...formData, isAutoRespond: !!checked})}
+              />
+              <Label htmlFor="autoRespond" className="text-sm">
+                Show in auto-respond options
+              </Label>
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => { setIsCreateDialogOpen(false); resetForm(); }}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateTemplate}>
+                Create Template
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={!!editingTemplate} onOpenChange={() => setEditingTemplate(null)}>
@@ -459,67 +378,59 @@ export default function Templates() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="edit-name">Template Name *</Label>
+              <Label htmlFor="editName">Template Name</Label>
               <Input
-                id="edit-name"
+                id="editName"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Polite Decline, Request Info"
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                placeholder="e.g., Polite Decline"
               />
             </div>
-            
             <div>
-              <Label htmlFor="edit-subject">Email Subject *</Label>
+              <Label htmlFor="editSubject">Email Subject</Label>
               <Input
-                id="edit-subject"
+                id="editSubject"
                 value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                placeholder="e.g., Re: Your Enquiry - Unfortunately Not Available"
+                onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                placeholder="e.g., Thank you for your enquiry"
               />
             </div>
-            
             <div>
-              <Label htmlFor="edit-emailBody">Email Body *</Label>
+              <Label htmlFor="editEmailBody">Email Body</Label>
               <Textarea
-                id="edit-emailBody"
+                id="editEmailBody"
                 value={formData.emailBody}
-                onChange={(e) => setFormData({ ...formData, emailBody: e.target.value })}
-                placeholder="Use {clientName} for the client's name and {title} for the enquiry title"
-                rows={8}
+                onChange={(e) => setFormData({...formData, emailBody: e.target.value})}
+                placeholder="Your email message here..."
+                rows={6}
               />
             </div>
-            
             <div>
-              <Label htmlFor="edit-smsBody">SMS Version (Optional)</Label>
+              <Label htmlFor="editSmsBody">SMS Body (Optional)</Label>
               <Textarea
-                id="edit-smsBody"
+                id="editSmsBody"
                 value={formData.smsBody}
-                onChange={(e) => setFormData({ ...formData, smsBody: e.target.value })}
-                placeholder="Shorter version for SMS (160 characters recommended)"
+                onChange={(e) => setFormData({...formData, smsBody: e.target.value})}
+                placeholder="Your SMS message here..."
                 rows={3}
               />
             </div>
-            
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="edit-autoRespond"
+                id="editAutoRespond"
                 checked={formData.isAutoRespond}
-                onCheckedChange={(checked) => setFormData({ ...formData, isAutoRespond: checked })}
+                onCheckedChange={(checked) => setFormData({...formData, isAutoRespond: !!checked})}
               />
-              <Label htmlFor="edit-autoRespond" className="text-sm">
+              <Label htmlFor="editAutoRespond" className="text-sm">
                 Show in auto-respond options
               </Label>
             </div>
-            
             <div className="flex justify-end space-x-2 pt-4">
               <Button variant="outline" onClick={() => { setEditingTemplate(null); resetForm(); }}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleUpdateTemplate}
-                disabled={updateTemplateMutation.isPending}
-              >
-                {updateTemplateMutation.isPending ? 'Updating...' : 'Update Template'}
+              <Button onClick={handleUpdateTemplate}>
+                Update Template
               </Button>
             </div>
           </div>
