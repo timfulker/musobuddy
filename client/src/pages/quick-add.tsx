@@ -110,7 +110,7 @@ export default function QuickAddPage() {
                   <Plus className="w-4 h-4 mr-2" />
                   Add Another Enquiry
                 </Button>
-                <Link href="/dashboard">
+                <Link href="/">
                   <Button variant="outline" className="w-full">
                     <Home className="w-4 h-4 mr-2" />
                     Go to Dashboard
