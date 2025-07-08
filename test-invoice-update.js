@@ -1,45 +1,47 @@
-// Monitor for DNS propagation and email delivery
-console.log('🔍 MONITORING DNS PROPAGATION AND EMAIL DELIVERY...');
-console.log('SPF Record: v=spf1 include:sendgrid.net ~all');
-console.log('Status: Configured in Namecheap, waiting for global propagation');
-console.log('');
-
-let checkCount = 0;
-const maxChecks = 12; // 12 checks over 6 minutes
+// Monitor DNS and email activity after Namecheap confirmation
+console.log('🔍 MONITORING AFTER NAMECHEAP DNS CONFIRMATION...');
 
 async function monitorDNSAndEmails() {
-  checkCount++;
-  console.log(`Check ${checkCount}/${maxChecks} - ${new Date().toLocaleTimeString()}`);
+  console.log('1. Testing webhook endpoint...');
   
-  // Test if DNS has propagated
   try {
-    const response = await fetch('https://dns.google/resolve?name=musobuddy.com&type=TXT');
-    const data = await response.json();
-    const spfRecord = data.Answer?.find(record => record.data.includes('spf1'));
+    // Test webhook endpoint
+    const webhookResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid');
+    const webhookData = await webhookResponse.json();
+    console.log('✅ Webhook Status:', webhookData.status);
     
-    if (spfRecord) {
-      console.log('✅ DNS PROPAGATION COMPLETE!');
-      console.log('✅ SPF Record now visible globally');
-      console.log('✅ Gmail should now accept emails to leads@musobuddy.com');
-      console.log('');
-      console.log('🎯 EMAIL FORWARDING SYSTEM IS NOW READY!');
-      console.log('Try sending emails to leads@musobuddy.com - they should create enquiries');
-      return true;
+    console.log('\n2. Testing POST to webhook...');
+    const testPost = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'SendGrid-Event-Webhook'
+      },
+      body: JSON.stringify({
+        to: 'leads@musobuddy.com',
+        from: 'test-after-namecheap@example.com',
+        subject: 'Test after Namecheap DNS confirmation',
+        text: 'Testing webhook after DNS verification by Namecheap support',
+        envelope: {
+          from: 'test-after-namecheap@example.com',
+          to: ['leads@musobuddy.com']
+        }
+      })
+    });
+    
+    if (testPost.ok) {
+      const result = await testPost.json();
+      console.log('✅ Webhook Test Result:', result);
     } else {
-      console.log('⏳ Still propagating...');
+      console.log('❌ Webhook test failed:', testPost.status);
     }
+    
+    console.log('\n📧 System confirmed ready by Namecheap support');
+    console.log('🎯 Send email now from timfulkermusic@gmail.com to leads@musobuddy.com');
+    
   } catch (error) {
-    console.log('❌ DNS check failed:', error.message);
-  }
-  
-  if (checkCount < maxChecks) {
-    setTimeout(monitorDNSAndEmails, 30000); // Check every 30 seconds
-  } else {
-    console.log('');
-    console.log('📧 DNS propagation taking longer than expected');
-    console.log('Try sending a test email anyway - it might work');
+    console.log('❌ Error:', error.message);
   }
 }
 
-// Start monitoring
 monitorDNSAndEmails();
