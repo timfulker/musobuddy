@@ -48,7 +48,9 @@ export default function Templates() {
       console.log('Templates is array:', Array.isArray(response));
       console.log('Templates length:', response?.length);
       return Array.isArray(response) ? response : [];
-    }
+    },
+    staleTime: 0, // Always refetch
+    cacheTime: 0  // Don't cache
   });
 
   const createTemplateMutation = useMutation({
@@ -318,7 +320,7 @@ export default function Templates() {
       <div className="grid gap-4 md:grid-cols-2">
         {isLoading && <div className="col-span-2 text-center py-8">Loading templates...</div>}
         {error && <div className="col-span-2 text-center py-8 text-red-500">Error loading templates: {error.message}</div>}
-        {!isLoading && !error && templates && templates.length > 0 ? (
+        {templates && templates.length > 0 ? (
           templates.map((template: EmailTemplate) => (
             <Card key={template.id} className="h-fit">
               <CardHeader className="pb-3">
@@ -399,6 +401,7 @@ export default function Templates() {
           !isLoading && (
             <div className="col-span-2 text-center py-8 text-gray-500">
               <p>No templates found. Create your first template to get started!</p>
+              <p className="text-sm mt-2">Debug: templates={JSON.stringify(templates)}</p>
             </div>
           )
         )}
