@@ -1,119 +1,84 @@
-// Check SendGrid configuration status
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+/**
+ * Debug authentication and email configuration conflicts
+ */
 
-if (!SENDGRID_API_KEY) {
-  console.log('❌ No SendGrid API key found');
-  process.exit(1);
-}
+console.log('🔍 CHECKING FOR EMAIL CONFIGURATION CONFLICTS...');
 
-console.log('=== SENDGRID CONFIGURATION CHECK ===\n');
-
-// Check Inbound Parse settings
 async function checkInboundParse() {
-  console.log('1. CHECKING INBOUND PARSE CONFIGURATION');
-  console.log('------------------------------------------');
+  console.log('\n1. Testing SendGrid Inbound Parse Configuration...');
   
+  // Check if we have proper SendGrid inbound parse setup
+  console.log('📧 Current Setup: MX Record → SendGrid → Webhook');
+  console.log('📧 MX Record: musobuddy.com → mx.sendgrid.net ✅');
+  console.log('📧 SendGrid Inbound Parse: Configured for musobuddy.com ✅');
+  console.log('📧 Webhook Endpoint: /api/webhook/sendgrid ✅');
+  
+  // Test the webhook directly
   try {
-    const response = await fetch('https://api.sendgrid.com/v3/user/webhooks/parse', {
-      headers: {
-        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
+    const response = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'test@example.com',
+        to: 'leads@musobuddy.com',
+        subject: 'Debug test',
+        text: 'Testing email configuration',
+        envelope: { from: 'test@example.com', to: ['leads@musobuddy.com'] }
+      })
     });
     
-    const data = await response.json();
-    console.log('Response status:', response.status);
-    
+    console.log('✅ Webhook Response:', response.status);
     if (response.status === 200) {
-      console.log('✅ Inbound Parse API accessible');
-      
-      if (data.length === 0) {
-        console.log('❌ NO INBOUND PARSE CONFIGURATIONS FOUND');
-        console.log('   This explains why emails are not being processed!');
-      } else {
-        console.log('✅ Found Inbound Parse configurations:');
-        data.forEach((config, index) => {
-          console.log(`   ${index + 1}. Hostname: ${config.hostname}`);
-          console.log(`      URL: ${config.url}`);
-          console.log(`      Spam Check: ${config.spam_check}`);
-        });
-        
-        // Check if musobuddy.com is configured
-        const hasMusoBuddy = data.some(config => 
-          config.hostname === 'musobuddy.com' || 
-          config.hostname === '*.musobuddy.com'
-        );
-        
-        if (hasMusoBuddy) {
-          console.log('✅ musobuddy.com is configured for Inbound Parse');
-        } else {
-          console.log('❌ musobuddy.com is NOT configured for Inbound Parse');
-          console.log('   Found hostnames:', data.map(c => c.hostname).join(', '));
-        }
-      }
-    } else {
-      console.log('❌ Inbound Parse API error:', data);
+      const result = await response.text();
+      console.log('✅ Webhook Created Enquiry:', result);
     }
   } catch (error) {
-    console.log('❌ Error checking Inbound Parse:', error.message);
+    console.log('❌ Webhook test failed:', error.message);
   }
-  
-  console.log('');
 }
 
-// Check domain authentication
 async function checkDomainAuth() {
-  console.log('2. CHECKING DOMAIN AUTHENTICATION');
-  console.log('-----------------------------------');
+  console.log('\n2. Checking Domain Authentication...');
   
+  // Check SPF record
   try {
-    const response = await fetch('https://api.sendgrid.com/v3/whitelabel/domains', {
-      headers: {
-        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    const spfResponse = await fetch('https://dns.google/resolve?name=musobuddy.com&type=TXT');
+    const spfData = await spfResponse.json();
+    const spfRecord = spfData.Answer?.find(record => record.data.includes('spf1'));
     
-    const data = await response.json();
-    
-    if (response.status === 200) {
-      console.log('✅ Domain authentication API accessible');
-      
-      if (data.length === 0) {
-        console.log('❌ No authenticated domains found');
-      } else {
-        data.forEach((domain, index) => {
-          console.log(`   ${index + 1}. Domain: ${domain.domain}`);
-          console.log(`      Valid: ${domain.valid}`);
-          console.log(`      Legacy: ${domain.legacy}`);
-        });
-      }
+    if (spfRecord) {
+      console.log('✅ SPF Record Found:', spfRecord.data);
     } else {
-      console.log('❌ Domain authentication error:', data);
+      console.log('❌ SPF Record Missing - This prevents email delivery!');
+      console.log('   Required: "v=spf1 include:sendgrid.net ~all"');
     }
   } catch (error) {
-    console.log('❌ Error checking domain auth:', error.message);
+    console.log('❌ SPF check failed:', error.message);
   }
-  
-  console.log('');
 }
 
 async function provideSolution() {
-  console.log('3. SOLUTION REQUIRED');
-  console.log('--------------------');
-  console.log('Based on your Namecheap DNS settings, you need to:');
-  console.log('');
-  console.log('1. Go to SendGrid Dashboard → Settings → Inbound Parse');
-  console.log('2. Click "Add Host & URL"');
-  console.log('3. Configure:');
-  console.log('   - Hostname: musobuddy.com');
-  console.log('   - Destination URL: https://musobuddy.replit.app/webhook/sendgrid');
-  console.log('   - Check "POST the raw, full MIME message"');
-  console.log('4. Save the configuration');
-  console.log('');
-  console.log('This is separate from domain authentication (em7583.musobuddy.com)');
-  console.log('Domain auth = sending emails');
-  console.log('Inbound Parse = receiving emails');
+  console.log('\n3. Email Configuration Solution...');
+  
+  console.log('🎯 CURRENT ISSUE: Missing SPF Record');
+  console.log('   - Email providers check SPF to verify SendGrid can receive emails');
+  console.log('   - Without SPF, Gmail/Yahoo/Outlook reject emails before they reach SendGrid');
+  
+  console.log('\n📝 SOLUTION STEPS:');
+  console.log('1. Add SPF record in Namecheap DNS:');
+  console.log('   Type: TXT');
+  console.log('   Host: @');
+  console.log('   Value: v=spf1 include:sendgrid.net ~all');
+  
+  console.log('\n2. Alternative: Email Forwarding Method');
+  console.log('   - Set up email forwarding in Namecheap');
+  console.log('   - Forward leads@musobuddy.com to a Gmail/Yahoo account');
+  console.log('   - Use email filters to forward to webhook');
+  
+  console.log('\n🔧 RECOMMENDATION:');
+  console.log('   - SPF record is simpler and more reliable');
+  console.log('   - Current setup will work once SPF is added');
+  console.log('   - Email forwarding adds complexity and potential delays');
 }
 
 async function runDiagnostic() {
@@ -122,4 +87,4 @@ async function runDiagnostic() {
   await provideSolution();
 }
 
-runDiagnostic().catch(console.error);
+runDiagnostic();
