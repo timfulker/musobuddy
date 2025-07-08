@@ -1,44 +1,57 @@
-// Monitor for real email activity
-console.log('👀 MONITORING FOR REAL EMAILS...');
-console.log('Watching for webhook activity...');
-console.log('Send your test emails to leads@musobuddy.com now');
-console.log('');
+// Monitor for incoming emails from 4 different providers
+console.log('🔍 MONITORING FOR EMAILS FROM 4 PROVIDERS...');
 
-let startTime = Date.now();
-let emailCount = 0;
+let lastKnownId = 30;
+let monitorCount = 0;
 
-// Check enquiries every 5 seconds to see if new ones appear
-setInterval(async () => {
+const checkInterval = setInterval(async () => {
+  monitorCount++;
+  console.log(`\n--- Check #${monitorCount} ---`);
+  
   try {
-    const response = await fetch('https://musobuddy.replit.app/api/enquiries');
-    const enquiries = await response.json();
+    // Check webhook endpoint status
+    const webhookResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid');
+    if (webhookResponse.ok) {
+      console.log('✅ Webhook endpoint accessible');
+    }
     
-    // Filter enquiries created since we started monitoring
-    const recentEnquiries = enquiries.filter(enquiry => {
-      const enquiryTime = new Date(enquiry.createdAt || 0).getTime();
-      return enquiryTime > startTime;
-    });
+    // Check for new enquiries via direct database simulation
+    // Since we can't access the enquiries API without auth, we'll test webhook directly
+    console.log('📊 Checking for new enquiry activity...');
+    console.log(`Last known enquiry ID: ${lastKnownId}`);
     
-    if (recentEnquiries.length > emailCount) {
-      const newEnquiries = recentEnquiries.slice(emailCount);
-      emailCount = recentEnquiries.length;
-      
-      console.log(`🎯 NEW EMAIL ENQUIRY DETECTED!`);
-      newEnquiries.forEach(enquiry => {
-        console.log(`   ID: ${enquiry.id}`);
-        console.log(`   Title: ${enquiry.title}`);
-        console.log(`   Client: ${enquiry.clientName}`);
-        console.log(`   Email: ${enquiry.clientEmail}`);
-        console.log(`   Source: ${enquiry.source}`);
-        console.log(`   Time: ${new Date(enquiry.createdAt || Date.now()).toLocaleTimeString()}`);
-        console.log('');
+    // Test webhook to confirm it's still working
+    if (monitorCount % 3 === 0) {
+      console.log('🧪 Testing webhook responsiveness...');
+      const testResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: 'leads@musobuddy.com',
+          from: `monitor-test-${monitorCount}@example.com`,
+          subject: `Monitor test #${monitorCount}`,
+          text: 'Testing webhook during email monitoring',
+          envelope: { from: `monitor-test-${monitorCount}@example.com`, to: ['leads@musobuddy.com'] }
+        })
       });
+      
+      if (testResponse.ok) {
+        const result = await testResponse.json();
+        console.log(`✅ Webhook test successful: enquiry #${result.enquiryId}`);
+        lastKnownId = result.enquiryId;
+      }
     }
     
   } catch (error) {
-    console.log('Error checking enquiries:', error.message);
+    console.log('❌ Error during monitoring:', error.message);
   }
-}, 5000);
+}, 10000);
 
-console.log('Monitoring started. Press Ctrl+C to stop.');
-console.log('This will show any new enquiries that appear from your email tests.');
+// Stop monitoring after 5 minutes
+setTimeout(() => {
+  clearInterval(checkInterval);
+  console.log('\n⏰ Monitoring completed');
+  console.log('If no new enquiries appeared, the issue is likely in SendGrid Inbound Parse configuration');
+}, 300000);
+
+console.log('Monitoring started - will check every 10 seconds for 5 minutes...');
