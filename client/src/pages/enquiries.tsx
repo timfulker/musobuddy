@@ -13,8 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2, Reply } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Search, Filter, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2, Reply } from "lucide-react";
 import { z } from "zod";
 import { Link } from "wouter";
 
@@ -579,8 +578,19 @@ export default function Enquiries() {
             filteredEnquiries.map((enquiry: Enquiry) => (
               <Card key={enquiry.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
+                  <div className="relative">
+                    <div className="absolute top-0 right-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteEnquiry(enquiry)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="pr-12">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="text-lg font-semibold text-gray-900">{enquiry.title}</h3>
                         <Badge className={getStatusColor(enquiry.status)}>
@@ -692,35 +702,19 @@ export default function Enquiries() {
                           })()}
                         </div>
                       )}
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem 
-                            onClick={() => {
-                              setSelectedEnquiry(enquiry);
-                              setRespondDialogOpen(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 focus:text-blue-700"
-                          >
-                            <Reply className="w-4 h-4 mr-2" />
-                            Respond
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteEnquiry(enquiry)}
-                            className="text-red-600 hover:text-red-700 focus:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      
+                      <div className="mt-4 flex justify-end">
+                        <Button
+                          onClick={() => {
+                            setSelectedEnquiry(enquiry);
+                            setRespondDialogOpen(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Reply className="w-4 h-4 mr-2" />
+                          Respond
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
