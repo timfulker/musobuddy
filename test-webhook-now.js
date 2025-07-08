@@ -1,22 +1,27 @@
-// Test webhook endpoint with form data (how SendGrid sends it)
-const testData = new URLSearchParams();
-testData.append('to', 'leads@musobuddy.com');
-testData.append('from', 'test@yahoo.com');
-testData.append('subject', 'Yahoo Test Email');
-testData.append('text', 'Testing from Yahoo address');
+// Direct test with server logs
+console.log('Testing webhook after server restart...');
 
 fetch('https://musobuddy.replit.app/webhook/sendgrid', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'SendGrid-Test'
+    'User-Agent': 'TestClient/1.0'
   },
-  body: testData
+  body: 'to=leads@musobuddy.com&from=test@example.com&subject=Test&text=Test message'
 })
-.then(response => response.json())
+.then(response => {
+  console.log('Status:', response.status);
+  console.log('Content-Type:', response.headers.get('content-type'));
+  return response.text();
+})
 .then(data => {
-  console.log('✅ Webhook test successful:', data);
+  console.log('Response length:', data.length);
+  if (data.includes('🔥 WEBHOOK ENDPOINT HIT')) {
+    console.log('✅ Webhook is working!');
+  } else if (data.includes('<!DOCTYPE html>')) {
+    console.log('❌ Still getting HTML - webhook route not working');
+  } else {
+    console.log('Response preview:', data.substring(0, 100));
+  }
 })
-.catch(err => {
-  console.error('❌ Webhook test failed:', err);
-});
+.catch(err => console.error('Error:', err));
