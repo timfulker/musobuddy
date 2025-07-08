@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bell, Search, Plus } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Link } from "wouter";
+import NotificationsDropdown from "@/components/notifications-dropdown";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -34,12 +35,7 @@ export default function DashboardHeader() {
           </div>
           
           {/* Notifications */}
-          <button className="relative p-2 text-gray-400 hover:text-gray-600">
-            <Bell className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
-          </button>
+          <NotificationsDropdown />
           
           {/* Quick Actions */}
           <Link href="/enquiries?action=new">
