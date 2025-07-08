@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus } from "lucide-react";
 import { Link } from "wouter";
 import NotificationsDropdown from "@/components/notifications-dropdown";
+import { ThemeSelector } from "./theme-selector";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -36,6 +37,7 @@ export default function DashboardHeader() {
           
           {/* Notifications */}
           <NotificationsDropdown />
+          <ThemeSelector />
           
           {/* Quick Actions */}
           <Link href="/enquiries?action=new">
