@@ -16,15 +16,15 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
 const quickAddFormSchema = z.object({
-  clientName: z.string().min(1, "Client name is required"),
+  clientName: z.string().optional(),
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientPhone: z.string().optional(),
-  eventDate: z.string().min(1, "Event date is required"),
+  eventDate: z.string().optional(),
   venue: z.string().optional(),
   estimatedValue: z.string().optional(),
   notes: z.string().optional(),
-  source: z.string().min(1, "Source is required"),
-  contactMethod: z.string().min(1, "Contact method is required"),
+  source: z.string().optional(),
+  contactMethod: z.string().optional(),
 });
 
 type QuickAddFormData = z.infer<typeof quickAddFormSchema>;
