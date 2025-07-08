@@ -143,6 +143,7 @@ export const emailTemplates = pgTable("email_templates", {
   emailBody: text("email_body").notNull(),
   smsBody: text("sms_body"),
   isDefault: boolean("is_default").default(false),
+  isAutoRespond: boolean("is_auto_respond").default(false), // Show in auto-respond options
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

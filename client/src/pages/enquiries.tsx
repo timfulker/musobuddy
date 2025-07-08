@@ -45,6 +45,10 @@ export default function Enquiries() {
     queryKey: ["/api/enquiries"],
   });
 
+  const { data: templates = [] } = useQuery({
+    queryKey: ["/api/templates"],
+  });
+
   const createEnquiryMutation = useMutation({
     mutationFn: async (data: z.infer<typeof enquiryFormSchema>) => {
       const enquiryData = {
@@ -109,7 +113,7 @@ export default function Enquiries() {
     }
   };
 
-  const handleQuickResponse = async (templateType: string) => {
+  const handleQuickResponse = async (templateId: number) => {
     if (!selectedEnquiry?.clientEmail && !selectedEnquiry?.clientPhone) {
       toast({
         title: "Error",
@@ -119,30 +123,7 @@ export default function Enquiries() {
       return;
     }
 
-    // Get user settings for signature
-    const userSettings = await fetch('/api/user/settings').then(res => res.json());
-    const userName = userSettings?.emailFromName || userSettings?.businessName || "MusoBuddy User";
-    
-    // Default templates
-    const templates = {
-      decline: {
-        subject: "Re: Your Enquiry - Unfortunately Not Available",
-        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI appreciate you thinking of me for your event. Unfortunately, I am not available for your requested date.\n\nI hope you find a fantastic musician for your event, and I wish you all the best.\n\nKind regards,\n${userName}`,
-        smsBody: `Hi ${selectedEnquiry.clientName}, thanks for your enquiry. Unfortunately I'm not available for your requested date. Hope you find someone great for your event!`
-      },
-      more_info: {
-        subject: "Re: Your Enquiry - Need More Information",
-        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI'd be delighted to help make your event special! To provide you with an accurate quote and ensure I can meet your needs, could you please provide:\n\n• Event date and time\n• Venue location\n• Number of guests expected\n• Specific music requirements\n• Duration of performance needed\n\nI look forward to hearing from you soon.\n\nBest regards,\n${userName}`,
-        smsBody: `Hi ${selectedEnquiry.clientName}, thanks for your enquiry! I'd love to help with your event. Could you send me: date/time, venue, guest count, and music requirements? Thanks!`
-      },
-      available: {
-        subject: "Re: Your Enquiry - Available and Interested!",
-        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI'm pleased to confirm that I am available for your event and would be delighted to perform for you.\n\nTo proceed with a formal quote, I'll need a few more details:\n\n• Exact venue address\n• Performance duration required\n• Any specific music requests\n• Setup requirements\n\nI look forward to discussing your event further.\n\nBest regards,\n${userName}`,
-        smsBody: `Hi ${selectedEnquiry.clientName}, great news - I'm available for your event! I'd love to perform for you. Can you send venue address, duration needed, and any music requests? Thanks!`
-      }
-    };
-
-    const template = templates[templateType as keyof typeof templates];
+    const template = templates.find(t => t.id === templateId);
     
     if (template) {
       // For now, send email. SMS functionality will be added later
@@ -155,7 +136,7 @@ export default function Enquiries() {
               enquiryId: selectedEnquiry.id,
               to: selectedEnquiry.clientEmail,
               subject: template.subject,
-              body: template.body
+              body: template.emailBody
             })
           });
           
@@ -181,10 +162,10 @@ export default function Enquiries() {
         });
       }
     } else {
-      // Handle custom response - could open a compose dialog
       toast({
-        title: "Coming Soon",
-        description: "Custom response editor will be available soon.",
+        title: "Error",
+        description: "Template not found. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -482,45 +463,29 @@ export default function Enquiries() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button 
-                    onClick={() => handleQuickResponse('decline')}
-                    variant="outline"
-                    className="p-6 h-auto flex flex-col items-center space-y-2"
-                  >
-                    <span className="text-lg">📧</span>
-                    <span className="font-medium">Polite Decline</span>
-                    <span className="text-xs text-gray-500">Send a professional decline email</span>
-                  </Button>
+                  {templates.filter(t => t.isAutoRespond).map((template) => (
+                    <Button 
+                      key={template.id}
+                      onClick={() => handleQuickResponse(template.id)}
+                      variant="outline"
+                      className="p-6 h-auto flex flex-col items-center space-y-2"
+                    >
+                      <span className="text-lg">📧</span>
+                      <span className="font-medium">{template.name}</span>
+                      <span className="text-xs text-gray-500 text-center">{template.subject}</span>
+                    </Button>
+                  ))}
                   
-                  <Button 
-                    onClick={() => handleQuickResponse('more_info')}
-                    variant="outline"
-                    className="p-6 h-auto flex flex-col items-center space-y-2"
-                  >
-                    <span className="text-lg">❓</span>
-                    <span className="font-medium">Request More Info</span>
-                    <span className="text-xs text-gray-500">Ask for additional details</span>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => handleQuickResponse('available')}
-                    variant="outline"
-                    className="p-6 h-auto flex flex-col items-center space-y-2"
-                  >
-                    <span className="text-lg">✅</span>
-                    <span className="font-medium">Confirm Available</span>
-                    <span className="text-xs text-gray-500">Confirm availability & request details</span>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => handleQuickResponse('custom')}
-                    variant="outline"
-                    className="p-6 h-auto flex flex-col items-center space-y-2"
-                  >
-                    <span className="text-lg">✏️</span>
-                    <span className="font-medium">Custom Reply</span>
-                    <span className="text-xs text-gray-500">Write a custom response</span>
-                  </Button>
+                  {templates.filter(t => t.isAutoRespond).length === 0 && (
+                    <div className="col-span-full text-center py-8">
+                      <p className="text-gray-500 mb-4">No auto-respond templates configured</p>
+                      <Link href="/templates">
+                        <Button variant="outline" size="sm">
+                          Configure Templates
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </DialogContent>

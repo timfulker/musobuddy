@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit3, Trash2, MessageSquare, Mail, Phone, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -20,6 +21,7 @@ interface EmailTemplate {
   emailBody: string;
   smsBody: string;
   isDefault: boolean;
+  isAutoRespond: boolean;
   createdAt: string;
 }
 
@@ -30,7 +32,8 @@ export default function Templates() {
     name: '',
     subject: '',
     emailBody: '',
-    smsBody: ''
+    smsBody: '',
+    isAutoRespond: false
   });
   
   const { toast } = useToast();
@@ -51,7 +54,7 @@ export default function Templates() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/templates'] });
       setIsCreateDialogOpen(false);
-      setFormData({ name: '', subject: '', emailBody: '', smsBody: '' });
+      setFormData({ name: '', subject: '', emailBody: '', smsBody: '', isAutoRespond: false });
       toast({
         title: "Success",
         description: "Template created successfully!",
@@ -72,7 +75,7 @@ export default function Templates() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/templates'] });
       setEditingTemplate(null);
-      setFormData({ name: '', subject: '', emailBody: '', smsBody: '' });
+      setFormData({ name: '', subject: '', emailBody: '', smsBody: '', isAutoRespond: false });
       toast({
         title: "Success",
         description: "Template updated successfully!",
@@ -135,8 +138,10 @@ export default function Templates() {
       name: template.name,
       subject: template.subject,
       emailBody: template.emailBody,
-      smsBody: template.smsBody
+      smsBody: template.smsBody,
+      isAutoRespond: template.isAutoRespond || false
     });
+    setIsCreateDialogOpen(true);
   };
 
   const handleDelete = (template: EmailTemplate) => {
@@ -155,7 +160,7 @@ export default function Templates() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', subject: '', emailBody: '', smsBody: '' });
+    setFormData({ name: '', subject: '', emailBody: '', smsBody: '', isAutoRespond: false });
     setEditingTemplate(null);
   };
 
@@ -242,6 +247,17 @@ export default function Templates() {
                 />
               </div>
               
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="autoRespond"
+                  checked={formData.isAutoRespond}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isAutoRespond: checked })}
+                />
+                <Label htmlFor="autoRespond" className="text-sm">
+                  Show in auto-respond options
+                </Label>
+              </div>
+              
               <div className="flex justify-end space-x-2 pt-4">
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
@@ -268,6 +284,11 @@ export default function Templates() {
                   <div className="flex items-center space-x-2">
                     {template.isDefault && (
                       <Badge variant="secondary">Default</Badge>
+                    )}
+                    {template.isAutoRespond && (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        Auto-Respond
+                      </Badge>
                     )}
                     <Button
                       variant="ghost"
@@ -375,6 +396,17 @@ export default function Templates() {
                 placeholder="Shorter version for SMS (160 characters recommended)"
                 rows={3}
               />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="edit-autoRespond"
+                checked={formData.isAutoRespond}
+                onCheckedChange={(checked) => setFormData({ ...formData, isAutoRespond: checked })}
+              />
+              <Label htmlFor="edit-autoRespond" className="text-sm">
+                Show in auto-respond options
+              </Label>
             </div>
             
             <div className="flex justify-end space-x-2 pt-4">
