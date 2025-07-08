@@ -37,7 +37,11 @@ export default function Templates() {
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['/api/templates'],
-    queryFn: () => apiRequest('GET', '/api/templates')
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/templates');
+      console.log('Templates response:', response);
+      return Array.isArray(response) ? response : [];
+    }
   });
 
   const createTemplateMutation = useMutation({
@@ -243,67 +247,73 @@ export default function Templates() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {templates.map((template: EmailTemplate) => (
-          <Card key={template.id} className="h-fit">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{template.name}</CardTitle>
-                <div className="flex items-center space-x-2">
-                  {template.isDefault && (
-                    <Badge variant="secondary">Default</Badge>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(template)}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(template)}
-                    disabled={template.isDefault}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <Mail className="w-4 h-4 text-gray-500" />
-                  <span className="font-medium text-sm">Subject:</span>
-                </div>
-                <p className="text-sm text-gray-600">{template.subject}</p>
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <MessageSquare className="w-4 h-4 text-gray-500" />
-                  <span className="font-medium text-sm">Email Body:</span>
-                </div>
-                <p className="text-sm text-gray-600 line-clamp-3">{template.emailBody}</p>
-              </div>
-              
-              {template.smsBody && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Phone className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium text-sm">SMS Version:</span>
-                    </div>
-                    <p className="text-sm text-gray-600">{template.smsBody}</p>
+        {templates && templates.length > 0 ? (
+          templates.map((template: EmailTemplate) => (
+            <Card key={template.id} className="h-fit">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">{template.name}</CardTitle>
+                  <div className="flex items-center space-x-2">
+                    {template.isDefault && (
+                      <Badge variant="secondary">Default</Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(template)}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(template)}
+                      disabled={template.isDefault}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-sm">Subject:</span>
+                  </div>
+                  <p className="text-sm text-gray-600">{template.subject}</p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <MessageSquare className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-sm">Email Body:</span>
+                  </div>
+                  <p className="text-sm text-gray-600 line-clamp-3">{template.emailBody}</p>
+                </div>
+                
+                {template.smsBody && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Phone className="w-4 h-4 text-gray-500" />
+                        <span className="font-medium text-sm">SMS Version:</span>
+                      </div>
+                      <p className="text-sm text-gray-600">{template.smsBody}</p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="col-span-2 text-center py-8 text-gray-500">
+            <p>No templates found. Create your first template to get started!</p>
+          </div>
+        )}
       </div>
 
       {/* Edit Dialog */}
