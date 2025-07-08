@@ -231,7 +231,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/templates', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log('Templates request - userId:', userId);
       const templates = await storage.getEmailTemplates(userId);
+      console.log('Templates fetched:', templates.length);
       res.json(templates);
     } catch (error) {
       console.error("Error fetching email templates:", error);
