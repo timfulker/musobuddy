@@ -182,7 +182,7 @@ export default function Templates() {
           <div className="flex items-center space-x-4 mb-2">
             <Button
               variant="ghost"
-              onClick={() => setLocation('/dashboard')}
+              onClick={() => setLocation('/')}
               className="text-blue-600 hover:text-blue-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
