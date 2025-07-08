@@ -141,7 +141,6 @@ export default function Templates() {
       smsBody: template.smsBody,
       isAutoRespond: template.isAutoRespond || false
     });
-    setIsCreateDialogOpen(true);
   };
 
   const handleDelete = (template: EmailTemplate) => {
@@ -259,7 +258,7 @@ export default function Templates() {
               </div>
               
               <div className="flex justify-end space-x-2 pt-4">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                <Button variant="outline" onClick={() => { setIsCreateDialogOpen(false); resetForm(); }}>
                   Cancel
                 </Button>
                 <Button 
@@ -410,7 +409,7 @@ export default function Templates() {
             </div>
             
             <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setEditingTemplate(null)}>
+              <Button variant="outline" onClick={() => { setEditingTemplate(null); resetForm(); }}>
                 Cancel
               </Button>
               <Button 
