@@ -64,22 +64,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/enquiries/quick-add', async (req: any, res) => {
     try {
       console.log("Quick-add endpoint hit with data:", req.body);
+      console.log("Request body type:", typeof req.body);
+      console.log("Request body keys:", Object.keys(req.body || {}));
+      
       // For quick-add, we need to associate with the account owner
       // In a real app, this would be configurable or have a different approach
       const userId = "43963086"; // Your user ID from auth logs
-      const data = { ...req.body, userId };
       
-      // Convert eventDate string to Date if present
-      if (data.eventDate && typeof data.eventDate === 'string') {
-        data.eventDate = new Date(data.eventDate);
-      }
+      // Transform Quick Add form data to match enquiry schema
+      const quickAddData = req.body;
+      console.log("Client name from body:", quickAddData.clientName);
       
-      const enquiryData = insertEnquirySchema.parse(data);
-      const enquiry = await storage.createEnquiry(enquiryData);
+      const enquiryData = {
+        userId,
+        title: `Enquiry from ${quickAddData.clientName}`,
+        clientName: quickAddData.clientName,
+        clientEmail: quickAddData.clientEmail || null,
+        clientPhone: quickAddData.clientPhone || null,
+        eventDate: quickAddData.eventDate ? new Date(quickAddData.eventDate) : null,
+        venue: quickAddData.venue || null,
+        estimatedValue: quickAddData.estimatedValue ? quickAddData.estimatedValue.toString() : null,
+        notes: quickAddData.notes ? `${quickAddData.notes}\n\nSource: ${quickAddData.source || 'Unknown'}\nContact Method: ${quickAddData.contactMethod || 'Unknown'}` : `Source: ${quickAddData.source || 'Unknown'}\nContact Method: ${quickAddData.contactMethod || 'Unknown'}`,
+        status: "new"
+      };
+      
+      console.log("Transformed enquiry data:", enquiryData);
+      console.log("estimatedValue type:", typeof enquiryData.estimatedValue);
+      console.log("estimatedValue value:", enquiryData.estimatedValue);
+      
+      // Validate using insertEnquirySchema
+      const validatedData = insertEnquirySchema.parse(enquiryData);
+      const enquiry = await storage.createEnquiry(validatedData);
       console.log("Quick-add enquiry created:", enquiry);
       res.status(201).json(enquiry);
     } catch (error) {
       console.error("Error creating enquiry via quick-add:", error);
+      console.error("Error details:", error.stack);
       res.status(500).json({ message: "Failed to create enquiry", error: error.message });
     }
   });
