@@ -62,20 +62,11 @@ app.use((req, res, next) => {
   
   // Add middleware to prevent vite from intercepting webhook routes
   app.use((req, res, next) => {
-    if (req.path.startsWith('/webhook/')) {
+    if (req.path.startsWith('/api/webhook/')) {
       console.log('🔥 WEBHOOK REQUEST DETECTED - bypassing vite middleware');
-      // Find and call the webhook handler directly
-      const webhookHandler = app._router.stack.find(layer => {
-        return layer.route && layer.route.path === '/webhook/sendgrid';
-      });
-      
-      if (webhookHandler) {
-        console.log('✅ Found webhook handler, calling directly');
-        return webhookHandler.route.stack[0].handle(req, res, next);
-      } else {
-        console.log('❌ No webhook handler found');
-        return res.status(404).json({ error: 'Webhook handler not found' });
-      }
+      console.log(`Path: ${req.path}, Method: ${req.method}`);
+      // Let it continue to the route handler in routes.ts
+      return next();
     }
     next();
   });
