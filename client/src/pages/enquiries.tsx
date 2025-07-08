@@ -430,7 +430,7 @@ export default function Enquiries() {
             </Card>
           ) : (
             filteredEnquiries.map((enquiry: Enquiry) => (
-              <Card key={enquiry.id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card key={enquiry.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
