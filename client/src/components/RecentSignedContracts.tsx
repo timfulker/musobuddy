@@ -51,6 +51,7 @@ export default function RecentSignedContracts() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading contract:', error);
+      alert('Failed to download contract. Please try again.');
     }
   };
 

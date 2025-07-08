@@ -73,6 +73,7 @@ export default function SignContract() {
         
       } catch (error) {
         console.error("Error loading contract:", error);
+        setError("Failed to load contract. Please check the URL and try again.");
         toast({
           title: "Error",
           description: "Contract not found or has already been signed",
@@ -135,6 +136,7 @@ export default function SignContract() {
 
     } catch (error) {
       console.error("Error signing contract:", error);
+      setError("Failed to sign contract. Please try again.");
       toast({
         title: "Error",
         description: "Failed to sign contract. Please try again.",
