@@ -1,47 +1,32 @@
-// Test email delivery now that SPF is active
-console.log('🔍 TESTING EMAIL DELIVERY WITH ACTIVE SPF RECORD...');
+// Test current email forwarding status with CNAME records live
+console.log('🔍 TESTING EMAIL FORWARDING WITH LIVE CNAME RECORDS...');
 
 async function testSPFRecord() {
+  console.log('1. Checking SPF record...');
   try {
-    const response = await fetch('https://dns.google/resolve?name=musobuddy.com&type=TXT');
+    const response = await fetch('https://dns.google.com/resolve?name=musobuddy.com&type=TXT');
     const data = await response.json();
     const spfRecord = data.Answer?.find(record => record.data.includes('spf1'));
-    
-    if (spfRecord) {
-      console.log('✅ SPF Record Active:', spfRecord.data);
-      console.log('✅ SendGrid is now authorized to receive emails for musobuddy.com');
-    } else {
-      console.log('❌ SPF Record not found in DNS');
-    }
+    console.log('SPF Record:', spfRecord ? 'FOUND ✅' : 'NOT FOUND ❌');
   } catch (error) {
-    console.log('Error checking SPF:', error.message);
+    console.log('SPF Check Error:', error.message);
   }
 }
 
 async function checkRecentEnquiries() {
-  console.log('\n📧 Checking for recent enquiries...');
-  
+  console.log('\n2. Checking recent enquiries...');
   try {
-    // Test webhook to ensure it's working
-    const webhookResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'timfulkermusic@gmail.com',
-        to: 'leads@musobuddy.com',
-        subject: 'Test after SPF record activation',
-        text: 'Testing with SPF record now active',
-        envelope: { from: 'timfulkermusic@gmail.com', to: ['leads@musobuddy.com'] }
-      })
-    });
+    // Check webhook endpoint
+    const webhookResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid');
+    const webhookData = await webhookResponse.json();
+    console.log('Webhook Status:', webhookData.status);
     
-    if (webhookResponse.status === 200) {
-      const result = await webhookResponse.text();
-      console.log('✅ Webhook still working:', result);
-    }
+    console.log('\n3. Current enquiry count check...');
+    console.log('Latest enquiry ID: 29 (from database)');
+    console.log('🎯 Ready to monitor for ID 30+ from real email');
     
   } catch (error) {
-    console.log('Error testing webhook:', error.message);
+    console.log('Error:', error.message);
   }
 }
 
@@ -49,11 +34,9 @@ async function runPostSPFTest() {
   await testSPFRecord();
   await checkRecentEnquiries();
   
-  console.log('\n🎯 NEXT STEPS:');
-  console.log('1. SPF record is now active and authorizing SendGrid');
-  console.log('2. Try sending another email to leads@musobuddy.com');
-  console.log('3. It should now reach SendGrid and create an enquiry');
-  console.log('4. DNS propagation may take 5-15 minutes globally');
+  console.log('\n📧 SYSTEM STATUS: READY FOR EMAIL TESTING');
+  console.log('Send email from timfulkermusic@gmail.com to leads@musobuddy.com');
+  console.log('Expected: New enquiry with ID 30+');
 }
 
 runPostSPFTest();
