@@ -1,104 +1,59 @@
-// Test email delivery chain step by step
-console.log('=== EMAIL DELIVERY CHAIN TEST ===\n');
+// Test if SendGrid is properly accepting emails for the domain
+console.log('🔍 TESTING EMAIL DELIVERY CHAIN...');
 
-// Test 1: Check if SendGrid accepts emails for your domain
 async function testSendGridAcceptance() {
-  console.log('1. TESTING SENDGRID EMAIL ACCEPTANCE');
-  console.log('-------------------------------------');
+  console.log('\n1. Testing if SendGrid accepts emails for musobuddy.com...');
   
-  // Simulate what happens when an email provider tries to deliver to SendGrid
-  console.log('Testing SMTP connection to mx.sendgrid.net...');
-  
-  // This would normally be done via SMTP, but we can test the email path
-  console.log('Email flow should be:');
-  console.log('  Gmail/Yahoo → DNS lookup → mx.sendgrid.net → SendGrid → Webhook');
-  console.log('');
-  
-  console.log('If no activity in SendGrid, possible causes:');
-  console.log('  1. SendGrid rejecting emails for unverified domain');
-  console.log('  2. Email providers treating musobuddy.com as spam');
-  console.log('  3. DNS propagation issues');
-  console.log('  4. SendGrid account limits or restrictions');
-  console.log('');
-}
-
-// Test 2: Check domain reputation
-async function checkDomainReputation() {
-  console.log('2. DOMAIN REPUTATION CHECK');
-  console.log('----------------------------');
-  
-  console.log('Checking if musobuddy.com is blacklisted...');
-  
-  // Check some basic reputation indicators
+  // This won't work directly but shows the concept
   try {
-    const response = await fetch('https://dns.google/resolve?name=musobuddy.com&type=TXT');
-    const data = await response.json();
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email: 'leads@musobuddy.com' }],
+          subject: 'Test email delivery'
+        }],
+        from: { email: 'test@gmail.com' },
+        content: [{ type: 'text/plain', value: 'Testing email delivery' }]
+      })
+    });
     
-    if (data.Answer) {
-      console.log('TXT records found:', data.Answer.length);
-      data.Answer.forEach(record => {
-        if (record.data.includes('spf') || record.data.includes('dmarc')) {
-          console.log('  Email auth record:', record.data);
-        }
-      });
-    } else {
-      console.log('❌ No TXT records - this could cause delivery issues');
-    }
+    console.log('SendGrid API response:', response.status);
   } catch (error) {
-    console.log('❌ Error checking domain records:', error.message);
+    console.log('SendGrid API test failed:', error.message);
   }
-  
-  console.log('');
 }
 
-// Test 3: Check if domain is too new
+async function checkDomainReputation() {
+  console.log('\n2. Checking domain reputation indicators...');
+  
+  // Check if domain is accessible
+  try {
+    const response = await fetch('https://musobuddy.com');
+    console.log(`✅ Domain accessible: ${response.status}`);
+  } catch (error) {
+    console.log(`❌ Domain not accessible: ${error.message}`);
+  }
+}
+
 async function checkDomainAge() {
-  console.log('3. DOMAIN AGE AND TRUST CHECK');
-  console.log('------------------------------');
-  
-  console.log('New domains often face delivery restrictions:');
-  console.log('  - Gmail/Yahoo may reject emails from new domains');
-  console.log('  - SendGrid may require domain verification');
-  console.log('  - Email providers use "domain warming" periods');
-  console.log('');
-  
-  console.log('Solutions for new domains:');
-  console.log('  1. Use subdomain of established domain');
-  console.log('  2. Start with transactional emails first');
-  console.log('  3. Gradually increase email volume');
-  console.log('  4. Set up proper SPF/DKIM/DMARC records');
-  console.log('');
+  console.log('\n3. Domain age considerations...');
+  console.log('📧 New domains often face email delivery challenges');
+  console.log('📧 Gmail/Yahoo/Outlook are strict with new domains');
+  console.log('📧 Consider using a subdomain of an established domain');
 }
 
-// Test 4: Alternative diagnostic
 async function suggestAlternatives() {
-  console.log('4. IMMEDIATE DIAGNOSTIC STEPS');
-  console.log('------------------------------');
-  
-  console.log('To diagnose why SendGrid shows no activity:');
-  console.log('');
-  console.log('A. Check SendGrid Settings:');
-  console.log('   - Go to Settings → Sender Authentication');
-  console.log('   - Verify domain authentication status');
-  console.log('   - Check if musobuddy.com is verified (not just em7583)');
-  console.log('');
-  
-  console.log('B. Test with Different Email Addresses:');
-  console.log('   - Try sending FROM a SendGrid verified domain');
-  console.log('   - Test with a subdomain (test@em7583.musobuddy.com)');
-  console.log('   - Use a completely different domain temporarily');
-  console.log('');
-  
-  console.log('C. Check Email Provider Logs:');
-  console.log('   - Gmail: Check "Sent" folder for bounce messages');
-  console.log('   - Look for NDR (Non-Delivery Reports)');
-  console.log('   - Check spam/junk folders');
-  console.log('');
-  
-  console.log('D. Alternative Test:');
-  console.log('   - Send email TO a different address first');
-  console.log('   - Verify SendGrid can receive ANY emails');
-  console.log('   - Use SendGrid\'s email testing tools');
+  console.log('\n4. Potential solutions:');
+  console.log('🔧 Option 1: Wait 24-48 hours for DNS/reputation settling');
+  console.log('🔧 Option 2: Try Premium DNS for better email routing');
+  console.log('🔧 Option 3: Use a subdomain of an established domain');
+  console.log('🔧 Option 4: Test with different email providers');
+  console.log('🔧 Option 5: Contact SendGrid support for domain verification');
 }
 
 async function runEmailDeliveryTest() {
@@ -106,10 +61,6 @@ async function runEmailDeliveryTest() {
   await checkDomainReputation();
   await checkDomainAge();
   await suggestAlternatives();
-  
-  console.log('=== CONCLUSION ===');
-  console.log('Since SendGrid shows NO activity, emails are not reaching SendGrid.');
-  console.log('This is likely a domain verification or reputation issue, not a webhook problem.');
 }
 
-runEmailDeliveryTest().catch(console.error);
+runEmailDeliveryTest();
