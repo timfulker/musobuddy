@@ -496,6 +496,13 @@ All core features implemented and operational:
   * **DNS Verification**: Live testing confirms all records responding correctly
   * **Issue Confirmed**: Problem is definitely SendGrid internal routing, not DNS configuration
   * **Support Package**: Comprehensive technical documentation provided to SendGrid support team
+- July 08, 2025. Professional overdue notice system implemented:
+  * **Two-Tier Reminder System**: First reminder at 7 days (polite), final notice at 21 days (firm)
+  * **Professional Tone**: Removed aggressive language from first reminder - now courteous and professional
+  * **Visual Differentiation**: First reminder uses amber styling, final notice uses red styling
+  * **Email Client Fix**: Now checks both invoice and contract emails for overdue notifications
+  * **Escalation Logic**: Automatically determines reminder type based on days overdue
+  * **Professional Subjects**: "Payment Reminder" vs "FINAL NOTICE" for appropriate escalation
 ```
 
 ## User Preferences

@@ -16,14 +16,14 @@ export class InvoiceManager {
       const allInvoices = await this.getAllSentInvoices();
       
       const currentDate = new Date();
-      const overdueThreshold = 3; // 3 working days grace period
+      const overdueThreshold = 7; // 7 days grace period for first reminder
       
       for (const invoice of allInvoices) {
         if (invoice.status === 'sent' && invoice.dueDate) {
           const dueDate = new Date(invoice.dueDate);
-          const workingDaysOverdue = this.calculateWorkingDays(dueDate, currentDate);
+          const daysOverdue = Math.ceil((currentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
           
-          if (workingDaysOverdue >= overdueThreshold) {
+          if (daysOverdue >= overdueThreshold) {
             console.log(`Marking invoice ${invoice.invoiceNumber} as overdue`);
             await storage.updateInvoice(invoice.id, { status: 'overdue' }, invoice.userId);
           }
@@ -137,13 +137,20 @@ export class InvoiceManager {
       
       const daysOverdue = Math.ceil((Date.now() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24));
       
+      // Determine reminder type based on days overdue
+      const reminderType = daysOverdue >= 21 ? 'final' : 'first';
+      
       const emailSent = await sendEmail({
         to: clientEmail,
         from: `${fromName} <business@musobuddy.com>`,
         replyTo: fromEmail,
-        subject: `OVERDUE: Invoice ${invoice.invoiceNumber} - Payment Required`,
-        html: this.generateOverdueEmailHtml(invoice, contract, userSettings, daysOverdue),
-        text: `PAYMENT OVERDUE: Invoice ${invoice.invoiceNumber} for £${invoice.amount} was due ${daysOverdue} days ago. Please arrange payment immediately to avoid further action.`,
+        subject: reminderType === 'final' 
+          ? `FINAL NOTICE: Invoice ${invoice.invoiceNumber} - Immediate Payment Required`
+          : `Payment Reminder: Invoice ${invoice.invoiceNumber}`,
+        html: this.generateOverdueEmailHtml(invoice, contract, userSettings, daysOverdue, reminderType),
+        text: reminderType === 'final'
+          ? `FINAL NOTICE: Invoice ${invoice.invoiceNumber} for £${invoice.amount} was due ${daysOverdue} days ago. Please arrange payment immediately to avoid further action.`
+          : `Payment Reminder: Invoice ${invoice.invoiceNumber} for £${invoice.amount} was due ${daysOverdue} days ago. Please arrange payment at your earliest convenience.`,
         attachments: [{
           content: pdfBase64,
           filename: `OVERDUE-Invoice-${invoice.invoiceNumber}.pdf`,
@@ -167,10 +174,14 @@ export class InvoiceManager {
   /**
    * Generate HTML for overdue email reminder
    */
-  private generateOverdueEmailHtml(invoice: any, contract: any, userSettings: any, daysOverdue: number): string {
+  private generateOverdueEmailHtml(invoice: any, contract: any, userSettings: any, daysOverdue: number, reminderType: 'first' | 'final' = 'first'): string {
     const businessName = userSettings?.businessName || 'Your Business';
     const businessEmail = userSettings?.businessEmail || 'noreply@musobuddy.com';
     const businessPhone = userSettings?.phone || '';
+    
+    const isFirstReminder = reminderType === 'first';
+    const headerColor = isFirstReminder ? '#f59e0b' : '#dc2626';
+    const headerText = isFirstReminder ? 'PAYMENT REMINDER' : 'FINAL NOTICE';
     
     return `
       <!DOCTYPE html>
@@ -178,17 +189,17 @@ export class InvoiceManager {
       <head>
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .header { background-color: #dc2626; color: white; padding: 20px; text-align: center; }
+          .header { background-color: ${headerColor}; color: white; padding: 20px; text-align: center; }
           .content { padding: 30px; background-color: #fff; }
-          .warning { background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }
+          .warning { background-color: ${isFirstReminder ? '#fef3c7' : '#fef2f2'}; border-left: 4px solid ${headerColor}; padding: 15px; margin: 20px 0; }
           .invoice-details { background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; }
-          .amount { font-size: 24px; font-weight: bold; color: #dc2626; }
+          .amount { font-size: 24px; font-weight: bold; color: ${headerColor}; }
           .footer { background-color: #f3f4f6; padding: 20px; text-align: center; font-size: 14px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>PAYMENT OVERDUE</h1>
+          <h1>${headerText}</h1>
           <p>Invoice ${invoice.invoiceNumber}</p>
         </div>
         
@@ -196,8 +207,10 @@ export class InvoiceManager {
           <p>Dear ${contract?.clientName || invoice.clientName},</p>
           
           <div class="warning">
-            <strong>⚠️ URGENT ACTION REQUIRED</strong><br>
-            Your payment is now <strong>${daysOverdue} days overdue</strong>. Immediate payment is required to avoid further action.
+            ${isFirstReminder 
+              ? `<strong>Payment Reminder</strong><br>Your payment is now <strong>${daysOverdue} days overdue</strong>. We would appreciate if you could arrange payment at your earliest convenience.`
+              : `<strong>⚠️ FINAL NOTICE</strong><br>Your payment is now <strong>${daysOverdue} days overdue</strong>. Immediate payment is required to avoid further action.`
+            }
           </div>
           
           <div class="invoice-details">
@@ -209,25 +222,39 @@ export class InvoiceManager {
             <p><strong>Event:</strong> ${new Date(invoice.performanceDate).toLocaleDateString('en-GB')}</p>
           </div>
           
-          <p><strong>Please arrange payment immediately using one of the following methods:</strong></p>
-          <ul>
-            <li>Bank Transfer: ${userSettings?.bankDetails || 'Contact us for bank details'}</li>
-            <li>Contact us directly: ${businessEmail}</li>
-            ${businessPhone ? `<li>Phone: ${businessPhone}</li>` : ''}
-          </ul>
-          
-          <p>If payment is not received within 7 days, we may be forced to take further action including:</p>
-          <ul>
-            <li>Additional late payment charges</li>
-            <li>Referral to debt collection</li>
-            <li>Legal action</li>
-          </ul>
-          
-          <p>If you have already made payment, please disregard this notice and contact us immediately with proof of payment.</p>
-          
-          <p>Thank you for your immediate attention to this matter.</p>
-          
-          <p>Best regards,<br>${businessName}</p>
+          ${isFirstReminder 
+            ? `<p><strong>Please arrange payment using one of the following methods:</strong></p>
+              <ul>
+                <li>Bank Transfer: ${userSettings?.bankDetails || 'Contact us for bank details'}</li>
+                <li>Contact us directly: ${businessEmail}</li>
+                ${businessPhone ? `<li>Phone: ${businessPhone}</li>` : ''}
+              </ul>
+              
+              <p>If you have already made payment, please disregard this notice and contact us with proof of payment.</p>
+              
+              <p>Thank you for your prompt attention to this matter.</p>
+              
+              <p>Best regards,<br>${businessName}</p>`
+            : `<p><strong>Please arrange payment immediately using one of the following methods:</strong></p>
+              <ul>
+                <li>Bank Transfer: ${userSettings?.bankDetails || 'Contact us for bank details'}</li>
+                <li>Contact us directly: ${businessEmail}</li>
+                ${businessPhone ? `<li>Phone: ${businessPhone}</li>` : ''}
+              </ul>
+              
+              <p>If payment is not received within 7 days, we may be forced to take further action including:</p>
+              <ul>
+                <li>Additional late payment charges</li>
+                <li>Referral to debt collection</li>
+                <li>Legal action</li>
+              </ul>
+              
+              <p>If you have already made payment, please disregard this notice and contact us immediately with proof of payment.</p>
+              
+              <p>Thank you for your immediate attention to this matter.</p>
+              
+              <p>Best regards,<br>${businessName}</p>`
+          }
         </div>
         
         <div class="footer">
