@@ -44,9 +44,6 @@ export default function Templates() {
     queryKey: ['/api/templates'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/templates');
-      console.log('Templates response:', response);
-      console.log('Templates response type:', typeof response);
-      console.log('Templates response length:', response?.length);
       return Array.isArray(response) ? response : [];
     }
   });
@@ -197,11 +194,7 @@ export default function Templates() {
     setEditingTemplate(null);
   };
 
-  // Debug logging to understand template loading issues
-  console.log('Templates data:', templates);
-  console.log('Templates length:', templates?.length);
-  console.log('Is loading:', isLoading);
-  console.log('Error:', error);
+
 
   if (isLoading) {
     return (
@@ -316,7 +309,7 @@ export default function Templates() {
       <div className="grid gap-4 md:grid-cols-2">
         {isLoading && <div className="col-span-2 text-center py-8">Loading templates...</div>}
         {error && <div className="col-span-2 text-center py-8 text-red-500">Error loading templates: {error.message}</div>}
-        {templates && templates.length > 0 ? (
+        {!isLoading && !error && templates && templates.length > 0 ? (
           templates.map((template: EmailTemplate) => (
             <Card key={template.id} className="h-fit">
               <CardHeader className="pb-3">
