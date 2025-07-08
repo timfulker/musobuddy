@@ -5,7 +5,31 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Webhook route moved to index.ts to prevent conflicts
+  // Primary SendGrid webhook endpoint using proper email handling
+  app.post('/api/webhook/sendgrid', async (req, res) => {
+    console.log('🔥 WEBHOOK HIT! Email received via /api/webhook/sendgrid');
+    console.log('Request from IP:', req.ip);
+    console.log('User-Agent:', req.headers['user-agent']);
+    console.log('Content-Type:', req.headers['content-type']);
+    try {
+      const { handleSendGridWebhook } = await import('./email-webhook');
+      await handleSendGridWebhook(req, res);
+    } catch (error) {
+      console.error("Error in SendGrid webhook:", error);
+      res.status(500).json({ message: "Failed to process SendGrid webhook" });
+    }
+  });
+
+  // GET endpoint for testing webhook connectivity
+  app.get('/api/webhook/sendgrid', (req, res) => {
+    res.json({ 
+      status: 'webhook_active',
+      message: 'SendGrid webhook endpoint is accessible',
+      timestamp: new Date().toISOString(),
+      endpoint: '/api/webhook/sendgrid',
+      note: 'Ready for POST requests from SendGrid Inbound Parse'
+    });
+  });
 
   // Auth middleware
   await setupAuth(app);

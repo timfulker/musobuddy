@@ -1,0 +1,113 @@
+Thanks for sharing the full code — it’s clear you’re thorough. Here’s the good news:
+
+⸻
+
+✅ SendGrid Webhook Support is Already Implemented
+
+Your Replit app does have webhook routes defined for SendGrid, specifically:
+
+🔥 These are your active endpoints:
+
+app.post('/api/webhook/sendgrid-alt', ...)  ✅
+app.post('/api/webhook/parse', ...)         ✅
+app.post('/api/parse', ...)                 ✅
+app.all('/api/webhook/email', ...)          ✅
+
+All of these call:
+
+const { handleSendGridWebhook } = await import('./email-webhook');
+
+
+⸻
+
+🛑 BUT… No Route for /api/webhook/sendgrid
+
+From your message, it looks like SendGrid is posting to:
+
+https://musobuddy.replit.app/api/webhook/sendgrid
+
+That exact path is not registered in your routes. You’re using:
+	•	/api/webhook/sendgrid-alt
+	•	/api/webhook/email
+	•	/api/webhook/parse
+
+⚠️ That mismatch would cause a silent 404, meaning SendGrid’s POST is never processed and just fails quietly.
+
+⸻
+
+✅ Fix Options
+
+🔧 Option 1: Register the Missing Route
+
+Add this to your route file:
+
+app.post('/api/webhook/sendgrid', async (req, res) => {
+  console.log('🔥 WEBHOOK HIT! Email received via /api/webhook/sendgrid');
+  try {
+    const { handleSendGridWebhook } = await import('./email-webhook');
+    await handleSendGridWebhook(req, res);
+  } catch (error) {
+    console.error("Error in sendgrid webhook:", error);
+    res.status(500).json({ message: "Failed to process SendGrid webhook" });
+  }
+});
+
+Then confirm in SendGrid’s Inbound Parse settings:
+	•	Hostname: leads.musobuddy.com
+	•	Destination URL: https://musobuddy.replit.app/api/webhook/sendgrid
+
+⸻
+
+🔁 Option 2: Point SendGrid at an Existing Route
+
+Instead of creating a new route, update SendGrid to point to:
+
+https://musobuddy.replit.app/api/webhook/parse
+
+Or:
+
+https://musobuddy.replit.app/api/webhook/sendgrid-alt
+
+Just ensure whichever one you choose is publicly accessible and logs POST requests.
+
+⸻
+
+✅ To Confirm It’s Working
+
+After sending a test email to leads@musobuddy.com:
+	1.	Open your Replit logs
+	2.	You should see:
+
+🔥 WEBHOOK HIT! Email received via /api/webhook/sendgrid
+... or whichever route you used
+
+	3.	If it doesn’t appear → SendGrid couldn’t connect.
+
+⸻
+
+🔍 Final Suggestion: Add a Catch-All Debug Route
+
+You already have:
+
+app.use((req, res, next) => {
+  if (req.url.includes('webhook') || req.url.includes('parse')) {
+    console.log(`📧 Webhook attempt detected: ${req.method} ${req.url}`);
+    console.log(`Headers:`, req.headers);
+    console.log(`Body:`, req.body);
+  }
+  next();
+});
+
+Leave this in! It helps you catch any webhook traffic even if the exact route isn’t matched.
+
+⸻
+
+✅ TL;DR
+
+Why it’s not working:
+	•	You’re missing an exact match for the webhook route SendGrid is calling.
+
+Quick fix:
+	•	Either register POST /api/webhook/sendgrid or update the SendGrid webhook to match one of your existing routes.
+
+Let me know which route you want to standardise around, and I can help you centralise the logic.

@@ -1,51 +1,45 @@
-// Test the invoice update right now
-import https from 'https';
+// Test the webhook immediately after server restart
+console.log('Testing webhook with comprehensive logging...');
 
-const testData = {
-  contractId: null,
-  clientName: "Test Update Now",
-  clientEmail: "test@example.com",
-  clientAddress: "123 Test St",
-  venueAddress: "456 Venue Ave",
-  amount: "100.00",
-  dueDate: "2025-08-01",
-  performanceDate: "2025-08-01",
-  performanceFee: "100.00",
-  depositPaid: "0.00"
-};
+setTimeout(() => {
+  fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'TestClient/1.0'
+    },
+    body: 'to=leads@musobuddy.com&from=testuser@example.com&subject=Webhook Test&text=Testing webhook logging'
+  })
+  .then(response => {
+    console.log('Response Status:', response.status);
+    console.log('Response Headers:', Object.fromEntries(response.headers.entries()));
+    return response.text();
+  })
+  .then(data => {
+    console.log('Response Body:', data);
+    
+    if (data.includes('webhook_active') || data.includes('success')) {
+      console.log('✅ Webhook is working!');
+    } else if (data.includes('<!DOCTYPE')) {
+      console.log('❌ Still getting HTML response');
+    } else {
+      console.log('📄 Response:', data.substring(0, 200));
+    }
+  })
+  .catch(err => console.error('Error:', err));
+}, 3000);
 
-const postData = JSON.stringify(testData);
-
-const options = {
-  hostname: 'musobuddy.replit.app',
-  port: 443,
-  path: '/api/invoices/47',
-  method: 'PATCH',
-  headers: {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(postData)
-  }
-};
-
-console.log('Making PATCH request to:', options.hostname + options.path);
-
-const req = https.request(options, (res) => {
-  console.log(`Status: ${res.statusCode}`);
-  console.log(`Headers:`, res.headers);
-  
-  let data = '';
-  res.on('data', (chunk) => {
-    data += chunk;
-  });
-  
-  res.on('end', () => {
-    console.log('Response:', data);
-  });
-});
-
-req.on('error', (e) => {
-  console.error(`Request error: ${e.message}`);
-});
-
-req.write(postData);
-req.end();
+// Also test GET request
+setTimeout(() => {
+  console.log('\nTesting GET request...');
+  fetch('https://musobuddy.replit.app/api/webhook/sendgrid')
+  .then(response => response.text())
+  .then(data => {
+    if (data.includes('webhook_active')) {
+      console.log('✅ GET request working - webhook route is active');
+    } else {
+      console.log('❌ GET request returning:', data.substring(0, 100));
+    }
+  })
+  .catch(err => console.error('GET Error:', err));
+}, 5000);

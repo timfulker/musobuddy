@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Enable extended URL encoding for webhook data
 
-// Webhook routes handled in routes.ts
+// Remove conflicting webhook - will handle via different approach
 
 app.use((req, res, next) => {
   const start = Date.now();

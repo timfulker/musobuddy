@@ -1,27 +1,30 @@
-// Direct test with server logs
-console.log('Testing webhook after server restart...');
+// Test GET endpoint specifically
+console.log('Testing GET endpoint for webhook...');
 
-fetch('https://musobuddy.replit.app/webhook/sendgrid', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'TestClient/1.0'
-  },
-  body: 'to=leads@musobuddy.com&from=test@example.com&subject=Test&text=Test message'
+fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
+  method: 'GET'
 })
 .then(response => {
-  console.log('Status:', response.status);
-  console.log('Content-Type:', response.headers.get('content-type'));
+  console.log('GET Response Status:', response.status);
+  console.log('GET Response Headers:', Object.fromEntries(response.headers.entries()));
   return response.text();
 })
 .then(data => {
-  console.log('Response length:', data.length);
-  if (data.includes('🔥 WEBHOOK ENDPOINT HIT')) {
-    console.log('✅ Webhook is working!');
-  } else if (data.includes('<!DOCTYPE html>')) {
-    console.log('❌ Still getting HTML - webhook route not working');
-  } else {
-    console.log('Response preview:', data.substring(0, 100));
+  console.log('GET Response Body:', data);
+  
+  try {
+    const json = JSON.parse(data);
+    if (json.status === 'webhook_active') {
+      console.log('✅ GET endpoint working correctly');
+    } else {
+      console.log('📄 Unexpected response:', json);
+    }
+  } catch (e) {
+    if (data.includes('<!DOCTYPE')) {
+      console.log('❌ Still getting HTML response for GET');
+    } else {
+      console.log('❌ Invalid JSON response:', data.substring(0, 100));
+    }
   }
 })
-.catch(err => console.error('Error:', err));
+.catch(err => console.error('GET Error:', err));
