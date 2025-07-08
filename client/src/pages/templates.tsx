@@ -44,6 +44,9 @@ export default function Templates() {
     queryKey: ['/api/templates'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/templates');
+      console.log('Templates API response:', response);
+      console.log('Templates is array:', Array.isArray(response));
+      console.log('Templates length:', response?.length);
       return Array.isArray(response) ? response : [];
     }
   });
@@ -193,6 +196,12 @@ export default function Templates() {
     setFormData({ name: '', subject: '', emailBody: '', smsBody: '', isAutoRespond: false });
     setEditingTemplate(null);
   };
+
+  // Debug logging for templates display
+  console.log('Render check - templates:', templates);
+  console.log('Render check - templates.length:', templates?.length);
+  console.log('Render check - isLoading:', isLoading);
+  console.log('Render check - error:', error);
 
 
 
