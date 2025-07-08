@@ -181,6 +181,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send response to enquiry
+  app.post('/api/enquiries/send-response', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { enquiryId, to, subject, body } = req.body;
+      
+      // Verify enquiry belongs to user
+      const enquiry = await storage.getEnquiry(enquiryId, userId);
+      if (!enquiry) {
+        return res.status(404).json({ message: "Enquiry not found" });
+      }
+
+      // Get user settings for email configuration
+      const userSettings = await storage.getUserSettings(userId);
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || "MusoBuddy User";
+      
+      // Send email using SendGrid
+      const { sendEmail } = await import('./sendgrid');
+      const emailParams = {
+        to: to,
+        from: `${fromName} <business@musobuddy.com>`,
+        replyTo: userSettings?.businessEmail || undefined,
+        subject: subject,
+        text: body,
+        html: body.replace(/\n/g, '<br>')
+      };
+      
+      const success = await sendEmail(emailParams);
+      
+      if (success) {
+        // Update enquiry status to indicate response sent
+        await storage.updateEnquiry(enquiryId, { 
+          status: 'qualified',
+          notes: enquiry.notes ? `${enquiry.notes}\n\n--- Response sent on ${new Date().toLocaleDateString()} ---\nSubject: ${subject}\nMessage: ${body}` : `Response sent on ${new Date().toLocaleDateString()}\nSubject: ${subject}\nMessage: ${body}`
+        }, userId);
+        
+        res.json({ success: true, message: 'Response sent successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to send email response' });
+      }
+    } catch (error) {
+      console.error("Error sending enquiry response:", error);
+      res.status(500).json({ message: "Failed to send response" });
+    }
+  });
+
   // Public contract download route (for signed contracts)
   app.get('/api/contracts/:id/download', async (req, res) => {
     console.log('Public contract download request for contract:', req.params.id);

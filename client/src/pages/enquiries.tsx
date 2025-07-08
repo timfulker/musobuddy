@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2, Reply } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { z } from "zod";
 import { Link } from "wouter";
@@ -28,6 +28,8 @@ export default function Enquiries() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [respondDialogOpen, setRespondDialogOpen] = useState(false);
+  const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
   const { toast } = useToast();
 
   // Check URL params to auto-open form dialog
@@ -105,6 +107,82 @@ export default function Enquiries() {
   const handleDeleteEnquiry = (enquiry: Enquiry) => {
     if (window.confirm(`Are you sure you want to delete the enquiry "${enquiry.title}"? This action cannot be undone.`)) {
       deleteEnquiryMutation.mutate(enquiry.id);
+    }
+  };
+
+  const handleQuickResponse = async (templateType: string) => {
+    if (!selectedEnquiry?.clientEmail && !selectedEnquiry?.clientPhone) {
+      toast({
+        title: "Error",
+        description: "This enquiry has no email address or phone number to respond to.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Default templates
+    const templates = {
+      decline: {
+        subject: "Re: Your Enquiry - Unfortunately Not Available",
+        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI appreciate you thinking of me for your event. Unfortunately, I am not available for your requested date.\n\nI hope you find a fantastic musician for your event, and I wish you all the best.\n\nKind regards,\n[Your Name]`,
+        smsBody: `Hi ${selectedEnquiry.clientName}, thanks for your enquiry. Unfortunately I'm not available for your requested date. Hope you find someone great for your event!`
+      },
+      more_info: {
+        subject: "Re: Your Enquiry - Need More Information",
+        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI'd be delighted to help make your event special! To provide you with an accurate quote and ensure I can meet your needs, could you please provide:\n\n• Event date and time\n• Venue location\n• Number of guests expected\n• Specific music requirements\n• Duration of performance needed\n\nI look forward to hearing from you soon.\n\nBest regards,\n[Your Name]`,
+        smsBody: `Hi ${selectedEnquiry.clientName}, thanks for your enquiry! I'd love to help with your event. Could you send me: date/time, venue, guest count, and music requirements? Thanks!`
+      },
+      available: {
+        subject: "Re: Your Enquiry - Available and Interested!",
+        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI'm pleased to confirm that I am available for your event and would be delighted to perform for you.\n\nTo proceed with a formal quote, I'll need a few more details:\n\n• Exact venue address\n• Performance duration required\n• Any specific music requests\n• Setup requirements\n\nI look forward to discussing your event further.\n\nBest regards,\n[Your Name]`,
+        smsBody: `Hi ${selectedEnquiry.clientName}, great news - I'm available for your event! I'd love to perform for you. Can you send venue address, duration needed, and any music requests? Thanks!`
+      }
+    };
+
+    const template = templates[templateType as keyof typeof templates];
+    
+    if (template) {
+      // For now, send email. SMS functionality will be added later
+      if (selectedEnquiry?.clientEmail) {
+        try {
+          await fetch('/api/enquiries/send-response', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              enquiryId: selectedEnquiry.id,
+              to: selectedEnquiry.clientEmail,
+              subject: template.subject,
+              body: template.body
+            })
+          });
+          
+          toast({
+            title: "Success",
+            description: "Email response sent successfully!",
+          });
+          
+          setRespondDialogOpen(false);
+          setSelectedEnquiry(null);
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to send response. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Future SMS functionality
+        toast({
+          title: "SMS Coming Soon",
+          description: "SMS responses will be available soon for enquiries with phone numbers.",
+        });
+      }
+    } else {
+      // Handle custom response - could open a compose dialog
+      toast({
+        title: "Coming Soon",
+        description: "Custom response editor will be available soon.",
+      });
     }
   };
 
@@ -379,6 +457,71 @@ export default function Enquiries() {
               </Form>
             </DialogContent>
           </Dialog>
+          
+          {/* Respond Dialog */}
+          <Dialog open={respondDialogOpen} onOpenChange={setRespondDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Respond to {selectedEnquiry?.clientName}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Enquiry Details</h4>
+                  <p className="text-sm text-gray-600">{selectedEnquiry?.title}</p>
+                  <p className="text-sm text-gray-600">Email: {selectedEnquiry?.clientEmail || 'No email provided'}</p>
+                  <p className="text-sm text-gray-600">Phone: {selectedEnquiry?.clientPhone || 'No phone provided'}</p>
+                  
+                  {selectedEnquiry?.clientPhone && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-600">
+                      💡 SMS responses will be available soon for phone enquiries
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button 
+                    onClick={() => handleQuickResponse('decline')}
+                    variant="outline"
+                    className="p-6 h-auto flex flex-col items-center space-y-2"
+                  >
+                    <span className="text-lg">📧</span>
+                    <span className="font-medium">Polite Decline</span>
+                    <span className="text-xs text-gray-500">Send a professional decline email</span>
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => handleQuickResponse('more_info')}
+                    variant="outline"
+                    className="p-6 h-auto flex flex-col items-center space-y-2"
+                  >
+                    <span className="text-lg">❓</span>
+                    <span className="font-medium">Request More Info</span>
+                    <span className="text-xs text-gray-500">Ask for additional details</span>
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => handleQuickResponse('available')}
+                    variant="outline"
+                    className="p-6 h-auto flex flex-col items-center space-y-2"
+                  >
+                    <span className="text-lg">✅</span>
+                    <span className="font-medium">Confirm Available</span>
+                    <span className="text-xs text-gray-500">Confirm availability & request details</span>
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => handleQuickResponse('custom')}
+                    variant="outline"
+                    className="p-6 h-auto flex flex-col items-center space-y-2"
+                  >
+                    <span className="text-lg">✏️</span>
+                    <span className="font-medium">Custom Reply</span>
+                    <span className="text-xs text-gray-500">Write a custom response</span>
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Filters */}
@@ -555,6 +698,16 @@ export default function Enquiries() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setSelectedEnquiry(enquiry);
+                              setRespondDialogOpen(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 focus:text-blue-700"
+                          >
+                            <Reply className="w-4 h-4 mr-2" />
+                            Respond
+                          </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleDeleteEnquiry(enquiry)}
                             className="text-red-600 hover:text-red-700 focus:text-red-700"
