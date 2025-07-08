@@ -244,9 +244,7 @@ export default function Templates() {
   }
   
   // Force a re-render when templates change
-  React.useEffect(() => {
-    console.log('Templates state changed:', templates);
-  }, [templates]);
+  console.log('Templates state changed:', templates);
 
 
 
