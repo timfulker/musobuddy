@@ -14,7 +14,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
-const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true });
+const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).extend({
+  nextInvoiceNumber: z.number().min(1, "Invoice number must be at least 1"),
+});
 
 export default function Settings() {
   const { toast } = useToast();
@@ -41,6 +43,7 @@ export default function Settings() {
       bankDetails: settings.bankDetails || "",
       defaultTerms: settings.defaultTerms || "",
       emailFromName: settings.emailFromName || "",
+      nextInvoiceNumber: settings.nextInvoiceNumber || 256,
     },
   });
 
@@ -57,6 +60,7 @@ export default function Settings() {
       bankDetails: settings.bankDetails || "",
       defaultTerms: settings.defaultTerms || "",
       emailFromName: settings.emailFromName || "",
+      nextInvoiceNumber: settings.nextInvoiceNumber || 256,
     });
     
     // Parse bank details from stored string format
@@ -382,6 +386,28 @@ export default function Settings() {
                     </FormControl>
                     <p className="text-sm text-muted-foreground">
                       This name will appear in the "From" field when clients receive your contracts and invoices
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="nextInvoiceNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Next Invoice Number Override</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="256"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      The next invoice will use this number (formatted as 5 digits, e.g., 00256). Change this to sync with external systems or correct the sequence.
                     </p>
                     <FormMessage />
                   </FormItem>

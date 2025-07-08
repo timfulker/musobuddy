@@ -5,8 +5,86 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // PUBLIC WEBHOOK ENDPOINTS (NO AUTH REQUIRED) - MUST BE BEFORE AUTH SETUP
+  
+  // Simpler webhook endpoint without /api/ prefix
+  app.all('/webhook/sendgrid', async (req, res) => {
+    console.log(`🔥 WEBHOOK ENDPOINT HIT: ${req.method} ${req.url}`);
+    console.log('Request IP:', req.ip);
+    console.log('User-Agent:', req.headers['user-agent']);
+    console.log('Content-Type:', req.headers['content-type']);
+    
+    if (req.method === 'GET') {
+      console.log('GET request to webhook endpoint - SendGrid testing connectivity');
+      res.json({ 
+        status: 'active', 
+        message: 'SendGrid webhook endpoint is accessible',
+        timestamp: new Date().toISOString(),
+        url: 'https://musobuddy.replit.app/webhook/sendgrid',
+        debug: 'No authentication required for webhooks'
+      });
+    } else if (req.method === 'POST') {
+      console.log('🔥 EMAIL WEBHOOK HIT! Processing email from SendGrid...');
+      console.log('Request body keys:', Object.keys(req.body || {}));
+      console.log('Request body:', req.body);
+      
+      try {
+        // WEBHOOK AUTHENTICATION BYPASS TEST
+        const { from, to, subject, text } = req.body;
+        
+        console.log('✅ WEBHOOK AUTHENTICATION BYPASS SUCCESSFUL!');
+        console.log('Email data received:', { from, to, subject, textLength: text?.length });
+        
+        // Check for any musobuddy.com email (more flexible)
+        const toField = Array.isArray(to) ? to.join(', ') : to;
+        if (!toField || !toField.includes('musobuddy.com')) {
+          console.log('Email not for musobuddy.com domain, ignoring. TO field:', toField);
+          return res.status(200).json({ message: 'Email ignored - not for musobuddy.com' });
+        }
+        
+        console.log('📧 EMAIL ACCEPTED for musobuddy.com domain!');
+
+        // Extract basic client information for testing
+        const clientName = from?.replace(/<.*>/, '').trim() || 'Unknown Client';
+        
+        console.log('✅ EMAIL PARSING SUCCESSFUL!');
+        console.log('Extracted client name:', clientName);
+        
+        // Create enquiry in database
+        const enquiry = await storage.createEnquiry({
+          title: `Email Enquiry: ${subject || 'No Subject'}`,
+          clientName: clientName,
+          clientEmail: from || null,
+          clientPhone: null,
+          eventDate: new Date(),
+          venue: null,
+          notes: text || 'Email enquiry received via forwarding',
+          userId: "43963086", // Main account owner
+          status: 'new',
+        });
+
+        console.log('✅ ENQUIRY CREATED! ID:', enquiry.id);
+        
+        res.status(200).json({ 
+          message: 'Email processed successfully - enquiry created!', 
+          enquiryId: enquiry.id,
+          clientName: clientName,
+          subject: subject
+        });
+        
+      } catch (error) {
+        console.error("Error in SendGrid webhook:", error);
+        res.status(500).json({ message: "Failed to process SendGrid webhook", error: error.message });
+      }
+    } else {
+      res.status(405).json({ message: 'Method not allowed' });
+    }
+  });
+
   // Auth middleware
   await setupAuth(app);
+
+
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -133,54 +211,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Contract PDF download route
+  // Public contract download route (for signed contracts)
+  app.get('/api/contracts/:id/download', async (req, res) => {
+    console.log('Public contract download request for contract:', req.params.id);
+    
+    try {
+      const contractId = parseInt(req.params.id);
+      
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        console.log('Contract not found:', contractId);
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      // Only allow downloading signed contracts
+      if (contract.status !== 'signed') {
+        console.log('Contract not signed:', contractId, contract.status);
+        return res.status(403).json({ message: "Contract must be signed before downloading" });
+      }
+      
+      const userSettings = await storage.getUserSettings(contract.userId);
+      
+      console.log('Starting PDF generation for contract:', contract.contractNumber);
+      
+      
+      const { generateContractPDF } = await import('./pdf-generator');
+      
+      const signatureDetails = {
+        signedAt: contract.signedAt!,
+        signatureName: contract.clientName,
+        clientIpAddress: 'Digital signature'
+      };
+      
+      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      
+      
+      console.log('PDF generated successfully:', contract.contractNumber);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber}-Signed.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error("Error generating contract PDF:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to generate PDF" });
+      }
+    }
+  });
+
+  // Contract PDF download route (authenticated)
   app.get('/api/contracts/:id/pdf', isAuthenticated, async (req: any, res) => {
+    console.log('Authenticated PDF download request for contract:', req.params.id);
+    
     try {
       const userId = req.user.claims.sub;
       const contractId = parseInt(req.params.id);
       
       const contract = await storage.getContract(contractId, userId);
       if (!contract) {
+        console.log('Contract not found:', contractId);
         return res.status(404).json({ message: "Contract not found" });
       }
       
       const userSettings = await storage.getUserSettings(userId);
-      const { generateContractPDF } = await import('./pdf-generator');
       
-      const signatureDetails = contract.signedAt ? {
-        signedAt: contract.signedAt,
-        signatureName: contract.clientName, // We'll store this properly later
-        clientIpAddress: 'Digital signature'
-      } : undefined;
+      console.log('Starting PDF generation for contract:', contract.contractNumber);
       
-      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
       
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber}.pdf"`);
-      res.send(pdfBuffer);
-      
-    } catch (error) {
-      console.error("Error generating contract PDF:", error);
-      res.status(500).json({ message: "Failed to generate PDF" });
-    }
-  });
-
-  // Public contract PDF download (for clients)
-  app.get('/api/contracts/public/:id/pdf', async (req, res) => {
-    try {
-      const contractId = parseInt(req.params.id);
-      
-      const contract = await storage.getContractById(contractId);
-      if (!contract) {
-        return res.status(404).json({ message: "Contract not found" });
-      }
-      
-      // Only allow PDF download for signed contracts
-      if (contract.status !== 'signed') {
-        return res.status(403).json({ message: "Contract must be signed to download PDF" });
-      }
-      
-      const userSettings = await storage.getUserSettings(contract.userId);
       const { generateContractPDF } = await import('./pdf-generator');
       
       const signatureDetails = contract.signedAt ? {
@@ -191,24 +289,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
       
+      
+      console.log('PDF generated successfully:', contract.contractNumber);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error("Error generating contract PDF:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to generate PDF" });
+      }
+    }
+  });
+
+  // Public contract PDF download (for clients)
+  app.get('/api/contracts/public/:id/pdf', async (req, res) => {
+    console.log('Public PDF download request for contract:', req.params.id);
+    
+    try {
+      const contractId = parseInt(req.params.id);
+      
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        console.log('Contract not found:', contractId);
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      // Only allow PDF download for signed contracts
+      if (contract.status !== 'signed') {
+        console.log('Contract not signed:', contractId, contract.status);
+        return res.status(403).json({ message: "Contract must be signed to download PDF" });
+      }
+      
+      const userSettings = await storage.getUserSettings(contract.userId);
+      
+      console.log('Starting PDF generation for contract:', contract.contractNumber);
+      
+      
+      const { generateContractPDF } = await import('./pdf-generator');
+      
+      const signatureDetails = contract.signedAt ? {
+        signedAt: contract.signedAt,
+        signatureName: contract.clientName,
+        clientIpAddress: 'Digital signature'
+      } : undefined;
+      
+      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      
+      
+      console.log('PDF generated successfully:', contract.contractNumber);
+      
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber}.pdf"`);
       res.send(pdfBuffer);
       
     } catch (error) {
       console.error("Error generating public contract PDF:", error);
-      res.status(500).json({ message: "Failed to generate PDF" });
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to generate PDF" });
+      }
     }
   });
 
-  // Invoice PDF download route
+  // Invoice PDF download route (authenticated)
   app.get('/api/invoices/:id/pdf', isAuthenticated, async (req: any, res) => {
+    console.log('PDF download request for invoice:', req.params.id);
+    
     try {
       const userId = req.user.claims.sub;
       const invoiceId = parseInt(req.params.id);
       
       const invoice = await storage.getInvoice(invoiceId, userId);
       if (!invoice) {
+        console.log('Invoice not found:', invoiceId);
         return res.status(404).json({ message: "Invoice not found" });
       }
       
@@ -219,9 +374,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const userSettings = await storage.getUserSettings(userId);
-      const { generateInvoicePDF } = await import('./pdf-generator');
       
+      console.log('Starting PDF generation for invoice:', invoice.invoiceNumber);
+      
+      
+      const { generateInvoicePDF } = await import('./pdf-generator');
       const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+      
+      
+      console.log('PDF generated successfully:', invoice.invoiceNumber);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
@@ -229,7 +390,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error) {
       console.error("Error generating invoice PDF:", error);
-      res.status(500).json({ message: "Failed to generate PDF" });
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to generate PDF" });
+      }
+    }
+  });
+
+  // Public invoice view (no authentication required)
+  app.get('/api/invoices/:id/view', async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      
+      // Get invoice with basic validation - no user restriction for public view
+      const invoice = await storage.getInvoiceById(invoiceId);
+      
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      res.json(invoice);
+    } catch (error) {
+      console.error('Error fetching invoice for view:', error);
+      res.status(500).json({ message: "Failed to fetch invoice" });
+    }
+  });
+
+  // Public invoice download (generates PDF)
+  app.get('/api/invoices/:id/download', async (req, res) => {
+    console.log('Public PDF download request for invoice:', req.params.id);
+    
+    try {
+      const invoiceId = parseInt(req.params.id);
+      
+      // Get invoice and related data
+      const invoice = await storage.getInvoiceById(invoiceId);
+      if (!invoice) {
+        console.log('Invoice not found:', invoiceId);
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+
+      // Get user settings and contract if available
+      const userSettings = await storage.getUserSettings(invoice.userId);
+      let contract = null;
+      if (invoice.contractId) {
+        contract = await storage.getContractById(invoice.contractId);
+      }
+
+      // Generate PDF with simple approach
+      const { generateInvoicePDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+
+      // Send PDF as download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating invoice PDF:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to generate invoice PDF" });
+      }
     }
   });
 
@@ -242,6 +461,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching contracts:", error);
       res.status(500).json({ message: "Failed to fetch contracts" });
+    }
+  });
+
+  app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contractId = parseInt(req.params.id);
+      
+      const success = await storage.deleteContract(contractId, userId);
+      if (success) {
+        res.json({ message: "Contract deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Contract not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting contract:", error);
+      res.status(500).json({ message: "Failed to delete contract" });
     }
   });
 
@@ -264,6 +500,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invoice route logging (disabled for production)
+  // app.use('/api/invoices*', (req, res, next) => {
+  //   console.log(`=== INVOICE ROUTE: ${req.method} ${req.originalUrl} ===`);
+  //   next();
+  // });
+
+  // Test route to verify invoice routes work
+
+
 
 
   // Invoice routes
@@ -278,6 +523,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const invoiceId = parseInt(req.params.id);
+      
+      const success = await storage.deleteInvoice(invoiceId, userId);
+      if (success) {
+        res.json({ message: "Invoice deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Invoice not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      res.status(500).json({ message: "Failed to delete invoice" });
+    }
+  });
+
+
+
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -286,14 +550,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prepare the invoice data with all required fields
       const invoiceData = {
         userId,
-        invoiceNumber: req.body.invoiceNumber,
-        contractId: parseInt(req.body.contractId.toString()),
+        // invoiceNumber is auto-generated in storage layer - don't include it
+        contractId: req.body.contractId ? parseInt(req.body.contractId.toString()) : null,
         clientName: req.body.clientName,
-        businessAddress: req.body.businessAddress || null,
+        clientEmail: req.body.clientEmail || null,
+        clientAddress: req.body.clientAddress || null,
+        venueAddress: req.body.venueAddress || null,
         amount: req.body.amount.toString(),
         dueDate: new Date(req.body.dueDate),
         performanceDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
-        performanceFee: req.body.performanceFee || "0",
+        performanceFee: req.body.performanceFee || req.body.amount.toString(),
         depositPaid: req.body.depositPaid || "0",
         status: "draft",
       };
@@ -321,35 +587,181 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
+  // Debug route to check user session
+  app.get('/api/debug-user', isAuthenticated, (req: any, res) => {
+    console.log('DEBUG USER ROUTE REACHED');
+    res.json({
+      user: req.user,
+      userId: req.userId,
+      isAuthenticated: req.isAuthenticated(),
+      sessionID: req.sessionID
+    });
+  });
+
   // Update invoice
   app.patch('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+    console.log('=== INVOICE UPDATE REQUEST RECEIVED ===');
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.id; // Use the properly stored user ID
       const invoiceId = parseInt(req.params.id);
       
-      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body, userId);
+      console.log('Invoice ID:', invoiceId, 'User ID:', userId);
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
+      
+      if (!userId) {
+        console.log('ERROR: No user ID available');
+        return res.status(401).json({ message: "User ID not available" });
+      }
+      console.log('User ID:', userId);
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
+      
+      // First, let's verify the invoice exists and belongs to the user
+      const existingInvoice = await storage.getInvoice(invoiceId, userId);
+      if (!existingInvoice) {
+        console.log('Invoice not found or does not belong to user');
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      console.log('Existing invoice found:', existingInvoice.invoiceNumber);
+      
+      // Process the update data with minimal validation to isolate the issue
+      const updateData = { ...req.body };
+      
+      // Basic validation - only check what's absolutely required
+      if (!updateData.clientName) {
+        console.log('Missing client name');
+        return res.status(400).json({ message: "Client name is required" });
+      }
+      if (!updateData.amount) {
+        console.log('Missing amount');
+        return res.status(400).json({ message: "Amount is required" });
+      }
+      
+      if (updateData.dueDate && typeof updateData.dueDate === 'string') {
+        updateData.dueDate = new Date(updateData.dueDate);
+      }
+      if (updateData.performanceDate && typeof updateData.performanceDate === 'string') {
+        updateData.performanceDate = new Date(updateData.performanceDate);
+      }
+      
+      // Ensure decimal fields are properly formatted
+      if (updateData.amount && typeof updateData.amount === 'string') {
+        updateData.amount = updateData.amount;  // Keep as string for Drizzle decimal handling
+      }
+      if (updateData.performanceFee && typeof updateData.performanceFee === 'string') {
+        updateData.performanceFee = updateData.performanceFee;
+      }
+      if (updateData.depositPaid && typeof updateData.depositPaid === 'string') {
+        updateData.depositPaid = updateData.depositPaid;
+      }
+      
+      // Handle empty strings and null values properly for optional fields
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        } else if (updateData[key] === '' && (key === 'clientEmail' || key === 'clientAddress' || key === 'venueAddress' || key === 'performanceDate' || key === 'performanceFee' || key === 'depositPaid')) {
+          updateData[key] = null; // Set optional fields to null instead of empty string
+        }
+      });
+      
+      // Don't allow updates to system-generated fields
+      delete updateData.id;
+      delete updateData.invoiceNumber;
+      delete updateData.createdAt;
+      delete updateData.updatedAt;
+      
+      console.log('About to call storage.updateInvoice with:', { invoiceId, userId, updateData });
+      
+      const updatedInvoice = await storage.updateInvoice(invoiceId, updateData, userId);
+      console.log('Storage returned:', updatedInvoice ? 'Success' : 'Not found');
+      
       if (!updatedInvoice) {
         return res.status(404).json({ message: "Invoice not found" });
       }
       
       res.json(updatedInvoice);
     } catch (error) {
-      console.error("Error updating invoice:", error);
-      res.status(500).json({ message: "Failed to update invoice" });
+      console.error("=== INVOICE UPDATE ERROR ===");
+      console.error("Error message:", error.message);
+      console.error("Error name:", error.name);
+      console.error("Error code:", error.code);
+      console.error("Error stack:", error.stack);
+      console.error("Invoice ID:", invoiceId);
+      console.error("User ID:", userId);
+      console.error("Request body:", JSON.stringify(req.body, null, 2));
+      res.status(500).json({ message: "Failed to update invoice", error: error.message, details: error.stack });
     }
   });
 
-  // Test endpoint for debugging
-  app.post('/api/test-email', async (req: any, res) => {
-    console.log('TEST EMAIL ENDPOINT REACHED');
-    res.json({ success: true, message: 'Test endpoint working' });
+  // Debug endpoint without authentication to test raw update
+  app.post('/api/debug-invoice-update', async (req: any, res) => {
+    try {
+      console.log('=== DEBUG INVOICE UPDATE ===');
+      
+      const testData = {
+        contractId: null,
+        clientName: "Pat Davis Updated",
+        clientEmail: "timfulker@gmail.com",
+        clientAddress: "291, Alder Road, Poole",
+        venueAddress: "Langham House, Rode, Frome BA11 6PS",
+        amount: "300.00",
+        dueDate: new Date("2025-07-05T00:00:00.000Z"),
+        performanceDate: new Date("2025-07-05T00:00:00.000Z"),
+        performanceFee: "300.00",
+        depositPaid: "0.00"
+      };
+      
+      console.log('Test data:', JSON.stringify(testData, null, 2));
+      
+      const result = await storage.updateInvoice(47, testData, '43963086');
+      console.log('Debug update result:', result);
+      
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error('=== DEBUG UPDATE ERROR ===');
+      console.error('Error message:', error.message);
+      console.error('Error name:', error.name);
+      console.error('Error code:', error.code);
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ error: error.message, stack: error.stack });
+    }
   });
+
+  // Test endpoint for debugging invoice updates
+  app.post('/api/test-invoice-update', async (req: any, res) => {
+    try {
+      console.log('TEST INVOICE UPDATE ENDPOINT REACHED');
+      
+      // Test 1: Basic database read
+      const existingInvoice = await storage.getInvoice(47, '43963086');
+      console.log('Existing invoice:', existingInvoice?.invoiceNumber);
+      
+      if (!existingInvoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      // Test 2: Simple field update
+      const simpleData = {
+        clientName: 'Test Client Updated'
+      };
+      
+      const result = await storage.updateInvoice(47, simpleData, '43963086');
+      console.log('Simple update result:', result?.invoiceNumber);
+      
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error('Test update error:', error);
+      res.status(500).json({ error: error.message, stack: error.stack });
+    }
+  });
+
+
 
   // Send invoice email
   app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
     try {
-      console.log('=== INVOICE EMAIL SEND REQUEST ===');
-      console.log('Request body:', req.body);
+
       const userId = req.user.claims.sub;
       const { invoiceId } = req.body;
       
@@ -381,8 +793,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Failed to update invoice status" });
       }
 
-      // Import SendGrid functions
+      // Import SendGrid
       const { sendEmail } = await import('./sendgrid');
+      
+      // Generate invoice view link
+      const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
+      const invoiceViewUrl = `https://${currentDomain}/view-invoice/${updatedInvoice.id}`;
+      const invoiceDownloadUrl = `https://${currentDomain}/api/invoices/${updatedInvoice.id}/download`;
+      
+      console.log('=== SENDING INVOICE EMAIL WITH LINK ===');
+      console.log('Invoice view URL:', invoiceViewUrl);
+      console.log('Invoice download URL:', invoiceDownloadUrl);
       
       // Smart email handling - use authenticated domain for sending, Gmail for replies
       const userBusinessEmail = userSettings?.businessEmail;
@@ -404,8 +825,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         to: clientEmail,
         from: `${fromName} <${fromEmail}>`,
         subject: `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`,
-        html: `<h1>Invoice ${updatedInvoice.invoiceNumber}</h1><p>Amount: £${updatedInvoice.amount}</p><p>Due Date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}</p>`,
-        text: `Invoice ${updatedInvoice.invoiceNumber}. Amount: £${updatedInvoice.amount}. Due date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}.`
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #0EA5E9; margin-bottom: 20px;">Invoice ${updatedInvoice.invoiceNumber}</h1>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+              <p><strong>Amount:</strong> £${updatedInvoice.amount}</p>
+              <p><strong>Due Date:</strong> ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}</p>
+              <p><strong>Client:</strong> ${updatedInvoice.clientName}</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${invoiceViewUrl}" style="background: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Invoice Online</a>
+            </div>
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="${invoiceDownloadUrl}" style="background: #6B7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;">Download PDF</a>
+            </div>
+            <p>Thank you for your business!</p>
+            <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
+              <small>Powered by MusoBuddy – less admin, more music</small>
+            </p>
+          </div>
+        `,
+        text: `Invoice ${updatedInvoice.invoiceNumber}. Amount: £${updatedInvoice.amount}. Due date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}. View your invoice online: ${invoiceViewUrl} or download PDF: ${invoiceDownloadUrl}`
       };
       
       // Add reply-to if user has Gmail or other external email
@@ -469,10 +909,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Import SendGrid functions
-      const { sendEmail, generateContractHtml } = await import('./sendgrid');
+      const { sendEmail } = await import('./sendgrid');
       
-      // Generate HTML content
-      const htmlContent = generateContractHtml(contract, userSettings);
+      // Generate contract signing link instead of PDF attachment
+      const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
+      const contractSignUrl = `https://${currentDomain}/sign-contract/${contract.id}`;
+      const contractViewUrl = `https://${currentDomain}/view-contract/${contract.id}`;
+      
+      console.log('=== SENDING CONTRACT EMAIL WITH SIGNING LINK ===');
+      console.log('Contract sign URL:', contractSignUrl);
+      console.log('Contract view URL:', contractViewUrl);
       
       // Smart email handling - use authenticated domain for sending, Gmail for replies
       const userBusinessEmail = userSettings?.businessEmail;
@@ -493,9 +939,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailData: any = {
         to: contract.clientEmail,
         from: `${fromName} <${fromEmail}>`,
-        subject: `Performance Contract ${contract.contractNumber} from ${fromName}`,
-        html: htmlContent,
-        text: `Please find attached your performance contract ${contract.contractNumber}. Event date: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}. Fee: £${contract.fee}.`
+        subject: `Performance Contract ${contract.contractNumber} from ${fromName} - Please Sign`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #0EA5E9; margin-bottom: 20px;">Performance Contract ${contract.contractNumber}</h1>
+            
+            <p>Dear ${contract.clientName},</p>
+            <p>Please find your performance contract ready for signing.</p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #333;">Event Details</h3>
+              <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+              <p><strong>Time:</strong> ${contract.eventTime}</p>
+              <p><strong>Venue:</strong> ${contract.venue}</p>
+              <p><strong>Fee:</strong> £${contract.fee}</p>
+              <p><strong>Deposit:</strong> £${contract.deposit}</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${contractSignUrl}" style="background: #0EA5E9; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Sign Contract Online</a>
+            </div>
+            
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="${contractViewUrl}" style="background: #6B7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;">View Contract Details</a>
+            </div>
+            
+            <p style="color: #6B7280; font-size: 14px;">
+              By clicking "Sign Contract Online" you'll be taken to a secure page where you can review and digitally sign the contract. No downloads or printing required.
+            </p>
+            
+            <p>Thank you for choosing our services!</p>
+            <p>Best regards,<br><strong>${userSettings?.businessName || fromName}</strong></p>
+            
+            <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
+              <small>Powered by MusoBuddy – less admin, more music</small>
+            </p>
+          </div>
+        `,
+        text: `Performance Contract ${contract.contractNumber}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. Sign online: ${contractSignUrl}`
       };
       
       // Add reply-to if user has Gmail or other external email
@@ -596,11 +1077,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      // Generate PDF and send confirmation emails with attachments
+      // Send confirmation emails with download links (no PDF generation)
       try {
         const userSettings = await storage.getUserSettings(contract.userId);
         const { sendEmail } = await import('./sendgrid');
-        const { generateContractPDF } = await import('./pdf-generator');
+        
+        // Generate contract download links
+        const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
+        const contractDownloadUrl = `https://${currentDomain}/api/contracts/${signedContract.id}/download`;
+        const contractViewUrl = `https://${currentDomain}/view-contract/${signedContract.id}`;
         
         // Smart email handling - use authenticated domain for sending, Gmail for replies
         const userBusinessEmail = userSettings?.businessEmail;
@@ -612,58 +1097,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If user has Gmail (or other non-authenticated domain), use it as reply-to
         const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
         
-        console.log('=== CONTRACT SIGNING EMAIL DETAILS ===');
+        console.log('=== CONTRACT SIGNING CONFIRMATION EMAIL ===');
         console.log('To:', contract.clientEmail);
         console.log('From:', `${fromName} <${fromEmail}>`);
         console.log('Reply-To:', replyToEmail);
-        console.log('Subject:', `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`);
+        console.log('Contract download URL:', contractDownloadUrl);
+        console.log('Contract view URL:', contractViewUrl);
         
-        // Generate signed contract PDF
-        const signatureDetails = {
-          signedAt: new Date(),
-          signatureName: signatureName.trim(),
-          clientIpAddress: clientIP
-        };
-        
-        const pdfBuffer = await generateContractPDF(signedContract, userSettings || null, signatureDetails);
-        const pdfBase64 = pdfBuffer.toString('base64');
-        
-        // Email to client with PDF attachment
+        // Email to client with download link
         const clientEmailData: any = {
           to: contract.clientEmail,
           from: `${fromName} <${fromEmail}>`,
-          subject: `Contract ${contract.contractNumber} Successfully Signed - Copy Attached`,
+          subject: `Contract ${contract.contractNumber} Successfully Signed ✓`,
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #4CAF50;">Contract Signed Successfully ✓</h2>
-              <p>Dear ${contract.clientName},</p>
-              <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed.</p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #4CAF50; margin-bottom: 20px;">Contract Signed Successfully ✓</h2>
               
-              <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p>Dear ${contract.clientName},</p>
+              <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed!</p>
+              
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0; color: #333;">Event Details</h3>
-                <ul style="list-style: none; padding: 0;">
-                  <li><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
-                  <li><strong>Time:</strong> ${contract.eventTime}</li>
-                  <li><strong>Venue:</strong> ${contract.venue}</li>
-                  <li><strong>Fee:</strong> £${contract.fee}</li>
-                </ul>
+                <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+                <p><strong>Time:</strong> ${contract.eventTime}</p>
+                <p><strong>Venue:</strong> ${contract.venue}</p>
+                <p><strong>Fee:</strong> £${contract.fee}</p>
+                <p><strong>Signed by:</strong> ${signatureName.trim()}</p>
+                <p><strong>Signed on:</strong> ${new Date().toLocaleString('en-GB')}</p>
               </div>
               
-              <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
-                📎 <strong>Your signed contract is attached as a PDF for your records.</strong>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${contractViewUrl}" style="background: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin-right: 10px;">View Signed Contract</a>
+                <a href="${contractDownloadUrl}" style="background: #6B7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Download PDF</a>
+              </div>
+              
+              <p style="color: #6B7280; font-size: 14px;">
+                Your signed contract is ready for download at any time. We look forward to performing at your event!
               </p>
               
-              <p>We look forward to performing at your event!</p>
-              <p>Best regards,<br><strong>${userSettings?.businessName || 'MusoBuddy'}</strong></p>
+              <p>Best regards,<br><strong>${userSettings?.businessName || fromName}</strong></p>
+              
+              <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
+                <small>Powered by MusoBuddy – less admin, more music</small>
+              </p>
             </div>
           `,
-          text: `Contract ${contract.contractNumber} has been successfully signed. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Signed contract PDF is attached.`,
-          attachments: [{
-            content: pdfBase64,
-            filename: `Contract-${contract.contractNumber}-Signed.pdf`,
-            type: 'application/pdf',
-            disposition: 'attachment'
-          }]
+          text: `Contract ${contract.contractNumber} successfully signed by ${signatureName.trim()}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
         };
         
         // Add reply-to if user has Gmail or other external email
@@ -673,45 +1152,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         await sendEmail(clientEmailData);
         
-        // Email to performer (business owner) with PDF attachment
+        // Email to performer (business owner) with download link
         if (userSettings?.businessEmail) {
           const performerEmailData: any = {
             to: userSettings.businessEmail,
             from: `${fromName} <${fromEmail}>`,
-            subject: `Contract ${contract.contractNumber} Signed by Client - Copy Attached`,
+            subject: `Contract ${contract.contractNumber} Signed by Client ✓`,
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #4CAF50;">Contract Signed! ✓</h2>
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #4CAF50; margin-bottom: 20px;">Contract Signed! ✓</h2>
+                
                 <p>Great news! Contract <strong>${contract.contractNumber}</strong> has been signed by ${contract.clientName}.</p>
                 
-                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                   <h3 style="margin-top: 0; color: #333;">Event Details</h3>
-                  <ul style="list-style: none; padding: 0;">
-                    <li><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</li>
-                    <li><strong>Time:</strong> ${contract.eventTime}</li>
-                    <li><strong>Venue:</strong> ${contract.venue}</li>
-                    <li><strong>Fee:</strong> £${contract.fee}</li>
-                  </ul>
+                  <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+                  <p><strong>Time:</strong> ${contract.eventTime}</p>
+                  <p><strong>Venue:</strong> ${contract.venue}</p>
+                  <p><strong>Fee:</strong> £${contract.fee}</p>
                 </div>
                 
-                <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3; margin: 20px 0;">
                   <p style="margin: 0;"><strong>Signature Details:</strong></p>
-                  <p style="margin: 5px 0;">Signed by: ${signatureName}</p>
+                  <p style="margin: 5px 0;">Signed by: ${signatureName.trim()}</p>
                   <p style="margin: 5px 0;">Time: ${new Date().toLocaleString('en-GB')}</p>
+                  <p style="margin: 5px 0;">IP: ${clientIP}</p>
                 </div>
                 
-                <p style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
-                  📎 <strong>The signed contract PDF is attached for your records.</strong>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${contractViewUrl}" style="background: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin-right: 10px;">View Signed Contract</a>
+                  <a href="${contractDownloadUrl}" style="background: #6B7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Download PDF</a>
+                </div>
+                
+                <p style="background: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                  📋 <strong>The signed contract is ready for download when needed.</strong>
+                </p>
+                
+                <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
+                  <small>Powered by MusoBuddy – less admin, more music</small>
                 </p>
               </div>
             `,
-            text: `Contract ${contract.contractNumber} signed by ${signatureName} on ${new Date().toLocaleString('en-GB')}. Signed contract PDF is attached.`,
-            attachments: [{
-              content: pdfBase64,
-              filename: `Contract-${contract.contractNumber}-Signed.pdf`,
-              type: 'application/pdf',
-              disposition: 'attachment'
-            }]
+            text: `Contract ${contract.contractNumber} signed by ${signatureName.trim()} on ${new Date().toLocaleString('en-GB')}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
           };
           
           // Add reply-to for performer email too
@@ -817,14 +1299,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SendGrid Email Webhook (for leads@musobuddy.com)
-  app.post('/api/webhook/sendgrid', async (req, res) => {
+
+
+  // Manual test endpoint for email processing
+  app.post('/api/webhook/test', async (req, res) => {
+    console.log('🧪 MANUAL TEST: Simulating email webhook...');
+    try {
+      const testEmailData = {
+        to: 'leads@musobuddy.com',
+        from: 'test@example.com',
+        subject: 'Test Wedding Enquiry',
+        text: `Hi, I'm looking to book a musician for my wedding on September 20th, 2025.
+        
+Event Details:
+- Date: September 20th, 2025
+- Venue: Grand Hotel, Manchester
+- Contact: Jane Smith
+- Phone: 07123 456789
+- Email: jane.smith@email.com
+
+Please let me know availability and pricing.
+
+Best regards,
+Jane`
+      };
+      
+      const { handleSendGridWebhook } = await import('./email-webhook');
+      
+      // Create a mock request object
+      const mockReq = {
+        body: testEmailData,
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        method: 'POST',
+        url: '/api/webhook/test'
+      };
+      
+      await handleSendGridWebhook(mockReq as any, res);
+    } catch (error) {
+      console.error("Error in test webhook:", error);
+      res.status(500).json({ message: "Test webhook failed", error: error.message });
+    }
+  });
+
+  // Catch-all webhook routes for different possible SendGrid configurations
+  app.post('/api/webhook/parse', async (req, res) => {
+    console.log('🔥 WEBHOOK HIT! Email received via /api/webhook/parse');
+    console.log('Request from IP:', req.ip);
     try {
       const { handleSendGridWebhook } = await import('./email-webhook');
       await handleSendGridWebhook(req, res);
     } catch (error) {
-      console.error("Error in SendGrid webhook:", error);
-      res.status(500).json({ message: "Failed to process SendGrid webhook" });
+      console.error("Error in parse webhook:", error);
+      res.status(500).json({ message: "Failed to process webhook" });
+    }
+  });
+
+  app.post('/api/parse', async (req, res) => {
+    console.log('🔥 WEBHOOK HIT! Email received via /api/parse');
+    console.log('Request from IP:', req.ip);
+    try {
+      const { handleSendGridWebhook } = await import('./email-webhook');
+      await handleSendGridWebhook(req, res);
+    } catch (error) {
+      console.error("Error in root parse webhook:", error);
+      res.status(500).json({ message: "Failed to process webhook" });
+    }
+  });
+
+  // Alternative webhook endpoint with different path (in case of URL issues)
+  app.all('/api/webhook/sendgrid-alt', async (req, res) => {
+    if (req.method === 'GET') {
+      console.log('GET request to alternative webhook endpoint');
+      res.json({ 
+        status: 'active', 
+        message: 'Alternative SendGrid webhook endpoint is accessible',
+        timestamp: new Date().toISOString(),
+        path: '/api/webhook/sendgrid-alt',
+        method: 'Ready for POST requests',
+        recommendedUrl: 'https://musobuddy.replit.app/api/webhook/sendgrid-alt'
+      });
+    } else if (req.method === 'POST') {
+      console.log('🔥 ALTERNATIVE WEBHOOK HIT! Email received via /api/webhook/sendgrid-alt');
+      console.log('Request IP:', req.ip);
+      console.log('User-Agent:', req.headers['user-agent']);
+      console.log('Content-Type:', req.headers['content-type']);
+      try {
+        const { handleSendGridWebhook } = await import('./email-webhook');
+        await handleSendGridWebhook(req, res);
+      } catch (error) {
+        console.error("Error in alternative SendGrid webhook:", error);
+        res.status(500).json({ message: "Failed to process SendGrid webhook" });
+      }
+    } else {
+      res.status(405).json({ message: 'Method not allowed' });
+    }
+  });
+
+  // Global catch-all for any webhook attempts
+  app.use((req, res, next) => {
+    if (req.url.includes('webhook') || req.url.includes('parse')) {
+      console.log(`📧 Webhook attempt detected: ${req.method} ${req.url}`);
+      console.log(`Headers:`, req.headers);
+      console.log(`Body:`, req.body);
+    }
+    next();
+  });
+
+  // Working webhook endpoint for SendGrid
+  app.all('/api/webhook/email', async (req, res) => {
+    console.log(`📧 EMAIL WEBHOOK: ${req.method} ${req.url}`);
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    
+    if (req.method === 'GET') {
+      res.json({ 
+        status: 'active', 
+        message: 'Email webhook endpoint is working',
+        timestamp: new Date().toISOString(),
+        url: 'https://musobuddy.replit.app/api/webhook/email'
+      });
+    } else if (req.method === 'POST') {
+      console.log('🔥 EMAIL WEBHOOK HIT! Processing email...');
+      try {
+        const { handleSendGridWebhook } = await import('./email-webhook');
+        await handleSendGridWebhook(req, res);
+      } catch (error) {
+        console.error("Error in email webhook:", error);
+        res.status(500).json({ message: "Failed to process email webhook" });
+      }
+    } else {
+      res.status(405).json({ message: 'Method not allowed' });
     }
   });
 
@@ -935,6 +1539,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error stack:", error.stack);
       res.status(500).json({ message: "Failed to save settings" });
     }
+  });
+
+  // Catch-all route to log any unmatched requests
+  app.use('*', (req, res, next) => {
+    console.log(`=== UNMATCHED ROUTE: ${req.method} ${req.originalUrl} ===`);
+    next();
   });
 
   const httpServer = createServer(app);

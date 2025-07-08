@@ -30,9 +30,10 @@ export async function handleSendGridWebhook(req: Request, res: Response) {
   try {
     console.log('=== SENDGRID WEBHOOK RECEIVED ===');
     console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
+    console.log('Raw Body:', req.body);
     console.log('Method:', req.method);
     console.log('URL:', req.url);
+    console.log('Content-Type:', req.headers['content-type']);
     
     // SendGrid sends email data as form data
     const {
@@ -44,9 +45,11 @@ export async function handleSendGridWebhook(req: Request, res: Response) {
       envelope
     } = req.body;
 
+    console.log('Parsed fields:', { to, from, subject, text: text?.substring(0, 100) });
+
     // Validate this is for our leads email
     if (!to || !to.includes('leads@musobuddy.com')) {
-      console.log('Email not for leads@musobuddy.com, ignoring');
+      console.log('Email not for leads@musobuddy.com, ignoring. TO field:', to);
       return res.status(200).json({ message: 'Email ignored - not for leads' });
     }
 

@@ -14,6 +14,8 @@ import Calendar from "@/pages/calendar";
 import Compliance from "@/pages/compliance";
 import Settings from "@/pages/settings";
 import SignContract from "@/pages/sign-contract";
+import ViewContract from "@/pages/view-contract";
+import ViewInvoice from "@/pages/view-invoice";
 import QuickAdd from "@/pages/quick-add";
 
 function Router() {
@@ -23,6 +25,8 @@ function Router() {
     <Switch>
       {/* Public routes - no authentication required */}
       <Route path="/sign-contract/:id" component={SignContract} />
+      <Route path="/view-contract/:id" component={ViewContract} />
+      <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/quick-add" component={QuickAdd} />
       
       {isLoading || !isAuthenticated ? (

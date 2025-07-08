@@ -48,10 +48,12 @@ function updateUserSession(
   user: any,
   tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
 ) {
-  user.claims = tokens.claims();
+  const claims = tokens.claims();
+  user.id = claims.sub; // Store user ID in session
+  user.claims = claims;
   user.access_token = tokens.access_token;
   user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
+  user.expires_at = claims?.exp;
 }
 
 async function upsertUser(
@@ -68,9 +70,25 @@ async function upsertUser(
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
-  app.use(getSession());
-  app.use(passport.initialize());
-  app.use(passport.session());
+  
+  // Apply auth middleware only to non-webhook routes
+  app.use((req, res, next) => {
+    // Skip auth for webhook endpoints
+    if (req.path.includes('/webhook/') || req.path.includes('/parse')) {
+      return next();
+    }
+    
+    // Apply session middleware for other routes
+    return getSession()(req, res, (err) => {
+      if (err) return next(err);
+      
+      passport.initialize()(req, res, (err) => {
+        if (err) return next(err);
+        
+        passport.session()(req, res, next);
+      });
+    });
+  });
 
   const config = await getOidcConfig();
 
@@ -78,9 +96,10 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const claims = tokens.claims();
+    const user = { id: claims.sub }; // Initialize with user ID
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    await upsertUser(claims);
     verified(null, user);
   };
 
@@ -102,14 +121,18 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || req.hostname;
+    console.log(`Login attempt - req.hostname: ${req.hostname}, using domain: ${domain}`);
+    passport.authenticate(`replitauth:${domain}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || req.hostname;
+    console.log(`Callback attempt - req.hostname: ${req.hostname}, using domain: ${domain}`);
+    passport.authenticate(`replitauth:${domain}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
@@ -128,30 +151,40 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user?.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
   try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
+    const user = req.user as any;
+
+    if (!req.isAuthenticated() || !user?.expires_at) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Add user ID to request for easy access
+    (req as any).userId = user.id;
+
+    const now = Math.floor(Date.now() / 1000);
+    if (now <= user.expires_at) {
+      return next();
+    }
+
+    const refreshToken = user.refresh_token;
+    if (!refreshToken) {
+      console.log('NO REFRESH TOKEN - returning 401');
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      console.log('REFRESHING TOKEN...');
+      const config = await getOidcConfig();
+      const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+      updateUserSession(user, tokenResponse);
+      console.log('TOKEN REFRESHED - proceeding');
+      return next();
+    } catch (error) {
+      console.log('TOKEN REFRESH FAILED:', error);
+      return res.status(401).json({ message: "Unauthorized" });
+    }
   } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
+    console.log('AUTHENTICATION ERROR:', error);
+    return res.status(500).json({ message: "Authentication error" });
   }
 };

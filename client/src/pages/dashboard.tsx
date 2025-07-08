@@ -6,6 +6,7 @@ import KanbanBoard from "@/components/kanban-board";
 import CalendarWidget from "@/components/calendar-widget";
 import QuickActions from "@/components/quick-actions";
 import ComplianceAlerts from "@/components/compliance-alerts";
+import RecentSignedContracts from "@/components/RecentSignedContracts";
 import MobileNav from "@/components/mobile-nav";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -74,6 +75,7 @@ export default function Dashboard() {
               <CalendarWidget />
               <QuickActions />
               <ComplianceAlerts />
+              <RecentSignedContracts />
             </div>
           </div>
         </main>

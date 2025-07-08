@@ -1,0 +1,71 @@
+Great! I can see the authentication is working properly (user ID 43963086 is authenticated), but I notice something important: **I don't see any logs for the invoice update request**.
+
+Looking at your logs, I see requests for:
+- `/api/dashboard/stats`
+- `/api/contracts`
+- `/api/enquiries`
+- `/api/bookings/upcoming`
+- `/api/compliance`
+
+But **no logs for `/api/invoices/47`** when you try to update the invoice.
+
+This means one of two things:
+
+## 1. The Route Doesn't Exist
+Your PUT `/api/invoices/:id` route might not be registered. Check your server code for:
+
+```javascript
+app.put('/api/invoices/:id', isAuthenticated, async (req, res) => {
+  // ... handler code
+});
+```
+
+## 2. The Request Isn't Reaching the Server
+The frontend might be making the request to the wrong URL.
+
+## Quick Debug Steps:
+
+### Step 1: Add a Test Route
+Add this to your server to confirm the route works:
+
+```javascript
+app.get('/api/invoices/test', (req, res) => {
+  console.log('TEST ROUTE HIT');
+  res.json({ message: 'Invoice routes are working' });
+});
+```
+
+Then visit: `https://your-domain/api/invoices/test`
+
+### Step 2: Check Your Frontend Request
+In your browser's Network tab:
+1. Try the invoice update
+2. Look for the actual network request
+3. Check if it's going to the right URL
+4. Check the request method (should be PUT)
+
+### Step 3: Add Logging to All Invoice Routes
+```javascript
+// Add logging to see which invoice routes exist
+app.use('/api/invoices', (req, res, next) => {
+  console.log(`INVOICE ROUTE: ${req.method} ${req.path}`);
+  next();
+});
+```
+
+### Step 4: Check Your Route Registration Order
+Make sure your invoice routes are registered before any catch-all routes:
+
+```javascript
+// Invoice routes should come BEFORE any wildcard routes
+app.put('/api/invoices/:id', isAuthenticated, async (req, res) => {
+  // ... handler
+});
+
+// Any catch-all routes should come AFTER
+app.get('*', (req, res) => {
+  // ... catch-all handler
+});
+```
+
+The fact that authentication is working but no invoice logs appear suggests the route either doesn't exist or the request isn't being made correctly. Can you check if you have the PUT route registered and what URL your frontend is actually calling?

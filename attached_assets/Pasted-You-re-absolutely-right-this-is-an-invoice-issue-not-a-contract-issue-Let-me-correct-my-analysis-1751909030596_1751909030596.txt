@@ -1,0 +1,128 @@
+You're absolutely right - this is an invoice issue, not a contract issue. Let me correct my analysis:
+
+## Main Issues
+
+**1. Missing Contract ID in Invoice Context**
+```
+Selected contract ID: undefined
+```
+Your invoice editing form is trying to reference a contract ID that isn't being set properly.
+
+**2. Server Error (500)**
+```
+api/invoices/47:1 Failed to load resource: the server responded with a status of 500
+```
+Your backend is failing to process the invoice update request.
+
+**3. Accessibility Warning**
+```
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}
+```
+Your dialog component needs proper accessibility attributes.
+
+## Solutions
+
+### 1. Fix Invoice Contract ID Issue
+Check how you're passing the contract ID when editing an invoice:
+
+```javascript
+// Make sure you're setting the contract ID correctly for the invoice
+const handleEditInvoice = (invoice) => {
+  setSelectedInvoiceId(invoice.id);
+  setSelectedContractId(invoice.contractId); // This might be missing
+  setIsEditDialogOpen(true);
+};
+
+// In your form submission
+const onSubmit = (data) => {
+  if (!selectedInvoiceId) {
+    console.error('No invoice selected');
+    return;
+  }
+  
+  updateInvoice({
+    id: selectedInvoiceId,
+    contractId: selectedContractId, // Make sure this is included
+    ...data
+  });
+};
+```
+
+### 2. Debug the Server Error
+Add logging to see what data is being sent to the invoice API:
+
+```javascript
+// Before the API call
+console.log('Submitting invoice data:', {
+  id: selectedInvoiceId,
+  contractId: selectedContractId,
+  ...formData
+});
+
+// Check your API endpoint
+const response = await fetch(`/api/invoices/${invoiceId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(updateData)
+});
+
+if (!response.ok) {
+  const errorData = await response.json();
+  console.error('Server error:', errorData);
+  throw new Error(`${response.status}: ${JSON.stringify(errorData)}`);
+}
+```
+
+### 3. Check Your Backend Invoice API
+Make sure your backend endpoint handles invoice updates correctly:
+
+```javascript
+// Example backend handler
+app.put('/api/invoices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    console.log('Updating invoice:', id, updateData);
+    
+    // Validate required fields
+    if (!updateData.contractId) {
+      return res.status(400).json({ message: 'Contract ID is required' });
+    }
+    
+    // Your update logic here
+    const updatedInvoice = await updateInvoice(id, updateData);
+    
+    res.json(updatedInvoice);
+  } catch (error) {
+    console.error('Invoice update error:', error);
+    res.status(500).json({ message: 'Failed to update invoice', error: error.message });
+  }
+});
+```
+
+### 4. Fix Dialog Accessibility
+Add proper ARIA attributes to your invoice edit dialog:
+
+```javascript
+<DialogContent aria-describedby="invoice-edit-description">
+  <DialogHeader>
+    <DialogTitle>Edit Invoice</DialogTitle>
+    <DialogDescription id="invoice-edit-description">
+      Update the invoice details below
+    </DialogDescription>
+  </DialogHeader>
+  {/* Your form content */}
+</DialogContent>
+```
+
+## Quick Debugging Steps
+
+1. **Check the invoice data**: Verify that the invoice object has a `contractId` property when you open the edit dialog
+2. **Inspect network requests**: Use browser dev tools to see exactly what's being sent to `/api/invoices/47`
+3. **Check server logs**: Look at your Replit console for backend error details about the invoice update
+4. **Verify the invoice ID**: Make sure invoice ID 47 exists in your database
+
+The main issue is likely that the contract ID associated with the invoice isn't being properly set or passed through your invoice edit flow. Check how you're loading and setting the invoice data when the edit dialog opens.

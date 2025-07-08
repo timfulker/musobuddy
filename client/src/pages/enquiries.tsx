@@ -13,7 +13,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar, ArrowLeft, User } from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { z } from "zod";
 import { Link } from "wouter";
 
@@ -79,6 +80,33 @@ export default function Enquiries() {
       });
     },
   });
+
+  const deleteEnquiryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/enquiries/${id}`);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
+      toast({
+        title: "Success",
+        description: "Enquiry deleted successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete enquiry. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteEnquiry = (enquiry: Enquiry) => {
+    if (window.confirm(`Are you sure you want to delete the enquiry "${enquiry.title}"? This action cannot be undone.`)) {
+      deleteEnquiryMutation.mutate(enquiry.id);
+    }
+  };
 
   const form = useForm<z.infer<typeof enquiryFormSchema>>({
     resolver: zodResolver(enquiryFormSchema),
@@ -520,9 +548,22 @@ export default function Enquiries() {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteEnquiry(enquiry)}
+                            className="text-red-600 hover:text-red-700 focus:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </CardContent>

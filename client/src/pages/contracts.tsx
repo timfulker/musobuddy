@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, ArrowLeft, Eye, Mail, Download } from "lucide-react";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, ArrowLeft, Eye, Mail, Download, Trash2, Archive, FileDown } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
@@ -32,6 +32,8 @@ export default function Contracts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [previewContract, setPreviewContract] = useState<Contract | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedContracts, setSelectedContracts] = useState<number[]>([]);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const { toast } = useToast();
 
   const { data: contracts = [], isLoading } = useQuery<Contract[]>({
@@ -144,6 +146,83 @@ export default function Contracts() {
 
   const handleSendEmail = (contract: Contract) => {
     sendEmailMutation.mutate(contract);
+  };
+
+  const handleViewSignedContract = (contract: Contract) => {
+    // Open the public view contract page in a new tab
+    window.open(`/view-contract/${contract.id}`, '_blank');
+  };
+
+  // Bulk action handlers for contracts
+  const handleSelectContract = (contractId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedContracts(prev => [...prev, contractId]);
+    } else {
+      setSelectedContracts(prev => prev.filter(id => id !== contractId));
+    }
+  };
+
+  const handleSelectAllContracts = (checked: boolean) => {
+    if (checked) {
+      setSelectedContracts(filteredContracts.map(contract => contract.id));
+    } else {
+      setSelectedContracts([]);
+    }
+  };
+
+  const deleteContractsMutation = useMutation({
+    mutationFn: async (contractIds: number[]) => {
+      const responses = await Promise.all(
+        contractIds.map(id => 
+          apiRequest("DELETE", `/api/contracts/${id}`, {})
+        )
+      );
+      return responses;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      setSelectedContracts([]);
+      toast({
+        title: "Contracts deleted",
+        description: `${selectedContracts.length} contract(s) deleted successfully`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error deleting contracts",
+        description: "Failed to delete selected contracts",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBulkContractAction = async (action: string) => {
+    if (selectedContracts.length === 0) return;
+    
+    setBulkActionLoading(true);
+    
+    try {
+      switch (action) {
+        case 'delete':
+          await deleteContractsMutation.mutateAsync(selectedContracts);
+          break;
+        case 'download':
+          // Download each selected contract
+          for (const contractId of selectedContracts) {
+            window.open(`/api/contracts/${contractId}/pdf`, '_blank');
+          }
+          setSelectedContracts([]);
+          toast({
+            title: "Downloads started",
+            description: `Downloading ${selectedContracts.length} contract(s)`,
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Bulk contract action error:', error);
+    } finally {
+      setBulkActionLoading(false);
+    }
   };
 
   // Additional contract action handlers
@@ -588,8 +667,9 @@ export default function Contracts() {
                         
                         {contract.status === "signed" && (
                           <>
-                            <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewContract(contract)}>
-                              Preview
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-xs" onClick={() => handleViewSignedContract(contract)}>
+                              <Eye className="w-3 h-3 mr-1" />
+                              View Signed
                             </Button>
                             <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadContract(contract)}>
                               <Download className="w-3 h-3 mr-1" />

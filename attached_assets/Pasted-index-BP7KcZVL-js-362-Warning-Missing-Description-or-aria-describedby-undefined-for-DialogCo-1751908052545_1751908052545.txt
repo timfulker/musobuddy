@@ -1,0 +1,51 @@
+index-BP7KcZVL.js:362 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-BP7KcZVL.js:362Understand this warning
+index-BP7KcZVL.js:367 Form submission data: Object
+index-BP7KcZVL.js:367 Selected contract ID: undefined
+index-BP7KcZVL.js:367 Final data being sent: Object
+index-BP7KcZVL.js:367 Updating invoice with data: Object
+api/invoices/47:1 
+            
+            
+           Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-BP7KcZVL.js:367 Update invoice error: Error: 500: {"message":"Failed to update invoice"}
+    at oS (index-BP7KcZVL.js:48:42800)
+    at async Lt (index-BP7KcZVL.js:48:43001)
+    at async Object.mutationFn (index-BP7KcZVL.js:367:24271)
+onError @ index-BP7KcZVL.js:367Understand this error
+index-BP7KcZVL.js:367 Form submission data: {contractId: undefined, clientName: 'Pat Davis', clientEmail: 'timfulker@gmail.com', clientAddress: '291, Alder Road, Poole', venueAddress: 'Langham House, Rode, Frome BA11 6PS', …}
+index-BP7KcZVL.js:367 Selected contract ID: undefined
+index-BP7KcZVL.js:367 Final data being sent: {contractId: null, clientName: 'Pat Davis', clientEmail: 'timfulker@gmail.com', clientAddress: '291, Alder Road, Poole', venueAddress: 'Langham House, Rode, Frome BA11 6PS', …}
+index-BP7KcZVL.js:367 Updating invoice with data: {contractId: null, clientName: 'Pat Davis', clientEmail: 'timfulker@gmail.com', clientAddress: '291, Alder Road, Poole', venueAddress: 'Langham House, Rode, Frome BA11 6PS', …}
+t.js:1 
+            
+            
+           PATCH https://musobuddy.replit.app/api/invoices/47 500 (Internal Server Error)
+apply @ t.js:1
+Lt @ index-BP7KcZVL.js:48
+mutationFn @ index-BP7KcZVL.js:367
+fn @ index-BP7KcZVL.js:48
+j @ index-BP7KcZVL.js:48
+start @ index-BP7KcZVL.js:48
+execute @ index-BP7KcZVL.js:48
+await in execute
+mutate @ index-BP7KcZVL.js:48
+(anonymous) @ index-BP7KcZVL.js:48
+L @ index-BP7KcZVL.js:367
+(anonymous) @ index-BP7KcZVL.js:362
+await in (anonymous)
+gT @ index-BP7KcZVL.js:37
+vT @ index-BP7KcZVL.js:37
+yT @ index-BP7KcZVL.js:37
+bx @ index-BP7KcZVL.js:37
+P1 @ index-BP7KcZVL.js:37
+(anonymous) @ index-BP7KcZVL.js:37
+kp @ index-BP7KcZVL.js:40
+Jj @ index-BP7KcZVL.js:37
+jf @ index-BP7KcZVL.js:37
+np @ index-BP7KcZVL.js:37
+IT @ index-BP7KcZVL.js:37Understand this error
+index-BP7KcZVL.js:367 Update invoice error: Error: 500: {"message":"Failed to update invoice"}
+    at oS (index-BP7KcZVL.js:48:42800)
+    at async Lt (index-BP7KcZVL.js:48:43001)
+    at async Object.mutationFn (index-BP7KcZVL.js:367:24271)

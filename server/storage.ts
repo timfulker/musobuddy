@@ -42,13 +42,16 @@ export interface IStorage {
   getContractById(id: number): Promise<Contract | undefined>; // Public access for signing
   createContract(contract: InsertContract): Promise<Contract>;
   updateContract(id: number, contract: Partial<InsertContract>, userId: string): Promise<Contract | undefined>;
+  deleteContract(id: number, userId: string): Promise<boolean>;
   signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date }): Promise<Contract | undefined>;
   
   // Invoice operations
   getInvoices(userId: string): Promise<Invoice[]>;
   getInvoice(id: number, userId: string): Promise<Invoice | undefined>;
+  getInvoiceById(id: number): Promise<Invoice | undefined>; // Public access for viewing
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
   updateInvoice(id: number, invoice: Partial<InsertInvoice>, userId: string): Promise<Invoice | undefined>;
+  deleteInvoice(id: number, userId: string): Promise<boolean>;
   
   // Booking operations
   getBookings(userId: string): Promise<Booking[]>;
@@ -173,6 +176,12 @@ export class DatabaseStorage implements IStorage {
     return updatedContract;
   }
 
+  async deleteContract(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(contracts)
+      .where(and(eq(contracts.id, id), eq(contracts.userId, userId)));
+    return result.rowCount > 0;
+  }
+
   async getContractById(id: number): Promise<Contract | undefined> {
     const [contract] = await db
       .select()
@@ -211,21 +220,123 @@ export class DatabaseStorage implements IStorage {
     return invoice;
   }
 
+  async getInvoiceById(id: number): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.id, id));
+    return invoice;
+  }
+
   async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
-    const [newInvoice] = await db
-      .insert(invoices)
-      .values(invoice)
-      .returning();
-    return newInvoice;
+    // Get user settings to get next invoice number
+    const settings = await this.getUserSettings(invoice.userId);
+    let nextNumber = settings?.nextInvoiceNumber || 256;
+    
+    // Find the next available invoice number by checking existing invoices
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      const invoiceNumber = nextNumber.toString().padStart(5, '0');
+      
+      // Check if this invoice number already exists
+      const [existingInvoice] = await db
+        .select()
+        .from(invoices)
+        .where(and(
+          eq(invoices.userId, invoice.userId),
+          eq(invoices.invoiceNumber, invoiceNumber)
+        ))
+        .limit(1);
+      
+      if (!existingInvoice) {
+        // Invoice number is available, create the invoice
+        try {
+          const [newInvoice] = await db
+            .insert(invoices)
+            .values({
+              ...invoice,
+              invoiceNumber,
+            })
+            .returning();
+          
+          // Update the next invoice number in user settings
+          await db
+            .update(userSettings)
+            .set({ nextInvoiceNumber: nextNumber + 1 })
+            .where(eq(userSettings.userId, invoice.userId));
+          
+          return newInvoice;
+        } catch (error: any) {
+          // Handle race condition - another invoice might have been created
+          if (error.code === '23505' && error.constraint === 'invoices_invoice_number_unique') {
+            nextNumber++;
+            attempts++;
+            continue;
+          }
+          throw error;
+        }
+      }
+      
+      // Invoice number exists, try the next one
+      nextNumber++;
+      attempts++;
+    }
+    
+    throw new Error('Unable to generate unique invoice number after multiple attempts');
   }
 
   async updateInvoice(id: number, invoice: Partial<InsertInvoice>, userId: string): Promise<Invoice | undefined> {
-    const [updatedInvoice] = await db
-      .update(invoices)
-      .set({ ...invoice, updatedAt: new Date() })
-      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
-      .returning();
-    return updatedInvoice;
+    console.log('Storage updateInvoice called with:', { id, userId, invoice });
+    try {
+      // Clean the invoice data before update
+      const cleanInvoiceData = { ...invoice };
+      
+      // Handle contractId - if it's null, undefined, or empty string, set to null
+      if (cleanInvoiceData.contractId === null || cleanInvoiceData.contractId === undefined || cleanInvoiceData.contractId === '') {
+        cleanInvoiceData.contractId = null;
+      }
+      
+      // Convert string numbers to proper types for validation if needed
+      if (typeof cleanInvoiceData.amount === 'string') {
+        // Keep as string for Drizzle decimal handling
+      }
+      
+      console.log('Clean invoice data for update:', JSON.stringify(cleanInvoiceData, null, 2));
+      
+      // Try the update with more specific error handling
+      const updateResult = await db
+        .update(invoices)
+        .set({ ...cleanInvoiceData, updatedAt: new Date() })
+        .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
+        .returning();
+        
+      console.log('Update result count:', updateResult.length);
+      
+      if (updateResult.length === 0) {
+        console.log('No rows updated - invoice not found or access denied');
+        return undefined;
+      }
+      
+      const updatedInvoice = updateResult[0];
+      console.log('Storage update success:', updatedInvoice?.invoiceNumber);
+      return updatedInvoice;
+    } catch (error) {
+      console.error('=== STORAGE ERROR DETAILS ===');
+      console.error('Error message:', error.message);
+      console.error('Error name:', error.name);
+      console.error('Error code:', error.code);
+      console.error('Error stack:', error.stack);
+      console.error('Invoice data attempted:', JSON.stringify(invoice, null, 2));
+      throw error;
+    }
+  }
+
+  async deleteInvoice(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
+    return result.rowCount > 0;
   }
 
   // Booking operations

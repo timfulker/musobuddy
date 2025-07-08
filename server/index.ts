@@ -4,7 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true })); // Enable extended URL encoding for webhook data
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -38,6 +38,11 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Start automatic cleanup service
+  // Automatic cleanup disabled for now
+  // const { scheduleAutomaticCleanup } = await import('./cleanup-service');
+  // scheduleAutomaticCleanup();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

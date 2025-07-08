@@ -10,40 +10,23 @@ export async function generateContractPDF(
     clientIpAddress?: string;
   }
 ): Promise<Buffer> {
+  console.log('Starting contract PDF generation for:', contract.contractNumber);
+  
+  // Simple, reliable Puppeteer configuration
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-    args: [
-      '--no-sandbox', 
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process'
-    ]
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   });
   
   try {
     const page = await browser.newPage();
-    
-    // Generate HTML content for the contract
     const html = generateContractHTML(contract, userSettings, signatureDetails);
     
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    const pdf = await page.pdf({ format: 'A4', printBackground: true });
     
-    // Generate PDF
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '1cm',
-        bottom: '1cm',
-        left: '1cm',
-        right: '1cm'
-      }
-    });
-    
+    console.log('Contract PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
   } finally {
     await browser.close();
@@ -55,40 +38,23 @@ export async function generateInvoicePDF(
   contract: Contract | null,
   userSettings: UserSettings | null
 ): Promise<Buffer> {
+  console.log('Starting invoice PDF generation for:', invoice.invoiceNumber);
+  
+  // Simple, reliable Puppeteer configuration
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-    args: [
-      '--no-sandbox', 
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process'
-    ]
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   });
   
   try {
     const page = await browser.newPage();
-    
-    // Generate HTML content for the invoice
     const html = generateInvoiceHTML(invoice, contract, userSettings);
     
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    const pdf = await page.pdf({ format: 'A4', printBackground: true });
     
-    // Generate PDF
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20px',
-        right: '20px',
-        bottom: '20px',
-        left: '20px'
-      }
-    });
-    
+    console.log('Invoice PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
   } finally {
     await browser.close();
@@ -278,17 +244,18 @@ function generateInvoiceHTML(
         <div class="billing-info">
           <h3>From:</h3>
           <p><strong>${businessName}</strong></p>
-          ${userSettings?.businessAddress ? `<p>${userSettings.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
-          ${userSettings?.phone ? `<p>Phone: ${userSettings.phone}</p>` : ''}
+          <p style="font-style: italic; color: #666;">Sole trader trading as ${businessName}</p>
+          ${userSettings?.businessAddress ? `<p>${userSettings?.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
+          ${userSettings?.phone ? `<p>Phone: ${userSettings?.phone}</p>` : ''}
           ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
           ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
         </div>
         <div class="billing-info">
           <h3>Bill To:</h3>
           <p><strong>${invoice.clientName}</strong></p>
-          ${contract?.clientEmail ? `<p>${contract.clientEmail}</p>` : ''}
+          ${invoice.clientAddress ? `<p>${invoice.clientAddress.replace(/\n/g, '<br>')}</p>` : ''}
+          ${(invoice.clientEmail || contract?.clientEmail) ? `<p>${invoice.clientEmail || contract?.clientEmail}</p>` : ''}
           ${contract?.clientPhone ? `<p>${contract.clientPhone}</p>` : ''}
-          ${invoice.businessAddress ? `<p>${invoice.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
         </div>
       </div>
 
@@ -304,9 +271,9 @@ function generateInvoiceHTML(
         </thead>
         <tbody>
           <tr>
-            <td>Music Performance - ${invoice.clientName}</td>
+            <td>Music Performance${invoice.venueAddress ? `<br><strong>Venue:</strong> ${invoice.venueAddress}` : ''}</td>
             <td>${invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : 'TBD'}</td>
-            <td>£${parseFloat(invoice.performanceFee || '0').toFixed(2)}</td>
+            <td>£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</td>
             <td>£${parseFloat(invoice.depositPaid || '0').toFixed(2)}</td>
             <td class="amount">£${parseFloat(invoice.amount).toFixed(2)}</td>
           </tr>
@@ -316,11 +283,15 @@ function generateInvoiceHTML(
       <div class="total-section">
         <div class="total-row">
           <div class="total-label">Performance Fee:</div>
-          <div class="total-amount">£${parseFloat(invoice.performanceFee || '0').toFixed(2)}</div>
+          <div class="total-amount">£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</div>
         </div>
         <div class="total-row">
           <div class="total-label">Deposit Paid:</div>
           <div class="total-amount">-£${parseFloat(invoice.depositPaid || '0').toFixed(2)}</div>
+        </div>
+        <div class="total-row">
+          <div class="total-label">VAT Status:</div>
+          <div class="total-amount">Not VAT registered</div>
         </div>
         <div class="total-row grand-total">
           <div class="total-label">Total Due:</div>
@@ -337,6 +308,11 @@ function generateInvoiceHTML(
       <div class="terms">
         <h3>Terms & Conditions</h3>
         <p>${userSettings?.defaultTerms || 'Payment is due within 30 days of the invoice date. Thank you for your business!'}</p>
+        <p style="margin-top: 15px; font-weight: bold; color: #333;">VAT Status: I am not VAT registered and therefore no VAT is charged.</p>
+      </div>
+
+      <div style="margin-top: 40px; padding: 15px; text-align: center; border-top: 1px solid #dee2e6; color: #999; font-size: 12px;">
+        <p style="margin: 0;">Powered by <strong style="color: #0EA5E9;">MusoBuddy</strong> – less admin, more music.</p>
       </div>
     </body>
     </html>
@@ -532,6 +508,10 @@ ${contract.terms}
         <p>Contract Number: ${contract.contractNumber}</p>
         <p>Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
         <p>This is a legally binding agreement between the parties named above.</p>
+      </div>
+
+      <div style="margin-top: 30px; padding: 15px; text-align: center; border-top: 1px solid #ccc; color: #999; font-size: 12px;">
+        <p style="margin: 0;">Powered by <strong style="color: #0EA5E9;">MusoBuddy</strong> – less admin, more music.</p>
       </div>
     </body>
     </html>

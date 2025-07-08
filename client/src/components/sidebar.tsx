@@ -11,6 +11,7 @@ import {
   BarChart3, 
   Music,
   Settings,
+  LogOut,
   X
 } from "lucide-react";
 
@@ -157,9 +158,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
             <button 
               onClick={handleLogout}
-              className="text-gray-400 hover:text-gray-600"
+              className="flex items-center space-x-2 text-gray-400 hover:text-gray-600 px-2 py-1 rounded transition-colors"
+              title="Logout"
             >
-              <Settings className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm">Logout</span>
             </button>
           </div>
         </div>
