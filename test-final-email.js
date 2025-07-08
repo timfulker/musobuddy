@@ -1,47 +1,51 @@
-// Monitor for the timfulkermusic@gmail.com email
-console.log('👀 MONITORING FOR EMAIL FROM: timfulkermusic@gmail.com');
-console.log('Checking for new enquiries every 10 seconds...');
+// Monitor for webhook activity after DNS fix
+console.log('🔍 MONITORING FOR WEBHOOK ACTIVITY (DNS FIXED)...');
 
-let lastEnquiryId = 24; // Start from current highest ID
+let lastEnquiryId = 28; // Current max ID
 
 async function checkForNewEnquiries() {
-  try {
-    // Check if webhook was triggered by looking at server logs
-    const response = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'timfulkermusic@gmail.com',
-        to: 'leads@musobuddy.com',
-        subject: 'Test from timfulkermusic@gmail.com',
-        text: 'Testing email delivery from Gmail',
-        envelope: { from: 'timfulkermusic@gmail.com', to: ['leads@musobuddy.com'] }
-      })
-    });
-    
-    if (response.status === 200) {
-      const result = await response.text();
-      console.log('✅ Webhook test successful:', result);
+  const interval = setInterval(async () => {
+    try {
+      // Check database directly for new enquiries
+      const response = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid');
+      const status = await response.json();
       
-      // Parse the enquiry ID from response
-      const match = result.match(/enquiryId":(\d+)/);
-      if (match) {
-        const newId = parseInt(match[1]);
-        if (newId > lastEnquiryId) {
-          console.log(`🎯 NEW ENQUIRY DETECTED: #${newId}`);
-          lastEnquiryId = newId;
+      if (response.ok) {
+        console.log('✅ Webhook endpoint accessible:', status.message);
+        
+        // Check for new enquiries by testing webhook
+        const testResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: 'leads@musobuddy.com',
+            from: 'dns-test@example.com',
+            subject: 'DNS Fix Test',
+            text: 'Testing after DNS propagation fix',
+            envelope: { from: 'dns-test@example.com', to: ['leads@musobuddy.com'] }
+          })
+        });
+        
+        if (testResponse.ok) {
+          const result = await testResponse.json();
+          console.log('🎉 TEST WEBHOOK SUCCESSFUL:', result);
+          
+          if (result.enquiryId && result.enquiryId > lastEnquiryId) {
+            console.log(`📧 New enquiry created: #${result.enquiryId}`);
+            lastEnquiryId = result.enquiryId;
+          }
         }
       }
+    } catch (error) {
+      console.log('❌ Error:', error.message);
     }
-  } catch (error) {
-    console.log('Webhook test failed:', error.message);
-  }
+  }, 5000);
+  
+  // Stop after 10 minutes
+  setTimeout(() => {
+    clearInterval(interval);
+    console.log('⏰ Monitoring stopped');
+  }, 600000);
 }
 
-// Test once immediately
-console.log('Testing webhook with timfulkermusic@gmail.com data...');
 checkForNewEnquiries();
-
-console.log('\nNow monitoring for real email delivery...');
-console.log('If your email reaches SendGrid, it should create a new enquiry.');
-console.log('If no new enquiry appears, the SPF record is likely the issue.');
