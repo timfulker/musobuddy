@@ -213,6 +213,11 @@ export default function Templates() {
   console.log('Render check - templates is array:', Array.isArray(templates));
   console.log('=== END DEBUG ===');
 
+  // Force templates to display for debugging
+  if (!isLoading && !error && Array.isArray(templates) && templates.length > 0) {
+    console.log('CONDITIONS MET - Should show templates!');
+  }
+
 
 
   if (isLoading) {
@@ -326,9 +331,11 @@ export default function Templates() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {isLoading && <div className="col-span-2 text-center py-8">Loading templates...</div>}
-        {error && <div className="col-span-2 text-center py-8 text-red-500">Error loading templates: {error.message}</div>}
-        {Array.isArray(templates) && templates.length > 0 ? (
+        {isLoading ? (
+          <div className="col-span-2 text-center py-8">Loading templates...</div>
+        ) : error ? (
+          <div className="col-span-2 text-center py-8 text-red-500">Error loading templates: {error.message}</div>
+        ) : Array.isArray(templates) && templates.length > 0 ? (
           templates.map((template: EmailTemplate) => (
             <Card key={template.id} className="h-fit">
               <CardHeader className="pb-3">
@@ -406,12 +413,10 @@ export default function Templates() {
             </Card>
           ))
         ) : (
-          !isLoading && (
-            <div className="col-span-2 text-center py-8 text-gray-500">
-              <p>No templates found. Create your first template to get started!</p>
-              <p className="text-sm mt-2">Debug: templates={JSON.stringify(templates)}</p>
-            </div>
-          )
+          <div className="col-span-2 text-center py-8 text-gray-500">
+            <p>No templates found. Create your first template to get started!</p>
+            <p className="text-sm mt-2">Debug: templates={JSON.stringify(templates)}</p>
+          </div>
         )}
       </div>
 
