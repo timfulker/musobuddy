@@ -1,39 +1,36 @@
-// Test what SendGrid sees when posting to our webhook
-const testData = new URLSearchParams();
-testData.append('to', 'leads@musobuddy.com');
-testData.append('from', 'test@sendgrid.com');
-testData.append('subject', 'SendGrid Delivery Test');
-testData.append('text', 'Testing SendGrid webhook delivery');
+/**
+ * Simple webhook test to verify email processing
+ */
 
-fetch('https://musobuddy.replit.app/webhook/sendgrid', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'SendGrid/1.0'
-  },
-  body: testData
-})
-.then(response => {
-  console.log('Status Code:', response.status);
-  console.log('Content-Type:', response.headers.get('content-type'));
+async function testWebhook() {
+  console.log('=== Simple Webhook Test ===');
   
-  if (response.status === 200) {
-    console.log('✅ SendGrid sees SUCCESS (200) - thinks webhook worked');
-  } else {
-    console.log('❌ SendGrid sees ERROR - would retry delivery');
-  }
+  const testData = new URLSearchParams({
+    to: 'leads@musobuddy.com',
+    from: 'timfulkermusic@gmail.com',
+    subject: 'Test Email from Tim',
+    text: 'This is a test email to verify the webhook is working',
+    envelope: '{"to":["leads@musobuddy.com"],"from":"timfulkermusic@gmail.com"}'
+  });
   
-  return response.text();
-})
-.then(data => {
-  if (data.includes('<!DOCTYPE html>')) {
-    console.log('🔥 PROBLEM: SendGrid gets HTML instead of webhook response');
-    console.log('SendGrid logs this as "successful delivery" but email is lost');
-  } else {
-    console.log('✅ Proper webhook response received');
+  try {
+    console.log('Testing webhook endpoint...');
+    
+    const response = await fetch('https://musobuddy.com/api/webhook/sendgrid', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Test-Webhook/1.0'
+      },
+      body: testData.toString()
+    });
+    
+    console.log('Status:', response.status);
+    console.log('Response:', await response.text());
+    
+  } catch (error) {
+    console.log('Error:', error.message);
   }
-})
-.catch(err => {
-  console.error('Request failed:', err.message);
-  console.log('❌ SendGrid would see network error and retry');
-});
+}
+
+testWebhook();
