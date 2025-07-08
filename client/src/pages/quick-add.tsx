@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Calendar, MessageSquare, Plus, CheckCircle } from "lucide-react";
+import { Calendar, MessageSquare, Plus, CheckCircle, Home } from "lucide-react";
+import { Link } from "wouter";
 import { insertEnquirySchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -107,10 +108,16 @@ export default function QuickAddPage() {
                   <Plus className="w-4 h-4 mr-2" />
                   Add Another Enquiry
                 </Button>
+                <Link href="/dashboard">
+                  <Button variant="outline" className="w-full">
+                    <Home className="w-4 h-4 mr-2" />
+                    Go to Dashboard
+                  </Button>
+                </Link>
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   onClick={() => window.close()} 
-                  className="w-full"
+                  className="w-full text-gray-500"
                 >
                   Close
                 </Button>
