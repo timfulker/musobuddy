@@ -43,11 +43,21 @@ export default function Templates() {
   const templatesQuery = useQuery({
     queryKey: ['/api/templates'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/templates');
-      console.log('Templates API response:', response);
-      console.log('Templates is array:', Array.isArray(response));
-      console.log('Templates length:', response?.length);
-      return Array.isArray(response) ? response : [];
+      try {
+        const response = await apiRequest('GET', '/api/templates');
+        console.log('Templates API response:', response);
+        console.log('Templates is array:', Array.isArray(response));
+        console.log('Templates length:', response?.length);
+        return Array.isArray(response) ? response : [];
+      } catch (error: any) {
+        console.error('Templates API error:', error);
+        if (error.status === 401) {
+          // Authentication failed - redirect to login
+          window.location.href = '/';
+          return [];
+        }
+        throw error;
+      }
     },
     staleTime: 0, // Always refetch
     gcTime: 0  // Don't cache (React Query v5 uses gcTime instead of cacheTime)
