@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Edit3, Trash2, MessageSquare, Mail, Phone } from 'lucide-react';
+import { Plus, Edit3, Trash2, MessageSquare, Mail, Phone, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 
 interface EmailTemplate {
   id: number;
@@ -34,6 +35,7 @@ export default function Templates() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['/api/templates'],
@@ -172,6 +174,16 @@ export default function Templates() {
     <div className="max-w-6xl mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
         <div>
+          <div className="flex items-center space-x-4 mb-2">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation('/dashboard')}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900">Email Templates</h1>
           <p className="text-gray-600">Manage your automated response templates for enquiries</p>
         </div>
