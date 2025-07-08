@@ -1,63 +1,43 @@
-// Monitor for real email from timfulkermusic@gmail.com
-console.log('👀 MONITORING FOR REAL EMAIL FROM timfulkermusic@gmail.com');
-console.log('Watching server logs for webhook activity...');
-console.log('Time:', new Date().toLocaleTimeString());
-
-let attempts = 0;
-const maxAttempts = 10;
+// Monitor for real email webhook activity
+console.log('🔍 MONITORING FOR REAL EMAIL WEBHOOK ACTIVITY...');
 
 async function checkForWebhookActivity() {
-  attempts++;
-  console.log(`\nCheck ${attempts}/${maxAttempts} - ${new Date().toLocaleTimeString()}`);
-  
-  try {
-    // Test if webhook is responsive
-    const testResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid');
-    const testData = await testResponse.json();
-    
-    if (testResponse.status === 200) {
-      console.log('✅ Webhook endpoint responsive');
-    } else {
-      console.log('❌ Webhook endpoint issue:', testResponse.status);
-    }
-    
-    // Check for recent enquiries with authentication
-    const enquiriesResponse = await fetch('https://musobuddy.replit.app/api/enquiries');
-    
-    if (enquiriesResponse.status === 200) {
-      const enquiries = await enquiriesResponse.json();
-      const recentEnquiries = enquiries.filter(e => 
-        new Date(e.createdAt) > new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
-      );
+  const interval = setInterval(async () => {
+    try {
+      // Check for new enquiries
+      const response = await fetch('https://musobuddy.replit.app/api/enquiries');
+      const enquiries = await response.json();
       
-      if (recentEnquiries.length > 0) {
-        console.log('🎯 RECENT ENQUIRIES FOUND:');
-        recentEnquiries.forEach(enquiry => {
-          console.log(`   #${enquiry.id}: ${enquiry.clientEmail} - "${enquiry.title}"`);
-          if (enquiry.clientEmail?.includes('timfulkermusic')) {
-            console.log('   🎉 THIS IS YOUR EMAIL! Email forwarding worked!');
-          }
-        });
+      const latest = enquiries.sort((a, b) => b.id - a.id)[0];
+      
+      if (latest && latest.id > 28) {
+        console.log('🎉 NEW ENQUIRY DETECTED!');
+        console.log(`ID: ${latest.id}`);
+        console.log(`Title: ${latest.title}`);
+        console.log(`Status: ${latest.status}`);
+        console.log(`Created: ${latest.created_at}`);
+        
+        // Check if this looks like an email webhook
+        if (latest.title.includes('@') || latest.message?.includes('From:')) {
+          console.log('✅ This appears to be from email webhook!');
+        }
+        
+        clearInterval(interval);
+        process.exit(0);
       } else {
-        console.log('⏳ No recent enquiries - email may still be processing');
+        console.log(`⏳ Still waiting... Latest enquiry is still #${latest?.id || 'none'}`);
       }
-    } else {
-      console.log('❌ Cannot check enquiries:', enquiriesResponse.status);
+    } catch (error) {
+      console.log('❌ Error checking enquiries:', error.message);
     }
-    
-  } catch (error) {
-    console.log('❌ Monitor error:', error.message);
-  }
+  }, 3000);
   
-  if (attempts < maxAttempts) {
-    setTimeout(checkForWebhookActivity, 30000); // Check every 30 seconds
-  } else {
-    console.log('\n📧 Monitoring complete. If no enquiry appeared, check:');
-    console.log('1. Email may be delayed by Gmail/SendGrid processing');
-    console.log('2. Check your sent folder for bounce messages');
-    console.log('3. Try sending from a different email provider');
-  }
+  // Stop monitoring after 5 minutes
+  setTimeout(() => {
+    console.log('⏰ Monitoring timeout after 5 minutes');
+    clearInterval(interval);
+    process.exit(0);
+  }, 300000);
 }
 
-// Start monitoring
 checkForWebhookActivity();
