@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -117,6 +117,11 @@ export function ThemeSelector() {
         root.style.setProperty('--card-foreground', '220 9% 12%');
         root.style.setProperty('--sidebar-background', '220 14% 98%');
         root.style.setProperty('--sidebar-primary', '214 87% 56%');
+        root.style.setProperty('--sidebar-foreground', '220 9% 12%');
+        root.style.setProperty('--sidebar-accent', '220 14% 96%');
+        root.style.setProperty('--sidebar-accent-foreground', '220 9% 12%');
+        root.style.setProperty('--sidebar-border', '220 13% 91%');
+        root.style.setProperty('--sidebar-ring', '214 87% 56%');
         break;
         
       case 'framer':
@@ -135,6 +140,11 @@ export function ThemeSelector() {
         root.style.setProperty('--card-foreground', '0 0% 5%');
         root.style.setProperty('--sidebar-background', '240 5% 98%');
         root.style.setProperty('--sidebar-primary', '262 83% 58%');
+        root.style.setProperty('--sidebar-foreground', '0 0% 5%');
+        root.style.setProperty('--sidebar-accent', '240 5% 96%');
+        root.style.setProperty('--sidebar-accent-foreground', '0 0% 5%');
+        root.style.setProperty('--sidebar-border', '240 6% 90%');
+        root.style.setProperty('--sidebar-ring', '262 83% 58%');
         break;
         
       case 'linear':
@@ -153,6 +163,11 @@ export function ThemeSelector() {
         root.style.setProperty('--card-foreground', '240 6% 22%');
         root.style.setProperty('--sidebar-background', '240 5% 99%');
         root.style.setProperty('--sidebar-primary', '214 95% 64%');
+        root.style.setProperty('--sidebar-foreground', '240 6% 22%');
+        root.style.setProperty('--sidebar-accent', '240 5% 96%');
+        root.style.setProperty('--sidebar-accent-foreground', '240 6% 22%');
+        root.style.setProperty('--sidebar-border', '240 6% 90%');
+        root.style.setProperty('--sidebar-ring', '214 95% 64%');
         break;
         
       case 'soundtrap':
@@ -171,6 +186,11 @@ export function ThemeSelector() {
         root.style.setProperty('--card-foreground', '20 14% 4%');
         root.style.setProperty('--sidebar-background', '43 100% 98%');
         root.style.setProperty('--sidebar-primary', '43 96% 56%');
+        root.style.setProperty('--sidebar-foreground', '20 14% 4%');
+        root.style.setProperty('--sidebar-accent', '43 100% 96%');
+        root.style.setProperty('--sidebar-accent-foreground', '20 14% 4%');
+        root.style.setProperty('--sidebar-border', '43 20% 90%');
+        root.style.setProperty('--sidebar-ring', '43 96% 56%');
         break;
         
       case 'bandzoogle':
@@ -189,6 +209,11 @@ export function ThemeSelector() {
         root.style.setProperty('--card-foreground', '0 0% 15%');
         root.style.setProperty('--sidebar-background', '0 100% 98%');
         root.style.setProperty('--sidebar-primary', '0 84% 60%');
+        root.style.setProperty('--sidebar-foreground', '0 0% 15%');
+        root.style.setProperty('--sidebar-accent', '0 100% 96%');
+        root.style.setProperty('--sidebar-accent-foreground', '0 0% 15%');
+        root.style.setProperty('--sidebar-border', '0 20% 90%');
+        root.style.setProperty('--sidebar-ring', '0 84% 60%');
         break;
         
       default: // MusoBuddy Classic
@@ -206,6 +231,11 @@ export function ThemeSelector() {
         root.style.setProperty('--card-foreground', '20 14% 4%');
         root.style.setProperty('--sidebar-background', '0 0% 98%');
         root.style.setProperty('--sidebar-primary', '271 81% 56%');
+        root.style.setProperty('--sidebar-foreground', '240 5% 26%');
+        root.style.setProperty('--sidebar-accent', '60 5% 96%');
+        root.style.setProperty('--sidebar-accent-foreground', '240 6% 10%');
+        root.style.setProperty('--sidebar-border', '220 13% 91%');
+        root.style.setProperty('--sidebar-ring', '271 81% 56%');
         break;
     }
     
@@ -213,10 +243,16 @@ export function ThemeSelector() {
     
     // Save to localStorage
     localStorage.setItem('musobuddy-theme', theme.id);
+    
+    // Force a slight delay to ensure CSS variables are applied
+    setTimeout(() => {
+      // Trigger a re-render by updating a data attribute
+      document.documentElement.setAttribute('data-theme', theme.id);
+    }, 50);
   };
 
   // Load saved theme on mount
-  useState(() => {
+  React.useEffect(() => {
     const savedTheme = localStorage.getItem('musobuddy-theme');
     if (savedTheme) {
       const theme = themes.find(t => t.id === savedTheme);
@@ -224,7 +260,7 @@ export function ThemeSelector() {
         applyTheme(theme);
       }
     }
-  });
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -246,7 +282,10 @@ export function ThemeSelector() {
               className={`cursor-pointer transition-all hover:shadow-lg ${
                 selectedTheme === theme.id ? 'ring-2 ring-primary' : ''
               }`}
-              onClick={() => applyTheme(theme)}
+              onClick={() => {
+                applyTheme(theme);
+                setOpen(false);
+              }}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">

@@ -41,7 +41,7 @@ export default function DashboardHeader() {
           
           {/* Quick Actions */}
           <Link href="/enquiries?action=new">
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button className="bg-primary hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">New Enquiry</span>
               <span className="sm:hidden">New</span>
