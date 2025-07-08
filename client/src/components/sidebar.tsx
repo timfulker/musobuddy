@@ -12,7 +12,8 @@ import {
   Music,
   Settings,
   LogOut,
-  X
+  X,
+  MessageSquare
 } from "lucide-react";
 
 interface SidebarProps {
@@ -133,6 +134,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           )}>
             <Settings className="w-5 h-5" />
             <span>Settings</span>
+          </Link>
+          <Link href="/templates" onClick={onClose} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/templates") 
+              ? "bg-purple-50 text-purple-700 font-medium" 
+              : "text-gray-600 hover:bg-gray-50"
+          )}>
+            <MessageSquare className="w-5 h-5" />
+            <span>Templates</span>
           </Link>
         </nav>
 

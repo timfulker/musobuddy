@@ -140,7 +140,8 @@ export const emailTemplates = pgTable("email_templates", {
   userId: varchar("user_id").notNull(),
   name: varchar("name").notNull(), // "Decline Enquiry", "Request More Info", etc.
   subject: varchar("subject").notNull(),
-  body: text("body").notNull(),
+  emailBody: text("email_body").notNull(),
+  smsBody: text("sms_body"),
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

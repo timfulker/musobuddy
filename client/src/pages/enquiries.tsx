@@ -120,21 +120,25 @@ export default function Enquiries() {
       return;
     }
 
+    // Get user settings for signature
+    const userSettings = await fetch('/api/user/settings').then(res => res.json());
+    const userName = userSettings?.emailFromName || userSettings?.businessName || "MusoBuddy User";
+    
     // Default templates
     const templates = {
       decline: {
         subject: "Re: Your Enquiry - Unfortunately Not Available",
-        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI appreciate you thinking of me for your event. Unfortunately, I am not available for your requested date.\n\nI hope you find a fantastic musician for your event, and I wish you all the best.\n\nKind regards,\n[Your Name]`,
+        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI appreciate you thinking of me for your event. Unfortunately, I am not available for your requested date.\n\nI hope you find a fantastic musician for your event, and I wish you all the best.\n\nKind regards,\n${userName}`,
         smsBody: `Hi ${selectedEnquiry.clientName}, thanks for your enquiry. Unfortunately I'm not available for your requested date. Hope you find someone great for your event!`
       },
       more_info: {
         subject: "Re: Your Enquiry - Need More Information",
-        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI'd be delighted to help make your event special! To provide you with an accurate quote and ensure I can meet your needs, could you please provide:\n\n• Event date and time\n• Venue location\n• Number of guests expected\n• Specific music requirements\n• Duration of performance needed\n\nI look forward to hearing from you soon.\n\nBest regards,\n[Your Name]`,
+        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI'd be delighted to help make your event special! To provide you with an accurate quote and ensure I can meet your needs, could you please provide:\n\n• Event date and time\n• Venue location\n• Number of guests expected\n• Specific music requirements\n• Duration of performance needed\n\nI look forward to hearing from you soon.\n\nBest regards,\n${userName}`,
         smsBody: `Hi ${selectedEnquiry.clientName}, thanks for your enquiry! I'd love to help with your event. Could you send me: date/time, venue, guest count, and music requirements? Thanks!`
       },
       available: {
         subject: "Re: Your Enquiry - Available and Interested!",
-        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI'm pleased to confirm that I am available for your event and would be delighted to perform for you.\n\nTo proceed with a formal quote, I'll need a few more details:\n\n• Exact venue address\n• Performance duration required\n• Any specific music requests\n• Setup requirements\n\nI look forward to discussing your event further.\n\nBest regards,\n[Your Name]`,
+        body: `Dear ${selectedEnquiry.clientName},\n\nThank you for your enquiry regarding ${selectedEnquiry.title}.\n\nI'm pleased to confirm that I am available for your event and would be delighted to perform for you.\n\nTo proceed with a formal quote, I'll need a few more details:\n\n• Exact venue address\n• Performance duration required\n• Any specific music requests\n• Setup requirements\n\nI look forward to discussing your event further.\n\nBest regards,\n${userName}`,
         smsBody: `Hi ${selectedEnquiry.clientName}, great news - I'm available for your event! I'd love to perform for you. Can you send venue address, duration needed, and any music requests? Thanks!`
       }
     };

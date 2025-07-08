@@ -13,6 +13,7 @@ import Invoices from "@/pages/invoices";
 import Calendar from "@/pages/calendar";
 import Compliance from "@/pages/compliance";
 import Settings from "@/pages/settings";
+import Templates from "@/pages/templates";
 import SignContract from "@/pages/sign-contract";
 import ViewContract from "@/pages/view-contract";
 import ViewInvoice from "@/pages/view-invoice";
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/calendar" component={Calendar} />
           <Route path="/compliance" component={Compliance} />
           <Route path="/settings" component={Settings} />
+          <Route path="/templates" component={Templates} />
         </>
       )}
       <Route component={NotFound} />

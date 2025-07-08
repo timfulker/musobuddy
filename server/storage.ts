@@ -20,6 +20,9 @@ import {
   type InsertComplianceDocument,
   type UserSettings,
   type InsertUserSettings,
+  emailTemplates,
+  type EmailTemplate,
+  type InsertEmailTemplate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
@@ -77,6 +80,12 @@ export interface IStorage {
   // User settings operations
   getUserSettings(userId: string): Promise<UserSettings | undefined>;
   upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
+  
+  // Email template operations
+  getEmailTemplates(userId: string): Promise<EmailTemplate[]>;
+  createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate>;
+  updateEmailTemplate(id: number, updates: Partial<EmailTemplate>, userId: string): Promise<EmailTemplate | undefined>;
+  deleteEmailTemplate(id: number, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -535,6 +544,35 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return newSettings;
     }
+  }
+
+  // Email template operations
+  async getEmailTemplates(userId: string): Promise<EmailTemplate[]> {
+    return await db
+      .select()
+      .from(emailTemplates)
+      .where(eq(emailTemplates.userId, userId))
+      .orderBy(desc(emailTemplates.createdAt));
+  }
+
+  async createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate> {
+    const result = await db.insert(emailTemplates).values(template).returning();
+    return result[0];
+  }
+
+  async updateEmailTemplate(id: number, updates: Partial<EmailTemplate>, userId: string): Promise<EmailTemplate | undefined> {
+    const result = await db
+      .update(emailTemplates)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(emailTemplates.id, id), eq(emailTemplates.userId, userId)))
+      .returning();
+    return result[0];
+  }
+
+  async deleteEmailTemplate(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(emailTemplates)
+      .where(and(eq(emailTemplates.id, id), eq(emailTemplates.userId, userId)));
+    return result.rowCount > 0;
   }
 }
 
