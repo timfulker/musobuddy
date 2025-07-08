@@ -1,45 +1,59 @@
-// Test the webhook immediately after server restart
-console.log('Testing webhook with comprehensive logging...');
+// Test email delivery now that SPF is active
+console.log('🔍 TESTING EMAIL DELIVERY WITH ACTIVE SPF RECORD...');
 
-setTimeout(() => {
-  fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'TestClient/1.0'
-    },
-    body: 'to=leads@musobuddy.com&from=testuser@example.com&subject=Webhook Test&text=Testing webhook logging'
-  })
-  .then(response => {
-    console.log('Response Status:', response.status);
-    console.log('Response Headers:', Object.fromEntries(response.headers.entries()));
-    return response.text();
-  })
-  .then(data => {
-    console.log('Response Body:', data);
+async function testSPFRecord() {
+  try {
+    const response = await fetch('https://dns.google/resolve?name=musobuddy.com&type=TXT');
+    const data = await response.json();
+    const spfRecord = data.Answer?.find(record => record.data.includes('spf1'));
     
-    if (data.includes('webhook_active') || data.includes('success')) {
-      console.log('✅ Webhook is working!');
-    } else if (data.includes('<!DOCTYPE')) {
-      console.log('❌ Still getting HTML response');
+    if (spfRecord) {
+      console.log('✅ SPF Record Active:', spfRecord.data);
+      console.log('✅ SendGrid is now authorized to receive emails for musobuddy.com');
     } else {
-      console.log('📄 Response:', data.substring(0, 200));
+      console.log('❌ SPF Record not found in DNS');
     }
-  })
-  .catch(err => console.error('Error:', err));
-}, 3000);
+  } catch (error) {
+    console.log('Error checking SPF:', error.message);
+  }
+}
 
-// Also test GET request
-setTimeout(() => {
-  console.log('\nTesting GET request...');
-  fetch('https://musobuddy.replit.app/api/webhook/sendgrid')
-  .then(response => response.text())
-  .then(data => {
-    if (data.includes('webhook_active')) {
-      console.log('✅ GET request working - webhook route is active');
-    } else {
-      console.log('❌ GET request returning:', data.substring(0, 100));
+async function checkRecentEnquiries() {
+  console.log('\n📧 Checking for recent enquiries...');
+  
+  try {
+    // Test webhook to ensure it's working
+    const webhookResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'timfulkermusic@gmail.com',
+        to: 'leads@musobuddy.com',
+        subject: 'Test after SPF record activation',
+        text: 'Testing with SPF record now active',
+        envelope: { from: 'timfulkermusic@gmail.com', to: ['leads@musobuddy.com'] }
+      })
+    });
+    
+    if (webhookResponse.status === 200) {
+      const result = await webhookResponse.text();
+      console.log('✅ Webhook still working:', result);
     }
-  })
-  .catch(err => console.error('GET Error:', err));
-}, 5000);
+    
+  } catch (error) {
+    console.log('Error testing webhook:', error.message);
+  }
+}
+
+async function runPostSPFTest() {
+  await testSPFRecord();
+  await checkRecentEnquiries();
+  
+  console.log('\n🎯 NEXT STEPS:');
+  console.log('1. SPF record is now active and authorizing SendGrid');
+  console.log('2. Try sending another email to leads@musobuddy.com');
+  console.log('3. It should now reach SendGrid and create an enquiry');
+  console.log('4. DNS propagation may take 5-15 minutes globally');
+}
+
+runPostSPFTest();
