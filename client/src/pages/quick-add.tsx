@@ -25,6 +25,7 @@ const quickAddFormSchema = z.object({
   notes: z.string().optional(),
   source: z.string().optional(),
   contactMethod: z.string().optional(),
+  gigType: z.string().optional(),
 });
 
 type QuickAddFormData = z.infer<typeof quickAddFormSchema>;
@@ -45,6 +46,7 @@ export default function QuickAddPage() {
       notes: "",
       source: "",
       contactMethod: "",
+      gigType: "",
     },
   });
 
@@ -153,7 +155,7 @@ export default function QuickAddPage() {
                     name="clientName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Name *</FormLabel>
+                        <FormLabel>Client Name</FormLabel>
                         <FormControl>
                           <Input placeholder="Enter client name" {...field} />
                         </FormControl>
@@ -167,7 +169,7 @@ export default function QuickAddPage() {
                     name="source"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Source *</FormLabel>
+                        <FormLabel>Source</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -198,7 +200,7 @@ export default function QuickAddPage() {
                     name="contactMethod"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Method *</FormLabel>
+                        <FormLabel>Contact Method</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -247,13 +249,45 @@ export default function QuickAddPage() {
                   )}
                 />
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="gigType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Type of Gig</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="What type of performance?" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Saxophone Solo">Saxophone Solo</SelectItem>
+                            <SelectItem value="DJ Set">DJ Set</SelectItem>
+                            <SelectItem value="Sax + DJ">Sax + DJ</SelectItem>
+                            <SelectItem value="Band Performance">Band Performance</SelectItem>
+                            <SelectItem value="Session Work">Session Work</SelectItem>
+                            <SelectItem value="Wedding Ceremony">Wedding Ceremony</SelectItem>
+                            <SelectItem value="Corporate Event">Corporate Event</SelectItem>
+                            <SelectItem value="Private Party">Private Party</SelectItem>
+                            <SelectItem value="Festival">Festival</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="eventDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Event Date *</FormLabel>
+                        <FormLabel>Event Date</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>

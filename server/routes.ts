@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         eventDate: quickAddData.eventDate ? new Date(quickAddData.eventDate) : null,
         venue: quickAddData.venue || null,
         estimatedValue: quickAddData.estimatedValue ? quickAddData.estimatedValue.toString() : null,
-        notes: quickAddData.notes ? `${quickAddData.notes}\n\nSource: ${quickAddData.source || 'Unknown'}\nContact Method: ${quickAddData.contactMethod || 'Unknown'}` : `Source: ${quickAddData.source || 'Unknown'}\nContact Method: ${quickAddData.contactMethod || 'Unknown'}`,
+        notes: quickAddData.notes ? `${quickAddData.notes}\n\nSource: ${quickAddData.source || 'Unknown'}\nContact Method: ${quickAddData.contactMethod || 'Unknown'}\nGig Type: ${quickAddData.gigType || 'Unknown'}` : `Source: ${quickAddData.source || 'Unknown'}\nContact Method: ${quickAddData.contactMethod || 'Unknown'}\nGig Type: ${quickAddData.gigType || 'Unknown'}`,
         status: "new"
       };
       
