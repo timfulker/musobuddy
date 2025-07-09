@@ -99,6 +99,7 @@ export function ThemeSelector() {
 
   const applyTheme = (theme: Theme) => {
     const root = document.documentElement;
+    console.log('Applying theme:', theme.name);
     
     switch (theme.id) {
       case 'superhuman':
@@ -122,6 +123,9 @@ export function ThemeSelector() {
         root.style.setProperty('--sidebar-accent-foreground', '220 9% 12%');
         root.style.setProperty('--sidebar-border', '220 13% 91%');
         root.style.setProperty('--sidebar-ring', '214 87% 56%');
+        root.style.setProperty('--ring', '214 87% 56%');
+        root.style.setProperty('--secondary', '220 14% 96%');
+        root.style.setProperty('--secondary-foreground', '220 9% 12%');
         break;
         
       case 'framer':
@@ -145,6 +149,9 @@ export function ThemeSelector() {
         root.style.setProperty('--sidebar-accent-foreground', '0 0% 5%');
         root.style.setProperty('--sidebar-border', '240 6% 90%');
         root.style.setProperty('--sidebar-ring', '262 83% 58%');
+        root.style.setProperty('--ring', '262 83% 58%');
+        root.style.setProperty('--secondary', '240 5% 96%');
+        root.style.setProperty('--secondary-foreground', '0 0% 5%');
         break;
         
       case 'linear':
@@ -168,6 +175,9 @@ export function ThemeSelector() {
         root.style.setProperty('--sidebar-accent-foreground', '240 6% 22%');
         root.style.setProperty('--sidebar-border', '240 6% 90%');
         root.style.setProperty('--sidebar-ring', '214 95% 64%');
+        root.style.setProperty('--ring', '214 95% 64%');
+        root.style.setProperty('--secondary', '240 5% 96%');
+        root.style.setProperty('--secondary-foreground', '240 6% 22%');
         break;
         
       case 'soundtrap':
@@ -191,6 +201,9 @@ export function ThemeSelector() {
         root.style.setProperty('--sidebar-accent-foreground', '20 14% 4%');
         root.style.setProperty('--sidebar-border', '43 20% 90%');
         root.style.setProperty('--sidebar-ring', '43 96% 56%');
+        root.style.setProperty('--ring', '43 96% 56%');
+        root.style.setProperty('--secondary', '43 100% 96%');
+        root.style.setProperty('--secondary-foreground', '20 14% 4%');
         break;
         
       case 'bandzoogle':
@@ -214,6 +227,9 @@ export function ThemeSelector() {
         root.style.setProperty('--sidebar-accent-foreground', '0 0% 15%');
         root.style.setProperty('--sidebar-border', '0 20% 90%');
         root.style.setProperty('--sidebar-ring', '0 84% 60%');
+        root.style.setProperty('--ring', '0 84% 60%');
+        root.style.setProperty('--secondary', '0 100% 96%');
+        root.style.setProperty('--secondary-foreground', '0 0% 15%');
         break;
         
       default: // MusoBuddy Classic
@@ -236,6 +252,9 @@ export function ThemeSelector() {
         root.style.setProperty('--sidebar-accent-foreground', '240 6% 10%');
         root.style.setProperty('--sidebar-border', '220 13% 91%');
         root.style.setProperty('--sidebar-ring', '271 81% 56%');
+        root.style.setProperty('--ring', '271 81% 56%');
+        root.style.setProperty('--secondary', '60 5% 96%');
+        root.style.setProperty('--secondary-foreground', '24 10% 10%');
         break;
     }
     
@@ -248,6 +267,7 @@ export function ThemeSelector() {
     setTimeout(() => {
       // Trigger a re-render by updating a data attribute
       document.documentElement.setAttribute('data-theme', theme.id);
+      console.log('Theme applied:', theme.name, 'Primary color:', root.style.getPropertyValue('--primary'));
     }, 50);
   };
 
