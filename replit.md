@@ -280,6 +280,12 @@ Changelog:
   * Single .ics file download works with all calendar applications (Google, Apple, Outlook, etc.)
   * Improved user experience with clearer button labeling and unified export process
   * Toast notification explains compatibility with all major calendar systems
+- July 09, 2025. Dashboard stats system clarified and fixed:
+  * "Active Bookings" now properly defined as confirmed bookings with future event dates
+  * Fixed hardcoded "5 overdue" to use dynamic count from database
+  * Added overdueInvoices field to dashboard stats API
+  * Updated stats cards to show accurate overdue invoice count
+  * Clarified Active Bookings description as "Confirmed & upcoming"
 - July 09, 2025. Calendar system enhancement with comprehensive booking management:
   * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
   * Added automatic integration with enquiries and contracts showing potential bookings

@@ -454,6 +454,7 @@ export class DatabaseStorage implements IStorage {
     monthlyRevenue: number;
     activeBookings: number;
     pendingInvoices: number;
+    overdueInvoices: number;
     conversionRate: number;
   }> {
     const now = new Date();
@@ -475,7 +476,7 @@ export class DatabaseStorage implements IStorage {
 
     const monthlyRevenue = monthlyInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
 
-    // Active bookings (upcoming)
+    // Active bookings (upcoming confirmed bookings)
     const activeBookingsCount = await db
       .select()
       .from(bookings)
@@ -487,7 +488,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    // Pending invoices
+    // Pending invoices (sent status)
     const pendingInvoicesData = await db
       .select()
       .from(invoices)
@@ -499,6 +500,17 @@ export class DatabaseStorage implements IStorage {
       );
 
     const pendingInvoices = pendingInvoicesData.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+
+    // Overdue invoices count
+    const overdueInvoicesCount = await db
+      .select()
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.userId, userId),
+          eq(invoices.status, "overdue")
+        )
+      );
 
     // Conversion rate (confirmed bookings / total enquiries)
     const totalEnquiries = await db
@@ -524,6 +536,7 @@ export class DatabaseStorage implements IStorage {
       monthlyRevenue,
       activeBookings: activeBookingsCount.length,
       pendingInvoices,
+      overdueInvoices: overdueInvoicesCount.length,
       conversionRate: Math.round(conversionRate),
     };
   }

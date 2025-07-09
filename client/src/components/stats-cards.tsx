@@ -62,7 +62,7 @@ export default function StatsCards() {
               </p>
               <p className="text-xs md:text-sm text-blue-600 mt-1 flex items-center">
                 <Calendar className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                Next: Tomorrow
+                Confirmed & upcoming
               </p>
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -82,7 +82,7 @@ export default function StatsCards() {
               </p>
               <p className="text-xs md:text-sm text-orange-600 mt-1 flex items-center">
                 <Clock className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                5 overdue
+                {stats?.overdueInvoices || 0} overdue
               </p>
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg flex items-center justify-center">
