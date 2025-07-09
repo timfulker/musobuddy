@@ -192,7 +192,7 @@ export default function Calendar() {
       case "confirmed": return "bg-green-100 text-green-800 border-green-200";
       case "completed": return "bg-purple-100 text-purple-800 border-purple-200";
       case "cancelled": return "bg-red-100 text-red-800 border-red-200";
-      default: return "bg-blue-100 text-blue-800 border-blue-200";
+      default: return "bg-yellow-100 text-yellow-800 border-yellow-200";
     }
   };
 
@@ -201,7 +201,7 @@ export default function Calendar() {
       case "confirmed": return "bg-green-200 text-green-900 hover:bg-green-300";
       case "completed": return "bg-purple-200 text-purple-900 hover:bg-purple-300";
       case "cancelled": return "bg-red-200 text-red-900 hover:bg-red-300";
-      default: return "bg-blue-200 text-blue-900 hover:bg-blue-300";
+      default: return "bg-yellow-200 text-yellow-900 hover:bg-yellow-300";
     }
   };
 
@@ -726,39 +726,47 @@ export default function Calendar() {
                   onSelect={setSelectedDate}
                   className="rounded-md border"
                   modifiers={{
+                    today: [new Date()],
                     confirmed: bookings.filter((b: Booking) => b.status === 'confirmed').map((booking: Booking) => new Date(booking.eventDate)),
                     completed: bookings.filter((b: Booking) => b.status === 'completed').map((booking: Booking) => new Date(booking.eventDate)),
                     cancelled: bookings.filter((b: Booking) => b.status === 'cancelled').map((booking: Booking) => new Date(booking.eventDate)),
                     newEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-new').map((booking: any) => new Date(booking.eventDate)),
+                    inProgressEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-qualified' || b.status === 'enquiry-contract_sent').map((booking: any) => new Date(booking.eventDate)),
                     confirmedEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-confirmed').map((booking: any) => new Date(booking.eventDate)),
                     signedContract: potentialBookings.filter((b: any) => b.status === 'contract-signed').map((booking: any) => new Date(booking.eventDate)),
                   }}
                   modifiersClassNames={{
+                    today: "bg-purple-100 text-purple-900 font-bold ring-2 ring-purple-400",
                     confirmed: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
                     completed: "bg-purple-200 text-purple-900 font-semibold hover:bg-purple-300",
                     cancelled: "bg-red-200 text-red-900 font-semibold hover:bg-red-300",
-                    newEnquiry: "bg-blue-200 text-blue-900 font-semibold hover:bg-blue-300",
+                    newEnquiry: "bg-yellow-200 text-yellow-900 font-semibold hover:bg-yellow-300",
+                    inProgressEnquiry: "bg-blue-200 text-blue-900 font-semibold hover:bg-blue-300",
                     confirmedEnquiry: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
-                    signedContract: "bg-purple-200 text-purple-900 font-semibold hover:bg-purple-300",
+                    signedContract: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
                   }}
                 />
                 
                 <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-gray-600">
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-200 border border-green-300 rounded"></div>
-                    <span>Confirmed</span>
+                    <div className="w-3 h-3 bg-yellow-200 border border-yellow-300 rounded"></div>
+                    <span>New Enquiry</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-purple-200 border border-purple-300 rounded"></div>
-                    <span>Completed</span>
+                    <div className="w-3 h-3 bg-blue-200 border border-blue-300 rounded"></div>
+                    <span>In Progress</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-200 border border-green-300 rounded"></div>
+                    <span>Confirmed</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-red-200 border border-red-300 rounded"></div>
                     <span>Cancelled</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-200 border border-blue-300 rounded"></div>
-                    <span>New Enquiry</span>
+                    <div className="w-3 h-3 bg-purple-100 border border-purple-400 rounded ring-1 ring-purple-400"></div>
+                    <span>Today</span>
                   </div>
                 </div>
               </CardContent>
@@ -836,14 +844,16 @@ export default function Calendar() {
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-semibold">{booking.title}</h4>
                         <Badge className={
-                          booking.status === 'enquiry-new' ? 'bg-blue-100 text-blue-800' :
+                          booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
+                          booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
                           booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
-                          booking.status === 'contract-signed' ? 'bg-purple-100 text-purple-800' :
+                          booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
                           'bg-amber-100 text-amber-800'
                         }>
                           {booking.status === 'enquiry-new' ? 'New Enquiry' :
+                           booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'In Progress' :
                            booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
-                           booking.status === 'contract-signed' ? 'Contract' :
+                           booking.status === 'contract-signed' ? 'Contract Signed' :
                            'Potential'}
                         </Badge>
                       </div>
