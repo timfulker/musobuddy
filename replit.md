@@ -275,6 +275,11 @@ Changelog:
   * Made contractId optional in bookings table schema to support calendar imports
   * Cleaned up 113 incorrectly created contracts from previous calendar imports
   * Calendar import workflow: .ics file → parsed events → bookings only (no contracts or enquiries)
+- July 09, 2025. Calendar export system simplified:
+  * Replaced separate Google/Apple export buttons with single "Export Calendar" button
+  * Single .ics file download works with all calendar applications (Google, Apple, Outlook, etc.)
+  * Improved user experience with clearer button labeling and unified export process
+  * Toast notification explains compatibility with all major calendar systems
 - July 09, 2025. Calendar system enhancement with comprehensive booking management:
   * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
   * Added automatic integration with enquiries and contracts showing potential bookings

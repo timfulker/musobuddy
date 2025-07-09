@@ -65,14 +65,14 @@ export default function Calendar() {
     queryKey: ["/api/contracts"],
   });
 
-  const handleAppleCalendarExport = () => {
-    // Create Apple Calendar export
+  const handleCalendarExport = () => {
+    // Create calendar export - works with all calendar apps
     const icalData = createICalData();
-    downloadICalFile(icalData);
+    downloadICalFile(icalData, "musobuddy-calendar.ics");
     
     toast({
       title: "Calendar Export",
-      description: "Apple Calendar file downloaded",
+      description: "Calendar file downloaded - works with Google, Apple, Outlook, and other calendar apps",
     });
   };
 
@@ -118,12 +118,12 @@ export default function Calendar() {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   };
 
-  const downloadICalFile = (icalData: string) => {
+  const downloadICalFile = (icalData: string, filename: string = 'musobuddy-calendar.ics') => {
     const blob = new Blob([icalData], { type: 'text/calendar' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'musobuddy-calendar.ics';
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -675,13 +675,9 @@ export default function Calendar() {
               <div className="flex items-center justify-between">
                 <CardTitle>Performance Calendar - Year View</CardTitle>
                 <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => window.open('https://calendar.google.com/calendar/u/0/r/eventedit', '_blank')}>
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Add to Google
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleAppleCalendarExport}>
+                  <Button variant="outline" size="sm" onClick={handleCalendarExport}>
                     <Download className="w-4 h-4 mr-2" />
-                    Export .ics
+                    Export Calendar
                   </Button>
                 </div>
               </div>
@@ -698,13 +694,9 @@ export default function Calendar() {
               <div className="flex items-center justify-between">
                 <CardTitle>Performance Calendar - Week View</CardTitle>
                 <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => window.open('https://calendar.google.com/calendar/u/0/r/eventedit', '_blank')}>
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Add to Google
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleAppleCalendarExport}>
+                  <Button variant="outline" size="sm" onClick={handleCalendarExport}>
                     <Download className="w-4 h-4 mr-1" />
-                    Export .ics
+                    Export Calendar
                   </Button>
                 </div>
               </div>
@@ -721,13 +713,9 @@ export default function Calendar() {
               <div className="flex items-center justify-between">
                 <CardTitle>Performance Calendar - Day View</CardTitle>
                 <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => window.open('https://calendar.google.com/calendar/u/0/r/eventedit', '_blank')}>
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Add to Google
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleAppleCalendarExport}>
+                  <Button variant="outline" size="sm" onClick={handleCalendarExport}>
                     <Download className="w-4 h-4 mr-1" />
-                    Export .ics
+                    Export Calendar
                   </Button>
                 </div>
               </div>
@@ -765,13 +753,9 @@ export default function Calendar() {
                       )}
                     </Button>
                     <CalendarImport />
-                    <Button variant="outline" size="sm" onClick={() => window.open('https://calendar.google.com/calendar/u/0/r/eventedit', '_blank')}>
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Add to Google
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleAppleCalendarExport}>
+                    <Button variant="outline" size="sm" onClick={handleCalendarExport}>
                       <Download className="w-4 h-4 mr-2" />
-                      Export .ics
+                      Export Calendar
                     </Button>
                   </div>
                 </div>
@@ -988,20 +972,11 @@ export default function Calendar() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open('https://calendar.google.com/calendar/u/0/r/eventedit', '_blank')}
-                  className="text-sm"
-                >
-                  <ExternalLink className="w-4 h-4 mr-1" />
-                  Add to Google
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAppleCalendarExport}
+                  onClick={handleCalendarExport}
                   className="text-sm"
                 >
                   <Download className="w-4 h-4 mr-1" />
-                  Export .ics
+                  Export Calendar
                 </Button>
               </div>
             </div>
