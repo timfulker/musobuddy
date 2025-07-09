@@ -70,6 +70,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Public demo info endpoint (no auth required)
+  app.get('/demo', (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>MusoBuddy - Demo Information</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; }
+            .header { text-align: center; margin-bottom: 3rem; }
+            .feature { margin: 2rem 0; padding: 1.5rem; border-left: 4px solid #6366f1; background: #f8fafc; }
+            .status { color: #16a34a; font-weight: bold; }
+            .auth-note { background: #fef3c7; padding: 1rem; border-radius: 8px; margin: 2rem 0; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🎵 MusoBuddy</h1>
+            <h2>Music Business Management Platform</h2>
+            <p class="status">Status: Operational</p>
+          </div>
+          
+          <div class="auth-note">
+            <strong>Authentication Required:</strong> This platform uses Replit OAuth for security. 
+            Access requires a Replit account and authentication.
+          </div>
+          
+          <div class="feature">
+            <h3>📝 Enquiry Management</h3>
+            <p>Complete lead tracking from initial contact through booking confirmation. 
+            Includes email forwarding system at leads@musobuddy.com for automated enquiry capture.</p>
+          </div>
+          
+          <div class="feature">
+            <h3>📋 Digital Contracts</h3>
+            <p>Create, send, and manage digital contracts with client signature capture. 
+            Professional PDF generation with automated email delivery.</p>
+          </div>
+          
+          <div class="feature">
+            <h3>💰 Invoice System</h3>
+            <p>Auto-sequenced invoice generation with PDF creation, email delivery, 
+            and payment tracking. UK tax compliance built-in.</p>
+          </div>
+          
+          <div class="feature">
+            <h3>📅 Calendar Management</h3>
+            <p>Booking management with Google Calendar and Apple Calendar sync. 
+            Intelligent conflict detection and booking status tracking.</p>
+          </div>
+          
+          <div class="feature">
+            <h3>✉️ Email Integration</h3>
+            <p>Professional email system with SendGrid integration, 
+            automated forwarding, and template management.</p>
+          </div>
+          
+          <div class="feature">
+            <h3>👥 Client Management</h3>
+            <p>Address book functionality with client contact management 
+            and booking history tracking.</p>
+          </div>
+          
+          <p style="text-align: center; margin-top: 3rem;">
+            <strong>Technology Stack:</strong> React, TypeScript, Node.js, PostgreSQL, SendGrid
+          </p>
+        </body>
+      </html>
+    `);
+  });
+
   // Auth middleware
   await setupAuth(app);
 
