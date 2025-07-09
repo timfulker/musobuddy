@@ -36,8 +36,8 @@ export default function StatsCards() {
         <CardContent className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm font-medium text-gray-600">This Month</p>
-              <p className="text-xl md:text-3xl font-bold text-gray-900">
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">This Month</p>
+              <p className="text-xl md:text-3xl font-bold text-foreground">
                 £{stats?.monthlyRevenue?.toLocaleString() || "0"}
               </p>
               <p className="text-xs md:text-sm text-green-600 mt-1 flex items-center">
@@ -56,8 +56,8 @@ export default function StatsCards() {
         <CardContent className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm font-medium text-gray-600">Active Bookings</p>
-              <p className="text-xl md:text-3xl font-bold text-gray-900">
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Active Bookings</p>
+              <p className="text-xl md:text-3xl font-bold text-foreground">
                 {stats?.activeBookings || 0}
               </p>
               <p className="text-xs md:text-sm text-blue-600 mt-1 flex items-center">
@@ -76,8 +76,8 @@ export default function StatsCards() {
         <CardContent className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm font-medium text-gray-600">Pending Invoices</p>
-              <p className="text-xl md:text-3xl font-bold text-gray-900">
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Pending Invoices</p>
+              <p className="text-xl md:text-3xl font-bold text-foreground">
                 £{stats?.pendingInvoices?.toLocaleString() || "0"}
               </p>
               <p className="text-xs md:text-sm text-orange-600 mt-1 flex items-center">
@@ -96,8 +96,8 @@ export default function StatsCards() {
         <CardContent className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm font-medium text-gray-600">Conversion Rate</p>
-              <p className="text-xl md:text-3xl font-bold text-gray-900">
+              <p className="text-xs md:text-sm font-medium text-muted-foreground">Conversion Rate</p>
+              <p className="text-xl md:text-3xl font-bold text-foreground">
                 {stats?.conversionRate || 0}%
               </p>
               <p className="text-xs md:text-sm text-green-600 mt-1 flex items-center">
