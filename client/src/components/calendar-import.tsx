@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, Link, Calendar, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -16,98 +14,19 @@ interface CalendarImportProps {
 
 export default function CalendarImport({ onImportComplete }: CalendarImportProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [importType, setImportType] = useState<'google' | 'apple' | null>(null);
-  const [googleTokens, setGoogleTokens] = useState<any>(null);
-  const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [importStep, setImportStep] = useState<'select' | 'configure' | 'importing' | 'complete'>('select');
+  const [importStep, setImportStep] = useState<'select' | 'importing' | 'complete'>('select');
   const [importResult, setImportResult] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Google Calendar Authentication
-  const googleAuthMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('/api/calendar/google/auth');
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Authentication failed');
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // Redirect to Google OAuth (full page redirect for better compatibility)
-      window.location.href = data.authUrl;
-    },
-    onError: (error) => {
-      console.error('Google auth error:', error);
-      toast({
-        title: "Authentication Error",
-        description: error.message || "Failed to initialize Google Calendar connection",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Get Google Calendars
-  const getCalendarsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('/api/calendar/google/calendars');
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch calendars');
-      }
-      return response.json();
-    },
-    onSuccess: (calendars) => {
-      console.log('Calendars received:', calendars);
-      setGoogleCalendars(calendars);
-      setImportStep('configure');
-    },
-    onError: (error) => {
-      console.error('Calendar fetch error:', error);
-      toast({
-        title: "Calendar Error",
-        description: error.message || "Failed to fetch Google calendars",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Google Calendar Import
-  const googleImportMutation = useMutation({
-    mutationFn: async (data: { calendarId: string; startDate?: string; endDate?: string }) => {
-      const response = await apiRequest('/api/calendar/google/import', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      return response.json();
-    },
-    onSuccess: (result) => {
-      setImportResult(result);
-      setImportStep('complete');
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
-      onImportComplete?.();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to import Google Calendar events",
-        variant: "destructive",
-      });
-      setImportStep('configure');
-    },
-  });
-
-  // Apple Calendar Import
-  const appleImportMutation = useMutation({
+  // Local Calendar File Import
+  const fileImportMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('icsFile', file);
       
-      const response = await apiRequest('/api/calendar/apple/import', {
+      const response = await apiRequest('/api/calendar/import', {
         method: 'POST',
         body: formData,
       });
@@ -123,41 +42,12 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to import Apple Calendar file",
+        description: "Failed to import calendar file",
         variant: "destructive",
       });
-      setImportStep('configure');
+      setImportStep('select');
     },
   });
-
-  // Check for Google OAuth success on component mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('google_auth') === 'success') {
-      setImportType('google');
-      setIsDialogOpen(true);
-      getCalendarsMutation.mutate();
-      // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (urlParams.get('error')) {
-      toast({
-        title: "Authentication Error",
-        description: "Failed to connect Google Calendar. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [getCalendarsMutation, toast]);
-
-  const handleGoogleImport = () => {
-    setImportType('google');
-    setImportStep('configure');
-    googleAuthMutation.mutate();
-  };
-
-  const handleAppleImport = () => {
-    setImportType('apple');
-    setImportStep('configure');
-  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -172,23 +62,7 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
     }
   };
 
-  const executeGoogleImport = () => {
-    if (!selectedCalendar) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a calendar to import",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setImportStep('importing');
-    googleImportMutation.mutate({
-      calendarId: selectedCalendar,
-    });
-  };
-
-  const executeAppleImport = () => {
+  const executeFileImport = () => {
     if (!selectedFile) {
       toast({
         title: "Missing File",
@@ -199,15 +73,11 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
     }
 
     setImportStep('importing');
-    appleImportMutation.mutate(selectedFile);
+    fileImportMutation.mutate(selectedFile);
   };
 
   const resetDialog = () => {
-    setImportType(null);
     setImportStep('select');
-    setGoogleTokens(null);
-    setGoogleCalendars([]);
-    setSelectedCalendar('');
     setSelectedFile(null);
     setImportResult(null);
   };
@@ -229,107 +99,11 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
         <DialogHeader>
           <DialogTitle>Import Calendar Events</DialogTitle>
           <DialogDescription>
-            Import your existing bookings from Google Calendar or Apple Calendar
+            Import your existing bookings from a .ics calendar file (Google Calendar, Apple Calendar, Outlook, etc.)
           </DialogDescription>
         </DialogHeader>
 
         {importStep === 'select' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <Card className="cursor-pointer hover:bg-muted/50" onClick={handleGoogleImport}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center">
-                    <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-                    Google Calendar
-                  </CardTitle>
-                  <CardDescription>
-                    Connect your Google account and import events directly
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full" onClick={handleGoogleImport}>
-                    <Link className="w-4 h-4 mr-2" />
-                    Connect Google Calendar
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:bg-muted/50" onClick={handleAppleImport}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center">
-                    <Calendar className="w-5 h-5 mr-2 text-gray-600" />
-                    Apple Calendar
-                  </CardTitle>
-                  <CardDescription>
-                    Upload an exported .ics file from Apple Calendar
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="outline" className="w-full" onClick={handleAppleImport}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload .ics File
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {importStep === 'configure' && importType === 'google' && (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="calendar-select">Select Calendar</Label>
-              <Select value={selectedCalendar} onValueChange={setSelectedCalendar}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a calendar to import" />
-                </SelectTrigger>
-                <SelectContent>
-                  {googleCalendars.length > 0 ? (
-                    googleCalendars.map((calendar) => (
-                      <SelectItem key={calendar.id} value={calendar.id}>
-                        {calendar.summary}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="loading" disabled>
-                      Loading calendars...
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              
-              {googleCalendars.length === 0 && (
-                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-700">
-                    <strong>Authentication needed:</strong> Please update your Google Cloud Console OAuth settings to include:
-                  </p>
-                  <code className="text-xs bg-amber-100 px-2 py-1 rounded mt-1 block">
-                    https://workspace.timfulker.repl.co/api/calendar/google/callback
-                  </code>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="mt-2"
-                    onClick={() => getCalendarsMutation.mutate()}
-                  >
-                    Retry Connection
-                  </Button>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={resetDialog}>
-                Back
-              </Button>
-              <Button onClick={executeGoogleImport} disabled={!selectedCalendar || googleCalendars.length === 0}>
-                Import Events
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {importStep === 'configure' && importType === 'apple' && (
           <div className="space-y-4">
             <div>
               <Label htmlFor="file-upload">Calendar File (.ics)</Label>
@@ -338,19 +112,26 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
                 type="file"
                 accept=".ics"
                 onChange={handleFileUpload}
-                className="mt-1"
+                className="mt-2"
               />
               {selectedFile && (
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-2">
                   Selected: {selectedFile.name}
                 </p>
               )}
             </div>
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={resetDialog}>
-                Back
-              </Button>
-              <Button onClick={executeAppleImport} disabled={!selectedFile}>
+            
+            <div className="bg-muted p-4 rounded-lg">
+              <h4 className="font-medium mb-2">How to export your calendar:</h4>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li>• <strong>Google Calendar:</strong> Settings → Import & Export → Export</li>
+                <li>• <strong>Apple Calendar:</strong> File → Export → Export as .ics</li>
+                <li>• <strong>Outlook:</strong> File → Save Calendar → iCalendar format</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={executeFileImport} disabled={!selectedFile}>
                 Import Events
               </Button>
             </div>
@@ -374,7 +155,7 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <p><strong>Created:</strong> {importResult.created} new bookings</p>
               <p><strong>Skipped:</strong> {importResult.skipped} duplicate events</p>
-              {importResult.errors.length > 0 && (
+              {importResult.errors && importResult.errors.length > 0 && (
                 <div className="flex items-start text-amber-600">
                   <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                   <div>

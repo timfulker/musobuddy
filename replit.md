@@ -258,24 +258,14 @@ Changelog:
   * System treats confirmed enquiries as bookings for dashboard display and workflow purposes
   * Updated calendar widget to combine bookings and confirmed enquiries into unified upcoming gigs view
   * Improved cache invalidation to refresh dashboard widgets when enquiry status changes
-- July 09, 2025. Google Calendar import system implemented:
-  * Created comprehensive calendar import infrastructure with Google OAuth integration
-  * Added calendar tokens database table for secure credential storage
-  * Implemented Google Calendar API integration with proper authentication flow
-  * Added Apple Calendar .ics file import capability
-  * Fixed calendar import function to match database schema requirements
-  * Enhanced import process to create proper contracts and bookings for imported events
-  * System ready for one-way sync from Google Calendar to MusoBuddy
-  * **Setup Required**: Google Cloud Console OAuth consent screen needs test user configuration
-  * **Issue**: OAuth consent screen in testing mode requires adding timfulker@gmail.com as test user
-- July 09, 2025. Calendar import authentication flow optimized:
-  * Implemented full-page OAuth redirect for better compatibility with Google Calendar
-  * Added automatic calendar list fetching after successful authentication
-  * Enhanced session-based token storage for secure credential management
-  * Fixed calendar selection dropdown to display all available calendars from user's Google account
-  * Added proper error handling for authentication failures
-  * System now shows multiple calendars including "tim Fulker gigs" for selection
-  * Complete workflow: Connect Google → Select Calendar → Import Events → Create Bookings
+- July 09, 2025. Calendar import system simplified for Phase 1:
+  * Removed Google Calendar OAuth integration for Phase 1 deployment simplicity
+  * Streamlined to local .ics file upload only (Google Calendar, Apple Calendar, Outlook compatible)
+  * Added comprehensive export instructions for all major calendar systems
+  * Enhanced import results display with created/skipped counts and error handling
+  * Removed Google secrets and OAuth complexity for mass-market SaaS deployment
+  * Manual calendar export/import approach eliminates per-user Google Console setup requirements
+  * System ready for custom domain deployment without Google OAuth dependencies
 - July 09, 2025. Calendar system enhancement with comprehensive booking management:
   * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
   * Added automatic integration with enquiries and contracts showing potential bookings

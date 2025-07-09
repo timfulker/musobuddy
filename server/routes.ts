@@ -4,14 +4,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema } from "@shared/schema";
 import { 
-  getGoogleAuthUrl, 
-  handleGoogleCallback, 
-  getGoogleCalendars, 
-  importGoogleCalendarEvents,
   parseAppleCalendar,
-  convertEventsToBookings,
-  storeCalendarTokens,
-  getCalendarTokens
+  convertEventsToBookings
 } from './calendar-import';
 import multer from 'multer';
 
@@ -1885,123 +1879,10 @@ Jane`
 
   // Calendar Import Routes
   
-  // Get Google Calendar authorization URL
-  app.get('/api/calendar/google/auth', isAuthenticated, async (req: any, res) => {
-    try {
-      console.log('Generating Google auth URL...');
-      const authUrl = getGoogleAuthUrl();
-      console.log('Auth URL generated:', authUrl);
-      res.json({ authUrl });
-    } catch (error) {
-      console.error("Error getting Google auth URL:", error);
-      res.status(500).json({ 
-        message: "Failed to get Google authorization URL",
-        error: error.message,
-        hint: "Check if Google Calendar API credentials are configured correctly"
-      });
-    }
-  });
 
-  // Handle Google Calendar OAuth callback
-  app.get('/api/calendar/google/callback', async (req, res) => {
-    try {
-      console.log('Google OAuth callback received');
-      const { code, state } = req.query;
-      console.log('Code received:', !!code);
-      
-      if (!code) {
-        console.log('No authorization code received');
-        return res.redirect('/calendar?error=no_code');
-      }
 
-      console.log('Exchanging code for tokens...');
-      const { tokens, userInfo } = await handleGoogleCallback(code as string);
-      console.log('Tokens received:', !!tokens);
-      console.log('User info:', userInfo?.email);
-      
-      // Store tokens in session for now
-      (req as any).session.googleCalendarTokens = tokens;
-      (req as any).session.googleUserInfo = userInfo;
-      
-      console.log('Tokens stored in session, redirecting to calendar');
-      // Redirect back to calendar page with success
-      res.redirect('/calendar?google_auth=success');
-    } catch (error) {
-      console.error("Error handling Google callback:", error);
-      res.redirect('/calendar?error=auth_failed');
-    }
-  });
-
-  // Get Google Calendar list
-  app.get('/api/calendar/google/calendars', isAuthenticated, async (req: any, res) => {
-    try {
-      console.log('Fetching Google calendars...');
-      const tokens = req.session.googleCalendarTokens;
-      console.log('Tokens found in session:', !!tokens);
-      
-      if (!tokens) {
-        console.log('No tokens in session');
-        return res.status(400).json({ message: "Google Calendar not connected. Please authenticate first." });
-      }
-
-      console.log('Calling getGoogleCalendars...');
-      const calendars = await getGoogleCalendars(tokens);
-      console.log('Calendars fetched:', calendars.length);
-      res.json(calendars);
-    } catch (error) {
-      console.error("Error fetching Google calendars:", error);
-      res.status(500).json({ message: "Failed to fetch Google calendars" });
-    }
-  });
-
-  // Import from Google Calendar
-  app.post('/api/calendar/google/import', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const tokens = req.session.googleCalendarTokens;
-      const { calendarId, startDate, endDate } = req.body;
-      
-      if (!tokens || !calendarId) {
-        return res.status(400).json({ message: "Google Calendar not connected or calendar ID not provided" });
-      }
-
-      // Import events from Google Calendar
-      const importResult = await importGoogleCalendarEvents(
-        tokens,
-        calendarId,
-        startDate ? new Date(startDate) : undefined,
-        endDate ? new Date(endDate) : undefined
-      );
-
-      if (!importResult.success) {
-        return res.status(500).json({ 
-          message: "Failed to import Google Calendar events",
-          errors: importResult.errors
-        });
-      }
-
-      // Convert events to MusoBuddy bookings
-      const conversionResult = await convertEventsToBookings(userId, importResult.events);
-
-      // Store tokens for future use
-      await storeCalendarTokens(userId, 'google', tokens);
-
-      res.json({
-        success: true,
-        imported: importResult.imported,
-        skipped: importResult.skipped + conversionResult.skipped,
-        created: conversionResult.created,
-        errors: [...importResult.errors, ...conversionResult.errors],
-        message: `Successfully imported ${conversionResult.created} bookings from Google Calendar`
-      });
-    } catch (error) {
-      console.error("Error importing Google Calendar:", error);
-      res.status(500).json({ message: "Failed to import Google Calendar events" });
-    }
-  });
-
-  // Import from Apple Calendar (.ics file)
-  app.post('/api/calendar/apple/import', isAuthenticated, upload.single('icsFile'), async (req: any, res) => {
+  // Import from Calendar file (.ics file)
+  app.post('/api/calendar/import', isAuthenticated, upload.single('icsFile'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -2011,12 +1892,12 @@ Jane`
 
       const icsContent = req.file.buffer.toString('utf8');
       
-      // Parse Apple Calendar file
+      // Parse calendar file
       const importResult = await parseAppleCalendar(icsContent);
 
       if (!importResult.success) {
         return res.status(500).json({ 
-          message: "Failed to parse Apple Calendar file",
+          message: "Failed to parse calendar file",
           errors: importResult.errors
         });
       }
@@ -2030,27 +1911,15 @@ Jane`
         skipped: importResult.skipped + conversionResult.skipped,
         created: conversionResult.created,
         errors: [...importResult.errors, ...conversionResult.errors],
-        message: `Successfully imported ${conversionResult.created} bookings from Apple Calendar`
+        message: `Successfully imported ${conversionResult.created} bookings from calendar file`
       });
     } catch (error) {
-      console.error("Error importing Apple Calendar:", error);
-      res.status(500).json({ message: "Failed to import Apple Calendar file" });
+      console.error("Error importing calendar file:", error);
+      res.status(500).json({ message: "Failed to import calendar file" });
     }
   });
 
-  // Get stored calendar tokens
-  app.get('/api/calendar/tokens/:provider', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const provider = req.params.provider as 'google' | 'apple';
-      
-      const tokens = await getCalendarTokens(userId, provider);
-      res.json({ tokens, connected: !!tokens });
-    } catch (error) {
-      console.error("Error fetching calendar tokens:", error);
-      res.status(500).json({ message: "Failed to fetch calendar tokens" });
-    }
-  });
+
 
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {

@@ -29,9 +29,7 @@ import {
   bookingConflicts,
   type BookingConflict,
   type InsertBookingConflict,
-  calendarTokens,
-  type CalendarTokens,
-  type InsertCalendarTokens,
+
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, ne } from "drizzle-orm";
@@ -668,44 +666,7 @@ export class DatabaseStorage implements IStorage {
     return resolvedConflict;
   }
 
-  // Calendar tokens operations
-  async getCalendarTokens(userId: string, provider: 'google' | 'apple'): Promise<CalendarTokens | undefined> {
-    const [tokens] = await db
-      .select()
-      .from(calendarTokens)
-      .where(and(eq(calendarTokens.userId, userId), eq(calendarTokens.provider, provider)))
-      .orderBy(desc(calendarTokens.createdAt))
-      .limit(1);
-    return tokens;
-  }
-
-  async storeCalendarTokens(userId: string, provider: 'google' | 'apple', tokens: any): Promise<CalendarTokens> {
-    // First try to update existing tokens
-    const existing = await this.getCalendarTokens(userId, provider);
-    
-    if (existing) {
-      const [updated] = await db
-        .update(calendarTokens)
-        .set({
-          tokens,
-          updatedAt: new Date(),
-        })
-        .where(eq(calendarTokens.id, existing.id))
-        .returning();
-      return updated;
-    } else {
-      // Create new tokens entry
-      const [newTokens] = await db
-        .insert(calendarTokens)
-        .values({
-          userId,
-          provider,
-          tokens,
-        })
-        .returning();
-      return newTokens;
-    }
-  }
+  
 }
 
 export const storage = new DatabaseStorage();
