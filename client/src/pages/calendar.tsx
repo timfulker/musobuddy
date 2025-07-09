@@ -224,18 +224,6 @@ export default function Calendar() {
     });
   };
 
-  const selectedDateBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
-  
-  const getSelectedDatePotentialBookings = () => {
-    if (!selectedDate) return [];
-    return potentialBookings.filter((booking: any) => {
-      const bookingDate = new Date(booking.eventDate);
-      return bookingDate.toDateString() === selectedDate.toDateString();
-    });
-  };
-
-  const selectedDatePotentialBookings = getSelectedDatePotentialBookings();
-  
   // Get potential bookings from enquiries and contracts
   const getPotentialBookings = () => {
     const potentialEvents = [];
@@ -281,6 +269,17 @@ export default function Calendar() {
   };
 
   const potentialBookings = getPotentialBookings();
+  const selectedDateBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
+  
+  const getSelectedDatePotentialBookings = () => {
+    if (!selectedDate) return [];
+    return potentialBookings.filter((booking: any) => {
+      const bookingDate = new Date(booking.eventDate);
+      return bookingDate.toDateString() === selectedDate.toDateString();
+    });
+  };
+
+  const selectedDatePotentialBookings = getSelectedDatePotentialBookings();
 
   if (isLoading) {
     return (
