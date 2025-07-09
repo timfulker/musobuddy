@@ -229,9 +229,9 @@ export default function Calendar() {
   const getPotentialBookings = () => {
     const potentialEvents = [];
     
-    // Add confirmed enquiries with dates
+    // Add all enquiries with dates (any status)
     enquiries.forEach((enquiry: any) => {
-      if (enquiry.status === 'confirmed' && enquiry.eventDate) {
+      if (enquiry.eventDate) {
         potentialEvents.push({
           id: `enquiry-${enquiry.id}`,
           title: enquiry.title,
@@ -240,7 +240,7 @@ export default function Calendar() {
           eventTime: enquiry.eventTime || 'TBC',
           venue: enquiry.venue || 'TBC',
           fee: enquiry.estimatedValue || 0,
-          status: 'enquiry-confirmed',
+          status: `enquiry-${enquiry.status}`,
           source: 'enquiry'
         });
       }
@@ -729,13 +729,17 @@ export default function Calendar() {
                     confirmed: bookings.filter((b: Booking) => b.status === 'confirmed').map((booking: Booking) => new Date(booking.eventDate)),
                     completed: bookings.filter((b: Booking) => b.status === 'completed').map((booking: Booking) => new Date(booking.eventDate)),
                     cancelled: bookings.filter((b: Booking) => b.status === 'cancelled').map((booking: Booking) => new Date(booking.eventDate)),
-                    potential: potentialBookings.map((booking: any) => new Date(booking.eventDate)),
+                    newEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-new').map((booking: any) => new Date(booking.eventDate)),
+                    confirmedEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-confirmed').map((booking: any) => new Date(booking.eventDate)),
+                    signedContract: potentialBookings.filter((b: any) => b.status === 'contract-signed').map((booking: any) => new Date(booking.eventDate)),
                   }}
                   modifiersClassNames={{
                     confirmed: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
                     completed: "bg-purple-200 text-purple-900 font-semibold hover:bg-purple-300",
                     cancelled: "bg-red-200 text-red-900 font-semibold hover:bg-red-300",
-                    potential: "bg-amber-200 text-amber-900 font-semibold hover:bg-amber-300",
+                    newEnquiry: "bg-blue-200 text-blue-900 font-semibold hover:bg-blue-300",
+                    confirmedEnquiry: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
+                    signedContract: "bg-purple-200 text-purple-900 font-semibold hover:bg-purple-300",
                   }}
                 />
                 
@@ -753,8 +757,8 @@ export default function Calendar() {
                     <span>Cancelled</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-amber-200 border border-amber-300 rounded"></div>
-                    <span>Pending</span>
+                    <div className="w-3 h-3 bg-blue-200 border border-blue-300 rounded"></div>
+                    <span>New Enquiry</span>
                   </div>
                 </div>
               </CardContent>
@@ -831,8 +835,16 @@ export default function Calendar() {
                     <div key={booking.id} className="p-4 rounded-lg border-2 bg-amber-50 border-amber-200">
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-semibold">{booking.title}</h4>
-                        <Badge className="bg-amber-100 text-amber-800">
-                          {booking.status === 'enquiry-confirmed' ? 'Enquiry' : 'Contract'}
+                        <Badge className={
+                          booking.status === 'enquiry-new' ? 'bg-blue-100 text-blue-800' :
+                          booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
+                          booking.status === 'contract-signed' ? 'bg-purple-100 text-purple-800' :
+                          'bg-amber-100 text-amber-800'
+                        }>
+                          {booking.status === 'enquiry-new' ? 'New Enquiry' :
+                           booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
+                           booking.status === 'contract-signed' ? 'Contract' :
+                           'Potential'}
                         </Badge>
                       </div>
                       

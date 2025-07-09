@@ -141,6 +141,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data.eventDate = new Date(data.eventDate);
       }
       
+      // Handle optional numeric fields - convert empty strings to null
+      if (data.estimatedValue === '' || data.estimatedValue === undefined) {
+        data.estimatedValue = null;
+      }
+      if (data.clientPhone === '' || data.clientPhone === undefined) {
+        data.clientPhone = null;
+      }
+      if (data.clientEmail === '' || data.clientEmail === undefined) {
+        data.clientEmail = null;
+      }
+      if (data.venue === '' || data.venue === undefined) {
+        data.venue = null;
+      }
+      if (data.eventTime === '' || data.eventTime === undefined) {
+        data.eventTime = null;
+      }
+      if (data.notes === '' || data.notes === undefined) {
+        data.notes = null;
+      }
+      
+      console.log("Processed enquiry data:", data);
+      
       const enquiryData = insertEnquirySchema.parse(data);
       const enquiry = await storage.createEnquiry(enquiryData);
       res.status(201).json(enquiry);
