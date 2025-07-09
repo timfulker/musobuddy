@@ -252,6 +252,16 @@ Changelog:
   * Address book includes client statistics, search functionality, and comprehensive management
   * Updated MusoBuddy logo with professional custom headphones design replacing generic music icon
   * Fixed logo consistency across sidebar and dashboard with proper asset import
+- July 09, 2025. Calendar system enhancement with comprehensive booking management:
+  * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
+  * Added automatic integration with enquiries and contracts showing potential bookings
+  * Integrated Google Calendar and Apple Calendar sync capabilities
+  * Google Calendar: Opens Google Calendar for manual entry of confirmed bookings
+  * Apple Calendar: Downloads .ics file with all confirmed bookings for import
+  * Enhanced selected date display showing both confirmed bookings and potential bookings from enquiries/contracts
+  * Added navigation buttons from potential bookings to source enquiries and contracts
+  * Color-coded calendar view with hover effects and comprehensive legend
+  * Professional calendar export with proper timezone handling and event formatting
 - July 07, 2025. Mobile dashboard optimization completed:
   * Fixed header layout conflict where hamburger menu overlapped with "Dashboard" title
   * Added proper spacing (ml-12 md:ml-0) to accommodate mobile navigation button
