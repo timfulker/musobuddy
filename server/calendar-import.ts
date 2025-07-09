@@ -48,11 +48,19 @@ export function getGoogleAuthUrl(): string {
     throw new Error('Google Calendar API credentials are not configured');
   }
   
+  console.log('Google OAuth configuration:');
+  console.log('- Client ID:', GOOGLE_CLIENT_ID ? 'Present' : 'Missing');
+  console.log('- Client Secret:', GOOGLE_CLIENT_SECRET ? 'Present' : 'Missing');
+  console.log('- Redirect URI:', GOOGLE_REDIRECT_URI);
+  console.log('- Scopes:', CALENDAR_SCOPES);
+  
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: CALENDAR_SCOPES,
     include_granted_scopes: true
   });
+  
+  console.log('Generated auth URL:', authUrl);
   return authUrl;
 }
 
