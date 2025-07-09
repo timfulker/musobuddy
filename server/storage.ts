@@ -26,6 +26,9 @@ import {
   clients,
   type Client,
   type InsertClient,
+  bookingConflicts,
+  type BookingConflict,
+  type InsertBookingConflict,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, ne } from "drizzle-orm";
@@ -96,6 +99,11 @@ export interface IStorage {
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: number, client: Partial<InsertClient>, userId: string): Promise<Client | undefined>;
   deleteClient(id: number, userId: string): Promise<boolean>;
+  
+  // Booking conflict operations
+  getUnresolvedConflicts(userId: string): Promise<BookingConflict[]>;
+  createBookingConflict(conflict: InsertBookingConflict): Promise<BookingConflict>;
+  resolveConflict(conflictId: number, resolution: string, notes?: string): Promise<BookingConflict | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -620,6 +628,37 @@ export class DatabaseStorage implements IStorage {
   async deleteClient(id: number, userId: string): Promise<boolean> {
     const result = await db.delete(clients).where(and(eq(clients.id, id), eq(clients.userId, userId)));
     return result.rowCount > 0;
+  }
+
+  // Booking conflict operations
+  async getUnresolvedConflicts(userId: string): Promise<BookingConflict[]> {
+    return await db
+      .select()
+      .from(bookingConflicts)
+      .where(and(eq(bookingConflicts.userId, userId), eq(bookingConflicts.isResolved, false)))
+      .orderBy(desc(bookingConflicts.createdAt));
+  }
+
+  async createBookingConflict(conflict: InsertBookingConflict): Promise<BookingConflict> {
+    const [newConflict] = await db
+      .insert(bookingConflicts)
+      .values(conflict)
+      .returning();
+    return newConflict;
+  }
+
+  async resolveConflict(conflictId: number, resolution: string, notes?: string): Promise<BookingConflict | undefined> {
+    const [resolvedConflict] = await db
+      .update(bookingConflicts)
+      .set({
+        isResolved: true,
+        resolution,
+        notes,
+        resolvedAt: new Date(),
+      })
+      .where(eq(bookingConflicts.id, conflictId))
+      .returning();
+    return resolvedConflict;
   }
 }
 

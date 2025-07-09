@@ -7,6 +7,7 @@ import CalendarWidget from "@/components/calendar-widget";
 import QuickActions from "@/components/quick-actions";
 import ComplianceAlerts from "@/components/compliance-alerts";
 import RecentSignedContracts from "@/components/RecentSignedContracts";
+import { ConflictsWidget } from "@/components/conflicts-widget";
 import MobileNav from "@/components/mobile-nav";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -74,6 +75,7 @@ export default function Dashboard() {
             <div className="space-y-3 md:space-y-6">
               <CalendarWidget />
               <QuickActions />
+              <ConflictsWidget />
               <ComplianceAlerts />
               <RecentSignedContracts />
             </div>

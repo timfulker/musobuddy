@@ -157,6 +157,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (data.eventTime === '' || data.eventTime === undefined) {
         data.eventTime = null;
       }
+      if (data.eventEndTime === '' || data.eventEndTime === undefined) {
+        data.eventEndTime = null;
+      }
+      if (data.performanceDuration === '' || data.performanceDuration === undefined) {
+        data.performanceDuration = null;
+      }
       if (data.notes === '' || data.notes === undefined) {
         data.notes = null;
       }
@@ -165,7 +171,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const enquiryData = insertEnquirySchema.parse(data);
       const enquiry = await storage.createEnquiry(enquiryData);
-      res.status(201).json(enquiry);
+      
+      // Check for conflicts after creating enquiry
+      const conflictService = new (await import('./conflict-detection')).ConflictDetectionService(storage);
+      const { conflicts, analysis } = await conflictService.checkEnquiryConflicts(enquiry, userId);
+      
+      if (conflicts.length > 0 && analysis) {
+        // Save conflict to database for tracking
+        await conflictService.saveConflict(userId, enquiry.id, conflicts[0], analysis);
+        
+        // Return enquiry with conflict information
+        res.status(201).json({
+          ...enquiry,
+          conflict: {
+            detected: true,
+            severity: analysis.severity,
+            conflictsWith: conflicts.length,
+            analysis: analysis
+          }
+        });
+      } else {
+        res.status(201).json(enquiry);
+      }
     } catch (error) {
       console.error("Error creating enquiry:", error);
       res.status(500).json({ message: "Failed to create enquiry" });
@@ -1694,6 +1721,36 @@ Jane`
     } catch (error) {
       console.error("Error deleting client:", error);
       res.status(500).json({ message: "Failed to delete client" });
+    }
+  });
+
+  // Conflict detection API routes
+  app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conflicts = await storage.getUnresolvedConflicts(userId);
+      res.json(conflicts);
+    } catch (error) {
+      console.error("Error fetching conflicts:", error);
+      res.status(500).json({ message: "Failed to fetch conflicts" });
+    }
+  });
+
+  app.post('/api/conflicts/:id/resolve', isAuthenticated, async (req: any, res) => {
+    try {
+      const conflictId = parseInt(req.params.id);
+      const { resolution, notes } = req.body;
+      
+      const resolvedConflict = await storage.resolveConflict(conflictId, resolution, notes);
+      
+      if (resolvedConflict) {
+        res.json({ message: "Conflict resolved successfully", conflict: resolvedConflict });
+      } else {
+        res.status(404).json({ message: "Conflict not found" });
+      }
+    } catch (error) {
+      console.error("Error resolving conflict:", error);
+      res.status(500).json({ message: "Failed to resolve conflict" });
     }
   });
 

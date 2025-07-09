@@ -35,6 +35,8 @@ export const enquiries = pgTable("enquiries", {
   clientPhone: varchar("client_phone"),
   eventDate: timestamp("event_date"),
   eventTime: varchar("event_time"),
+  eventEndTime: varchar("event_end_time"), // End time for performance
+  performanceDuration: integer("performance_duration"), // Duration in minutes
   venue: varchar("venue"),
   eventType: varchar("event_type"),
   estimatedValue: decimal("estimated_value", { precision: 10, scale: 2 }),
@@ -57,6 +59,8 @@ export const contracts = pgTable("contracts", {
   clientPhone: varchar("client_phone"),
   eventDate: timestamp("event_date").notNull(),
   eventTime: varchar("event_time").notNull(),
+  eventEndTime: varchar("event_end_time"), // End time for performance
+  performanceDuration: integer("performance_duration"), // Duration in minutes
   venue: varchar("venue").notNull(),
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
   deposit: decimal("deposit", { precision: 10, scale: 2 }),
@@ -97,6 +101,8 @@ export const bookings = pgTable("bookings", {
   clientName: varchar("client_name").notNull(),
   eventDate: timestamp("event_date").notNull(),
   eventTime: varchar("event_time").notNull(),
+  eventEndTime: varchar("event_end_time"), // End time for performance
+  performanceDuration: integer("performance_duration"), // Duration in minutes
   venue: varchar("venue").notNull(),
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
   status: varchar("status").notNull().default("confirmed"), // confirmed, completed, cancelled
@@ -132,6 +138,14 @@ export const userSettings = pgTable("user_settings", {
   defaultTerms: text("default_terms"),
   emailFromName: varchar("email_from_name"),
   nextInvoiceNumber: integer("next_invoice_number").default(1),
+  // Conflict detection settings
+  defaultSetupTime: integer("default_setup_time").default(60), // minutes
+  defaultBreakdownTime: integer("default_breakdown_time").default(30), // minutes
+  weddingBufferTime: integer("wedding_buffer_time").default(120), // minutes
+  corporateBufferTime: integer("corporate_buffer_time").default(60), // minutes
+  defaultBufferTime: integer("default_buffer_time").default(90), // minutes
+  maxTravelDistance: integer("max_travel_distance").default(100), // miles
+  homePostcode: varchar("home_postcode"), // For distance calculations
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -163,6 +177,25 @@ export const clients = pgTable("clients", {
   totalRevenue: decimal("total_revenue", { precision: 10, scale: 2 }).default("0.00"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Booking conflicts table
+export const bookingConflicts = pgTable("booking_conflicts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  enquiryId: integer("enquiry_id").notNull(),
+  conflictingId: integer("conflicting_id").notNull(), // ID of conflicting enquiry/booking
+  conflictType: varchar("conflict_type").notNull(), // 'enquiry', 'contract', 'booking'
+  conflictDate: timestamp("conflict_date").notNull(),
+  severity: varchar("severity").notNull(), // 'critical', 'warning', 'manageable'
+  travelTime: integer("travel_time"), // minutes between venues
+  distance: decimal("distance", { precision: 5, scale: 2 }), // miles
+  timeGap: integer("time_gap"), // minutes between bookings
+  isResolved: boolean("is_resolved").default(false),
+  resolution: varchar("resolution"), // 'accepted_both', 'declined_new', 'rescheduled'
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
 });
 
 // Relations
@@ -273,6 +306,12 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
   updatedAt: true,
 });
 
+export const insertBookingConflictSchema = createInsertSchema(bookingConflicts).omit({
+  id: true,
+  createdAt: true,
+  resolvedAt: true,
+});
+
 export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
   id: true,
   createdAt: true,
@@ -304,3 +343,5 @@ export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
+export type InsertBookingConflict = z.infer<typeof insertBookingConflictSchema>;
+export type BookingConflict = typeof bookingConflicts.$inferSelect;
