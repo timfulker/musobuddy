@@ -663,7 +663,7 @@ export default function Calendar() {
               onClick={() => setIsDialogOpen(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Block Time
+              Mark Unavailable
             </Button>
           </div>
         </div>
