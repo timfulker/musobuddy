@@ -323,11 +323,21 @@ export default function Calendar() {
   };
 
   const getBookingsForMonth = (month: Date) => {
-    return bookings.filter((booking: Booking) => {
+    // Get confirmed bookings for the month
+    const monthBookings = bookings.filter((booking: Booking) => {
       const bookingDate = new Date(booking.eventDate);
       return bookingDate.getMonth() === month.getMonth() && 
              bookingDate.getFullYear() === month.getFullYear();
     });
+    
+    // Get potential bookings (enquiries/contracts) for the month
+    const monthPotentialBookings = getPotentialBookings().filter((booking: any) => {
+      const bookingDate = new Date(booking.eventDate);
+      return bookingDate.getMonth() === month.getMonth() && 
+             bookingDate.getFullYear() === month.getFullYear();
+    });
+    
+    return [...monthBookings, ...monthPotentialBookings];
   };
 
   const renderYearView = () => {
@@ -364,18 +374,31 @@ export default function Calendar() {
               <Card key={index} className="p-4">
                 <div className="text-center mb-3">
                   <h3 className="font-semibold text-lg">{monthName}</h3>
-                  <p className="text-sm text-gray-600">{monthBookings.length} bookings</p>
+                  <p className="text-sm text-gray-600">{monthBookings.length} events</p>
                 </div>
                 
                 <div className="space-y-2">
-                  {monthBookings.slice(0, 3).map((booking: Booking) => (
-                    <div key={booking.id} className={`p-2 rounded text-xs ${getStatusColor(booking.status)}`}>
-                      <div className="font-medium truncate">{booking.title}</div>
-                      <div className="text-xs opacity-75">
-                        {new Date(booking.eventDate).getDate()} - {booking.clientName}
+                  {monthBookings.slice(0, 3).map((booking: any) => {
+                    // Handle both regular bookings and potential bookings
+                    const isRegularBooking = booking.contractId !== undefined;
+                    const statusColor = isRegularBooking 
+                      ? getStatusColor(booking.status)
+                      : booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                        booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                        booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800 border-green-200' :
+                        booking.status === 'contract-signed' ? 'bg-green-100 text-green-800 border-green-200' :
+                        booking.isExpired ? 'bg-gray-100 text-gray-600 border-gray-200 opacity-60' :
+                        'bg-amber-100 text-amber-800 border-amber-200';
+                    
+                    return (
+                      <div key={booking.id} className={`p-2 rounded text-xs ${statusColor}`}>
+                        <div className="font-medium truncate">{booking.title}</div>
+                        <div className="text-xs opacity-75">
+                          {new Date(booking.eventDate).getDate()} - {booking.clientName}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   
                   {monthBookings.length > 3 && (
                     <div className="text-xs text-gray-500 text-center">
@@ -385,7 +408,7 @@ export default function Calendar() {
                   
                   {monthBookings.length === 0 && (
                     <div className="text-xs text-gray-400 text-center py-2">
-                      No bookings
+                      No events
                     </div>
                   )}
                 </div>
@@ -396,6 +419,7 @@ export default function Calendar() {
                   className="w-full mt-3"
                   onClick={() => {
                     setCurrentDate(month);
+                    setSelectedDate(month);
                     setViewMode("month");
                   }}
                 >
