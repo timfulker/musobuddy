@@ -2,61 +2,58 @@
  * Check for new enquiries created from email forwarding
  */
 
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL);
+
 async function checkForNewEnquiries() {
-  console.log('=== Checking for Recent Enquiries ===');
-  console.log('Time:', new Date().toISOString());
-  
   try {
-    const response = await fetch('https://musobuddy.com/api/enquiries', {
-      headers: {
-        'Cookie': 'connect.sid=s%3AreEUKsCAAhNQWBnwTUkLhKJFzKNTfpB7.8aUVUXBIKvzSNAFbAQNKfKhTH1bCEWOiDEJCHUPLWNQ'
-      }
-    });
+    console.log('🔍 Checking for recent enquiries...\n');
     
-    if (!response.ok) {
-      console.log('❌ Failed to fetch enquiries:', response.status, response.statusText);
-      return;
-    }
+    // Get the latest enquiries
+    const enquiries = await sql`
+      SELECT id, title, client_name, client_email, created_at, notes
+      FROM enquiries
+      ORDER BY created_at DESC
+      LIMIT 10
+    `;
     
-    const enquiries = await response.json();
-    console.log(`📋 Total enquiries found: ${enquiries.length}`);
+    console.log(`Found ${enquiries.length} recent enquiries:\n`);
     
-    // Sort by creation date (newest first)
-    enquiries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    // Show recent enquiries (last 10)
-    console.log('\n🔍 Recent enquiries:');
-    enquiries.slice(0, 10).forEach((enquiry, index) => {
-      const createdAt = new Date(enquiry.createdAt);
-      const timeAgo = Math.round((Date.now() - createdAt.getTime()) / (1000 * 60)); // minutes ago
+    enquiries.forEach((enquiry, index) => {
+      const createdAt = new Date(enquiry.created_at);
+      const timeAgo = Math.round((Date.now() - createdAt.getTime()) / 60000); // minutes ago
       
       console.log(`${index + 1}. ID: ${enquiry.id}`);
       console.log(`   Title: ${enquiry.title}`);
-      console.log(`   Client: ${enquiry.clientName} (${enquiry.clientEmail || 'no email'})`);
-      console.log(`   Created: ${createdAt.toLocaleString()} (${timeAgo} mins ago)`);
+      console.log(`   Client: ${enquiry.client_name} (${enquiry.client_email})`);
+      console.log(`   Created: ${createdAt.toLocaleString()} (${timeAgo} min ago)`);
       console.log(`   Notes: ${enquiry.notes?.substring(0, 100)}...`);
-      console.log('   ---');
+      console.log('---');
     });
     
-    // Check for enquiries created in the last hour
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const recentEnquiries = enquiries.filter(e => new Date(e.createdAt) > oneHourAgo);
-    
-    console.log(`\n⏰ Enquiries created in the last hour: ${recentEnquiries.length}`);
+    // Check for any enquiries created in the last 5 minutes
+    const recentEnquiries = enquiries.filter(e => {
+      const createdAt = new Date(e.created_at);
+      const minutesAgo = (Date.now() - createdAt.getTime()) / 60000;
+      return minutesAgo <= 5;
+    });
     
     if (recentEnquiries.length > 0) {
-      console.log('🎉 Recent enquiries found:');
-      recentEnquiries.forEach(enquiry => {
-        console.log(`✅ ID ${enquiry.id}: ${enquiry.title} from ${enquiry.clientName}`);
-      });
+      console.log(`\n✅ Found ${recentEnquiries.length} enquiries created in the last 5 minutes!`);
+      console.log('Email forwarding is working correctly! 🎉');
     } else {
-      console.log('⏳ No new enquiries in the last hour');
+      console.log('\n⏰ No enquiries created in the last 5 minutes.');
+      console.log('This might mean:');
+      console.log('- Email is still being processed by SendGrid');
+      console.log('- Webhook update may still be propagating');
+      console.log('- Email was not sent to leads@musobuddy.com');
     }
     
   } catch (error) {
-    console.log('❌ Error checking enquiries:', error.message);
+    console.error('Error checking enquiries:', error);
   }
 }
 
 // Run the check
-checkForNewEnquiries().catch(console.error);
+checkForNewEnquiries();
