@@ -1892,7 +1892,11 @@ Jane`
       res.json({ authUrl });
     } catch (error) {
       console.error("Error getting Google auth URL:", error);
-      res.status(500).json({ message: "Failed to get Google authorization URL" });
+      res.status(500).json({ 
+        message: "Failed to get Google authorization URL",
+        error: error.message,
+        hint: "Check if Google Calendar API credentials are configured correctly"
+      });
     }
   });
 

@@ -252,6 +252,15 @@ Changelog:
   * Address book includes client statistics, search functionality, and comprehensive management
   * Updated MusoBuddy logo with professional custom headphones design replacing generic music icon
   * Fixed logo consistency across sidebar and dashboard with proper asset import
+- July 09, 2025. Google Calendar import system implemented:
+  * Created comprehensive calendar import infrastructure with Google OAuth integration
+  * Added calendar tokens database table for secure credential storage
+  * Implemented Google Calendar API integration with proper authentication flow
+  * Added Apple Calendar .ics file import capability
+  * Fixed calendar import function to match database schema requirements
+  * Enhanced import process to create proper contracts and bookings for imported events
+  * System ready for one-way sync from Google Calendar to MusoBuddy
+  * **Setup Required**: Google Cloud Console OAuth redirect URI needs updating to https://workspace.timfulker.repl.co/api/calendar/google/callback
 - July 09, 2025. Calendar system enhancement with comprehensive booking management:
   * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
   * Added automatic integration with enquiries and contracts showing potential bookings

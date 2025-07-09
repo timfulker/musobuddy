@@ -7,7 +7,7 @@ import type { AuthenticatedRequest } from './auth';
 // Google Calendar Configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/calendar/google/callback';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'https://workspace.timfulker.repl.co/api/calendar/google/callback';
 
 // Google Calendar OAuth Client
 const oauth2Client = new OAuth2Client(
@@ -44,6 +44,10 @@ export interface ImportResult {
 
 // Generate Google Calendar OAuth URL
 export function getGoogleAuthUrl(): string {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    throw new Error('Google Calendar API credentials are not configured');
+  }
+  
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: CALENDAR_SCOPES,
@@ -79,7 +83,15 @@ export async function getGoogleCalendars(tokens: any): Promise<any[]> {
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
     
     const response = await calendar.calendarList.list();
-    return response.data.items || [];
+    const calendars = response.data.items || [];
+    
+    // Log calendar names for debugging
+    console.log('Available Google Calendars:');
+    calendars.forEach(cal => {
+      console.log(`- ${cal.summary} (ID: ${cal.id})`);
+    });
+    
+    return calendars;
   } catch (error) {
     console.error('Error fetching Google calendars:', error);
     throw new Error('Failed to fetch Google calendars');
@@ -100,6 +112,8 @@ export async function importGoogleCalendarEvents(
     const timeMin = startDate ? startDate.toISOString() : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const timeMax = endDate ? endDate.toISOString() : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
+    console.log(`Importing from calendar: ${calendarId} from ${timeMin} to ${timeMax}`);
+
     const response = await calendar.events.list({
       calendarId,
       timeMin,
@@ -110,6 +124,8 @@ export async function importGoogleCalendarEvents(
     });
 
     const events = response.data.items || [];
+    console.log(`Found ${events.length} events in calendar`);
+    
     const importedEvents: CalendarEvent[] = [];
     const errors: string[] = [];
     let imported = 0;
@@ -118,9 +134,12 @@ export async function importGoogleCalendarEvents(
     for (const event of events) {
       try {
         if (!event.start || !event.end) {
+          console.log(`Skipping event without start/end: ${event.summary}`);
           skipped++;
           continue;
         }
+
+        console.log(`Processing event: ${event.summary} at ${event.start.dateTime || event.start.date}`);
 
         const calendarEvent: CalendarEvent = {
           id: event.id || '',
@@ -137,6 +156,7 @@ export async function importGoogleCalendarEvents(
         importedEvents.push(calendarEvent);
         imported++;
       } catch (error) {
+        console.error(`Error processing event ${event.id}:`, error);
         errors.push(`Error processing event ${event.id}: ${error.message}`);
         skipped++;
       }
