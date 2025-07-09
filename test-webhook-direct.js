@@ -1,37 +1,50 @@
-// Direct test to see exactly what's happening
-console.log('Testing webhook endpoint directly...');
+/**
+ * Test webhook accessibility directly
+ */
 
-const testData = new URLSearchParams();
-testData.append('to', 'leads@musobuddy.com');
-testData.append('from', 'directtest@example.com');
-testData.append('subject', 'Direct Webhook Test');
-testData.append('text', 'Testing webhook processing directly');
-
-fetch('https://musobuddy.replit.app/webhook/sendgrid', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'DirectTest/1.0'
-  },
-  body: testData
-})
-.then(response => {
-  console.log('Response status:', response.status);
-  console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-  return response.text();
-})
-.then(data => {
-  console.log('Response body length:', data.length);
-  console.log('Response preview:', data.substring(0, 200));
+async function testWebhookDirect() {
+  console.log('🔍 Testing webhook accessibility...\n');
   
-  // Check if it's JSON or HTML
-  if (data.startsWith('<!DOCTYPE') || data.startsWith('<html')) {
-    console.log('❌ ERROR: Received HTML instead of webhook response');
-    console.log('This means the webhook route is not working');
-  } else {
-    console.log('✅ Received proper webhook response');
+  // Test the current domain
+  const testUrls = [
+    'https://musobuddy.com/api/webhook/sendgrid',
+    'https://musobuddy.replit.app/api/webhook/sendgrid'
+  ];
+  
+  for (const url of testUrls) {
+    console.log(`Testing: ${url}`);
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'SendGrid-Event-Webhook/1.0'
+        },
+        body: 'to=leads@musobuddy.com&from=test@example.com&subject=Test&text=Test message',
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      console.log(`✅ Status: ${response.status} ${response.statusText}`);
+      const responseText = await response.text();
+      console.log(`Response: ${responseText.substring(0, 100)}...`);
+      
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log(`⏰ Timeout after 5 seconds`);
+      } else {
+        console.log(`❌ Error: ${error.message}`);
+      }
+    }
+    
+    console.log('---\n');
   }
-})
-.catch(err => {
-  console.error('Request failed:', err.message);
-});
+}
+
+// Run the test
+testWebhookDirect().catch(console.error);
