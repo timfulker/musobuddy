@@ -290,6 +290,10 @@ Changelog:
   * Fixed "View Full Calendar" button to properly navigate to /calendar page
   * Added Link component from wouter for proper routing functionality
   * Calendar widget now provides seamless navigation to full calendar view
+- July 09, 2025. Calendar terminology improved for clarity:
+  * Changed "Block Time" to "Mark Unavailable" throughout calendar system
+  * Updated button text, dialog title, and toast messages for better user understanding
+  * Professional terminology that clearly communicates the purpose of blocking dates
 - July 09, 2025. Calendar system enhancement with comprehensive booking management:
   * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
   * Added automatic integration with enquiries and contracts showing potential bookings

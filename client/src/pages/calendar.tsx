@@ -148,7 +148,7 @@ export default function Calendar() {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       toast({
         title: "Success",
-        description: "Time blocked successfully",
+        description: "Time marked as unavailable successfully",
       });
       setIsDialogOpen(false);
       form.reset();
@@ -156,7 +156,7 @@ export default function Calendar() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to block time. Please try again.",
+        description: "Failed to mark time as unavailable. Please try again.",
         variant: "destructive",
       });
     },
@@ -1061,11 +1061,11 @@ export default function Calendar() {
         </Card>
       </div>
 
-      {/* Block Time Dialog */}
+      {/* Mark Unavailable Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Block Time</DialogTitle>
+            <DialogTitle>Mark Unavailable</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -1173,7 +1173,7 @@ export default function Calendar() {
                   className="bg-purple-600 hover:bg-purple-700"
                   disabled={createBookingMutation.isPending}
                 >
-                  {createBookingMutation.isPending ? "Blocking..." : "Block Time"}
+                  {createBookingMutation.isPending ? "Marking..." : "Mark Unavailable"}
                 </Button>
               </div>
             </form>
