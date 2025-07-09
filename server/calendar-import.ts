@@ -7,7 +7,7 @@ import type { AuthenticatedRequest } from './auth';
 // Google Calendar Configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'https://workspace.timfulker.repl.co/api/calendar/google/callback';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || `https://${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/api/calendar/google/callback`;
 
 // Google Calendar OAuth Client
 const oauth2Client = new OAuth2Client(
