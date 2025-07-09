@@ -137,6 +137,32 @@ export default function Enquiries() {
     },
   });
 
+  const updateEnquiryStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await apiRequest(`/api/enquiries/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
+      toast({
+        title: "Success",
+        description: "Enquiry status updated successfully!",
+      });
+      setRespondDialogOpen(false);
+      setSelectedEnquiry(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update enquiry status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteEnquiry = (enquiry: Enquiry) => {
     if (window.confirm(`Are you sure you want to delete the enquiry "${enquiry.title}"? This action cannot be undone.`)) {
       deleteEnquiryMutation.mutate(enquiry.id);
@@ -541,6 +567,23 @@ export default function Enquiries() {
                       <span className="text-xs text-gray-500 text-center">{template.subject}</span>
                     </Button>
                   ))}
+                  
+                  {/* Mark as Confirmed Button */}
+                  <Button 
+                    onClick={() => selectedEnquiry && updateEnquiryStatusMutation.mutate({ 
+                      id: selectedEnquiry.id, 
+                      status: 'confirmed' 
+                    })}
+                    disabled={updateEnquiryStatusMutation.isPending}
+                    variant="outline"
+                    className="p-6 h-auto flex flex-col items-center space-y-2 border-green-200 hover:border-green-300 hover:bg-green-50"
+                  >
+                    <span className="text-lg">✅</span>
+                    <span className="font-medium">Mark as Confirmed</span>
+                    <span className="text-xs text-gray-500 text-center">
+                      {updateEnquiryStatusMutation.isPending ? "Updating..." : "Update enquiry status to confirmed"}
+                    </span>
+                  </Button>
                   
                   {templates.filter(t => t.isAutoRespond).length === 0 && (
                     <div className="col-span-full text-center py-8">
