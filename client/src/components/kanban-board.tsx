@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Clock, MoreHorizontal, Filter } from "lucide-react";
+import { DollarSign, Clock, MoreHorizontal, Filter, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import type { Enquiry } from "@shared/schema";
 
 export default function KanbanBoard() {
@@ -83,12 +84,11 @@ export default function KanbanBoard() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base md:text-lg">Enquiry Pipeline</CardTitle>
           <div className="flex items-center space-x-1 md:space-x-2">
-            <Button variant="ghost" size="sm" className="h-8 w-8 md:h-10 md:w-10">
-              <Filter className="w-3 h-3 md:w-4 md:h-4" />
-            </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 md:h-10 md:w-10">
-              <MoreHorizontal className="w-3 h-3 md:w-4 md:h-4" />
-            </Button>
+            <Link href="/enquiries">
+              <Button variant="ghost" size="sm" className="h-8 w-8 md:h-10 md:w-10" title="View all enquiries">
+                <Eye className="w-3 h-3 md:w-4 md:h-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </CardHeader>
@@ -104,23 +104,25 @@ export default function KanbanBoard() {
               </div>
               <div className="space-y-2 md:space-y-3">
                 {groupedEnquiries.new.map((enquiry: Enquiry) => (
-                  <div key={enquiry.id} className={`p-3 md:p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                    <div className="flex items-start justify-between mb-1 md:mb-2">
-                      <h5 className="font-medium text-gray-900 text-sm md:text-base">{enquiry.title}</h5>
-                      {getStatusBadge(enquiry.status)}
+                  <Link key={enquiry.id} href="/enquiries">
+                    <div className={`p-3 md:p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
+                      <div className="flex items-start justify-between mb-1 md:mb-2">
+                        <h5 className="font-medium text-gray-900 text-sm md:text-base">{enquiry.title}</h5>
+                        {getStatusBadge(enquiry.status)}
+                      </div>
+                      <p className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">{enquiry.clientName}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span className="flex items-center">
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          £{enquiry.estimatedValue || "TBC"}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {formatTime(enquiry.createdAt!)}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">{enquiry.clientName}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span className="flex items-center">
-                        <DollarSign className="w-3 h-3 mr-1" />
-                        £{enquiry.estimatedValue || "TBC"}
-                      </span>
-                      <span className="flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {formatTime(enquiry.createdAt!)}
-                      </span>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
                 {groupedEnquiries.new.length === 0 && (
                   <div className="text-center py-4 md:py-8 text-gray-500">
@@ -138,28 +140,30 @@ export default function KanbanBoard() {
               </div>
               <div className="space-y-3">
                 {groupedEnquiries.qualified.map((enquiry: Enquiry) => (
-                  <div key={enquiry.id} className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
-                      {getStatusBadge(enquiry.status)}
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span className="flex items-center">
-                        <DollarSign className="w-3 h-3 mr-1" />
-                        £{enquiry.estimatedValue || "TBC"}
-                      </span>
-                      <span className="flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {formatTime(enquiry.createdAt!)}
-                      </span>
-                    </div>
-                    {enquiry.eventDate && (
-                      <div className="mt-2 text-xs text-blue-600">
-                        Event: {formatDate(enquiry.eventDate)}
+                  <Link key={enquiry.id} href="/enquiries">
+                    <div className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
+                        {getStatusBadge(enquiry.status)}
                       </div>
-                    )}
-                  </div>
+                      <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span className="flex items-center">
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          £{enquiry.estimatedValue || "TBC"}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {formatTime(enquiry.createdAt!)}
+                        </span>
+                      </div>
+                      {enquiry.eventDate && (
+                        <div className="mt-2 text-xs text-blue-600">
+                          Event: {formatDate(enquiry.eventDate)}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
                 ))}
                 {groupedEnquiries.qualified.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
@@ -177,26 +181,28 @@ export default function KanbanBoard() {
               </div>
               <div className="space-y-3">
                 {groupedEnquiries.contract_sent.map((enquiry: Enquiry) => (
-                  <div key={enquiry.id} className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
-                      {getStatusBadge(enquiry.status)}
+                  <Link key={enquiry.id} href="/enquiries">
+                    <div className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
+                        {getStatusBadge(enquiry.status)}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span className="flex items-center">
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          £{enquiry.estimatedValue || "TBC"}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {formatTime(enquiry.createdAt!)}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs text-purple-600">
+                        Contract sent, awaiting signature
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span className="flex items-center">
-                        <DollarSign className="w-3 h-3 mr-1" />
-                        £{enquiry.estimatedValue || "TBC"}
-                      </span>
-                      <span className="flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {formatTime(enquiry.createdAt!)}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-xs text-purple-600">
-                      Contract sent, awaiting signature
-                    </div>
-                  </div>
+                  </Link>
                 ))}
                 {groupedEnquiries.contract_sent.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
@@ -214,27 +220,29 @@ export default function KanbanBoard() {
               </div>
               <div className="space-y-3">
                 {groupedEnquiries.confirmed.map((enquiry: Enquiry) => (
-                  <div key={enquiry.id} className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
-                      {getStatusBadge(enquiry.status)}
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span className="flex items-center">
-                        <DollarSign className="w-3 h-3 mr-1" />
-                        £{enquiry.estimatedValue || "TBC"}
-                      </span>
-                      {enquiry.venue && (
+                  <Link key={enquiry.id} href="/enquiries">
+                    <div className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
+                        {getStatusBadge(enquiry.status)}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
                         <span className="flex items-center">
-                          {enquiry.venue}
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          £{enquiry.estimatedValue || "TBC"}
                         </span>
-                      )}
+                        {enquiry.venue && (
+                          <span className="flex items-center">
+                            {enquiry.venue}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 text-xs text-green-600">
+                        All documents signed, ready to perform
+                      </div>
                     </div>
-                    <div className="mt-2 text-xs text-green-600">
-                      All documents signed, ready to perform
-                    </div>
-                  </div>
+                  </Link>
                 ))}
                 {groupedEnquiries.confirmed.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
