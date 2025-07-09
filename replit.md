@@ -266,6 +266,15 @@ Changelog:
   * Removed Google secrets and OAuth complexity for mass-market SaaS deployment
   * Manual calendar export/import approach eliminates per-user Google Console setup requirements
   * System ready for custom domain deployment without Google OAuth dependencies
+  * Updated all calendar sync buttons: "Add to Google" opens Google Calendar, "Export .ics" downloads file
+  * Removed all Google Calendar OAuth routes, functions, and database tables completely
+  * Calendar system now uses simple export/import workflow suitable for mass-market deployment
+- July 09, 2025. Calendar import bug fix completed:
+  * Fixed critical issue where calendar import was creating unwanted contract entries
+  * Calendar import now creates only bookings (no contracts) for imported calendar events
+  * Made contractId optional in bookings table schema to support calendar imports
+  * Cleaned up 113 incorrectly created contracts from previous calendar imports
+  * Calendar import workflow: .ics file → parsed events → bookings only (no contracts or enquiries)
 - July 09, 2025. Calendar system enhancement with comprehensive booking management:
   * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
   * Added automatic integration with enquiries and contracts showing potential bookings

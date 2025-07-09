@@ -106,28 +106,10 @@ export async function convertEventsToBookings(
         continue;
       }
 
-      // Create booking (schema requires contractId to be non-null, so create a temporary contract)
-      // First create a minimal contract for the imported event
-      const contract = await storage.createContract({
-        userId,
-        contractNumber: `IMPORT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        clientName: extractClientName(event.title),
-        clientEmail: '',
-        eventDate: event.startTime,
-        eventTime: event.startTime.toTimeString().slice(0, 5), // "HH:MM" format
-        eventEndTime: event.endTime.toTimeString().slice(0, 5), // "HH:MM" format
-        performanceDuration: Math.round((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60)), // minutes
-        venue: event.location || 'Unknown Venue',
-        fee: "0",
-        deposit: "0",
-        terms: `Imported from ${event.source} calendar`,
-        status: 'signed' // Mark as signed since it's an existing event
-      });
-
-      // Now create the booking with the contract ID
+      // Create booking only (no contract creation)
       await storage.createBooking({
         userId,
-        contractId: contract.id,
+        contractId: null, // No contract associated with imported events
         title: event.title,
         clientName: extractClientName(event.title),
         eventDate: event.startTime,
@@ -138,19 +120,6 @@ export async function convertEventsToBookings(
         fee: "0",
         status: 'confirmed',
         notes: `Imported from ${event.source} calendar`
-      });
-
-      // Create corresponding enquiry
-      await storage.createEnquiry({
-        userId,
-        title: event.title,
-        clientName: extractClientName(event.title),
-        clientEmail: '',
-        eventDate: event.startTime,
-        venue: event.location || 'Unknown Venue',
-        eventType: 'performance',
-        status: 'confirmed',
-        notes: `Imported from ${event.source} calendar: ${event.description || ''}`
       });
 
       created++;

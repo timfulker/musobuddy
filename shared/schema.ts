@@ -96,7 +96,7 @@ export const invoices = pgTable("invoices", {
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
-  contractId: integer("contract_id").notNull(),
+  contractId: integer("contract_id"), // Made optional - can be null for calendar imports
   title: varchar("title").notNull(),
   clientName: varchar("client_name").notNull(),
   eventDate: timestamp("event_date").notNull(),
