@@ -252,6 +252,12 @@ Changelog:
   * Address book includes client statistics, search functionality, and comprehensive management
   * Updated MusoBuddy logo with professional custom headphones design replacing generic music icon
   * Fixed logo consistency across sidebar and dashboard with proper asset import
+- July 09, 2025. Enhanced enquiry management with confirmed booking integration:
+  * Added "Mark as Confirmed" button to enquiry respond dialog for quick status updates
+  * Confirmed enquiries now appear in "Upcoming Gigs" dashboard widget alongside actual bookings
+  * System treats confirmed enquiries as bookings for dashboard display and workflow purposes
+  * Updated calendar widget to combine bookings and confirmed enquiries into unified upcoming gigs view
+  * Improved cache invalidation to refresh dashboard widgets when enquiry status changes
 - July 09, 2025. Google Calendar import system implemented:
   * Created comprehensive calendar import infrastructure with Google OAuth integration
   * Added calendar tokens database table for secure credential storage

@@ -147,6 +147,8 @@ export default function Enquiries() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       toast({
         title: "Success",
         description: "Enquiry status updated successfully!",

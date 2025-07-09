@@ -5,9 +5,15 @@ import { ArrowRight } from "lucide-react";
 import type { Booking } from "@shared/schema";
 
 export default function CalendarWidget() {
-  const { data: bookings = [], isLoading } = useQuery({
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ["/api/bookings/upcoming"],
   });
+
+  const { data: enquiries = [], isLoading: enquiriesLoading } = useQuery({
+    queryKey: ["/api/enquiries"],
+  });
+
+  const isLoading = bookingsLoading || enquiriesLoading;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -32,6 +38,53 @@ export default function CalendarWidget() {
       default: return "text-gray-600";
     }
   };
+
+  // Combine bookings and confirmed enquiries
+  const getUpcomingGigs = () => {
+    const upcoming = [];
+    const now = new Date();
+    
+    // Add actual bookings
+    bookings.forEach((booking: Booking) => {
+      if (new Date(booking.eventDate) >= now) {
+        upcoming.push({
+          id: booking.id,
+          title: booking.title,
+          clientName: booking.clientName,
+          eventDate: booking.eventDate,
+          eventTime: booking.eventTime,
+          venue: booking.venue,
+          fee: booking.fee,
+          status: booking.status,
+          type: 'booking'
+        });
+      }
+    });
+    
+    // Add confirmed enquiries with event dates
+    enquiries.forEach((enquiry: any) => {
+      if (enquiry.status === 'confirmed' && enquiry.eventDate && new Date(enquiry.eventDate) >= now) {
+        upcoming.push({
+          id: `enquiry-${enquiry.id}`,
+          title: enquiry.title,
+          clientName: enquiry.clientName,
+          eventDate: enquiry.eventDate,
+          eventTime: enquiry.eventTime || 'TBC',
+          venue: enquiry.venue || 'TBC',
+          fee: enquiry.estimatedValue || '0',
+          status: 'confirmed',
+          type: 'enquiry'
+        });
+      }
+    });
+    
+    // Sort by date and limit to 3
+    return upcoming
+      .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
+      .slice(0, 3);
+  };
+
+  const upcomingGigs = getUpcomingGigs();
 
   if (isLoading) {
     return (
@@ -62,12 +115,12 @@ export default function CalendarWidget() {
         <CardTitle>Upcoming Gigs</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {bookings.slice(0, 3).map((booking: Booking) => {
-          const dateInfo = formatDate(booking.eventDate);
+        {upcomingGigs.map((gig: any) => {
+          const dateInfo = formatDate(gig.eventDate);
           return (
-            <div key={booking.id} className={`flex items-center space-x-3 p-3 rounded-lg ${getStatusColor(booking.status)}`}>
+            <div key={gig.id} className={`flex items-center space-x-3 p-3 rounded-lg ${getStatusColor(gig.status)}`}>
               <div className="text-center">
-                <div className={`text-xs font-medium ${getStatusBadgeColor(booking.status)}`}>
+                <div className={`text-xs font-medium ${getStatusBadgeColor(gig.status)}`}>
                   {dateInfo.month}
                 </div>
                 <div className="text-lg font-bold">
@@ -75,17 +128,17 @@ export default function CalendarWidget() {
                 </div>
               </div>
               <div className="flex-1">
-                <h4 className="font-medium">{booking.title}</h4>
-                <p className="text-sm opacity-75">{booking.venue} • {booking.eventTime}</p>
-                <p className={`text-xs ${getStatusBadgeColor(booking.status)}`}>
-                  £{booking.fee} • {booking.status === "confirmed" ? "Confirmed" : "Pending"}
+                <h4 className="font-medium">{gig.title}</h4>
+                <p className="text-sm opacity-75">{gig.venue} • {gig.eventTime}</p>
+                <p className={`text-xs ${getStatusBadgeColor(gig.status)}`}>
+                  £{gig.fee} • {gig.status === "confirmed" ? "Confirmed" : "Pending"}
                 </p>
               </div>
             </div>
           );
         })}
 
-        {bookings.length === 0 && (
+        {upcomingGigs.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <p>No upcoming gigs</p>
             <p className="text-sm">New bookings will appear here</p>
