@@ -300,6 +300,31 @@ export default function Calendar() {
 
   const selectedDatePotentialBookings = getSelectedDatePotentialBookings();
 
+  // Get all bookings and enquiries for the current month
+  const getCurrentMonthEvents = () => {
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    // Get confirmed bookings for the month
+    const monthBookings = bookings.filter((booking: Booking) => {
+      const bookingDate = new Date(booking.eventDate);
+      return bookingDate.getMonth() === currentMonth && 
+             bookingDate.getFullYear() === currentYear;
+    });
+    
+    // Get potential bookings (enquiries/contracts) for the month
+    const monthPotentialBookings = getPotentialBookings().filter((booking: any) => {
+      const bookingDate = new Date(booking.eventDate);
+      return bookingDate.getMonth() === currentMonth && 
+             bookingDate.getFullYear() === currentYear &&
+             (showExpiredEnquiries || !booking.isExpired);
+    });
+    
+    // Combine and sort by date
+    const allEvents = [...monthBookings, ...monthPotentialBookings];
+    return allEvents.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+  };
+
   // Helper functions for different view modes
   const getWeekDays = (date: Date) => {
     const week = [];
@@ -984,7 +1009,9 @@ export default function Calendar() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Upcoming Performances</CardTitle>
+              <CardTitle>
+                {currentDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })} Events
+              </CardTitle>
               <div className="flex space-x-2">
                 <Button
                   variant="outline"
@@ -1009,38 +1036,77 @@ export default function Calendar() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {bookings.slice(0, 5).map((booking: Booking) => (
-                <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-center">
-                      <div className="text-sm font-medium text-purple-600">
-                        {new Date(booking.eventDate).toLocaleDateString("en-GB", { month: "short" }).toUpperCase()}
+              {getCurrentMonthEvents().map((event: any) => {
+                const isRegularBooking = event.contractId !== undefined;
+                const isExpired = event.isExpired;
+                
+                return (
+                  <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg ${
+                    isExpired ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
+                  }`}>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <div className={`text-sm font-medium ${
+                          isExpired ? 'text-gray-500' : 'text-purple-600'
+                        }`}>
+                          {new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" }).toUpperCase()}
+                        </div>
+                        <div className={`text-lg font-bold ${
+                          isExpired ? 'text-gray-500' : ''
+                        }`}>
+                          {new Date(event.eventDate).getDate()}
+                        </div>
                       </div>
-                      <div className="text-lg font-bold">
-                        {new Date(booking.eventDate).getDate()}
+                      
+                      <div>
+                        <h4 className={`font-medium ${
+                          isExpired ? 'text-gray-500' : ''
+                        }`}>
+                          {event.title}
+                          {isExpired && <span className="ml-2 text-xs text-gray-400">(Expired)</span>}
+                        </h4>
+                        <p className={`text-sm ${
+                          isExpired ? 'text-gray-500' : 'text-gray-600'
+                        }`}>
+                          {event.venue} • {event.eventTime}
+                        </p>
                       </div>
                     </div>
                     
-                    <div>
-                      <h4 className="font-medium">{booking.title}</h4>
-                      <p className="text-sm text-gray-600">{booking.venue} • {booking.eventTime}</p>
+                    <div className="text-right">
+                      <p className={`font-semibold ${
+                        isExpired ? 'text-gray-500' : 
+                        isRegularBooking ? 'text-green-600' : 'text-amber-600'
+                      }`}>
+                        £{Number(event.fee).toLocaleString()}
+                      </p>
+                      <Badge className={
+                        isExpired ? 'bg-gray-100 text-gray-600' :
+                        isRegularBooking ? getStatusColor(event.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-') :
+                        event.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
+                        event.status === 'enquiry-qualified' || event.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
+                        event.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
+                        event.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
+                        'bg-amber-100 text-amber-800'
+                      }>
+                        {isExpired ? 'Expired' :
+                         isRegularBooking ? event.status :
+                         event.status === 'enquiry-new' ? 'New Enquiry' :
+                         event.status === 'enquiry-qualified' || event.status === 'enquiry-contract_sent' ? 'In Progress' :
+                         event.status === 'enquiry-confirmed' ? 'Confirmed' :
+                         event.status === 'contract-signed' ? 'Signed' :
+                         'Potential'}
+                      </Badge>
                     </div>
                   </div>
-                  
-                  <div className="text-right">
-                    <p className="font-semibold text-green-600">£{Number(booking.fee).toLocaleString()}</p>
-                    <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
-                      {booking.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               
-              {bookings.length === 0 && (
+              {getCurrentMonthEvents().length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-lg">No upcoming performances</p>
-                  <p>Your confirmed bookings will appear here</p>
+                  <p className="text-lg">No events this month</p>
+                  <p>Your bookings and enquiries will appear here</p>
                 </div>
               )}
             </div>
