@@ -459,28 +459,32 @@ All core features implemented and operational:
 - Settings and business configuration
 - Address Book: Client contact management and organization
 - Calendar: Booking management and scheduling system with intelligent expired enquiry filtering
+- Manual calendar import (.ics files) for Google Calendar, Apple Calendar, and other calendar systems
 
-**Deployment Status:**
-- Development environment: Fully functional at musobuddy.replit.dev (requires Replit OAuth)
-- Production build: Ready for deployment with proper dist/ structure
-- Public API endpoints: /api/health and /api/system accessible without authentication
-- Authentication: Replit OAuth integration working correctly
-
-**Deployment Note:**
-- Production URL (musobuddy.replit.app) requires redeployment to activate updated build
-- Development URL (musobuddy.replit.dev) blocked by robots.txt for automated tools (normal behavior)
-- Public API endpoints provide system verification without authentication requirements
+**Deployment Strategy:**
+- Phase 1: Custom domain deployment (Vercel/Railway) removing Replit OAuth dependency
+- Authentication: Transition from Replit OAuth to standard email/password or social auth
+- Domain: Custom domain (musobuddy.com) for professional SaaS deployment
+- Calendar Integration: Manual .ics export/import (no Google OAuth setup required)
 
 **Timeline Update:**
-- August 1, 2025: Beta testing begins
+- August 1, 2025: Beta testing begins on custom domain
 - September 1, 2025: Official launch
 - January 1, 2026: Phase 2 development begins with premium subscription model
 
-## Phase 2 - Business Intelligence & Email Correspondence (January 1, 2026)
+## Phase 2 - Advanced Integrations & Business Intelligence (January 1, 2026)
 **Target Audience: Musicians and DJs**
 **Premium Subscription Model: Feature tier evaluation pending**
 
-### A. Musician-Specific Business Intelligence
+### A. Professional Calendar Integration
+**Google Calendar Integration:**
+- **Seamless OAuth Integration**: One-click Google Calendar connection (no user setup required)
+- **Google OAuth Review**: Proper domain verification and app review process
+- **Two-Way Sync**: MusoBuddy ↔ Google Calendar synchronization
+- **Automatic Conflict Detection**: Real-time scheduling conflict prevention
+- **Mobile Calendar Apps**: Full integration with Google Calendar mobile apps
+
+### B. Musician-Specific Business Intelligence
 **Gig Intelligence Features:**
 - **Peak Season Insights**: "Your busiest months are June-September", wedding season alerts
 - **Simple Money Tracking**: Monthly earnings comparison, average gig payment, payment speed analysis
@@ -496,7 +500,7 @@ All core features implemented and operational:
 
 *Focus on practical, music-business-specific insights that help musicians book more gigs and get paid faster, rather than traditional business analytics.*
 
-### B. Complete Email Correspondence System
+### C. Complete Email Correspondence System
 **Core Features:**
 - **Email Thread Management**: All client communication flows through MusoBuddy
 - **Complete Conversation History**: Full email threads from initial enquiry through final correspondence
