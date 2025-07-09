@@ -324,6 +324,22 @@ export const insertClientSchema = createInsertSchema(clients).omit({
   updatedAt: true,
 });
 
+// Calendar tokens table for storing OAuth tokens
+export const calendarTokens = pgTable("calendar_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  provider: varchar("provider").notNull(), // 'google' or 'apple'
+  tokens: jsonb("tokens").notNull(), // OAuth tokens and refresh tokens
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCalendarTokensSchema = createInsertSchema(calendarTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -345,3 +361,5 @@ export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
 export type InsertBookingConflict = z.infer<typeof insertBookingConflictSchema>;
 export type BookingConflict = typeof bookingConflicts.$inferSelect;
+export type InsertCalendarTokens = z.infer<typeof insertCalendarTokensSchema>;
+export type CalendarTokens = typeof calendarTokens.$inferSelect;

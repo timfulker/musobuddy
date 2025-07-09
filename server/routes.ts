@@ -3,6 +3,17 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema } from "@shared/schema";
+import { 
+  getGoogleAuthUrl, 
+  handleGoogleCallback, 
+  getGoogleCalendars, 
+  importGoogleCalendarEvents,
+  parseAppleCalendar,
+  convertEventsToBookings,
+  storeCalendarTokens,
+  getCalendarTokens
+} from './calendar-import';
+import multer from 'multer';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Primary SendGrid webhook endpoint using proper email handling
@@ -1863,6 +1874,164 @@ Jane`
     } catch (error) {
       console.error("Error resolving conflict:", error);
       res.status(500).json({ message: "Failed to resolve conflict" });
+    }
+  });
+
+  // Setup multer for file uploads
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
+  // Calendar Import Routes
+  
+  // Get Google Calendar authorization URL
+  app.get('/api/calendar/google/auth', isAuthenticated, async (req: any, res) => {
+    try {
+      const authUrl = getGoogleAuthUrl();
+      res.json({ authUrl });
+    } catch (error) {
+      console.error("Error getting Google auth URL:", error);
+      res.status(500).json({ message: "Failed to get Google authorization URL" });
+    }
+  });
+
+  // Handle Google Calendar OAuth callback
+  app.get('/api/calendar/google/callback', async (req, res) => {
+    try {
+      const { code, state } = req.query;
+      
+      if (!code) {
+        return res.status(400).json({ message: "Authorization code not provided" });
+      }
+
+      const { tokens, userInfo } = await handleGoogleCallback(code as string);
+      
+      // Store tokens (you might want to associate with user ID from state parameter)
+      // For now, we'll store in session or return to frontend
+      res.json({
+        success: true,
+        tokens,
+        userInfo,
+        message: "Google Calendar connected successfully"
+      });
+    } catch (error) {
+      console.error("Error handling Google callback:", error);
+      res.status(500).json({ message: "Failed to connect Google Calendar" });
+    }
+  });
+
+  // Get Google Calendar list
+  app.post('/api/calendar/google/calendars', isAuthenticated, async (req: any, res) => {
+    try {
+      const { tokens } = req.body;
+      
+      if (!tokens) {
+        return res.status(400).json({ message: "Google Calendar tokens required" });
+      }
+
+      const calendars = await getGoogleCalendars(tokens);
+      res.json(calendars);
+    } catch (error) {
+      console.error("Error fetching Google calendars:", error);
+      res.status(500).json({ message: "Failed to fetch Google calendars" });
+    }
+  });
+
+  // Import from Google Calendar
+  app.post('/api/calendar/google/import', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { tokens, calendarId, startDate, endDate } = req.body;
+      
+      if (!tokens || !calendarId) {
+        return res.status(400).json({ message: "Google Calendar tokens and calendar ID required" });
+      }
+
+      // Import events from Google Calendar
+      const importResult = await importGoogleCalendarEvents(
+        tokens,
+        calendarId,
+        startDate ? new Date(startDate) : undefined,
+        endDate ? new Date(endDate) : undefined
+      );
+
+      if (!importResult.success) {
+        return res.status(500).json({ 
+          message: "Failed to import Google Calendar events",
+          errors: importResult.errors
+        });
+      }
+
+      // Convert events to MusoBuddy bookings
+      const conversionResult = await convertEventsToBookings(userId, importResult.events);
+
+      // Store tokens for future use
+      await storeCalendarTokens(userId, 'google', tokens);
+
+      res.json({
+        success: true,
+        imported: importResult.imported,
+        skipped: importResult.skipped + conversionResult.skipped,
+        created: conversionResult.created,
+        errors: [...importResult.errors, ...conversionResult.errors],
+        message: `Successfully imported ${conversionResult.created} bookings from Google Calendar`
+      });
+    } catch (error) {
+      console.error("Error importing Google Calendar:", error);
+      res.status(500).json({ message: "Failed to import Google Calendar events" });
+    }
+  });
+
+  // Import from Apple Calendar (.ics file)
+  app.post('/api/calendar/apple/import', isAuthenticated, upload.single('icsFile'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "Please upload an .ics file" });
+      }
+
+      const icsContent = req.file.buffer.toString('utf8');
+      
+      // Parse Apple Calendar file
+      const importResult = await parseAppleCalendar(icsContent);
+
+      if (!importResult.success) {
+        return res.status(500).json({ 
+          message: "Failed to parse Apple Calendar file",
+          errors: importResult.errors
+        });
+      }
+
+      // Convert events to MusoBuddy bookings
+      const conversionResult = await convertEventsToBookings(userId, importResult.events);
+
+      res.json({
+        success: true,
+        imported: importResult.imported,
+        skipped: importResult.skipped + conversionResult.skipped,
+        created: conversionResult.created,
+        errors: [...importResult.errors, ...conversionResult.errors],
+        message: `Successfully imported ${conversionResult.created} bookings from Apple Calendar`
+      });
+    } catch (error) {
+      console.error("Error importing Apple Calendar:", error);
+      res.status(500).json({ message: "Failed to import Apple Calendar file" });
+    }
+  });
+
+  // Get stored calendar tokens
+  app.get('/api/calendar/tokens/:provider', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const provider = req.params.provider as 'google' | 'apple';
+      
+      const tokens = await getCalendarTokens(userId, provider);
+      res.json({ tokens, connected: !!tokens });
+    } catch (error) {
+      console.error("Error fetching calendar tokens:", error);
+      res.status(500).json({ message: "Failed to fetch calendar tokens" });
     }
   });
 
