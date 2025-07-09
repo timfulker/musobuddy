@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 import type { Booking } from "@shared/schema";
 
 export default function CalendarWidget() {
@@ -145,9 +146,11 @@ export default function CalendarWidget() {
           </div>
         )}
 
-        <Button variant="ghost" className="w-full justify-center">
-          View Full Calendar <ArrowRight className="w-4 h-4 ml-1" />
-        </Button>
+        <Link href="/calendar">
+          <Button variant="ghost" className="w-full justify-center">
+            View Full Calendar <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </Link>
       </CardContent>
     </Card>
   );
