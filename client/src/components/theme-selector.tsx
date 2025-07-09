@@ -99,7 +99,6 @@ export function ThemeSelector() {
 
   const applyTheme = (theme: Theme) => {
     const root = document.documentElement;
-    console.log('Applying theme:', theme.name);
     
     switch (theme.id) {
       case 'superhuman':
@@ -267,7 +266,6 @@ export function ThemeSelector() {
     setTimeout(() => {
       // Trigger a re-render by updating a data attribute
       document.documentElement.setAttribute('data-theme', theme.id);
-      console.log('Theme applied:', theme.name, 'Primary color:', root.style.getPropertyValue('--primary'));
     }, 50);
   };
 
