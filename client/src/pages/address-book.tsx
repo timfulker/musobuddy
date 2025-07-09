@@ -29,16 +29,22 @@ export default function AddressBook() {
   });
 
   const createClientMutation = useMutation({
-    mutationFn: (data: InsertClient) => apiRequest("/api/clients", "POST", data),
-    onSuccess: () => {
+    mutationFn: (data: InsertClient) => {
+      console.log("Creating client with data:", data);
+      return apiRequest("/api/clients", "POST", data);
+    },
+    onSuccess: (response) => {
+      console.log("Client created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setIsCreateOpen(false);
+      form.reset();
       toast({
         title: "Success",
         description: "Client added to address book",
       });
     },
     onError: (error: any) => {
+      console.error("Error creating client:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to add client",
@@ -86,9 +92,13 @@ export default function AddressBook() {
   });
 
   const form = useForm<InsertClient>({
-    resolver: zodResolver(insertClientSchema.extend({
-      totalBookings: insertClientSchema.shape.totalBookings.optional(),
-      totalRevenue: insertClientSchema.shape.totalRevenue.optional(),
+    resolver: zodResolver(insertClientSchema.omit({ 
+      userId: true, 
+      id: true, 
+      createdAt: true, 
+      updatedAt: true, 
+      totalBookings: true, 
+      totalRevenue: true 
     })),
     defaultValues: {
       name: "",
@@ -100,9 +110,14 @@ export default function AddressBook() {
   });
 
   const handleSubmit = (data: InsertClient) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
+    
     if (editingClient) {
+      console.log("Updating client:", editingClient.id);
       updateClientMutation.mutate({ id: editingClient.id, data });
     } else {
+      console.log("Creating new client");
       createClientMutation.mutate(data);
     }
   };
