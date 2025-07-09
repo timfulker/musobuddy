@@ -237,7 +237,7 @@ export async function convertEventsToBookings(
       // Check if booking already exists
       const existingBookings = await storage.getBookings(userId);
       const exists = existingBookings.some(booking => 
-        booking.date.getTime() === event.startTime.getTime() &&
+        booking.eventDate.getTime() === event.startTime.getTime() &&
         booking.venue === event.location
       );
 
@@ -246,20 +246,43 @@ export async function convertEventsToBookings(
         continue;
       }
 
-      // Create booking
-      await storage.createBooking(userId, {
-        date: event.startTime,
-        venue: event.location || 'Unknown Venue',
+      // Create booking (schema requires contractId to be non-null, so create a temporary contract)
+      // First create a minimal contract for the imported event
+      const contract = await storage.createContract({
+        userId,
+        contractNumber: `IMPORT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         clientName: extractClientName(event.title),
+        clientEmail: '',
+        eventDate: event.startTime,
+        eventTime: event.startTime.toTimeString().slice(0, 5), // "HH:MM" format
+        eventEndTime: event.endTime.toTimeString().slice(0, 5), // "HH:MM" format
+        performanceDuration: Math.round((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60)), // minutes
+        venue: event.location || 'Unknown Venue',
+        fee: 0,
+        deposit: 0,
+        terms: `Imported from ${event.source} calendar`,
+        status: 'signed' // Mark as signed since it's an existing event
+      });
+
+      // Now create the booking with the contract ID
+      await storage.createBooking({
+        userId,
+        contractId: contract.id,
+        title: event.title,
+        clientName: extractClientName(event.title),
+        eventDate: event.startTime,
+        eventTime: event.startTime.toTimeString().slice(0, 5), // "HH:MM" format
+        eventEndTime: event.endTime.toTimeString().slice(0, 5), // "HH:MM" format
+        performanceDuration: Math.round((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60)), // minutes
+        venue: event.location || 'Unknown Venue',
+        fee: 0,
         status: 'confirmed',
-        duration: Math.round((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60 * 60)), // hours
-        notes: event.description || '',
-        fee: 0, // User can update this later
-        source: `imported_${event.source}`
+        notes: `Imported from ${event.source} calendar`
       });
 
       // Create corresponding enquiry
-      await storage.createEnquiry(userId, {
+      await storage.createEnquiry({
+        userId,
         clientName: extractClientName(event.title),
         clientEmail: '',
         eventDate: event.startTime,
@@ -307,12 +330,7 @@ function extractClientName(title: string): string {
 // Store calendar tokens for user
 export async function storeCalendarTokens(userId: string, provider: 'google' | 'apple', tokens: any): Promise<void> {
   try {
-    // Store tokens securely (implement based on your storage system)
-    await storage.updateUser(userId, {
-      calendarTokens: {
-        [provider]: tokens
-      }
-    });
+    await storage.storeCalendarTokens(userId, provider, tokens);
   } catch (error) {
     console.error('Error storing calendar tokens:', error);
     throw new Error('Failed to store calendar tokens');
@@ -322,8 +340,8 @@ export async function storeCalendarTokens(userId: string, provider: 'google' | '
 // Get stored calendar tokens
 export async function getCalendarTokens(userId: string, provider: 'google' | 'apple'): Promise<any | null> {
   try {
-    const user = await storage.getUser(userId);
-    return user.calendarTokens?.[provider] || null;
+    const tokenData = await storage.getCalendarTokens(userId, provider);
+    return tokenData ? tokenData.tokens : null;
   } catch (error) {
     console.error('Error getting calendar tokens:', error);
     return null;
