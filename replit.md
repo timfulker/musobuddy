@@ -408,37 +408,45 @@ All core features implemented and operational:
 - Notifications system
 - Settings and business configuration
 
-## Phase 2 - Complete Email Correspondence System (3-6 months)
-**Target: Centralized Client Communication Hub**
+## Phase 2 - Business Intelligence & Email Correspondence (3-6 months)
+**Target Audience: Musicians and DJs**
 
-### Core Features:
+### A. Musician-Specific Business Intelligence
+**Gig Intelligence Features:**
+- **Peak Season Insights**: "Your busiest months are June-September", wedding season alerts
+- **Simple Money Tracking**: Monthly earnings comparison, average gig payment, payment speed analysis
+- **Music Performance Data**: Most requested songs/genres, event types that pay most, client preferences
+- **Quick Business Wins**: Repeat clients identification, best enquiry sources, response time optimization
+- **Practical Alerts**: Busy period warnings, quiet period marketing prompts, client retention alerts
+
+**Actionable Insights (Not Complex Charts):**
+- "You earn 30% more from weddings than corporate events"
+- "Clients who book 2+ months ahead pay faster"
+- "Friday/Saturday gigs average £200 more than weekday events"
+- "3 regular clients haven't booked recently"
+
+*Focus on practical, music-business-specific insights that help musicians book more gigs and get paid faster, rather than traditional business analytics.*
+
+### B. Complete Email Correspondence System
+**Core Features:**
 - **Email Thread Management**: All client communication flows through MusoBuddy
 - **Complete Conversation History**: Full email threads from initial enquiry through final correspondence
 - **Smart Reply System**: Template-based responses with context awareness
 - **Thread Continuity**: Automatic message linking and conversation flow
 - **Professional Email Branding**: All communication via leads@musobuddy.com domain
 
-### Implementation Flow:
+**Implementation Flow:**
 1. **Client emails leads@musobuddy.com** → Enquiry creation with thread tracking
 2. **User responds via MusoBuddy** → Template-based replies with proper threading
 3. **Future correspondence** → Automatic thread linking and conversation history
 4. **Complete audit trail** → All client communication centralized in platform
 
-### Business Benefits:
+**Business Benefits:**
 - **Never miss follow-ups**: Visual indicators for enquiries needing responses
 - **Professional consistency**: All emails branded with business domain
 - **Complete context**: Full conversation history for each booking
 - **Improved conversion**: Better follow-up leads to more bookings
 - **Mobile optimization**: Manage client emails on any device
-
-### Technical Implementation:
-- Email thread database tables with message linking
-- Enhanced SendGrid webhook processing for thread management
-- Smart reply interface with template integration
-- Mobile-first email management interface
-- Analytics dashboard for email performance tracking
-
-*Note: Phase 2 transforms MusoBuddy from business management into complete client communication hub, eliminating the need for separate email management.*
 
 - July 07, 2025. PDF download hanging issue completely resolved:
   * Identified root cause: complex timeout handling interfering with Puppeteer operations
