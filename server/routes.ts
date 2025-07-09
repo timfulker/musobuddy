@@ -1906,32 +1906,30 @@ Jane`
       const { code, state } = req.query;
       
       if (!code) {
-        return res.status(400).json({ message: "Authorization code not provided" });
+        return res.redirect('/calendar?error=no_code');
       }
 
       const { tokens, userInfo } = await handleGoogleCallback(code as string);
       
-      // Store tokens (you might want to associate with user ID from state parameter)
-      // For now, we'll store in session or return to frontend
-      res.json({
-        success: true,
-        tokens,
-        userInfo,
-        message: "Google Calendar connected successfully"
-      });
+      // Store tokens in session for now
+      (req as any).session.googleCalendarTokens = tokens;
+      (req as any).session.googleUserInfo = userInfo;
+      
+      // Redirect back to calendar page with success
+      res.redirect('/calendar?google_auth=success');
     } catch (error) {
       console.error("Error handling Google callback:", error);
-      res.status(500).json({ message: "Failed to connect Google Calendar" });
+      res.redirect('/calendar?error=auth_failed');
     }
   });
 
   // Get Google Calendar list
-  app.post('/api/calendar/google/calendars', isAuthenticated, async (req: any, res) => {
+  app.get('/api/calendar/google/calendars', isAuthenticated, async (req: any, res) => {
     try {
-      const { tokens } = req.body;
+      const tokens = req.session.googleCalendarTokens;
       
       if (!tokens) {
-        return res.status(400).json({ message: "Google Calendar tokens required" });
+        return res.status(400).json({ message: "Google Calendar not connected. Please authenticate first." });
       }
 
       const calendars = await getGoogleCalendars(tokens);
@@ -1946,10 +1944,11 @@ Jane`
   app.post('/api/calendar/google/import', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { tokens, calendarId, startDate, endDate } = req.body;
+      const tokens = req.session.googleCalendarTokens;
+      const { calendarId, startDate, endDate } = req.body;
       
       if (!tokens || !calendarId) {
-        return res.status(400).json({ message: "Google Calendar tokens and calendar ID required" });
+        return res.status(400).json({ message: "Google Calendar not connected or calendar ID not provided" });
       }
 
       // Import events from Google Calendar

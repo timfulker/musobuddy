@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,21 +33,8 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
       return response.json();
     },
     onSuccess: (data) => {
-      // Open Google OAuth popup
-      const popup = window.open(data.authUrl, 'google-auth', 'width=500,height=600');
-      
-      // Listen for OAuth completion
-      const checkClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkClosed);
-          // Check if we have tokens (this is a simplified approach)
-          // In production, you'd use postMessage or similar for secure communication
-          toast({
-            title: "Google Calendar",
-            description: "Please complete authorization and try again",
-          });
-        }
-      }, 1000);
+      // Redirect to Google OAuth (full page redirect for better compatibility)
+      window.location.href = data.authUrl;
     },
     onError: () => {
       toast({
@@ -60,11 +47,8 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
 
   // Get Google Calendars
   const getCalendarsMutation = useMutation({
-    mutationFn: async (tokens: any) => {
-      const response = await apiRequest('/api/calendar/google/calendars', {
-        method: 'POST',
-        body: JSON.stringify({ tokens }),
-      });
+    mutationFn: async () => {
+      const response = await apiRequest('/api/calendar/google/calendars');
       return response.json();
     },
     onSuccess: (calendars) => {
@@ -82,7 +66,7 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
 
   // Google Calendar Import
   const googleImportMutation = useMutation({
-    mutationFn: async (data: { tokens: any; calendarId: string; startDate?: string; endDate?: string }) => {
+    mutationFn: async (data: { calendarId: string; startDate?: string; endDate?: string }) => {
       const response = await apiRequest('/api/calendar/google/import', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -135,9 +119,27 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
     },
   });
 
+  // Check for Google OAuth success on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('google_auth') === 'success') {
+      setImportType('google');
+      setIsDialogOpen(true);
+      getCalendarsMutation.mutate();
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (urlParams.get('error')) {
+      toast({
+        title: "Authentication Error",
+        description: "Failed to connect Google Calendar. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [getCalendarsMutation, toast]);
+
   const handleGoogleImport = () => {
     setImportType('google');
-    setImportStep('importing');
+    setImportStep('configure');
     googleAuthMutation.mutate();
   };
 
@@ -160,7 +162,7 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
   };
 
   const executeGoogleImport = () => {
-    if (!googleTokens || !selectedCalendar) {
+    if (!selectedCalendar) {
       toast({
         title: "Missing Information",
         description: "Please select a calendar to import",
@@ -171,7 +173,6 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
 
     setImportStep('importing');
     googleImportMutation.mutate({
-      tokens: googleTokens,
       calendarId: selectedCalendar,
     });
   };

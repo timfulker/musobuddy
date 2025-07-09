@@ -261,6 +261,14 @@ Changelog:
   * Enhanced import process to create proper contracts and bookings for imported events
   * System ready for one-way sync from Google Calendar to MusoBuddy
   * **Setup Required**: Google Cloud Console OAuth redirect URI needs updating to https://workspace.timfulker.repl.co/api/calendar/google/callback
+- July 09, 2025. Calendar import authentication flow optimized:
+  * Implemented full-page OAuth redirect for better compatibility with Google Calendar
+  * Added automatic calendar list fetching after successful authentication
+  * Enhanced session-based token storage for secure credential management
+  * Fixed calendar selection dropdown to display all available calendars from user's Google account
+  * Added proper error handling for authentication failures
+  * System now shows multiple calendars including "tim Fulker gigs" for selection
+  * Complete workflow: Connect Google → Select Calendar → Import Events → Create Bookings
 - July 09, 2025. Calendar system enhancement with comprehensive booking management:
   * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
   * Added automatic integration with enquiries and contracts showing potential bookings
