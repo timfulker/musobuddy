@@ -262,6 +262,14 @@ Changelog:
   * Added navigation buttons from potential bookings to source enquiries and contracts
   * Color-coded calendar view with hover effects and comprehensive legend
   * Professional calendar export with proper timezone handling and event formatting
+- July 09, 2025. Intelligent expired enquiry filtering system implemented:
+  * Added smart calendar filtering that distinguishes between expired enquiries and completed gigs
+  * Expired enquiries are greyed out and hidden by default to keep calendar clean and focused
+  * Expired confirmed gigs remain visible as completed work for reference and portfolio tracking
+  * Added "Show/Hide Expired Enquiries" toggle button in calendar header for optional viewing
+  * Implemented grey styling (opacity 50%) for expired enquiries with "Expired" badges
+  * Enhanced calendar legend with expired enquiry indicator when toggle is active
+  * Improved user experience by reducing visual clutter while maintaining historical context
 - July 07, 2025. Mobile dashboard optimization completed:
   * Fixed header layout conflict where hamburger menu overlapped with "Dashboard" title
   * Added proper spacing (ml-12 md:ml-0) to accommodate mobile navigation button
@@ -426,9 +434,9 @@ All core features implemented and operational:
 - Notifications system
 - Settings and business configuration
 - Address Book: Client contact management and organization
+- Calendar: Booking management and scheduling system with intelligent expired enquiry filtering
 
 **Phase 1 Final Additions:**
-- Calendar: Booking management and scheduling system
 - Data Export/Backup: Complete user data export functionality for data ownership and portability
 - Additional feature refinements based on user feedback
 

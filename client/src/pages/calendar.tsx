@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, ArrowLeft, Download, ExternalLink } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, ArrowLeft, Download, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, type Booking } from "@shared/schema";
 import { Link, useLocation } from "wouter";
@@ -28,6 +28,7 @@ export default function Calendar() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [showExpiredEnquiries, setShowExpiredEnquiries] = useState(false);
 
   // Check URL parameters to auto-open dialog
   useEffect(() => {
@@ -225,13 +226,29 @@ export default function Calendar() {
     });
   };
 
+  // Helper function to check if an enquiry is expired
+  const isEnquiryExpired = (enquiry: any) => {
+    if (!enquiry.eventDate) return false;
+    const eventDate = new Date(enquiry.eventDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return eventDate < today;
+  };
+
   // Get potential bookings from enquiries and contracts
   const getPotentialBookings = () => {
     const potentialEvents = [];
     
-    // Add all enquiries with dates (any status)
+    // Add enquiries with dates, filtering expired ones unless toggle is enabled
     enquiries.forEach((enquiry: any) => {
       if (enquiry.eventDate) {
+        const isExpired = isEnquiryExpired(enquiry);
+        
+        // Skip expired enquiries if toggle is off
+        if (isExpired && !showExpiredEnquiries) {
+          return;
+        }
+        
         potentialEvents.push({
           id: `enquiry-${enquiry.id}`,
           title: enquiry.title,
@@ -241,7 +258,8 @@ export default function Calendar() {
           venue: enquiry.venue || 'TBC',
           fee: enquiry.estimatedValue || 0,
           status: `enquiry-${enquiry.status}`,
-          source: 'enquiry'
+          source: 'enquiry',
+          isExpired: isExpired
         });
       }
     });
@@ -701,6 +719,24 @@ export default function Calendar() {
                 <div className="flex items-center justify-between">
                   <CardTitle>Performance Calendar</CardTitle>
                   <div className="flex items-center space-x-2">
+                    <Button 
+                      variant={showExpiredEnquiries ? "default" : "outline"} 
+                      size="sm" 
+                      onClick={() => setShowExpiredEnquiries(!showExpiredEnquiries)}
+                      className="text-xs"
+                    >
+                      {showExpiredEnquiries ? (
+                        <>
+                          <Eye className="w-3 h-3 mr-1" />
+                          Hide Expired
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="w-3 h-3 mr-1" />
+                          Show Expired
+                        </>
+                      )}
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => handleCalendarSync('google')}>
                       <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -730,10 +766,11 @@ export default function Calendar() {
                     confirmed: bookings.filter((b: Booking) => b.status === 'confirmed').map((booking: Booking) => new Date(booking.eventDate)),
                     completed: bookings.filter((b: Booking) => b.status === 'completed').map((booking: Booking) => new Date(booking.eventDate)),
                     cancelled: bookings.filter((b: Booking) => b.status === 'cancelled').map((booking: Booking) => new Date(booking.eventDate)),
-                    newEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-new').map((booking: any) => new Date(booking.eventDate)),
-                    inProgressEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-qualified' || b.status === 'enquiry-contract_sent').map((booking: any) => new Date(booking.eventDate)),
-                    confirmedEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-confirmed').map((booking: any) => new Date(booking.eventDate)),
+                    newEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-new' && !b.isExpired).map((booking: any) => new Date(booking.eventDate)),
+                    inProgressEnquiry: potentialBookings.filter((b: any) => (b.status === 'enquiry-qualified' || b.status === 'enquiry-contract_sent') && !b.isExpired).map((booking: any) => new Date(booking.eventDate)),
+                    confirmedEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-confirmed' && !b.isExpired).map((booking: any) => new Date(booking.eventDate)),
                     signedContract: potentialBookings.filter((b: any) => b.status === 'contract-signed').map((booking: any) => new Date(booking.eventDate)),
+                    expiredEnquiry: potentialBookings.filter((b: any) => b.isExpired && b.source === 'enquiry').map((booking: any) => new Date(booking.eventDate)),
                   }}
                   modifiersClassNames={{
                     today: "bg-purple-100 text-purple-900 font-bold ring-2 ring-purple-400",
@@ -744,6 +781,7 @@ export default function Calendar() {
                     inProgressEnquiry: "bg-blue-200 text-blue-900 font-semibold hover:bg-blue-300",
                     confirmedEnquiry: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
                     signedContract: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
+                    expiredEnquiry: "bg-gray-200 text-gray-500 font-normal opacity-50 hover:bg-gray-300",
                   }}
                 />
                 
@@ -768,6 +806,12 @@ export default function Calendar() {
                     <div className="w-3 h-3 bg-purple-100 border border-purple-400 rounded ring-1 ring-purple-400"></div>
                     <span>Today</span>
                   </div>
+                  {showExpiredEnquiries && (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-gray-200 border border-gray-300 rounded opacity-50"></div>
+                      <span className="text-gray-500">Expired Enquiry</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -840,17 +884,24 @@ export default function Calendar() {
                   
                   {/* Potential Bookings */}
                   {selectedDatePotentialBookings.map((booking: any) => (
-                    <div key={booking.id} className="p-4 rounded-lg border-2 bg-amber-50 border-amber-200">
+                    <div key={booking.id} className={`p-4 rounded-lg border-2 ${booking.isExpired ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-amber-50 border-amber-200'}`}>
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold">{booking.title}</h4>
+                        <h4 className={`font-semibold ${booking.isExpired ? 'text-gray-500' : ''}`}>
+                          {booking.title}
+                          {booking.isExpired && (
+                            <span className="ml-2 text-xs text-gray-400">(Expired)</span>
+                          )}
+                        </h4>
                         <Badge className={
+                          booking.isExpired ? 'bg-gray-100 text-gray-600' :
                           booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
                           booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
                           booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
                           booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
                           'bg-amber-100 text-amber-800'
                         }>
-                          {booking.status === 'enquiry-new' ? 'New Enquiry' :
+                          {booking.isExpired ? 'Expired Enquiry' :
+                           booking.status === 'enquiry-new' ? 'New Enquiry' :
                            booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'In Progress' :
                            booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
                            booking.status === 'contract-signed' ? 'Contract Signed' :
@@ -859,36 +910,36 @@ export default function Calendar() {
                       </div>
                       
                       <div className="space-y-2 text-sm">
-                        <div className="flex items-center space-x-2 text-gray-600">
+                        <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
                           <User className="w-4 h-4" />
                           <span>{booking.clientName}</span>
                         </div>
                         
-                        <div className="flex items-center space-x-2 text-gray-600">
+                        <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
                           <Clock className="w-4 h-4" />
                           <span>{formatTime(booking.eventTime)}</span>
                         </div>
                         
-                        <div className="flex items-center space-x-2 text-gray-600">
+                        <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
                           <MapPin className="w-4 h-4" />
                           <span>{booking.venue}</span>
                         </div>
                         
                         <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                          <span className="font-semibold text-amber-600">
+                          <span className={`font-semibold ${booking.isExpired ? 'text-gray-500' : 'text-amber-600'}`}>
                             £{Number(booking.fee).toLocaleString()}
                           </span>
                           <div className="flex space-x-2">
                             {booking.source === 'enquiry' && (
                               <Link href="/enquiries">
-                                <Button size="sm" variant="outline">
+                                <Button size="sm" variant="outline" className={booking.isExpired ? 'opacity-50' : ''}>
                                   View Enquiry
                                 </Button>
                               </Link>
                             )}
                             {booking.source === 'contract' && (
                               <Link href="/contracts">
-                                <Button size="sm" variant="outline">
+                                <Button size="sm" variant="outline" className={booking.isExpired ? 'opacity-50' : ''}>
                                   View Contract
                                 </Button>
                               </Link>
