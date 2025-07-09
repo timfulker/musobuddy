@@ -13,9 +13,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertClientSchema, type InsertClient, type Client } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
+import { Link } from "wouter";
 
 export default function AddressBook() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -204,7 +205,7 @@ export default function AddressBook() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className="md:ml-64">
@@ -213,10 +214,15 @@ export default function AddressBook() {
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <Users className="w-8 h-8 text-purple-600" />
+              <Link href="/">
+                <Button variant="ghost" size="sm" className="p-2 hover:bg-accent">
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Users className="w-8 h-8 text-primary" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Address Book</h1>
-                <p className="text-sm text-gray-600">Manage your client contacts</p>
+                <h1 className="text-2xl font-bold text-foreground">Address Book</h1>
+                <p className="text-sm text-muted-foreground">Manage your client contacts</p>
               </div>
             </div>
             
