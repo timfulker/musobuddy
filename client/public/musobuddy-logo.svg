@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Purple gradient background circle -->
+  <defs>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="url(#purpleGradient)" />
+  
+  <!-- Headphones -->
+  <g transform="translate(100, 100)">
+    <!-- Headband -->
+    <path d="M -35 -25 A 35 35 0 0 1 35 -25" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+    
+    <!-- Left ear cup -->
+    <rect x="-50" y="-15" width="20" height="30" rx="10" fill="white"/>
+    
+    <!-- Right ear cup -->
+    <rect x="30" y="-15" width="20" height="30" rx="10" fill="white"/>
+    
+    <!-- Smiley face -->
+    <circle cx="0" cy="0" r="25" fill="white" stroke="none"/>
+    
+    <!-- Eyes -->
+    <circle cx="-8" cy="-8" r="4" fill="url(#purpleGradient)"/>
+    <circle cx="8" cy="-8" r="4" fill="url(#purpleGradient)"/>
+    
+    <!-- Smile -->
+    <path d="M -12 8 Q 0 20 12 8" stroke="url(#purpleGradient)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>
