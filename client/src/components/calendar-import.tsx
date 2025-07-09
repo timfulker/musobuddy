@@ -273,19 +273,45 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
                   <SelectValue placeholder="Choose a calendar to import" />
                 </SelectTrigger>
                 <SelectContent>
-                  {googleCalendars.map((calendar) => (
-                    <SelectItem key={calendar.id} value={calendar.id}>
-                      {calendar.summary}
+                  {googleCalendars.length > 0 ? (
+                    googleCalendars.map((calendar) => (
+                      <SelectItem key={calendar.id} value={calendar.id}>
+                        {calendar.summary}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="loading" disabled>
+                      Loading calendars...
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
+              
+              {googleCalendars.length === 0 && (
+                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-700">
+                    <strong>Authentication needed:</strong> Please update your Google Cloud Console OAuth settings to include:
+                  </p>
+                  <code className="text-xs bg-amber-100 px-2 py-1 rounded mt-1 block">
+                    https://workspace.timfulker.repl.co/api/calendar/google/callback
+                  </code>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => getCalendarsMutation.mutate()}
+                  >
+                    Retry Connection
+                  </Button>
+                </div>
+              )}
             </div>
+            
             <div className="flex justify-between">
               <Button variant="outline" onClick={resetDialog}>
                 Back
               </Button>
-              <Button onClick={executeGoogleImport} disabled={!selectedCalendar}>
+              <Button onClick={executeGoogleImport} disabled={!selectedCalendar || googleCalendars.length === 0}>
                 Import Events
               </Button>
             </div>
