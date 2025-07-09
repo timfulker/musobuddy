@@ -89,7 +89,9 @@ export default function Enquiries() {
 
   const deleteEnquiryMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest('DELETE', `/api/enquiries/${id}`);
+      const response = await apiRequest(`/api/enquiries/${id}`, {
+        method: 'DELETE'
+      });
       return response;
     },
     onSuccess: () => {

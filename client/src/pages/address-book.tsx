@@ -37,7 +37,10 @@ export default function AddressBook() {
   const createClientMutation = useMutation({
     mutationFn: (data: InsertClient) => {
       console.log("Creating client with data:", data);
-      return apiRequest("/api/clients", "POST", data);
+      return apiRequest("/api/clients", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: (response) => {
       console.log("Client created successfully:", response);
@@ -61,7 +64,10 @@ export default function AddressBook() {
 
   const updateClientMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<InsertClient> }) => 
-      apiRequest(`/api/clients/${id}`, "PATCH", data),
+      apiRequest(`/api/clients/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data)
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setEditingClient(null);
@@ -80,7 +86,9 @@ export default function AddressBook() {
   });
 
   const deleteClientMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/clients/${id}`, "DELETE"),
+    mutationFn: (id: number) => apiRequest(`/api/clients/${id}`, {
+      method: "DELETE"
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       toast({
