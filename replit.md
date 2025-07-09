@@ -577,4 +577,5 @@ All core features implemented and operational:
 
 ```
 Preferred communication style: Simple, everyday language.
+Implementation approach: When asked for insight/opinion on issues, provide perspective and recommendations WITHOUT automatically implementing changes. Only implement when explicitly requested to do so.
 ```
