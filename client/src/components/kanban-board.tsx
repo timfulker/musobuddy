@@ -31,7 +31,7 @@ export default function KanbanBoard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "new": return <Badge variant="secondary">NEW</Badge>;
-      case "qualified": return <Badge className="bg-blue-100 text-blue-800">ACTIONED</Badge>;
+      case "qualified": return <Badge className="bg-blue-100 text-blue-800">IN PROGRESS</Badge>;
       case "contract_sent": return <Badge className="bg-purple-100 text-purple-800">PENDING</Badge>;
       case "confirmed": return <Badge className="bg-green-100 text-green-800">CONFIRMED</Badge>;
       default: return <Badge variant="secondary">NEW</Badge>;
@@ -132,10 +132,10 @@ export default function KanbanBoard() {
               </div>
             </div>
 
-            {/* Actioned Column */}
+            {/* In Progress Column */}
             <div className="w-80">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-medium text-gray-900">Actioned</h4>
+                <h4 className="font-medium text-gray-900">In Progress</h4>
                 <Badge className="bg-blue-100 text-blue-600">{groupedEnquiries.qualified.length}</Badge>
               </div>
               <div className="space-y-3">
@@ -167,7 +167,7 @@ export default function KanbanBoard() {
                 ))}
                 {groupedEnquiries.qualified.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    <p>No actioned enquiries</p>
+                    <p>No enquiries in progress</p>
                   </div>
                 )}
               </div>
