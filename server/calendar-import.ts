@@ -286,8 +286,8 @@ export async function convertEventsToBookings(
         eventEndTime: event.endTime.toTimeString().slice(0, 5), // "HH:MM" format
         performanceDuration: Math.round((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60)), // minutes
         venue: event.location || 'Unknown Venue',
-        fee: 0,
-        deposit: 0,
+        fee: "0",
+        deposit: "0",
         terms: `Imported from ${event.source} calendar`,
         status: 'signed' // Mark as signed since it's an existing event
       });
@@ -303,7 +303,7 @@ export async function convertEventsToBookings(
         eventEndTime: event.endTime.toTimeString().slice(0, 5), // "HH:MM" format
         performanceDuration: Math.round((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60)), // minutes
         venue: event.location || 'Unknown Venue',
-        fee: 0,
+        fee: "0",
         status: 'confirmed',
         notes: `Imported from ${event.source} calendar`
       });
@@ -311,14 +311,14 @@ export async function convertEventsToBookings(
       // Create corresponding enquiry
       await storage.createEnquiry({
         userId,
+        title: event.title,
         clientName: extractClientName(event.title),
         clientEmail: '',
         eventDate: event.startTime,
         venue: event.location || 'Unknown Venue',
         eventType: 'performance',
         status: 'confirmed',
-        notes: `Imported from ${event.source} calendar: ${event.description || ''}`,
-        source: `${event.source}_import`
+        notes: `Imported from ${event.source} calendar: ${event.description || ''}`
       });
 
       created++;
