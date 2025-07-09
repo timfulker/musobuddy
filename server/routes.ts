@@ -31,6 +31,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Public health check endpoint (no auth required)
+  app.get('/api/health', (req, res) => {
+    res.json({
+      status: 'healthy',
+      service: 'MusoBuddy',
+      description: 'Music Business Management Platform',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      features: [
+        'Enquiry Management',
+        'Digital Contracts',
+        'Invoice System',
+        'Calendar Integration',
+        'Email Forwarding',
+        'Address Book'
+      ]
+    });
+  });
+
+  // Public system info endpoint (no auth required)
+  app.get('/api/system', (req, res) => {
+    res.json({
+      name: 'MusoBuddy',
+      description: 'Complete business management platform for freelance musicians',
+      status: 'operational',
+      deployment: 'production',
+      authentication: 'Replit OAuth',
+      database: 'PostgreSQL',
+      features: {
+        enquiries: 'Lead management and tracking',
+        contracts: 'Digital contract creation and signing',
+        invoices: 'Invoice generation with PDF support',
+        calendar: 'Booking management and scheduling',
+        email: 'Email forwarding and automation',
+        clients: 'Address book and client management'
+      }
+    });
+  });
+
   // Auth middleware
   await setupAuth(app);
 
