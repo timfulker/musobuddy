@@ -23,6 +23,9 @@ import {
   emailTemplates,
   type EmailTemplate,
   type InsertEmailTemplate,
+  clients,
+  type Client,
+  type InsertClient,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, ne } from "drizzle-orm";
@@ -86,6 +89,13 @@ export interface IStorage {
   createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate>;
   updateEmailTemplate(id: number, updates: Partial<EmailTemplate>, userId: string): Promise<EmailTemplate | undefined>;
   deleteEmailTemplate(id: number, userId: string): Promise<boolean>;
+  
+  // Client operations
+  getClients(userId: string): Promise<Client[]>;
+  getClient(id: number, userId: string): Promise<Client | undefined>;
+  createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: number, client: Partial<InsertClient>, userId: string): Promise<Client | undefined>;
+  deleteClient(id: number, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -580,6 +590,35 @@ export class DatabaseStorage implements IStorage {
   async deleteEmailTemplate(id: number, userId: string): Promise<boolean> {
     const result = await db.delete(emailTemplates)
       .where(and(eq(emailTemplates.id, id), eq(emailTemplates.userId, userId)));
+    return result.rowCount > 0;
+  }
+
+  // Client operations
+  async getClients(userId: string): Promise<Client[]> {
+    return await db.select().from(clients).where(eq(clients.userId, userId)).orderBy(desc(clients.createdAt));
+  }
+
+  async getClient(id: number, userId: string): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(and(eq(clients.id, id), eq(clients.userId, userId)));
+    return client;
+  }
+
+  async createClient(clientData: InsertClient): Promise<Client> {
+    const [client] = await db.insert(clients).values(clientData).returning();
+    return client;
+  }
+
+  async updateClient(id: number, updateData: Partial<InsertClient>, userId: string): Promise<Client | undefined> {
+    const result = await db
+      .update(clients)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(and(eq(clients.id, id), eq(clients.userId, userId)))
+      .returning();
+    return result[0];
+  }
+
+  async deleteClient(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(clients).where(and(eq(clients.id, id), eq(clients.userId, userId)));
     return result.rowCount > 0;
   }
 }

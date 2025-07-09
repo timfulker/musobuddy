@@ -18,6 +18,7 @@ import SignContract from "@/pages/sign-contract";
 import ViewContract from "@/pages/view-contract";
 import ViewInvoice from "@/pages/view-invoice";
 import QuickAdd from "@/pages/quick-add";
+import AddressBook from "@/pages/address-book";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -36,6 +37,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/enquiries" component={Enquiries} />
+          <Route path="/address-book" component={AddressBook} />
           <Route path="/contracts" component={Contracts} />
           <Route path="/invoices" component={Invoices} />
           <Route path="/calendar" component={Calendar} />

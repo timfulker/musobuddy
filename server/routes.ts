@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema } from "@shared/schema";
+import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Primary SendGrid webhook endpoint using proper email handling
@@ -1613,6 +1613,65 @@ Jane`
       console.error("Error details:", error.message);
       console.error("Error stack:", error.stack);
       res.status(500).json({ message: "Failed to save settings" });
+    }
+  });
+
+  // Client (Address Book) routes
+  app.get('/api/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const clients = await storage.getClients(userId);
+      res.json(clients);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
+
+  app.post('/api/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const clientData = insertClientSchema.parse({ ...req.body, userId });
+      const client = await storage.createClient(clientData);
+      res.status(201).json(client);
+    } catch (error) {
+      console.error("Error creating client:", error);
+      res.status(500).json({ message: "Failed to create client" });
+    }
+  });
+
+  app.patch('/api/clients/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const clientId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      const client = await storage.updateClient(clientId, updateData, userId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      res.json(client);
+    } catch (error) {
+      console.error("Error updating client:", error);
+      res.status(500).json({ message: "Failed to update client" });
+    }
+  });
+
+  app.delete('/api/clients/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const clientId = parseInt(req.params.id);
+      
+      const success = await storage.deleteClient(clientId, userId);
+      if (success) {
+        res.json({ message: "Client deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Client not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      res.status(500).json({ message: "Failed to delete client" });
     }
   });
 
