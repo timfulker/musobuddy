@@ -1888,7 +1888,9 @@ Jane`
   // Get Google Calendar authorization URL
   app.get('/api/calendar/google/auth', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('Generating Google auth URL...');
       const authUrl = getGoogleAuthUrl();
+      console.log('Auth URL generated:', authUrl);
       res.json({ authUrl });
     } catch (error) {
       console.error("Error getting Google auth URL:", error);
@@ -1903,18 +1905,25 @@ Jane`
   // Handle Google Calendar OAuth callback
   app.get('/api/calendar/google/callback', async (req, res) => {
     try {
+      console.log('Google OAuth callback received');
       const { code, state } = req.query;
+      console.log('Code received:', !!code);
       
       if (!code) {
+        console.log('No authorization code received');
         return res.redirect('/calendar?error=no_code');
       }
 
+      console.log('Exchanging code for tokens...');
       const { tokens, userInfo } = await handleGoogleCallback(code as string);
+      console.log('Tokens received:', !!tokens);
+      console.log('User info:', userInfo?.email);
       
       // Store tokens in session for now
       (req as any).session.googleCalendarTokens = tokens;
       (req as any).session.googleUserInfo = userInfo;
       
+      console.log('Tokens stored in session, redirecting to calendar');
       // Redirect back to calendar page with success
       res.redirect('/calendar?google_auth=success');
     } catch (error) {
@@ -1926,13 +1935,18 @@ Jane`
   // Get Google Calendar list
   app.get('/api/calendar/google/calendars', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('Fetching Google calendars...');
       const tokens = req.session.googleCalendarTokens;
+      console.log('Tokens found in session:', !!tokens);
       
       if (!tokens) {
+        console.log('No tokens in session');
         return res.status(400).json({ message: "Google Calendar not connected. Please authenticate first." });
       }
 
+      console.log('Calling getGoogleCalendars...');
       const calendars = await getGoogleCalendars(tokens);
+      console.log('Calendars fetched:', calendars.length);
       res.json(calendars);
     } catch (error) {
       console.error("Error fetching Google calendars:", error);
