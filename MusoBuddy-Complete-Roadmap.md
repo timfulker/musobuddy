@@ -47,6 +47,7 @@ This document provides a comprehensive roadmap for MusoBuddy development across 
 **Target Audience: Musicians and DJs**
 **Status: Documented and Ready for Implementation**
 **Timeline: 6 months development (January - June 2026)**
+**Revenue Model: Premium Subscription Launch**
 
 ### A. Musician-Specific Business Intelligence
 
@@ -101,6 +102,45 @@ This document provides a comprehensive roadmap for MusoBuddy development across 
 - **Improved conversion**: Better follow-up leads to more bookings
 - **Mobile optimization**: Manage client emails on any device
 
+### C. Premium Subscription Model
+
+#### Subscription Tiers
+
+**Free Tier (Current Phase 1 Features)**
+- Basic enquiry management (up to 20 enquiries/month)
+- Standard contract creation (3 templates)
+- Basic invoice generation (up to 10 invoices/month)
+- Email forwarding via leads@musobuddy.com
+- Standard email templates
+
+**Premium Tier (£19.99/month)**
+- Unlimited enquiries and invoices
+- Advanced business intelligence dashboard
+- Complete email correspondence system
+- Unlimited custom email templates
+- Priority email support
+- Advanced analytics and insights
+- Automated follow-up sequences
+- Custom contract templates (unlimited)
+- Advanced reporting and exports
+
+**Pro Tier (£39.99/month)**
+- All Premium features
+- Multi-user collaboration
+- Advanced calendar integration
+- Priority feature requests
+- Phone support
+- Custom integrations
+- Advanced automation workflows
+- White-label options
+
+#### Premium Features Implementation
+- **Subscription Management**: Stripe integration for recurring payments
+- **Feature Gating**: Tier-based access control throughout platform
+- **Usage Tracking**: Monitor feature usage and limits
+- **Upgrade Prompts**: Smart upgrade suggestions based on usage patterns
+- **Billing Dashboard**: Self-service subscription management
+
 ---
 
 ## Phase 3: Advanced Platform Features (Summer 2026)
@@ -133,6 +173,14 @@ This document provides a comprehensive roadmap for MusoBuddy development across 
 - **Social Media**: Instagram, Facebook business integration
 - **Music Platforms**: Spotify, Apple Music playlist management
 - **Payment Processing**: Stripe, PayPal, GoCardless direct integration
+
+#### Personalized Email Addresses (Phase 3 Feature)
+- **Custom Domain Support**: yourname@yourbusiness.com email addresses
+- **Professional Branding**: Full email customization with business domain
+- **Email Forwarding**: Advanced routing and forwarding options
+- **Domain Management**: Integrated domain setup and DNS management
+- **Email Analytics**: Advanced tracking and performance metrics
+- **Multi-User Support**: Team email addresses and management
 
 ### Mobile Platform Strategy (Decision Point)
 
@@ -173,11 +221,11 @@ This document provides a comprehensive roadmap for MusoBuddy development across 
 
 ### Phase 2 (January 1, 2026 - June 30, 2026)
 - **Month 1 (January)**: Database enhancement and email threading foundation
-- **Month 2 (February)**: Business intelligence dashboard implementation
-- **Month 3 (March)**: Email correspondence interface development
-- **Month 4 (April)**: Smart reply system and template integration
-- **Month 5 (May)**: Mobile optimization and notification system
-- **Month 6 (June)**: Testing, analytics, and performance optimization
+- **Month 2 (February)**: Business intelligence dashboard implementation + Subscription system setup
+- **Month 3 (March)**: Email correspondence interface development + Premium tier launch
+- **Month 4 (April)**: Smart reply system and template integration + Feature gating
+- **Month 5 (May)**: Mobile optimization and notification system + Pro tier launch
+- **Month 6 (June)**: Testing, analytics, and performance optimization + Subscription analytics
 
 ### Phase 3 (Summer 2026 - Spring 2027)
 - **Months 1-3 (Summer 2026)**: Advanced client management features
@@ -201,6 +249,8 @@ This document provides a comprehensive roadmap for MusoBuddy development across 
 - **Client Conversion Rate**: 25% increase in enquiry-to-booking conversion
 - **Revenue Growth**: 20% increase through better follow-up and pricing insights
 - **User Engagement**: 40% increase in daily platform usage
+- **Subscription Adoption**: 30% conversion rate from free to premium tier
+- **Monthly Recurring Revenue**: £50,000 MRR within 6 months of launch
 
 ### Phase 3 Goals
 - **Business Scaling**: Support for multi-service music businesses
