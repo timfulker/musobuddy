@@ -40,6 +40,8 @@ export const enquiries = pgTable("enquiries", {
   estimatedValue: decimal("estimated_value", { precision: 10, scale: 2 }),
   status: varchar("status").notNull().default("new"), // new, qualified, contract_sent, confirmed, rejected
   notes: text("notes"),
+  responseNeeded: boolean("response_needed").default(true), // Visual indicator for enquiries requiring response
+  lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2, Reply } from "lucide-react";
+import { Plus, Search, Filter, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2, Reply, AlertCircle, CheckCircle } from "lucide-react";
 import { z } from "zod";
 import { Link } from "wouter";
 
@@ -230,6 +230,26 @@ export default function Enquiries() {
     
     return matchesSearch && matchesStatus;
   });
+
+  // Helper function to determine if response is needed
+  const needsResponse = (enquiry: Enquiry): boolean => {
+    // Check if explicitly marked as needing response
+    if (enquiry.responseNeeded) return true;
+    
+    // Check if it's a new enquiry with no contact for over 24 hours
+    if (enquiry.status === "new" && !enquiry.lastContactedAt) {
+      const hoursSinceCreated = (new Date().getTime() - new Date(enquiry.createdAt!).getTime()) / (1000 * 60 * 60);
+      return hoursSinceCreated > 24;
+    }
+    
+    // Check if last contact was over 72 hours ago for in-progress enquiries
+    if (enquiry.status === "qualified" && enquiry.lastContactedAt) {
+      const hoursSinceContact = (new Date().getTime() - new Date(enquiry.lastContactedAt).getTime()) / (1000 * 60 * 60);
+      return hoursSinceContact > 72;
+    }
+    
+    return false;
+  };
 
   if (isLoading) {
     return (
@@ -558,9 +578,17 @@ export default function Enquiries() {
                     <div className="pr-12">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="text-lg font-semibold text-gray-900">{enquiry.title}</h3>
-                        <Badge className={getStatusColor(enquiry.status)}>
-                          {enquiry.status.replace('_', ' ').toUpperCase()}
-                        </Badge>
+                        <div className="flex items-center space-x-2">
+                          {needsResponse(enquiry) && (
+                            <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+                              <AlertCircle className="w-3 h-3" />
+                              <span>Response needed</span>
+                            </div>
+                          )}
+                          <Badge className={getStatusColor(enquiry.status)}>
+                            {enquiry.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
