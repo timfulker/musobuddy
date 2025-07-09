@@ -30,16 +30,21 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
   const googleAuthMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('/api/calendar/google/auth');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Authentication failed');
+      }
       return response.json();
     },
     onSuccess: (data) => {
       // Redirect to Google OAuth (full page redirect for better compatibility)
       window.location.href = data.authUrl;
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Google auth error:', error);
       toast({
-        title: "Error",
-        description: "Failed to initialize Google Calendar connection",
+        title: "Authentication Error",
+        description: error.message || "Failed to initialize Google Calendar connection",
         variant: "destructive",
       });
     },
@@ -49,16 +54,22 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
   const getCalendarsMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('/api/calendar/google/calendars');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch calendars');
+      }
       return response.json();
     },
     onSuccess: (calendars) => {
+      console.log('Calendars received:', calendars);
       setGoogleCalendars(calendars);
       setImportStep('configure');
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Calendar fetch error:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch Google calendars",
+        title: "Calendar Error",
+        description: error.message || "Failed to fetch Google calendars",
         variant: "destructive",
       });
     },
