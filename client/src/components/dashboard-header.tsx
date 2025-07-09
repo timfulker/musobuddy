@@ -5,19 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus } from "lucide-react";
 import { Link } from "wouter";
 import NotificationsDropdown from "@/components/notifications-dropdown";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-background border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Add left margin on mobile to make room for hamburger menu */}
-          <h2 className="text-xl md:text-2xl font-bold text-gray-900 ml-12 md:ml-0">Dashboard</h2>
-          <div className="hidden md:flex items-center space-x-2 text-sm text-gray-500">
-            <span>Welcome back, <span className="font-medium text-gray-900">{user?.firstName || "User"}</span></span>
+          <h2 className="text-xl md:text-2xl font-bold text-foreground ml-12 md:ml-0">Dashboard</h2>
+          <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
+            <span>Welcome back, <span className="font-medium text-foreground">{user?.firstName || "User"}</span></span>
           </div>
         </div>
         
@@ -31,15 +32,18 @@ export default function DashboardHeader() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-64 pl-10"
             />
-            <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
           </div>
+          
+          {/* Theme Toggle */}
+          <ThemeToggle />
           
           {/* Notifications */}
           <NotificationsDropdown />
           
           {/* Quick Actions */}
           <Link href="/enquiries?action=new">
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">New Enquiry</span>
               <span className="sm:hidden">New</span>

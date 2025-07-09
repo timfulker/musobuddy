@@ -294,6 +294,13 @@ Changelog:
   * Changed "Block Time" to "Mark Unavailable" throughout calendar system
   * Updated button text, dialog title, and toast messages for better user understanding
   * Professional terminology that clearly communicates the purpose of blocking dates
+- July 09, 2025. Superhuman-inspired theme implementation:
+  * Implemented modern dark/light theme system with Superhuman-inspired color palette
+  * Added theme toggle functionality with light/dark mode switching
+  * Updated color scheme to use purple/violet accent colors matching Superhuman's aesthetic
+  * Enhanced UI with improved contrast, modern typography, and smooth transitions
+  * Applied theme variables throughout sidebar, header, and component system
+  * Created ThemeProvider component with localStorage persistence
 - July 09, 2025. Calendar system enhancement with comprehensive booking management:
   * Implemented three-color status scheme: Green (confirmed), Purple (completed), Red (cancelled), Amber (pending)
   * Added automatic integration with enquiries and contracts showing potential bookings
