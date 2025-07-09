@@ -13,9 +13,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2, Reply, AlertCircle, CheckCircle } from "lucide-react";
+import { Plus, Search, Filter, DollarSign, Clock, Calendar, ArrowLeft, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus } from "lucide-react";
 import { z } from "zod";
 import { Link } from "wouter";
+import { insertClientSchema, type InsertClient } from "@shared/schema";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
@@ -102,6 +103,33 @@ export default function Enquiries() {
       toast({
         title: "Error",
         description: "Failed to delete enquiry. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addToAddressBookMutation = useMutation({
+    mutationFn: async (enquiry: Enquiry) => {
+      const clientData: InsertClient = {
+        name: enquiry.clientName,
+        email: enquiry.clientEmail || "",
+        phone: enquiry.clientPhone || "",
+        address: "", // We don't have address from enquiry
+        notes: `Added from enquiry: ${enquiry.title}${enquiry.venue ? ` at ${enquiry.venue}` : ''}`
+      };
+      return apiRequest("/api/clients", "POST", clientData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      toast({
+        title: "Success", 
+        description: "Client added to address book successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add client to address book",
         variant: "destructive",
       });
     },
@@ -480,6 +508,22 @@ export default function Enquiries() {
                       💡 SMS responses will be available soon for phone enquiries
                     </div>
                   )}
+                </div>
+
+                {/* Add to Address Book Button */}
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => selectedEnquiry && addToAddressBookMutation.mutate(selectedEnquiry)}
+                    disabled={addToAddressBookMutation.isPending}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center space-x-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>
+                      {addToAddressBookMutation.isPending ? "Adding..." : "Add to Address Book"}
+                    </span>
+                  </Button>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

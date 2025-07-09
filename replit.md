@@ -244,6 +244,13 @@ Changelog:
   * Invoices can now be created and sent completely independently without requiring contracts
   * Contract dropdown auto-fills all fields including client email when selected for speed
   * Updated form validation to support standalone invoice creation with proper email handling
+- July 09, 2025. Enhanced address book with selective client management:
+  * Implemented complete address book system with client CRUD operations
+  * Added "Add to Address Book" button in enquiry response dialog for selective client addition
+  * Removed auto-population from enquiries to address book for better workflow control
+  * Users can now choose which enquiries to convert to permanent client contacts
+  * Address book includes client statistics, search functionality, and comprehensive management
+  * Fixed logo display with professional music icon gradient design
 - July 07, 2025. Mobile dashboard optimization completed:
   * Fixed header layout conflict where hamburger menu overlapped with "Dashboard" title
   * Added proper spacing (ml-12 md:ml-0) to accommodate mobile navigation button
