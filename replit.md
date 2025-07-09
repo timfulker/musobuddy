@@ -260,7 +260,8 @@ Changelog:
   * Fixed calendar import function to match database schema requirements
   * Enhanced import process to create proper contracts and bookings for imported events
   * System ready for one-way sync from Google Calendar to MusoBuddy
-  * **Setup Required**: Google Cloud Console OAuth redirect URI needs updating to https://workspace.timfulker.repl.co/api/calendar/google/callback
+  * **Setup Required**: Google Cloud Console OAuth consent screen needs test user configuration
+  * **Issue**: OAuth consent screen in testing mode requires adding timfulker@gmail.com as test user
 - July 09, 2025. Calendar import authentication flow optimized:
   * Implemented full-page OAuth redirect for better compatibility with Google Calendar
   * Added automatic calendar list fetching after successful authentication
