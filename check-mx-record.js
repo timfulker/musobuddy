@@ -5,28 +5,34 @@
 import dns from 'dns';
 
 async function checkMXRecord() {
-  console.log('Checking MX record for musobuddy.com...');
+  console.log('🔍 Checking MX record for musobuddy.com...\n');
   
   try {
     const mxRecords = await dns.promises.resolveMx('musobuddy.com');
-    console.log('MX Records found:', mxRecords);
+    console.log('MX Records found:');
     
-    const sendgridMx = mxRecords.find(r => r.exchange === 'mx.sendgrid.net');
+    mxRecords.forEach((record, index) => {
+      console.log(`${index + 1}. Priority: ${record.priority}, Exchange: ${record.exchange}`);
+    });
     
-    if (sendgridMx) {
-      console.log('✅ SendGrid MX Record FOUND:');
-      console.log(`   Exchange: ${sendgridMx.exchange}`);
-      console.log(`   Priority: ${sendgridMx.priority}`);
-      console.log('\n✅ This means MX record is working from DNS perspective');
-      console.log('   But it needs to be visible in Namecheap control panel too');
+    // Check if SendGrid MX is present
+    const hasSendGrid = mxRecords.some(record => 
+      record.exchange.includes('sendgrid.net')
+    );
+    
+    if (hasSendGrid) {
+      console.log('\n✅ SendGrid MX record found - should be working');
+      console.log('💡 The "550 Mailbox not found" error suggests:');
+      console.log('   - Your email client is bypassing SendGrid');
+      console.log('   - DNS cache needs to be cleared');
+      console.log('   - Try sending from a different email client/server');
     } else {
-      console.log('❌ SendGrid MX Record NOT FOUND');
-      console.log('   This is why email forwarding is not working');
+      console.log('\n❌ SendGrid MX record NOT found');
+      console.log('💡 This explains the "550 Mailbox not found" error');
     }
     
   } catch (error) {
-    console.log('❌ Error checking MX record:', error.message);
-    console.log('   This suggests no MX record exists');
+    console.error('Error checking MX records:', error);
   }
 }
 
