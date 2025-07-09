@@ -117,7 +117,7 @@ export default function Enquiries() {
         address: "", // We don't have address from enquiry
         notes: `Added from enquiry: ${enquiry.title}${enquiry.venue ? ` at ${enquiry.venue}` : ''}`
       };
-      return apiRequest("/api/clients", "POST", clientData);
+      return apiRequest("POST", "/api/clients", clientData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
