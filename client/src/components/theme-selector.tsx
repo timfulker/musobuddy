@@ -99,6 +99,7 @@ export function ThemeSelector() {
 
   const applyTheme = (theme: Theme) => {
     const root = document.documentElement;
+    console.log('Applying theme:', theme.name, 'ID:', theme.id);
     
     switch (theme.id) {
       case 'superhuman':
@@ -262,10 +263,22 @@ export function ThemeSelector() {
     // Save to localStorage
     localStorage.setItem('musobuddy-theme', theme.id);
     
+    // Log what was set
+    console.log('CSS Variables set:', {
+      primary: root.style.getPropertyValue('--primary'),
+      background: root.style.getPropertyValue('--background'),
+      foreground: root.style.getPropertyValue('--foreground')
+    });
+    
     // Force a slight delay to ensure CSS variables are applied
     setTimeout(() => {
       // Trigger a re-render by updating a data attribute
       document.documentElement.setAttribute('data-theme', theme.id);
+      // Force a repaint by temporarily changing a harmless style
+      document.body.style.transform = 'translateZ(0)';
+      setTimeout(() => {
+        document.body.style.transform = '';
+      }, 10);
     }, 50);
   };
 
@@ -288,9 +301,9 @@ export function ThemeSelector() {
           Theme
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Choose Your Theme</DialogTitle>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-background border shadow-lg">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-2xl font-bold">Choose Your Theme</DialogTitle>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
@@ -302,7 +315,8 @@ export function ThemeSelector() {
               }`}
               onClick={() => {
                 applyTheme(theme);
-                setOpen(false);
+                // Don't close immediately to let user see the change
+                setTimeout(() => setOpen(false), 200);
               }}
             >
               <CardHeader className="pb-3">
