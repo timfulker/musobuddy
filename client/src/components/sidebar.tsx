@@ -62,11 +62,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 flex items-center justify-center">
-              <img 
-                src="/attached_assets/musobuddy_logo_1752051088182.png" 
-                alt="MusoBuddy" 
-                className="w-10 h-10 object-contain"
-              />
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <Music className="w-6 h-6 text-white" />
+              </div>
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">MusoBuddy</h1>
