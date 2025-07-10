@@ -10,6 +10,9 @@ import {
 import multer from 'multer';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware setup FIRST
+  await setupAuth(app);
+
   // Primary SendGrid webhook endpoint using proper email handling
   app.post('/api/webhook/sendgrid', async (req, res) => {
     console.log('🔥 WEBHOOK HIT! Email received via /api/webhook/sendgrid');
@@ -38,6 +41,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in Mailgun webhook:", error);
       res.status(500).json({ message: "Failed to process Mailgun webhook" });
+    }
+  });
+
+  // PRIORITY ROUTES - These must be registered before Vite middleware
+  // Invoice creation route (moved to priority section to avoid Vite interference)
+  app.post('/api/invoices', async (req: any, res) => {
+    console.log('🎯 PRIORITY INVOICE ROUTE HIT!');
+    try {
+      // Authentication check using middleware
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const userId = req.user.claims.sub;
+      console.log("=== INVOICE CREATION REQUEST ===");
+      console.log("User ID:", userId);
+      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
+      
+      // Check if we have the required fields
+      const requiredFields = ['clientName', 'amount', 'dueDate'];
+      const missingFields = requiredFields.filter(field => !req.body[field]);
+      
+      if (missingFields.length > 0) {
+        console.log("Missing required fields:", missingFields);
+        return res.status(400).json({ 
+          message: "Missing required fields", 
+          missing: missingFields 
+        });
+      }
+      
+      // Prepare the invoice data with all required fields
+      const invoiceData = {
+        userId,
+        contractId: req.body.contractId ? parseInt(req.body.contractId.toString()) : null,
+        clientName: req.body.clientName,
+        clientEmail: req.body.clientEmail || null,
+        clientAddress: req.body.clientAddress || null,
+        venueAddress: req.body.venueAddress || null,
+        amount: req.body.amount.toString(),
+        dueDate: new Date(req.body.dueDate),
+        performanceDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
+        performanceFee: req.body.performanceFee || req.body.amount.toString(),
+        depositPaid: req.body.depositPaid || "0",
+        status: "draft",
+      };
+      
+      console.log("Processed invoice data:", JSON.stringify(invoiceData, null, 2));
+      
+      // Validate against schema
+      const validatedData = insertInvoiceSchema.parse(invoiceData);
+      console.log("Validation successful:", JSON.stringify(validatedData, null, 2));
+      
+      const invoice = await storage.createInvoice(validatedData);
+      console.log("Invoice created successfully:", invoice);
+      res.status(201).json(invoice);
+    } catch (error: any) {
+      console.error("=== INVOICE CREATION ERROR ===");
+      console.error("Error type:", error.name);
+      console.error("Error message:", error.message);
+      
+      if (error.name === 'ZodError') {
+        const fieldErrors = error.errors.map((e: any) => {
+          const field = e.path.join('.');
+          switch(field) {
+            case 'clientName': return "Client name is required";
+            case 'amount': return "Amount must be a valid number";
+            case 'dueDate': return "Due date is required";
+            case 'clientEmail': return "Please enter a valid email address";
+            default: return `${field}: ${e.message}`;
+          }
+        });
+        
+        res.status(400).json({ 
+          message: `Please fix the following: ${fieldErrors.join(', ')}`,
+          errors: error.errors,
+          details: fieldErrors
+        });
+      } else if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        res.status(400).json({ 
+          message: "An invoice with this number already exists. Please try again.",
+          error: error.message 
+        });
+      } else {
+        console.error("Stack trace:", error.stack);
+        res.status(500).json({ 
+          message: "Unable to create invoice. Please check your internet connection and try again.",
+          error: error.message 
+        });
+      }
     }
   });
 
@@ -261,11 +353,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       </html>
     `);
   });
-
-  // Auth middleware
-  await setupAuth(app);
-
-
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -894,94 +981,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting invoice:", error);
       res.status(500).json({ message: "Failed to delete invoice" });
-    }
-  });
-
-
-
-  app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      console.log("=== INVOICE CREATION REQUEST ===");
-      console.log("User ID:", userId);
-      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
-      
-      // Check if we have the required fields
-      const requiredFields = ['clientName', 'amount', 'dueDate'];
-      const missingFields = requiredFields.filter(field => !req.body[field]);
-      
-      if (missingFields.length > 0) {
-        console.log("Missing required fields:", missingFields);
-        return res.status(400).json({ 
-          message: "Missing required fields", 
-          missing: missingFields 
-        });
-      }
-      
-      // Prepare the invoice data with all required fields
-      const invoiceData = {
-        userId,
-        // invoiceNumber is auto-generated in storage layer - don't include it
-        contractId: req.body.contractId ? parseInt(req.body.contractId.toString()) : null,
-        clientName: req.body.clientName,
-        clientEmail: req.body.clientEmail || null,
-        clientAddress: req.body.clientAddress || null,
-        venueAddress: req.body.venueAddress || null,
-        amount: req.body.amount.toString(),
-        dueDate: new Date(req.body.dueDate),
-        performanceDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
-        performanceFee: req.body.performanceFee || req.body.amount.toString(),
-        depositPaid: req.body.depositPaid || "0",
-        status: "draft",
-      };
-      
-      console.log("Processed invoice data:", JSON.stringify(invoiceData, null, 2));
-      
-      // Validate against schema
-      console.log("Validating invoice data...");
-      const validatedData = insertInvoiceSchema.parse(invoiceData);
-      console.log("Validation successful:", JSON.stringify(validatedData, null, 2));
-      
-      const invoice = await storage.createInvoice(validatedData);
-      console.log("Invoice created successfully:", invoice);
-      res.status(201).json(invoice);
-    } catch (error: any) {
-      console.error("=== INVOICE CREATION ERROR ===");
-      console.error("Error type:", error.name);
-      console.error("Error message:", error.message);
-      
-      if (error.name === 'ZodError') {
-        console.error("Validation errors:", JSON.stringify(error.errors, null, 2));
-        
-        // Create user-friendly error messages
-        const fieldErrors = error.errors.map(e => {
-          const field = e.path.join('.');
-          switch(field) {
-            case 'clientName': return "Client name is required";
-            case 'amount': return "Amount must be a valid number";
-            case 'dueDate': return "Due date is required";
-            case 'clientEmail': return "Please enter a valid email address";
-            default: return `${field}: ${e.message}`;
-          }
-        });
-        
-        res.status(400).json({ 
-          message: `Please fix the following: ${fieldErrors.join(', ')}`,
-          errors: error.errors,
-          details: fieldErrors
-        });
-      } else if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
-        res.status(400).json({ 
-          message: "An invoice with this number already exists. Please try again.",
-          error: error.message 
-        });
-      } else {
-        console.error("Stack trace:", error.stack);
-        res.status(500).json({ 
-          message: "Unable to create invoice. Please check your internet connection and try again.",
-          error: error.message 
-        });
-      }
     }
   });
 
