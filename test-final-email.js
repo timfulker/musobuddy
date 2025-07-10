@@ -1,51 +1,43 @@
-// Monitor for webhook activity after DNS fix
-console.log('🔍 MONITORING FOR WEBHOOK ACTIVITY (DNS FIXED)...');
+/**
+ * Monitor for new enquiries from email forwarding test
+ */
 
-let lastEnquiryId = 28; // Current max ID
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL);
 
 async function checkForNewEnquiries() {
-  const interval = setInterval(async () => {
-    try {
-      // Check database directly for new enquiries
-      const response = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid');
-      const status = await response.json();
-      
-      if (response.ok) {
-        console.log('✅ Webhook endpoint accessible:', status.message);
-        
-        // Check for new enquiries by testing webhook
-        const testResponse = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: 'leads@musobuddy.com',
-            from: 'dns-test@example.com',
-            subject: 'DNS Fix Test',
-            text: 'Testing after DNS propagation fix',
-            envelope: { from: 'dns-test@example.com', to: ['leads@musobuddy.com'] }
-          })
-        });
-        
-        if (testResponse.ok) {
-          const result = await testResponse.json();
-          console.log('🎉 TEST WEBHOOK SUCCESSFUL:', result);
-          
-          if (result.enquiryId && result.enquiryId > lastEnquiryId) {
-            console.log(`📧 New enquiry created: #${result.enquiryId}`);
-            lastEnquiryId = result.enquiryId;
-          }
-        }
-      }
-    } catch (error) {
-      console.log('❌ Error:', error.message);
-    }
-  }, 5000);
+  console.log('=== CHECKING FOR NEW ENQUIRIES ===');
   
-  // Stop after 10 minutes
-  setTimeout(() => {
-    clearInterval(interval);
-    console.log('⏰ Monitoring stopped');
-  }, 600000);
+  try {
+    // Get the 5 most recent enquiries
+    const enquiries = await sql`
+      SELECT id, title, client_name, client_email, event_date, event_type, notes, created_at
+      FROM enquiries 
+      ORDER BY created_at DESC 
+      LIMIT 5
+    `;
+    
+    console.log(`Found ${enquiries.length} recent enquiries:`);
+    
+    enquiries.forEach((enquiry, index) => {
+      console.log(`\n${index + 1}. Enquiry #${enquiry.id}`);
+      console.log(`   Title: ${enquiry.title}`);
+      console.log(`   Client: ${enquiry.client_name}`);
+      console.log(`   Email: ${enquiry.client_email}`);
+      console.log(`   Event: ${enquiry.event_type} on ${enquiry.event_date}`);
+      console.log(`   Notes: ${enquiry.notes?.substring(0, 100)}...`);
+      console.log(`   Created: ${enquiry.created_at}`);
+    });
+    
+    console.log('\n=== NEXT STEPS ===');
+    console.log('1. Send a test email to leads@musobuddy.com');
+    console.log('2. Check your MusoBuddy enquiries page');
+    console.log('3. Run this script again to see new enquiries');
+    
+  } catch (error) {
+    console.error('Error checking enquiries:', error);
+  }
 }
 
 checkForNewEnquiries();
