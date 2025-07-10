@@ -31,6 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Request from IP:', req.ip);
     console.log('User-Agent:', req.headers['user-agent']);
     console.log('Content-Type:', req.headers['content-type']);
+    console.log('Raw request body:', JSON.stringify(req.body, null, 2));
     try {
       const { handleMailgunWebhook } = await import('./mailgun-webhook');
       await handleMailgunWebhook(req, res);

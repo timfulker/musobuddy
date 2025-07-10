@@ -89,7 +89,9 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
   
   try {
     console.log('📧 MAILGUN WEBHOOK PROCESSING EMAIL');
+    console.log('Request headers:', JSON.stringify(req.headers, null, 2));
     console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('Request body keys:', Object.keys(req.body || {}));
     
     const {
       recipient,
