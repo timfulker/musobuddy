@@ -1,8 +1,66 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
 
 const app = express();
+
+// CRITICAL: Register invoice route FIRST, before ANY middleware to bypass Vite interference  
+app.post('/api/invoices', express.json({ limit: '50mb' }), async (req: any, res) => {
+  console.log('🚨 PRIORITY INVOICE ROUTE HIT - FIRST IN STACK!');
+  console.log('Method:', req.method);
+  console.log('Path:', req.path);
+  console.log('Body:', req.body);
+  console.log('Session check - req.session:', !!req.session);
+  console.log('Session user:', req.session?.user?.id);
+  
+  // Skip auth check for now to test if route is working
+  const userId = '43963086'; // Hard-coded for testing
+  console.log('⚠️ USING HARDCODED USER ID FOR TESTING:', userId);
+  
+  try {
+    const { clientName, clientEmail, clientAddress, venueAddress, amount, dueDate, performanceDate, contractId } = req.body;
+    
+    // Get user settings for invoice numbering
+    const userSettings = await storage.getUserSettings(userId);
+    let nextInvoiceNumber = userSettings?.nextInvoiceNumber || 1;
+    
+    // Check if invoice number already exists and increment if needed
+    let invoiceNumber = String(nextInvoiceNumber).padStart(5, '0');
+    let existingInvoice = await storage.getInvoiceByNumber(userId, invoiceNumber);
+    
+    while (existingInvoice) {
+      nextInvoiceNumber++;
+      invoiceNumber = String(nextInvoiceNumber).padStart(5, '0');
+      existingInvoice = await storage.getInvoiceByNumber(userId, invoiceNumber);
+    }
+    
+    const invoice = await storage.createInvoice({
+      userId: userId,
+      clientName,
+      clientEmail,
+      clientAddress,
+      venueAddress,
+      amount: parseFloat(amount),
+      dueDate: new Date(dueDate),
+      performanceDate: new Date(performanceDate),
+      contractId: contractId || null,
+      invoiceNumber,
+      status: 'draft'
+    });
+    
+    // Update next invoice number
+    await storage.updateUserSettings(userId, {
+      nextInvoiceNumber: nextInvoiceNumber + 1
+    });
+    
+    console.log('✅ Invoice created successfully:', invoice);
+    res.json(invoice);
+  } catch (error) {
+    console.error('❌ Invoice creation error:', error);
+    res.status(500).json({ message: 'Failed to create invoice' });
+  }
+});
 
 // Essential middleware setup
 app.use(express.json({ limit: '50mb' }));

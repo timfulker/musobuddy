@@ -10,63 +10,9 @@ import {
 import multer from 'multer';
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // CRITICAL: Register invoice route BEFORE auth middleware to avoid Vite interference
-  app.post('/api/invoices', express.json(), async (req: any, res) => {
-    console.log('🚨 EMERGENCY INVOICE ROUTE HIT - BEFORE AUTH!');
-    console.log('Method:', req.method);
-    console.log('Path:', req.path);
-    console.log('Body:', req.body);
-    
-    // Manual authentication check since this is before auth middleware
-    if (!req.session?.user?.id) {
-      return res.status(401).json({ message: 'Authentication required' });
-    }
-    
-    try {
-      const { clientName, clientEmail, clientAddress, venueAddress, amount, dueDate, performanceDate, contractId } = req.body;
-      
-      // Get user settings for invoice numbering
-      const userSettings = await storage.getUserSettings(req.session.user.id);
-      let nextInvoiceNumber = userSettings?.nextInvoiceNumber || 1;
-      
-      // Check if invoice number already exists and increment if needed
-      let invoiceNumber = String(nextInvoiceNumber).padStart(5, '0');
-      let existingInvoice = await storage.getInvoiceByNumber(req.session.user.id, invoiceNumber);
-      
-      while (existingInvoice) {
-        nextInvoiceNumber++;
-        invoiceNumber = String(nextInvoiceNumber).padStart(5, '0');
-        existingInvoice = await storage.getInvoiceByNumber(req.session.user.id, invoiceNumber);
-      }
-      
-      const invoice = await storage.createInvoice({
-        userId: req.session.user.id,
-        clientName,
-        clientEmail,
-        clientAddress,
-        venueAddress,
-        amount: parseFloat(amount),
-        dueDate: new Date(dueDate),
-        performanceDate: new Date(performanceDate),
-        contractId: contractId || null,
-        invoiceNumber,
-        status: 'draft'
-      });
-      
-      // Update next invoice number
-      await storage.updateUserSettings(req.session.user.id, {
-        nextInvoiceNumber: nextInvoiceNumber + 1
-      });
-      
-      console.log('✅ Invoice created successfully:', invoice);
-      res.json(invoice);
-    } catch (error) {
-      console.error('❌ Invoice creation error:', error);
-      res.status(500).json({ message: 'Failed to create invoice' });
-    }
-  });
-
-  // Auth middleware setup AFTER critical routes
+  // Invoice route now registered in server/index.ts to avoid Vite interference
+  
+  // Auth middleware setup
   await setupAuth(app);
 
   // Debug middleware to log all requests
