@@ -727,13 +727,12 @@ All core features implemented and operational:
   * **Responsive PDF Viewer**: 800px height iframe for optimal viewing experience across devices
   * **Integrated Navigation**: Added sidebar and proper navigation breadcrumbs to maintain app context
   * **Multi-Level Navigation**: Dashboard and "Back to Invoices" buttons for clear navigation hierarchy
-- July 10, 2025. Professional branded background design implemented for external-facing pages:
-  * **Gradient Background**: Subtle blue-to-purple gradient with decorative blur elements for visual appeal
-  * **Glass Morphism Design**: Semi-transparent cards with backdrop blur effects for modern aesthetic
-  * **Brand Color Integration**: Purple and blue accent colors throughout interface elements
-  * **Professional Loading States**: Enhanced loading screens with branded styling and glass effects
-  * **Subtle Branding Elements**: "Powered by MusoBuddy" watermark and colored accent dots on cards
-  * **Consistent External Experience**: All invoice and contract viewing pages now feature professional branding
+- July 10, 2025. External invoice viewing system restored for email link compatibility:
+  * **Standalone External Pages**: Invoice view pages work independently without app authentication
+  * **Clean External Interface**: Simple close button instead of app navigation for email-accessed invoices
+  * **Email Link Compatibility**: External invoice links from emails work correctly without app integration
+  * **Professional PDF Viewer**: Maintains in-browser PDF preview with download functionality
+  * **Independent Operation**: External pages operate separately from main app for client accessibility
 - July 10, 2025. Mailgun backup email system implemented:
   * **Mailgun Integration**: Created complete webhook handler for Mailgun Routes system as SendGrid alternative
   * **Webhook Testing**: Confirmed Mailgun endpoint functional (test created enquiry #171 with 200 OK response)
