@@ -733,6 +733,12 @@ All core features implemented and operational:
   * **Email Link Compatibility**: External invoice links from emails work correctly without app integration
   * **Professional PDF Viewer**: Maintains in-browser PDF preview with download functionality
   * **Independent Operation**: External pages operate separately from main app for client accessibility
+- July 10, 2025. External invoice PDF preview system completely fixed:
+  * **Fixed Automatic Download Issue**: Created separate `/api/invoices/:id/pdf` endpoint for inline PDF viewing
+  * **Resolved Empty Preview Window**: PDF now displays correctly in iframe without triggering downloads
+  * **Enhanced PDF Serving**: Removed Content-Disposition headers for inline viewing, kept separate download endpoint
+  * **Professional External View**: Clean standalone invoice view with working PDF preview and manual download option
+  * **Universal Access**: Single PDF endpoint handles both authenticated and public access seamlessly
 - July 10, 2025. Mailgun backup email system implemented:
   * **Mailgun Integration**: Created complete webhook handler for Mailgun Routes system as SendGrid alternative
   * **Webhook Testing**: Confirmed Mailgun endpoint functional (test created enquiry #171 with 200 OK response)
