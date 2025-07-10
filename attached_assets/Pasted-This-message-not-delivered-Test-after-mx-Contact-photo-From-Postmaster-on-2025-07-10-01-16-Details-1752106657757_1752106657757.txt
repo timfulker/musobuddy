@@ -1,0 +1,64 @@
+This message not delivered: Test after mx 
+Contact photo
+From Postmaster on 2025-07-10 01:16
+Details Headers
+Delivery Status Report
+(~422 B)
+This message was created automatically by mail delivery software.
+
+Sorry, the message you're trying to send cannot be delivered to one or more recipients.
+The address may be invalid or mistyped. Please view the error below:
+
+<leads@musobuddy.com>: 550 Mailbox not found
+Reporting-MTA: dns; mail-2b-r17.ipv4.per01.ds.network
+Received-from-MTA: dns; cp-wc03.lon01.ds.network (176.74.26.42)
+Arrival-Date: Thu, 10 Jul 2025 08:16:45 +0800
+X-Original-ID: 28c77dfd-5d23-11f0-aeff-f8bc12f6d67f
+
+Final-Recipient: rfc822; leads@musobuddy.com
+Action: failed
+Status: 5.0.0
+Remote-MTA: dns; mx.sendgrid.net (13.216.54.185)
+Diagnostic-Code: smtp; 550 Mailbox not found (in reply to RCPT command)
+Received: from cp-wc03.lon01.ds.network (unknown [176.74.26.42])
+    by halon-out01.au.ds.network (Halon) with ESMTPS
+    id 28c77dfd-5d23-11f0-aeff-f8bc12f6d67f;
+    Thu, 10 Jul 2025 08:16:45 +0800 (AWST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+    d=saxweddings.com; s=default; h=Content-Type:MIME-Version:Subject:References:
+    Message-ID:To:From:Date:Sender:Reply-To:Cc:Content-Transfer-Encoding:
+    Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+    Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:List-Id:List-Help:
+    List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+    bh=2UnhoVM6MlkNYo5HookR3WTXkp1DTuYt7+Tj8Ubluu8=; b=VEQi3ahtuWHsLmrI15kU+IxtoX
+    pcdTUZjv088KcKaZUVIFrRaBrUDmU6YqtjQTHEefyP+vcxv8kam5vpxZ/5E/nuQEhAUtuoNuAugoh
+    69bOxV7DPCZSbfQP0GDSoorCMmeXthZbFelIxCd5DLvKRnqwbq0SHGCJDl79AMcNuuesiSGJU3QPx
+    wA1zu9pvoZKe0JO2bDLpRJGx03oNnBLHH2mLdKSoZdKuxu8rWQXsaxa+Mg8SmEQdmYiwSd60GdSkA
+    3qBrOrIJsgHUSB9G0XHWzAp809dUBWj8x5Sh7l3FHcJ/SUylIzl6ozfrm6WtiNnYGdkBrxAyzXUHs
+    LbyduxkA==;
+Received: from [90.243.141.215] (port=62024 helo=[192.168.1.13])
+    by cp-wc03.lon01.ds.network with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    (Exim 4.96.2)
+    (envelope-from <tim@saxweddings.com>)
+    id 1uZeoC-00054W-0Y
+    for leads@musobuddy.com;
+    Thu, 10 Jul 2025 01:06:40 +0100
+Date: Thu, 10 Jul 2025 01:06:34 +0100
+From: Tim Fulker <tim@saxweddings.com>
+To: leads@musobuddy.com
+Message-ID: <d82b25dc-0588-4e4b-b983-a4f3ce6fc605@Spark>
+References: <cdc7badc-53ce-45fd-a778-2765b287a288@Spark>
+Subject: Test after mx
+X-Readdle-Message-ID: d82b25dc-0588-4e4b-b983-a4f3ce6fc605@Spark
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="686f040f_34871dfe_10309"
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - cp-wc03.lon01.ds.network
+X-AntiAbuse: Original Domain - musobuddy.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - saxweddings.com
+X-Get-Message-Sender-Via: cp-wc03.lon01.ds.network: authenticated_id: tim@saxweddings.com
+X-Authenticated-Sender: cp-wc03.lon01.ds.network: tim@saxweddings.com
+X-Source:
+X-Source-Args:
+X-Source-Dir:
