@@ -2,40 +2,38 @@
  * Check MX records for musobuddy.com
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { promises as dns } from 'dns';
 
 async function checkMXRecords() {
   console.log('=== MX RECORD VERIFICATION ===');
   
   try {
-    const { stdout, stderr } = await execAsync('dig MX musobuddy.com +short');
+    // Check MX records using Node.js DNS module
+    console.log('Checking MX records for musobuddy.com...');
+    const mxRecords = await dns.resolveMx('musobuddy.com');
     
-    if (stderr) {
-      console.error('Error:', stderr);
-      return;
-    }
-    
-    console.log('MX Records for musobuddy.com:');
-    console.log(stdout);
-    
-    // Check if mx.sendgrid.net is present
-    if (stdout.includes('mx.sendgrid.net')) {
-      console.log('✅ SendGrid MX record found');
+    if (mxRecords.length > 0) {
+      console.log('✅ MX Records found:');
+      mxRecords.forEach((record, index) => {
+        console.log(`${index + 1}. Priority: ${record.priority}, Exchange: ${record.exchange}`);
+      });
+      
+      // Check if Mailgun MX records are present
+      const mailgunMx = mxRecords.filter(record => 
+        record.exchange.includes('mailgun.org')
+      );
+      
+      if (mailgunMx.length > 0) {
+        console.log('\n✅ Mailgun MX records confirmed - DNS is ready!');
+        console.log('📧 You can test email forwarding immediately.');
+      } else {
+        console.log('\n⚠️  No Mailgun MX records found');
+      }
     } else {
-      console.log('❌ SendGrid MX record NOT found');
+      console.log('❌ No MX records found');
     }
-    
-    // Also check A record
-    console.log('\n=== A RECORD VERIFICATION ===');
-    const { stdout: aRecord } = await execAsync('dig A musobuddy.com +short');
-    console.log('A Records for musobuddy.com:');
-    console.log(aRecord);
-    
   } catch (error) {
-    console.error('DNS lookup failed:', error);
+    console.error('Error checking MX records:', error.message);
   }
 }
 
