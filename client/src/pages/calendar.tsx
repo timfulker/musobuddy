@@ -947,18 +947,24 @@ export default function Calendar() {
                           </span>
                           <div className="flex space-x-2">
                             {booking.source === 'enquiry' && (
-                              <Link href="/enquiries">
-                                <Button size="sm" variant="outline" className={booking.isExpired ? 'opacity-50' : ''}>
-                                  View Enquiry
-                                </Button>
-                              </Link>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className={booking.isExpired ? 'opacity-50' : ''}
+                                onClick={() => window.location.href = '/enquiries'}
+                              >
+                                View Enquiry
+                              </Button>
                             )}
                             {booking.source === 'contract' && (
-                              <Link href="/contracts">
-                                <Button size="sm" variant="outline" className={booking.isExpired ? 'opacity-50' : ''}>
-                                  View Contract
-                                </Button>
-                              </Link>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className={booking.isExpired ? 'opacity-50' : ''}
+                                onClick={() => window.location.href = '/contracts'}
+                              >
+                                View Contract
+                              </Button>
                             )}
                           </div>
                         </div>
