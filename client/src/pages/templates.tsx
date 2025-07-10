@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit3, Trash2, ArrowLeft, Star } from 'lucide-react';
+import { Plus, Edit3, Trash2, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Sidebar from '@/components/sidebar';
 
 interface EmailTemplate {
   id: number;
@@ -27,6 +28,7 @@ export default function Templates() {
   const [error, setError] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { toast } = useToast();
 
   // Form state
@@ -203,25 +205,36 @@ export default function Templates() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <div className="flex items-center space-x-4 mb-2">
-            <Button variant="ghost" size="sm" onClick={() => window.location.href = '/'}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+    <div className="min-h-screen bg-background">
+      {/* Mobile menu toggle */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="bg-card p-2 rounded-lg shadow-lg"
+        >
+          <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Main Content */}
+      <div className="md:ml-64 min-h-screen">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Email Templates</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                Manage your automated response templates for enquiries
+              </p>
+            </div>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Template
             </Button>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Email Templates</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your automated response templates for enquiries
-          </p>
-        </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Template
-        </Button>
-      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         {loading ? (
@@ -436,6 +449,8 @@ export default function Templates() {
           </div>
         </DialogContent>
       </Dialog>
+        </div>
+      </div>
     </div>
   );
 }

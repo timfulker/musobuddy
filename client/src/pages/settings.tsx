@@ -7,12 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, ArrowLeft, Mail, Key } from "lucide-react";
-import { Link } from "wouter";
+import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, Mail, Key } from "lucide-react";
 import { insertUserSettingsSchema, type UserSettings } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import Sidebar from "@/components/sidebar";
 
 const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).extend({
   nextInvoiceNumber: z.number().min(1, "Invoice number must be at least 1"),
@@ -20,6 +20,7 @@ const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).exten
 
 export default function Settings() {
   const { toast } = useToast();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bankDetails, setBankDetails] = useState({
     bankName: "",
     accountName: "",
@@ -134,26 +135,33 @@ export default function Settings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Back Button */}
-      <div className="mb-6">
-        <Link href="/">
-          <Button variant="outline" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </Link>
+    <div className="min-h-screen bg-background">
+      {/* Mobile menu toggle */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="bg-card p-2 rounded-lg shadow-lg"
+        >
+          <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
 
-      <div className="flex items-center gap-3 mb-8">
-        <SettingsIcon className="h-8 w-8 text-blue-600" />
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Business Settings</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Configure your business details for contracts and invoices
-          </p>
-        </div>
-      </div>
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Main Content */}
+      <div className="md:ml-64 min-h-screen">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="flex items-center gap-3 mb-8">
+            <SettingsIcon className="h-8 w-8 text-blue-600" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Business Settings</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Configure your business details for contracts and invoices
+              </p>
+            </div>
+          </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -430,6 +438,8 @@ export default function Settings() {
           </div>
         </form>
       </Form>
+        </div>
+      </div>
     </div>
   );
 }
