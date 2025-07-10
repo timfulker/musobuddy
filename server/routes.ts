@@ -862,9 +862,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // });
 
   // Test route to verify invoice routes work
-
-
-
+  app.post('/api/test-invoice-simple', (req, res) => {
+    console.log('=== TEST INVOICE SIMPLE REACHED ===');
+    console.log('Request body:', req.body);
+    res.json({ message: 'Test invoice endpoint reached', data: req.body });
+  });
 
   // Invoice routes
   app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
@@ -950,15 +952,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (error.name === 'ZodError') {
         console.error("Validation errors:", JSON.stringify(error.errors, null, 2));
+        
+        // Create user-friendly error messages
+        const fieldErrors = error.errors.map(e => {
+          const field = e.path.join('.');
+          switch(field) {
+            case 'clientName': return "Client name is required";
+            case 'amount': return "Amount must be a valid number";
+            case 'dueDate': return "Due date is required";
+            case 'clientEmail': return "Please enter a valid email address";
+            default: return `${field}: ${e.message}`;
+          }
+        });
+        
         res.status(400).json({ 
-          message: "Validation failed", 
+          message: `Please fix the following: ${fieldErrors.join(', ')}`,
           errors: error.errors,
-          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+          details: fieldErrors
+        });
+      } else if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        res.status(400).json({ 
+          message: "An invoice with this number already exists. Please try again.",
+          error: error.message 
         });
       } else {
         console.error("Stack trace:", error.stack);
         res.status(500).json({ 
-          message: "Failed to create invoice", 
+          message: "Unable to create invoice. Please check your internet connection and try again.",
           error: error.message 
         });
       }
