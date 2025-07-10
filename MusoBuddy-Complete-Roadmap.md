@@ -143,35 +143,78 @@ This document provides a comprehensive roadmap for MusoBuddy development across 
 
 ---
 
-## Phase 3: Advanced Platform Features (Summer 2026)
-**Status: Future Development - Concepts and Ideas**
+## Phase 3: Social Media Buddy & Advanced Platform Features (Mid-2026)
+**Status: Social Media Buddy Documented - Advanced Features for Discussion**
 **Timeline: 6-12 months development (Summer 2026 - Spring 2027)**
-**Platform Decision: iOS/Android Apps vs Enhanced Webapp (To Be Determined)**
+**Target Audience: Musicians seeking comprehensive marketing automation**
 
-### Potential Features for Discussion
+### A. Social Media Buddy Integration
+**Premium Feature Set: Social media management without full-time content creation**
 
-#### Advanced Client Management
+#### Smart Content Automation
+**Auto-Generated Post Templates:**
+- **Upcoming Gigs**: "Catch me live this Friday in Brighton!" with venue/date auto-fill from booking system
+- **Behind-the-Scenes Content**: Rehearsals, travel, new gear automated posts with customizable templates
+- **Gig Wrap-Up Posts**: Thank you messages with venue/client auto-population from completed bookings
+- **AI-Created Social Captions**: Input keywords (wedding, sax, Dorset) → full caption with hashtags and emojis
+- **Testimonial Integration**: Auto-generate posts from client testimonials with professional formatting
+
+#### Media and Testimonial Management
+**Content Library System:**
+- **Photo & Video Upload Library**: Organize post-worthy media from gigs with tags and captions
+- **Client Testimonial Capture Tool**: Simple post-gig link for clients to rate and review performance
+- **AI Testimonial Polish**: Raw client feedback → professional shareable quotes
+- **"Best of" Content Curator**: Automatically identifies high-engagement past posts for strategic reposting
+
+#### Scheduled Social Posting
+**Automated Social Calendar:**
+- **Weekly/Monthly Post Planner**: User selects post frequency (1 gig promo, 1 throwback, 1 client review)
+- **Social Media Calendar View**: Visual overview of scheduled content with conflict detection
+- **Auto-Crossposting**: One-click push to Instagram, Facebook, Twitter/X, Threads via API integrations
+- **Post Timing Optimizer**: Suggests optimal posting times based on engagement patterns and audience analytics
+
+#### Smart Engagement Tools
+**Reach and Interaction Boosters:**
+- **Trending Hashtag Assistant**: Relevant hashtags based on gig type, genre, location, and current trends
+- **Auto Comment & DM Reply Templates**: Customizable responses to common gig inquiries and fan comments
+- **"Buddy Boost" Social Exchange**: Opt-in network of musicians supporting each other's posts (gamified)
+- **Analytics Dashboard**: Engagement insights, testimonial usage tracking, growth metrics, and ROI analysis
+
+#### Integration with Core MusoBuddy
+**Seamless Workflow:**
+- **Gig Data Integration**: Automatically pull venue, date, client info from booking system for content generation
+- **Testimonial Sync**: Client testimonials feed directly into social media content pipeline
+- **Calendar Integration**: Upcoming gigs automatically generate promotional posts with venue details
+- **Business Intelligence**: Social media performance feeds into overall business analytics and lead attribution
+
+**Business Benefits:**
+- **Consistent Online Presence**: Automated posting maintains visibility without daily effort
+- **Professional Brand Building**: Cohesive social media strategy integrated with business operations
+- **Lead Generation**: Social media drives enquiries back to core MusoBuddy system through integrated tracking
+- **Time Savings**: Reduce social media management from hours to minutes per week
+
+### B. Advanced Client Management
 - **Client Portal**: Dedicated login area for clients to view contracts, invoices, and communicate
 - **Automated Workflows**: Smart automation based on client behavior and preferences
 - **Multi-User Support**: Team collaboration for larger music businesses
 - **Advanced Calendar**: Integrated scheduling with client booking system
 
-#### Business Expansion Tools
+### C. Business Expansion Tools
 - **Multi-Service Support**: DJ, live music, sound engineering, equipment rental
 - **Inventory Management**: Equipment tracking, maintenance schedules, rental management
 - **Vendor Integration**: Partnerships with venues, suppliers, and other service providers
 - **Marketplace Integration**: Connect with wedding planners, event organizers
 
-#### Advanced Analytics
+### D. Advanced Analytics
 - **Predictive Analytics**: Forecast busy periods, revenue projections, client behavior
 - **Competitive Analysis**: Market rate comparisons, pricing optimization
 - **Client Lifetime Value**: Long-term client relationship tracking and optimization
-- **Performance Metrics**: Detailed business performance analysis
+- **Performance Metrics**: Detailed business performance analysis including social media ROI
 
-#### Platform Integrations
+### E. Platform Integrations
 - **Accounting Software**: QuickBooks, Xero, FreshBooks integration
-- **Social Media**: Instagram, Facebook business integration
-- **Music Platforms**: Spotify, Apple Music playlist management
+- **Social Media**: Instagram, Facebook, Twitter/X, Threads Business API integration
+- **Music Platforms**: Spotify, Apple Music playlist management for gig promotion
 - **Payment Processing**: Stripe, PayPal, GoCardless direct integration
 
 #### Personalized Email Addresses (Phase 3 Feature)
