@@ -6,7 +6,33 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Enable extended URL encoding for webhook data
 
-// Remove conflicting webhook - will handle via different approach
+// Priority webhook route registration - must happen BEFORE any other middleware
+// This ensures SendGrid webhook requests are handled immediately without interference
+app.post('/api/webhook/sendgrid', async (req, res) => {
+  console.log('🔥 PRIORITY WEBHOOK HIT! Email received via /api/webhook/sendgrid');
+  console.log('Request from IP:', req.ip);
+  console.log('User-Agent:', req.headers['user-agent']);
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Raw body keys:', Object.keys(req.body));
+  try {
+    const { handleSendGridWebhook } = await import('./email-webhook');
+    await handleSendGridWebhook(req, res);
+  } catch (error) {
+    console.error("Error in priority SendGrid webhook:", error);
+    res.status(500).json({ message: "Failed to process SendGrid webhook" });
+  }
+});
+
+// GET endpoint for testing webhook connectivity
+app.get('/api/webhook/sendgrid', (req, res) => {
+  res.json({ 
+    status: 'webhook_active',
+    message: 'SendGrid webhook endpoint is accessible',
+    timestamp: new Date().toISOString(),
+    endpoint: '/api/webhook/sendgrid (priority route)',
+    note: 'Ready for POST requests from SendGrid Inbound Parse'
+  });
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -38,8 +64,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Webhook routes now handled in routes.ts - no duplicate registration needed
-
 (async () => {
   const server = await registerRoutes(app);
   
@@ -60,16 +84,7 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   
-  // Add middleware to prevent vite from intercepting webhook routes
-  app.use((req, res, next) => {
-    if (req.path.startsWith('/api/webhook/')) {
-      console.log('🔥 WEBHOOK REQUEST DETECTED - bypassing vite middleware');
-      console.log(`Path: ${req.path}, Method: ${req.method}`);
-      // Let it continue to the route handler in routes.ts
-      return next();
-    }
-    next();
-  });
+  // Webhook middleware protection is no longer needed since priority routes are registered first
   
   if (app.get("env") === "development") {
     await setupVite(app, server);
