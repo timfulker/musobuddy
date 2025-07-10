@@ -48,12 +48,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl z-50 transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-700",
-        // On desktop (md+), always visible. On mobile, controlled by isOpen state
+        "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out",
+        // Desktop: always visible (z-30), Mobile: slide in/out overlay (z-50)
+        "md:z-30 z-50",
+        // Desktop: always visible, Mobile: controlled by isOpen
         "md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full",
-        // Force visibility on desktop regardless of isOpen state
-        "md:translate-x-0"
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         {/* Close button for mobile */}
         <button
