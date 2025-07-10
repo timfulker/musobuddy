@@ -59,6 +59,7 @@ export interface IStorage {
   getInvoices(userId: string): Promise<Invoice[]>;
   getInvoice(id: number, userId: string): Promise<Invoice | undefined>;
   getInvoiceById(id: number): Promise<Invoice | undefined>; // Public access for viewing
+  getInvoiceByNumber(userId: string, invoiceNumber: string): Promise<Invoice | undefined>;
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
   updateInvoice(id: number, invoice: Partial<InsertInvoice>, userId: string): Promise<Invoice | undefined>;
   deleteInvoice(id: number, userId: string): Promise<boolean>;
@@ -87,6 +88,7 @@ export interface IStorage {
   // User settings operations
   getUserSettings(userId: string): Promise<UserSettings | undefined>;
   upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
+  updateUserSettings(userId: string, settings: Partial<InsertUserSettings>): Promise<UserSettings | undefined>;
   
   // Email template operations
   getEmailTemplates(userId: string): Promise<EmailTemplate[]>;
@@ -257,6 +259,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(invoices)
       .where(eq(invoices.id, id));
+    return invoice;
+  }
+
+  async getInvoiceByNumber(userId: string, invoiceNumber: string): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.userId, userId), eq(invoices.invoiceNumber, invoiceNumber)));
     return invoice;
   }
 
@@ -580,6 +590,18 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return newSettings;
     }
+  }
+
+  async updateUserSettings(userId: string, settings: Partial<InsertUserSettings>): Promise<UserSettings | undefined> {
+    const [updatedSettings] = await db
+      .update(userSettings)
+      .set({
+        ...settings,
+        updatedAt: new Date(),
+      })
+      .where(eq(userSettings.userId, userId))
+      .returning();
+    return updatedSettings;
   }
 
   // Email template operations
