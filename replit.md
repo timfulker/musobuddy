@@ -719,6 +719,12 @@ All core features implemented and operational:
   * **Flexible Button Container**: Uses flex-wrap on mobile, flex-nowrap on large screens for optimal display
   * **Improved Information Display**: Better grid layout for invoice details with truncate for long client names
   * **Enhanced Responsiveness**: Invoice cards now work properly across all screen sizes with sidebar navigation
+- July 10, 2025. Invoice viewing system enhanced with proper PDF preview:
+  * **In-Browser PDF Viewer**: Replaced confusing blank page download with iframe-based PDF preview
+  * **Side-by-Side Layout**: Invoice details panel alongside full PDF preview for better UX
+  * **Proper Download Functionality**: Clean download button that saves file locally without opening new tabs
+  * **Enhanced Invoice Details**: Comprehensive invoice information display with proper formatting
+  * **Responsive PDF Viewer**: 800px height iframe for optimal viewing experience across devices
 - July 10, 2025. Mailgun backup email system implemented:
   * **Mailgun Integration**: Created complete webhook handler for Mailgun Routes system as SendGrid alternative
   * **Webhook Testing**: Confirmed Mailgun endpoint functional (test created enquiry #171 with 200 OK response)
