@@ -17,7 +17,7 @@ import {
   Users,
   User
 } from "lucide-react";
-import logoImage from "/musobuddy-logo.png";
+import logoImage from "/musobuddy-logo-purple.svg";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -50,7 +50,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className={cn(
         "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl z-50 transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-700",
         "md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         {/* Close button for mobile */}
         <button
@@ -66,7 +66,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <img 
               src={logoImage} 
               alt="MusoBuddy Logo" 
-              className="w-10 h-10 object-contain"
+              className="w-10 h-10 object-contain rounded-lg shadow-lg"
             />
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">MusoBuddy</h1>

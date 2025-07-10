@@ -1,0 +1,29 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Purple background -->
+  <rect width="400" height="400" fill="#9333ea" rx="20"/>
+  
+  <!-- Headphones with smiley face -->
+  <g transform="translate(200, 150)">
+    <!-- Headphone band -->
+    <path d="M-60 -30 Q0 -80, 60 -30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Left ear cup -->
+    <rect x="-70" y="-10" width="20" height="40" fill="white" rx="10"/>
+    
+    <!-- Right ear cup -->
+    <rect x="50" y="-10" width="20" height="40" fill="white" rx="10"/>
+    
+    <!-- Head circle -->
+    <circle cx="0" cy="0" r="50" fill="white"/>
+    
+    <!-- Eyes -->
+    <circle cx="-15" cy="-10" r="6" fill="#9333ea"/>
+    <circle cx="15" cy="-10" r="6" fill="#9333ea"/>
+    
+    <!-- Smile -->
+    <path d="M-20 15 Q0 35, 20 15" fill="none" stroke="#9333ea" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  
+  <!-- MusoBuddy text -->
+  <text x="200" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">MusoBuddy</text>
+</svg>
