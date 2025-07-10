@@ -372,38 +372,46 @@ export default function Invoices() {
   // Invoice action handlers
   const sendInvoiceMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
-      console.log('Sending invoice:', invoice.id);
-      console.log('API URL:', window.location.origin + '/api/invoices/send-email');
-      try {
-        const response = await apiRequest('POST', '/api/invoices/send-email', { invoiceId: invoice.id });
-        console.log('Send response status:', response.status);
-        console.log('Send response:', response);
-        const result = await response.json();
-        console.log('Send result:', result);
-        return result;
-      } catch (error) {
-        console.error('Send API error:', error);
-        throw error;
+      console.log('🔥 Email Send: Starting invoice email send');
+      console.log('🔥 Email Send: Invoice ID:', invoice.id);
+      console.log('🔥 Email Send: Invoice data:', JSON.stringify(invoice, null, 2));
+      
+      // Use direct fetch to avoid middleware interference (same fix as invoice creation)
+      const response = await fetch('/api/invoices/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important for session handling
+        body: JSON.stringify({ invoiceId: invoice.id }),
+      });
+      
+      console.log('🔥 Email Send: Response status:', response.status);
+      console.log('🔥 Email Send: Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('🔥 Email Send: Error response:', errorText);
+        throw new Error(errorText || 'Failed to send invoice email');
       }
+      
+      const result = await response.json();
+      console.log('🔥 Email Send: Success response:', result);
+      return result;
     },
     onSuccess: () => {
-      console.log('=== INVOICE SEND SUCCESS ===');
+      console.log('🔥 Email Send: SUCCESS');
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
       toast({
         title: "Success",
         description: "Invoice sent successfully with view link!",
       });
     },
-    onError: (error) => {
-      console.error('=== INVOICE SEND ERROR ===');
-      console.error('Full error object:', error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-      }
-      console.error('=== END ERROR DEBUG ===');
+    onError: (error: any) => {
+      console.error('🔥 Email Send: ERROR');
+      console.error('🔥 Email Send: Full error object:', error);
+      console.error('🔥 Email Send: Error message:', error.message);
+      console.error('🔥 Email Send: Error stack:', error.stack);
       toast({
         title: "Error",
         description: `Failed to send invoice email: ${error.message}`,

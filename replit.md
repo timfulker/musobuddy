@@ -696,16 +696,15 @@ All core features implemented and operational:
   * **Responsive Design**: Desktop sidebar with md:ml-64 spacing and mobile overlay navigation
   * **Complete Page Coverage**: Dashboard, Enquiries, Contracts, Invoices, Calendar, Address Book, Settings, Templates all have navigation
   * **Status**: Navigation system fully operational - users can seamlessly navigate between all sections
-- July 10, 2025. Invoice creation system completely fixed with comprehensive improvements:
-  * **Root Cause Resolved**: Frontend apiRequest() function was not reaching priority route in server/index.ts
-  * **Direct Fetch Implementation**: Replaced apiRequest() with direct fetch() to bypass middleware interference
+- July 10, 2025. Invoice creation and email sending system completely fixed:
+  * **Root Cause Resolved**: Frontend apiRequest() function was not reaching priority routes in server/index.ts
+  * **Direct Fetch Implementation**: Replaced apiRequest() with direct fetch() for both invoice creation AND email sending
   * **Enhanced Logging**: Added comprehensive "🔥" prefixed logging throughout frontend, backend, and storage layers
-  * **Improved Data Validation**: Enhanced field validation, error handling, and user feedback on all levels
-  * **Storage Optimization**: Upgraded createInvoice method with detailed logging and robust error handling
-  * **Backend Route Enhancement**: Improved priority route with extensive request logging and validation
-  * **Data Flow Tracking**: Complete request tracking from frontend form submission through database insertion
-  * **Error Handling**: Specific error messages for database constraints, validation failures, and network issues
-  * **Status**: Invoice creation system fully operational with detailed debugging and robust error handling
+  * **Invoice Creation Fixed**: Complete data flow tracking from form submission through database insertion
+  * **Email Sending Fixed**: Applied same direct fetch solution to sendInvoiceMutation to resolve JSON parsing errors
+  * **Universal Middleware Bypass**: All critical operations now use direct fetch() to avoid Vite middleware interference
+  * **Comprehensive Error Handling**: Specific error messages for database constraints, validation failures, and network issues
+  * **Status**: Both invoice creation and email sending fully operational with detailed debugging and robust error handling
 - July 10, 2025. Mailgun backup email system implemented:
   * **Mailgun Integration**: Created complete webhook handler for Mailgun Routes system as SendGrid alternative
   * **Webhook Testing**: Confirmed Mailgun endpoint functional (test created enquiry #171 with 200 OK response)
