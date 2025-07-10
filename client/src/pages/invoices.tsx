@@ -283,12 +283,12 @@ export default function Invoices() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "draft": return "bg-gray-100 text-gray-800";
-      case "sent": return "bg-blue-100 text-blue-800";
-      case "paid": return "bg-green-100 text-green-800";
-      case "overdue": return "bg-red-500 text-white font-bold";
-      case "archived": return "bg-purple-100 text-purple-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "draft": return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+      case "sent": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      case "paid": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "overdue": return "bg-red-500 text-white font-bold dark:bg-red-600 dark:text-red-100";
+      case "archived": return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+      default: return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
     }
   };
 
@@ -838,10 +838,10 @@ export default function Invoices() {
 
       {/* Filters and Search */}
       <div className="p-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
               <Input
                 placeholder="Search by invoice number or client name..."
                 className="pl-10"
@@ -872,15 +872,15 @@ export default function Invoices() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Outstanding</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Outstanding</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     £{invoices.filter((inv: Invoice) => inv.status === "sent").reduce((sum: number, inv: Invoice) => sum + Number(inv.amount), 0).toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {invoices.filter((inv: Invoice) => inv.status === "sent").length} invoices
                   </p>
                 </div>
-                <FileText className="w-8 h-8 text-blue-600" />
+                <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               </div>
             </CardContent>
           </Card>
@@ -889,13 +889,13 @@ export default function Invoices() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Overdue</p>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Overdue</p>
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                     {invoices.filter((inv: Invoice) => inv.status === "overdue").length}
                   </p>
-                  <p className="text-xs text-gray-500">Need attention</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Need attention</p>
                 </div>
-                <Calendar className="w-8 h-8 text-red-600" />
+                <Calendar className="w-8 h-8 text-red-600 dark:text-red-400" />
               </div>
             </CardContent>
           </Card>
@@ -904,13 +904,13 @@ export default function Invoices() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Paid This Month</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Paid This Month</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     £{invoices.filter((inv: Invoice) => inv.status === "paid").reduce((sum: number, inv: Invoice) => sum + Number(inv.amount), 0).toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500">Great progress!</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Great progress!</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-green-600" />
+                <DollarSign className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
             </CardContent>
           </Card>
@@ -919,11 +919,11 @@ export default function Invoices() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-                  <p className="text-2xl font-bold text-gray-900">{invoices.length}</p>
-                  <p className="text-xs text-gray-500">All time</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Invoices</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{invoices.length}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">All time</p>
                 </div>
-                <FileText className="w-8 h-8 text-gray-600" />
+                <FileText className="w-8 h-8 text-gray-600 dark:text-gray-400" />
               </div>
             </CardContent>
           </Card>
@@ -931,11 +931,11 @@ export default function Invoices() {
 
         {/* Bulk Actions Bar */}
         {selectedInvoices.length > 0 && (
-          <Card className="mb-4 bg-blue-50 border-blue-200">
+          <Card className="mb-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-blue-900">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
                     {selectedInvoices.length} invoice(s) selected
                   </span>
                   <Button
@@ -985,9 +985,9 @@ export default function Invoices() {
           {filteredInvoices.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices found</h3>
-                <p className="text-gray-600 mb-4">
+                <FileText className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No invoices found</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
                   {searchQuery || statusFilter !== "all" 
                     ? "Try adjusting your search or filter criteria."
                     : "Get started by creating your first invoice."
@@ -1012,7 +1012,7 @@ export default function Invoices() {
                         onChange={(e) => handleSelectAll(e.target.checked)}
                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Select All ({filteredInvoices.length} invoices)
                       </span>
                     </div>
@@ -1023,7 +1023,7 @@ export default function Invoices() {
               {filteredInvoices.map((invoice: Invoice) => {
                 const isSelected = selectedInvoices.includes(invoice.id);
                 return (
-                  <Card key={invoice.id} className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}>
+                  <Card key={invoice.id} className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -1035,7 +1035,7 @@ export default function Invoices() {
                           />
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg text-gray-900">
+                          <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
                             Invoice #{invoice.invoiceNumber}
                           </h3>
                           <Badge className={getStatusColor(invoice.status)}>
@@ -1043,22 +1043,22 @@ export default function Invoices() {
                           </Badge>
                         </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-300">
                           <div>
                             <span className="font-medium">Client:</span>
-                            <p className="text-gray-900">{invoice.clientName}</p>
+                            <p className="text-gray-900 dark:text-gray-100">{invoice.clientName}</p>
                           </div>
                           <div>
                             <span className="font-medium">Amount:</span>
-                            <p className="text-gray-900 font-semibold">£{Number(invoice.amount).toLocaleString()}</p>
+                            <p className="text-gray-900 dark:text-gray-100 font-semibold">£{Number(invoice.amount).toLocaleString()}</p>
                           </div>
                           <div>
                             <span className="font-medium">Due Date:</span>
-                            <p className="text-gray-900">{formatDate(invoice.dueDate)}</p>
+                            <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.dueDate)}</p>
                           </div>
                           <div>
                             <span className="font-medium">Created:</span>
-                            <p className="text-gray-900">{formatDate(invoice.createdAt!)}</p>
+                            <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.createdAt!)}</p>
                           </div>
                             </div>
                           </div>
