@@ -1,50 +1,76 @@
 /**
- * Test webhook accessibility directly
+ * Test webhook endpoint directly
  */
 
-async function testWebhookDirect() {
-  console.log('🔍 Testing webhook accessibility...\n');
+const https = require('https');
+
+async function testWebhook() {
+  console.log('Testing webhook endpoint...');
   
-  // Test the current domain
-  const testUrls = [
-    'https://musobuddy.com/api/webhook/sendgrid',
-    'https://musobuddy.replit.app/api/webhook/sendgrid'
-  ];
+  // First test GET endpoint
+  const getOptions = {
+    hostname: 'musobuddy.replit.app',
+    port: 443,
+    path: '/api/webhook/sendgrid',
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json'
+    }
+  };
   
-  for (const url of testUrls) {
-    console.log(`Testing: ${url}`);
-    
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const getReq = https.request(getOptions, (res) => {
+    console.log('GET Response status:', res.statusCode);
+    let data = '';
+    res.on('data', (chunk) => {
+      data += chunk;
+    });
+    res.on('end', () => {
+      console.log('GET Response:', data);
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'SendGrid-Event-Webhook/1.0'
-        },
-        body: 'to=leads@musobuddy.com&from=test@example.com&subject=Test&text=Test message',
-        signal: controller.signal
+      // Now test POST endpoint
+      const postData = JSON.stringify({
+        from: 'test@example.com',
+        to: 'leads@musobuddy.com',
+        subject: 'Direct webhook test',
+        text: 'Testing webhook directly'
       });
       
-      clearTimeout(timeoutId);
+      const postOptions = {
+        hostname: 'musobuddy.replit.app',
+        port: 443,
+        path: '/api/webhook/sendgrid',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      };
       
-      console.log(`✅ Status: ${response.status} ${response.statusText}`);
-      const responseText = await response.text();
-      console.log(`Response: ${responseText.substring(0, 100)}...`);
+      const postReq = https.request(postOptions, (postRes) => {
+        console.log('POST Response status:', postRes.statusCode);
+        let postData = '';
+        postRes.on('data', (chunk) => {
+          postData += chunk;
+        });
+        postRes.on('end', () => {
+          console.log('POST Response:', postData);
+        });
+      });
       
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log(`⏰ Timeout after 5 seconds`);
-      } else {
-        console.log(`❌ Error: ${error.message}`);
-      }
-    }
-    
-    console.log('---\n');
-  }
+      postReq.on('error', (e) => {
+        console.error('POST Error:', e.message);
+      });
+      
+      postReq.write(postData);
+      postReq.end();
+    });
+  });
+  
+  getReq.on('error', (e) => {
+    console.error('GET Error:', e.message);
+  });
+  
+  getReq.end();
 }
 
-// Run the test
-testWebhookDirect().catch(console.error);
+testWebhook();
