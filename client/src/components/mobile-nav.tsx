@@ -10,7 +10,7 @@ export default function MobileNav() {
   };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-4 py-2 z-40">
+    <div className="md:hidden mobile-nav-hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-4 py-2 z-40">
       <div className="flex justify-around">
         <Link href="/" className={cn(
           "flex flex-col items-center space-y-1 py-2",

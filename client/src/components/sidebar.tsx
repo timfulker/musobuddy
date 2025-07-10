@@ -52,8 +52,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         // Desktop: always visible (z-30), Mobile: slide in/out overlay (z-50)
         "md:z-30 z-50",
         // Desktop: always visible, Mobile: controlled by isOpen
-        "md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        "transform",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        // Force visibility on screens wider than 768px with custom CSS
+        "sidebar-desktop-visible"
       )}>
         {/* Close button for mobile */}
         <button

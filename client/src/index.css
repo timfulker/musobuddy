@@ -96,6 +96,19 @@
   transition: transform 0.3s ease-in-out;
 }
 
+/* Force sidebar visibility on desktop */
+@media (min-width: 768px) {
+  .sidebar-desktop-visible {
+    transform: translateX(0) !important;
+    display: block !important;
+  }
+  
+  /* Hide mobile navigation on desktop */
+  .mobile-nav-hidden {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .sidebar-hidden {
     transform: translateX(-100%);
