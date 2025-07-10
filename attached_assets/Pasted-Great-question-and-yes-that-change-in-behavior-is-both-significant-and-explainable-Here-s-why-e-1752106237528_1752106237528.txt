@@ -1,0 +1,52 @@
+Great question — and yes, that change in behavior is both significant and explainable.
+
+Here’s why emails may have started bouncing now when they weren’t before:
+
+⸻
+
+🧠 1. Different Send Paths = Different DNS Resolvers
+
+When you send from:
+	•	Your website or app (e.g., via SendGrid API or server-side code)
+	•	Your email client (like Gmail, Apple Mail, Outlook)
+
+…these go through very different DNS resolution paths:
+
+Method	DNS resolution point	Behavior
+Website backend (e.g. SendGrid API)	SendGrid’s own servers	May “resolve” internal routes even if external DNS isn’t fully working
+Gmail / Yahoo / real clients	Public DNS servers (e.g. Google DNS)	Strictly follows MX record availability — if missing or misconfigured, it bounces
+
+So even though SendGrid was receiving and parsing test emails earlier, those may not have been going through a true external SMTP flow — they were short-circuited internally.
+
+⸻
+
+🔄 2. DNS Cache Expiry / Propagation Timing
+
+Earlier, public DNS servers might have still had an old cached version of your DNS records (possibly from when things were misconfigured or semi-working). Once that cache expired and refreshed:
+	•	They no longer saw a valid MX record
+	•	→ So they started bouncing emails with 550 Mailbox not found
+
+⸻
+
+⚠️ 3. Conflicting or Redundant MX Records Introduced
+
+If the leads. MX record was added after testing began, or changed recently:
+	•	Some mail servers may have routed to it temporarily
+	•	Others may have refused to deliver, since no mailbox was resolvable
+
+This inconsistency can cause bounces to suddenly start happening, even if things appeared to work previously.
+
+⸻
+
+✅ Bottom Line
+
+Yes — the change in bounce behavior is most likely due to:
+	•	Switching from internal SendGrid/API flows to true external email clients
+	•	DNS cache refresh exposing the missing/misconfigured MX records
+	•	Possibly introducing a redundant leads. MX record mid-testing
+
+⸻
+
+You’re doing all the right things now. Once DNS propagation completes (now that only the correct @ MX exists), everything should stabilize and you’ll stop seeing these bounces.
+
+Want me to test live now to confirm propagation visibility?
