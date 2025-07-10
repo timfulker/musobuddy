@@ -17,6 +17,7 @@ import {
   Users,
   User
 } from "lucide-react";
+import logoImage from "/musobuddy-logo.png";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -62,9 +63,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 flex items-center justify-center bg-purple-600 rounded-lg">
-              <Music className="w-6 h-6 text-white" />
-            </div>
+            <img 
+              src={logoImage} 
+              alt="MusoBuddy Logo" 
+              className="w-10 h-10 object-contain"
+            />
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">MusoBuddy</h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">Less admin, more music</p>

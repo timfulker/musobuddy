@@ -1,5 +1,19 @@
 import puppeteer from 'puppeteer';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import type { Contract, UserSettings, Invoice } from '@shared/schema';
+
+function getLogoBase64(): string {
+  try {
+    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo.png');
+    const logoBuffer = readFileSync(logoPath);
+    return logoBuffer.toString('base64');
+  } catch (error) {
+    console.error('Error loading logo:', error);
+    // Fallback to empty string if logo not found
+    return '';
+  }
+}
 
 export async function generateContractPDF(
   contract: Contract,
@@ -68,16 +82,9 @@ function generateInvoiceHTML(
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
-  // Create SVG logo matching the app's design
-  const logoSvg = `
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="20" cy="20" r="18" fill="#9333ea" stroke="#7c3aed" stroke-width="2"/>
-      <path d="M12 18h16v2H12v-2z" fill="white"/>
-      <circle cx="14" cy="14" r="2" fill="white"/>
-      <circle cx="26" cy="14" r="2" fill="white"/>
-      <path d="M15 24c1.5 1.5 3.5 2 5 2s3.5-0.5 5-2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-  `;
+  // Use the custom MusoBuddy logo
+  const logoBase64 = getLogoBase64();
+  const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 40px; width: auto;" alt="MusoBuddy Logo" />` : '';
   
   return `
     <!DOCTYPE html>
@@ -247,7 +254,7 @@ function generateInvoiceHTML(
     <body>
       <div class="header">
         <div class="logo-section">
-          ${logoSvg}
+          ${logoHtml}
           <div class="logo">${businessName}</div>
         </div>
         <div class="invoice-details">
@@ -352,6 +359,10 @@ function generateContractHTML(
   const businessPhone = userSettings?.phone || '';
   const businessEmail = userSettings?.businessEmail || '';
   
+  // Use the custom MusoBuddy logo
+  const logoBase64 = getLogoBase64();
+  const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto; margin-bottom: 20px;" alt="MusoBuddy Logo" />` : '';
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -369,7 +380,7 @@ function generateContractHTML(
         }
         .header {
           text-align: center;
-          border-bottom: 2px solid #333;
+          border-bottom: 3px solid #9333ea;
           padding-bottom: 20px;
           margin-bottom: 30px;
         }
@@ -438,6 +449,7 @@ function generateContractHTML(
     </head>
     <body>
       <div class="header">
+        ${logoHtml}
         <h1>Performance Contract</h1>
         <h2>${contract.contractNumber}</h2>
         <div class="status-badge ${contract.status === 'signed' ? 'status-signed' : 'status-sent'}">
