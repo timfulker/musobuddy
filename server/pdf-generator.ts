@@ -68,6 +68,17 @@ function generateInvoiceHTML(
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
+  // Create SVG logo matching the app's design
+  const logoSvg = `
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="18" fill="#9333ea" stroke="#7c3aed" stroke-width="2"/>
+      <path d="M12 18h16v2H12v-2z" fill="white"/>
+      <circle cx="14" cy="14" r="2" fill="white"/>
+      <circle cx="26" cy="14" r="2" fill="white"/>
+      <path d="M15 24c1.5 1.5 3.5 2 5 2s3.5-0.5 5-2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  `;
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -87,13 +98,18 @@ function generateInvoiceHTML(
           justify-content: space-between;
           align-items: center;
           margin-bottom: 40px;
-          border-bottom: 3px solid #0EA5E9;
+          border-bottom: 3px solid #9333ea;
           padding-bottom: 20px;
+        }
+        .logo-section {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
         .logo {
           font-size: 32px;
           font-weight: bold;
-          color: #0EA5E9;
+          color: #9333ea;
         }
         .invoice-details {
           text-align: right;
@@ -173,8 +189,8 @@ function generateInvoiceHTML(
         }
         .grand-total {
           font-size: 20px;
-          color: #0EA5E9;
-          border-top: 2px solid #0EA5E9;
+          color: #9333ea;
+          border-top: 2px solid #9333ea;
           padding-top: 15px;
           margin-top: 15px;
         }
@@ -230,7 +246,10 @@ function generateInvoiceHTML(
     </head>
     <body>
       <div class="header">
-        <div class="logo">${businessName}</div>
+        <div class="logo-section">
+          ${logoSvg}
+          <div class="logo">${businessName}</div>
+        </div>
         <div class="invoice-details">
           <div class="invoice-number">Invoice ${invoice.invoiceNumber}</div>
           <div class="invoice-date">${new Date(invoice.createdAt || '').toLocaleDateString('en-GB')}</div>
@@ -312,7 +331,7 @@ function generateInvoiceHTML(
       </div>
 
       <div style="margin-top: 40px; padding: 15px; text-align: center; border-top: 1px solid #dee2e6; color: #999; font-size: 12px;">
-        <p style="margin: 0;">Powered by <strong style="color: #0EA5E9;">MusoBuddy</strong> – less admin, more music.</p>
+        <p style="margin: 0;">Powered by <strong style="color: #9333ea;">MusoBuddy</strong> – less admin, more music.</p>
       </div>
     </body>
     </html>
@@ -511,7 +530,7 @@ ${contract.terms}
       </div>
 
       <div style="margin-top: 30px; padding: 15px; text-align: center; border-top: 1px solid #ccc; color: #999; font-size: 12px;">
-        <p style="margin: 0;">Powered by <strong style="color: #0EA5E9;">MusoBuddy</strong> – less admin, more music.</p>
+        <p style="margin: 0;">Powered by <strong style="color: #9333ea;">MusoBuddy</strong> – less admin, more music.</p>
       </div>
     </body>
     </html>
