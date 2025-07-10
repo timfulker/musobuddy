@@ -900,7 +900,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      console.log("Received invoice data:", req.body);
+      console.log("=== INVOICE CREATION REQUEST ===");
+      console.log("User ID:", userId);
+      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
+      
+      // Check if we have the required fields
+      const requiredFields = ['clientName', 'amount', 'dueDate'];
+      const missingFields = requiredFields.filter(field => !req.body[field]);
+      
+      if (missingFields.length > 0) {
+        console.log("Missing required fields:", missingFields);
+        return res.status(400).json({ 
+          message: "Missing required fields", 
+          missing: missingFields 
+        });
+      }
       
       // Prepare the invoice data with all required fields
       const invoiceData = {
@@ -919,25 +933,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "draft",
       };
       
-      console.log("Processed invoice data:", invoiceData);
+      console.log("Processed invoice data:", JSON.stringify(invoiceData, null, 2));
       
       // Validate against schema
       console.log("Validating invoice data...");
       const validatedData = insertInvoiceSchema.parse(invoiceData);
-      console.log("Validation successful:", validatedData);
+      console.log("Validation successful:", JSON.stringify(validatedData, null, 2));
       
       const invoice = await storage.createInvoice(validatedData);
       console.log("Invoice created successfully:", invoice);
       res.status(201).json(invoice);
     } catch (error: any) {
-      console.error("Error creating invoice:", error);
+      console.error("=== INVOICE CREATION ERROR ===");
+      console.error("Error type:", error.name);
+      console.error("Error message:", error.message);
+      
       if (error.name === 'ZodError') {
-        console.error("Validation errors:", error.errors);
-        console.error("Full error details:", JSON.stringify(error, null, 2));
-        res.status(400).json({ message: "Validation failed", errors: error.errors });
+        console.error("Validation errors:", JSON.stringify(error.errors, null, 2));
+        res.status(400).json({ 
+          message: "Validation failed", 
+          errors: error.errors,
+          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        });
       } else {
-        console.error("Other error:", error.message, error.stack);
-        res.status(500).json({ message: "Failed to create invoice", error: error.message });
+        console.error("Stack trace:", error.stack);
+        res.status(500).json({ 
+          message: "Failed to create invoice", 
+          error: error.message 
+        });
       }
     }
   });
