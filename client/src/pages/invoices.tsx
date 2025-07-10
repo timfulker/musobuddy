@@ -126,9 +126,14 @@ export default function Invoices() {
   }, [userSettings, form]);
 
   const createInvoiceMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof invoiceFormSchema>) => {
+    mutationFn: async (data: any) => {
       console.log("Making API request with data:", data);
       const response = await apiRequest('POST', '/api/invoices', data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error Response:", errorData);
+        throw new Error(errorData.message || 'Failed to create invoice');
+      }
       return response.json();
     },
     onSuccess: () => {
