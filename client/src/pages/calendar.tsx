@@ -9,14 +9,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, ArrowLeft, Download, ExternalLink, Eye, EyeOff } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, type Booking } from "@shared/schema";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import CalendarImport from "@/components/calendar-import";
+import Sidebar from "@/components/sidebar";
 
 const bookingFormSchema = insertBookingSchema.extend({
   eventDate: z.string(),
@@ -30,6 +31,7 @@ export default function Calendar() {
   const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showExpiredEnquiries, setShowExpiredEnquiries] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Check URL parameters to auto-open dialog
   useEffect(() => {

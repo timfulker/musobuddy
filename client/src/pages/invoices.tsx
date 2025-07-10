@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, ArrowLeft, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw } from "lucide-react";
+import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw } from "lucide-react";
 import { insertInvoiceSchema, type Invoice } from "@shared/schema";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import Sidebar from "@/components/sidebar";
 
 const invoiceFormSchema = z.object({
   contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
@@ -39,6 +40,7 @@ export default function Invoices() {
   const [editAndResendMode, setEditAndResendMode] = useState(false);
   const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Check for URL parameters to auto-open dialog
   useEffect(() => {

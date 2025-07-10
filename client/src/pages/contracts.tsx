@@ -13,11 +13,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, ArrowLeft, Eye, Mail, Download, Trash2, Archive, FileDown } from "lucide-react";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
-import { Link } from "wouter";
+import Sidebar from "@/components/sidebar";
 
 const contractFormSchema = insertContractSchema.extend({
   eventDate: z.string().optional(),
@@ -34,6 +34,7 @@ export default function Contracts() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedContracts, setSelectedContracts] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: contracts = [], isLoading } = useQuery<Contract[]>({
@@ -314,22 +315,31 @@ export default function Contracts() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/">
-              <Button variant="outline" size="sm" className="bg-white border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Contracts</h1>
-              <p className="text-gray-600">Manage your performance contracts and agreements</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Mobile menu toggle */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="bg-card p-2 rounded-lg shadow-lg"
+        >
+          <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Main Content */}
+      <div className="md:ml-64 min-h-screen">
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Contracts</h1>
+                <p className="text-gray-600 dark:text-gray-400">Manage your performance contracts and agreements</p>
+              </div>
           
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
@@ -891,6 +901,8 @@ export default function Contracts() {
             )}
           </DialogContent>
         </Dialog>
+          </div>
+        </div>
       </div>
     </div>
   );
