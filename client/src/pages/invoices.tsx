@@ -130,16 +130,35 @@ export default function Invoices() {
 
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Making API request with data:", data);
-      const response = await apiRequest('POST', '/api/invoices', data);
+      console.log("🔥 Frontend: Making invoice creation request");
+      console.log("🔥 Frontend: Request data:", JSON.stringify(data, null, 2));
+      console.log("🔥 Frontend: Request URL:", '/api/invoices');
+      
+      // Use fetch directly to ensure we hit the priority route
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important for session handling
+        body: JSON.stringify(data),
+      });
+      
+      console.log("🔥 Frontend: Response status:", response.status);
+      console.log("🔥 Frontend: Response ok:", response.ok);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API Error Response:", errorData);
-        throw new Error(errorData.message || 'Failed to create invoice');
+        const errorData = await response.text();
+        console.error("🔥 Frontend: Error response:", errorData);
+        throw new Error(errorData || 'Failed to create invoice');
       }
-      return response.json();
+      
+      const result = await response.json();
+      console.log("🔥 Frontend: Success response:", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("🔥 Frontend: Mutation success:", data);
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
       form.reset();
       setIsDialogOpen(false);
@@ -150,7 +169,9 @@ export default function Invoices() {
       });
     },
     onError: (error: any) => {
-      console.error("Create invoice error:", error);
+      console.error("🔥 Frontend: Mutation error:", error);
+      console.error("🔥 Frontend: Error message:", error.message);
+      console.error("🔥 Frontend: Error stack:", error.stack);
       
       // Show specific error message if available
       const errorMessage = error.message || "Failed to create invoice. Please try again.";
