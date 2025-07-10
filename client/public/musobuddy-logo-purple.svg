@@ -1,29 +1,29 @@
 <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <!-- Purple background -->
-  <rect width="400" height="400" fill="#9333ea" rx="20"/>
+  <rect width="400" height="400" fill="#9333ea"/>
   
-  <!-- Headphones with smiley face -->
-  <g transform="translate(200, 150)">
+  <!-- Headphones -->
+  <g transform="translate(200, 120)">
     <!-- Headphone band -->
-    <path d="M-60 -30 Q0 -80, 60 -30" fill="none" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    <path d="M-80 10 Q0 -40, 80 10" fill="none" stroke="#1e293b" stroke-width="20" stroke-linecap="round"/>
     
     <!-- Left ear cup -->
-    <rect x="-70" y="-10" width="20" height="40" fill="white" rx="10"/>
+    <rect x="-90" y="10" width="25" height="50" fill="#1e293b" rx="12"/>
     
     <!-- Right ear cup -->
-    <rect x="50" y="-10" width="20" height="40" fill="white" rx="10"/>
+    <rect x="65" y="10" width="25" height="50" fill="#1e293b" rx="12"/>
     
-    <!-- Head circle -->
-    <circle cx="0" cy="0" r="50" fill="white"/>
+    <!-- Main head circle -->
+    <circle cx="0" cy="40" r="60" fill="#f8fafc" stroke="#1e293b" stroke-width="8"/>
     
     <!-- Eyes -->
-    <circle cx="-15" cy="-10" r="6" fill="#9333ea"/>
-    <circle cx="15" cy="-10" r="6" fill="#9333ea"/>
+    <circle cx="-18" cy="25" r="8" fill="#1e293b"/>
+    <circle cx="18" cy="25" r="8" fill="#1e293b"/>
     
     <!-- Smile -->
-    <path d="M-20 15 Q0 35, 20 15" fill="none" stroke="#9333ea" stroke-width="6" stroke-linecap="round"/>
+    <path d="M-25 55 Q0 75, 25 55" fill="none" stroke="#1e293b" stroke-width="8" stroke-linecap="round"/>
   </g>
   
   <!-- MusoBuddy text -->
-  <text x="200" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">MusoBuddy</text>
+  <text x="200" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="#1e293b">MusoBuddy</text>
 </svg>
