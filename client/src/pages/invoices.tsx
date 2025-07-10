@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft } from "lucide-react";
+import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye } from "lucide-react";
 import { insertInvoiceSchema, type Invoice } from "@shared/schema";
 import { useLocation, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -94,17 +94,28 @@ export default function Invoices() {
   const selectedContractId = form.watch("contractId");
 
   // Auto-fill fields when contract is selected (for convenience)
+  // Only auto-fill when user explicitly selects a contract (not when form first loads)
+  const [contractHasBeenSelected, setContractHasBeenSelected] = useState(false);
+  
   useEffect(() => {
-    if (selectedContractId && contracts.length > 0) {
+    // Only auto-fill if a contract is explicitly selected AND we have contracts loaded
+    if (selectedContractId && contracts.length > 0 && contractHasBeenSelected) {
       const selectedContract = contracts.find((c: any) => c.id === selectedContractId);
       if (selectedContract) {
-        form.setValue("clientName", selectedContract.clientName);
-        form.setValue("clientEmail", selectedContract.clientEmail || "");
-        form.setValue("venueAddress", selectedContract.venue || "");
-        if (selectedContract.eventDate) {
+        // Only fill empty fields to preserve user edits
+        if (!form.getValues("clientName")) {
+          form.setValue("clientName", selectedContract.clientName);
+        }
+        if (!form.getValues("clientEmail")) {
+          form.setValue("clientEmail", selectedContract.clientEmail || "");
+        }
+        if (!form.getValues("venueAddress")) {
+          form.setValue("venueAddress", selectedContract.venue || "");
+        }
+        if (!form.getValues("performanceDate") && selectedContract.eventDate) {
           form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
         }
-        if (selectedContract.fee) {
+        if (!form.getValues("amount") && selectedContract.fee) {
           // Set the performance fee and calculate amount due (fee minus any deposit)
           const fee = Number(selectedContract.fee);
           const deposit = Number(selectedContract.deposit) || 0;
@@ -116,7 +127,7 @@ export default function Invoices() {
         }
       }
     }
-  }, [selectedContractId, contracts, form]);
+  }, [selectedContractId, contracts, form, contractHasBeenSelected]);
 
   // Auto-fill business address and phone from settings
   useEffect(() => {
@@ -348,6 +359,8 @@ export default function Invoices() {
     setIsDialogOpen(false);
     setEditAndResendMode(false);
     setEditingInvoice(null);
+    setContractHasBeenSelected(false); // Reset contract selection tracking
+    form.reset(); // Clear the form completely when closing
     if (window.location.search) {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -698,6 +711,11 @@ export default function Invoices() {
     }
   };
 
+  const handleViewInvoice = (invoice: Invoice) => {
+    // Open invoice PDF in new tab
+    window.open(`/api/invoices/${invoice.id}/pdf`, '_blank');
+  };
+
   const filteredInvoices = invoices.filter((invoice: Invoice) => {
     const matchesSearch = searchQuery === "" || 
       invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -783,7 +801,10 @@ export default function Invoices() {
                             <FormLabel>Select Contract (optional - for auto-fill)</FormLabel>
                             <Select 
                               value={field.value?.toString()} 
-                              onValueChange={(value) => field.onChange(parseInt(value))}
+                              onValueChange={(value) => {
+                                field.onChange(parseInt(value));
+                                setContractHasBeenSelected(true); // Mark that user has selected a contract
+                              }}
                             >
                               <FormControl>
                                 <SelectTrigger>
@@ -1153,6 +1174,17 @@ export default function Invoices() {
                         </div>
                       
                       <div className="flex items-center gap-2 ml-4">
+                        {/* View button - available for all statuses */}
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-xs"
+                          onClick={() => handleViewInvoice(invoice)}
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          View
+                        </Button>
+
                         {invoice.status === "draft" && (
                           <>
                             <Button 

@@ -705,6 +705,13 @@ All core features implemented and operational:
   * **Universal Middleware Bypass**: All critical operations now use direct fetch() to avoid Vite middleware interference
   * **Comprehensive Error Handling**: Specific error messages for database constraints, validation failures, and network issues
   * **Status**: Both invoice creation and email sending fully operational with detailed debugging and robust error handling
+- July 10, 2025. Invoice contract auto-fill system improved for better user control:
+  * **Fixed Auto-Population Issue**: Invoice form no longer auto-fills with contract data on opening
+  * **Explicit Contract Selection**: Auto-fill only triggers when user explicitly selects a contract from dropdown
+  * **Preserve User Edits**: When contract is selected, only fills empty fields to preserve any user modifications
+  * **Clean Form Start**: Invoice creation starts with completely blank form, contracts are purely optional for convenience
+  * **Smart Field Protection**: User-edited values are preserved even when switching between contracts
+  * **Improved UX**: Contract dropdown clearly labeled as "optional - for auto-fill" to set proper expectations
 - July 10, 2025. Mailgun backup email system implemented:
   * **Mailgun Integration**: Created complete webhook handler for Mailgun Routes system as SendGrid alternative
   * **Webhook Testing**: Confirmed Mailgun endpoint functional (test created enquiry #171 with 200 OK response)
