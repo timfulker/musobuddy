@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -10,7 +10,63 @@ import {
 import multer from 'multer';
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware setup FIRST
+  // CRITICAL: Register invoice route BEFORE auth middleware to avoid Vite interference
+  app.post('/api/invoices', express.json(), async (req: any, res) => {
+    console.log('🚨 EMERGENCY INVOICE ROUTE HIT - BEFORE AUTH!');
+    console.log('Method:', req.method);
+    console.log('Path:', req.path);
+    console.log('Body:', req.body);
+    
+    // Manual authentication check since this is before auth middleware
+    if (!req.session?.user?.id) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    try {
+      const { clientName, clientEmail, clientAddress, venueAddress, amount, dueDate, performanceDate, contractId } = req.body;
+      
+      // Get user settings for invoice numbering
+      const userSettings = await storage.getUserSettings(req.session.user.id);
+      let nextInvoiceNumber = userSettings?.nextInvoiceNumber || 1;
+      
+      // Check if invoice number already exists and increment if needed
+      let invoiceNumber = String(nextInvoiceNumber).padStart(5, '0');
+      let existingInvoice = await storage.getInvoiceByNumber(req.session.user.id, invoiceNumber);
+      
+      while (existingInvoice) {
+        nextInvoiceNumber++;
+        invoiceNumber = String(nextInvoiceNumber).padStart(5, '0');
+        existingInvoice = await storage.getInvoiceByNumber(req.session.user.id, invoiceNumber);
+      }
+      
+      const invoice = await storage.createInvoice({
+        userId: req.session.user.id,
+        clientName,
+        clientEmail,
+        clientAddress,
+        venueAddress,
+        amount: parseFloat(amount),
+        dueDate: new Date(dueDate),
+        performanceDate: new Date(performanceDate),
+        contractId: contractId || null,
+        invoiceNumber,
+        status: 'draft'
+      });
+      
+      // Update next invoice number
+      await storage.updateUserSettings(req.session.user.id, {
+        nextInvoiceNumber: nextInvoiceNumber + 1
+      });
+      
+      console.log('✅ Invoice created successfully:', invoice);
+      res.json(invoice);
+    } catch (error) {
+      console.error('❌ Invoice creation error:', error);
+      res.status(500).json({ message: 'Failed to create invoice' });
+    }
+  });
+
+  // Auth middleware setup AFTER critical routes
   await setupAuth(app);
 
   // Debug middleware to log all requests
@@ -63,92 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, method: req.method, url: req.url, body: req.body });
   });
   
-  // Invoice creation route (moved to priority section to avoid Vite interference)
-  app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
-    console.log('🎯 PRIORITY INVOICE ROUTE HIT!');
-    console.log('Request method:', req.method);
-    console.log('Request path:', req.path);
-    console.log('Request authenticated:', req.isAuthenticated());
-    try {
-      
-      const userId = req.user.claims.sub;
-      console.log("=== INVOICE CREATION REQUEST ===");
-      console.log("User ID:", userId);
-      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
-      
-      // Check if we have the required fields
-      const requiredFields = ['clientName', 'amount', 'dueDate'];
-      const missingFields = requiredFields.filter(field => !req.body[field]);
-      
-      if (missingFields.length > 0) {
-        console.log("Missing required fields:", missingFields);
-        return res.status(400).json({ 
-          message: "Missing required fields", 
-          missing: missingFields 
-        });
-      }
-      
-      // Prepare the invoice data with all required fields
-      const invoiceData = {
-        userId,
-        contractId: req.body.contractId ? parseInt(req.body.contractId.toString()) : null,
-        clientName: req.body.clientName,
-        clientEmail: req.body.clientEmail || null,
-        clientAddress: req.body.clientAddress || null,
-        venueAddress: req.body.venueAddress || null,
-        amount: req.body.amount.toString(),
-        dueDate: new Date(req.body.dueDate),
-        performanceDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
-        performanceFee: req.body.performanceFee || req.body.amount.toString(),
-        depositPaid: req.body.depositPaid || "0",
-        status: "draft",
-      };
-      
-      console.log("Processed invoice data:", JSON.stringify(invoiceData, null, 2));
-      
-      // Validate against schema
-      const validatedData = insertInvoiceSchema.parse(invoiceData);
-      console.log("Validation successful:", JSON.stringify(validatedData, null, 2));
-      
-      const invoice = await storage.createInvoice(validatedData);
-      console.log("Invoice created successfully:", invoice);
-      res.status(201).json(invoice);
-    } catch (error: any) {
-      console.error("=== INVOICE CREATION ERROR ===");
-      console.error("Error type:", error.name);
-      console.error("Error message:", error.message);
-      
-      if (error.name === 'ZodError') {
-        const fieldErrors = error.errors.map((e: any) => {
-          const field = e.path.join('.');
-          switch(field) {
-            case 'clientName': return "Client name is required";
-            case 'amount': return "Amount must be a valid number";
-            case 'dueDate': return "Due date is required";
-            case 'clientEmail': return "Please enter a valid email address";
-            default: return `${field}: ${e.message}`;
-          }
-        });
-        
-        res.status(400).json({ 
-          message: `Please fix the following: ${fieldErrors.join(', ')}`,
-          errors: error.errors,
-          details: fieldErrors
-        });
-      } else if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
-        res.status(400).json({ 
-          message: "An invoice with this number already exists. Please try again.",
-          error: error.message 
-        });
-      } else {
-        console.error("Stack trace:", error.stack);
-        res.status(500).json({ 
-          message: "Unable to create invoice. Please check your internet connection and try again.",
-          error: error.message 
-        });
-      }
-    }
-  });
+  // Invoice creation route removed - now handled at top of file to avoid Vite interference
 
   // GET endpoint for testing webhook connectivity
   app.get('/api/webhook/sendgrid', (req, res) => {
