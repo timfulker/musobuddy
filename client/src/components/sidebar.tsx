@@ -47,42 +47,38 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed left-0 top-0 h-full w-64 bg-sidebar-background shadow-xl z-50 transition-transform duration-300 ease-in-out",
+        "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl z-50 transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-700",
         "md:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Close button for mobile */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-sidebar-accent md:hidden"
+          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 md:hidden"
         >
-          <X className="w-5 h-5 text-sidebar-foreground" />
+          <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
         </button>
 
         {/* Header */}
-        <div className="p-6 border-b border-sidebar-border">
+        <div className="p-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <img 
-                src="/musobuddy-logo.svg" 
-                alt="MusoBuddy Logo" 
-                className="w-10 h-10 object-contain"
-              />
+            <div className="w-10 h-10 flex items-center justify-center bg-purple-600 rounded-lg">
+              <Music className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-sidebar-foreground">MusoBuddy</h1>
-              <p className="text-sm text-sidebar-foreground/70">Less admin, more music</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">MusoBuddy</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Less admin, more music</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-1">
           <Link href="/" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors",
             isActive("/") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
@@ -90,8 +86,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/enquiries" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/enquiries") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <Inbox className="w-5 h-5" />
             <span>Enquiries</span>
@@ -99,8 +95,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/address-book" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/address-book") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <Users className="w-5 h-5" />
             <span>Address Book</span>
@@ -108,8 +104,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/contracts" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/contracts") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <FileText className="w-5 h-5" />
             <span>Contracts</span>
@@ -117,8 +113,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/invoices" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/invoices") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <DollarSign className="w-5 h-5" />
             <span>Invoices</span>
@@ -126,8 +122,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/calendar" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/calendar") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <Calendar className="w-5 h-5" />
             <span>Calendar</span>
@@ -135,8 +131,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/compliance" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/compliance") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <Shield className="w-5 h-5" />
             <span>Compliance</span>
@@ -144,8 +140,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/settings" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/settings") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <Settings className="w-5 h-5" />
             <span>Settings</span>
@@ -153,8 +149,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/templates" onClick={onClose} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/templates") 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
             <MessageSquare className="w-5 h-5" />
             <span>Templates</span>
@@ -162,7 +158,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-sidebar-border">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           <div className="flex items-center space-x-3">
             {user?.profileImageUrl ? (
               <img 
@@ -171,19 +167,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <div className="w-10 h-10 superhuman-gradient rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
             )}
             <div className="flex-1">
-              <p className="text-sm font-medium text-sidebar-foreground">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {user?.firstName || user?.email || "User"}
               </p>
-              <p className="text-xs text-sidebar-foreground/70">Musician</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Musician</p>
             </div>
             <button 
               onClick={handleLogout}
-              className="flex items-center space-x-2 text-sidebar-foreground/70 hover:text-sidebar-foreground px-2 py-1 rounded transition-colors"
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded transition-colors"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />
