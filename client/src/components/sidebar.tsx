@@ -17,7 +17,7 @@ import {
   Users,
   User
 } from "lucide-react";
-import logoImage from "/musobuddy-logo-purple.svg";
+import logoImage from "/musobuddy-logo.png";
 
 interface SidebarProps {
   isOpen: boolean;
