@@ -193,11 +193,20 @@ This document provides a comprehensive roadmap for MusoBuddy development across 
 - **Lead Generation**: Social media drives enquiries back to core MusoBuddy system through integrated tracking
 - **Time Savings**: Reduce social media management from hours to minutes per week
 
-### B. Advanced Client Management
+### B. Advanced Client Management & Location Intelligence
 - **Client Portal**: Dedicated login area for clients to view contracts, invoices, and communicate
 - **Automated Workflows**: Smart automation based on client behavior and preferences
 - **Multi-User Support**: Team collaboration for larger music businesses
 - **Advanced Calendar**: Integrated scheduling with client booking system
+- **Google Maps Integration**: 
+  - **Smart Pricing Calculator**: Distance-based pricing recommendations with travel time factored into quotes
+  - **Multi-Gig Feasibility**: Automatic calculation of whether multiple bookings in one day are possible
+  - **Travel Time Conflicts**: Prevent double-booking by accounting for travel time between venues
+  - **Dynamic Pricing**: Suggest higher rates for distant venues based on travel costs and time
+  - **Venue Location Mapping**: Automatic venue location detection and mapping from enquiry addresses
+  - **Route Optimization**: Suggest optimal travel routes for multi-gig days with time and cost analysis
+  - **Mileage Tracking**: Automatic business mileage calculation for tax purposes and expense tracking
+  - **Venue Database**: Build personal database of venue locations with notes, accessibility, and pricing history
 
 ### C. Business Expansion Tools
 - **Multi-Service Support**: DJ, live music, sound engineering, equipment rental
