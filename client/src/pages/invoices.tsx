@@ -647,21 +647,29 @@ export default function Invoices() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-            <p className="text-gray-600">Manage your invoices and payments</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      
+      {/* Main Content */}
+      <div className="md:ml-64">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="md:hidden mr-3 p-2 rounded-md hover:bg-gray-100"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
+                <p className="text-gray-600">Manage your invoices and payments</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
               if (!open) {
                 setEditingInvoice(null);
@@ -1231,6 +1239,7 @@ export default function Invoices() {
             </>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
