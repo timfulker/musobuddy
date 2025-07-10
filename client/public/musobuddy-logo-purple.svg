@@ -1,29 +1,37 @@
 <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <!-- Purple background -->
-  <rect width="400" height="400" fill="#9333ea"/>
+  <rect width="400" height="400" fill="#9333ea" rx="40"/>
   
-  <!-- Headphones -->
-  <g transform="translate(200, 120)">
-    <!-- Headphone band -->
-    <path d="M-80 10 Q0 -40, 80 10" fill="none" stroke="#1e293b" stroke-width="20" stroke-linecap="round"/>
+  <!-- Headphones design matching original -->
+  <g transform="translate(200, 140)">
+    <!-- Headphone band - outer curve -->
+    <path d="M-70 0 Q0 -50, 70 0" fill="none" stroke="#1e293b" stroke-width="18" stroke-linecap="round"/>
+    
+    <!-- Headphone band - inner curve -->
+    <path d="M-55 0 Q0 -35, 55 0" fill="none" stroke="#f8fafc" stroke-width="14" stroke-linecap="round"/>
+    
+    <!-- Inner band curve -->
+    <path d="M-40 0 Q0 -20, 40 0" fill="none" stroke="#1e293b" stroke-width="10" stroke-linecap="round"/>
     
     <!-- Left ear cup -->
-    <rect x="-90" y="10" width="25" height="50" fill="#1e293b" rx="12"/>
+    <ellipse cx="-70" cy="15" rx="20" ry="28" fill="#1e293b"/>
     
     <!-- Right ear cup -->
-    <rect x="65" y="10" width="25" height="50" fill="#1e293b" rx="12"/>
+    <ellipse cx="70" cy="15" rx="20" ry="28" fill="#1e293b"/>
     
-    <!-- Main head circle -->
-    <circle cx="0" cy="40" r="60" fill="#f8fafc" stroke="#1e293b" stroke-width="8"/>
+    <!-- Main head circle - positioned below headphones with gap -->
+    <circle cx="0" cy="35" r="45" fill="#f8fafc"/>
+    <circle cx="0" cy="35" r="40" fill="#1e293b" stroke="#1e293b" stroke-width="2"/>
+    <circle cx="0" cy="35" r="35" fill="#f8fafc"/>
     
     <!-- Eyes -->
-    <circle cx="-18" cy="25" r="8" fill="#1e293b"/>
-    <circle cx="18" cy="25" r="8" fill="#1e293b"/>
+    <circle cx="-12" cy="25" r="5" fill="#1e293b"/>
+    <circle cx="12" cy="25" r="5" fill="#1e293b"/>
     
     <!-- Smile -->
-    <path d="M-25 55 Q0 75, 25 55" fill="none" stroke="#1e293b" stroke-width="8" stroke-linecap="round"/>
+    <path d="M-15 45 Q0 55, 15 45" fill="none" stroke="#1e293b" stroke-width="5" stroke-linecap="round"/>
   </g>
   
-  <!-- MusoBuddy text -->
-  <text x="200" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="#1e293b">MusoBuddy</text>
+  <!-- MusoBuddy text - matching original proportions -->
+  <text x="200" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="52" font-weight="900" fill="#1e293b">MusoBuddy</text>
 </svg>
