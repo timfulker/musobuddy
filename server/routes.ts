@@ -13,6 +13,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware setup FIRST
   await setupAuth(app);
 
+  // Debug middleware to log all requests
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      console.log(`🔍 API REQUEST: ${req.method} ${req.path}`);
+    }
+    next();
+  });
+
   // Primary SendGrid webhook endpoint using proper email handling
   app.post('/api/webhook/sendgrid', async (req, res) => {
     console.log('🔥 WEBHOOK HIT! Email received via /api/webhook/sendgrid');
@@ -58,6 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice creation route (moved to priority section to avoid Vite interference)
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     console.log('🎯 PRIORITY INVOICE ROUTE HIT!');
+    console.log('Request method:', req.method);
+    console.log('Request path:', req.path);
+    console.log('Request authenticated:', req.isAuthenticated());
     try {
       
       const userId = req.user.claims.sub;
