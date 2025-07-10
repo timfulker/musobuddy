@@ -45,14 +45,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PRIORITY ROUTES - These must be registered before Vite middleware
+  
+  // Test route to debug POST request issue
+  app.post('/api/test-post', (req, res) => {
+    console.log('🧪 TEST POST ROUTE HIT!');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Body:', req.body);
+    res.json({ success: true, method: req.method, url: req.url, body: req.body });
+  });
+  
   // Invoice creation route (moved to priority section to avoid Vite interference)
-  app.post('/api/invoices', async (req: any, res) => {
+  app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     console.log('🎯 PRIORITY INVOICE ROUTE HIT!');
     try {
-      // Authentication check using middleware
-      if (!req.isAuthenticated || !req.isAuthenticated()) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
       
       const userId = req.user.claims.sub;
       console.log("=== INVOICE CREATION REQUEST ===");
