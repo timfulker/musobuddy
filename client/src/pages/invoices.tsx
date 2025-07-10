@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw } from "lucide-react";
+import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft } from "lucide-react";
 import { insertInvoiceSchema, type Invoice } from "@shared/schema";
 import { useLocation, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
