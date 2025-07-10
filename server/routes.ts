@@ -730,38 +730,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Invoice PDF download route (authenticated)
-  app.get('/api/invoices/:id/pdf', isAuthenticated, async (req: any, res) => {
-    console.log('PDF download request for invoice:', req.params.id);
+  // Invoice PDF endpoint - supports both authenticated and public access
+  app.get('/api/invoices/:id/pdf', async (req: any, res) => {
+    console.log('PDF request for invoice:', req.params.id);
     
     try {
-      const userId = req.user.claims.sub;
       const invoiceId = parseInt(req.params.id);
-      
-      const invoice = await storage.getInvoice(invoiceId, userId);
+      let invoice = null;
+      let userSettings = null;
+      let contract = null;
+
+      // Try authenticated access first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        const userId = req.user.claims.sub;
+        invoice = await storage.getInvoice(invoiceId, userId);
+        if (invoice) {
+          userSettings = await storage.getUserSettings(userId);
+          if (invoice.contractId) {
+            contract = await storage.getContract(invoice.contractId, userId);
+          }
+        }
+      }
+
+      // If not found via authenticated access, try public access
+      if (!invoice) {
+        invoice = await storage.getInvoiceById(invoiceId);
+        if (invoice) {
+          userSettings = await storage.getUserSettings(invoice.userId);
+          if (invoice.contractId) {
+            contract = await storage.getContractById(invoice.contractId);
+          }
+        }
+      }
+
       if (!invoice) {
         console.log('Invoice not found:', invoiceId);
         return res.status(404).json({ message: "Invoice not found" });
       }
       
-      // Get related contract for client details
-      let contract = null;
-      if (invoice.contractId) {
-        contract = await storage.getContract(invoice.contractId, userId);
-      }
-      
-      const userSettings = await storage.getUserSettings(userId);
-      
       console.log('Starting PDF generation for invoice:', invoice.invoiceNumber);
-      
-      
       const { generateInvoicePDF } = await import('./pdf-generator');
       const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
-      
-      
       console.log('PDF generated successfully:', invoice.invoiceNumber);
       
+      // Send PDF for inline viewing (no Content-Disposition header)
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      res.setHeader('Cache-Control', 'no-cache');
       res.send(pdfBuffer);
       
     } catch (error) {
@@ -791,7 +805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public invoice download (generates PDF)
+  // Public invoice download (generates PDF for download)
   app.get('/api/invoices/:id/download', async (req, res) => {
     console.log('Public PDF download request for invoice:', req.params.id);
     
@@ -812,9 +826,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contract = await storage.getContractById(invoice.contractId);
       }
 
-      // Generate PDF with simple approach
+      console.log('Starting PDF generation for invoice:', invoice.invoiceNumber);
       const { generateInvoicePDF } = await import('./pdf-generator');
       const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+      console.log('PDF generated successfully:', invoice.invoiceNumber);
 
       // Send PDF as download
       res.setHeader('Content-Type', 'application/pdf');
@@ -827,6 +842,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
+
 
   // Contract routes
   app.get('/api/contracts', isAuthenticated, async (req: any, res) => {

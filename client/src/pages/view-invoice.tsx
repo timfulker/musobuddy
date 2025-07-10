@@ -149,7 +149,7 @@ export default function ViewInvoice() {
             <CardContent className="p-0">
               <div className="w-full h-[800px] border rounded-b-lg overflow-hidden bg-white">
                 <iframe
-                  src={`/api/invoices/${id}/download`}
+                  src={`/api/invoices/${id}/pdf`}
                   className="w-full h-full border-none"
                   title={`Invoice ${invoice.invoiceNumber}`}
                 />
