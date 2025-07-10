@@ -1,50 +1,31 @@
-# Mailgun Route Setup - Step by Step
+# Mailgun Route Configuration
 
-## Where to Create the Route
+## Complete DNS Setup ✅
+- MX Records: mxa.mailgun.org & mxb.mailgun.org (Priority 10)
+- SPF Record: v=spf1 include:mailgun.org ~all
+- DMARC Record: v=DMARC1; p=none; pct=100; fo=1; ri=3600
+- CNAME Record: email.musobuddy.com → mailgun.org
 
-1. **Log into Mailgun Dashboard**
-   - Go to mailgun.com
-   - Sign in to your account
+## Next Step: Create Route
 
-2. **Navigate to Routes**
-   - In the left sidebar, click **"Receiving"**
-   - Click **"Routes"** (under the Receiving section)
+**In your Mailgun dashboard:**
+1. Go to **Receiving** → **Routes**
+2. Click **Create Route**
+3. Configure:
+   - **Priority**: 0 (highest priority)
+   - **Filter**: `catch_all()`
+   - **Action**: `forward("https://musobuddy.replit.app/api/webhook/mailgun")`
+   - **Description**: "Forward all emails to MusoBuddy webhook"
 
-3. **Create New Route**
-   - Click the **"Create Route"** button (usually blue button on the right)
-
-4. **Fill in Route Details**
-   ```
-   Priority: 0
-   Filter Expression: catch_all()
-   Actions: forward("https://musobuddy.replit.app/api/webhook/mailgun")
-   Description: Forward all emails to MusoBuddy webhook
-   ```
-
-5. **Save Route**
-   - Click **"Create Route"** to save
-
-## Visual Guide
-
-The page structure looks like this:
-```
-Mailgun Dashboard
-├── Sending
-├── Receiving
-│   ├── Routes          ← Click here
-│   ├── Suppressions
-│   └── Webhooks
-├── Analytics
-└── Settings
-```
-
-## What Each Field Means
-
-- **Priority**: 0 = highest priority (processed first)
-- **Filter**: `catch_all()` = captures all emails to your domain
-- **Action**: `forward("URL")` = sends POST request to your webhook
-- **Description**: Human-readable note for your reference
+## Route Details
+- **catch_all()**: Catches all emails sent to any address at musobuddy.com
+- **Webhook URL**: https://musobuddy.replit.app/api/webhook/mailgun
+- **Priority 0**: Ensures this route is processed first
 
 ## After Creating Route
+1. Test by sending email to leads@musobuddy.com
+2. Check MusoBuddy enquiries page for new entries
+3. Monitor webhook logs for successful processing
 
-The route will show up in your Routes list and will be active immediately. Once DNS propagates, emails to leads@musobuddy.com will trigger this route.
+## Expected Flow
+Email → Mailgun → Route → Webhook → New Enquiry in MusoBuddy
