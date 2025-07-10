@@ -88,6 +88,71 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
   const startTime = Date.now();
   
   try {
+    console.log('📧 MAILGUN WEBHOOK PROCESSING EMAIL');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
+    const {
+      recipient,
+      sender,
+      subject,
+      'body-plain': bodyPlain,
+      'body-html': bodyHtml
+    } = req.body;
+
+    // Validate this is for our leads email
+    if (!recipient || !recipient.includes('leads@musobuddy.com')) {
+      console.log('Email not for leads@musobuddy.com, ignoring');
+      return res.status(200).json({ message: 'Email ignored - not for leads' });
+    }
+
+    // Parse the email content using our client info parser
+    const clientInfo = parseClientInfo(bodyPlain || bodyHtml || '', sender, subject);
+    
+    // Create enquiry in system - assign to main account owner
+    const enquiry = await storage.createEnquiry({
+      title: subject || `Email from ${clientInfo.clientName}`,
+      clientName: clientInfo.clientName,
+      clientEmail: clientInfo.clientEmail,
+      clientPhone: clientInfo.clientPhone || null,
+      eventDate: clientInfo.eventDate ? new Date(clientInfo.eventDate) : null,
+      venue: clientInfo.venue || null,
+      notes: clientInfo.details,
+      userId: "43963086", // Main account owner
+      status: 'new',
+    });
+
+    const processingTime = Date.now() - startTime;
+    console.log(`✅ Successfully created enquiry from Mailgun email: ${enquiry.id} (${processingTime}ms)`);
+    
+    res.status(200).json({ 
+      message: 'Email processed successfully', 
+      enquiryId: enquiry.id,
+      clientName: enquiry.clientName,
+      processingTime: processingTime 
+    });
+
+  } catch (error) {
+    const processingTime = Date.now() - startTime;
+    console.error('❌ Error processing Mailgun webhook:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Processing time:', processingTime, 'ms');
+    
+    res.status(500).json({ 
+      message: 'Failed to process email',
+      error: error.message,
+      processingTime: processingTime
+    });
+  }
+  };
+}
+
+/**
+ * Mailgun Inbound Email Webhook Handler
+ */
+export async function handleMailgunWebhook(req: Request, res: Response) {
+  const startTime = Date.now();
+  
+  try {
     console.log('📧 Mailgun webhook received');
     
     // Return 200 immediately as per Mailgun best practices
