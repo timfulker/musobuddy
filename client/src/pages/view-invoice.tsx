@@ -53,12 +53,18 @@ export default function ViewInvoice() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-blue-900/20">
+        {/* Decorative background pattern */}
+        <div className="absolute inset-0 opacity-5 dark:opacity-10">
+          <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full blur-3xl"></div>
+        </div>
+        
         <Sidebar />
-        <div className="md:ml-64 flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 text-blue-500 dark:text-blue-400 mx-auto mb-4 animate-spin" />
-            <p className="text-gray-600 dark:text-gray-300">Loading invoice...</p>
+        <div className="md:ml-64 flex items-center justify-center min-h-screen relative z-10">
+          <div className="text-center backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 rounded-xl p-8 shadow-xl">
+            <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto mb-4 animate-spin" />
+            <p className="text-gray-700 dark:text-gray-200 font-medium">Loading invoice...</p>
           </div>
         </div>
       </div>
@@ -67,10 +73,16 @@ export default function ViewInvoice() {
 
   if (error || !invoice) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-blue-900/20">
+        {/* Decorative background pattern */}
+        <div className="absolute inset-0 opacity-5 dark:opacity-10">
+          <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full blur-3xl"></div>
+        </div>
+        
         <Sidebar />
-        <div className="md:ml-64 flex items-center justify-center min-h-screen">
-          <Card className="w-full max-w-md">
+        <div className="md:ml-64 flex items-center justify-center min-h-screen relative z-10">
+          <Card className="w-full max-w-md backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 shadow-xl border-0">
             <CardHeader>
               <CardTitle className="text-center text-red-600 dark:text-red-400">Invoice Not Found</CardTitle>
             </CardHeader>
@@ -96,9 +108,16 @@ export default function ViewInvoice() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-blue-900/20">
+      {/* Decorative background pattern */}
+      <div className="absolute inset-0 opacity-5 dark:opacity-10">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-pink-400 to-blue-500 rounded-full blur-3xl"></div>
+      </div>
+      
       <Sidebar />
-      <div className="md:ml-64">
+      <div className="md:ml-64 relative z-10">
         <div className="container mx-auto px-4 py-8">
           {/* Navigation Header */}
           <div className="flex items-center justify-between mb-6">
@@ -119,9 +138,12 @@ export default function ViewInvoice() {
 
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Invoice Details Panel */}
-            <Card className="w-full lg:w-96">
+            <Card className="w-full lg:w-96 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 shadow-xl border-0">
               <CardHeader>
-                <CardTitle>Invoice Details</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                  Invoice Details
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
               <div>
@@ -165,20 +187,25 @@ export default function ViewInvoice() {
           </Card>
 
           {/* PDF Viewer */}
-          <Card className="flex-1">
+          <Card className="flex-1 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 shadow-xl border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
+                <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 Invoice Preview
+                <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full ml-auto"></div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="w-full h-[800px] border rounded-b-lg overflow-hidden bg-white">
+            <CardContent className="p-0 relative">
+              <div className="w-full h-[800px] border rounded-b-lg overflow-hidden bg-white shadow-inner">
                 <iframe
                   src={`/api/invoices/${id}/download`}
                   className="w-full h-full border-0"
                   title={`Invoice ${invoice.invoiceNumber}`}
                 />
+              </div>
+              {/* MusoBuddy Branding */}
+              <div className="absolute bottom-2 right-2 text-xs text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-2 py-1 rounded">
+                Powered by MusoBuddy
               </div>
             </CardContent>
           </Card>
