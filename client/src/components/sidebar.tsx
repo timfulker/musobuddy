@@ -49,8 +49,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div className={cn(
         "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl z-50 transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-700",
+        // On desktop (md+), always visible. On mobile, controlled by isOpen state
         "md:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        // Force visibility on desktop regardless of isOpen state
+        "md:translate-x-0"
       )}>
         {/* Close button for mobile */}
         <button
@@ -77,7 +80,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="p-4 space-y-1">
-          <Link href="/" onClick={onClose} className={cn(
+          <Link href="/" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors",
             isActive("/") 
               ? "bg-purple-600 text-white" 
@@ -86,7 +89,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
           </Link>
-          <Link href="/enquiries" onClick={onClose} className={cn(
+          <Link href="/enquiries" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/enquiries") 
               ? "bg-purple-600 text-white font-medium" 
@@ -95,7 +98,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Inbox className="w-5 h-5" />
             <span>Enquiries</span>
           </Link>
-          <Link href="/address-book" onClick={onClose} className={cn(
+          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/address-book") 
               ? "bg-purple-600 text-white font-medium" 
@@ -104,7 +107,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Users className="w-5 h-5" />
             <span>Address Book</span>
           </Link>
-          <Link href="/contracts" onClick={onClose} className={cn(
+          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/contracts") 
               ? "bg-purple-600 text-white font-medium" 
@@ -113,7 +116,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <FileText className="w-5 h-5" />
             <span>Contracts</span>
           </Link>
-          <Link href="/invoices" onClick={onClose} className={cn(
+          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/invoices") 
               ? "bg-purple-600 text-white font-medium" 
@@ -122,7 +125,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <DollarSign className="w-5 h-5" />
             <span>Invoices</span>
           </Link>
-          <Link href="/calendar" onClick={onClose} className={cn(
+          <Link href="/calendar" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/calendar") 
               ? "bg-purple-600 text-white font-medium" 
@@ -131,7 +134,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Calendar className="w-5 h-5" />
             <span>Calendar</span>
           </Link>
-          <Link href="/compliance" onClick={onClose} className={cn(
+          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/compliance") 
               ? "bg-purple-600 text-white font-medium" 
@@ -140,7 +143,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Shield className="w-5 h-5" />
             <span>Compliance</span>
           </Link>
-          <Link href="/settings" onClick={onClose} className={cn(
+          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/settings") 
               ? "bg-purple-600 text-white font-medium" 
@@ -149,7 +152,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Settings className="w-5 h-5" />
             <span>Settings</span>
           </Link>
-          <Link href="/templates" onClick={onClose} className={cn(
+          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/templates") 
               ? "bg-purple-600 text-white font-medium" 
