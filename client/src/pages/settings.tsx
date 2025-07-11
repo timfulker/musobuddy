@@ -418,6 +418,8 @@ export default function Settings() {
     },
   });
 
+
+
   const onSubmit = (data: z.infer<typeof settingsFormSchema>) => {
     // Convert bank details table format back to string for storage
     const bankDetailsString = [
