@@ -784,6 +784,13 @@ All core features implemented and operational:
   * **Auto-Apply Functionality**: "Apply to Gig Types" button adds suggestions directly to configuration
   * **Real-Time Integration**: Suggestions appear as green badges and can be applied to existing gig types list
   * **Enhanced Instrument Coverage**: Includes synth, viola, clarinet, harp, trombone and specialized gig types
+- July 11, 2025. Performance configuration section consolidated and enquiries form sync fixed:
+  * **Consolidated Interface**: Merged instrument suggestions directly into gig types configuration section
+  * **Removed Redundant Section**: Eliminated "What do you play?" field in favor of instrument-based suggestions
+  * **Improved Layout**: Instrument suggestions now appear as integrated component within gig types configuration
+  * **Fixed Cache Sync Issue**: Enhanced settings save function to properly invalidate and refetch settings cache
+  * **Event Types Integration**: Connected enquiries form to use event types from settings instead of hardcoded values
+  * **Real-Time Updates**: Enquiries form now immediately reflects changes made to gig types and event types in settings
 ```
 
 ## User Preferences

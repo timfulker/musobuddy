@@ -73,11 +73,20 @@ export default function Enquiries() {
     return [];
   }, [settings.gigTypes]);
 
-  // Standard event types (could be made configurable in the future)
-  const eventTypes = [
-    "Wedding", "Corporate Event", "Private Party", "Birthday Party", 
-    "Anniversary", "Concert", "Festival", "Charity Event", "Christmas Party", "Other"
-  ];
+  // Parse event types from settings
+  const eventTypes = React.useMemo(() => {
+    if (settings.eventTypes) {
+      try {
+        return JSON.parse(settings.eventTypes);
+      } catch (error) {
+        console.error('Error parsing eventTypes:', error);
+        return ["Wedding", "Corporate Event", "Private Party", "Birthday Party", 
+                "Anniversary", "Concert", "Festival", "Charity Event", "Christmas Party", "Other"];
+      }
+    }
+    return ["Wedding", "Corporate Event", "Private Party", "Birthday Party", 
+            "Anniversary", "Concert", "Festival", "Charity Event", "Christmas Party", "Other"];
+  }, [settings.eventTypes]);
 
   const createEnquiryMutation = useMutation({
     mutationFn: async (data: z.infer<typeof enquiryFormSchema>) => {

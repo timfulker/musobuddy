@@ -216,7 +216,10 @@ export default function Settings() {
         title: "Settings saved",
         description: "Your business settings have been updated successfully.",
       });
+      // Invalidate all settings-related caches so forms refresh with new data
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      // Force refetch settings data to update all components that depend on it
+      queryClient.refetchQueries({ queryKey: ["/api/settings"] });
     },
     onError: () => {
       toast({
@@ -557,26 +560,6 @@ export default function Settings() {
             <CardContent className="space-y-6">
               <FormField
                 control={form.control}
-                name="instrumentsPlayed"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>What Do You Play?</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Saxophone, Piano, Guitar, DJ, Vocals"
-                        {...field}
-                      />
-                    </FormControl>
-                    <p className="text-sm text-muted-foreground">
-                      Describe your musical instruments and services. This helps personalize your enquiry forms.
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="eventTypes"
                 render={({ field }) => (
                   <FormItem>
@@ -642,7 +625,92 @@ export default function Settings() {
                   <FormItem>
                     <FormLabel>Available Gig Types</FormLabel>
                     <div className="space-y-3">
-                      {/* Add new gig type */}
+                      {/* Instrument Selection for Suggestions */}
+                      <div className="border rounded-lg p-4 bg-muted/20">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Music className="h-4 w-4 text-purple-600" />
+                          <h4 className="font-medium text-sm">Get Suggestions Based on Instruments</h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Select instruments you play to get tailored gig type suggestions
+                        </p>
+                        
+                        {/* Instrument Selection */}
+                        <div className="space-y-3">
+                          {Object.entries(instrumentCategories).map(([category, instruments]) => (
+                            <div key={category} className="space-y-2">
+                              <h5 className="font-medium text-xs text-muted-foreground uppercase tracking-wide">{category}</h5>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                {instruments.map((instrument) => (
+                                  <div key={instrument} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={instrument}
+                                      checked={selectedInstruments.includes(instrument)}
+                                      onCheckedChange={(checked) => 
+                                        handleInstrumentChange(instrument, checked as boolean)
+                                      }
+                                    />
+                                    <label
+                                      htmlFor={instrument}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
+                                    >
+                                      {instrument.replace('-', ' ')}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Get Suggestions Button */}
+                        {selectedInstruments.length > 0 && (
+                          <div className="flex gap-2 mt-4">
+                            <Button
+                              type="button"
+                              onClick={fetchGigSuggestions}
+                              disabled={isLoadingSuggestions}
+                              className="flex items-center gap-2"
+                              size="sm"
+                            >
+                              <Sparkles className="h-4 w-4" />
+                              {isLoadingSuggestions ? "Getting Suggestions..." : "Get Gig Suggestions"}
+                            </Button>
+                            
+                            {suggestedGigs.length > 0 && (
+                              <Button
+                                type="button"
+                                onClick={applySuggestedGigs}
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-2"
+                              >
+                                <Plus className="h-4 w-4" />
+                                Apply to Gig Types
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Display Suggestions */}
+                        {suggestedGigs.length > 0 && (
+                          <div className="space-y-2 mt-4">
+                            <h5 className="font-medium text-sm">Suggested Gig Types:</h5>
+                            <div className="flex flex-wrap gap-2">
+                              {suggestedGigs.map((gig, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-sm"
+                                >
+                                  {gig}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Manual Add new gig type */}
                       <div className="flex gap-2">
                         <Input
                           placeholder="e.g., Saxophone Solo, DJ Set, Sax + DJ, Band Performance"
@@ -694,96 +762,6 @@ export default function Settings() {
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
-
-          {/* Instrument-Based Gig Suggestions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Music className="h-5 w-5" />
-                Instrument-Based Gig Suggestions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Select instruments you play to get AI-powered gig type suggestions that you can add to your configuration.
-              </p>
-              
-              {/* Instrument Selection */}
-              <div className="space-y-4">
-                {Object.entries(instrumentCategories).map(([category, instruments]) => (
-                  <div key={category} className="space-y-2">
-                    <h4 className="font-medium text-sm">{category}</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {instruments.map((instrument) => (
-                        <div key={instrument} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={instrument}
-                            checked={selectedInstruments.includes(instrument)}
-                            onCheckedChange={(checked) => 
-                              handleInstrumentChange(instrument, checked as boolean)
-                            }
-                          />
-                          <label
-                            htmlFor={instrument}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
-                          >
-                            {instrument.replace('-', ' ')}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Get Suggestions Button */}
-              {selectedInstruments.length > 0 && (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    onClick={fetchGigSuggestions}
-                    disabled={isLoadingSuggestions}
-                    className="flex items-center gap-2"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {isLoadingSuggestions ? "Getting Suggestions..." : "Get Gig Suggestions"}
-                  </Button>
-                  
-                  {suggestedGigs.length > 0 && (
-                    <Button
-                      type="button"
-                      onClick={applySuggestedGigs}
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Apply to Gig Types
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {/* Display Suggestions */}
-              {suggestedGigs.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Suggested Gig Types:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestedGigs.map((gig, index) => (
-                      <div
-                        key={index}
-                        className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-sm"
-                      >
-                        {gig}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Click "Apply to Gig Types" to add these suggestions to your gig types configuration above.
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
