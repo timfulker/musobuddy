@@ -272,6 +272,24 @@ export default function Settings() {
     const newGigTypes = [...new Set([...gigTypes, ...allSuggestions])];
     setGigTypes(newGigTypes);
     form.setValue('gigTypes', newGigTypes.join('\n'));
+    
+    // Auto-save the settings with the new gig types
+    const currentFormData = form.getValues();
+    
+    // Convert bank details table format back to string for storage
+    const bankDetailsString = [
+      bankDetails.bankName ? `Bank Name: ${bankDetails.bankName}` : '',
+      bankDetails.accountName ? `Account Name: ${bankDetails.accountName}` : '',
+      bankDetails.sortCode ? `Sort Code: ${bankDetails.sortCode}` : '',
+      bankDetails.accountNumber ? `Account Number: ${bankDetails.accountNumber}` : ''
+    ].filter(line => line.length > 0).join('\n');
+    
+    const updatedFormData = {
+      ...currentFormData,
+      bankDetails: bankDetailsString,
+      gigTypes: JSON.stringify(newGigTypes) // Store as JSON string
+    };
+    saveSettingsMutation.mutate(updatedFormData);
   };
 
   // Auto-update gig types when instruments change
