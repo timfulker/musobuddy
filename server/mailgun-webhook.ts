@@ -111,12 +111,26 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
     const clientInfo = parseClientInfo(bodyPlain || bodyHtml || '', sender, subject);
     
     // Create enquiry in system - assign to main account owner
+    let eventDate = null;
+    if (clientInfo.eventDate) {
+      try {
+        eventDate = new Date(clientInfo.eventDate);
+        if (isNaN(eventDate.getTime())) {
+          console.log('Invalid date detected, setting to null:', clientInfo.eventDate);
+          eventDate = null;
+        }
+      } catch (e) {
+        console.log('Error parsing date, setting to null:', clientInfo.eventDate);
+        eventDate = null;
+      }
+    }
+    
     const enquiry = await storage.createEnquiry({
       title: subject || `Email from ${clientInfo.clientName}`,
       clientName: clientInfo.clientName,
       clientEmail: clientInfo.clientEmail,
       clientPhone: clientInfo.clientPhone || null,
-      eventDate: clientInfo.eventDate ? new Date(clientInfo.eventDate) : null,
+      eventDate: eventDate,
       venue: clientInfo.venue || null,
       notes: clientInfo.details,
       userId: "43963086", // Main account owner
@@ -144,65 +158,5 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
       error: error.message,
       processingTime: processingTime
     });
-  }
-  };
-}
-
-/**
- * Mailgun Inbound Email Webhook Handler
- */
-export async function handleMailgunWebhook(req: Request, res: Response) {
-  const startTime = Date.now();
-  
-  try {
-    console.log('📧 Mailgun webhook received');
-    
-    // Return 200 immediately as per Mailgun best practices
-    res.status(200).send('OK');
-    
-    // Verify webhook signature if signing key is provided
-    if (process.env.MAILGUN_SIGNING_KEY) {
-      const { timestamp, token, signature } = req.body;
-      if (!verifyMailgunSignature(timestamp, token, signature, process.env.MAILGUN_SIGNING_KEY)) {
-        console.error('❌ Mailgun webhook signature verification failed');
-        return;
-      }
-      console.log('✅ Mailgun webhook signature verified');
-    }
-    
-    const emailData = req.body as MailgunWebhookPayload;
-    
-    // Log email details
-    console.log('From:', emailData.sender);
-    console.log('To:', emailData.recipient);
-    console.log('Subject:', emailData.subject);
-    console.log('Body length:', emailData['body-plain']?.length || 0);
-    
-    // Parse client information
-    const clientInfo = parseClientInfo(
-      emailData['body-plain'] || '',
-      emailData.sender,
-      emailData.subject
-    );
-    
-    // Create enquiry in database
-    const enquiry = await storage.createEnquiry({
-      clientName: clientInfo.clientName,
-      clientEmail: clientInfo.clientEmail,
-      clientPhone: clientInfo.clientPhone,
-      eventDate: clientInfo.eventDate,
-      venue: clientInfo.venue,
-      details: clientInfo.details,
-      status: 'new',
-      source: 'Email',
-      userId: 1 // Default user ID - update based on your user system
-    });
-    
-    const processingTime = Date.now() - startTime;
-    console.log(`✅ Enquiry created successfully: #${enquiry.id} (${processingTime}ms)`);
-    
-  } catch (error) {
-    console.error('❌ Error processing Mailgun webhook:', error);
-    // Don't throw error since we already sent 200 response
   }
 }
