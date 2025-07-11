@@ -1,64 +1,60 @@
-// Monitor for email from tim@saxweddings.com webserver
-console.log('🔍 MONITORING FOR WEBSERVER EMAIL FROM tim@saxweddings.com...');
+/**
+ * Monitor for new enquiries from your test emails
+ */
 
-let checkCount = 0;
-const startTime = Date.now();
+console.log('Monitoring for new enquiries from your test emails...');
 
-const monitorInterval = setInterval(async () => {
-  checkCount++;
-  const elapsed = Math.round((Date.now() - startTime) / 1000);
-  
-  console.log(`\n--- Check #${checkCount} (${elapsed}s elapsed) ---`);
-  
+let initialCount = 0;
+
+async function checkForNewEnquiries() {
   try {
-    // Test webhook is still responsive
-    const webhookTest = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid');
-    if (webhookTest.ok) {
-      console.log('✅ Webhook endpoint still accessible');
-    }
-    
-    // Simulate checking for new enquiries 
-    // (Real check would require authentication)
-    console.log('📧 Monitoring for tim@saxweddings.com email...');
-    console.log('Expected: New enquiry ID 31+ if email forwarding works');
-    
-    // Every 5th check, test webhook functionality
-    if (checkCount % 5 === 0) {
-      console.log('🧪 Testing webhook with server email simulation...');
-      const testPost = await fetch('https://musobuddy.replit.app/api/webhook/sendgrid', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'User-Agent': 'SendGrid-Event-Webhook'
-        },
-        body: JSON.stringify({
-          to: 'leads@musobuddy.com',
-          from: 'test-webserver@saxweddings.com',
-          subject: 'Webserver email test',
-          text: 'Testing webhook with webserver-style email',
-          envelope: {
-            from: 'test-webserver@saxweddings.com',
-            to: ['leads@musobuddy.com']
-          }
-        })
-      });
+    const response = await fetch('https://musobuddy.replit.app/api/enquiries');
+    if (response.ok) {
+      const enquiries = await response.json();
       
-      if (testPost.ok) {
-        const result = await testPost.json();
-        console.log(`✅ Webhook test: created enquiry #${result.enquiryId}`);
+      if (initialCount === 0) {
+        initialCount = enquiries.length;
+        console.log(`Starting count: ${initialCount} enquiries`);
+        return;
       }
+      
+      if (enquiries.length > initialCount) {
+        const newEnquiries = enquiries.slice(initialCount);
+        console.log(`\n🎉 ${newEnquiries.length} NEW ENQUIRY(S) DETECTED!`);
+        
+        newEnquiries.forEach((enquiry, index) => {
+          console.log(`\n${index + 1}. Enquiry #${enquiry.id}`);
+          console.log(`   Title: ${enquiry.title}`);
+          console.log(`   Client: ${enquiry.clientName}`);
+          console.log(`   Email: ${enquiry.clientEmail}`);
+          console.log(`   Phone: ${enquiry.clientPhone || 'N/A'}`);
+          console.log(`   Event Date: ${enquiry.eventDate || 'N/A'}`);
+          console.log(`   Venue: ${enquiry.venue || 'N/A'}`);
+          console.log(`   Notes: ${enquiry.notes?.substring(0, 150) || 'N/A'}...`);
+          console.log(`   Source: ${enquiry.source || 'Email'}`);
+          console.log(`   Status: ${enquiry.status}`);
+        });
+        
+        initialCount = enquiries.length;
+        console.log(`\n✅ Total enquiries now: ${enquiries.length}`);
+        console.log('✅ Email forwarding system working perfectly!');
+      } else {
+        console.log(`[${new Date().toLocaleTimeString()}] Waiting... (${enquiries.length} total)`);
+      }
+    } else {
+      console.log('Failed to fetch enquiries');
     }
-    
   } catch (error) {
-    console.log('❌ Error:', error.message);
+    console.log(`Error: ${error.message}`);
   }
-}, 8000);
+}
 
-// Monitor for 10 minutes
+// Check every 5 seconds
+setInterval(checkForNewEnquiries, 5000);
+checkForNewEnquiries();
+
+// Stop after 3 minutes
 setTimeout(() => {
-  clearInterval(monitorInterval);
-  console.log('\n⏰ 10-minute monitoring complete');
-  console.log('If no enquiry from tim@saxweddings.com appeared, SendGrid Inbound Parse needs configuration review');
-}, 600000);
-
-console.log('Starting 10-minute monitoring for webserver email...');
+  console.log('\nMonitoring stopped.');
+  process.exit(0);
+}, 180000);
