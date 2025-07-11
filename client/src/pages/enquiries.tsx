@@ -473,13 +473,6 @@ export default function Enquiries() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Gig Type</FormLabel>
-                          {/* Debug Output */}
-                          <div className="text-xs bg-gray-100 p-2 rounded mb-2">
-                            <div>🔍 Debug Info:</div>
-                            <div>gigTypes length: {gigTypes.length}</div>
-                            <div>gigTypes type: {Array.isArray(gigTypes) ? 'Array' : typeof gigTypes}</div>
-                            <div>gigTypes: {JSON.stringify(gigTypes)}</div>
-                          </div>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -489,7 +482,7 @@ export default function Enquiries() {
                             <SelectContent>
                               {gigTypes.length > 0 ? (
                                 gigTypes.map((type: string, index: number) => (
-                                  <SelectItem key={`${type}-${index}`} value={type}>
+                                  <SelectItem key={`gig-${index}`} value={type}>
                                     {type}
                                   </SelectItem>
                                 ))
