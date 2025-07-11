@@ -1,0 +1,37 @@
+Looking at your code and the issue description, I can see the problem. The responsive detection logic is distributed across multiple components, each with their own independent `useState` for tracking desktop/mobile state. This creates timing issues where components might not sync up properly when the page loads externally.
+
+The main issue is that each component starts with `useState(true)` (assuming desktop), but when the page loads externally, there might be a brief moment where some components think they're on desktop while others detect mobile, causing layout conflicts.
+
+Here's a solution that centralizes the responsive detection logic:Now, let's update the sidebar component to use this centralized hook:Now let's update the mobile navigation component:Now let's create an updated Dashboard component that uses the centralized responsive hook:Here's what you need to do to fix the responsive issue:
+
+## The Problem
+The issue is that each component has its own independent `useState` for tracking responsive state, starting with `useState(true)` (assuming desktop). When the external URL loads, there are timing differences between when each component detects the actual screen size, causing layout conflicts.
+
+## The Solution
+
+1. **Create the centralized hook** (`hooks/useResponsive.ts`)
+2. **Update all components** to use this shared hook instead of their individual responsive detection
+
+## Key Changes Made:
+
+1. **Centralized Logic**: The `useResponsive` hook initializes with the actual window width immediately if available, defaulting to mobile-first approach
+2. **Consistent Timing**: All components now share the same responsive state, eliminating timing mismatches
+3. **Proper Initialization**: Uses a function to initialize state, checking `window.innerWidth` immediately rather than defaulting to `true`
+
+## Files to Update:
+
+1. Create `client/src/hooks/useResponsive.ts` with the hook code
+2. Update `client/src/components/sidebar.tsx` 
+3. Update `client/src/components/mobile-nav.tsx`
+4. Update all page components (`Dashboard.tsx`, `Contracts.tsx`, `Enquiries.tsx`, `Invoices.tsx`) to:
+   - Import `useResponsive` hook
+   - Replace individual responsive logic with `const { isDesktop } = useResponsive();`
+   - Remove the individual `useState` and `useEffect` for responsive detection
+
+## Additional Benefits:
+- **Performance**: Only one resize listener instead of multiple
+- **Consistency**: All components always have the same responsive state
+- **Maintainability**: Central place to adjust breakpoint logic
+- **SSR-Safe**: Handles server-side rendering properly with mobile-first approach
+
+This should resolve the issue where the external URL shows mobile view on desktop browsers.
