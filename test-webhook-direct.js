@@ -1,76 +1,57 @@
 /**
- * Test webhook endpoint directly
+ * Test webhook endpoint directly with curl-like approach
  */
 
-const https = require('https');
+import https from 'https';
+import http from 'http';
+import url from 'url';
 
-async function testWebhook() {
-  console.log('Testing webhook endpoint...');
-  
-  // First test GET endpoint
-  const getOptions = {
-    hostname: 'musobuddy.replit.app',
-    port: 443,
-    path: '/api/webhook/sendgrid',
-    method: 'GET',
+const testWebhook = async () => {
+  const webhookUrl = 'https://Musobuddy.replit.app/api/webhook/simple-email';
+  const data = JSON.stringify({
+    from: 'test@example.com',
+    to: 'leads@musobuddy.com',
+    subject: 'Test Email Forwarding',
+    text: 'Hello, I would like to book you for a wedding on July 15th at the Grand Hotel. Please call me at 555-1234. Thanks, John Smith'
+  });
+
+  const parsedUrl = url.parse(webhookUrl);
+  const options = {
+    hostname: parsedUrl.hostname,
+    port: parsedUrl.port || 443,
+    path: parsedUrl.path,
+    method: 'POST',
     headers: {
-      'Accept': 'application/json'
+      'Content-Type': 'application/json',
+      'Content-Length': data.length,
+      'User-Agent': 'Test-Webhook-Client'
     }
   };
-  
-  const getReq = https.request(getOptions, (res) => {
-    console.log('GET Response status:', res.statusCode);
-    let data = '';
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
-    res.on('end', () => {
-      console.log('GET Response:', data);
-      
-      // Now test POST endpoint
-      const postData = JSON.stringify({
-        from: 'test@example.com',
-        to: 'leads@musobuddy.com',
-        subject: 'Direct webhook test',
-        text: 'Testing webhook directly'
-      });
-      
-      const postOptions = {
-        hostname: 'musobuddy.replit.app',
-        port: 443,
-        path: '/api/webhook/sendgrid',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(postData)
-        }
-      };
-      
-      const postReq = https.request(postOptions, (postRes) => {
-        console.log('POST Response status:', postRes.statusCode);
-        let postData = '';
-        postRes.on('data', (chunk) => {
-          postData += chunk;
-        });
-        postRes.on('end', () => {
-          console.log('POST Response:', postData);
-        });
-      });
-      
-      postReq.on('error', (e) => {
-        console.error('POST Error:', e.message);
-      });
-      
-      postReq.write(postData);
-      postReq.end();
-    });
-  });
-  
-  getReq.on('error', (e) => {
-    console.error('GET Error:', e.message);
-  });
-  
-  getReq.end();
-}
 
-testWebhook();
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      console.log('Status:', res.statusCode);
+      console.log('Headers:', res.headers);
+      
+      let body = '';
+      res.on('data', (chunk) => {
+        body += chunk;
+      });
+      
+      res.on('end', () => {
+        console.log('Response body:', body);
+        resolve({ status: res.statusCode, headers: res.headers, body });
+      });
+    });
+
+    req.on('error', (err) => {
+      console.error('Request error:', err);
+      reject(err);
+    });
+
+    req.write(data);
+    req.end();
+  });
+};
+
+testWebhook().catch(console.error);

@@ -55,6 +55,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple email webhook endpoint - bypasses domain verification
+  app.post('/api/webhook/simple-email', async (req, res) => {
+    console.log('🔥 SIMPLE EMAIL WEBHOOK HIT! Email received via /api/webhook/simple-email');
+    console.log('Request from IP:', req.ip);
+    console.log('User-Agent:', req.headers['user-agent']);
+    console.log('Content-Type:', req.headers['content-type']);
+    try {
+      const { handleSimpleEmailWebhook } = await import('./simple-email-webhook');
+      await handleSimpleEmailWebhook(req, res);
+    } catch (error) {
+      console.error("Error in simple email webhook:", error);
+      res.status(500).json({ message: "Failed to process simple email webhook" });
+    }
+  });
+
   // PRIORITY ROUTES - These must be registered before Vite middleware
   
   // Test route to debug POST request issue
