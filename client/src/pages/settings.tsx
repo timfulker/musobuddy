@@ -20,6 +20,7 @@ const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).exten
   gigTypes: z.string().optional(),
   eventTypes: z.string().optional(),
   instrumentsPlayed: z.string().optional(),
+  customInstruments: z.string().optional(),
 });
 
 export default function Settings() {
@@ -81,6 +82,7 @@ export default function Settings() {
       })(),
       eventTypes: settings.eventTypes || "",
       instrumentsPlayed: settings.instrumentsPlayed || "",
+      customInstruments: settings.customInstruments || "",
     },
   });
 
@@ -112,6 +114,7 @@ export default function Settings() {
       })(),
       eventTypes: settings.eventTypes || "",
       instrumentsPlayed: settings.instrumentsPlayed || "",
+      customInstruments: settings.customInstruments || "",
     });
     
     // Initialize tag arrays
