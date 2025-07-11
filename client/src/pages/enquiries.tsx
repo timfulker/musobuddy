@@ -33,7 +33,7 @@ export default function Enquiries() {
   const [respondDialogOpen, setRespondDialogOpen] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
+  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
   const { toast } = useToast();
 
   // Responsive detection

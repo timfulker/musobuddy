@@ -36,7 +36,7 @@ export default function Contracts() {
   const [selectedContracts, setSelectedContracts] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
+  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
   const { toast } = useToast();
 
   // Responsive detection

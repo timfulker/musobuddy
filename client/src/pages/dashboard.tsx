@@ -15,7 +15,8 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
+  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
+  const [hasInitialized, setHasInitialized] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -23,6 +24,7 @@ export default function Dashboard() {
     const checkScreenSize = () => {
       const desktop = window.innerWidth >= 768;
       setIsDesktop(desktop);
+      setHasInitialized(true);
       console.log('Dashboard screen check - width:', window.innerWidth, 'isDesktop:', desktop);
     };
     

@@ -45,7 +45,7 @@ export default function Invoices() {
   const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
+  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
 
   // Responsive detection
   useEffect(() => {
