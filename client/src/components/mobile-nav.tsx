@@ -1,16 +1,34 @@
 import { Link, useLocation } from "wouter";
 import { Home, Inbox, Calendar, DollarSign, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 export default function MobileNav() {
   const [location] = useLocation();
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const isActive = (path: string) => {
     return location === path;
   };
 
+  // Don't render on desktop
+  if (isDesktop) {
+    return null;
+  }
+
   return (
-    <div className="md:hidden mobile-nav-hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-4 py-2 z-40">
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-4 py-2 z-40">
       <div className="flex justify-around">
         <Link href="/" className={cn(
           "flex flex-col items-center space-y-1 py-2",

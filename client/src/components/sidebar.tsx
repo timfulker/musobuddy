@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { 
   Home, 
   Inbox, 
@@ -27,6 +28,18 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
@@ -47,16 +60,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       {/* Sidebar */}
-      <div className={cn(
-        "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out",
-        // Desktop: always visible (z-30), Mobile: slide in/out overlay (z-50)
-        "md:z-30 z-50",
-        // Desktop: always visible, Mobile: controlled by isOpen
-        "transform",
-        isOpen ? "translate-x-0" : "-translate-x-full",
-        // Force visibility on screens wider than 768px with custom CSS
-        "sidebar-desktop-visible"
-      )}>
+      <div 
+        className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out"
+        style={{
+          transform: isDesktop ? 'translateX(0)' : (isOpen ? 'translateX(0)' : 'translateX(-100%)'),
+          zIndex: isDesktop ? 30 : 50
+        }}
+      >
         {/* Close button for mobile */}
         <button
           onClick={onClose}
