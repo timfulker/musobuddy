@@ -58,10 +58,7 @@ export default function Dashboard() {
     );
   }
 
-  // Force desktop layout - responsive detection will be added later
-  const forceDesktop = true;
-  
-  if (forceDesktop || isDesktop) {
+  if (isDesktop) {
     return (
       <div className="min-h-screen bg-background flex">
         {/* Desktop Sidebar - Always visible */}
