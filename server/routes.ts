@@ -121,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           Return only a JSON array of strings, no explanations.`;
 
           const response = await openai.chat.completions.create({
-            model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+            model: "gpt-3.5-turbo",
             messages: [
               {
                 role: "system",
