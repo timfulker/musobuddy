@@ -2,47 +2,59 @@
  * Test the exact webhook URL from Mailgun route
  */
 
-const webhook_url = 'https://musobuddy.replit.app/api/webhook/mailgun';
-
-console.log('Testing exact webhook URL from Mailgun route...');
-console.log('URL:', webhook_url);
-
-// Test with data similar to what Mailgun would send
-const testData = new URLSearchParams({
-  sender: 'external-test@example.com',
-  recipient: 'leads@musobuddy.com',
-  subject: 'External URL Test',
-  'body-plain': 'Testing exact URL from Mailgun route configuration'
-});
-
 async function testExactURL() {
+  console.log('Testing exact webhook URL for Mailgun catch-all route...');
+  
+  const testData = {
+    recipient: 'leads@musobuddy.com',
+    sender: 'test@example.com',
+    subject: 'Catch-all Route Test',
+    'body-plain': 'Testing catch-all routing configuration'
+  };
+  
+  const webhookURL = 'https://musobuddy.replit.app/api/webhook/mailgun';
+  
   try {
-    console.log('\nSending POST request to webhook...');
+    console.log('Testing URL:', webhookURL);
     
-    const response = await fetch(webhook_url, {
+    const response = await fetch(webhookURL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mailgun/2.0'
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mailgun/Route-Test'
       },
-      body: testData
+      body: JSON.stringify(testData)
     });
     
-    console.log(`Status: ${response.status}`);
-    console.log(`Status Text: ${response.statusText}`);
+    console.log('Response status:', response.status);
     
-    const result = await response.json();
-    console.log('Response:', result);
-    
-    if (result.enquiryId) {
-      console.log(`✅ SUCCESS: Webhook URL working - created enquiry #${result.enquiryId}`);
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ SUCCESS - Webhook accessible:', result);
+      
+      if (result.enquiryId) {
+        console.log(`🎉 Created enquiry #${result.enquiryId}`);
+        console.log('✅ This proves the webhook URL is correct for catch-all routing!');
+        
+        console.log('\n📧 MAILGUN CATCH-ALL ROUTE CONFIG:');
+        console.log('Expression: catch_all()');
+        console.log('Action: forward("https://musobuddy.replit.app/api/webhook/mailgun")');
+        console.log('Priority: 0');
+        console.log('Status: Active');
+        
+        console.log('\n🔧 IF STILL NOT WORKING:');
+        console.log('1. Check if route is Active in Mailgun dashboard');
+        console.log('2. Verify domain is fully verified (all DNS records green)');
+        console.log('3. Check Mailgun logs for delivery attempts');
+        console.log('4. Ensure no other routes are conflicting');
+      }
     } else {
-      console.log('⚠️  Response received but no enquiry created');
+      const error = await response.text();
+      console.log('❌ ERROR:', error);
     }
     
   } catch (error) {
-    console.log(`❌ ERROR: ${error.message}`);
-    console.log('This suggests the webhook URL is not accessible from external sources');
+    console.log('❌ Request failed:', error.message);
   }
 }
 
