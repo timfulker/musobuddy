@@ -244,62 +244,21 @@ export default function Settings() {
   };
 
   const addCustomInstrument = () => {
-    if (newInstrument.trim() && !customInstruments.includes(newInstrument.trim()) && !selectedInstruments.includes(newInstrument.trim())) {
+    if (newInstrument.trim() && !customInstruments.includes(newInstrument.trim())) {
       const instrument = newInstrument.trim();
       
-      // Update component state
-      const updatedCustom = [...customInstruments, instrument];
-      const updatedSelected = [...selectedInstruments, instrument];
-      
-      setCustomInstruments(updatedCustom);
-      setSelectedInstruments(updatedSelected);
-      
-      // ✅ KEY FIX: Update form state with selected instruments only (not duplicating)
-      form.setValue('instrumentsPlayed', JSON.stringify(updatedSelected), {
-        shouldDirty: true,
-        shouldTouch: true,
-        shouldValidate: true
-      });
-      
-      // ✅ KEY FIX: Update custom instruments field separately
-      form.setValue('customInstruments', JSON.stringify(updatedCustom), {
-        shouldDirty: true,
-        shouldTouch: true,
-        shouldValidate: true
-      });
-      
-      console.log('🎯 Added custom instrument:', instrument);
-      console.log('🎸 Selected instruments now:', updatedSelected);
-      console.log('🎯 Custom instruments now:', updatedCustom);
+      // Simple local state update only - no form integration
+      setCustomInstruments([...customInstruments, instrument]);
+      setSelectedInstruments([...selectedInstruments, instrument]);
       
       setNewInstrument("");
     }
   };
 
   const removeCustomInstrument = (instrument: string) => {
-    const updatedCustom = customInstruments.filter(i => i !== instrument);
-    const updatedSelected = selectedInstruments.filter(i => i !== instrument);
-    
-    setCustomInstruments(updatedCustom);
-    setSelectedInstruments(updatedSelected);
-    
-    // ✅ KEY FIX: Update form state with selected instruments only
-    form.setValue('instrumentsPlayed', JSON.stringify(updatedSelected), {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true
-    });
-    
-    // ✅ KEY FIX: Update custom instruments field separately
-    form.setValue('customInstruments', JSON.stringify(updatedCustom), {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true
-    });
-    
-    console.log('🗑️ Removed custom instrument:', instrument);
-    console.log('🎸 Selected instruments now:', updatedSelected);
-    console.log('🎯 Custom instruments now:', updatedCustom);
+    // Simple local state update only - no form integration
+    setCustomInstruments(customInstruments.filter(i => i !== instrument));
+    setSelectedInstruments(selectedInstruments.filter(i => i !== instrument));
   };
 
   // Debug function to trace form state
@@ -947,21 +906,30 @@ export default function Settings() {
                           </div>
                         </div>
 
-                        {/* Display custom instruments */}
+                        {/* Display custom instruments with checkboxes */}
                         {customInstruments.length > 0 && (
                           <div className="space-y-2 mt-3">
                             <h5 className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Custom Instruments</h5>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                               {customInstruments.map((instrument) => (
-                                <div
-                                  key={instrument}
-                                  className="flex items-center gap-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-sm"
-                                >
-                                  <span className="capitalize">{instrument}</span>
+                                <div key={instrument} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={instrument}
+                                    checked={selectedInstruments.includes(instrument)}
+                                    onCheckedChange={(checked) => 
+                                      handleInstrumentChange(instrument, checked as boolean)
+                                    }
+                                  />
+                                  <label
+                                    htmlFor={instrument}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
+                                  >
+                                    {instrument}
+                                  </label>
                                   <button
                                     type="button"
                                     onClick={() => removeCustomInstrument(instrument)}
-                                    className="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-200"
+                                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 ml-auto"
                                   >
                                     <X className="h-3 w-3" />
                                   </button>
