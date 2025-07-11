@@ -130,36 +130,34 @@ export default function Settings() {
     }
     setGigTypes(gigTypesArray);
     
-    // Load custom instruments from instrumentsPlayed field
-    let allInstruments = [];
+    // Load selected instruments from instrumentsPlayed field
+    let selectedInstrumentsFromDB = [];
     if (settings.instrumentsPlayed) {
       try {
-        allInstruments = JSON.parse(settings.instrumentsPlayed);
-        console.log('🎯 Loaded instruments from database:', allInstruments);
+        selectedInstrumentsFromDB = JSON.parse(settings.instrumentsPlayed);
+        console.log('🎯 Selected instruments from DB:', selectedInstrumentsFromDB);
       } catch (e) {
         // If JSON parsing fails, treat as newline-separated string
-        allInstruments = settings.instrumentsPlayed.split('\n').filter(Boolean);
-        console.log('🎯 Loaded instruments from string:', allInstruments);
+        selectedInstrumentsFromDB = settings.instrumentsPlayed.split('\n').filter(Boolean);
+        console.log('🎯 Selected instruments from string:', selectedInstrumentsFromDB);
       }
     }
     
-    // Define predefined instruments for separation
-    const predefinedInstruments = [
-      'saxophone', 'guitar', 'piano', 'vocals', 'bass', 'drums', 'dj', 'keyboard', 'synth', 'singer songwriter',
-      'violin', 'viola', 'cello', 'flute', 'clarinet', 'oboe', 'harp',
-      'trumpet', 'trombone', 'percussion'
-    ];
+    // Load custom instruments from customInstruments field
+    let customInstrumentsFromDB = [];
+    if (settings.customInstruments) {
+      try {
+        customInstrumentsFromDB = JSON.parse(settings.customInstruments);
+        console.log('🎯 Custom instruments from DB:', customInstrumentsFromDB);
+      } catch (e) {
+        // If JSON parsing fails, treat as newline-separated string
+        customInstrumentsFromDB = settings.customInstruments.split('\n').filter(Boolean);
+        console.log('🎯 Custom instruments from string:', customInstrumentsFromDB);
+      }
+    }
     
-    // Separate custom instruments from predefined ones
-    const customInstrumentsFromDB = allInstruments.filter(instrument => 
-      !predefinedInstruments.includes(instrument.toLowerCase())
-    );
-    const selectedInstrumentsFromDB = allInstruments.filter(instrument => 
-      predefinedInstruments.includes(instrument.toLowerCase())
-    );
-    
-    console.log('🎯 Custom instruments from DB:', customInstrumentsFromDB);
-    console.log('🎯 Selected instruments from DB:', selectedInstrumentsFromDB);
+    console.log('🎯 Final selected instruments:', selectedInstrumentsFromDB);
+    console.log('🎯 Final custom instruments:', customInstrumentsFromDB);
     
     setSelectedInstruments(selectedInstrumentsFromDB);
     setCustomInstruments(customInstrumentsFromDB);
@@ -464,10 +462,12 @@ export default function Settings() {
       ...data,
       bankDetails: bankDetailsString,
       gigTypes: JSON.stringify(gigTypesArray),
-      instrumentsPlayed: instrumentsPlayedString // ✅ Use form data
+      instrumentsPlayed: instrumentsPlayedString, // ✅ Use form data
+      customInstruments: JSON.stringify(customInstruments) // ✅ Include custom instruments
     };
     
     console.log('🎯 Final save data:', updatedData);
+    console.log('🎯 Custom instruments being saved:', customInstruments);
     saveSettingsMutation.mutate(updatedData);
   };
 
