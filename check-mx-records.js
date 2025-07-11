@@ -2,36 +2,28 @@
  * Check MX records for musobuddy.com
  */
 
-import { promises as dns } from 'dns';
+import dns from 'dns';
 
 async function checkMXRecords() {
-  console.log('=== MX RECORD VERIFICATION ===');
-  
   try {
-    // Check MX records using Node.js DNS module
     console.log('Checking MX records for musobuddy.com...');
-    const mxRecords = await dns.resolveMx('musobuddy.com');
     
-    if (mxRecords.length > 0) {
-      console.log('✅ MX Records found:');
-      mxRecords.forEach((record, index) => {
-        console.log(`${index + 1}. Priority: ${record.priority}, Exchange: ${record.exchange}`);
-      });
-      
-      // Check if Mailgun MX records are present
-      const mailgunMx = mxRecords.filter(record => 
-        record.exchange.includes('mailgun.org')
-      );
-      
-      if (mailgunMx.length > 0) {
-        console.log('\n✅ Mailgun MX records confirmed - DNS is ready!');
-        console.log('📧 You can test email forwarding immediately.');
-      } else {
-        console.log('\n⚠️  No Mailgun MX records found');
-      }
+    const mxRecords = await dns.promises.resolveMx('musobuddy.com');
+    console.log('MX Records:', mxRecords);
+    
+    // Check if Mailgun MX records are present
+    const mailgunMX = mxRecords.some(record => 
+      record.exchange.includes('mailgun.org') || 
+      record.exchange.includes('mg.musobuddy.com')
+    );
+    
+    if (mailgunMX) {
+      console.log('✅ Mailgun MX records found');
     } else {
-      console.log('❌ No MX records found');
+      console.log('❌ No Mailgun MX records found');
+      console.log('This might explain why emails aren\'t reaching Mailgun');
     }
+    
   } catch (error) {
     console.error('Error checking MX records:', error.message);
   }
