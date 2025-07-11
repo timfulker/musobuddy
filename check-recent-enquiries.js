@@ -5,44 +5,48 @@
 async function checkForNewEnquiries() {
   try {
     const response = await fetch('https://musobuddy.replit.app/api/enquiries');
+    
     if (response.ok) {
       const enquiries = await response.json();
-      console.log(`Total enquiries: ${enquiries.length}`);
+      console.log(`📋 Total enquiries: ${enquiries.length}`);
       
-      // Show the last 5 enquiries to understand the pattern
+      // Show the last 5 enquiries
+      console.log('\n🔍 Most recent enquiries:');
       const recent = enquiries.slice(-5);
-      console.log('\nMost recent 5 enquiries:');
       recent.forEach((enquiry, index) => {
-        console.log(`\n${index + 1}. Enquiry #${enquiry.id}`);
-        console.log(`   Title: ${enquiry.title}`);
-        console.log(`   Client: ${enquiry.clientName}`);
-        console.log(`   Email: ${enquiry.clientEmail}`);
+        const created = new Date(enquiry.createdAt);
+        console.log(`${index + 1}. #${enquiry.id} - ${enquiry.clientName} - ${enquiry.title}`);
+        console.log(`   Created: ${created.toLocaleString()}`);
         console.log(`   Status: ${enquiry.status}`);
-        console.log(`   Source: ${enquiry.source || 'Unknown'}`);
-        console.log(`   Event Date: ${enquiry.eventDate || 'N/A'}`);
-        console.log(`   Created: ${enquiry.createdAt || 'N/A'}`);
-        console.log(`   Notes: ${enquiry.notes?.substring(0, 100) || 'N/A'}...`);
+        if (enquiry.notes) {
+          console.log(`   Notes: ${enquiry.notes.substring(0, 100)}...`);
+        }
+        console.log('');
       });
       
-      // Look for patterns in recent enquiries
-      const emailEnquiries = enquiries.filter(e => e.source === 'email' || e.title.includes('email') || e.title.includes('Email'));
-      console.log(`\nEmail-based enquiries: ${emailEnquiries.length}`);
+      // Check for very recent enquiries (last 10 minutes)
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const veryRecent = enquiries.filter(enquiry => 
+        new Date(enquiry.createdAt) > tenMinutesAgo
+      );
       
-      if (emailEnquiries.length > 0) {
-        console.log('\nMost recent email enquiry:');
-        const lastEmail = emailEnquiries[emailEnquiries.length - 1];
-        console.log(`ID: ${lastEmail.id}`);
-        console.log(`Title: ${lastEmail.title}`);
-        console.log(`Client: ${lastEmail.clientName}`);
-        console.log(`Email: ${lastEmail.clientEmail}`);
-        console.log(`Notes: ${lastEmail.notes}`);
+      if (veryRecent.length > 0) {
+        console.log('🎉 RECENT ENQUIRIES FOUND (last 10 minutes):');
+        veryRecent.forEach(enquiry => {
+          console.log(`• #${enquiry.id}: ${enquiry.clientName} - ${enquiry.title}`);
+          console.log(`  Created: ${new Date(enquiry.createdAt).toLocaleString()}`);
+        });
+      } else {
+        console.log('❌ No enquiries created in the last 10 minutes');
+        console.log('This suggests the email may not have reached the webhook');
       }
       
     } else {
-      console.log('Failed to fetch enquiries');
+      console.log('❌ Failed to fetch enquiries:', response.status);
     }
+    
   } catch (error) {
-    console.log(`Error: ${error.message}`);
+    console.log('❌ Error:', error.message);
   }
 }
 
