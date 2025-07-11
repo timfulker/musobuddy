@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 
 export default function MobileNav() {
   const [location] = useLocation();
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
 
   useEffect(() => {
     const checkScreenSize = () => {

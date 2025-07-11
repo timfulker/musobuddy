@@ -28,7 +28,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
 
   useEffect(() => {
     const checkScreenSize = () => {
