@@ -565,7 +565,7 @@ export default function Enquiries() {
                         <FormItem>
                           <FormLabel>Price Quoted (£)</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="500" {...field} value={field.value || ""} step="1" />
+                            <Input placeholder="500" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
