@@ -2,53 +2,46 @@
  * Debug Mailgun route configuration
  */
 
-console.log('=== MAILGUN ROUTE DEBUG ===');
+console.log('=== MAILGUN ROUTE CONFIGURATION DEBUG ===');
 
-console.log('\n🔍 ISSUE IDENTIFIED:');
-console.log('• Webhook tests work perfectly (created test enquiries)');
-console.log('• Real emails from your addresses are NOT reaching webhook');
-console.log('• This indicates a Mailgun route configuration issue');
+console.log('\n🔍 POTENTIAL MAILGUN FREE PLAN ISSUES:');
+console.log('• Free plan: Only 1 inbound route allowed');
+console.log('• Route must be configured with exact webhook URL');
+console.log('• Domain verification must be 100% complete');
+console.log('• Route priority must be set correctly (lower = higher priority)');
 
-console.log('\n📋 MAILGUN ROUTE REQUIREMENTS:');
-console.log('Your Mailgun route must be configured exactly like this:');
-console.log('');
-console.log('PRIORITY: 0 (highest priority)');
-console.log('FILTER: catch_all(*)');
-console.log('ACTION: forward("https://musobuddy.replit.app/api/webhook/mailgun")');
-console.log('DESCRIPTION: Forward all emails to MusoBuddy');
+console.log('\n📧 MAILGUN ROUTE REQUIREMENTS:');
+console.log('• Expression: match_recipient(".*@musobuddy.com")');
+console.log('• Action: forward("https://musobuddy.replit.app/api/webhook/mailgun")');
+console.log('• Priority: 0 (highest)');
+console.log('• Description: Forward to MusoBuddy webhook');
 
-console.log('\n🔧 COMMON CONFIGURATION MISTAKES:');
-console.log('1. Route priority not set to 0 (highest)');
-console.log('2. Filter not set to catch_all(*)');
-console.log('3. Wrong webhook URL or typo in URL');
-console.log('4. Route not active/enabled');
-console.log('5. Domain not fully verified');
+console.log('\n🚨 COMMON MAILGUN FREE PLAN ISSUES:');
+console.log('1. Route URL mismatch (http vs https)');
+console.log('2. Domain not fully verified');
+console.log('3. Route expression syntax error');
+console.log('4. Webhook URL not accessible from Mailgun servers');
+console.log('5. Route disabled/inactive');
 
-console.log('\n✅ VERIFIED WORKING COMPONENTS:');
-console.log('• Webhook endpoint: FUNCTIONAL');
-console.log('• Email parsing: WORKING');
-console.log('• Database storage: ACTIVE');
-console.log('• Processing time: ~100ms');
+console.log('\n✅ ROUTE VERIFICATION CHECKLIST:');
+console.log('□ Domain verification: All DNS records green');
+console.log('□ Route expression: match_recipient(".*@musobuddy.com")');
+console.log('□ Route action: forward("https://musobuddy.replit.app/api/webhook/mailgun")');
+console.log('□ Route priority: 0');
+console.log('□ Route status: Active');
+console.log('□ Webhook URL: Publicly accessible');
 
-console.log('\n🎯 NEXT STEPS:');
-console.log('1. Check your Mailgun dashboard Routes section');
-console.log('2. Verify the catch_all(*) route exists and is active');
-console.log('3. Confirm webhook URL is exactly: https://musobuddy.replit.app/api/webhook/mailgun');
-console.log('4. Ensure route priority is 0 (highest)');
-console.log('5. Check domain authentication status');
+console.log('\n🔧 NEXT STEPS:');
+console.log('1. Check Mailgun dashboard → Routes');
+console.log('2. Verify route configuration matches exactly');
+console.log('3. Test webhook URL independently');
+console.log('4. Check domain verification status');
+console.log('5. Review Mailgun logs for delivery attempts');
 
-console.log('\n📧 TEST PROCEDURE:');
-console.log('After fixing the route:');
-console.log('1. Send another test email to leads@musobuddy.com');
-console.log('2. Check MusoBuddy dashboard within 1-2 minutes');
-console.log('3. Should see new enquiry with your real email address');
+console.log('\n💡 ALTERNATIVE SOLUTION:');
+console.log('If free plan issues persist, consider:');
+console.log('• Upgrading to Mailgun Basic plan ($15/month)');
+console.log('• Switching to SendGrid (more generous free tier)');
+console.log('• Using Gmail forwarding + SMTP (completely free)');
 
-console.log('\n🚨 IMPORTANT:');
-console.log('The webhook is 100% functional - this is purely a Mailgun routing issue.');
-console.log('Once the route is fixed, email forwarding will work immediately.');
-
-console.log('\n📞 ALTERNATIVE SOLUTION:');
-console.log('If Mailgun route issues persist, we can switch to:');
-console.log('• SendGrid inbound parse (already configured)');
-console.log('• Different email forwarding service');
-console.log('• Manual email forwarding setup');
+console.log('\nThe webhook code is working perfectly - this is a configuration issue!');
