@@ -64,7 +64,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div 
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out",
+          "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col",
           // Always show on desktop (768px+), slide on mobile
           "transform",
           isDesktop ? "translate-x-0 z-30" : (isOpen ? "translate-x-0 z-50" : "-translate-x-full z-50")
@@ -96,7 +96,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
           <Link href="/" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors",
             isActive("/") 
