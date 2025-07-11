@@ -264,7 +264,7 @@ export default function Settings() {
     'clarinet': ['Jazz Ensemble', 'Classical Performance', 'Wedding Ceremony', 'Folk Music', 'Solo Clarinet', 'Wind Ensemble', 'Background Music']
   };
 
-  // Auto-update gig types based on instrument selection
+  // Update gig types based on instrument selection (no auto-save)
   const updateGigTypesFromInstruments = async () => {
     if (selectedInstruments.length === 0) {
       return;
@@ -302,38 +302,15 @@ export default function Settings() {
       }
     }
 
-    // Update gig types with all suggestions
+    // Update gig types with all suggestions (but don't auto-save)
     const newGigTypes = [...new Set([...gigTypes, ...allSuggestions])];
     setGigTypes(newGigTypes);
     form.setValue('gigTypes', newGigTypes.join('\n'));
     
-    // Auto-save the settings with the new gig types
-    const currentFormData = form.getValues();
-    
-    // Convert bank details table format back to string for storage
-    const bankDetailsString = [
-      bankDetails.bankName ? `Bank Name: ${bankDetails.bankName}` : '',
-      bankDetails.accountName ? `Account Name: ${bankDetails.accountName}` : '',
-      bankDetails.sortCode ? `Sort Code: ${bankDetails.sortCode}` : '',
-      bankDetails.accountNumber ? `Account Number: ${bankDetails.accountNumber}` : ''
-    ].filter(line => line.length > 0).join('\n');
-    
-    // Save custom instruments to instrumentsPlayed field
-    const allInstruments = [...selectedInstruments, ...customInstruments];
-    const instrumentsPlayedString = JSON.stringify(allInstruments);
-    console.log('🎯 Auto-saving instruments:', allInstruments);
-    console.log('🎯 Auto-saving gig types:', newGigTypes);
-    
-    const updatedFormData = {
-      ...currentFormData,
-      bankDetails: bankDetailsString,
-      gigTypes: JSON.stringify(newGigTypes), // Store as JSON string
-      instrumentsPlayed: instrumentsPlayedString // Save all instruments (selected + custom)
-    };
-    saveSettingsMutation.mutate(updatedFormData);
+    console.log('🎯 Updated gig types (not saved yet):', newGigTypes);
   };
 
-  // Auto-update gig types when instruments change
+  // Update gig types when instruments change (but don't auto-save)
   React.useEffect(() => {
     if (selectedInstruments.length > 0) {
       updateGigTypesFromInstruments();
@@ -354,7 +331,8 @@ export default function Settings() {
       // Force refetch settings data to update all components that depend on it
       queryClient.refetchQueries({ queryKey: ["/api/settings"] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Settings save error:', error);
       toast({
         title: "Error",
         description: "Failed to save settings. Please try again.",
@@ -389,6 +367,7 @@ export default function Settings() {
       instrumentsPlayed: instrumentsPlayedString // Save all instruments (selected + custom)
     };
     
+    console.log('🎯 Final save data:', updatedData);
     saveSettingsMutation.mutate(updatedData);
   };
 
