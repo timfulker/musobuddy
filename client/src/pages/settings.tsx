@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, Mail, Key, Plus, X } from "lucide-react";
+import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, Mail, Key, Plus, X, Music, Sparkles } from "lucide-react";
 import { insertUserSettingsSchema, type UserSettings } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +37,18 @@ export default function Settings() {
   const [gigTypes, setGigTypes] = useState<string[]>([]);
   const [newEventType, setNewEventType] = useState("");
   const [newGigType, setNewGigType] = useState("");
+  
+  // State for instrument selection
+  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
+  const [suggestedGigs, setSuggestedGigs] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  
+  // Define instrument categories
+  const instrumentCategories = {
+    "Band Instruments": ["guitar", "bass", "drums", "vocals", "saxophone", "trumpet"],
+    "Classical Instruments": ["violin", "flute", "cello", "piano", "oboe"],
+    "Other/General": ["keyboard", "dj", "singer-songwriter", "percussion"]
+  };
 
   const { data: settings = {}, isLoading } = useQuery({
     queryKey: ["/api/settings"],
@@ -135,6 +148,63 @@ export default function Settings() {
     const updatedTypes = gigTypes.filter(type => type !== typeToRemove);
     setGigTypes(updatedTypes);
     form.setValue('gigTypes', updatedTypes.join('\n'));
+  };
+
+  // Handle instrument selection
+  const handleInstrumentChange = (instrument: string, checked: boolean) => {
+    let updatedInstruments;
+    if (checked) {
+      updatedInstruments = [...selectedInstruments, instrument];
+    } else {
+      updatedInstruments = selectedInstruments.filter(i => i !== instrument);
+    }
+    setSelectedInstruments(updatedInstruments);
+  };
+
+  // Fetch gig suggestions based on selected instruments
+  const fetchGigSuggestions = async () => {
+    if (selectedInstruments.length === 0) {
+      setSuggestedGigs([]);
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+    try {
+      const response = await fetch('/api/suggest-gigs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ instruments: selectedInstruments }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch suggestions');
+      }
+
+      const data = await response.json();
+      setSuggestedGigs(data.suggestions);
+    } catch (error) {
+      console.error('Error fetching gig suggestions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch gig suggestions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  // Auto-apply suggested gigs to the gig types list
+  const applySuggestedGigs = () => {
+    const newGigTypes = [...new Set([...gigTypes, ...suggestedGigs])];
+    setGigTypes(newGigTypes);
+    form.setValue('gigTypes', newGigTypes.join('\n'));
+    toast({
+      title: "Success",
+      description: `Added ${suggestedGigs.length} suggested gig types to your configuration.`,
+    });
   };
 
   const saveSettingsMutation = useMutation({
@@ -624,6 +694,96 @@ export default function Settings() {
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          {/* Instrument-Based Gig Suggestions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Music className="h-5 w-5" />
+                Instrument-Based Gig Suggestions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Select instruments you play to get AI-powered gig type suggestions that you can add to your configuration.
+              </p>
+              
+              {/* Instrument Selection */}
+              <div className="space-y-4">
+                {Object.entries(instrumentCategories).map(([category, instruments]) => (
+                  <div key={category} className="space-y-2">
+                    <h4 className="font-medium text-sm">{category}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {instruments.map((instrument) => (
+                        <div key={instrument} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={instrument}
+                            checked={selectedInstruments.includes(instrument)}
+                            onCheckedChange={(checked) => 
+                              handleInstrumentChange(instrument, checked as boolean)
+                            }
+                          />
+                          <label
+                            htmlFor={instrument}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
+                          >
+                            {instrument.replace('-', ' ')}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Get Suggestions Button */}
+              {selectedInstruments.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={fetchGigSuggestions}
+                    disabled={isLoadingSuggestions}
+                    className="flex items-center gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {isLoadingSuggestions ? "Getting Suggestions..." : "Get Gig Suggestions"}
+                  </Button>
+                  
+                  {suggestedGigs.length > 0 && (
+                    <Button
+                      type="button"
+                      onClick={applySuggestedGigs}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Apply to Gig Types
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Display Suggestions */}
+              {suggestedGigs.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Suggested Gig Types:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedGigs.map((gig, index) => (
+                      <div
+                        key={index}
+                        className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-sm"
+                      >
+                        {gig}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Click "Apply to Gig Types" to add these suggestions to your gig types configuration above.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

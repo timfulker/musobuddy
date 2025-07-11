@@ -64,6 +64,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Body:', req.body);
     res.json({ success: true, method: req.method, url: req.url, body: req.body });
   });
+
+  // Gig suggestions endpoint
+  app.post('/api/suggest-gigs', isAuthenticated, async (req, res) => {
+    try {
+      const { instruments } = req.body;
+      
+      if (!instruments || !Array.isArray(instruments)) {
+        return res.status(400).json({ error: 'Instruments array is required' });
+      }
+
+      // Define instrument to gig type mapping
+      const instrumentToGigTypes = {
+        // Band Instruments
+        saxophone: ['Solo Sax', 'Sax with DJ', 'Jazz Quartet', 'Wedding Ceremony', 'Corporate Reception'],
+        guitar: ['Acoustic Set', 'Rock Band', 'Wedding Gig', 'Singer-Songwriter', 'Duo Performance'],
+        bass: ['Rock Band', 'Jazz Ensemble', 'Function Band', 'Studio Session', 'Acoustic Duo'],
+        drums: ['Rock Band', 'Jazz Ensemble', 'Function Band', 'Studio Session', 'Percussion Section'],
+        vocals: ['Lead Singer', 'Backing Vocals', 'Acoustic Duo', 'Wedding Singer', 'Tribute Band'],
+        trumpet: ['Jazz Ensemble', 'Big Band', 'Wedding Ceremony', 'Classical Orchestra', 'Brass Section'],
+        
+        // Classical Instruments
+        violin: ['String Quartet', 'Wedding Ceremony', 'Classical Recital', 'Orchestra', 'Chamber Music'],
+        flute: ['Orchestral Gig', 'Wedding Ceremony', 'Classical Recital', 'Chamber Music', 'Wind Ensemble'],
+        cello: ['String Quartet', 'Wedding Ceremony', 'Classical Recital', 'Orchestra', 'Chamber Music'],
+        piano: ['Cocktail Set', 'Solo Piano', 'Musical Theatre', 'Wedding Ceremony', 'Classical Recital'],
+        oboe: ['Orchestra', 'Wind Ensemble', 'Chamber Music', 'Classical Recital', 'Wedding Ceremony'],
+        
+        // Other/General
+        keyboard: ['Function Band', 'Solo Performance', 'Wedding Gig', 'Corporate Event', 'Jazz Ensemble'],
+        dj: ['DJ Set', 'Wedding Reception', 'Corporate Event', 'Private Party', 'Club Night'],
+        'singer-songwriter': ['Solo Performance', 'Acoustic Set', 'Open Mic', 'Coffee Shop Gig', 'Wedding Ceremony'],
+        percussion: ['Latin Band', 'World Music', 'Function Band', 'Studio Session', 'Percussion Ensemble']
+      };
+
+      // Collect suggested gig types
+      const suggestedGigs = new Set();
+      
+      instruments.forEach(instrument => {
+        const gigTypes = instrumentToGigTypes[instrument.toLowerCase()];
+        if (gigTypes) {
+          gigTypes.forEach(gig => suggestedGigs.add(gig));
+        }
+      });
+
+      // Convert to array and sort
+      const suggestions = Array.from(suggestedGigs).sort();
+
+      res.json({
+        instruments,
+        suggestions,
+        source: 'lookup'
+      });
+
+    } catch (error) {
+      console.error('Error generating gig suggestions:', error);
+      res.status(500).json({ error: 'Failed to generate suggestions' });
+    }
+  });
   
   // Invoice creation route removed - now handled at top of file to avoid Vite interference
 
