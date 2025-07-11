@@ -64,19 +64,44 @@ export default function Enquiries() {
   const gigTypes = React.useMemo(() => {
     if (settings.gigTypes) {
       try {
-        const parsed = JSON.parse(settings.gigTypes);
-        // Handle potential double-encoded JSON from settings
-        if (Array.isArray(parsed)) {
-          return parsed;
-        } else if (typeof parsed === 'string') {
-          return JSON.parse(parsed);
-        } else if (Array.isArray(parsed[0])) {
-          return parsed[0];
+        console.log('🔍 Raw gigTypes from settings:', settings.gigTypes);
+        console.log('🔍 Type of gigTypes:', typeof settings.gigTypes);
+        
+        // First check if it's already an array
+        if (Array.isArray(settings.gigTypes)) {
+          console.log('🔍 Already an array:', settings.gigTypes);
+          return settings.gigTypes;
         }
-        return parsed;
-      } catch (error) {
-        console.error('Error parsing gigTypes:', error);
+        
+        // If it's a string, try to parse it
+        if (typeof settings.gigTypes === 'string') {
+          let parsed = JSON.parse(settings.gigTypes);
+          console.log('🔍 First parse result:', parsed, typeof parsed);
+          
+          // Handle potential double-encoded JSON from settings
+          if (Array.isArray(parsed)) {
+            console.log('🔍 Parsed to array:', parsed);
+            return parsed;
+          } else if (typeof parsed === 'string') {
+            console.log('🔍 Parsing string again:', parsed);
+            let secondParse = JSON.parse(parsed);
+            console.log('🔍 Second parse result:', secondParse);
+            return Array.isArray(secondParse) ? secondParse : [secondParse];
+          } else if (parsed && typeof parsed === 'object' && parsed.length !== undefined) {
+            console.log('🔍 Converting object to array:', Object.values(parsed));
+            return Object.values(parsed);
+          } else {
+            console.log('🔍 Wrapping in array:', [parsed]);
+            return [parsed];
+          }
+        }
+        
+        console.log('🔍 Returning as-is:', settings.gigTypes);
         return [];
+      } catch (error) {
+        console.error('❌ Error parsing gigTypes:', error);
+        console.log('🔍 Attempting to use raw string as single item:', settings.gigTypes);
+        return Array.isArray(settings.gigTypes) ? settings.gigTypes : [settings.gigTypes];
       }
     }
     return [];
@@ -459,6 +484,13 @@ export default function Enquiries() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Gig Type</FormLabel>
+                          {/* Debug Output */}
+                          <div className="text-xs bg-gray-100 p-2 rounded mb-2">
+                            <div>🔍 Debug Info:</div>
+                            <div>gigTypes length: {gigTypes.length}</div>
+                            <div>gigTypes type: {Array.isArray(gigTypes) ? 'Array' : typeof gigTypes}</div>
+                            <div>gigTypes: {JSON.stringify(gigTypes)}</div>
+                          </div>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -467,8 +499,8 @@ export default function Enquiries() {
                             </FormControl>
                             <SelectContent>
                               {gigTypes.length > 0 ? (
-                                gigTypes.map((type: string) => (
-                                  <SelectItem key={type} value={type}>
+                                gigTypes.map((type: string, index: number) => (
+                                  <SelectItem key={`${type}-${index}`} value={type}>
                                     {type}
                                   </SelectItem>
                                 ))
