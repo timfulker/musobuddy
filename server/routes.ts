@@ -8,6 +8,7 @@ import {
   convertEventsToBookings
 } from './calendar-import';
 import multer from 'multer';
+import OpenAI from 'openai';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice route now registered in server/index.ts to avoid Vite interference
@@ -65,6 +66,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, method: req.method, url: req.url, body: req.body });
   });
 
+  // Test OpenAI integration
+  app.post('/api/test-openai', async (req, res) => {
+    try {
+      console.log('🤖 Testing OpenAI integration...');
+      console.log('🤖 API Key available:', !!process.env.OPENAI_API_KEY);
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.json({ error: 'OpenAI API key not available' });
+      }
+
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant.' },
+          { role: 'user', content: 'Generate gig types for bagpipes in JSON format with gig_types array.' }
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens: 200
+      });
+
+      console.log('🤖 OpenAI response:', response.choices[0].message.content);
+      res.json({ success: true, response: response.choices[0].message.content });
+    } catch (error) {
+      console.error('🤖 OpenAI test error:', error);
+      res.json({ error: error.message });
+    }
+  });
+
   // Gig suggestions endpoint with AI fallback for unknown instruments
   app.post('/api/suggest-gigs', isAuthenticated, async (req, res) => {
     try {
@@ -111,21 +144,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use OpenAI for unknown instruments if available
       if (unknownInstruments.length > 0 && process.env.OPENAI_API_KEY) {
         try {
-          const OpenAI = require('openai');
+          console.log('🤖 OpenAI API Key available:', !!process.env.OPENAI_API_KEY);
           const openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY,
           });
 
           const prompt = `Generate 5-7 realistic gig types for a freelance musician who plays: ${unknownInstruments.join(', ')}. 
           Focus on practical, bookable performance opportunities like weddings, corporate events, private parties, etc.
-          Return only a JSON array of strings, no explanations.`;
+          Format your response as a JSON object with a "gig_types" array containing the suggestions.`;
+
+          console.log('🤖 Calling OpenAI for instruments:', unknownInstruments);
 
           const response = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
               {
                 role: "system",
-                content: "You are a music industry expert helping musicians identify gig opportunities. Return only a JSON array of gig type strings."
+                content: "You are a music industry expert helping musicians identify gig opportunities. Always respond with a JSON object containing a 'gig_types' array."
               },
               {
                 role: "user",
@@ -136,11 +171,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             max_tokens: 200
           });
 
+          console.log('🤖 OpenAI response:', response.choices[0].message.content);
+
           const aiResult = JSON.parse(response.choices[0].message.content);
+          console.log('🤖 Parsed AI result:', aiResult);
+          
           if (aiResult.gig_types && Array.isArray(aiResult.gig_types)) {
-            allSuggestions.push(...aiResult.gig_types);
+            console.log('🤖 Adding AI suggestions:', aiResult.gig_types);
+            // Extract just the type names from the AI response
+            const gigTypeNames = aiResult.gig_types.map(item => 
+              typeof item === 'string' ? item : item.type || item.name || item
+            );
+            allSuggestions.push(...gigTypeNames);
+          } else {
+            console.log('🤖 No gig_types array found in AI response');
           }
         } catch (error) {
+          console.error('🤖 OpenAI Error:', error);
           console.log('AI suggestions not available for unknown instruments:', unknownInstruments, error.message);
         }
       } else if (unknownInstruments.length > 0) {
