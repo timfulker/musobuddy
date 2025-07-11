@@ -1,67 +1,50 @@
 /**
- * Test webhook endpoint externally
+ * Test webhook endpoint externally to verify Mailgun can reach it
  */
 
-import https from 'https';
-
-function testWebhookEndpoint() {
-  console.log('=== TESTING WEBHOOK ENDPOINT EXTERNALLY ===');
+const testWebhook = async () => {
+  console.log('Testing webhook endpoint externally...');
   
-  // Test GET request first
-  const getUrl = 'https://musobuddy.replit.app/api/webhook/mailgun';
-  console.log('Testing GET request to:', getUrl);
+  const url = 'https://musobuddy.replit.app/api/webhook/mailgun';
   
-  https.get(getUrl, (res) => {
-    console.log('GET Status:', res.statusCode);
-    let data = '';
-    res.on('data', (chunk) => data += chunk);
-    res.on('end', () => {
-      console.log('GET Response:', data);
-      
-      // Now test POST request
-      testPostRequest();
-    });
-  }).on('error', (err) => {
-    console.error('GET Error:', err.message);
-  });
-}
-
-function testPostRequest() {
-  console.log('\n=== TESTING POST REQUEST ===');
-  
-  const postData = JSON.stringify({
+  const testData = {
+    sender: 'test@example.com',
     recipient: 'leads@musobuddy.com',
-    sender: 'external-test@example.com',
-    subject: 'External Test',
-    'body-plain': 'This is an external test of the webhook endpoint'
-  });
-  
-  const options = {
-    hostname: 'musobuddy.replit.app',
-    port: 443,
-    path: '/api/webhook/mailgun',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': postData.length
-    }
+    subject: 'External webhook test',
+    'body-plain': 'Testing external webhook accessibility'
   };
   
-  const req = https.request(options, (res) => {
-    console.log('POST Status:', res.statusCode);
-    let data = '';
-    res.on('data', (chunk) => data += chunk);
-    res.on('end', () => {
-      console.log('POST Response:', data);
+  // Convert to form data format like Mailgun sends
+  const formData = new URLSearchParams();
+  Object.entries(testData).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mailgun/1.0'
+      },
+      body: formData
     });
-  });
-  
-  req.on('error', (err) => {
-    console.error('POST Error:', err.message);
-  });
-  
-  req.write(postData);
-  req.end();
-}
+    
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers));
+    
+    const responseText = await response.text();
+    console.log('Response body:', responseText);
+    
+    if (response.ok) {
+      console.log('✅ Webhook is accessible from external sources!');
+    } else {
+      console.log('❌ Webhook returned error status:', response.status);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error accessing webhook:', error.message);
+  }
+};
 
-testWebhookEndpoint();
+testWebhook();

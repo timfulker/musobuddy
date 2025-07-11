@@ -39,21 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mailgun webhook endpoint - alternative to SendGrid
-  app.post('/api/webhook/mailgun', async (req, res) => {
-    console.log('📧 MAILGUN WEBHOOK HIT! Email received via /api/webhook/mailgun');
-    console.log('Request from IP:', req.ip);
-    console.log('User-Agent:', req.headers['user-agent']);
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('Raw request body:', JSON.stringify(req.body, null, 2));
-    try {
-      const { handleMailgunWebhook } = await import('./mailgun-webhook');
-      await handleMailgunWebhook(req, res);
-    } catch (error) {
-      console.error("Error in Mailgun webhook:", error);
-      res.status(500).json({ message: "Failed to process Mailgun webhook" });
-    }
-  });
+  // Mailgun webhook endpoint now registered in server/index.ts to avoid duplication
 
   // Simple email webhook endpoint - bypasses domain verification
   app.post('/api/webhook/simple-email', async (req, res) => {
