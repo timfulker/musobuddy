@@ -485,7 +485,7 @@ export default function Enquiries() {
                       name="estimatedValue"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Estimated Value (£)</FormLabel>
+                          <FormLabel>Price Quoted (£)</FormLabel>
                           <FormControl>
                             <Input type="number" placeholder="500" {...field} value={field.value || ""} />
                           </FormControl>
