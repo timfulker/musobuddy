@@ -107,9 +107,9 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
     let targetEmail = recipient;
     let fromEmail = sender;
     
-    // Check if this is test data (no recipient field or test sender)
-    if (!recipient || (sender && sender.includes('mailgun.example.com'))) {
-      console.log('🧪 Detected test data - no recipient field or test sender, processing anyway');
+    // Check if this is test data (no recipient field)
+    if (!recipient && sender) {
+      console.log('🧪 Detected test data - no recipient field, processing anyway');
       isTestData = true;
       targetEmail = 'leads@musobuddy.com'; // Assume it's for leads
       fromEmail = sender;
