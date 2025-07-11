@@ -70,15 +70,17 @@ export default function Enquiries() {
       const cleanString = settings.gigTypes.replace(/^["']|["']$/g, '');
       if (cleanString.includes(',')) {
         return cleanString.split(',').map(item => 
-          item.replace(/^["']|["']$/g, '').trim()
+          item.replace(/^["'\\]|["'\\]$/g, '').replace(/\\"/g, '"').trim()
         ).filter(item => item.length > 0);
       }
-      return [cleanString];
+      return [cleanString.replace(/^["'\\]|["'\\]$/g, '').replace(/\\"/g, '"').trim()];
     }
     
     // Handle array format
     if (Array.isArray(settings.gigTypes)) {
-      return settings.gigTypes;
+      return settings.gigTypes.map(item => 
+        typeof item === 'string' ? item.replace(/^["'\\]|["'\\]$/g, '').replace(/\\"/g, '"').trim() : item
+      );
     }
     
     return [];
