@@ -71,12 +71,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       >
         {/* Close button for mobile */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 md:hidden"
-        >
-          <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-        </button>
+        {!isDesktop && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"
+          >
+            <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          </button>
+        )}
 
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-slate-700">
