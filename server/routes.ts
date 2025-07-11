@@ -126,20 +126,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'clarinet': ['Jazz Ensemble', 'Classical Performance', 'Wedding Ceremony', 'Folk Music', 'Solo Clarinet', 'Wind Ensemble', 'Background Music']
       };
 
-      // Collect suggestions from default mappings
+      // Collect suggestions from default mappings and database cache
       const allSuggestions = [];
       const unknownInstruments = [];
 
-      instruments.forEach(instrument => {
+      for (const instrument of instruments) {
         const normalizedInstrument = instrument.toLowerCase();
-        const gigTypes = defaultGigMappings[normalizedInstrument];
         
+        // First check if we have cached AI mappings in the database
+        const cachedMapping = await storage.getInstrumentMapping(normalizedInstrument);
+        if (cachedMapping) {
+          console.log('🎵 Using cached mapping for', normalizedInstrument);
+          try {
+            const cachedTypes = JSON.parse(cachedMapping.gigTypes);
+            if (Array.isArray(cachedTypes)) {
+              allSuggestions.push(...cachedTypes);
+              continue; // Skip to next instrument
+            }
+          } catch (e) {
+            console.error('Error parsing cached gig types:', e);
+          }
+        }
+        
+        // Check default mappings
+        const gigTypes = defaultGigMappings[normalizedInstrument];
         if (gigTypes) {
           allSuggestions.push(...gigTypes);
+          
+          // Cache the default mapping for future use
+          try {
+            await storage.createInstrumentMapping({
+              instrument: normalizedInstrument,
+              gigTypes: JSON.stringify(gigTypes)
+            });
+            console.log('🎵 Cached default mapping for', normalizedInstrument);
+          } catch (error) {
+            console.error('Error caching default mapping:', error);
+          }
         } else {
           unknownInstruments.push(instrument);
         }
-      });
+      }
 
       // Use OpenAI for unknown instruments if available
       if (unknownInstruments.length > 0 && process.env.OPENAI_API_KEY) {
@@ -186,6 +213,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return name;
             });
             allSuggestions.push(...gigTypeNames);
+            
+            // Cache the AI-generated mapping in the database
+            try {
+              await storage.createInstrumentMapping({
+                instrument: unknownInstruments.join(',').toLowerCase(),
+                gigTypes: JSON.stringify(gigTypeNames)
+              });
+              console.log('🎵 Cached AI mapping for', unknownInstruments.join(','));
+            } catch (error) {
+              console.error('Error caching AI mapping:', error);
+            }
           } else {
             console.log('🤖 No gig_types array found in AI response');
           }

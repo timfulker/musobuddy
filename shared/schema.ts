@@ -183,6 +183,15 @@ export const clients = pgTable("clients", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Instrument gig type mappings table - stores AI-generated mappings to avoid repeated calls
+export const instrumentMappings = pgTable("instrument_mappings", {
+  id: serial("id").primaryKey(),
+  instrument: varchar("instrument").notNull().unique(), // lowercase instrument name
+  gigTypes: text("gig_types").notNull(), // JSON array of gig types
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Booking conflicts table
 export const bookingConflicts = pgTable("booking_conflicts", {
   id: serial("id").primaryKey(),
@@ -328,6 +337,12 @@ export const insertClientSchema = createInsertSchema(clients).omit({
   updatedAt: true,
 });
 
+export const insertInstrumentMappingSchema = createInsertSchema(instrumentMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 
 
 
@@ -353,4 +368,6 @@ export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
 export type InsertBookingConflict = z.infer<typeof insertBookingConflictSchema>;
 export type BookingConflict = typeof bookingConflicts.$inferSelect;
+export type InsertInstrumentMapping = z.infer<typeof insertInstrumentMappingSchema>;
+export type InstrumentMapping = typeof instrumentMappings.$inferSelect;
 

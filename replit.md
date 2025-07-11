@@ -804,6 +804,14 @@ All core features implemented and operational:
   * **Comprehensive Coverage**: Default mappings cover saxophone, guitar, piano, vocals, DJ, violin, trumpet, drums, bass, keyboard, cello, flute, harp, trombone, clarinet
   * **Smart Fallback**: System works fully without OpenAI key, only enhances experience for custom instruments
   * **Custom Instrument Management**: Add/remove custom instruments with orange badges for visual distinction
+- July 11, 2025. Intelligent caching system implemented for cost optimization:
+  * **Database Caching**: Created instrumentMappings table to cache AI-generated gig type suggestions
+  * **Cache-First Strategy**: System checks database cache before making expensive AI API calls
+  * **Automatic Cache Population**: Default instrument mappings automatically cached on first use
+  * **AI Response Caching**: GPT-3.5 responses cached in database to prevent duplicate API calls
+  * **Cost Optimization**: GPT-3.5 Turbo used instead of GPT-4o for significant cost savings
+  * **Smart Lookup**: Database queries for cached mappings before fallback to AI or default mappings
+  * **Persistent Storage**: Cached mappings persist across user sessions reducing API costs long-term
 ```
 
 ## User Preferences

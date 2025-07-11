@@ -29,6 +29,9 @@ import {
   bookingConflicts,
   type BookingConflict,
   type InsertBookingConflict,
+  instrumentMappings,
+  type InstrumentMapping,
+  type InsertInstrumentMapping,
 
 } from "@shared/schema";
 import { db } from "./db";
@@ -108,9 +111,10 @@ export interface IStorage {
   createBookingConflict(conflict: InsertBookingConflict): Promise<BookingConflict>;
   resolveConflict(conflictId: number, resolution: string, notes?: string): Promise<BookingConflict | undefined>;
   
-  // Calendar tokens operations
-  getCalendarTokens(userId: string, provider: 'google' | 'apple'): Promise<CalendarTokens | undefined>;
-  storeCalendarTokens(userId: string, provider: 'google' | 'apple', tokens: any): Promise<CalendarTokens>;
+  // Instrument mapping operations
+  getInstrumentMapping(instrument: string): Promise<InstrumentMapping | undefined>;
+  createInstrumentMapping(mapping: InsertInstrumentMapping): Promise<InstrumentMapping>;
+  getAllInstrumentMappings(): Promise<InstrumentMapping[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -747,7 +751,34 @@ export class DatabaseStorage implements IStorage {
     return resolvedConflict;
   }
 
-  
+  // Instrument mapping operations
+  async getInstrumentMapping(instrument: string): Promise<InstrumentMapping | undefined> {
+    const [mapping] = await db
+      .select()
+      .from(instrumentMappings)
+      .where(eq(instrumentMappings.instrument, instrument.toLowerCase()));
+    return mapping;
+  }
+
+  async createInstrumentMapping(mapping: InsertInstrumentMapping): Promise<InstrumentMapping> {
+    const [newMapping] = await db
+      .insert(instrumentMappings)
+      .values({
+        ...mapping,
+        instrument: mapping.instrument.toLowerCase(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newMapping;
+  }
+
+  async getAllInstrumentMappings(): Promise<InstrumentMapping[]> {
+    return await db
+      .select()
+      .from(instrumentMappings)
+      .orderBy(instrumentMappings.instrument);
+  }
 }
 
 export const storage = new DatabaseStorage();
