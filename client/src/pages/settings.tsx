@@ -16,6 +16,7 @@ import Sidebar from "@/components/sidebar";
 
 const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).extend({
   nextInvoiceNumber: z.number().min(1, "Invoice number must be at least 1"),
+  gigTypes: z.string().optional(),
 });
 
 export default function Settings() {
@@ -45,6 +46,7 @@ export default function Settings() {
       defaultTerms: settings.defaultTerms || "",
       emailFromName: settings.emailFromName || "",
       nextInvoiceNumber: settings.nextInvoiceNumber || 256,
+      gigTypes: settings.gigTypes || "",
     },
   });
 
@@ -416,6 +418,40 @@ export default function Settings() {
                     </FormControl>
                     <p className="text-sm text-muted-foreground">
                       The next invoice will use this number (formatted as 5 digits, e.g., 00256). Change this to sync with external systems or correct the sequence.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Gig Types Configuration */}
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle>Gig Types Configuration</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure your available gig types for enquiry forms
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="gigTypes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Available Gig Types</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Saxophone Solo&#10;DJ Set&#10;Sax + DJ&#10;Band Performance&#10;Wedding Ceremony&#10;Corporate Event"
+                        className="min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      Enter each gig type on a separate line. These will appear in the "Gig Type" dropdown when creating enquiries.
                     </p>
                     <FormMessage />
                   </FormItem>

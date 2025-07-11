@@ -55,6 +55,29 @@ export default function Enquiries() {
     queryKey: ["/api/templates"],
   });
 
+  const { data: settings = {} } = useQuery({
+    queryKey: ["/api/settings"],
+  });
+
+  // Parse gig types from settings
+  const gigTypes = React.useMemo(() => {
+    if (settings.gigTypes) {
+      try {
+        return JSON.parse(settings.gigTypes);
+      } catch (error) {
+        console.error('Error parsing gigTypes:', error);
+        return [];
+      }
+    }
+    return [];
+  }, [settings.gigTypes]);
+
+  // Standard event types (could be made configurable in the future)
+  const eventTypes = [
+    "Wedding", "Corporate Event", "Private Party", "Birthday Party", 
+    "Anniversary", "Concert", "Festival", "Charity Event", "Christmas Party", "Other"
+  ];
+
   const createEnquiryMutation = useMutation({
     mutationFn: async (data: z.infer<typeof enquiryFormSchema>) => {
       const enquiryData = {
@@ -244,6 +267,7 @@ export default function Enquiries() {
       eventTime: "",
       venue: "",
       eventType: "",
+      gigType: "",
       estimatedValue: "",
       notes: "",
       status: "new",
@@ -374,19 +398,6 @@ export default function Enquiries() {
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Title</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Wedding reception, Corporate event..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
                       name="eventType"
                       render={({ field }) => (
                         <FormItem>
@@ -398,11 +409,41 @@ export default function Enquiries() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="wedding">Wedding</SelectItem>
-                              <SelectItem value="corporate">Corporate</SelectItem>
-                              <SelectItem value="private_party">Private Party</SelectItem>
-                              <SelectItem value="concert">Concert</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
+                              {eventTypes.map((type) => (
+                                <SelectItem key={type} value={type.toLowerCase().replace(/ /g, '_')}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="gigType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gig Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={gigTypes.length > 0 ? "Select gig type" : "Configure gig types in settings"} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {gigTypes.length > 0 ? (
+                                gigTypes.map((type: string) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="not_configured" disabled>
+                                  No gig types configured
+                                </SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -410,6 +451,20 @@ export default function Enquiries() {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event Description</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Wedding reception, Birthday celebration, Corporate awards..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <div className="grid grid-cols-3 gap-4">
                     <FormField

@@ -39,6 +39,7 @@ export const enquiries = pgTable("enquiries", {
   performanceDuration: integer("performance_duration"), // Duration in minutes
   venue: varchar("venue"),
   eventType: varchar("event_type"),
+  gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
   estimatedValue: decimal("estimated_value", { precision: 10, scale: 2 }),
   status: varchar("status").notNull().default("new"), // new, qualified, contract_sent, confirmed, rejected
   notes: text("notes"),
@@ -146,6 +147,7 @@ export const userSettings = pgTable("user_settings", {
   defaultBufferTime: integer("default_buffer_time").default(90), // minutes
   maxTravelDistance: integer("max_travel_distance").default(100), // miles
   homePostcode: varchar("home_postcode"), // For distance calculations
+  gigTypes: text("gig_types"), // JSON array of gig types: ["Sax", "DJ", "Band", "Piano", etc.]
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
