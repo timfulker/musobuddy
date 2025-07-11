@@ -19,6 +19,7 @@ import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
+import { useResponsive } from "@/hooks/useResponsive";
 
 const contractFormSchema = insertContractSchema.extend({
   eventDate: z.string().optional(),
@@ -36,20 +37,8 @@ export default function Contracts() {
   const [selectedContracts, setSelectedContracts] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
+  const { isDesktop } = useResponsive();
   const { toast } = useToast();
-
-  // Responsive detection
-  React.useEffect(() => {
-    const checkScreenSize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
 
   const { data: contracts = [], isLoading } = useQuery<Contract[]>({
     queryKey: ["/api/contracts"],

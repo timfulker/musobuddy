@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Sidebar from "@/components/sidebar";
 import DashboardHeader from "@/components/dashboard-header";
 import StatsCards from "@/components/stats-cards";
@@ -12,27 +12,13 @@ import MobileNav from "@/components/mobile-nav";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useResponsive } from "@/hooks/useResponsive";
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const { isDesktop } = useResponsive();
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      const desktop = window.innerWidth >= 768;
-      setIsDesktop(desktop);
-      setHasInitialized(true);
-      console.log('Dashboard screen check - width:', window.innerWidth, 'isDesktop:', desktop);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
 
   // Redirect to login if not authenticated
   useEffect(() => {

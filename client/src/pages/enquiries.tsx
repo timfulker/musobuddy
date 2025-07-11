@@ -19,6 +19,7 @@ import { insertClientSchema, type InsertClient } from "@shared/schema";
 import { Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
+import { useResponsive } from "@/hooks/useResponsive";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
@@ -33,20 +34,8 @@ export default function Enquiries() {
   const [respondDialogOpen, setRespondDialogOpen] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
+  const { isDesktop } = useResponsive();
   const { toast } = useToast();
-
-  // Responsive detection
-  React.useEffect(() => {
-    const checkScreenSize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
 
   // Check URL params to auto-open form dialog
   React.useEffect(() => {

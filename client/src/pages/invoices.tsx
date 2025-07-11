@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
+import { useResponsive } from "@/hooks/useResponsive";
 
 const invoiceFormSchema = z.object({
   contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
@@ -45,19 +46,7 @@ export default function Invoices() {
   const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
-
-  // Responsive detection
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  const { isDesktop } = useResponsive();
 
   // Check for URL parameters to auto-open dialog
   useEffect(() => {

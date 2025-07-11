@@ -1,22 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { Home, Inbox, Calendar, DollarSign, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useResponsive } from "@/hooks/useResponsive";
 
 export default function MobileNav() {
   const [location] = useLocation();
-  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  const { isDesktop } = useResponsive();
 
   const isActive = (path: string) => {
     return location === path;

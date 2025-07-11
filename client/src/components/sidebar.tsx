@@ -19,6 +19,7 @@ import {
   User
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.svg";
+import { useResponsive } from "@/hooks/useResponsive";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -28,20 +29,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
-  const [isDesktop, setIsDesktop] = useState(true); // Start with desktop assumption
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      const isDesktopScreen = window.innerWidth >= 768;
-      setIsDesktop(isDesktopScreen);
-      console.log('Screen width:', window.innerWidth, 'isDesktop:', isDesktopScreen);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  const { isDesktop } = useResponsive();
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
