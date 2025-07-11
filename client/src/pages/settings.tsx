@@ -165,9 +165,9 @@ export default function Settings() {
     setSelectedInstruments(selectedInstrumentsFromDB);
     setCustomInstruments(customInstrumentsFromDB);
     
-    // ✅ KEY FIX: Initialize form with instrument data
-    const allInstrumentsForForm = [...selectedInstrumentsFromDB, ...customInstrumentsFromDB];
-    form.setValue('instrumentsPlayed', JSON.stringify(allInstrumentsForForm));
+    // ✅ KEY FIX: Initialize form with actual instrument data
+    form.setValue('instrumentsPlayed', JSON.stringify(selectedInstrumentsFromDB));
+    form.setValue('customInstruments', JSON.stringify(customInstrumentsFromDB));
     
     // Parse bank details from stored string format
     const bankDetailsString = settings.bankDetails || "";
@@ -317,6 +317,33 @@ export default function Settings() {
       console.log('💾 Selected instruments (UI):', selectedInstruments);
       console.log('🎯 Custom instruments (UI):', customInstruments);
       console.log('🎮 New instrument input:', newInstrument);
+      
+      // Add database debugging
+      console.log('🔍 DATABASE VALUES DEBUG:');
+      console.log('  - settings.instrumentsPlayed (raw):', settings.instrumentsPlayed);
+      console.log('  - settings.customInstruments (raw):', settings.customInstruments);
+      
+      if (settings.instrumentsPlayed) {
+        try {
+          const parsed = JSON.parse(settings.instrumentsPlayed);
+          console.log('  - settings.instrumentsPlayed (parsed):', parsed);
+        } catch (e) {
+          console.log('  - settings.instrumentsPlayed (parse error):', e.message);
+        }
+      }
+      
+      if (settings.customInstruments) {
+        try {
+          const parsed = JSON.parse(settings.customInstruments);
+          console.log('  - settings.customInstruments (parsed):', parsed);
+        } catch (e) {
+          console.log('  - settings.customInstruments (parse error):', e.message);
+        }
+      }
+      
+      console.log('  - Current UI state:');
+      console.log('    - selectedInstruments:', selectedInstruments);
+      console.log('    - customInstruments:', customInstruments);
       console.log('🎪 Gig types state:', gigTypes);
     } catch (error) {
       console.error('❌ Error in debug function:', error);
