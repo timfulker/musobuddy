@@ -356,7 +356,10 @@ export default function Settings() {
 
   // Update gig types based on instrument selection (no auto-save)
   const updateGigTypesFromInstruments = async () => {
+    // ✅ KEY CHANGE: Clear gig types when no instruments are selected
     if (selectedInstruments.length === 0) {
+      setGigTypes([]);
+      form.setValue('gigTypes', JSON.stringify([]));
       return;
     }
 
@@ -372,40 +375,47 @@ export default function Settings() {
       }
     });
 
-    // Only use AI for unknown instruments if OpenAI key is available
+    // ✅ ENHANCED: Use API for unknown instruments with caching
     if (unknownInstruments.length > 0) {
       try {
+        console.log('🎵 Fetching gig suggestions for unknown instruments:', unknownInstruments);
+        
         const response = await fetch('/api/suggest-gigs', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ instruments: unknownInstruments }),
+          body: JSON.stringify({
+            instruments: unknownInstruments
+          }),
         });
 
         if (response.ok) {
-          const aiSuggestions = await response.json();
-          allSuggestions = [...allSuggestions, ...aiSuggestions];
+          const apiSuggestions = await response.json();
+          console.log('🎵 API suggestions received:', apiSuggestions);
+          allSuggestions = [...allSuggestions, ...apiSuggestions];
+        } else {
+          console.warn('🎵 API request failed, using default mappings only');
         }
       } catch (error) {
-        console.log('AI suggestions not available for unknown instruments:', unknownInstruments);
+        console.error('🎵 Error fetching API suggestions:', error);
       }
     }
 
-    // Update gig types with all suggestions (but don't auto-save)
-    const newGigTypes = [...new Set([...gigTypes, ...allSuggestions])];
+    // ✅ Update gig types with all suggestions (replace existing gig types)
+    const newGigTypes = [...new Set(allSuggestions)];
     setGigTypes(newGigTypes);
-    form.setValue('gigTypes', newGigTypes.join('\n'));
+    form.setValue('gigTypes', JSON.stringify(newGigTypes));
     
     console.log('🎯 Updated gig types (not saved yet):', newGigTypes);
   };
 
-  // Update gig types when instruments change (but don't auto-save)
+  // ✅ Auto-populate gig types when instruments change
   React.useEffect(() => {
-    if (selectedInstruments.length > 0) {
+    if (hasInitialized) {
       updateGigTypesFromInstruments();
     }
-  }, [selectedInstruments]);
+  }, [selectedInstruments, hasInitialized]);
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
