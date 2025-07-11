@@ -2053,14 +2053,17 @@ Jane`
   app.post('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      console.log("Saving settings for user:", userId);
-      console.log("Request body:", req.body);
+      console.log("🔥 Saving settings for user:", userId);
+      console.log("🔥 Request body:", req.body);
+      console.log("🔥 customInstruments in request:", req.body.customInstruments);
       
       const settingsData = { ...req.body, userId };
-      console.log("Settings data to save:", settingsData);
+      console.log("🔥 Settings data to save:", settingsData);
+      console.log("🔥 customInstruments in settings data:", settingsData.customInstruments);
       
       const settings = await storage.upsertUserSettings(settingsData);
-      console.log("Settings saved successfully:", settings);
+      console.log("🔥 Settings saved successfully:", settings);
+      console.log("🔥 customInstruments in saved settings:", settings?.customInstruments);
       res.json(settings);
     } catch (error) {
       console.error("Error saving user settings:", error);
