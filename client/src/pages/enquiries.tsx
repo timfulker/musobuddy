@@ -552,7 +552,7 @@ export default function Enquiries() {
                         <FormItem>
                           <FormLabel>Event Time</FormLabel>
                           <FormControl>
-                            <Input placeholder="7:00 PM" {...field} value={field.value || ""} />
+                            <Input type="time" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -565,7 +565,7 @@ export default function Enquiries() {
                         <FormItem>
                           <FormLabel>Price Quoted (£)</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="500" {...field} value={field.value || ""} />
+                            <Input type="number" placeholder="500" {...field} value={field.value || ""} step="1" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
