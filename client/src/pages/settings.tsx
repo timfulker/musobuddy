@@ -40,8 +40,6 @@ export default function Settings() {
   
   // State for instrument selection
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
-  const [suggestedGigs, setSuggestedGigs] = useState<string[]>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   
   // Define instrument categories
   const instrumentCategories = {
@@ -161,14 +159,14 @@ export default function Settings() {
     setSelectedInstruments(updatedInstruments);
   };
 
-  // Fetch gig suggestions based on selected instruments
-  const fetchGigSuggestions = async () => {
+
+
+  // Auto-update gig types based on instrument selection
+  const updateGigTypesFromInstruments = async () => {
     if (selectedInstruments.length === 0) {
-      setSuggestedGigs([]);
       return;
     }
 
-    setIsLoadingSuggestions(true);
     try {
       const response = await fetch('/api/suggest-gigs', {
         method: 'POST',
@@ -183,29 +181,20 @@ export default function Settings() {
       }
 
       const suggestions = await response.json();
-      setSuggestedGigs(suggestions);
+      const newGigTypes = [...new Set([...gigTypes, ...suggestions])];
+      setGigTypes(newGigTypes);
+      form.setValue('gigTypes', newGigTypes.join('\n'));
     } catch (error) {
-      console.error('Error fetching gig suggestions:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch gig suggestions. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingSuggestions(false);
+      console.error('Error updating gig types:', error);
     }
   };
 
-  // Auto-apply suggested gigs to the gig types list
-  const applySuggestedGigs = () => {
-    const newGigTypes = [...new Set([...gigTypes, ...suggestedGigs])];
-    setGigTypes(newGigTypes);
-    form.setValue('gigTypes', newGigTypes.join('\n'));
-    toast({
-      title: "Success",
-      description: `Added ${suggestedGigs.length} suggested gig types to your configuration.`,
-    });
-  };
+  // Auto-update gig types when instruments change
+  React.useEffect(() => {
+    if (selectedInstruments.length > 0) {
+      updateGigTypesFromInstruments();
+    }
+  }, [selectedInstruments]);
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
@@ -625,14 +614,14 @@ export default function Settings() {
                   <FormItem>
                     <FormLabel>Available Gig Types</FormLabel>
                     <div className="space-y-3">
-                      {/* Instrument Selection for Suggestions */}
+                      {/* Instrument Selection for Auto-Population */}
                       <div className="border rounded-lg p-4 bg-muted/20">
                         <div className="flex items-center gap-2 mb-3">
                           <Music className="h-4 w-4 text-purple-600" />
-                          <h4 className="font-medium text-sm">Get Suggestions Based on Instruments</h4>
+                          <h4 className="font-medium text-sm">What Do You Play?</h4>
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">
-                          Select instruments you play to get tailored gig type suggestions
+                          Select instruments you play to automatically populate gig types below
                         </p>
                         
                         {/* Instrument Selection */}
@@ -663,50 +652,10 @@ export default function Settings() {
                           ))}
                         </div>
 
-                        {/* Get Suggestions Button */}
                         {selectedInstruments.length > 0 && (
-                          <div className="flex gap-2 mt-4">
-                            <Button
-                              type="button"
-                              onClick={fetchGigSuggestions}
-                              disabled={isLoadingSuggestions}
-                              className="flex items-center gap-2"
-                              size="sm"
-                            >
-                              <Sparkles className="h-4 w-4" />
-                              {isLoadingSuggestions ? "Getting Suggestions..." : "Get Gig Suggestions"}
-                            </Button>
-                            
-                            {suggestedGigs.length > 0 && (
-                              <Button
-                                type="button"
-                                onClick={applySuggestedGigs}
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2"
-                              >
-                                <Plus className="h-4 w-4" />
-                                Apply to Gig Types
-                              </Button>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Display Suggestions */}
-                        {suggestedGigs.length > 0 && (
-                          <div className="space-y-2 mt-4">
-                            <h5 className="font-medium text-sm">Suggested Gig Types:</h5>
-                            <div className="flex flex-wrap gap-2">
-                              {suggestedGigs.map((gig, index) => (
-                                <div
-                                  key={index}
-                                  className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-sm"
-                                >
-                                  {gig}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                          <p className="text-sm text-green-600 dark:text-green-400 mt-3">
+                            ✓ Gig types will be automatically added based on your instrument selection
+                          </p>
                         )}
                       </div>
                       
@@ -756,7 +705,7 @@ export default function Settings() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Add gig types that will appear in the "Gig Type" dropdown when creating enquiries.
+                      Add gig types that will appear in the "Gig Type" dropdown when creating enquiries. Types are automatically added based on your instrument selection above.
                     </p>
                     <FormMessage />
                   </FormItem>
