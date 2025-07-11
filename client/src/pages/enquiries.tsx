@@ -85,9 +85,11 @@ export default function Enquiries() {
               // If JSON parsing fails, try splitting by comma and cleaning up
               const stringContent = settings.gigTypes[0];
               if (stringContent.includes(',')) {
-                const items = stringContent.split(',').map(item => 
-                  item.replace(/^["']|["']$/g, '').trim()
-                );
+                // Split by comma, then clean up quotes and whitespace
+                const items = stringContent.split(',').map(item => {
+                  // Remove surrounding quotes and trim whitespace
+                  return item.replace(/^["']|["']$/g, '').trim();
+                });
                 console.log('🔍 Split items:', items);
                 return items.filter(item => item.length > 0);
               }
