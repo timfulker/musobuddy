@@ -164,6 +164,10 @@ export default function Settings() {
     setSelectedInstruments(selectedInstrumentsFromDB);
     setCustomInstruments(customInstrumentsFromDB);
     
+    // ✅ KEY FIX: Initialize form with instrument data
+    const allInstrumentsForForm = [...selectedInstrumentsFromDB, ...customInstrumentsFromDB];
+    form.setValue('instrumentsPlayed', JSON.stringify(allInstrumentsForForm));
+    
     // Parse bank details from stored string format
     const bankDetailsString = settings.bankDetails || "";
     const parsedBankDetails = {
@@ -227,20 +231,41 @@ export default function Settings() {
       updatedInstruments = selectedInstruments.filter(i => i !== instrument);
     }
     setSelectedInstruments(updatedInstruments);
+    
+    // ✅ KEY FIX: Update the form state immediately
+    const allInstruments = [...updatedInstruments, ...customInstruments];
+    form.setValue('instrumentsPlayed', JSON.stringify(allInstruments));
   };
 
   const addCustomInstrument = () => {
     if (newInstrument.trim() && !customInstruments.includes(newInstrument.trim()) && !selectedInstruments.includes(newInstrument.trim())) {
       const instrument = newInstrument.trim();
-      setCustomInstruments([...customInstruments, instrument]);
-      setSelectedInstruments([...selectedInstruments, instrument]);
+      
+      // Update component state
+      const updatedCustom = [...customInstruments, instrument];
+      const updatedSelected = [...selectedInstruments, instrument];
+      
+      setCustomInstruments(updatedCustom);
+      setSelectedInstruments(updatedSelected);
+      
+      // ✅ KEY FIX: Update the form state immediately
+      const allInstruments = [...updatedSelected, ...updatedCustom];
+      form.setValue('instrumentsPlayed', JSON.stringify(allInstruments));
+      
       setNewInstrument("");
     }
   };
 
   const removeCustomInstrument = (instrument: string) => {
-    setCustomInstruments(customInstruments.filter(i => i !== instrument));
-    setSelectedInstruments(selectedInstruments.filter(i => i !== instrument));
+    const updatedCustom = customInstruments.filter(i => i !== instrument);
+    const updatedSelected = selectedInstruments.filter(i => i !== instrument);
+    
+    setCustomInstruments(updatedCustom);
+    setSelectedInstruments(updatedSelected);
+    
+    // ✅ KEY FIX: Update the form state immediately
+    const allInstruments = [...updatedSelected, ...updatedCustom];
+    form.setValue('instrumentsPlayed', JSON.stringify(allInstruments));
   };
 
 
@@ -354,17 +379,19 @@ export default function Settings() {
     const gigTypesArray = data.gigTypes ? 
       data.gigTypes.split('\n').filter(type => type.trim().length > 0) : [];
     
-    // Save custom instruments to instrumentsPlayed field
-    const allInstruments = [...selectedInstruments, ...customInstruments];
-    const instrumentsPlayedString = JSON.stringify(allInstruments);
-    console.log('🎯 Manual save - saving instruments:', allInstruments);
-    console.log('🎯 Manual save - saving gig types:', gigTypesArray);
+    // ✅ KEY FIX: Use the form data instead of manually constructing
+    const instrumentsPlayedString = data.instrumentsPlayed || JSON.stringify([]);
+    
+    console.log('🎯 Form submission data:', {
+      gigTypes: gigTypesArray,
+      instrumentsPlayed: instrumentsPlayedString
+    });
     
     const updatedData = {
       ...data,
       bankDetails: bankDetailsString,
-      gigTypes: JSON.stringify(gigTypesArray), // Store as JSON string
-      instrumentsPlayed: instrumentsPlayedString // Save all instruments (selected + custom)
+      gigTypes: JSON.stringify(gigTypesArray),
+      instrumentsPlayed: instrumentsPlayedString // ✅ Use form data
     };
     
     console.log('🎯 Final save data:', updatedData);
