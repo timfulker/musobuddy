@@ -128,8 +128,7 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
     let fromEmail = emailSender;
     
     // Check if this is test data (missing recipient field or generic test data)
-    if (!emailRecipient || emailRecipient === '' || emailRecipient === 'test@example.com' || 
-        (emailSender && emailSender === 'test@example.com')) {
+    if (!emailRecipient || emailRecipient === '' || emailRecipient === 'test@example.com') {
       console.log('🧪 Detected test data - missing or generic recipient field, processing anyway');
       isTestData = true;
       targetEmail = 'leads@musobuddy.com'; // Assume it's for leads
