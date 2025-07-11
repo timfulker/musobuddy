@@ -70,6 +70,16 @@ export default function Enquiries() {
         // First check if it's already an array
         if (Array.isArray(settings.gigTypes)) {
           console.log('🔍 Already an array:', settings.gigTypes);
+          // If it's a single-element array containing a JSON string, parse it
+          if (settings.gigTypes.length === 1 && typeof settings.gigTypes[0] === 'string') {
+            try {
+              const parsed = JSON.parse(settings.gigTypes[0]);
+              console.log('🔍 Parsed array element:', parsed);
+              return Array.isArray(parsed) ? parsed : settings.gigTypes;
+            } catch {
+              return settings.gigTypes;
+            }
+          }
           return settings.gigTypes;
         }
         
