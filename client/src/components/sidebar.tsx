@@ -81,132 +81,132 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
 
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-slate-700">
-          <div className="flex items-center space-x-2">
+        <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+          <div className="flex items-center space-x-3">
             <img 
               src={logoImage} 
               alt="MusoBuddy Logo" 
-              className="w-8 h-8 object-contain rounded-lg shadow-lg"
+              className="w-10 h-10 object-contain rounded-lg shadow-lg"
             />
             <div>
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white">MusoBuddy</h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Less admin, more music</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">MusoBuddy</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Less admin, more music</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="p-3 space-y-1">
+        <nav className="p-4 space-y-1">
           <Link href="/" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors",
             isActive("/") 
               ? "bg-purple-600 text-white" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <Home className="w-4 h-4" />
+            <Home className="w-5 h-5" />
             <span>Dashboard</span>
           </Link>
           <Link href="/enquiries" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/enquiries") 
-              ? "bg-purple-600 text-white" 
+              ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <Inbox className="w-4 h-4" />
+            <Inbox className="w-5 h-5" />
             <span>Enquiries</span>
           </Link>
           <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/address-book") 
-              ? "bg-purple-600 text-white" 
+              ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <Users className="w-4 h-4" />
+            <Users className="w-5 h-5" />
             <span>Address Book</span>
           </Link>
           <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/contracts") 
-              ? "bg-purple-600 text-white" 
+              ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <FileText className="w-4 h-4" />
+            <FileText className="w-5 h-5" />
             <span>Contracts</span>
           </Link>
           <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/invoices") 
-              ? "bg-purple-600 text-white" 
+              ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <DollarSign className="w-4 h-4" />
+            <DollarSign className="w-5 h-5" />
             <span>Invoices</span>
           </Link>
           <Link href="/calendar" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/calendar") 
-              ? "bg-purple-600 text-white" 
+              ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <Calendar className="w-4 h-4" />
+            <Calendar className="w-5 h-5" />
             <span>Calendar</span>
           </Link>
           <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/compliance") 
-              ? "bg-purple-600 text-white" 
+              ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <Shield className="w-4 h-4" />
+            <Shield className="w-5 h-5" />
             <span>Compliance</span>
           </Link>
           <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/settings") 
-              ? "bg-purple-600 text-white" 
+              ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <Settings className="w-4 h-4" />
+            <Settings className="w-5 h-5" />
             <span>Settings</span>
           </Link>
           <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/templates") 
-              ? "bg-purple-600 text-white" 
+              ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-5 h-5" />
             <span>Templates</span>
           </Link>
         </nav>
 
         {/* User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-          <div className="flex items-center space-x-2">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="flex items-center space-x-3">
             {user?.profileImageUrl ? (
               <img 
                 src={user.profileImageUrl} 
                 alt="Profile" 
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
+              <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
               </div>
             )}
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {user?.firstName || user?.email || "User"}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-400">Musician</p>
             </div>
             <button 
               onClick={handleLogout}
-              className="flex items-center space-x-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded transition-colors"
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded transition-colors"
               title="Logout"
             >
-              <LogOut className="w-3 h-3" />
-              <span className="text-xs">Logout</span>
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm">Logout</span>
             </button>
           </div>
         </div>
