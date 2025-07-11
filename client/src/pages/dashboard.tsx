@@ -15,13 +15,15 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsDesktop(window.innerWidth >= 768);
+      const desktop = window.innerWidth >= 768;
+      setIsDesktop(desktop);
+      console.log('Dashboard screen check - width:', window.innerWidth, 'isDesktop:', desktop);
     };
     
     checkScreenSize();
@@ -56,8 +58,10 @@ export default function Dashboard() {
     );
   }
 
-  // Use responsive layout based on screen size
-  if (isDesktop) {
+  // Force desktop layout - responsive detection will be added later
+  const forceDesktop = true;
+  
+  if (forceDesktop || isDesktop) {
     return (
       <div className="min-h-screen bg-background flex">
         {/* Desktop Sidebar - Always visible */}
