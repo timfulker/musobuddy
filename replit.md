@@ -759,6 +759,15 @@ All core features implemented and operational:
   * **Email Client Fix**: Now checks both invoice and contract emails for overdue notifications
   * **Escalation Logic**: Automatically determines reminder type based on days overdue
   * **Professional Subjects**: "Payment Reminder" vs "FINAL NOTICE" for appropriate escalation
+- July 11, 2025. Universal responsive layout system implemented:
+  * **Consistent Responsive Detection**: Fixed inverted responsive logic causing wrong views on different screen sizes
+  * **Unified Layout Pattern**: All pages now use `isDesktop` state with proper responsive detection hooks
+  * **Desktop Layout**: Sidebar (ml-64) for screens 768px+ with proper flexbox structure
+  * **Mobile Layout**: Bottom navigation (MobileNav) for screens under 768px with hamburger menu
+  * **Fixed Pages**: Dashboard, Enquiries, Contracts, Invoices all use consistent responsive patterns
+  * **Eliminated CSS-Only Issues**: Replaced inconsistent `md:ml-64` approach with unified JavaScript detection
+  * **App Preview Working**: Responsive views now display correctly in both dev URL and preview app
+  * **User Profile Visibility**: Sidebar sizing and proportions restored with proper user profile section
 ```
 
 ## User Preferences
