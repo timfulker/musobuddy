@@ -762,27 +762,33 @@ export default function Settings() {
                       </div>
                       
                       {/* Manual Add new gig type */}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="e.g., Saxophone Solo, DJ Set, Sax + DJ, Band Performance"
-                          value={newGigType}
-                          onChange={(e) => setNewGigType(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addGigType();
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          onClick={addGigType}
-                          size="sm"
-                          className="flex items-center gap-1"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Add
-                        </Button>
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-sm">Add Additional Gig Types</h5>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="e.g., Saxophone Solo, DJ Set, Sax + DJ, Band Performance"
+                            value={newGigType}
+                            onChange={(e) => setNewGigType(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addGigType();
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={addGigType}
+                            size="sm"
+                            className="flex items-center gap-1"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Add any custom gig types not covered by your instrument selections above.
+                        </p>
                       </div>
                       
                       {/* Display existing gig types as tags */}
