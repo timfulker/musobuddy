@@ -73,10 +73,24 @@ export default function Enquiries() {
           // If it's a single-element array containing a JSON string, parse it
           if (settings.gigTypes.length === 1 && typeof settings.gigTypes[0] === 'string') {
             try {
-              const parsed = JSON.parse(settings.gigTypes[0]);
+              // The string might be a comma-separated list with escaped quotes
+              const stringContent = settings.gigTypes[0];
+              console.log('🔍 String content:', stringContent);
+              
+              // Try to parse as JSON first
+              const parsed = JSON.parse(stringContent);
               console.log('🔍 Parsed array element:', parsed);
               return Array.isArray(parsed) ? parsed : settings.gigTypes;
             } catch {
+              // If JSON parsing fails, try splitting by comma and cleaning up
+              const stringContent = settings.gigTypes[0];
+              if (stringContent.includes(',')) {
+                const items = stringContent.split(',').map(item => 
+                  item.replace(/^["']|["']$/g, '').trim()
+                );
+                console.log('🔍 Split items:', items);
+                return items.filter(item => item.length > 0);
+              }
               return settings.gigTypes;
             }
           }
