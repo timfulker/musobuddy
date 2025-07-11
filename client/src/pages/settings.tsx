@@ -17,6 +17,8 @@ import Sidebar from "@/components/sidebar";
 const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).extend({
   nextInvoiceNumber: z.number().min(1, "Invoice number must be at least 1"),
   gigTypes: z.string().optional(),
+  eventTypes: z.string().optional(),
+  instrumentsPlayed: z.string().optional(),
 });
 
 export default function Settings() {
@@ -47,6 +49,8 @@ export default function Settings() {
       emailFromName: settings.emailFromName || "",
       nextInvoiceNumber: settings.nextInvoiceNumber || 256,
       gigTypes: settings.gigTypes || "",
+      eventTypes: settings.eventTypes || "",
+      instrumentsPlayed: settings.instrumentsPlayed || "",
     },
   });
 
@@ -426,17 +430,58 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          {/* Gig Types Configuration */}
+          {/* Performance Configuration */}
           <Card>
             <CardHeader>
               <div>
-                <CardTitle>Gig Types Configuration</CardTitle>
+                <CardTitle>Performance Configuration</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Configure your available gig types for enquiry forms
+                  Configure your performance types and available services
                 </p>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="instrumentsPlayed"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>What Do You Play?</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Saxophone, Piano, Guitar, DJ, Vocals"
+                        {...field}
+                      />
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      Describe your musical instruments and services. This helps personalize your enquiry forms.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="eventTypes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Available Event Types</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Wedding&#10;Corporate Event&#10;Private Party&#10;Birthday Party&#10;Anniversary&#10;Graduation&#10;Concert&#10;Festival&#10;Other"
+                        className="min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      Enter each event type on a separate line. These will appear in the "Event Type" dropdown when creating enquiries.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="gigTypes"

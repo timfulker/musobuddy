@@ -148,6 +148,8 @@ export const userSettings = pgTable("user_settings", {
   maxTravelDistance: integer("max_travel_distance").default(100), // miles
   homePostcode: varchar("home_postcode"), // For distance calculations
   gigTypes: text("gig_types"), // JSON array of gig types: ["Sax", "DJ", "Band", "Piano", etc.]
+  eventTypes: text("event_types"), // Custom event types for enquiry forms
+  instrumentsPlayed: text("instruments_played"), // What instruments/services the user plays
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
