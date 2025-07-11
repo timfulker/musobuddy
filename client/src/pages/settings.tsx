@@ -441,6 +441,9 @@ export default function Settings() {
 
 
   const onSubmit = (data: z.infer<typeof settingsFormSchema>) => {
+    console.log('🚀 FORM SUBMIT: Starting submission');
+    console.log('🚀 FORM SUBMIT: Form data received:', JSON.stringify(data, null, 2));
+    
     // Convert bank details table format back to string for storage
     const bankDetailsString = [
       bankDetails.bankName ? `Bank Name: ${bankDetails.bankName}` : '',
@@ -453,24 +456,24 @@ export default function Settings() {
     const gigTypesArray = data.gigTypes ? 
       data.gigTypes.split('\n').filter(type => type.trim().length > 0) : [];
     
-    // ✅ KEY FIX: Use the form data instead of manually constructing
+    // ✅ KEY FIX: Use form data for instruments
     const instrumentsPlayedString = data.instrumentsPlayed || JSON.stringify([]);
+    const customInstrumentsString = data.customInstruments || JSON.stringify([]);
     
-    console.log('🎯 Form submission data:', {
-      gigTypes: gigTypesArray,
-      instrumentsPlayed: instrumentsPlayedString
-    });
+    console.log('🚀 FORM SUBMIT: Processed data:');
+    console.log('  - gigTypes:', gigTypesArray);
+    console.log('  - instrumentsPlayed:', instrumentsPlayedString);
+    console.log('  - customInstruments:', customInstrumentsString);
     
     const updatedData = {
       ...data,
       bankDetails: bankDetailsString,
       gigTypes: JSON.stringify(gigTypesArray),
-      instrumentsPlayed: instrumentsPlayedString, // ✅ Use form data
-      customInstruments: JSON.stringify(customInstruments) // ✅ Include custom instruments
+      instrumentsPlayed: instrumentsPlayedString,
+      customInstruments: customInstrumentsString // ✅ Use form data not state
     };
     
-    console.log('🎯 Final save data:', updatedData);
-    console.log('🎯 Custom instruments being saved:', customInstruments);
+    console.log('🚀 FORM SUBMIT: Final data for API:', JSON.stringify(updatedData, null, 2));
     saveSettingsMutation.mutate(updatedData);
   };
 

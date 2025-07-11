@@ -1,0 +1,58 @@
+I can see the issue now! Looking at your current files, I notice a few problems:
+
+1. **Database Schema Issue**: You added `customInstruments` field to the schema, but you might need a database migration
+2. **Form Logic Issue**: The form is handling both `instrumentsPlayed` and `customInstruments` separately, but they should work together
+3. **Backend Logging**: The backend logs show it's receiving the data, but we need to verify what's actually being saved
+
+Let me create a comprehensive fix:## Action Plan to Fix This:
+
+### 1. **Check Database Schema**
+First, let's verify the database has the `custom_instruments` column:
+
+```sql
+-- Connect to your database and run:
+\d user_settings;
+-- Look for 'custom_instruments' column
+```
+
+If it's missing, run:
+```sql
+ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS custom_instruments TEXT;
+```
+
+### 2. **Apply the Code Changes**
+Apply all the updates from the artifact above to your files.
+
+### 3. **Test with Debug Output**
+After applying the changes:
+
+1. **Add a custom instrument** (e.g., "Bagpipes")
+2. **Click "Debug Form State"** button 
+3. **Click "Save Settings"**
+4. **Check console logs** for all the `🔥` messages
+
+### 4. **Expected Debug Output**
+You should see this sequence:
+
+```
+🚀 FORM SUBMIT: Starting submission
+🚀 FORM SUBMIT: instrumentsPlayed: ["saxophone","bagpipes"]
+🚀 FORM SUBMIT: customInstruments: ["bagpipes"]
+🔥 ROUTES: instrumentsPlayed in request: ["saxophone","bagpipes"]
+🔥 ROUTES: customInstruments in request: ["bagpipes"]
+🔥 STORAGE: instrumentsPlayed in result: ["saxophone","bagpipes"]
+🔥 STORAGE: customInstruments in result: ["bagpipes"]
+```
+
+### 5. **Database Verification**
+After saving, check the database directly:
+
+```sql
+SELECT instruments_played, custom_instruments 
+FROM user_settings 
+WHERE user_id = '43963086';
+```
+
+**The Root Cause**: Most likely the `custom_instruments` column doesn't exist in your database yet, so the data is being silently ignored during the database update.
+
+Try the database column check first, then apply the code changes. Let me know what you find!
