@@ -143,16 +143,26 @@ export default function Settings() {
       }
     }
     
-    // Separate built-in instruments from custom instruments
-    const builtInInstruments = ['saxophone', 'guitar', 'piano', 'vocals', 'dj', 'violin', 'trumpet', 'drums', 'bass', 'keyboard', 'cello', 'flute', 'harp', 'trombone', 'clarinet'];
-    const builtInSelected = allInstruments.filter(inst => builtInInstruments.includes(inst.toLowerCase()));
-    const customInstrumentsArray = allInstruments.filter(inst => !builtInInstruments.includes(inst.toLowerCase()));
+    // Define predefined instruments for separation
+    const predefinedInstruments = [
+      'saxophone', 'guitar', 'piano', 'vocals', 'bass', 'drums', 'dj', 'keyboard', 'synth', 'singer songwriter',
+      'violin', 'viola', 'cello', 'flute', 'clarinet', 'oboe', 'harp',
+      'trumpet', 'trombone', 'percussion'
+    ];
     
-    console.log('🎯 Built-in selected:', builtInSelected);
-    console.log('🎯 Custom instruments:', customInstrumentsArray);
+    // Separate custom instruments from predefined ones
+    const customInstrumentsFromDB = allInstruments.filter(instrument => 
+      !predefinedInstruments.includes(instrument.toLowerCase())
+    );
+    const selectedInstrumentsFromDB = allInstruments.filter(instrument => 
+      predefinedInstruments.includes(instrument.toLowerCase())
+    );
     
-    setSelectedInstruments(builtInSelected);
-    setCustomInstruments(customInstrumentsArray);
+    console.log('🎯 Custom instruments from DB:', customInstrumentsFromDB);
+    console.log('🎯 Selected instruments from DB:', selectedInstrumentsFromDB);
+    
+    setSelectedInstruments(selectedInstrumentsFromDB);
+    setCustomInstruments(customInstrumentsFromDB);
     
     // Parse bank details from stored string format
     const bankDetailsString = settings.bankDetails || "";
@@ -221,7 +231,7 @@ export default function Settings() {
 
   const addCustomInstrument = () => {
     if (newInstrument.trim() && !customInstruments.includes(newInstrument.trim()) && !selectedInstruments.includes(newInstrument.trim())) {
-      const instrument = newInstrument.trim().toLowerCase();
+      const instrument = newInstrument.trim();
       setCustomInstruments([...customInstruments, instrument]);
       setSelectedInstruments([...selectedInstruments, instrument]);
       setNewInstrument("");

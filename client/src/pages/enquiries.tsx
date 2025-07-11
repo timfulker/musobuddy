@@ -77,11 +77,16 @@ export default function Enquiries() {
   const eventTypes = React.useMemo(() => {
     if (settings.eventTypes) {
       try {
-        return JSON.parse(settings.eventTypes);
+        // First try to parse as JSON
+        const parsed = JSON.parse(settings.eventTypes);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+        // If not array, treat as string and split
+        return settings.eventTypes.split('\n').filter(Boolean);
       } catch (error) {
-        console.error('Error parsing eventTypes:', error);
-        return ["Wedding", "Corporate Event", "Private Party", "Birthday Party", 
-                "Anniversary", "Concert", "Festival", "Charity Event", "Christmas Party", "Other"];
+        // If JSON parsing fails, treat as newline-separated string
+        return settings.eventTypes.split('\n').filter(Boolean);
       }
     }
     return ["Wedding", "Corporate Event", "Private Party", "Birthday Party", 
