@@ -797,6 +797,13 @@ All core features implemented and operational:
   * **Manual Override**: Kept manual "Add" button for users to include additional custom gig types
   * **Simplified Workflow**: Users select instruments → gig types auto-populate → optional manual additions → save settings
   * **Reduced Complexity**: Removed suggestion preview and apply buttons for streamlined user experience
+- July 11, 2025. Hybrid gig type generation system with custom instrument support implemented:
+  * **Default Mappings**: Built-in gig type mappings for 15+ common instruments (saxophone, guitar, piano, etc.)
+  * **Custom Instrument Addition**: Users can add instruments not in the predefined list
+  * **Hybrid AI Integration**: OpenAI only used for unknown/custom instruments, reducing API dependency
+  * **Comprehensive Coverage**: Default mappings cover saxophone, guitar, piano, vocals, DJ, violin, trumpet, drums, bass, keyboard, cello, flute, harp, trombone, clarinet
+  * **Smart Fallback**: System works fully without OpenAI key, only enhances experience for custom instruments
+  * **Custom Instrument Management**: Add/remove custom instruments with orange badges for visual distinction
 ```
 
 ## User Preferences

@@ -40,6 +40,8 @@ export default function Settings() {
   
   // State for instrument selection
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
+  const [customInstruments, setCustomInstruments] = useState<string[]>([]);
+  const [newInstrument, setNewInstrument] = useState("");
   
   // Define instrument categories
   const instrumentCategories = {
@@ -159,7 +161,40 @@ export default function Settings() {
     setSelectedInstruments(updatedInstruments);
   };
 
+  const addCustomInstrument = () => {
+    if (newInstrument.trim() && !customInstruments.includes(newInstrument.trim()) && !selectedInstruments.includes(newInstrument.trim())) {
+      const instrument = newInstrument.trim().toLowerCase();
+      setCustomInstruments([...customInstruments, instrument]);
+      setSelectedInstruments([...selectedInstruments, instrument]);
+      setNewInstrument("");
+    }
+  };
 
+  const removeCustomInstrument = (instrument: string) => {
+    setCustomInstruments(customInstruments.filter(i => i !== instrument));
+    setSelectedInstruments(selectedInstruments.filter(i => i !== instrument));
+  };
+
+
+
+  // Default gig type mappings for known instruments
+  const defaultGigMappings: { [key: string]: string[] } = {
+    'saxophone': ['Wedding Ceremony Music', 'Jazz Club Performance', 'Corporate Event Entertainment', 'Function Band', 'Sax + DJ', 'Wedding Reception', 'Private Party'],
+    'guitar': ['Acoustic Wedding Ceremony', 'Spanish Guitar', 'Classical Guitar', 'Folk Music', 'Singer-Songwriter', 'Acoustic Duo', 'Background Music'],
+    'piano': ['Piano Bar', 'Wedding Ceremony', 'Classical Recital', 'Jazz Piano', 'Cocktail Piano', 'Restaurant Background', 'Solo Piano'],
+    'vocals': ['Wedding Singer', 'Jazz Vocalist', 'Corporate Entertainment', 'Function Band Vocals', 'Solo Vocalist', 'Tribute Acts', 'Karaoke Host'],
+    'dj': ['Wedding DJ', 'Corporate Event DJ', 'Party DJ', 'Club DJ', 'Mobile DJ', 'Sax + DJ', 'Event DJ'],
+    'violin': ['Wedding Ceremony', 'String Quartet', 'Classical Performance', 'Folk Violin', 'Electric Violin', 'Background Music', 'Solo Violin'],
+    'trumpet': ['Jazz Band', 'Big Band', 'Wedding Fanfare', 'Classical Trumpet', 'Brass Ensemble', 'Mariachi Band', 'Military Ceremony'],
+    'drums': ['Function Band', 'Jazz Ensemble', 'Rock Band', 'Wedding Band', 'Corporate Event Band', 'Percussion Solo', 'Session Musician'],
+    'bass': ['Function Band', 'Jazz Ensemble', 'Wedding Band', 'Corporate Event Band', 'Session Musician', 'Acoustic Bass', 'Electric Bass'],
+    'keyboard': ['Function Band', 'Wedding Ceremony', 'Jazz Piano', 'Corporate Entertainment', 'Solo Keyboard', 'Accompanist', 'Session Musician'],
+    'cello': ['Wedding Ceremony', 'String Quartet', 'Classical Performance', 'Solo Cello', 'Chamber Music', 'Background Music', 'Church Music'],
+    'flute': ['Wedding Ceremony', 'Classical Performance', 'Jazz Flute', 'Folk Music', 'Solo Flute', 'Wind Ensemble', 'Background Music'],
+    'harp': ['Wedding Ceremony', 'Classical Harp', 'Celtic Harp', 'Background Music', 'Solo Harp', 'Church Music', 'Private Events'],
+    'trombone': ['Jazz Band', 'Big Band', 'Brass Ensemble', 'Wedding Fanfare', 'Classical Trombone', 'Mariachi Band', 'Military Ceremony'],
+    'clarinet': ['Jazz Ensemble', 'Classical Performance', 'Wedding Ceremony', 'Folk Music', 'Solo Clarinet', 'Wind Ensemble', 'Background Music']
+  };
 
   // Auto-update gig types based on instrument selection
   const updateGigTypesFromInstruments = async () => {
@@ -167,26 +202,42 @@ export default function Settings() {
       return;
     }
 
-    try {
-      const response = await fetch('/api/suggest-gigs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ instruments: selectedInstruments }),
-      });
+    let allSuggestions: string[] = [];
+    const unknownInstruments: string[] = [];
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch suggestions');
+    // Get suggestions for known instruments from default mappings
+    selectedInstruments.forEach(instrument => {
+      if (defaultGigMappings[instrument]) {
+        allSuggestions = [...allSuggestions, ...defaultGigMappings[instrument]];
+      } else {
+        unknownInstruments.push(instrument);
       }
+    });
 
-      const suggestions = await response.json();
-      const newGigTypes = [...new Set([...gigTypes, ...suggestions])];
-      setGigTypes(newGigTypes);
-      form.setValue('gigTypes', newGigTypes.join('\n'));
-    } catch (error) {
-      console.error('Error updating gig types:', error);
+    // Only use AI for unknown instruments if OpenAI key is available
+    if (unknownInstruments.length > 0) {
+      try {
+        const response = await fetch('/api/suggest-gigs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ instruments: unknownInstruments }),
+        });
+
+        if (response.ok) {
+          const aiSuggestions = await response.json();
+          allSuggestions = [...allSuggestions, ...aiSuggestions];
+        }
+      } catch (error) {
+        console.log('AI suggestions not available for unknown instruments:', unknownInstruments);
+      }
     }
+
+    // Update gig types with all suggestions
+    const newGigTypes = [...new Set([...gigTypes, ...allSuggestions])];
+    setGigTypes(newGigTypes);
+    form.setValue('gigTypes', newGigTypes.join('\n'));
   };
 
   // Auto-update gig types when instruments change
@@ -651,6 +702,57 @@ export default function Settings() {
                             </div>
                           ))}
                         </div>
+
+                        {/* Custom Instrument Addition */}
+                        <div className="space-y-2 mt-4">
+                          <h5 className="font-medium text-sm">Add Custom Instrument</h5>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="e.g., Harmonica, Bagpipes, etc."
+                              value={newInstrument}
+                              onChange={(e) => setNewInstrument(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addCustomInstrument();
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              onClick={addCustomInstrument}
+                              size="sm"
+                              className="flex items-center gap-1"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Display custom instruments */}
+                        {customInstruments.length > 0 && (
+                          <div className="space-y-2 mt-3">
+                            <h5 className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Custom Instruments</h5>
+                            <div className="flex flex-wrap gap-2">
+                              {customInstruments.map((instrument) => (
+                                <div
+                                  key={instrument}
+                                  className="flex items-center gap-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full text-sm"
+                                >
+                                  <span className="capitalize">{instrument}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCustomInstrument(instrument)}
+                                    className="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-200"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {selectedInstruments.length > 0 && (
                           <p className="text-sm text-green-600 dark:text-green-400 mt-3">
