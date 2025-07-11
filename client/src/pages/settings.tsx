@@ -232,15 +232,14 @@ export default function Settings() {
     }
     setSelectedInstruments(updatedInstruments);
     
-    // ✅ KEY FIX: Update form state with proper options
-    const allInstruments = [...updatedInstruments, ...customInstruments];
-    form.setValue('instrumentsPlayed', JSON.stringify(allInstruments), {
+    // ✅ KEY FIX: Update form state with selected instruments only
+    form.setValue('instrumentsPlayed', JSON.stringify(updatedInstruments), {
       shouldDirty: true,
       shouldTouch: true,
       shouldValidate: true
     });
     
-    console.log('🎸 Updated instruments via checkbox:', allInstruments);
+    console.log('🎸 Updated instruments via checkbox:', updatedInstruments);
   };
 
   const addCustomInstrument = () => {
@@ -254,16 +253,23 @@ export default function Settings() {
       setCustomInstruments(updatedCustom);
       setSelectedInstruments(updatedSelected);
       
-      // ✅ KEY FIX: Update form state with proper options
-      const allInstruments = [...updatedSelected, ...updatedCustom];
-      form.setValue('instrumentsPlayed', JSON.stringify(allInstruments), {
+      // ✅ KEY FIX: Update form state with selected instruments only (not duplicating)
+      form.setValue('instrumentsPlayed', JSON.stringify(updatedSelected), {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true
+      });
+      
+      // ✅ KEY FIX: Update custom instruments field separately
+      form.setValue('customInstruments', JSON.stringify(updatedCustom), {
         shouldDirty: true,
         shouldTouch: true,
         shouldValidate: true
       });
       
       console.log('🎯 Added custom instrument:', instrument);
-      console.log('🎸 All instruments now:', allInstruments);
+      console.log('🎸 Selected instruments now:', updatedSelected);
+      console.log('🎯 Custom instruments now:', updatedCustom);
       
       setNewInstrument("");
     }
@@ -276,16 +282,23 @@ export default function Settings() {
     setCustomInstruments(updatedCustom);
     setSelectedInstruments(updatedSelected);
     
-    // ✅ KEY FIX: Update form state with proper options
-    const allInstruments = [...updatedSelected, ...updatedCustom];
-    form.setValue('instrumentsPlayed', JSON.stringify(allInstruments), {
+    // ✅ KEY FIX: Update form state with selected instruments only
+    form.setValue('instrumentsPlayed', JSON.stringify(updatedSelected), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true
+    });
+    
+    // ✅ KEY FIX: Update custom instruments field separately
+    form.setValue('customInstruments', JSON.stringify(updatedCustom), {
       shouldDirty: true,
       shouldTouch: true,
       shouldValidate: true
     });
     
     console.log('🗑️ Removed custom instrument:', instrument);
-    console.log('🎸 All instruments now:', allInstruments);
+    console.log('🎸 Selected instruments now:', updatedSelected);
+    console.log('🎯 Custom instruments now:', updatedCustom);
   };
 
   // Debug function to trace form state
@@ -376,9 +389,16 @@ export default function Settings() {
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
-      return await apiRequest("POST", "/api/settings", data);
+      console.log('🚀 SAVE MUTATION: Starting save with data:', JSON.stringify(data, null, 2));
+      console.log('🎯 SAVE MUTATION: customInstruments field:', data.customInstruments);
+      console.log('🎸 SAVE MUTATION: instrumentsPlayed field:', data.instrumentsPlayed);
+      
+      const result = await apiRequest("POST", "/api/settings", data);
+      console.log('🎉 SAVE MUTATION: Save completed successfully');
+      return result;
     },
     onSuccess: () => {
+      console.log('✅ SAVE MUTATION: Success handler called');
       toast({
         title: "Settings saved",
         description: "Your business settings have been updated successfully.",
@@ -389,7 +409,7 @@ export default function Settings() {
       queryClient.refetchQueries({ queryKey: ["/api/settings"] });
     },
     onError: (error) => {
-      console.error('Settings save error:', error);
+      console.error('❌ SAVE MUTATION: Error occurred:', error);
       toast({
         title: "Error",
         description: "Failed to save settings. Please try again.",
