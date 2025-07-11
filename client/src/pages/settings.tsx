@@ -130,6 +130,30 @@ export default function Settings() {
     }
     setGigTypes(gigTypesArray);
     
+    // Load custom instruments from instrumentsPlayed field
+    let allInstruments = [];
+    if (settings.instrumentsPlayed) {
+      try {
+        allInstruments = JSON.parse(settings.instrumentsPlayed);
+        console.log('🎯 Loaded instruments from database:', allInstruments);
+      } catch (e) {
+        // If JSON parsing fails, treat as newline-separated string
+        allInstruments = settings.instrumentsPlayed.split('\n').filter(Boolean);
+        console.log('🎯 Loaded instruments from string:', allInstruments);
+      }
+    }
+    
+    // Separate built-in instruments from custom instruments
+    const builtInInstruments = ['saxophone', 'guitar', 'piano', 'vocals', 'dj', 'violin', 'trumpet', 'drums', 'bass', 'keyboard', 'cello', 'flute', 'harp', 'trombone', 'clarinet'];
+    const builtInSelected = allInstruments.filter(inst => builtInInstruments.includes(inst.toLowerCase()));
+    const customInstrumentsArray = allInstruments.filter(inst => !builtInInstruments.includes(inst.toLowerCase()));
+    
+    console.log('🎯 Built-in selected:', builtInSelected);
+    console.log('🎯 Custom instruments:', customInstrumentsArray);
+    
+    setSelectedInstruments(builtInSelected);
+    setCustomInstruments(customInstrumentsArray);
+    
     // Parse bank details from stored string format
     const bankDetailsString = settings.bankDetails || "";
     const parsedBankDetails = {
@@ -284,10 +308,17 @@ export default function Settings() {
       bankDetails.accountNumber ? `Account Number: ${bankDetails.accountNumber}` : ''
     ].filter(line => line.length > 0).join('\n');
     
+    // Save custom instruments to instrumentsPlayed field
+    const allInstruments = [...selectedInstruments, ...customInstruments];
+    const instrumentsPlayedString = JSON.stringify(allInstruments);
+    console.log('🎯 Auto-saving instruments:', allInstruments);
+    console.log('🎯 Auto-saving gig types:', newGigTypes);
+    
     const updatedFormData = {
       ...currentFormData,
       bankDetails: bankDetailsString,
-      gigTypes: JSON.stringify(newGigTypes) // Store as JSON string
+      gigTypes: JSON.stringify(newGigTypes), // Store as JSON string
+      instrumentsPlayed: instrumentsPlayedString // Save all instruments (selected + custom)
     };
     saveSettingsMutation.mutate(updatedFormData);
   };
@@ -335,10 +366,17 @@ export default function Settings() {
     const gigTypesArray = data.gigTypes ? 
       data.gigTypes.split('\n').filter(type => type.trim().length > 0) : [];
     
+    // Save custom instruments to instrumentsPlayed field
+    const allInstruments = [...selectedInstruments, ...customInstruments];
+    const instrumentsPlayedString = JSON.stringify(allInstruments);
+    console.log('🎯 Manual save - saving instruments:', allInstruments);
+    console.log('🎯 Manual save - saving gig types:', gigTypesArray);
+    
     const updatedData = {
       ...data,
       bankDetails: bankDetailsString,
-      gigTypes: JSON.stringify(gigTypesArray) // Store as JSON string
+      gigTypes: JSON.stringify(gigTypesArray), // Store as JSON string
+      instrumentsPlayed: instrumentsPlayedString // Save all instruments (selected + custom)
     };
     
     saveSettingsMutation.mutate(updatedData);
