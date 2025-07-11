@@ -776,6 +776,14 @@ All core features implemented and operational:
   * **Duplicate Prevention**: System prevents duplicate entries and validates input automatically
   * **Real-Time Updates**: Form values update immediately when tags are added or removed
   * **Improved UX**: Users can now manage configuration options through intuitive tag interface instead of manual text editing
+- July 11, 2025. Instrument-based gig suggestions feature implemented:
+  * **Categorized Instrument Selection**: Three categories - Band/Pop/Function, Classical/Traditional, Brass/Jazz/Marching
+  * **Multi-Selection Interface**: Checkbox grid allowing selection of multiple instruments across categories
+  * **Backend Mapping System**: Comprehensive instrument-to-gig-type mapping with 20+ instruments and 50+ gig types
+  * **Smart Suggestion Engine**: POST /api/suggest-gigs endpoint with lookup-based suggestions
+  * **Auto-Apply Functionality**: "Apply to Gig Types" button adds suggestions directly to configuration
+  * **Real-Time Integration**: Suggestions appear as green badges and can be applied to existing gig types list
+  * **Enhanced Instrument Coverage**: Includes synth, viola, clarinet, harp, trombone and specialized gig types
 ```
 
 ## User Preferences

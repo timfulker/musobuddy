@@ -45,9 +45,9 @@ export default function Settings() {
   
   // Define instrument categories
   const instrumentCategories = {
-    "Band Instruments": ["guitar", "bass", "drums", "vocals", "saxophone", "trumpet"],
-    "Classical Instruments": ["violin", "flute", "cello", "piano", "oboe"],
-    "Other/General": ["keyboard", "dj", "singer-songwriter", "percussion"]
+    "Band / Pop / Function": ["saxophone", "guitar", "piano", "vocals", "bass", "drums", "dj", "keyboard", "synth", "singer-songwriter"],
+    "Classical / Traditional": ["violin", "viola", "cello", "flute", "clarinet", "oboe", "harp"],
+    "Brass / Jazz / Marching": ["trumpet", "trombone", "percussion"]
   };
 
   const { data: settings = {}, isLoading } = useQuery({

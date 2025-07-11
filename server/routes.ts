@@ -76,21 +76,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Define instrument to gig type mapping
       const instrumentToGigTypes = {
-        saxophone: ['Solo Sax', 'Sax with DJ', 'Jazz Quartet', 'Wedding Ceremony'],
-        guitar: ['Acoustic Set', 'Rock Band', 'Wedding Gig'],
-        piano: ['Cocktail Set', 'Solo Piano', 'Musical Theatre'],
-        flute: ['Orchestral Gig', 'Wedding Ceremony', 'Classical Recital'],
-        vocals: ['Lead Singer', 'Backing Vocals', 'Acoustic Duo'],
-        bass: ['Rock Band', 'Jazz Ensemble', 'Function Band'],
-        drums: ['Rock Band', 'Jazz Ensemble', 'Function Band'],
-        trumpet: ['Jazz Ensemble', 'Big Band', 'Wedding Ceremony'],
-        violin: ['String Quartet', 'Wedding Ceremony', 'Classical Recital'],
-        cello: ['String Quartet', 'Wedding Ceremony', 'Classical Recital'],
-        oboe: ['Orchestra', 'Wind Ensemble', 'Chamber Music'],
-        keyboard: ['Function Band', 'Solo Performance', 'Wedding Gig'],
-        dj: ['DJ Set', 'Wedding Reception', 'Corporate Event'],
-        'singer-songwriter': ['Solo Performance', 'Acoustic Set', 'Open Mic'],
-        percussion: ['Latin Band', 'World Music', 'Function Band']
+        // 🎸 BAND / POP / FUNCTION
+        saxophone: ['Solo Sax', 'Sax with DJ', 'Jazz Quartet', 'Wedding Ceremony', 'Function Band'],
+        guitar: ['Acoustic Solo', 'Rock Band', 'Function Band', 'Singer-Songwriter Set', 'Studio Session'],
+        piano: ['Cocktail Piano', 'Solo Piano Recital', 'Musical Theatre', 'Worship Band', 'Function Band'],
+        vocals: ['Lead Singer', 'Backing Vocals', 'Acoustic Duo', 'Worship Leader', 'Function Band'],
+        bass: ['Rock Band', 'Jazz Combo', 'Function Band', 'Studio Session'],
+        drums: ['Rock Band', 'Function Band', 'Jazz Trio', 'Studio Session'],
+        dj: ['Private Party', 'Club Night', 'Wedding DJ Set', 'Festival Stage'],
+        keyboard: ['Worship Band', 'Function Band', 'Theatre Pit', 'Pop Group'],
+        synth: ['Electronic Set', 'Studio Production', 'Pop Band', 'Ambient Solo Performance'],
+        'singer-songwriter': ['Acoustic Solo', 'Open Mic', 'Original Music Gig', 'Wedding Drinks Reception'],
+
+        // 🎻 CLASSICAL / TRADITIONAL
+        violin: ['String Quartet', 'Wedding Ceremony', 'Folk Group', 'Orchestral Gig', 'Solo Violin Set'],
+        viola: ['String Quartet', 'Chamber Ensemble', 'Orchestral Gig'],
+        cello: ['String Quartet', 'Solo Recital', 'Wedding Ceremony', 'Orchestral Gig'],
+        flute: ['Wedding Ceremony', 'Classical Recital', 'Chamber Ensemble', 'Orchestral Gig'],
+        clarinet: ['Classical Recital', 'Klezmer Group', 'Jazz Combo', 'Orchestral Gig'],
+        oboe: ['Classical Recital', 'Chamber Ensemble', 'Orchestral Gig'],
+        harp: ['Wedding Ceremony', 'Classical Recital', 'Spa/Hotel Background Set'],
+
+        // 🎺 BRASS / JAZZ / MARCHING
+        trumpet: ['Jazz Band', 'Brass Ensemble', 'Function Band', 'Marching Band'],
+        trombone: ['Big Band', 'Jazz Ensemble', 'Orchestral Gig', 'Brass Group'],
+        percussion: ['Latin Band', 'Orchestral Gig', 'Marching Band', 'Folk Group']
       };
 
       // Collect suggested gig types
