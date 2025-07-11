@@ -131,12 +131,21 @@ app.post('/api/invoices', express.json({ limit: '50mb' }), async (req: any, res)
 });
 
 // WEBHOOK ENDPOINTS - Must be registered before middleware to avoid routing conflicts
-app.post('/api/webhook/mailgun', express.json({ limit: '50mb' }), express.urlencoded({ extended: true, limit: '50mb' }), async (req, res) => {
+app.post('/api/webhook/mailgun', express.urlencoded({ extended: true, limit: '50mb' }), async (req, res) => {
   console.log('📧 MAILGUN WEBHOOK HIT! Email received via /api/webhook/mailgun');
   console.log('Request from IP:', req.ip);
   console.log('User-Agent:', req.headers['user-agent']);
   console.log('Content-Type:', req.headers['content-type']);
-  console.log('Raw request body:', JSON.stringify(req.body, null, 2));
+  console.log('Raw request body (form-data):', JSON.stringify(req.body, null, 2));
+  console.log('All form fields:', Object.keys(req.body || {}));
+  
+  // Log each field for debugging
+  if (req.body) {
+    for (const [key, value] of Object.entries(req.body)) {
+      console.log(`📧 Form field "${key}":`, typeof value, '=', value);
+    }
+  }
+  
   try {
     const { handleMailgunWebhook } = await import('./mailgun-webhook');
     await handleMailgunWebhook(req, res);
