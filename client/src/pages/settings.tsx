@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, Mail, Key } from "lucide-react";
+import { Settings as SettingsIcon, Save, Building, Phone, Globe, CreditCard, FileText, Mail, Key, Plus, X } from "lucide-react";
 import { insertUserSettingsSchema, type UserSettings } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +30,12 @@ export default function Settings() {
     sortCode: "",
     accountNumber: ""
   });
+  
+  // State for tag management
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
+  const [gigTypes, setGigTypes] = useState<string[]>([]);
+  const [newEventType, setNewEventType] = useState("");
+  const [newGigType, setNewGigType] = useState("");
 
   const { data: settings = {}, isLoading } = useQuery({
     queryKey: ["/api/settings"],
@@ -68,7 +74,14 @@ export default function Settings() {
       defaultTerms: settings.defaultTerms || "",
       emailFromName: settings.emailFromName || "",
       nextInvoiceNumber: settings.nextInvoiceNumber || 256,
+      gigTypes: settings.gigTypes || "",
+      eventTypes: settings.eventTypes || "",
+      instrumentsPlayed: settings.instrumentsPlayed || "",
     });
+    
+    // Initialize tag arrays
+    setEventTypes(settings.eventTypes ? settings.eventTypes.split('\n').filter(Boolean) : []);
+    setGigTypes(settings.gigTypes ? settings.gigTypes.split('\n').filter(Boolean) : []);
     
     // Parse bank details from stored string format
     const bankDetailsString = settings.bankDetails || "";
@@ -92,6 +105,37 @@ export default function Settings() {
     setBankDetails(parsedBankDetails);
     setHasInitialized(true);
   }
+
+  // Helper functions for tag management
+  const addEventType = () => {
+    if (newEventType.trim() && !eventTypes.includes(newEventType.trim())) {
+      const updatedTypes = [...eventTypes, newEventType.trim()];
+      setEventTypes(updatedTypes);
+      form.setValue('eventTypes', updatedTypes.join('\n'));
+      setNewEventType("");
+    }
+  };
+
+  const removeEventType = (typeToRemove: string) => {
+    const updatedTypes = eventTypes.filter(type => type !== typeToRemove);
+    setEventTypes(updatedTypes);
+    form.setValue('eventTypes', updatedTypes.join('\n'));
+  };
+
+  const addGigType = () => {
+    if (newGigType.trim() && !gigTypes.includes(newGigType.trim())) {
+      const updatedTypes = [...gigTypes, newGigType.trim()];
+      setGigTypes(updatedTypes);
+      form.setValue('gigTypes', updatedTypes.join('\n'));
+      setNewGigType("");
+    }
+  };
+
+  const removeGigType = (typeToRemove: string) => {
+    const updatedTypes = gigTypes.filter(type => type !== typeToRemove);
+    setGigTypes(updatedTypes);
+    form.setValue('gigTypes', updatedTypes.join('\n'));
+  };
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
@@ -467,15 +511,54 @@ export default function Settings() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Available Event Types</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Wedding&#10;Corporate Event&#10;Private Party&#10;Birthday Party&#10;Anniversary&#10;Graduation&#10;Concert&#10;Festival&#10;Other"
-                        className="min-h-[120px]"
-                        {...field}
-                      />
-                    </FormControl>
+                    <div className="space-y-3">
+                      {/* Add new event type */}
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="e.g., Wedding, Corporate Event, Private Party"
+                          value={newEventType}
+                          onChange={(e) => setNewEventType(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addEventType();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addEventType}
+                          size="sm"
+                          className="flex items-center gap-1"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add
+                        </Button>
+                      </div>
+                      
+                      {/* Display existing event types as tags */}
+                      {eventTypes.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {eventTypes.map((type, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm"
+                            >
+                              <span>{type}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeEventType(type)}
+                                className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      Enter each event type on a separate line. These will appear in the "Event Type" dropdown when creating enquiries.
+                      Add event types that will appear in the "Event Type" dropdown when creating enquiries.
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -488,15 +571,54 @@ export default function Settings() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Available Gig Types</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Saxophone Solo&#10;DJ Set&#10;Sax + DJ&#10;Band Performance&#10;Wedding Ceremony&#10;Corporate Event"
-                        className="min-h-[120px]"
-                        {...field}
-                      />
-                    </FormControl>
+                    <div className="space-y-3">
+                      {/* Add new gig type */}
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="e.g., Saxophone Solo, DJ Set, Sax + DJ, Band Performance"
+                          value={newGigType}
+                          onChange={(e) => setNewGigType(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addGigType();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addGigType}
+                          size="sm"
+                          className="flex items-center gap-1"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add
+                        </Button>
+                      </div>
+                      
+                      {/* Display existing gig types as tags */}
+                      {gigTypes.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {gigTypes.map((type, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm"
+                            >
+                              <span>{type}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeGigType(type)}
+                                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      Enter each gig type on a separate line. These will appear in the "Gig Type" dropdown when creating enquiries.
+                      Add gig types that will appear in the "Gig Type" dropdown when creating enquiries.
                     </p>
                     <FormMessage />
                   </FormItem>
