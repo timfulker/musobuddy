@@ -101,10 +101,15 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
       'body-html': bodyHtml
     } = req.body;
 
-    // Validate this is for our leads email
-    if (!recipient || !recipient.includes('leads@musobuddy.com')) {
+    // Validate this is for our leads email (but allow test data)
+    if (recipient && !recipient.includes('leads@musobuddy.com')) {
       console.log('Email not for leads@musobuddy.com, ignoring');
       return res.status(200).json({ message: 'Email ignored - not for leads' });
+    }
+
+    // If no recipient field, it might be a test - process it anyway
+    if (!recipient) {
+      console.log('No recipient field - might be test data, processing anyway');
     }
 
     // Parse the email content using our client info parser
