@@ -64,7 +64,16 @@ export default function Enquiries() {
   const gigTypes = React.useMemo(() => {
     if (settings.gigTypes) {
       try {
-        return JSON.parse(settings.gigTypes);
+        const parsed = JSON.parse(settings.gigTypes);
+        // Handle potential double-encoded JSON from settings
+        if (Array.isArray(parsed)) {
+          return parsed;
+        } else if (typeof parsed === 'string') {
+          return JSON.parse(parsed);
+        } else if (Array.isArray(parsed[0])) {
+          return parsed[0];
+        }
+        return parsed;
       } catch (error) {
         console.error('Error parsing gigTypes:', error);
         return [];
