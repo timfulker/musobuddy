@@ -611,14 +611,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
+    console.log('🔥 STORAGE: upsertUserSettings called with:', JSON.stringify(settings, null, 2));
+    
     // First try to find existing settings
     const [existingSettings] = await db
       .select()
       .from(userSettings)
       .where(eq(userSettings.userId, settings.userId));
 
+    console.log('🔥 STORAGE: Existing settings found:', existingSettings ? 'YES' : 'NO');
+
     if (existingSettings) {
       // Update existing settings
+      console.log('🔥 STORAGE: Updating existing settings');
       const [updatedSettings] = await db
         .update(userSettings)
         .set({
@@ -627,9 +632,11 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(userSettings.userId, settings.userId))
         .returning();
+      console.log('🔥 STORAGE: Updated settings result:', JSON.stringify(updatedSettings, null, 2));
       return updatedSettings;
     } else {
       // Insert new settings
+      console.log('🔥 STORAGE: Creating new settings');
       const [newSettings] = await db
         .insert(userSettings)
         .values({
@@ -638,6 +645,7 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         })
         .returning();
+      console.log('🔥 STORAGE: Created settings result:', JSON.stringify(newSettings, null, 2));
       return newSettings;
     }
   }

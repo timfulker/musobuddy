@@ -232,9 +232,15 @@ export default function Settings() {
     }
     setSelectedInstruments(updatedInstruments);
     
-    // ✅ KEY FIX: Update the form state immediately
+    // ✅ KEY FIX: Update form state with proper options
     const allInstruments = [...updatedInstruments, ...customInstruments];
-    form.setValue('instrumentsPlayed', JSON.stringify(allInstruments));
+    form.setValue('instrumentsPlayed', JSON.stringify(allInstruments), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true
+    });
+    
+    console.log('🎸 Updated instruments via checkbox:', allInstruments);
   };
 
   const addCustomInstrument = () => {
@@ -248,9 +254,16 @@ export default function Settings() {
       setCustomInstruments(updatedCustom);
       setSelectedInstruments(updatedSelected);
       
-      // ✅ KEY FIX: Update the form state immediately
+      // ✅ KEY FIX: Update form state with proper options
       const allInstruments = [...updatedSelected, ...updatedCustom];
-      form.setValue('instrumentsPlayed', JSON.stringify(allInstruments));
+      form.setValue('instrumentsPlayed', JSON.stringify(allInstruments), {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true
+      });
+      
+      console.log('🎯 Added custom instrument:', instrument);
+      console.log('🎸 All instruments now:', allInstruments);
       
       setNewInstrument("");
     }
@@ -263,9 +276,28 @@ export default function Settings() {
     setCustomInstruments(updatedCustom);
     setSelectedInstruments(updatedSelected);
     
-    // ✅ KEY FIX: Update the form state immediately
+    // ✅ KEY FIX: Update form state with proper options
     const allInstruments = [...updatedSelected, ...updatedCustom];
-    form.setValue('instrumentsPlayed', JSON.stringify(allInstruments));
+    form.setValue('instrumentsPlayed', JSON.stringify(allInstruments), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true
+    });
+    
+    console.log('🗑️ Removed custom instrument:', instrument);
+    console.log('🎸 All instruments now:', allInstruments);
+  };
+
+  // Debug function to trace form state
+  const debugFormState = () => {
+    const formData = form.getValues();
+    console.log('🔍 Debug Form State:');
+    console.log('📝 Current form data:', formData);
+    console.log('🎸 instrumentsPlayed field:', formData.instrumentsPlayed);
+    console.log('🎵 gigTypes field:', formData.gigTypes);
+    console.log('🔄 Form state:', form.formState);
+    console.log('💾 Selected instruments (UI):', selectedInstruments);
+    console.log('🎯 Custom instruments (UI):', customInstruments);
   };
 
 
@@ -934,7 +966,16 @@ export default function Settings() {
           </Card>
 
           {/* Save Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <Button 
+              type="button" 
+              onClick={debugFormState}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              Debug Form State
+            </Button>
             <Button 
               type="submit" 
               size="lg"
