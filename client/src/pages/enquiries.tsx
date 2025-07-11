@@ -60,48 +60,25 @@ export default function Enquiries() {
     queryKey: ["/api/settings"],
   });
 
-  // Parse gig types from settings (simplified like event types)
+  // Parse gig types from settings - handle the specific format from database
   const gigTypes = React.useMemo(() => {
-    console.log('🔍 Raw gigTypes from settings:', settings.gigTypes);
-    console.log('🔍 Type of gigTypes:', typeof settings.gigTypes);
-    console.log('🔍 Is array:', Array.isArray(settings.gigTypes));
-    
     if (!settings.gigTypes) return [];
+    
+    // Handle string format from database
+    if (typeof settings.gigTypes === 'string') {
+      // Remove outer quotes and parse comma-separated values
+      const cleanString = settings.gigTypes.replace(/^["']|["']$/g, '');
+      if (cleanString.includes(',')) {
+        return cleanString.split(',').map(item => 
+          item.replace(/^["']|["']$/g, '').trim()
+        ).filter(item => item.length > 0);
+      }
+      return [cleanString];
+    }
     
     // Handle array format
     if (Array.isArray(settings.gigTypes)) {
-      console.log('🔍 Array length:', settings.gigTypes.length);
-      console.log('🔍 First element:', settings.gigTypes[0]);
-      console.log('🔍 First element type:', typeof settings.gigTypes[0]);
-      
-      // If it's a single-element array containing a comma-separated string, parse it
-      if (settings.gigTypes.length === 1 && typeof settings.gigTypes[0] === 'string' && settings.gigTypes[0].includes(',')) {
-        const items = settings.gigTypes[0].split(',').map(item => 
-          item.replace(/^["']|["']$/g, '').trim()
-        );
-        console.log('🔍 Parsed items:', items);
-        return items.filter(item => item.length > 0);
-      }
       return settings.gigTypes;
-    }
-    
-    // Handle string format
-    if (typeof settings.gigTypes === 'string') {
-      try {
-        const parsed = JSON.parse(settings.gigTypes);
-        console.log('🔍 JSON parsed:', parsed);
-        return Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        // If JSON parsing fails, try splitting by comma
-        if (settings.gigTypes.includes(',')) {
-          const items = settings.gigTypes.split(',').map(item => 
-            item.replace(/^["']|["']$/g, '').trim()
-          );
-          console.log('🔍 Split items:', items);
-          return items.filter(item => item.length > 0);
-        }
-        return [settings.gigTypes];
-      }
     }
     
     return [];
