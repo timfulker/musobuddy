@@ -65,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true, method: req.method, url: req.url, body: req.body });
   });
 
-  // Gig suggestions endpoint
+  // Gig suggestions endpoint with AI fallback for unknown instruments
   app.post('/api/suggest-gigs', isAuthenticated, async (req, res) => {
     try {
       const { instruments } = req.body;
@@ -74,59 +74,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Instruments array is required' });
       }
 
-      // Define instrument to gig type mapping
-      const instrumentToGigTypes = {
-        // 🎸 BAND / POP / FUNCTION
-        saxophone: ['Solo Sax', 'Sax with DJ', 'Jazz Quartet', 'Wedding Ceremony', 'Function Band'],
-        guitar: ['Acoustic Solo', 'Rock Band', 'Function Band', 'Singer-Songwriter Set', 'Studio Session'],
-        piano: ['Cocktail Piano', 'Solo Piano Recital', 'Musical Theatre', 'Worship Band', 'Function Band'],
-        vocals: ['Lead Singer', 'Backing Vocals', 'Acoustic Duo', 'Worship Leader', 'Function Band'],
-        bass: ['Rock Band', 'Jazz Combo', 'Function Band', 'Studio Session'],
-        drums: ['Rock Band', 'Function Band', 'Jazz Trio', 'Studio Session'],
-        dj: ['Private Party', 'Club Night', 'Wedding DJ Set', 'Festival Stage'],
-        keyboard: ['Worship Band', 'Function Band', 'Theatre Pit', 'Pop Group'],
-        synth: ['Electronic Set', 'Studio Production', 'Pop Band', 'Ambient Solo Performance'],
-        'singer-songwriter': ['Acoustic Solo', 'Open Mic', 'Original Music Gig', 'Wedding Drinks Reception'],
-
-        // 🎻 CLASSICAL / TRADITIONAL
-        violin: ['String Quartet', 'Wedding Ceremony', 'Folk Group', 'Orchestral Gig', 'Solo Violin Set'],
-        viola: ['String Quartet', 'Chamber Ensemble', 'Orchestral Gig'],
-        cello: ['String Quartet', 'Solo Recital', 'Wedding Ceremony', 'Orchestral Gig'],
-        flute: ['Wedding Ceremony', 'Classical Recital', 'Chamber Ensemble', 'Orchestral Gig'],
-        clarinet: ['Classical Recital', 'Klezmer Group', 'Jazz Combo', 'Orchestral Gig'],
-        oboe: ['Classical Recital', 'Chamber Ensemble', 'Orchestral Gig'],
-        harp: ['Wedding Ceremony', 'Classical Recital', 'Spa/Hotel Background Set'],
-
-        // 🎺 BRASS / JAZZ / MARCHING
-        trumpet: ['Jazz Band', 'Brass Ensemble', 'Function Band', 'Marching Band'],
-        trombone: ['Big Band', 'Jazz Ensemble', 'Orchestral Gig', 'Brass Group'],
-        percussion: ['Latin Band', 'Orchestral Gig', 'Marching Band', 'Folk Group']
+      // Default mappings for known instruments
+      const defaultGigMappings = {
+        'saxophone': ['Wedding Ceremony Music', 'Jazz Club Performance', 'Corporate Event Entertainment', 'Function Band', 'Sax + DJ', 'Wedding Reception', 'Private Party'],
+        'guitar': ['Acoustic Wedding Ceremony', 'Spanish Guitar', 'Classical Guitar', 'Folk Music', 'Singer-Songwriter', 'Acoustic Duo', 'Background Music'],
+        'piano': ['Piano Bar', 'Wedding Ceremony', 'Classical Recital', 'Jazz Piano', 'Cocktail Piano', 'Restaurant Background', 'Solo Piano'],
+        'vocals': ['Wedding Singer', 'Jazz Vocalist', 'Corporate Entertainment', 'Function Band Vocals', 'Solo Vocalist', 'Tribute Acts', 'Karaoke Host'],
+        'dj': ['Wedding DJ', 'Corporate Event DJ', 'Party DJ', 'Club DJ', 'Mobile DJ', 'Sax + DJ', 'Event DJ'],
+        'violin': ['Wedding Ceremony', 'String Quartet', 'Classical Performance', 'Folk Violin', 'Electric Violin', 'Background Music', 'Solo Violin'],
+        'trumpet': ['Jazz Band', 'Big Band', 'Wedding Fanfare', 'Classical Trumpet', 'Brass Ensemble', 'Mariachi Band', 'Military Ceremony'],
+        'drums': ['Function Band', 'Jazz Ensemble', 'Rock Band', 'Wedding Band', 'Corporate Event Band', 'Percussion Solo', 'Session Musician'],
+        'bass': ['Function Band', 'Jazz Ensemble', 'Wedding Band', 'Corporate Event Band', 'Session Musician', 'Acoustic Bass', 'Electric Bass'],
+        'keyboard': ['Function Band', 'Wedding Ceremony', 'Jazz Piano', 'Corporate Entertainment', 'Solo Keyboard', 'Accompanist', 'Session Musician'],
+        'cello': ['Wedding Ceremony', 'String Quartet', 'Classical Performance', 'Solo Cello', 'Chamber Music', 'Background Music', 'Church Music'],
+        'flute': ['Wedding Ceremony', 'Classical Performance', 'Jazz Flute', 'Folk Music', 'Solo Flute', 'Wind Ensemble', 'Background Music'],
+        'harp': ['Wedding Ceremony', 'Classical Harp', 'Celtic Harp', 'Background Music', 'Solo Harp', 'Church Music', 'Private Events'],
+        'trombone': ['Jazz Band', 'Big Band', 'Brass Ensemble', 'Wedding Fanfare', 'Classical Trombone', 'Mariachi Band', 'Military Ceremony'],
+        'clarinet': ['Jazz Ensemble', 'Classical Performance', 'Wedding Ceremony', 'Folk Music', 'Solo Clarinet', 'Wind Ensemble', 'Background Music']
       };
 
-      // Collect suggested gig types
-      const suggestedGigs = new Set();
-      const unmatchedInstruments = [];
-      
+      // Collect suggestions from default mappings
+      const allSuggestions = [];
+      const unknownInstruments = [];
+
       instruments.forEach(instrument => {
         const normalizedInstrument = instrument.toLowerCase();
-        const gigTypes = instrumentToGigTypes[normalizedInstrument];
+        const gigTypes = defaultGigMappings[normalizedInstrument];
         
         if (gigTypes) {
-          gigTypes.forEach(gig => suggestedGigs.add(gig));
+          allSuggestions.push(...gigTypes);
         } else {
-          unmatchedInstruments.push(instrument);
+          unknownInstruments.push(instrument);
         }
       });
 
-      // Convert to array and sort
-      const suggestions = Array.from(suggestedGigs).sort();
+      // Use OpenAI for unknown instruments if available
+      if (unknownInstruments.length > 0 && process.env.OPENAI_API_KEY) {
+        try {
+          const OpenAI = require('openai');
+          const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+          });
 
-      // Log unmatched instruments for future enhancement
-      if (unmatchedInstruments.length > 0) {
-        console.log('Unmatched instruments:', unmatchedInstruments);
+          const prompt = `Generate 5-7 realistic gig types for a freelance musician who plays: ${unknownInstruments.join(', ')}. 
+          Focus on practical, bookable performance opportunities like weddings, corporate events, private parties, etc.
+          Return only a JSON array of strings, no explanations.`;
+
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+            messages: [
+              {
+                role: "system",
+                content: "You are a music industry expert helping musicians identify gig opportunities. Return only a JSON array of gig type strings."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            response_format: { type: "json_object" },
+            max_tokens: 200
+          });
+
+          const aiResult = JSON.parse(response.choices[0].message.content);
+          if (aiResult.gig_types && Array.isArray(aiResult.gig_types)) {
+            allSuggestions.push(...aiResult.gig_types);
+          }
+        } catch (error) {
+          console.log('AI suggestions not available for unknown instruments:', unknownInstruments, error.message);
+        }
+      } else if (unknownInstruments.length > 0) {
+        console.log('OpenAI API key not available for unknown instruments:', unknownInstruments);
       }
 
-      res.json(suggestions);
+      // Remove duplicates and sort
+      const uniqueSuggestions = [...new Set(allSuggestions)].sort();
+
+      res.json(uniqueSuggestions);
 
     } catch (error) {
       console.error('Error generating gig suggestions:', error);
