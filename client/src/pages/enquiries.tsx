@@ -60,76 +60,39 @@ export default function Enquiries() {
     queryKey: ["/api/settings"],
   });
 
-  // Parse gig types from settings
+  // Parse gig types from settings (simplified like event types)
   const gigTypes = React.useMemo(() => {
-    if (settings.gigTypes) {
+    if (!settings.gigTypes) return [];
+    
+    // Handle array format
+    if (Array.isArray(settings.gigTypes)) {
+      // If it's a single-element array containing a comma-separated string, parse it
+      if (settings.gigTypes.length === 1 && typeof settings.gigTypes[0] === 'string' && settings.gigTypes[0].includes(',')) {
+        const items = settings.gigTypes[0].split(',').map(item => 
+          item.replace(/^["']|["']$/g, '').trim()
+        );
+        return items.filter(item => item.length > 0);
+      }
+      return settings.gigTypes;
+    }
+    
+    // Handle string format
+    if (typeof settings.gigTypes === 'string') {
       try {
-        console.log('🔍 Raw gigTypes from settings:', settings.gigTypes);
-        console.log('🔍 Type of gigTypes:', typeof settings.gigTypes);
-        
-        // First check if it's already an array
-        if (Array.isArray(settings.gigTypes)) {
-          console.log('🔍 Already an array:', settings.gigTypes);
-          // If it's a single-element array containing a JSON string, parse it
-          if (settings.gigTypes.length === 1 && typeof settings.gigTypes[0] === 'string') {
-            try {
-              // The string might be a comma-separated list with escaped quotes
-              const stringContent = settings.gigTypes[0];
-              console.log('🔍 String content:', stringContent);
-              
-              // Try to parse as JSON first
-              const parsed = JSON.parse(stringContent);
-              console.log('🔍 Parsed array element:', parsed);
-              return Array.isArray(parsed) ? parsed : settings.gigTypes;
-            } catch {
-              // If JSON parsing fails, try splitting by comma and cleaning up
-              const stringContent = settings.gigTypes[0];
-              if (stringContent.includes(',')) {
-                // Split by comma, then clean up quotes and whitespace
-                const items = stringContent.split(',').map(item => {
-                  // Remove surrounding quotes and trim whitespace
-                  return item.replace(/^["']|["']$/g, '').trim();
-                });
-                console.log('🔍 Split items:', items);
-                return items.filter(item => item.length > 0);
-              }
-              return settings.gigTypes;
-            }
-          }
-          return settings.gigTypes;
+        const parsed = JSON.parse(settings.gigTypes);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        // If JSON parsing fails, try splitting by comma
+        if (settings.gigTypes.includes(',')) {
+          const items = settings.gigTypes.split(',').map(item => 
+            item.replace(/^["']|["']$/g, '').trim()
+          );
+          return items.filter(item => item.length > 0);
         }
-        
-        // If it's a string, try to parse it
-        if (typeof settings.gigTypes === 'string') {
-          let parsed = JSON.parse(settings.gigTypes);
-          console.log('🔍 First parse result:', parsed, typeof parsed);
-          
-          // Handle potential double-encoded JSON from settings
-          if (Array.isArray(parsed)) {
-            console.log('🔍 Parsed to array:', parsed);
-            return parsed;
-          } else if (typeof parsed === 'string') {
-            console.log('🔍 Parsing string again:', parsed);
-            let secondParse = JSON.parse(parsed);
-            console.log('🔍 Second parse result:', secondParse);
-            return Array.isArray(secondParse) ? secondParse : [secondParse];
-          } else if (parsed && typeof parsed === 'object' && parsed.length !== undefined) {
-            console.log('🔍 Converting object to array:', Object.values(parsed));
-            return Object.values(parsed);
-          } else {
-            console.log('🔍 Wrapping in array:', [parsed]);
-            return [parsed];
-          }
-        }
-        
-        console.log('🔍 Returning as-is:', settings.gigTypes);
-        return [];
-      } catch (error) {
-        console.error('❌ Error parsing gigTypes:', error);
-        console.log('🔍 Attempting to use raw string as single item:', settings.gigTypes);
-        return Array.isArray(settings.gigTypes) ? settings.gigTypes : [settings.gigTypes];
+        return [settings.gigTypes];
       }
     }
+    
     return [];
   }, [settings.gigTypes]);
 
