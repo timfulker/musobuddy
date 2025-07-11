@@ -315,10 +315,21 @@ export default function Settings() {
       console.log('🔄 Form state:', form.formState);
       console.log('💾 Selected instruments (UI):', selectedInstruments);
       console.log('🎯 Custom instruments (UI):', customInstruments);
+      console.log('🎮 New instrument input:', newInstrument);
+      console.log('🎪 Gig types state:', gigTypes);
     } catch (error) {
       console.error('❌ Error in debug function:', error);
       alert('Error in debug function: ' + error.message);
     }
+  };
+
+  // Test function to add a custom instrument
+  const testAddCustomInstrument = () => {
+    console.log('🧪 Testing add custom instrument...');
+    setNewInstrument('Test Harmonica');
+    setTimeout(() => {
+      addCustomInstrument();
+    }, 100);
   };
 
 
