@@ -56,6 +56,41 @@ export default function Dashboard() {
     );
   }
 
+  // Force desktop layout for debugging
+  const forceDesktop = true;
+  
+  if (forceDesktop) {
+    return (
+      <div className="min-h-screen bg-background flex">
+        {/* Desktop Sidebar - Always visible */}
+        <div className="w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 fixed left-0 top-0 h-full z-30">
+          <Sidebar isOpen={true} onClose={() => {}} />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 ml-64 min-h-screen">
+          <DashboardHeader />
+          
+          <main className="p-6 space-y-6">
+            <StatsCards />
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2">
+                <KanbanBoard />
+              </div>
+              <div className="space-y-6">
+                <CalendarWidget />
+                <QuickActions />
+                <ConflictsWidget />
+                <ComplianceAlerts />
+                <RecentSignedContracts />
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile menu toggle */}

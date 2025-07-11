@@ -32,7 +32,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsDesktop(window.innerWidth >= 768);
+      const isDesktopScreen = window.innerWidth >= 768;
+      setIsDesktop(isDesktopScreen);
+      console.log('Screen width:', window.innerWidth, 'isDesktop:', isDesktopScreen);
     };
     
     checkScreenSize();
@@ -61,11 +63,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <div 
-        className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out"
-        style={{
-          transform: isDesktop ? 'translateX(0)' : (isOpen ? 'translateX(0)' : 'translateX(-100%)'),
-          zIndex: isDesktop ? 30 : 50
-        }}
+        className={cn(
+          "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out",
+          // Always show on desktop (768px+), slide on mobile
+          "transform",
+          isDesktop ? "translate-x-0 z-30" : (isOpen ? "translate-x-0 z-50" : "-translate-x-full z-50")
+        )}
       >
         {/* Close button for mobile */}
         <button
