@@ -247,18 +247,32 @@ export default function Settings() {
     if (newInstrument.trim() && !customInstruments.includes(newInstrument.trim())) {
       const instrument = newInstrument.trim();
       
-      // Simple local state update only - no form integration
-      setCustomInstruments([...customInstruments, instrument]);
-      setSelectedInstruments([...selectedInstruments, instrument]);
+      // Update local state
+      const newCustomInstruments = [...customInstruments, instrument];
+      const newSelectedInstruments = [...selectedInstruments, instrument];
+      
+      setCustomInstruments(newCustomInstruments);
+      setSelectedInstruments(newSelectedInstruments);
+      
+      // Update form values to be saved to database
+      form.setValue('customInstruments', JSON.stringify(newCustomInstruments));
+      form.setValue('instrumentsPlayed', JSON.stringify(newSelectedInstruments));
       
       setNewInstrument("");
     }
   };
 
   const removeCustomInstrument = (instrument: string) => {
-    // Simple local state update only - no form integration
-    setCustomInstruments(customInstruments.filter(i => i !== instrument));
-    setSelectedInstruments(selectedInstruments.filter(i => i !== instrument));
+    // Update local state
+    const newCustomInstruments = customInstruments.filter(i => i !== instrument);
+    const newSelectedInstruments = selectedInstruments.filter(i => i !== instrument);
+    
+    setCustomInstruments(newCustomInstruments);
+    setSelectedInstruments(newSelectedInstruments);
+    
+    // Update form values to be saved to database
+    form.setValue('customInstruments', JSON.stringify(newCustomInstruments));
+    form.setValue('instrumentsPlayed', JSON.stringify(newSelectedInstruments));
   };
 
   // Debug function to trace form state
