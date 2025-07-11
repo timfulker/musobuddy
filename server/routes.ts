@@ -149,10 +149,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             apiKey: process.env.OPENAI_API_KEY,
           });
 
-          const prompt = `Generate 5-7 realistic gig types for a freelance musician who plays: ${unknownInstruments.join(', ')}. 
-          Focus on practical, bookable performance opportunities like weddings, corporate events, private parties, etc.
-          Format your response as a JSON object with a "gig_types" array containing the suggestions.`;
-
           console.log('🤖 Calling OpenAI for instruments:', unknownInstruments);
 
           const response = await openai.chat.completions.create({
@@ -160,15 +156,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             messages: [
               {
                 role: "system",
-                content: "You are a music industry expert helping musicians identify gig opportunities. Always respond with a JSON object containing a 'gig_types' array."
+                content: "You are a music industry expert. Generate SHORT gig type names (2-3 words maximum). Examples: 'Wedding Ceremony', 'Corporate Event', 'Private Party', 'Funeral Service'. Return only a JSON object with a 'gig_types' array."
               },
               {
                 role: "user",
-                content: prompt
+                content: `Generate 5-7 gig types for a musician who plays: ${unknownInstruments.join(', ')}. Return ONLY short names (2-3 words), no descriptions.`
               }
             ],
             response_format: { type: "json_object" },
-            max_tokens: 200
+            max_tokens: 150
           });
 
           console.log('🤖 OpenAI response:', response.choices[0].message.content);
@@ -178,10 +174,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (aiResult.gig_types && Array.isArray(aiResult.gig_types)) {
             console.log('🤖 Adding AI suggestions:', aiResult.gig_types);
-            // Extract just the type names from the AI response
-            const gigTypeNames = aiResult.gig_types.map(item => 
-              typeof item === 'string' ? item : item.type || item.name || item
-            );
+            // Extract just the type names from the AI response and clean them up
+            const gigTypeNames = aiResult.gig_types.map(item => {
+              let name = typeof item === 'string' ? item : item.type || item.name || item;
+              // Clean up long descriptions by taking only the part before the colon
+              if (name.includes(':')) {
+                name = name.split(':')[0].trim();
+              }
+              // Clean up common descriptive phrases
+              name = name.replace(/\s*-\s*.*$/, '').trim();
+              return name;
+            });
             allSuggestions.push(...gigTypeNames);
           } else {
             console.log('🤖 No gig_types array found in AI response');

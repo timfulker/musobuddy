@@ -67,7 +67,18 @@ export default function Settings() {
       defaultTerms: settings.defaultTerms || "",
       emailFromName: settings.emailFromName || "",
       nextInvoiceNumber: settings.nextInvoiceNumber || 256,
-      gigTypes: settings.gigTypes || "",
+      gigTypes: (() => {
+        // Convert gigTypes to newline-separated string for form display
+        if (settings.gigTypes) {
+          try {
+            const parsed = JSON.parse(settings.gigTypes);
+            return Array.isArray(parsed) ? parsed.join('\n') : settings.gigTypes;
+          } catch (e) {
+            return settings.gigTypes;
+          }
+        }
+        return "";
+      })(),
       eventTypes: settings.eventTypes || "",
       instrumentsPlayed: settings.instrumentsPlayed || "",
     },
@@ -87,14 +98,37 @@ export default function Settings() {
       defaultTerms: settings.defaultTerms || "",
       emailFromName: settings.emailFromName || "",
       nextInvoiceNumber: settings.nextInvoiceNumber || 256,
-      gigTypes: settings.gigTypes || "",
+      gigTypes: (() => {
+        // Convert gigTypes to newline-separated string for form display
+        if (settings.gigTypes) {
+          try {
+            const parsed = JSON.parse(settings.gigTypes);
+            return Array.isArray(parsed) ? parsed.join('\n') : settings.gigTypes;
+          } catch (e) {
+            return settings.gigTypes;
+          }
+        }
+        return "";
+      })(),
       eventTypes: settings.eventTypes || "",
       instrumentsPlayed: settings.instrumentsPlayed || "",
     });
     
     // Initialize tag arrays
     setEventTypes(settings.eventTypes ? settings.eventTypes.split('\n').filter(Boolean) : []);
-    setGigTypes(settings.gigTypes ? settings.gigTypes.split('\n').filter(Boolean) : []);
+    
+    // Handle gigTypes - they could be stored as JSON or newline-separated string
+    let gigTypesArray = [];
+    if (settings.gigTypes) {
+      try {
+        // Try to parse as JSON first
+        gigTypesArray = JSON.parse(settings.gigTypes);
+      } catch (e) {
+        // If JSON parsing fails, treat as newline-separated string
+        gigTypesArray = settings.gigTypes.split('\n').filter(Boolean);
+      }
+    }
+    setGigTypes(gigTypesArray);
     
     // Parse bank details from stored string format
     const bankDetailsString = settings.bankDetails || "";
@@ -279,9 +313,14 @@ export default function Settings() {
       bankDetails.accountNumber ? `Account Number: ${bankDetails.accountNumber}` : ''
     ].filter(line => line.length > 0).join('\n');
     
+    // Convert gigTypes from newline-separated string to JSON array
+    const gigTypesArray = data.gigTypes ? 
+      data.gigTypes.split('\n').filter(type => type.trim().length > 0) : [];
+    
     const updatedData = {
       ...data,
-      bankDetails: bankDetailsString
+      bankDetails: bankDetailsString,
+      gigTypes: JSON.stringify(gigTypesArray) // Store as JSON string
     };
     
     saveSettingsMutation.mutate(updatedData);
