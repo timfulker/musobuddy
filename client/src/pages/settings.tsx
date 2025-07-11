@@ -303,14 +303,22 @@ export default function Settings() {
 
   // Debug function to trace form state
   const debugFormState = () => {
-    const formData = form.getValues();
-    console.log('🔍 Debug Form State:');
-    console.log('📝 Current form data:', formData);
-    console.log('🎸 instrumentsPlayed field:', formData.instrumentsPlayed);
-    console.log('🎵 gigTypes field:', formData.gigTypes);
-    console.log('🔄 Form state:', form.formState);
-    console.log('💾 Selected instruments (UI):', selectedInstruments);
-    console.log('🎯 Custom instruments (UI):', customInstruments);
+    console.log('🔥 DEBUG BUTTON CLICKED!');
+    alert('Debug button clicked! Check the console for details.');
+    
+    try {
+      const formData = form.getValues();
+      console.log('🔍 Debug Form State:');
+      console.log('📝 Current form data:', formData);
+      console.log('🎸 instrumentsPlayed field:', formData.instrumentsPlayed);
+      console.log('🎵 gigTypes field:', formData.gigTypes);
+      console.log('🔄 Form state:', form.formState);
+      console.log('💾 Selected instruments (UI):', selectedInstruments);
+      console.log('🎯 Custom instruments (UI):', customInstruments);
+    } catch (error) {
+      console.error('❌ Error in debug function:', error);
+      alert('Error in debug function: ' + error.message);
+    }
   };
 
 
