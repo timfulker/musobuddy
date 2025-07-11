@@ -1,45 +1,33 @@
 /**
- * Simple DNS check using Node.js built-in dns module
+ * Simple DNS check using Google's DNS API
  */
 
-import dns from 'dns';
-import { promisify } from 'util';
-
-const resolveMx = promisify(dns.resolveMx);
-const resolve4 = promisify(dns.resolve4);
-
 async function checkDNS() {
-  console.log('=== DNS VERIFICATION ===');
+  console.log('🔍 CHECKING DNS RECORDS FOR musobuddy.com');
   
   try {
-    // Check MX records
-    console.log('Checking MX records for musobuddy.com...');
-    const mxRecords = await resolveMx('musobuddy.com');
+    // Use Google's DNS-over-HTTPS API
+    const response = await fetch('https://dns.google/resolve?name=musobuddy.com&type=MX');
+    const data = await response.json();
     
-    console.log('MX Records:');
-    mxRecords.forEach(record => {
-      console.log(`  Priority: ${record.priority}, Exchange: ${record.exchange}`);
-    });
+    console.log('✅ DNS Response:', JSON.stringify(data, null, 2));
     
-    // Check if SendGrid MX is present
-    const hasSendGrid = mxRecords.some(record => record.exchange.includes('sendgrid.net'));
-    console.log(`\n✅ SendGrid MX record: ${hasSendGrid ? 'FOUND' : 'NOT FOUND'}`);
-    
-    // Check A records
-    console.log('\nChecking A records for musobuddy.com...');
-    const aRecords = await resolve4('musobuddy.com');
-    console.log('A Records:');
-    aRecords.forEach(ip => {
-      console.log(`  ${ip}`);
-    });
+    if (data.Answer && data.Answer.length > 0) {
+      console.log('\n📧 MX Records found:');
+      data.Answer.forEach((record, index) => {
+        console.log(`${index + 1}. ${record.data}`);
+        if (record.data.includes('mailgun') || record.data.includes('mg')) {
+          console.log('   ✅ MAILGUN MX RECORD FOUND');
+        }
+      });
+    } else {
+      console.log('❌ NO MX RECORDS FOUND');
+      console.log('This means emails to @musobuddy.com will not be delivered!');
+    }
     
   } catch (error) {
-    console.error('DNS lookup failed:', error.message);
+    console.log('❌ DNS check failed:', error.message);
   }
-  
-  console.log('\n=== ANALYSIS ===');
-  console.log('If MX records point to SendGrid and webhook is working,');
-  console.log('the issue is likely in SendGrid\'s internal routing.');
 }
 
 checkDNS();
