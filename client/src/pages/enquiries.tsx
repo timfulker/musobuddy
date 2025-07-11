@@ -62,15 +62,24 @@ export default function Enquiries() {
 
   // Parse gig types from settings (simplified like event types)
   const gigTypes = React.useMemo(() => {
+    console.log('🔍 Raw gigTypes from settings:', settings.gigTypes);
+    console.log('🔍 Type of gigTypes:', typeof settings.gigTypes);
+    console.log('🔍 Is array:', Array.isArray(settings.gigTypes));
+    
     if (!settings.gigTypes) return [];
     
     // Handle array format
     if (Array.isArray(settings.gigTypes)) {
+      console.log('🔍 Array length:', settings.gigTypes.length);
+      console.log('🔍 First element:', settings.gigTypes[0]);
+      console.log('🔍 First element type:', typeof settings.gigTypes[0]);
+      
       // If it's a single-element array containing a comma-separated string, parse it
       if (settings.gigTypes.length === 1 && typeof settings.gigTypes[0] === 'string' && settings.gigTypes[0].includes(',')) {
         const items = settings.gigTypes[0].split(',').map(item => 
           item.replace(/^["']|["']$/g, '').trim()
         );
+        console.log('🔍 Parsed items:', items);
         return items.filter(item => item.length > 0);
       }
       return settings.gigTypes;
@@ -80,6 +89,7 @@ export default function Enquiries() {
     if (typeof settings.gigTypes === 'string') {
       try {
         const parsed = JSON.parse(settings.gigTypes);
+        console.log('🔍 JSON parsed:', parsed);
         return Array.isArray(parsed) ? parsed : [parsed];
       } catch {
         // If JSON parsing fails, try splitting by comma
@@ -87,6 +97,7 @@ export default function Enquiries() {
           const items = settings.gigTypes.split(',').map(item => 
             item.replace(/^["']|["']$/g, '').trim()
           );
+          console.log('🔍 Split items:', items);
           return items.filter(item => item.length > 0);
         }
         return [settings.gigTypes];
