@@ -413,9 +413,24 @@ export default function Settings() {
       console.log('🎯 SAVE MUTATION: customInstruments field:', data.customInstruments);
       console.log('🎸 SAVE MUTATION: instrumentsPlayed field:', data.instrumentsPlayed);
       
-      const result = await apiRequest("POST", "/api/settings", data);
+      // Use direct fetch to bypass middleware issues like invoices
+      const result = await fetch("/api/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!result.ok) {
+        const errorText = await result.text();
+        console.error('❌ SAVE MUTATION: HTTP Error:', result.status, errorText);
+        throw new Error(`HTTP ${result.status}: ${errorText}`);
+      }
+      
+      const responseData = await result.json();
       console.log('🎉 SAVE MUTATION: Save completed successfully');
-      return result;
+      return responseData;
     },
     onSuccess: () => {
       console.log('✅ SAVE MUTATION: Success handler called');
