@@ -76,46 +76,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Define instrument to gig type mapping
       const instrumentToGigTypes = {
-        // Band Instruments
-        saxophone: ['Solo Sax', 'Sax with DJ', 'Jazz Quartet', 'Wedding Ceremony', 'Corporate Reception'],
-        guitar: ['Acoustic Set', 'Rock Band', 'Wedding Gig', 'Singer-Songwriter', 'Duo Performance'],
-        bass: ['Rock Band', 'Jazz Ensemble', 'Function Band', 'Studio Session', 'Acoustic Duo'],
-        drums: ['Rock Band', 'Jazz Ensemble', 'Function Band', 'Studio Session', 'Percussion Section'],
-        vocals: ['Lead Singer', 'Backing Vocals', 'Acoustic Duo', 'Wedding Singer', 'Tribute Band'],
-        trumpet: ['Jazz Ensemble', 'Big Band', 'Wedding Ceremony', 'Classical Orchestra', 'Brass Section'],
-        
-        // Classical Instruments
-        violin: ['String Quartet', 'Wedding Ceremony', 'Classical Recital', 'Orchestra', 'Chamber Music'],
-        flute: ['Orchestral Gig', 'Wedding Ceremony', 'Classical Recital', 'Chamber Music', 'Wind Ensemble'],
-        cello: ['String Quartet', 'Wedding Ceremony', 'Classical Recital', 'Orchestra', 'Chamber Music'],
-        piano: ['Cocktail Set', 'Solo Piano', 'Musical Theatre', 'Wedding Ceremony', 'Classical Recital'],
-        oboe: ['Orchestra', 'Wind Ensemble', 'Chamber Music', 'Classical Recital', 'Wedding Ceremony'],
-        
-        // Other/General
-        keyboard: ['Function Band', 'Solo Performance', 'Wedding Gig', 'Corporate Event', 'Jazz Ensemble'],
-        dj: ['DJ Set', 'Wedding Reception', 'Corporate Event', 'Private Party', 'Club Night'],
-        'singer-songwriter': ['Solo Performance', 'Acoustic Set', 'Open Mic', 'Coffee Shop Gig', 'Wedding Ceremony'],
-        percussion: ['Latin Band', 'World Music', 'Function Band', 'Studio Session', 'Percussion Ensemble']
+        saxophone: ['Solo Sax', 'Sax with DJ', 'Jazz Quartet', 'Wedding Ceremony'],
+        guitar: ['Acoustic Set', 'Rock Band', 'Wedding Gig'],
+        piano: ['Cocktail Set', 'Solo Piano', 'Musical Theatre'],
+        flute: ['Orchestral Gig', 'Wedding Ceremony', 'Classical Recital'],
+        vocals: ['Lead Singer', 'Backing Vocals', 'Acoustic Duo'],
+        bass: ['Rock Band', 'Jazz Ensemble', 'Function Band'],
+        drums: ['Rock Band', 'Jazz Ensemble', 'Function Band'],
+        trumpet: ['Jazz Ensemble', 'Big Band', 'Wedding Ceremony'],
+        violin: ['String Quartet', 'Wedding Ceremony', 'Classical Recital'],
+        cello: ['String Quartet', 'Wedding Ceremony', 'Classical Recital'],
+        oboe: ['Orchestra', 'Wind Ensemble', 'Chamber Music'],
+        keyboard: ['Function Band', 'Solo Performance', 'Wedding Gig'],
+        dj: ['DJ Set', 'Wedding Reception', 'Corporate Event'],
+        'singer-songwriter': ['Solo Performance', 'Acoustic Set', 'Open Mic'],
+        percussion: ['Latin Band', 'World Music', 'Function Band']
       };
 
       // Collect suggested gig types
       const suggestedGigs = new Set();
+      const unmatchedInstruments = [];
       
       instruments.forEach(instrument => {
-        const gigTypes = instrumentToGigTypes[instrument.toLowerCase()];
+        const normalizedInstrument = instrument.toLowerCase();
+        const gigTypes = instrumentToGigTypes[normalizedInstrument];
+        
         if (gigTypes) {
           gigTypes.forEach(gig => suggestedGigs.add(gig));
+        } else {
+          unmatchedInstruments.push(instrument);
         }
       });
 
       // Convert to array and sort
       const suggestions = Array.from(suggestedGigs).sort();
 
-      res.json({
-        instruments,
-        suggestions,
-        source: 'lookup'
-      });
+      // Log unmatched instruments for future enhancement
+      if (unmatchedInstruments.length > 0) {
+        console.log('Unmatched instruments:', unmatchedInstruments);
+      }
+
+      res.json(suggestions);
 
     } catch (error) {
       console.error('Error generating gig suggestions:', error);

@@ -182,8 +182,8 @@ export default function Settings() {
         throw new Error('Failed to fetch suggestions');
       }
 
-      const data = await response.json();
-      setSuggestedGigs(data.suggestions);
+      const suggestions = await response.json();
+      setSuggestedGigs(suggestions);
     } catch (error) {
       console.error('Error fetching gig suggestions:', error);
       toast({
