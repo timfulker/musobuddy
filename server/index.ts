@@ -12,6 +12,85 @@ app.get('/api/test-route', (req, res) => {
   res.json({ message: 'Test route working', timestamp: new Date().toISOString() });
 });
 
+// CRITICAL: MAILGUN WEBHOOK ROUTE - MUST BE REGISTERED BEFORE VITE MIDDLEWARE
+app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req, res) => {
+  console.log('📧 MAILGUN WEBHOOK HIT! Email received');
+  console.log('📧 Body:', req.body);
+  
+  try {
+    // Extract email data
+    const sender = req.body.sender || req.body.from || 'unknown@example.com';
+    const subject = req.body.subject || 'Email enquiry';
+    const bodyText = req.body['body-plain'] || req.body.text || 'No message content';
+    
+    console.log('📧 Sender:', sender);
+    console.log('📧 Subject:', subject);
+    
+    // Extract client name from sender
+    let clientName = 'Unknown Client';
+    if (sender.includes('<')) {
+      const nameMatch = sender.match(/^([^<]+)/);
+      if (nameMatch) {
+        clientName = nameMatch[1].trim().replace(/['"]/g, '');
+      }
+    }
+    if (clientName === 'Unknown Client') {
+      const emailMatch = sender.match(/[\w.-]+@[\w.-]+\.\w+/);
+      const email = emailMatch ? emailMatch[0] : sender;
+      clientName = email.split('@')[0];
+    }
+    
+    // Create simple enquiry - NO DATE PROCESSING
+    const enquiry = {
+      userId: '43963086',
+      title: subject,
+      clientName: clientName,
+      clientEmail: sender.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || sender,
+      clientPhone: null,
+      eventDate: null,
+      eventTime: null,
+      eventEndTime: null,
+      performanceDuration: null,
+      venue: null,
+      eventType: null,
+      gigType: null,
+      estimatedValue: null,
+      status: 'new' as const,
+      notes: bodyText,
+      responseNeeded: true,
+      lastContactedAt: null
+    };
+    
+    console.log('📧 Creating enquiry...');
+    const newEnquiry = await storage.createEnquiry(enquiry);
+    
+    console.log('📧 ✅ ENQUIRY CREATED SUCCESSFULLY!');
+    console.log('📧 Enquiry ID:', newEnquiry.id);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Mailgun webhook processed successfully',
+      enquiryId: newEnquiry.id,
+      clientName: enquiry.clientName,
+      subject: subject,
+      processing: 'direct-registration'
+    });
+    
+  } catch (error: any) {
+    console.error('📧 MAILGUN WEBHOOK ERROR:', error.message);
+    console.error('📧 Error stack:', error.stack);
+    
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Mailgun webhook processing failed',
+        details: error.message
+      });
+    }
+  }
+});
+
+// Webhook route will be registered AFTER registerRoutes to ensure it overrides any conflicting routes
+
 // CRITICAL: ULTRA-SAFE WEBHOOK ROUTE FIRST - ABSOLUTELY HIGHEST PRIORITY
 app.post('/api/webhook/mailgun-ultra-safe', express.urlencoded({ extended: true }), async (req, res) => {
   console.log('🚨 🚨 🚨 ULTRA-SAFE WEBHOOK ROUTE HIT - FIRST IN ENTIRE APP! 🚨 🚨 🚨');
@@ -302,8 +381,93 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Register all routes (including webhook routes)
-  const server = await registerRoutes(app);
+  console.log('🔧 Starting route registration...');
+  
+  try {
+    // Register all routes (including webhook routes)
+    const server = await registerRoutes(app);
+    console.log('✅ All routes registered successfully');
+    
+    // CRITICAL: OVERRIDE ANY CONFLICTING ROUTES - Register webhook AFTER all other routes
+    console.log('🔧 Registering mailgun webhook...');
+    app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req, res) => {
+    console.log('📧 FINAL MAILGUN WEBHOOK HIT! Email received');
+    console.log('📧 Body:', req.body);
+    
+    try {
+      // Extract email data
+      const sender = req.body.sender || req.body.from || 'unknown@example.com';
+      const subject = req.body.subject || 'Email enquiry';
+      const bodyText = req.body['body-plain'] || req.body.text || 'No message content';
+      
+      console.log('📧 Sender:', sender);
+      console.log('📧 Subject:', subject);
+      
+      // Extract client name from sender
+      let clientName = 'Unknown Client';
+      if (sender.includes('<')) {
+        const nameMatch = sender.match(/^([^<]+)/);
+        if (nameMatch) {
+          clientName = nameMatch[1].trim().replace(/['"]/g, '');
+        }
+      }
+      if (clientName === 'Unknown Client') {
+        const emailMatch = sender.match(/[\w.-]+@[\w.-]+\.\w+/);
+        const email = emailMatch ? emailMatch[0] : sender;
+        clientName = email.split('@')[0];
+      }
+      
+      // Create simple enquiry - NO DATE PROCESSING
+      const enquiry = {
+        userId: '43963086',
+        title: subject,
+        clientName: clientName,
+        clientEmail: sender.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || sender,
+        clientPhone: null,
+        eventDate: null,
+        eventTime: null,
+        eventEndTime: null,
+        performanceDuration: null,
+        venue: null,
+        eventType: null,
+        gigType: null,
+        estimatedValue: null,
+        status: 'new' as const,
+        notes: bodyText,
+        responseNeeded: true,
+        lastContactedAt: null
+      };
+      
+      console.log('📧 Creating enquiry for:', clientName);
+      const newEnquiry = await storage.createEnquiry(enquiry);
+      
+      console.log('📧 ✅ EMAIL PROCESSED! Enquiry created:', newEnquiry.id);
+      
+      res.status(200).json({
+        success: true,
+        enquiryId: newEnquiry.id,
+        message: 'Email processed successfully - FINAL HANDLER',
+        handler: 'final-override'
+      });
+      
+    } catch (error: any) {
+      console.error('📧 Mailgun webhook error:', error);
+      res.status(500).json({ error: error.message, handler: 'final-override' });
+    }
+  });
+
+  // Test webhook endpoint to verify new handler is working
+  app.post('/api/webhook/mailgun-test', express.urlencoded({ extended: true }), async (req, res) => {
+    console.log('🧪 TEST WEBHOOK HIT!');
+    console.log('🧪 Body:', req.body);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Test webhook working!',
+      handler: 'test-handler',
+      body: req.body
+    });
+  });
   
   // CRITICAL: Add Mailgun webhook route BEFORE Vite middleware to ensure priority - INLINE HANDLER
   app.post('/api/webhook/mailgun-priority', express.urlencoded({ extended: true }), async (req, res) => {
@@ -442,4 +606,9 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
+} catch (error) {
+  console.error('❌ Fatal error in route registration:', error);
+  console.error('❌ Stack trace:', error.stack);
+  process.exit(1);
+}
 })();
