@@ -24,24 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // SendGrid webhook now registered in server/index.ts to avoid duplication
-
-  // Mailgun webhook endpoint now registered in server/index.ts to avoid duplication
-
-  // Simple email webhook endpoint - bypasses domain verification
-  app.post('/api/webhook/simple-email', async (req, res) => {
-    console.log('🔥 SIMPLE EMAIL WEBHOOK HIT! Email received via /api/webhook/simple-email');
-    console.log('Request from IP:', req.ip);
-    console.log('User-Agent:', req.headers['user-agent']);
-    console.log('Content-Type:', req.headers['content-type']);
-    try {
-      const { handleSimpleEmailWebhook } = await import('./simple-email-webhook');
-      await handleSimpleEmailWebhook(req, res);
-    } catch (error) {
-      console.error("Error in simple email webhook:", error);
-      res.status(500).json({ message: "Failed to process simple email webhook" });
-    }
-  });
+  // Email webhooks removed - clean slate rebuild
 
   // PRIORITY ROUTES - These must be registered before Vite middleware
   
@@ -1370,7 +1353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailData.replyTo = replyToEmail;
       }
       
-      const emailSent = await sendEmail(emailData);
+      const emailSent = false; // Email sending disabled - rebuilding
 
       if (emailSent) {
         console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${clientEmail}`);
@@ -1501,7 +1484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailData.replyTo = replyToEmail;
       }
       
-      const emailSent = await sendEmail(emailData);
+      const emailSent = false; // Email sending disabled - rebuilding
 
       if (emailSent) {
         // Update contract status to sent
@@ -1597,7 +1580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send confirmation emails with download links (no PDF generation)
       try {
         const userSettings = await storage.getUserSettings(contract.userId);
-        const { sendEmail } = await import('./sendgrid');
+        // Email sending disabled - clean slate rebuild
         
         // Generate contract download links
         const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';

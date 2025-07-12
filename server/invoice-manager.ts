@@ -120,8 +120,7 @@ export class InvoiceManager {
         return false;
       }
       
-      // Import email functions
-      const { sendEmail } = await import('./sendgrid');
+      // Email sending temporarily disabled - rebuilding from scratch
       const { generateInvoicePDF } = await import('./pdf-generator');
       
       // Get user settings
@@ -140,24 +139,7 @@ export class InvoiceManager {
       // Determine reminder type based on days overdue
       const reminderType = daysOverdue >= 21 ? 'final' : 'first';
       
-      const emailSent = await sendEmail({
-        to: clientEmail,
-        from: `${fromName} <business@musobuddy.com>`,
-        replyTo: fromEmail,
-        subject: reminderType === 'final' 
-          ? `FINAL NOTICE: Invoice ${invoice.invoiceNumber} - Immediate Payment Required`
-          : `Payment Reminder: Invoice ${invoice.invoiceNumber}`,
-        html: this.generateOverdueEmailHtml(invoice, contract, userSettings, daysOverdue, reminderType),
-        text: reminderType === 'final'
-          ? `FINAL NOTICE: Invoice ${invoice.invoiceNumber} for £${invoice.amount} was due ${daysOverdue} days ago. Please arrange payment immediately to avoid further action.`
-          : `Payment Reminder: Invoice ${invoice.invoiceNumber} for £${invoice.amount} was due ${daysOverdue} days ago. Please arrange payment at your earliest convenience.`,
-        attachments: [{
-          content: pdfBase64,
-          filename: `OVERDUE-Invoice-${invoice.invoiceNumber}.pdf`,
-          type: 'application/pdf',
-          disposition: 'attachment'
-        }]
-      });
+      const emailSent = false; // Email sending disabled - rebuilding
       
       if (emailSent) {
         console.log(`Overdue reminder sent for invoice ${invoice.invoiceNumber}`);

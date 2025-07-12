@@ -130,61 +130,7 @@ app.post('/api/invoices', express.json({ limit: '50mb' }), async (req: any, res)
   }
 });
 
-// WEBHOOK ENDPOINTS - Must be registered before middleware to avoid routing conflicts
-app.post('/api/webhook/mailgun', express.urlencoded({ extended: true, limit: '50mb' }), async (req, res) => {
-  console.log('📧 MAILGUN WEBHOOK HIT! Email received via /api/webhook/mailgun');
-  console.log('Request from IP:', req.ip);
-  console.log('User-Agent:', req.headers['user-agent']);
-  console.log('Content-Type:', req.headers['content-type']);
-  console.log('Raw request body (form-data):', JSON.stringify(req.body, null, 2));
-  console.log('All form fields:', Object.keys(req.body || {}));
-  
-  // Log each field for debugging
-  if (req.body) {
-    for (const [key, value] of Object.entries(req.body)) {
-      console.log(`📧 Form field "${key}":`, typeof value, '=', value);
-    }
-  }
-  
-  try {
-    const { handleMailgunWebhook } = await import('./mailgun-webhook');
-    await handleMailgunWebhook(req, res);
-  } catch (error) {
-    console.error("Error in Mailgun webhook:", error);
-    res.status(500).json({ message: "Failed to process Mailgun webhook" });
-  }
-});
-
-// SENDGRID WEBHOOK - Priority registration to avoid Vite interference
-app.post('/api/webhook/sendgrid', express.urlencoded({ extended: true, limit: '50mb' }), async (req, res) => {
-  console.log('📧 SENDGRID WEBHOOK HIT! Email received via /api/webhook/sendgrid');
-  console.log('Request from IP:', req.ip);
-  console.log('User-Agent:', req.headers['user-agent']);
-  console.log('Content-Type:', req.headers['content-type']);
-  console.log('Body keys:', Object.keys(req.body));
-  
-  try {
-    const { handleSendGridWebhook } = await import('./email-webhook');
-    await handleSendGridWebhook(req, res);
-  } catch (error) {
-    console.error("Error in SendGrid webhook:", error);
-    res.status(500).json({ message: "Failed to process SendGrid webhook" });
-  }
-});
-
-app.post('/api/webhook/simple-email', express.json({ limit: '50mb' }), express.urlencoded({ extended: true, limit: '50mb' }), async (req, res) => {
-  console.log('🔥 SIMPLE EMAIL WEBHOOK HIT! Email received via /api/webhook/simple-email');
-  console.log('Request from IP:', req.ip);
-  console.log('User-Agent:', req.headers['user-agent']);
-  console.log('Content-Type:', req.headers['content-type']);
-  try {
-    const { handleSimpleEmailWebhook } = await import('./simple-email-webhook');
-    await handleSimpleEmailWebhook(req, res);
-  } catch (error) {
-    console.error("Error in simple email webhook:", error);
-    res.status(500).json({ message: "Failed to process simple email webhook" });
-  }
-});
+// Email webhooks removed - will be rebuilt from scratch
 
 // Essential middleware setup
 app.use(express.json({ limit: '50mb' }));
