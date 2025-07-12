@@ -33,10 +33,18 @@ You need TWO DMARC records:
    - **TTL**: Automatic (or 300)
 7. **Save Changes**
 
-### Record 2: Subdomain DMARC (already exists)
-You already have this one:
-- **Host**: `_dmarc.mg`
-- **Value**: `v=DMARC1; p=none; pct=100; fo=1; ri=3600; rua=mailto:dcd0...`
+### Record 2: Subdomain DMARC (NEEDS FIXING)
+The existing `_dmarc.mg` record is not working properly. You need to fix it:
+
+**Current (broken)**: `_dmarc.mg` with complex value
+**Should be**: `_dmarc.mg` with simple value
+
+**Fix the existing record**:
+- **Host**: `_dmarc.mg` (keep the same)
+- **Value**: `v=DMARC1; p=none; rua=mailto:dmarc@musobuddy.com`
+- **TTL**: Automatic (or 300)
+
+**The Issue**: Your current `_dmarc.mg` record has a complex policy that's not being recognized by email servers. A simple policy will work better.
 
 ## Why This Fixes Gmail Delivery
 
