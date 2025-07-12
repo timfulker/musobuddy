@@ -1964,16 +1964,7 @@ Jane`
     }
   });
 
-  // Mailgun Email Webhook (alternative)
-  app.post('/api/webhook/mailgun', async (req, res) => {
-    try {
-      const { handleMailgunWebhook } = await import('./email-webhook');
-      await handleMailgunWebhook(req, res);
-    } catch (error) {
-      console.error("Error in Mailgun webhook:", error);
-      res.status(500).json({ message: "Failed to process Mailgun webhook" });
-    }
-  });
+  // Mailgun webhook endpoint removed - handled by enhanced handler at line 51
 
   // Booking routes
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {

@@ -41,8 +41,10 @@ function parseEmailForEnquiry(emailData: any): {
   title: string;
   clientName: string;
   clientEmail: string;
+  clientPhone: string;
   eventDate: string;
   venue: string;
+  eventType: string;
   description: string;
   source: string;
 } {
@@ -53,22 +55,50 @@ function parseEmailForEnquiry(emailData: any): {
     ? from.match(/<([^>]+)>/)?.[1] || from
     : from;
   
-  const clientName = from.includes('<')
+  let clientName = from.includes('<')
     ? from.replace(/<[^>]+>/, '').trim().replace(/['"]/g, '')
     : clientEmail.split('@')[0];
 
+  // Extract phone number from email content
+  const emailContent = text || html || '';
+  const phoneMatch = emailContent.match(/(?:phone|tel|mobile|call|contact).{0,20}?(\d{5}\s?\d{6}|\d{11}|07\d{3}\s?\d{6})/i);
+  const clientPhone = phoneMatch ? phoneMatch[1].replace(/\s/g, '') : '';
+
+  // Extract client name from email content if mentioned
+  const nameMatch = emailContent.match(/(?:my name is|i'm|i am|this is)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i);
+  if (nameMatch) {
+    clientName = nameMatch[1];
+  }
+
+  // Extract event date
+  const dateMatch = emailContent.match(/(?:on|for)\s+([A-Z][a-z]+\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)/i);
+  const eventDate = dateMatch ? dateMatch[1] : '';
+
+  // Extract venue
+  const venueMatch = emailContent.match(/(?:at|venue|location|held at)\s+([A-Z][^.!?]*)/i);
+  const venue = venueMatch ? venueMatch[1].trim() : '';
+
+  // Extract event type
+  let eventType = 'Performance';
+  if (emailContent.toLowerCase().includes('wedding')) eventType = 'Wedding';
+  else if (emailContent.toLowerCase().includes('birthday')) eventType = 'Birthday';
+  else if (emailContent.toLowerCase().includes('corporate')) eventType = 'Corporate';
+  else if (emailContent.toLowerCase().includes('party')) eventType = 'Party';
+
   // Use subject as title, or create from content
-  const title = subject || `Enquiry from ${clientName}`;
+  const title = subject || `${eventType} enquiry from ${clientName}`;
   
-  // Use both text and HTML for description
-  const description = text || html || 'Email enquiry received';
+  // Clean description - remove extracted details for cleaner notes
+  const description = emailContent || 'Email enquiry received';
   
   return {
     title,
     clientName,
     clientEmail,
-    eventDate: new Date(), // Convert to Date object
-    venue: 'TBD',
+    clientPhone,
+    eventDate,
+    venue,
+    eventType,
     description,
     source: 'Email'
   };
@@ -118,14 +148,20 @@ export async function handleMailgunWebhook(req: Request, res: Response): Promise
     
     // Create enquiry in database
     // Note: We'll need to determine the userId - for now using a default
-    const userId = 'email-system'; // This will need to be configured
+    const userId = '43963086'; // Using your user ID for testing
     
     const enquiry = await storage.createEnquiry({
-      ...enquiryData,
+      title: enquiryData.title,
+      clientName: enquiryData.clientName,
+      clientEmail: enquiryData.clientEmail,
+      clientPhone: enquiryData.clientPhone,
+      eventDate: enquiryData.eventDate,
+      venue: enquiryData.venue,
+      eventType: enquiryData.eventType,
+      notes: enquiryData.description,
       userId,
       status: 'new',
       gigType: 'TBD',
-      eventType: 'TBD',
       eventTime: '18:00',
       fee: 0
     });
