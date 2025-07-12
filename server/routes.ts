@@ -24,7 +24,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Email webhooks removed - clean slate rebuild
+  // Test endpoint for Mailgun email sending
+  app.post('/api/test-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const { sendEmail } = await import('./mailgun-email');
+      
+      const testResult = await sendEmail({
+        to: req.user.email || 'test@example.com',
+        from: 'MusoBuddy <noreply@sandbox-123.mailgun.org>',
+        subject: 'MusoBuddy Email Test',
+        text: 'This is a test email to verify Mailgun integration is working.',
+        html: '<h1>Email Test</h1><p>This is a test email to verify Mailgun integration is working.</p>'
+      });
+      
+      res.json({ 
+        success: testResult,
+        message: testResult ? 'Email sent successfully' : 'Email failed to send'
+      });
+    } catch (error: any) {
+      console.error('Test email error:', error);
+      res.status(500).json({ error: 'Failed to send test email' });
+    }
+  });
+
+  // Mailgun webhook endpoint
+  app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req, res) => {
+    try {
+      const { handleMailgunWebhook } = await import('./mailgun-webhook');
+      await handleMailgunWebhook(req, res);
+    } catch (error: any) {
+      console.error('Mailgun webhook error:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
 
   // PRIORITY ROUTES - These must be registered before Vite middleware
   
