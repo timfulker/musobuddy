@@ -145,6 +145,7 @@ export async function handleMailgunWebhook(req: Request, res: Response): Promise
     console.log('📋 Enquiry data:', enquiryData);
     console.log('📋 Event date type:', typeof enquiryData.eventDate);
     console.log('📋 Event date value:', enquiryData.eventDate);
+    console.log('📋 Event date conversion test:', enquiryData.eventDate ? new Date(enquiryData.eventDate) : new Date());
     
     // Create enquiry in database
     // Note: We'll need to determine the userId - for now using a default
@@ -155,7 +156,7 @@ export async function handleMailgunWebhook(req: Request, res: Response): Promise
       clientName: enquiryData.clientName,
       clientEmail: enquiryData.clientEmail,
       clientPhone: enquiryData.clientPhone,
-      eventDate: enquiryData.eventDate,
+      eventDate: enquiryData.eventDate ? new Date(enquiryData.eventDate) : new Date(), // Convert string to Date object
       venue: enquiryData.venue,
       eventType: enquiryData.eventType,
       notes: enquiryData.description,
