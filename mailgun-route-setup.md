@@ -1,64 +1,41 @@
-# Mailgun Route Setup Guide
+# Mailgun Route Setup for leads@musobuddy.com
 
-## Step 1: Access Routes in Mailgun Dashboard
+## Step 1: Verify Domain in Mailgun
+1. Go to Mailgun dashboard → Sending → Domains
+2. Click "Verify DNS Settings" on mg.musobuddy.com
+3. Wait for all records to show as "Verified" (may take 15-30 minutes)
 
-1. **Login to Mailgun Dashboard**: https://app.mailgun.com/
-2. **Navigate to Routes**: 
-   - Click on "Sending" in the left sidebar
-   - Click on "Routes" in the dropdown menu
-   - Or go directly to: https://app.mailgun.com/app/sending/routes
+## Step 2: Create Email Route
+Once domain is verified, create a route to forward emails from leads@musobuddy.com to our webhook:
 
-## Step 2: Create New Route
+1. Go to **Receiving** → **Routes**
+2. Click **Create Route**
+3. Configure:
+   - **Priority**: 1
+   - **Filter Expression**: `match_recipient("leads@musobuddy.com")`
+   - **Actions**: 
+     - **Forward to**: `https://musobuddy.replit.app/api/webhook/mailgun`
+     - **Stop processing**: Yes
 
-1. **Click "Create Route"** button
-2. **Fill in Route Details**:
+## Step 3: Update Environment Variables
+Once domain is verified, update these environment variables in Replit:
 
-   **Expression Type**: `Match Recipient`
-   **Expression**: `leads@musobuddy.com`
-   
-   **Priority**: `0` (highest priority)
-   
-   **Actions**: Select `Forward` and enter:
-   ```
-   https://musobuddy.replit.app/api/webhook/mailgun
-   ```
+```bash
+MAILGUN_DOMAIN=mg.musobuddy.com
+```
 
-3. **Route Configuration Summary**:
-   ```
-   Priority: 0
-   Expression: match_recipient("leads@musobuddy.com")
-   Actions: forward("https://musobuddy.replit.app/api/webhook/mailgun")
-   ```
-
-## Step 3: Save and Activate
-
-1. **Click "Create Route"** to save
-2. **Verify Route is Active** - it should appear in your routes list
-3. **Route should show as "Active"** status
-
-## Step 4: Test Route (After DNS Propagation)
-
-Once your MX records propagate, you can test by:
-1. Sending email to `leads@musobuddy.com`
-2. Check your MusoBuddy enquiries page for new entries
-3. Monitor webhook logs for processing confirmation
+## Step 4: Test Email Flow
+1. **Test Outgoing**: Send an invoice/contract email
+2. **Test Incoming**: Send email to leads@musobuddy.com
+3. **Verify**: Check if enquiry is created in dashboard
 
 ## Important Notes
+- The route allows emails sent to leads@musobuddy.com to be processed by mg.musobuddy.com
+- This setup enables receiving emails at the main domain while sending from the subdomain
+- Both sending and receiving will work through the same Mailgun configuration
 
-- **DNS Propagation Required**: MX records must be globally propagated before email forwarding works
-- **Route Priority**: Priority 0 ensures this route takes precedence over others
-- **Webhook Ready**: Your webhook endpoint is confirmed working via direct testing
-- **No Dashboard Test**: The Mailgun dashboard "Send Sample POST" test is unreliable - ignore it
-
-## Current Status
-
-✅ **Webhook endpoint working** (confirmed via external testing)
-✅ **Route configuration ready** (instructions above)
-⏳ **DNS propagation pending** (MX records not globally resolved yet)
-
-## Next Steps
-
-1. Create the route using steps above
-2. Wait for DNS propagation (15 minutes to 24 hours)
-3. Test with real email to leads@musobuddy.com
-4. Monitor enquiries page for new entries
+## Expected Timeline
+- DNS propagation: 15-30 minutes
+- Domain verification: Immediate after DNS propagation
+- Route creation: Immediate
+- Email testing: Immediate after route creation
