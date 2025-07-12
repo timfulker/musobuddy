@@ -32,10 +32,11 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
     // Use custom subdomain in production, sandbox for development
     const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
     
-    // Create Mailgun client
+    // Create Mailgun client with EU endpoint
     const mg = mailgun.client({
       username: 'api',
-      key: process.env.MAILGUN_API_KEY
+      key: process.env.MAILGUN_API_KEY,
+      url: 'https://api.eu.mailgun.net' // EU endpoint for better performance
     });
 
     // Prepare message data

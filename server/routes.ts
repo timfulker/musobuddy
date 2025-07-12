@@ -54,7 +54,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await handleMailgunWebhook(req, res);
     } catch (error: any) {
       console.error('Mailgun webhook error:', error);
-      res.status(500).json({ error: 'Webhook processing failed' });
+      res.status(500).json({ error: 'Failed to process webhook', details: error.message });
     }
   });
 

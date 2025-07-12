@@ -157,9 +157,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry> {
+    console.log('🔍 Storage createEnquiry called with:', JSON.stringify(enquiry, null, 2));
+    
+    // Ensure eventDate is properly handled
+    const processedEnquiry = {
+      ...enquiry,
+      eventDate: enquiry.eventDate instanceof Date ? enquiry.eventDate : 
+                enquiry.eventDate ? new Date(enquiry.eventDate) : null
+    };
+    
+    console.log('🔍 Processed enquiry for DB:', JSON.stringify(processedEnquiry, null, 2));
+    
     const [newEnquiry] = await db
       .insert(enquiries)
-      .values(enquiry)
+      .values(processedEnquiry)
       .returning();
     return newEnquiry;
   }

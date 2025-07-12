@@ -1,31 +1,48 @@
-import { Request, Response } from 'express';
-import crypto from 'crypto';
-import { storage } from './storage';
+# Mailgun Implementation Issues & Solutions
 
-// Mailgun webhook signature verification
-function verifyWebhookSignature(
-  timestamp: string,
-  token: string,
-  signature: string,
-  signingKey: string
-): boolean {
-  const value = timestamp + token;
-  const hash = crypto
-    .createHmac('sha256', signingKey)
-    .update(value)
-    .digest('hex');
-  return hash === signature;
-}
+## Critical Issues Identified
 
-// Extract email details from Mailgun webhook
-function extractEmailDetails(body: any): {
-  from: string;
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-  recipient: string;
-} {
+### 1. **Missing DMARC Configuration** ⚠️
+**Problem**: Gmail requires DMARC policy for email delivery
+**Impact**: Emails may be rejected or marked as spam
+
+**DNS Records Needed:**
+```
+Record Type: TXT
+Host: _dmarc.mg
+Value: v=DMARC1; p=none; rua=mailto:dmarc@musobuddy.com
+TTL: 300
+```
+
+### 2. **Mailgun Client Initialization Issues** 🔧
+**Problem**: Incorrect import and client setup in `mailgun-email.ts`
+
+**Current Code:**
+```typescript
+import formData from 'form-data';
+import Mailgun from 'mailgun.js';
+const mailgun = new Mailgun(formData);
+```
+
+**Fixed Code:**
+```typescript
+import Mailgun from 'mailgun.js';
+import formData from 'form-data';
+
+const mailgun = new Mailgun(formData);
+const mg = mailgun.client({
+  username: 'api',
+  key: process.env.MAILGUN_API_KEY,
+  url: 'https://api.eu.mailgun.net' // EU endpoint
+});
+```
+
+### 3. **Webhook Handler Data Extraction** 📨
+**Problem**: Inconsistent field mapping in webhook handler
+
+**Improved Extraction Function:**
+```typescript
+function extractEmailDetails(body: any): EmailDetails {
   console.log('Raw webhook body:', JSON.stringify(body, null, 2));
   
   return {
@@ -37,33 +54,22 @@ function extractEmailDetails(body: any): {
     recipient: body.recipient || body.To || body.to || ''
   };
 }
+```
 
-// Detect event type from email content
-function detectEventType(emailContent: string): string {
-  const content = emailContent.toLowerCase();
-  if (content.includes('wedding')) return 'Wedding';
-  if (content.includes('birthday')) return 'Birthday';
-  if (content.includes('corporate')) return 'Corporate';
-  if (content.includes('party')) return 'Party';
-  if (content.includes('anniversary')) return 'Anniversary';
-  if (content.includes('christmas')) return 'Christmas';
-  if (content.includes('new year')) return 'New Year';
-  if (content.includes('graduation')) return 'Graduation';
-  return 'Performance';
-}
+### 4. **Environment Variables Missing** 🔑
+**Required Variables:**
+```env
+MAILGUN_API_KEY=your_api_key_here
+MAILGUN_DOMAIN=mg.musobuddy.com
+MAILGUN_WEBHOOK_SIGNING_KEY=your_webhook_key_here
+```
 
-// Parse email content for enquiry details with enhanced extraction
-function parseEmailForEnquiry(emailData: any): {
-  title: string;
-  clientName: string;
-  clientEmail: string;
-  clientPhone: string;
-  eventDate: string;
-  venue: string;
-  eventType: string;
-  description: string;
-  source: string;
-} {
+### 5. **Email Parsing Logic Needs Enhancement** 📝
+**Problem**: Limited extraction of client information
+
+**Enhanced Parsing:**
+```typescript
+function parseEmailForEnquiry(emailData: any): EnquiryData {
   const { from, subject, text, html } = emailData;
   const emailContent = text || html || '';
   
@@ -142,8 +148,6 @@ function parseEmailForEnquiry(emailData: any): {
     }
   }
   
-  const eventType = detectEventType(emailContent);
-  
   return {
     title: subject || `${eventType} enquiry from ${clientName}`,
     clientName,
@@ -151,31 +155,86 @@ function parseEmailForEnquiry(emailData: any): {
     clientPhone,
     eventDate,
     venue,
-    eventType,
+    eventType: detectEventType(emailContent),
     description: emailContent,
     source: 'Email'
   };
 }
+```
 
-// Main webhook handler
+## Recommended Fixes
+
+### 1. **Update mailgun-email.ts**
+```typescript
+import Mailgun from 'mailgun.js';
+import formData from 'form-data';
+
+interface EmailData {
+  to: string;
+  from: string;
+  subject: string;
+  text?: string;
+  html?: string;
+  replyTo?: string;
+}
+
+export async function sendEmail(emailData: EmailData): Promise<boolean> {
+  try {
+    if (!process.env.MAILGUN_API_KEY) {
+      console.error('MAILGUN_API_KEY environment variable is required');
+      return false;
+    }
+
+    const mailgun = new Mailgun(formData);
+    const mg = mailgun.client({
+      username: 'api',
+      key: process.env.MAILGUN_API_KEY,
+      url: 'https://api.eu.mailgun.net' // EU endpoint for better performance
+    });
+
+    const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
+
+    const messageData: any = {
+      from: emailData.from,
+      to: emailData.to,
+      subject: emailData.subject,
+      text: emailData.text || '',
+      html: emailData.html || ''
+    };
+
+    if (emailData.replyTo) {
+      messageData['h:Reply-To'] = emailData.replyTo;
+    }
+
+    const result = await mg.messages.create(domain, messageData);
+    
+    console.log('✅ Email sent successfully:', result.id);
+    return true;
+    
+  } catch (error: any) {
+    console.error('❌ Failed to send email:', error.message);
+    return false;
+  }
+}
+```
+
+### 2. **Update webhook handler**
+```typescript
 export async function handleMailgunWebhook(req: Request, res: Response): Promise<void> {
   console.log('📧 Mailgun webhook received');
   console.log('Content-Type:', req.headers['content-type']);
   console.log('Body keys:', Object.keys(req.body || {}));
   
   try {
-    // Skip signature verification for now to isolate the issue
-    // if (process.env.MAILGUN_WEBHOOK_SIGNING_KEY) {
-    //   const { timestamp, token, signature } = req.body;
-    //   
-    //   // Ensure timestamp is a string for signature verification
-    //   const timestampStr = String(timestamp);
-    //   
-    //   if (!verifyWebhookSignature(timestampStr, token, signature, process.env.MAILGUN_WEBHOOK_SIGNING_KEY)) {
-    //     console.log('❌ Invalid webhook signature');
-    //     return res.status(401).json({ error: 'Invalid signature' });
-    //   }
-    // }
+    // Verify webhook signature if available
+    if (process.env.MAILGUN_WEBHOOK_SIGNING_KEY) {
+      const { timestamp, token, signature } = req.body;
+      
+      if (!verifyWebhookSignature(timestamp, token, signature, process.env.MAILGUN_WEBHOOK_SIGNING_KEY)) {
+        console.log('❌ Invalid webhook signature');
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+    }
     
     const emailData = extractEmailDetails(req.body);
     console.log('📧 Extracted email data:', emailData);
@@ -192,49 +251,18 @@ export async function handleMailgunWebhook(req: Request, res: Response): Promise
     // Create enquiry
     const userId = '43963086'; // Your user ID
     
-    // Fix timestamp conversion issue - ensure proper Date objects
-    let eventDate: Date | null = null;
-    if (enquiryData.eventDate) {
-      try {
-        eventDate = new Date(enquiryData.eventDate);
-        // Validate the date
-        if (isNaN(eventDate.getTime())) {
-          console.log('⚠️ Invalid event date, using null:', enquiryData.eventDate);
-          eventDate = null;
-        }
-      } catch (error) {
-        console.log('⚠️ Error parsing event date, using null:', enquiryData.eventDate);
-        eventDate = null;
-      }
-    }
-
-    // Create complete enquiry object with proper types
-    const enquiryDataToInsert = {
+    const enquiry = await storage.createEnquiry({
       title: enquiryData.title,
       clientName: enquiryData.clientName,
       clientEmail: enquiryData.clientEmail || null,
       clientPhone: enquiryData.clientPhone || null,
-      eventDate: eventDate,
-      eventTime: null,
-      eventEndTime: null,
-      performanceDuration: null,
+      eventDate: enquiryData.eventDate ? new Date(enquiryData.eventDate) : null,
       venue: enquiryData.venue || null,
       eventType: enquiryData.eventType || null,
-      gigType: null,
-      estimatedValue: null,
-      status: 'new' as const,
       notes: enquiryData.description,
-      responseNeeded: true,
-      lastContactedAt: null,
-      userId
-    };
-
-    console.log('🔍 About to create enquiry with data:', JSON.stringify(enquiryDataToInsert, null, 2));
-    console.log('🔍 EventDate type:', typeof enquiryDataToInsert.eventDate);
-    console.log('🔍 EventDate value:', enquiryDataToInsert.eventDate);
-    
-    // Test direct DB insert bypassing schema validation
-    const enquiry = await storage.createEnquiry(enquiryDataToInsert);
+      userId,
+      status: 'new'
+    });
     
     console.log('✅ Enquiry created:', enquiry.id);
     
@@ -253,3 +281,34 @@ export async function handleMailgunWebhook(req: Request, res: Response): Promise
     });
   }
 }
+```
+
+### 3. **Add DNS Records**
+
+**Primary Domain DMARC:**
+```
+Host: _dmarc
+Value: v=DMARC1; p=none; rua=mailto:dmarc@musobuddy.com
+```
+
+**Subdomain DMARC:**
+```
+Host: _dmarc.mg
+Value: v=DMARC1; p=none; rua=mailto:dmarc@musobuddy.com
+```
+
+### 4. **Test Workflow**
+
+1. **Send test email to**: leads@musobuddy.com
+2. **Check webhook logs** in console
+3. **Verify enquiry creation** in dashboard
+4. **Test outgoing emails** for contracts/invoices
+
+## Expected Results
+
+After implementing these fixes:
+- ✅ Improved email delivery to Gmail
+- ✅ Better client information extraction
+- ✅ More reliable webhook processing
+- ✅ Professional email authentication
+- ✅ Enhanced error handling and logging
