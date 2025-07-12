@@ -323,137 +323,17 @@ async function createEnquirySafe(enquiryData: {
   }
 }
 
-// Main webhook handler with comprehensive error handling
+// DEPRECATED: Old webhook handler - DO NOT USE
 export async function handleMailgunWebhook(req: Request, res: Response): Promise<void> {
-  const startTime = Date.now();
+  console.error('🚨 OLD HANDLER CALLED - THIS SHOULD NOT HAPPEN!');
+  console.error('🚨 Request path:', req.path);
+  console.error('🚨 Request method:', req.method);
   
-  try {
-    console.log('🚀 === BULLETPROOF MAILGUN WEBHOOK START ===');
-    console.log('🚀 Timestamp:', new Date().toISOString());
-    console.log('🚀 Processing time start:', startTime);
-    
-    // Step 1: Safely extract request data
-    console.log('📥 Step 1: Extracting request data...');
-    const requestBody = req.body || {};
-    console.log('📥 Request method:', req.method);
-    console.log('📥 Request headers:', safeInspect(req.headers));
-    console.log('📥 Request body keys:', Object.keys(requestBody));
-    console.log('📥 Request body size:', JSON.stringify(requestBody).length);
-
-    // Step 2: Extract email data safely
-    console.log('📧 Step 2: Extracting email data...');
-    let emailData;
-    try {
-      emailData = extractEmailData(requestBody);
-      console.log('📧 Email extraction successful');
-      console.log('📧 From:', emailData.from);
-      console.log('📧 To:', emailData.to);
-      console.log('📧 Subject:', emailData.subject);
-      console.log('📧 Text length:', emailData.text.length);
-      console.log('📧 HTML length:', emailData.html.length);
-    } catch (error) {
-      console.error('📧 Email extraction failed:', error.message);
-      throw new Error(`Email extraction failed: ${error.message}`);
-    }
-
-    // Step 3: Validate recipient
-    console.log('✅ Step 3: Validating recipient...');
-    if (!emailData.to.toLowerCase().includes('leads@musobuddy.com')) {
-      console.log('✅ Email not for leads address, ignoring');
-      return res.status(200).json({ 
-        message: 'Email ignored - not for leads',
-        recipient: emailData.to
-      });
-    }
-    console.log('✅ Recipient validation passed');
-
-    // Step 4: Extract enquiry data safely
-    console.log('📋 Step 4: Extracting enquiry data...');
-    let enquiryData;
-    try {
-      enquiryData = extractEnquiryData(emailData);
-      console.log('📋 Enquiry extraction successful');
-      console.log('📋 Title:', enquiryData.title);
-      console.log('📋 Client name:', enquiryData.clientName);
-      console.log('📋 Client email:', enquiryData.clientEmail);
-      console.log('📋 Client phone:', enquiryData.clientPhone);
-      console.log('📋 Event date:', enquiryData.eventDate ? enquiryData.eventDate.toISOString() : 'null');
-      console.log('📋 Venue:', enquiryData.venue);
-      console.log('📋 Event type:', enquiryData.eventType);
-    } catch (error) {
-      console.error('📋 Enquiry extraction failed:', error.message);
-      throw new Error(`Enquiry extraction failed: ${error.message}`);
-    }
-
-    // Step 5: Create database enquiry
-    console.log('💾 Step 5: Creating database enquiry...');
-    const userId = '43963086'; // Your user ID
-    
-    try {
-      // Prepare data for storage with explicit type safety
-      const storageData = {
-        userId,
-        title: enquiryData.title,
-        clientName: enquiryData.clientName,
-        clientEmail: enquiryData.clientEmail,
-        clientPhone: enquiryData.clientPhone,
-        eventDate: enquiryData.eventDate, // This is either a Date object or null
-        venue: enquiryData.venue,
-        eventType: enquiryData.eventType,
-        notes: enquiryData.notes,
-        status: 'new' as const
-      };
-
-      console.log('💾 Storage data prepared');
-      console.log('💾 EventDate type:', typeof storageData.eventDate);
-      console.log('💾 EventDate instanceof Date:', storageData.eventDate instanceof Date);
-
-      const enquiry = await createEnquirySafe(storageData);
-      
-      console.log('💾 Database enquiry created successfully');
-      console.log('💾 Enquiry ID:', enquiry.id);
-
-      const processingTime = Date.now() - startTime;
-      console.log('✅ === WEBHOOK SUCCESS ===');
-      console.log('✅ Processing time:', processingTime + 'ms');
-      console.log('✅ Enquiry created:', enquiry.id);
-
-      res.status(200).json({
-        message: 'Email processed successfully',
-        enquiryId: enquiry.id,
-        subject: emailData.subject,
-        from: emailData.from,
-        processingTime: processingTime + 'ms'
-      });
-
-    } catch (storageError) {
-      console.error('💾 Storage error:', storageError.message);
-      console.error('💾 Storage error stack:', storageError.stack);
-      throw new Error(`Storage failed: ${storageError.message}`);
-    }
-
-  } catch (error: any) {
-    const processingTime = Date.now() - startTime;
-    
-    console.error('❌ === WEBHOOK ERROR ===');
-    console.error('❌ Error type:', typeof error);
-    console.error('❌ Error name:', error.name);
-    console.error('❌ Error message:', error.message);
-    console.error('❌ Error stack:', error.stack);
-    console.error('❌ Processing time:', processingTime + 'ms');
-    console.error('❌ Request body that caused error:', safeInspect(req.body));
-
-    // Check specifically for toISOString errors
-    if (error.message && error.message.includes('toISOString')) {
-      console.error('❌ 🔍 FOUND toISOString ERROR - This indicates a date handling issue');
-      console.error('❌ 🔍 Check if any Date objects are being called incorrectly');
-    }
-
-    res.status(500).json({
-      error: 'Failed to process webhook',
-      details: error.message,
-      timestamp: new Date().toISOString(),
-      processingTime: processingTime + 'ms'
-    });
-  }
+  res.status(500).json({
+    error: 'Old handler called',
+    details: 'This old handler should not be called. Use the clean handler in index.ts instead.',
+    path: req.path,
+    method: req.method
+  });
+  
 }

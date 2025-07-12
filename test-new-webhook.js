@@ -1,41 +1,81 @@
 /**
- * Test the new webhook endpoint to verify it's working
+ * Test the new webhook endpoint to isolate the issue
  */
 
-import fetch from 'node-fetch';
+import https from 'https';
+import querystring from 'querystring';
 
 async function testNewWebhook() {
-  console.log('🧪 Testing new webhook endpoint...');
-  
-  try {
-    const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun-test', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        sender: 'test@example.com',
-        subject: 'Test Subject',
-        'body-plain': 'Test body content'
-      })
+  const postData = querystring.stringify({
+    sender: 'test@example.com',
+    subject: 'Test enquiry from new endpoint',
+    'body-plain': 'This is a test message to the new webhook endpoint'
+  });
+
+  const options = {
+    hostname: 'musobuddy.replit.app',
+    port: 443,
+    path: '/api/webhook/mailgun-new',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const jsonData = JSON.parse(data);
+          resolve({
+            status: res.statusCode,
+            headers: res.headers,
+            data: jsonData
+          });
+        } catch (error) {
+          resolve({
+            status: res.statusCode,
+            headers: res.headers,
+            data: data
+          });
+        }
+      });
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers));
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.write(postData);
+    req.end();
+  });
+}
+
+async function main() {
+  console.log('🔍 Testing NEW webhook endpoint...');
+  
+  try {
+    const result = await testNewWebhook();
     
-    const responseText = await response.text();
-    console.log('Response text:', responseText);
+    console.log('Response status:', result.status);
+    console.log('Response data:', result.data);
     
-    try {
-      const responseJson = JSON.parse(responseText);
-      console.log('Response JSON:', responseJson);
-    } catch (e) {
-      console.log('Response is not valid JSON');
+    if (result.status === 200) {
+      console.log('✅ NEW webhook endpoint working!');
+    } else {
+      console.log('❌ NEW webhook endpoint failed');
     }
     
   } catch (error) {
-    console.error('❌ Error testing webhook:', error.message);
+    console.error('❌ Test failed:', error);
   }
 }
 
-testNewWebhook();
+main();
