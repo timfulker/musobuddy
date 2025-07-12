@@ -19,16 +19,24 @@ If you prefer a simpler setup:
 
 ## Steps to Add in Namecheap
 
+You need TWO DMARC records:
+
+### Record 1: Main Domain DMARC (for receiving emails)
 1. **Login to Namecheap**
 2. **Go to Domain List** → Select musobuddy.com
 3. **Click "Manage"** → Advanced DNS
 4. **Click "Add New Record"**
 5. **Select "TXT Record"**
 6. **Enter**:
-   - **Host**: `_dmarc.mg`
+   - **Host**: `_dmarc`
    - **Value**: `v=DMARC1; p=quarantine; rua=mailto:dmarc@musobuddy.com; ruf=mailto:dmarc@musobuddy.com; sp=quarantine; adkim=r; aspf=r`
    - **TTL**: Automatic (or 300)
 7. **Save Changes**
+
+### Record 2: Subdomain DMARC (already exists)
+You already have this one:
+- **Host**: `_dmarc.mg`
+- **Value**: `v=DMARC1; p=none; pct=100; fo=1; ri=3600; rua=mailto:dcd0...`
 
 ## Why This Fixes Gmail Delivery
 
