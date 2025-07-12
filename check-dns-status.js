@@ -2,29 +2,46 @@
  * Check DNS status using Google's DNS API
  */
 
-const checkDNS = async () => {
-  console.log('Checking DNS records...');
+async function checkDNS() {
+  console.log('🔍 Checking DNS configuration for musobuddy.com...\n');
   
-  try {
-    // Check MX records
-    const mxResponse = await fetch('https://dns.google/resolve?name=musobuddy.com&type=MX');
-    const mxData = await mxResponse.json();
-    console.log('MX Records:', mxData.Answer?.map(r => r.data) || 'None found');
-    
-    // Check SPF record
-    const spfResponse = await fetch('https://dns.google/resolve?name=musobuddy.com&type=TXT');
-    const spfData = await spfResponse.json();
-    const spfRecords = spfData.Answer?.filter(r => r.data.includes('spf1')) || [];
-    console.log('SPF Records:', spfRecords.map(r => r.data));
-    
-    // Check DMARC record
-    const dmarcResponse = await fetch('https://dns.google/resolve?name=_dmarc.musobuddy.com&type=TXT');
-    const dmarcData = await dmarcResponse.json();
-    console.log('DMARC Records:', dmarcData.Answer?.map(r => r.data) || 'None found');
-    
-  } catch (error) {
-    console.error('Error checking DNS:', error);
+  const recordTypes = ['MX', 'TXT', 'CNAME', 'A'];
+  
+  for (const type of recordTypes) {
+    try {
+      const response = await fetch(`https://dns.google/resolve?name=musobuddy.com&type=${type}`);
+      const data = await response.json();
+      
+      console.log(`${type} Records:`);
+      if (data.Answer) {
+        data.Answer.forEach(record => {
+          console.log(`  ${record.data}`);
+        });
+      } else {
+        console.log(`  No ${type} records found`);
+      }
+      console.log('');
+    } catch (error) {
+      console.log(`❌ Error checking ${type} records: ${error.message}\n`);
+    }
   }
-};
+  
+  // Check specific subdomains that might have conflicting records
+  console.log('Checking subdomains:');
+  const subdomains = ['em8608.musobuddy.com', 'url8608.musobuddy.com', 's1._domainkey.musobuddy.com', 's2._domainkey.musobuddy.com'];
+  
+  for (const subdomain of subdomains) {
+    try {
+      const response = await fetch(`https://dns.google/resolve?name=${subdomain}&type=CNAME`);
+      const data = await response.json();
+      
+      if (data.Answer) {
+        console.log(`✅ ${subdomain} → ${data.Answer[0].data}`);
+      }
+    } catch (error) {
+      // Silent - subdomain might not exist
+    }
+  }
+}
 
 checkDNS();

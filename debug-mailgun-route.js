@@ -1,62 +1,59 @@
 /**
- * Debug Mailgun route configuration and webhook accessibility
+ * Debug Mailgun route configuration
  */
 
+import https from 'https';
+import { promisify } from 'util';
+
 async function checkMailgunRoute() {
-  console.log('🔍 DEBUGGING MAILGUN ROUTE CONFIGURATION');
+  console.log('🔍 Checking Mailgun route configuration...');
   
-  // Test if the webhook endpoint is accessible
+  // Test if webhook endpoint is accessible
   console.log('\n1. Testing webhook endpoint accessibility:');
   try {
     const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mailgun/Test'
       },
-      body: 'recipient=leads@musobuddy.com&sender=test@example.com&subject=Route Test&body-plain=Testing route configuration'
+      body: new URLSearchParams({
+        sender: 'debug@test.com',
+        subject: 'Debug test',
+        'body-plain': 'Testing webhook accessibility'
+      })
     });
     
-    console.log('✅ Webhook endpoint response:', response.status);
-    if (response.ok) {
-      const result = await response.json();
-      console.log('✅ Webhook processed successfully:', result);
-    } else {
-      console.log('❌ Webhook failed:', await response.text());
-    }
-    
+    const result = await response.json();
+    console.log(`✅ Webhook accessible - Status: ${response.status}`);
+    console.log(`✅ Response: ${JSON.stringify(result)}`);
   } catch (error) {
-    console.log('❌ Webhook endpoint not accessible:', error.message);
+    console.log(`❌ Webhook not accessible: ${error.message}`);
   }
   
-  // Instructions for checking Mailgun route
-  console.log('\n2. Mailgun Route Configuration Check:');
-  console.log('Please verify in your Mailgun control panel:');
-  console.log('• Domain: musobuddy.com');
-  console.log('• Routes section');
-  console.log('• Expression: catch_all()');
-  console.log('• Action: forward("https://musobuddy.replit.app/api/webhook/mailgun")');
-  console.log('• Priority: 0');
-  console.log('• Status: Active');
+  // Check MX record
+  console.log('\n2. Checking MX record configuration:');
+  try {
+    const dnsResponse = await fetch('https://dns.google/resolve?name=musobuddy.com&type=MX');
+    const dnsData = await dnsResponse.json();
+    
+    if (dnsData.Answer) {
+      console.log('✅ MX records found:');
+      dnsData.Answer.forEach(record => {
+        console.log(`   ${record.data}`);
+      });
+    } else {
+      console.log('❌ No MX records found');
+    }
+  } catch (error) {
+    console.log(`❌ Error checking MX records: ${error.message}`);
+  }
   
-  console.log('\n3. Common Issues to Check:');
-  console.log('• Route URL must be EXACTLY: https://musobuddy.replit.app/api/webhook/mailgun');
-  console.log('• No trailing slash');
-  console.log('• HTTPS (not HTTP)');
-  console.log('• Expression must be catch_all() not just catch_all');
-  console.log('• Priority should be 0 (highest)');
-  
-  console.log('\n4. Expected Replit Console Logs:');
-  console.log('If emails are reaching the webhook, you should see:');
-  console.log('• "📧 MAILGUN WEBHOOK HIT! Email received..."');
-  console.log('• "📧 Form field" entries showing the email data');
-  console.log('• "🔍 DEBUG WEBHOOK - PROCESSING EMAIL"');
-  
-  console.log('\n5. Next Steps:');
-  console.log('• Check Mailgun logs for delivery attempts');
-  console.log('• Verify route is active and not paused');
-  console.log('• Send another test email to leads@musobuddy.com');
-  console.log('• Watch Replit console for webhook hits');
+  // Check if emails are being delivered to Mailgun
+  console.log('\n3. Recommendations:');
+  console.log('- Verify Mailgun route is pointing to: https://musobuddy.replit.app/api/webhook/mailgun');
+  console.log('- Check if MX record is: mxa.mailgun.org or mxb.mailgun.org (not mx.sendgrid.net)');
+  console.log('- Ensure domain is verified in Mailgun dashboard');
+  console.log('- Check Mailgun logs for incoming emails');
 }
 
 checkMailgunRoute();
