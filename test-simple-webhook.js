@@ -2,32 +2,38 @@
  * Test simple email webhook endpoint
  */
 
-const testWebhook = async () => {
+async function testSimpleWebhook() {
+  console.log('🔍 TESTING SIMPLE WEBHOOK');
+  
+  const testData = new URLSearchParams({
+    sender: 'test@example.com',
+    recipient: 'leads@musobuddy.com',
+    subject: 'Simple Test Email',
+    'body-plain': 'This is a test email to see if the webhook works.'
+  });
+  
   try {
-    console.log('Testing simple email webhook...');
-    
-    const response = await fetch('https://Musobuddy.replit.app/api/webhook/simple-email', {
+    const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
-        from: 'test@example.com',
-        to: 'leads@musobuddy.com',
-        subject: 'Test Email Forwarding',
-        text: 'Hello, I would like to book you for a wedding on July 15th at the Grand Hotel. Please call me at 555-1234. Thanks, John Smith'
-      })
+      body: testData
     });
     
     console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers));
     
-    const data = await response.json();
-    console.log('Response data:', data);
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ SUCCESS:', result);
+    } else {
+      const error = await response.text();
+      console.log('❌ ERROR:', error);
+    }
     
   } catch (error) {
-    console.error('Error testing webhook:', error);
+    console.log('❌ REQUEST FAILED:', error.message);
   }
-};
+}
 
-testWebhook();
+testSimpleWebhook();

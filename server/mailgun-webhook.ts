@@ -1,182 +1,64 @@
 /**
- * Updated Mailgun Email Webhook Handler
- * Now handles both real emails AND test data from Mailgun
+ * Simple Mailgun Email Webhook Handler
+ * Just captures raw email data and displays it
  */
 
 import type { Request, Response } from "express";
 import { storage } from "./storage";
-import crypto from "crypto";
-
-export interface MailgunWebhookPayload {
-  sender: string;
-  recipient: string;
-  subject: string;
-  'body-plain': string;
-  'body-html'?: string;
-  'attachment-count'?: string;
-  timestamp: string;
-  token?: string;
-  signature?: string;
-  [key: string]: any;
-}
 
 /**
- * Verify Mailgun webhook signature for security
- */
-function verifyMailgunSignature(
-  timestamp: string,
-  token: string,
-  signature: string,
-  signingKey: string
-): boolean {
-  const value = timestamp + token;
-  const hash = crypto
-    .createHmac('sha256', signingKey)
-    .update(value)
-    .digest('hex');
-  
-  return hash === signature;
-}
-
-/**
- * Parse client information from email content
- */
-function parseClientInfo(emailText: string, fromEmail: string, subject: string) {
-  const lines = emailText.split('\n').map(line => line.trim()).filter(line => line);
-  
-  // Extract client name from email or content
-  let clientName = '';
-  const nameMatch = fromEmail.match(/^([^@]+)@/);
-  if (nameMatch) {
-    clientName = nameMatch[1].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  }
-  
-  // Look for phone numbers
-  const phoneRegex = /(?:\+?1[-.\s]?)?(?:\(?[0-9]{3}\)?[-.\s]?)?[0-9]{3}[-.\s]?[0-9]{4}/;
-  const phoneMatch = emailText.match(phoneRegex);
-  const phone = phoneMatch ? phoneMatch[0] : '';
-  
-  // Look for dates - various formats
-  const dateRegex = /(?:january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*|\d{1,2}[-/]\d{1,2})/i;
-  const dateMatch = emailText.match(dateRegex);
-  const eventDate = dateMatch ? dateMatch[0] : '';
-  
-  // Look for venue/location
-  const venueKeywords = ['venue', 'location', 'church', 'hall', 'hotel', 'club', 'center', 'centre'];
-  let venue = '';
-  for (const line of lines) {
-    if (venueKeywords.some(keyword => line.toLowerCase().includes(keyword))) {
-      venue = line;
-      break;
-    }
-  }
-  
-  return {
-    clientName: clientName || 'Unknown Client',
-    clientEmail: fromEmail,
-    clientPhone: phone,
-    eventDate,
-    venue,
-    details: emailText
-  };
-}
-
-/**
- * Enhanced Mailgun Inbound Email Webhook Handler
- * Now handles both real emails and test data
+ * Simple email webhook - just capture and display raw email data
  */
 export async function handleMailgunWebhook(req: Request, res: Response) {
   const startTime = Date.now();
   
   try {
-    console.log('🔍 DEBUG WEBHOOK - PROCESSING EMAIL');
-    console.log('📧 ALL REQUEST HEADERS:', JSON.stringify(req.headers, null, 2));
-    console.log('📧 ALL REQUEST BODY:', JSON.stringify(req.body, null, 2));
-    console.log('📧 REQUEST BODY KEYS:', Object.keys(req.body || {}));
-    console.log('📧 REQUEST METHOD:', req.method);
-    console.log('📧 REQUEST URL:', req.url);
+    console.log('📧 SIMPLE EMAIL WEBHOOK - RECEIVED EMAIL');
+    console.log('📧 Method:', req.method);
+    console.log('📧 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('📧 Body:', JSON.stringify(req.body, null, 2));
     
-    // Log every single field
     const body = req.body || {};
-    for (const [key, value] of Object.entries(body)) {
-      console.log(`📧 FIELD "${key}":`, typeof value, '=', value);
-    }
     
-    // Try to extract ANY email-like data
-    const possibleRecipients = [
-      body.recipient, body.to, body['To'], body.Recipient
-    ].filter(x => x);
+    // Get basic email info
+    const sender = body.sender || body.from || 'unknown@email.com';
+    const recipient = body.recipient || body.to || 'leads@musobuddy.com';
+    const subject = body.subject || 'No Subject';
+    const bodyText = body['body-plain'] || body.text || 'No body text';
     
-    const possibleSenders = [
-      body.sender, body.from, body['From'], body.Sender
-    ].filter(x => x);
+    console.log('📧 Sender:', sender);
+    console.log('📧 Recipient:', recipient);
+    console.log('📧 Subject:', subject);
+    console.log('📧 Body:', bodyText);
     
-    const possibleSubjects = [
-      body.subject, body.Subject, body['subject']
-    ].filter(x => x);
-    
-    const possibleBodies = [
-      body['body-plain'], body.text, body.Text, body['body-html'], 
-      body.html, body.Html, body.message, body.content
-    ].filter(x => x);
-    
-    console.log('📧 POSSIBLE RECIPIENTS:', possibleRecipients);
-    console.log('📧 POSSIBLE SENDERS:', possibleSenders);
-    console.log('📧 POSSIBLE SUBJECTS:', possibleSubjects);
-    console.log('📧 POSSIBLE BODIES (lengths):', possibleBodies.map(b => b?.length || 0));
-    
-    // Use first available values
-    const emailRecipient = possibleRecipients[0] || 'leads@musobuddy.com';
-    const emailSender = possibleSenders[0] || 'unknown@example.com';
-    const emailSubject = possibleSubjects[0] || 'Debug Email';
-    const emailBody = possibleBodies[0] || 'No content found';
-    
-    console.log('📧 FINAL VALUES USED:');
-    console.log('  - Recipient:', emailRecipient);
-    console.log('  - Sender:', emailSender);
-    console.log('  - Subject:', emailSubject);
-    console.log('  - Body length:', emailBody.length);
-    
-    // Extract client name from sender email
-    const nameMatch = emailSender.match(/^([^@]+)@/);
-    const clientName = nameMatch 
-      ? nameMatch[1].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-      : 'Debug Client';
-
-    // ALWAYS create an enquiry to test
+    // Create a simple enquiry with the email data
     const enquiry = await storage.createEnquiry({
-      title: `[DEBUG] ${emailSubject}`,
-      clientName: clientName,
-      clientEmail: emailSender,
+      title: `Email: ${subject}`,
+      clientName: sender.split('@')[0] || 'Unknown',
+      clientEmail: sender,
       clientPhone: null,
       eventDate: null,
       venue: null,
-      notes: `DEBUG WEBHOOK DATA:\n\nRecipient: ${emailRecipient}\nSender: ${emailSender}\nSubject: ${emailSubject}\n\nBody:\n${emailBody}\n\nAll Fields:\n${JSON.stringify(body, null, 2)}`,
+      notes: `RAW EMAIL DATA:\n\nFrom: ${sender}\nTo: ${recipient}\nSubject: ${subject}\n\nMessage:\n${bodyText}\n\nAll webhook data:\n${JSON.stringify(body, null, 2)}`,
       userId: "43963086",
       status: 'new',
     });
 
     const processingTime = Date.now() - startTime;
-    console.log(`✅ DEBUG: Created enquiry ${enquiry.id} (${processingTime}ms)`);
+    console.log(`✅ Email received and enquiry created: ${enquiry.id} (${processingTime}ms)`);
     
     res.status(200).json({ 
-      message: 'DEBUG: Email data logged and enquiry created',
+      message: 'Email received and enquiry created',
       enquiryId: enquiry.id,
-      clientName: enquiry.clientName,
-      processingTime: processingTime,
-      debugInfo: {
-        recipients: possibleRecipients,
-        senders: possibleSenders,
-        subjects: possibleSubjects,
-        bodyLengths: possibleBodies.map(b => b?.length || 0)
-      }
+      from: sender,
+      to: recipient,
+      subject: subject,
+      processingTime: processingTime
     });
 
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    console.error('❌ Error processing Mailgun webhook:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Processing time:', processingTime, 'ms');
+    console.error('❌ Error processing email webhook:', error);
     
     res.status(500).json({ 
       message: 'Failed to process email',
