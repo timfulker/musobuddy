@@ -3,62 +3,76 @@
  */
 
 async function checkForNewEnquiries() {
-  try {
-    // Check if webhook was hit by looking for recent enquiries
-    const response = await fetch('https://musobuddy.replit.app/api/enquiries', {
-      headers: {
-        'Cookie': 'connect.sid=s%3A_NKJPzDYvPPzO6SvWzJUqfOmZmQVrPOz.T3YJqtJbL4YuEiVQJIqLnCtKhJlG7qFUZE8ypLZSRjE'
-      }
-    });
-    
-    if (response.ok) {
-      const enquiries = await response.json();
-      console.log(`Current enquiries count: ${enquiries.length}`);
-      
-      // Show the most recent enquiry
-      if (enquiries.length > 0) {
-        const latest = enquiries[enquiries.length - 1];
-        console.log(`Most recent enquiry: #${latest.id} - ${latest.clientName} - ${latest.title}`);
-        console.log(`Created: ${new Date(latest.createdAt).toLocaleString()}`);
-        
-        // Check if it's very recent (last 5 minutes)
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        if (new Date(latest.createdAt) > fiveMinutesAgo) {
-          console.log('🎉 RECENT ENQUIRY DETECTED - This could be from your test email!');
-          console.log(`Details: ${latest.notes || 'No notes'}`);
-        }
-      }
-    }
-  } catch (error) {
-    console.log('Error checking enquiries:', error.message);
+  console.log('🔍 CHECKING FOR NEW ENQUIRIES FROM REAL EMAIL');
+  
+  // Send a test to get current enquiry ID
+  const testResponse = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      sender: 'baseline@test.com',
+      recipient: 'leads@musobuddy.com',
+      subject: 'Baseline check',
+      'body-plain': 'Getting current enquiry number'
+    })
+  });
+  
+  const testResult = await testResponse.json();
+  const baselineId = testResult.enquiryId;
+  
+  console.log(`📊 Current enquiry ID: ${baselineId}`);
+  console.log('🕒 Waiting 5 seconds for real email...');
+  
+  await new Promise(resolve => setTimeout(resolve, 5000));
+  
+  // Check again
+  const checkResponse = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      sender: 'check@test.com',
+      recipient: 'leads@musobuddy.com',
+      subject: 'Check for new',
+      'body-plain': 'Checking for new enquiries'
+    })
+  });
+  
+  const checkResult = await checkResponse.json();
+  const newId = checkResult.enquiryId;
+  
+  console.log(`📊 New enquiry ID: ${newId}`);
+  
+  if (newId > baselineId + 1) {
+    console.log('🎉 REAL EMAIL DETECTED! Enquiry ID jumped more than expected!');
+    console.log(`Gap of ${newId - baselineId - 1} enquiries suggests real email was processed`);
+  } else {
+    console.log('📧 No real email detected yet');
+    console.log('This means either:');
+    console.log('1. Real email hasn\'t reached Mailgun yet');
+    console.log('2. Mailgun isn\'t forwarding to webhook');
+    console.log('3. Email bounced/rejected');
   }
 }
 
 async function startMonitoring() {
-  console.log('📧 MONITORING FOR EMAIL WEBHOOK ACTIVITY');
-  console.log('Email was sent - checking for webhook hits...');
+  console.log('📧 SEND YOUR REAL EMAIL NOW TO: leads@musobuddy.com');
+  console.log('📧 Subject: Test from my real email');
+  console.log('📧 Body: This is a test email');
+  console.log('');
+  console.log('⏰ Starting monitoring in 10 seconds...');
   
-  // Check immediately
-  await checkForNewEnquiries();
+  await new Promise(resolve => setTimeout(resolve, 10000));
   
-  // Check every 10 seconds for 2 minutes
-  let checks = 0;
-  const maxChecks = 12; // 2 minutes
-  
-  const interval = setInterval(async () => {
-    checks++;
-    console.log(`\n📧 Check #${checks} - Looking for new enquiries...`);
+  for (let i = 0; i < 6; i++) {
     await checkForNewEnquiries();
-    
-    if (checks >= maxChecks) {
-      clearInterval(interval);
-      console.log('\n⏰ Monitoring complete');
-      console.log('If no new enquiries appeared, check:');
-      console.log('1. Mailgun route configuration');
-      console.log('2. Webhook URL accessibility');
-      console.log('3. Replit console logs for webhook hits');
+    if (i < 5) {
+      await new Promise(resolve => setTimeout(resolve, 10000));
     }
-  }, 10000);
+  }
 }
 
 startMonitoring();
