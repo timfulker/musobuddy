@@ -253,19 +253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // GET endpoint for testing Mailgun webhook connectivity
-  app.get('/api/webhook/mailgun', (req, res) => {
-    console.log('🔍 Mailgun webhook GET request received');
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json({ 
-      status: 'webhook_active',
-      message: 'Mailgun webhook endpoint is accessible',
-      timestamp: new Date().toISOString(),
-      endpoint: '/api/webhook/mailgun',
-      note: 'Ready for POST requests from Mailgun Routes',
-      method: 'GET'
-    });
-  });
+  // GET endpoint for testing Mailgun webhook connectivity removed to avoid conflicts
 
   // Debug webhook endpoint - logs everything
   app.all('/api/webhook/debug', async (req, res) => {

@@ -6,6 +6,111 @@ import { handleUltraSafeWebhook } from "./ultra-safe-webhook";
 
 const app = express();
 
+// CRITICAL: SIMPLE TEST ROUTE TO VERIFY ROUTE REGISTRATION
+app.get('/api/test-route', (req, res) => {
+  console.log('✅ Test route hit!');
+  res.json({ message: 'Test route working', timestamp: new Date().toISOString() });
+});
+
+// CRITICAL: ULTRA-SAFE WEBHOOK ROUTE FIRST - ABSOLUTELY HIGHEST PRIORITY
+app.post('/api/webhook/mailgun-ultra-safe', express.urlencoded({ extended: true }), async (req, res) => {
+  console.log('🚨 🚨 🚨 ULTRA-SAFE WEBHOOK ROUTE HIT - FIRST IN ENTIRE APP! 🚨 🚨 🚨');
+  console.log('🚨 Method:', req.method);
+  console.log('🚨 URL:', req.url);
+  console.log('🚨 Content-Type:', req.headers['content-type']);
+  console.log('🚨 Body keys:', Object.keys(req.body || {}));
+  
+  try {
+    console.log('🚨 Processing webhook with ULTRA-SAFE handler...');
+    
+    // Extract basic information without any date processing
+    const sender = req.body.sender || req.body.from || 'unknown@example.com';
+    const recipient = req.body.recipient || req.body.to || 'leads@musobuddy.com';
+    const subject = req.body.subject || 'Email enquiry';
+    const bodyText = req.body['body-plain'] || req.body.text || 'No message content';
+    
+    console.log('🚨 Extracted data:');
+    console.log('🚨 Sender:', sender);
+    console.log('🚨 Recipient:', recipient);
+    console.log('🚨 Subject:', subject);
+    console.log('🚨 Body length:', bodyText.length);
+    
+    // Extract client name from sender
+    let clientName = 'Unknown Client';
+    if (sender.includes('<')) {
+      const nameMatch = sender.match(/^([^<]+)/);
+      if (nameMatch) {
+        clientName = nameMatch[1].trim().replace(/['"]/g, '');
+      }
+    }
+    if (clientName === 'Unknown Client') {
+      const emailMatch = sender.match(/[\w.-]+@[\w.-]+\.\w+/);
+      const email = emailMatch ? emailMatch[0] : sender;
+      clientName = email.split('@')[0];
+    }
+    
+    // Create ultra-minimal enquiry with NO date fields
+    const ultraSafeEnquiry = {
+      userId: '43963086', // Your user ID
+      title: subject,
+      clientName: clientName,
+      clientEmail: sender.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || sender,
+      clientPhone: null,
+      eventDate: null,
+      eventTime: null,
+      eventEndTime: null,
+      performanceDuration: null,
+      venue: null,
+      eventType: null,
+      gigType: null,
+      estimatedValue: null,
+      status: 'new' as const,
+      notes: bodyText,
+      responseNeeded: true,
+      lastContactedAt: null
+    };
+    
+    console.log('🚨 Ultra safe enquiry data prepared');
+    console.log('🚨 Client name:', ultraSafeEnquiry.clientName);
+    console.log('🚨 Client email:', ultraSafeEnquiry.clientEmail);
+    
+    // Create enquiry with ultra-safe data
+    console.log('🚨 Creating enquiry with ultra-safe data...');
+    const newEnquiry = await storage.createEnquiry(ultraSafeEnquiry);
+    
+    console.log('🚨 ✅ ULTRA-SAFE ENQUIRY CREATED SUCCESSFULLY!');
+    console.log('🚨 Enquiry ID:', newEnquiry.id);
+    
+    res.status(200).json({
+      success: true,
+      message: 'ULTRA-SAFE webhook processed successfully',
+      enquiryId: newEnquiry.id,
+      clientName: ultraSafeEnquiry.clientName,
+      subject: subject,
+      processing: 'ultra-safe-mode',
+      route: 'first-in-app'
+    });
+    
+  } catch (error: any) {
+    console.error('🚨 ULTRA-SAFE WEBHOOK ERROR:', error.message);
+    console.error('🚨 Error stack:', error.stack);
+    
+    // Check for the specific toISOString error
+    if (error.message && error.message.includes('toISOString')) {
+      console.error('🚨 ⚠️ FOUND THE toISOString ERROR IN ULTRA-SAFE ROUTE!');
+      console.error('🚨 This confirms the error is in the webhook handler itself');
+    }
+    
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Ultra-safe webhook processing failed',
+        details: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+});
+
 // CRITICAL: Test Mailgun FIRST, before ANY middleware 
 app.post('/api/test-mailgun', express.json(), async (req, res) => {
   console.log('🧪 Testing Mailgun integration...');
@@ -30,51 +135,9 @@ app.post('/api/test-mailgun', express.json(), async (req, res) => {
   }
 });
 
-// CRITICAL: Add Mailgun webhook route FIRST, before ANY other middleware
-app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req, res) => {
-  console.log('🚨 DIRECT WEBHOOK ROUTE HIT - BYPASSING ROUTES.TS');
-  console.log('🚨 Method:', req.method);
-  console.log('🚨 URL:', req.url);
-  console.log('🚨 Content-Type:', req.headers['content-type']);
-  console.log('🚨 Body keys:', Object.keys(req.body || {}));
-  
-  try {
-    console.log('🚨 Calling ULTRA-SAFE webhook handler...');
-    await handleUltraSafeWebhook(req, res);
-    console.log('🚨 Ultra-safe webhook handler completed successfully');
-  } catch (error: any) {
-    console.error('🚨 DIRECT WEBHOOK ERROR:', error.message);
-    console.error('🚨 Error stack:', error.stack);
-    console.error('🚨 Error type:', typeof error);
-    console.error('🚨 Error name:', error.name);
-    
-    // Check for the specific toISOString error
-    if (error.message && error.message.includes('toISOString')) {
-      console.error('🚨 ⚠️ FOUND THE toISOString ERROR IN DIRECT ROUTE!');
-      console.error('🚨 This confirms the error is in the webhook handler itself');
-    }
-    
-    if (!res.headersSent) {
-      res.status(500).json({ 
-        error: 'Direct webhook processing failed',
-        details: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }
-});
+// Webhook route will be registered AFTER registerRoutes to ensure priority
 
-// Add a GET endpoint for testing webhook connectivity
-app.get('/api/webhook/mailgun', (req, res) => {
-  console.log('🔍 GET request to Mailgun webhook endpoint');
-  res.json({ 
-    status: 'active',
-    message: 'Direct Mailgun webhook endpoint is operational',
-    timestamp: new Date().toISOString(),
-    handler: 'ultra-safe',
-    route: 'direct'
-  });
-});
+// GET endpoint removed to avoid conflicts with priority POST route
 
 // CRITICAL: Register invoice route FIRST, before ANY middleware to bypass Vite interference  
 app.post('/api/invoices', express.json({ limit: '50mb' }), async (req: any, res) => {
@@ -241,6 +304,107 @@ app.use((req, res, next) => {
 (async () => {
   // Register all routes (including webhook routes)
   const server = await registerRoutes(app);
+  
+  // CRITICAL: Add Mailgun webhook route BEFORE Vite middleware to ensure priority - INLINE HANDLER
+  app.post('/api/webhook/mailgun-priority', express.urlencoded({ extended: true }), async (req, res) => {
+    console.log('🚨 PRIORITY WEBHOOK ROUTE HIT - BEFORE VITE');
+    console.log('🚨 Method:', req.method);
+    console.log('🚨 URL:', req.url);
+    console.log('🚨 Content-Type:', req.headers['content-type']);
+    console.log('🚨 Body keys:', Object.keys(req.body || {}));
+    
+    try {
+      console.log('🚨 Processing webhook with INLINE ultra-safe handler...');
+      
+      // Extract basic information without any date processing - INLINE IMPLEMENTATION
+      const sender = req.body.sender || req.body.from || 'unknown@example.com';
+      const recipient = req.body.recipient || req.body.to || 'leads@musobuddy.com';
+      const subject = req.body.subject || 'Email enquiry';
+      const bodyText = req.body['body-plain'] || req.body.text || 'No message content';
+      
+      console.log('🚨 Extracted data:');
+      console.log('🚨 Sender:', sender);
+      console.log('🚨 Recipient:', recipient);
+      console.log('🚨 Subject:', subject);
+      console.log('🚨 Body length:', bodyText.length);
+      
+      // Extract client name from sender
+      let clientName = 'Unknown Client';
+      if (sender.includes('<')) {
+        const nameMatch = sender.match(/^([^<]+)/);
+        if (nameMatch) {
+          clientName = nameMatch[1].trim().replace(/['"]/g, '');
+        }
+      }
+      if (clientName === 'Unknown Client') {
+        const emailMatch = sender.match(/[\w.-]+@[\w.-]+\.\w+/);
+        const email = emailMatch ? emailMatch[0] : sender;
+        clientName = email.split('@')[0];
+      }
+      
+      // Create ultra-minimal enquiry with NO date fields
+      const ultraSafeEnquiry = {
+        userId: '43963086', // Your user ID
+        title: subject,
+        clientName: clientName,
+        clientEmail: sender.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0] || sender,
+        clientPhone: null, // Explicitly null
+        eventDate: null, // Explicitly null - no date processing
+        eventTime: null, // Explicitly null
+        eventEndTime: null, // Explicitly null
+        performanceDuration: null, // Explicitly null
+        venue: null, // Explicitly null
+        eventType: null, // Explicitly null
+        gigType: null, // Explicitly null
+        estimatedValue: null, // Explicitly null
+        status: 'new' as const,
+        notes: bodyText,
+        responseNeeded: true,
+        lastContactedAt: null // Explicitly null - no date processing
+      };
+      
+      console.log('🚨 Ultra safe enquiry data prepared');
+      console.log('🚨 Client name:', ultraSafeEnquiry.clientName);
+      console.log('🚨 Client email:', ultraSafeEnquiry.clientEmail);
+      
+      // Create enquiry with ultra-safe data
+      console.log('🚨 Creating enquiry with ultra-safe data...');
+      const newEnquiry = await storage.createEnquiry(ultraSafeEnquiry);
+      
+      console.log('🚨 ✅ Ultra safe enquiry created successfully!');
+      console.log('🚨 Enquiry ID:', newEnquiry.id);
+      
+      res.status(200).json({
+        success: true,
+        message: 'PRIORITY ultra safe webhook processed successfully',
+        enquiryId: newEnquiry.id,
+        clientName: ultraSafeEnquiry.clientName,
+        subject: subject,
+        processing: 'priority-ultra-safe-mode',
+        route: 'before-vite'
+      });
+      
+    } catch (error: any) {
+      console.error('🚨 PRIORITY WEBHOOK ERROR:', error.message);
+      console.error('🚨 Error stack:', error.stack);
+      console.error('🚨 Error type:', typeof error);
+      console.error('🚨 Error name:', error.name);
+      
+      // Check for the specific toISOString error
+      if (error.message && error.message.includes('toISOString')) {
+        console.error('🚨 ⚠️ FOUND THE toISOString ERROR IN PRIORITY ROUTE!');
+        console.error('🚨 This confirms the error is in the webhook handler itself');
+      }
+      
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          error: 'Priority webhook processing failed',
+          details: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+  });
   
   // Start automatic cleanup service
   // Automatic cleanup disabled for now
