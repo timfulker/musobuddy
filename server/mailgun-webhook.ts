@@ -20,11 +20,17 @@ export async function handleMailgunWebhook(req: Request, res: Response) {
     
     const body = req.body || {};
     
-    // Get basic email info
-    const sender = body.sender || body.from || 'unknown@email.com';
-    const recipient = body.recipient || body.to || 'leads@musobuddy.com';
-    const subject = body.subject || 'No Subject';
-    const bodyText = body['body-plain'] || body.text || 'No body text';
+    // Get basic email info - try ALL possible field names
+    const sender = body.sender || body.from || body.From || body['from'] || body['sender'] || 'unknown@email.com';
+    const recipient = body.recipient || body.to || body.To || body['to'] || body['recipient'] || 'leads@musobuddy.com';
+    const subject = body.subject || body.Subject || body['subject'] || body['Subject'] || 'No Subject';
+    const bodyText = body['body-plain'] || body['body-html'] || body.text || body.Text || body.message || body.body || 'No body text';
+    
+    // Log ALL fields to see what Mailgun is actually sending
+    console.log('📧 ALL MAILGUN FIELDS:');
+    Object.keys(body).forEach(key => {
+      console.log(`  ${key}: ${body[key]}`);
+    });
     
     console.log('📧 Sender:', sender);
     console.log('📧 Recipient:', recipient);
