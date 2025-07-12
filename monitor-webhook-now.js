@@ -3,76 +3,47 @@
  */
 
 async function checkForNewEnquiries() {
-  console.log('🔍 CHECKING FOR NEW ENQUIRIES FROM REAL EMAIL');
+  console.log('🔍 Checking for new enquiries...');
   
-  // Send a test to get current enquiry ID
   const testResponse = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
-      sender: 'baseline@test.com',
+      sender: 'monitor@test.com',
       recipient: 'leads@musobuddy.com',
-      subject: 'Baseline check',
-      'body-plain': 'Getting current enquiry number'
+      subject: 'Monitor check',
+      'body-plain': 'Checking current enquiry count'
     })
   });
   
-  const testResult = await testResponse.json();
-  const baselineId = testResult.enquiryId;
+  const result = await testResponse.json();
+  console.log(`📊 Latest enquiry ID: ${result.enquiryId}`);
   
-  console.log(`📊 Current enquiry ID: ${baselineId}`);
-  console.log('🕒 Waiting 5 seconds for real email...');
-  
-  await new Promise(resolve => setTimeout(resolve, 5000));
-  
-  // Check again
-  const checkResponse = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      sender: 'check@test.com',
-      recipient: 'leads@musobuddy.com',
-      subject: 'Check for new',
-      'body-plain': 'Checking for new enquiries'
-    })
-  });
-  
-  const checkResult = await checkResponse.json();
-  const newId = checkResult.enquiryId;
-  
-  console.log(`📊 New enquiry ID: ${newId}`);
-  
-  if (newId > baselineId + 1) {
-    console.log('🎉 REAL EMAIL DETECTED! Enquiry ID jumped more than expected!');
-    console.log(`Gap of ${newId - baselineId - 1} enquiries suggests real email was processed`);
-  } else {
-    console.log('📧 No real email detected yet');
-    console.log('This means either:');
-    console.log('1. Real email hasn\'t reached Mailgun yet');
-    console.log('2. Mailgun isn\'t forwarding to webhook');
-    console.log('3. Email bounced/rejected');
-  }
+  return result.enquiryId;
 }
 
 async function startMonitoring() {
-  console.log('📧 SEND YOUR REAL EMAIL NOW TO: leads@musobuddy.com');
-  console.log('📧 Subject: Test from my real email');
-  console.log('📧 Body: This is a test email');
-  console.log('');
-  console.log('⏰ Starting monitoring in 10 seconds...');
+  const startingId = await checkForNewEnquiries();
+  console.log(`🎯 Starting monitoring from enquiry ID: ${startingId}`);
+  console.log('Waiting for your email...');
   
-  await new Promise(resolve => setTimeout(resolve, 10000));
-  
-  for (let i = 0; i < 6; i++) {
-    await checkForNewEnquiries();
-    if (i < 5) {
-      await new Promise(resolve => setTimeout(resolve, 10000));
+  // Check every 5 seconds for new enquiries
+  const interval = setInterval(async () => {
+    const currentId = await checkForNewEnquiries();
+    if (currentId > startingId) {
+      console.log(`🎉 NEW ENQUIRY DETECTED! ID: ${currentId}`);
+      console.log('Check your dashboard and console logs for webhook data!');
+      clearInterval(interval);
     }
-  }
+  }, 5000);
+  
+  // Stop monitoring after 2 minutes
+  setTimeout(() => {
+    clearInterval(interval);
+    console.log('⏰ Monitoring stopped');
+  }, 120000);
 }
 
 startMonitoring();
