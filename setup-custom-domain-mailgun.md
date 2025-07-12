@@ -13,8 +13,8 @@
 2. Navigate to "Sending" → "Domains"
 3. Click "Add New Domain"
 
-### 1.2 Add musobuddy.com Domain
-1. Enter domain: `musobuddy.com`
+### 1.2 Add mg.musobuddy.com Subdomain
+1. Enter domain: `mg.musobuddy.com`
 2. Select region: US (or EU based on your preference)
 3. Click "Add Domain"
 

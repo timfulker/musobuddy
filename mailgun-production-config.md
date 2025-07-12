@@ -7,7 +7,7 @@ Once your custom domain is verified in Mailgun, you'll need to update these envi
 ### Required Variables
 ```bash
 MAILGUN_API_KEY=your_api_key_here
-MAILGUN_DOMAIN=musobuddy.com
+MAILGUN_DOMAIN=mg.musobuddy.com
 MAILGUN_WEBHOOK_SIGNING_KEY=your_webhook_signing_key_here
 ```
 
