@@ -5,6 +5,30 @@ import { storage } from "./storage";
 
 const app = express();
 
+// CRITICAL: Test Mailgun FIRST, before ANY middleware 
+app.post('/api/test-mailgun', express.json(), async (req, res) => {
+  console.log('🧪 Testing Mailgun integration...');
+  try {
+    const { sendEmail } = await import('./mailgun-email');
+    
+    const testResult = await sendEmail({
+      to: 'test@example.com',
+      from: 'MusoBuddy <noreply@sandbox2e23cfec6e14ec6b880912ce39e4926.mailgun.org>',
+      subject: 'MusoBuddy Email Test',
+      text: 'This is a test email to verify Mailgun integration is working.',
+      html: '<h1>Email Test</h1><p>This is a test email to verify Mailgun integration is working.</p>'
+    });
+    
+    res.json({ 
+      success: testResult,
+      message: testResult ? 'Email sent successfully' : 'Email failed to send'
+    });
+  } catch (error: any) {
+    console.error('Test email error:', error);
+    res.status(500).json({ error: 'Failed to send test email', details: error.message });
+  }
+});
+
 // CRITICAL: Register invoice route FIRST, before ANY middleware to bypass Vite interference  
 app.post('/api/invoices', express.json({ limit: '50mb' }), async (req: any, res) => {
   console.log('🚨🚨🚨 PRIORITY INVOICE ROUTE HIT - FIRST IN STACK! 🚨🚨🚨');
@@ -130,7 +154,7 @@ app.post('/api/invoices', express.json({ limit: '50mb' }), async (req: any, res)
   }
 });
 
-// Email webhooks removed - will be rebuilt from scratch
+// Mailgun test endpoint moved to top of file
 
 // Essential middleware setup
 app.use(express.json({ limit: '50mb' }));

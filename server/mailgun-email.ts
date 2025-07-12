@@ -29,7 +29,7 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
       return false;
     }
 
-    const domain = process.env.MAILGUN_DOMAIN || 'sandbox-123.mailgun.org';
+    const domain = process.env.MAILGUN_DOMAIN || 'sandbox2e23cfec6e14ec6b880912ce39e4926.mailgun.org';
     
     // Create Mailgun client
     const mg = mailgun.client({

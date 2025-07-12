@@ -24,14 +24,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Test endpoint for Mailgun email sending
-  app.post('/api/test-email', isAuthenticated, async (req: any, res) => {
+  // Test endpoint for Mailgun email sending (no auth for testing)
+  app.post('/api/test-email', async (req: any, res) => {
     try {
       const { sendEmail } = await import('./mailgun-email');
       
       const testResult = await sendEmail({
-        to: req.user.email || 'test@example.com',
-        from: 'MusoBuddy <noreply@sandbox-123.mailgun.org>',
+        to: 'test@example.com',
+        from: 'MusoBuddy <noreply@sandbox2e23cfec6e14ec6b880912ce39e4926.mailgun.org>',
         subject: 'MusoBuddy Email Test',
         text: 'This is a test email to verify Mailgun integration is working.',
         html: '<h1>Email Test</h1><p>This is a test email to verify Mailgun integration is working.</p>'

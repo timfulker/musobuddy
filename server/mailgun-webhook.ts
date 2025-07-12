@@ -67,7 +67,7 @@ function parseEmailForEnquiry(emailData: any): {
     title,
     clientName,
     clientEmail,
-    eventDate: new Date().toISOString().split('T')[0], // Default to today
+    eventDate: new Date(), // Convert to Date object
     venue: 'TBD',
     description,
     source: 'Email'
@@ -113,6 +113,8 @@ export async function handleMailgunWebhook(req: Request, res: Response): Promise
     // Parse email for enquiry creation
     const enquiryData = parseEmailForEnquiry(emailData);
     console.log('📋 Enquiry data:', enquiryData);
+    console.log('📋 Event date type:', typeof enquiryData.eventDate);
+    console.log('📋 Event date value:', enquiryData.eventDate);
     
     // Create enquiry in database
     // Note: We'll need to determine the userId - for now using a default
