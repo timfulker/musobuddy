@@ -155,6 +155,23 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true, limit: '50
   }
 });
 
+// SENDGRID WEBHOOK - Priority registration to avoid Vite interference
+app.post('/api/webhook/sendgrid', express.urlencoded({ extended: true, limit: '50mb' }), async (req, res) => {
+  console.log('📧 SENDGRID WEBHOOK HIT! Email received via /api/webhook/sendgrid');
+  console.log('Request from IP:', req.ip);
+  console.log('User-Agent:', req.headers['user-agent']);
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Body keys:', Object.keys(req.body));
+  
+  try {
+    const { handleSendGridWebhook } = await import('./email-webhook');
+    await handleSendGridWebhook(req, res);
+  } catch (error) {
+    console.error("Error in SendGrid webhook:", error);
+    res.status(500).json({ message: "Failed to process SendGrid webhook" });
+  }
+});
+
 app.post('/api/webhook/simple-email', express.json({ limit: '50mb' }), express.urlencoded({ extended: true, limit: '50mb' }), async (req, res) => {
   console.log('🔥 SIMPLE EMAIL WEBHOOK HIT! Email received via /api/webhook/simple-email');
   console.log('Request from IP:', req.ip);

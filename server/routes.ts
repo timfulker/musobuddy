@@ -24,20 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Primary SendGrid webhook endpoint using proper email handling
-  app.post('/api/webhook/sendgrid', async (req, res) => {
-    console.log('🔥 WEBHOOK HIT! Email received via /api/webhook/sendgrid');
-    console.log('Request from IP:', req.ip);
-    console.log('User-Agent:', req.headers['user-agent']);
-    console.log('Content-Type:', req.headers['content-type']);
-    try {
-      const { handleSendGridWebhook } = await import('./email-webhook');
-      await handleSendGridWebhook(req, res);
-    } catch (error) {
-      console.error("Error in SendGrid webhook:", error);
-      res.status(500).json({ message: "Failed to process SendGrid webhook" });
-    }
-  });
+  // SendGrid webhook now registered in server/index.ts to avoid duplication
 
   // Mailgun webhook endpoint now registered in server/index.ts to avoid duplication
 
