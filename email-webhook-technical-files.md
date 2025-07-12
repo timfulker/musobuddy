@@ -36,9 +36,10 @@ Webhook throwing "value.toISOString is not a function" error when processing inc
 - Database configuration
 - Schema file references
 
-### 7. package.json
+### 7. package-minimal.json
 - Dependencies including Drizzle ORM
 - Mailgun SDK configuration
+- Note: Main package.json appears to be missing from root directory
 
 ## Test Files
 
