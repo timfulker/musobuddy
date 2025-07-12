@@ -1906,12 +1906,10 @@ Jane`
     }
   });
 
-  // Global catch-all for any webhook attempts
+  // Webhook logging middleware - but don't interfere with routing
   app.use((req, res, next) => {
-    if (req.url.includes('webhook') || req.url.includes('parse')) {
-      console.log(`📧 Webhook attempt detected: ${req.method} ${req.url}`);
-      console.log(`Headers:`, req.headers);
-      console.log(`Body:`, req.body);
+    if (req.url.includes('webhook') && !req.url.includes('mailgun')) {
+      console.log(`📧 Non-Mailgun webhook detected: ${req.method} ${req.url}`);
     }
     next();
   });
