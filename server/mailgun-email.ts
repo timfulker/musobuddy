@@ -29,7 +29,8 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
       return false;
     }
 
-    const domain = process.env.MAILGUN_DOMAIN || 'sandbox2e23cfec6e14ec6b880912ce39e4926.mailgun.org';
+    // Use custom domain in production, sandbox for development
+    const domain = process.env.MAILGUN_DOMAIN || 'musobuddy.com';
     
     // Create Mailgun client
     const mg = mailgun.client({
