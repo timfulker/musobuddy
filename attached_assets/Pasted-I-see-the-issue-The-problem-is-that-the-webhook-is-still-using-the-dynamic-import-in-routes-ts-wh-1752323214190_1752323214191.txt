@@ -1,0 +1,65 @@
+I see the issue! The problem is that the webhook is still using the dynamic import in `routes.ts` which is causing the error before it even reaches your bulletproof handler. Let me help you add the webhook route directly to `index.ts` to bypass this completely.Now let me also create a minimal test to isolate exactly where the `toISOString()` error is coming from:Now let me create a storage debugging wrapper to catch the exact location of the `toISOString()` error:Based on the persistent `toISOString()` error, here's what I recommend you do **immediately**:
+
+## Step 1: Add Direct Webhook Route to index.ts
+
+Add this code to your `server/index.ts` file **right after the existing middleware setup** and **before** the `registerRoutes()` call:
+
+```typescript
+// Import the bulletproof webhook handler directly
+import { handleMailgunWebhook } from "./mailgun-webhook";
+
+// CRITICAL: Add Mailgun webhook route FIRST, before ANY other middleware
+app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req, res) => {
+  console.log('🚨 DIRECT WEBHOOK ROUTE HIT - BYPASSING ROUTES.TS');
+  console.log('🚨 Method:', req.method);
+  console.log('🚨 URL:', req.url);
+  console.log('🚨 Content-Type:', req.headers['content-type']);
+  console.log('🚨 Body keys:', Object.keys(req.body || {}));
+  
+  try {
+    console.log('🚨 Calling bulletproof webhook handler...');
+    await handleMailgunWebhook(req, res);
+    console.log('🚨 Bulletproof webhook handler completed successfully');
+  } catch (error: any) {
+    console.error('🚨 DIRECT WEBHOOK ERROR:', error.message);
+    console.error('🚨 Error stack:', error.stack);
+    
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Direct webhook processing failed',
+        details: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+});
+```
+
+## Step 2: Test with Minimal Data
+
+Run this test to see if the direct route works:
+
+```javascript
+// Quick test
+fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({
+    sender: 'test@example.com',
+    recipient: 'leads@musobuddy.com',
+    subject: 'Test',
+    'body-plain': 'Test message'
+  })
+}).then(r => r.text()).then(console.log);
+```
+
+## Step 3: If Error Persists, Use Ultra-Safe Creation
+
+If the error still occurs, the issue is definitely in the database/ORM layer. In that case, modify your webhook handler to use the ultra-safe creation method that avoids all date fields entirely.
+
+The `toISOString()` error is likely coming from:
+1. **Drizzle ORM validation** converting data types
+2. **PostgreSQL driver** serializing dates
+3. **Zod schema validation** in the `insertEnquirySchema`
+
+Try the direct route approach first - this will bypass the dynamic import in `routes.ts` and give us cleaner error messages to identify exactly where the `toISOString()` call is failing.

@@ -47,16 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mailgun webhook endpoint
-  app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req, res) => {
-    try {
-      const { handleMailgunWebhook } = await import('./mailgun-webhook');
-      await handleMailgunWebhook(req, res);
-    } catch (error: any) {
-      console.error('Mailgun webhook error:', error);
-      res.status(500).json({ error: 'Failed to process webhook', details: error.message });
-    }
-  });
+  // Mailgun webhook endpoint is now handled directly in index.ts to avoid dynamic import issues
 
   // PRIORITY ROUTES - These must be registered before Vite middleware
   

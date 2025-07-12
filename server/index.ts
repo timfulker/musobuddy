@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
+import { handleUltraSafeWebhook } from "./ultra-safe-webhook";
 
 const app = express();
 
@@ -27,6 +28,52 @@ app.post('/api/test-mailgun', express.json(), async (req, res) => {
     console.error('Test email error:', error);
     res.status(500).json({ error: 'Failed to send test email', details: error.message });
   }
+});
+
+// CRITICAL: Add Mailgun webhook route FIRST, before ANY other middleware
+app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req, res) => {
+  console.log('🚨 DIRECT WEBHOOK ROUTE HIT - BYPASSING ROUTES.TS');
+  console.log('🚨 Method:', req.method);
+  console.log('🚨 URL:', req.url);
+  console.log('🚨 Content-Type:', req.headers['content-type']);
+  console.log('🚨 Body keys:', Object.keys(req.body || {}));
+  
+  try {
+    console.log('🚨 Calling ULTRA-SAFE webhook handler...');
+    await handleUltraSafeWebhook(req, res);
+    console.log('🚨 Ultra-safe webhook handler completed successfully');
+  } catch (error: any) {
+    console.error('🚨 DIRECT WEBHOOK ERROR:', error.message);
+    console.error('🚨 Error stack:', error.stack);
+    console.error('🚨 Error type:', typeof error);
+    console.error('🚨 Error name:', error.name);
+    
+    // Check for the specific toISOString error
+    if (error.message && error.message.includes('toISOString')) {
+      console.error('🚨 ⚠️ FOUND THE toISOString ERROR IN DIRECT ROUTE!');
+      console.error('🚨 This confirms the error is in the webhook handler itself');
+    }
+    
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Direct webhook processing failed',
+        details: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+});
+
+// Add a GET endpoint for testing webhook connectivity
+app.get('/api/webhook/mailgun', (req, res) => {
+  console.log('🔍 GET request to Mailgun webhook endpoint');
+  res.json({ 
+    status: 'active',
+    message: 'Direct Mailgun webhook endpoint is operational',
+    timestamp: new Date().toISOString(),
+    handler: 'ultra-safe',
+    route: 'direct'
+  });
 });
 
 // CRITICAL: Register invoice route FIRST, before ANY middleware to bypass Vite interference  

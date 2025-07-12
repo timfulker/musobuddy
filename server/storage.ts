@@ -157,7 +157,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry> {
-    console.log('🔍 Storage createEnquiry called with:', JSON.stringify(enquiry, null, 2));
+    console.log('🔍 Storage createEnquiry called');
+    console.log('🔍 Enquiry title:', enquiry.title);
+    console.log('🔍 Client name:', enquiry.clientName);
+    console.log('🔍 Event date type:', typeof enquiry.eventDate);
+    console.log('🔍 Event date instanceof Date:', enquiry.eventDate instanceof Date);
     
     // Ensure eventDate is properly handled
     const processedEnquiry = {
@@ -166,7 +170,7 @@ export class DatabaseStorage implements IStorage {
                 enquiry.eventDate ? new Date(enquiry.eventDate) : null
     };
     
-    console.log('🔍 Processed enquiry for DB:', JSON.stringify(processedEnquiry, null, 2));
+    console.log('🔍 Processed enquiry - eventDate:', processedEnquiry.eventDate);
     
     const [newEnquiry] = await db
       .insert(enquiries)
