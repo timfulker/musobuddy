@@ -745,11 +745,11 @@ export default function Contracts() {
                       THE MUSICIAN
                     </h3>
                     <div className="space-y-2">
-                      <p className="font-medium text-gray-900">Tim Fulker</p>
+                      <p className="font-medium text-gray-900">[Business Name]</p>
                       <div className="text-sm text-gray-600 space-y-1">
-                        <p><strong>Address:</strong> 59 Gloucester Road, Bournemouth, Dorset BH7 6JA</p>
-                        <p><strong>Phone:</strong> 07764190034</p>
-                        <p><strong>Email:</strong> timfulkermusic@gmail.com</p>
+                        <p><strong>Address:</strong> [Business Address]</p>
+                        <p><strong>Phone:</strong> [Business Phone]</p>
+                        <p><strong>Email:</strong> [Business Email]</p>
                       </div>
                     </div>
                   </div>
@@ -872,16 +872,16 @@ export default function Contracts() {
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 mb-1">Print Name</p>
-                          <p className="text-sm text-gray-700">Tim Fulker</p>
+                          <p className="text-sm text-gray-700">[Business Name]</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Phone</p>
-                            <p className="text-sm text-gray-700">07764190034</p>
+                            <p className="text-sm text-gray-700">[Business Phone]</p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Email</p>
-                            <p className="text-sm text-gray-700">timfulkermusic@gmail.com</p>
+                            <p className="text-sm text-gray-700">[Business Email]</p>
                           </div>
                         </div>
                         <div>
