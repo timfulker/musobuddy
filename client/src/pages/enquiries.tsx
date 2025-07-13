@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus } from "lucide-react";
+import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { z } from "zod";
 import { insertClientSchema, type InsertClient } from "@shared/schema";
 import { Link } from "wouter";
@@ -31,6 +31,7 @@ const enquiryFormSchema = insertEnquirySchema.extend({
 export default function Enquiries() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest"); // newest, oldest, eventDate, status
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [respondDialogOpen, setRespondDialogOpen] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
@@ -354,6 +355,18 @@ export default function Enquiries() {
     }
   };
 
+  const formatReceivedDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
   const filteredEnquiries = enquiries.filter((enquiry: Enquiry) => {
     const matchesSearch = searchQuery === "" || 
       enquiry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -362,6 +375,26 @@ export default function Enquiries() {
     const matchesStatus = statusFilter === "all" || enquiry.status === statusFilter;
     
     return matchesSearch && matchesStatus;
+  });
+
+  // Sort the filtered enquiries
+  const sortedEnquiries = [...filteredEnquiries].sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
+      case "oldest":
+        return new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime();
+      case "eventDate":
+        if (!a.eventDate && !b.eventDate) return 0;
+        if (!a.eventDate) return 1;
+        if (!b.eventDate) return -1;
+        return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+      case "status":
+        const statusOrder = { "new": 0, "qualified": 1, "contract_sent": 2, "confirmed": 3, "rejected": 4 };
+        return (statusOrder[a.status as keyof typeof statusOrder] || 99) - (statusOrder[b.status as keyof typeof statusOrder] || 99);
+      default:
+        return 0;
+    }
   });
 
   // Helper function to determine if response is needed
@@ -732,13 +765,44 @@ export default function Enquiries() {
                   <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">
+                    <div className="flex items-center space-x-2">
+                      <ArrowDown className="w-4 h-4" />
+                      <span>Newest First</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="oldest">
+                    <div className="flex items-center space-x-2">
+                      <ArrowUp className="w-4 h-4" />
+                      <span>Oldest First</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="eventDate">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>Event Date</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="status">
+                    <div className="flex items-center space-x-2">
+                      <ArrowUpDown className="w-4 h-4" />
+                      <span>Status</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
 
         {/* Enquiries List */}
         <div className="space-y-4">
-          {filteredEnquiries.length === 0 ? (
+          {sortedEnquiries.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -754,7 +818,7 @@ export default function Enquiries() {
               </CardContent>
             </Card>
           ) : (
-            filteredEnquiries.map((enquiry: Enquiry) => {
+            sortedEnquiries.map((enquiry: Enquiry) => {
               const dateBox = formatDateBox(enquiry.eventDate!);
               return (
                 <Card key={enquiry.id} className="hover:shadow-md transition-shadow bg-white">
@@ -830,6 +894,12 @@ export default function Enquiries() {
                                 <span>{enquiry.gigType}</span>
                               </div>
                             )}
+                            
+                            {/* Received Date */}
+                            <div className="flex items-center text-gray-500 text-sm mt-2 pt-2 border-t border-gray-100">
+                              <Clock className="w-3 h-3 mr-2" />
+                              <span>Received: {formatReceivedDate(enquiry.createdAt!)}</span>
+                            </div>
                           </div>
                           
                           {/* Notes Section */}
