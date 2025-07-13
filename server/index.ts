@@ -23,31 +23,29 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
   console.log(`🔍 [${requestId}] DIAGNOSTIC WEBHOOK START`);
   
   try {
-    // Log everything first
-    console.log(`🔍 [${requestId}] Raw body:`, JSON.stringify(req.body, null, 2));
-    console.log(`🔍 [${requestId}] Headers:`, JSON.stringify(req.headers, null, 2));
+    // Store webhook data in database for analysis
+    const webhookData = {
+      requestId,
+      timestamp: new Date().toISOString(),
+      allKeys: Object.keys(req.body || {}),
+      fromField: req.body.From || req.body.from || req.body.sender,
+      subjectField: req.body.Subject || req.body.subject,
+      bodyField: req.body['body-plain'] || req.body['stripped-text'] || req.body.text || req.body.message,
+      fullPayload: JSON.stringify(req.body)
+    };
     
-    // CRITICAL: Log all possible field variations to identify the issue
-    console.log(`🔍 [${requestId}] Body keys:`, Object.keys(req.body || {}));
-    console.log(`🔍 [${requestId}] From variations:`, {
-      From: req.body.From,
-      from: req.body.from,
-      sender: req.body.sender,
-      'From-Field': req.body['From-Field'],
-      'from-field': req.body['from-field']
-    });
-    console.log(`🔍 [${requestId}] Subject variations:`, {
-      Subject: req.body.Subject,
-      subject: req.body.subject,
-      'Subject-Field': req.body['Subject-Field'],
-      'subject-field': req.body['subject-field']
-    });
-    console.log(`🔍 [${requestId}] Body variations:`, {
-      'body-plain': req.body['body-plain'],
-      'stripped-text': req.body['stripped-text'],
-      text: req.body.text,
-      message: req.body.message,
-      body: req.body.body
+    // Insert webhook debug data into database
+    await db.insert(enquiries).values({
+      userId: 'debug-user',
+      title: `WEBHOOK DEBUG ${requestId}`,
+      clientName: `Debug: ${webhookData.fromField}`,
+      clientEmail: `debug@webhook.com`,
+      notes: `Keys: ${webhookData.allKeys.join(', ')}
+From: ${webhookData.fromField}
+Subject: ${webhookData.subjectField}
+Body: ${webhookData.bodyField}
+
+Full payload: ${webhookData.fullPayload}`
     });
     
     // Extract fields with fallbacks
