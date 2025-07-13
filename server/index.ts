@@ -27,15 +27,28 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     console.log(`🔍 [${requestId}] Raw body:`, JSON.stringify(req.body, null, 2));
     console.log(`🔍 [${requestId}] Headers:`, JSON.stringify(req.headers, null, 2));
     
-    // Also write to file for debugging
-    const fs = require('fs');
-    const logData = {
-      requestId,
-      timestamp: new Date().toISOString(),
-      headers: req.headers,
-      body: req.body
-    };
-    fs.writeFileSync(`/tmp/webhook-debug-${requestId}.json`, JSON.stringify(logData, null, 2));
+    // CRITICAL: Log all possible field variations to identify the issue
+    console.log(`🔍 [${requestId}] Body keys:`, Object.keys(req.body || {}));
+    console.log(`🔍 [${requestId}] From variations:`, {
+      From: req.body.From,
+      from: req.body.from,
+      sender: req.body.sender,
+      'From-Field': req.body['From-Field'],
+      'from-field': req.body['from-field']
+    });
+    console.log(`🔍 [${requestId}] Subject variations:`, {
+      Subject: req.body.Subject,
+      subject: req.body.subject,
+      'Subject-Field': req.body['Subject-Field'],
+      'subject-field': req.body['subject-field']
+    });
+    console.log(`🔍 [${requestId}] Body variations:`, {
+      'body-plain': req.body['body-plain'],
+      'stripped-text': req.body['stripped-text'],
+      text: req.body.text,
+      message: req.body.message,
+      body: req.body.body
+    });
     
     // Extract fields with fallbacks
     const from = req.body.From || req.body.from || req.body.sender || 'NO_FROM_FIELD';
