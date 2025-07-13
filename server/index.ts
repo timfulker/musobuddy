@@ -27,6 +27,16 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     console.log(`🔍 [${requestId}] Raw body:`, JSON.stringify(req.body, null, 2));
     console.log(`🔍 [${requestId}] Headers:`, JSON.stringify(req.headers, null, 2));
     
+    // Also write to file for debugging
+    const fs = require('fs');
+    const logData = {
+      requestId,
+      timestamp: new Date().toISOString(),
+      headers: req.headers,
+      body: req.body
+    };
+    fs.writeFileSync(`/tmp/webhook-debug-${requestId}.json`, JSON.stringify(logData, null, 2));
+    
     // Extract fields with fallbacks
     const from = req.body.From || req.body.from || req.body.sender || 'NO_FROM_FIELD';
     const subject = req.body.Subject || req.body.subject || 'NO_SUBJECT_FIELD';
