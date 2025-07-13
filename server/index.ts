@@ -14,13 +14,15 @@ console.log('🤖 API key exists:', !!process.env.OPENAI_API_KEY);
 // AI-Enhanced Email Parsing Function
 async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
   eventDate: string | null;
+  eventTime: string | null;
   venue: string | null;
   eventType: string | null;
   gigType: string | null;
   clientPhone: string | null;
+  estimatedValue: string | null;
 }> {
   if (!openai) {
-    return { eventDate: null, venue: null, eventType: null, gigType: null, clientPhone: null };
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null };
   }
 
   try {
@@ -29,12 +31,19 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
 Email Subject: "${subject}"
 Email Body: "${emailBody}"
 
+CRITICAL INSTRUCTIONS:
+1. Find the ACTUAL EVENT DATE - look for "Sunday 24 Aug 2025", "Aug 24", "24 Aug 2025" etc. NOT email send dates like "13 Jul 2025 at 15:42"
+2. Find the ACTUAL VENUE - look for location names like "Bognor Regis", "Brighton", city names, NOT email addresses or timestamps
+3. Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
+
 Extract:
-- eventDate: Date in YYYY-MM-DD format (assume current year 2025 unless "next year" mentioned = 2026)
-- venue: Location/venue name
-- eventType: wedding, birthday, corporate, party, celebration, etc.
+- eventDate: The actual event/performance date in YYYY-MM-DD format (e.g., "Sunday 24 Aug 2025" = "2025-08-24")
+- eventTime: Start time if mentioned (e.g., "1:00pm - 3:00pm", "7:30pm")
+- venue: Location/venue name including city/area (e.g., "Bognor Regis", "Brighton Hotel", "London venue")
+- eventType: wedding, birthday, corporate, party, celebration, private event, etc.
 - gigType: sax, saxophone, jazz, piano, guitar, dj, band, violin, drums, etc.
 - clientPhone: UK phone number if mentioned
+- estimatedValue: Budget/price range if mentioned (e.g., "£260-£450", "£300", "budget of £500")
 
 Return valid JSON only:`;
 
@@ -49,10 +58,12 @@ Return valid JSON only:`;
     const aiResult = JSON.parse(response.choices[0].message.content || '{}');
     return {
       eventDate: aiResult.eventDate || null,
+      eventTime: aiResult.eventTime || null,
       venue: aiResult.venue || null,
       eventType: aiResult.eventType || null,
       gigType: aiResult.gigType || null,
-      clientPhone: aiResult.clientPhone || null
+      clientPhone: aiResult.clientPhone || null,
+      estimatedValue: aiResult.estimatedValue || null
     };
   } catch (error) {
     console.log('AI parsing failed, using regex fallback');
@@ -107,139 +118,31 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientName = clientEmail.split('@')[0];
     }
     
-    // Parse phone numbers from email body
-    let clientPhone = null;
-    const phonePatterns = [
-      /(?:phone|mobile|tel|contact)[\s:]*(?:is|number)[\s:]*([0-9\s\-\(\)]{8,15})/i,
-      /(?:call|phone|tel|mobile|contact)[\s:]*(?:me\s+)?(?:on\s+)?([0-9\s\-\(\)]{8,15})/i,
-      /\b(0[0-9]\d{8,10})\b/,
-      /\b(\+44\s?[0-9\s\-\(\)]{10,15})\b/
-    ];
+    // AI-Only Email Parsing System
+    console.log(`📧 [${requestId}] Using AI-only parsing for maximum accuracy and cost efficiency`);
     
-    for (const pattern of phonePatterns) {
-      const phoneMatch = bodyField.match(pattern);
-      if (phoneMatch && phoneMatch[1]) {
-        const cleanPhone = phoneMatch[1].replace(/[^\d\+]/g, '');
-        if (cleanPhone.length >= 8) {
-          clientPhone = phoneMatch[1].trim(); // Keep original formatting
-          console.log(`📧 [${requestId}] Phone found: "${clientPhone}"`);
-          break;
-        }
-      }
-    }
-    
-    // Parse event date from email body
-    let eventDate = null;
-    const datePatterns = [
-      /(?:on|for|date|event)[\s:]*([0-9]{1,2}[\s\/\-][0-9]{1,2}[\s\/\-][0-9]{2,4})/i,
-      /(?:on|for|date|event)[\s:]*([0-9]{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+[0-9]{2,4})/i,
-      /(?:on|for|date|event)[\s:]*([a-z]+\s+[0-9]{1,2}(?:st|nd|rd|th)?\s*,?\s*[0-9]{2,4})/i,
-      /\b((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+[0-9]{1,2}(?:st|nd|rd|th)?)/i,
-      /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+[0-9]{1,2}(?:st|nd|rd|th)?\s*,?\s*[0-9]{2,4}\b/i,
-      /\b[0-9]{1,2}(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+[0-9]{2,4}\b/i
-    ];
-    
-    for (const pattern of datePatterns) {
-      const dateMatch = bodyField.match(pattern);
-      if (dateMatch) {
-        const dateStr = dateMatch[1] || dateMatch[0];
-        let parsedDate;
-        
-        // Clean date string by removing ordinal suffixes (st, nd, rd, th)
-        const cleanDateStr = dateStr.replace(/(?:st|nd|rd|th)/g, '').trim();
-        
-        // Check if "next year" is mentioned in the email body
-        const isNextYear = bodyField.toLowerCase().includes('next year');
-        const currentYear = new Date().getFullYear();
-        const targetYear = isNextYear ? currentYear + 1 : currentYear;
-        
-        // If no year is specified, add current year (or next year if mentioned)
-        if (!cleanDateStr.includes('20')) {
-          parsedDate = new Date(cleanDateStr + ', ' + targetYear);
-        } else {
-          parsedDate = new Date(cleanDateStr);
-        }
-        
-        if (!isNaN(parsedDate.getTime())) {
-          eventDate = parsedDate.toISOString().split('T')[0];
-          console.log(`📧 [${requestId}] Date found: "${dateStr}" -> ${eventDate}${isNextYear ? ' (next year)' : ''}`);
-          break;
-        }
-      }
-    }
-    
-    // Parse venue from email body
-    let venue = null;
-    const venuePatterns = [
-      /(?:at|venue|location|place)[\s:]+([^,.!?\n]+?)(?:\s+on|\s+in|\s+for|\.|\n|$)/i,
-      /(?:held at|taking place at|located at)[\s:]+([^,.!?\n]+?)(?:\s+on|\s+in|\s+for|\.|\n|$)/i,
-      /(?:in|at)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)(?:\s+on|\s+in|\s+for|\.|\n|$)/g,
-      /(?:wedding|event|party|celebration)[\s\w]*?(?:in|at)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)(?:\s+on|\s+in|\s+for|\.|\n|$)/i
-    ];
-    
-    for (const pattern of venuePatterns) {
-      const venueMatch = bodyField.match(pattern);
-      if (venueMatch && venueMatch[1]) {
-        venue = venueMatch[1].trim();
-        console.log(`📧 [${requestId}] Venue found: "${venue}"`);
-        break;
-      }
-    }
-    
-    // Parse event type from email body
-    let eventType = null;
-    const eventTypePatterns = [
-      /(?:wedding|birthday|corporate|party|celebration|anniversary|graduation|funeral|christmas|new year)/i
-    ];
-    
-    for (const pattern of eventTypePatterns) {
-      const typeMatch = bodyField.match(pattern);
-      if (typeMatch) {
-        eventType = typeMatch[0].toLowerCase();
-        break;
-      }
-    }
-    
-    // Parse gig type from email body
-    let gigType = null;
-    const gigTypePatterns = [
-      /(?:sax|saxophone|jazz|piano|guitar|dj|band|violin|drums|trumpet|clarinet|flute)/i
-    ];
-    
-    for (const pattern of gigTypePatterns) {
-      const gigMatch = bodyField.match(pattern);
-      if (gigMatch) {
-        gigType = gigMatch[0].toLowerCase();
-        break;
-      }
-    }
-    
-    // AI-Enhanced parsing as fallback for missing data
+    // Use AI to parse all fields from the email
     const aiResult = await parseEmailWithAI(bodyField, subjectField);
     
-    // Use AI results for any missing fields
-    if (!eventDate && aiResult.eventDate) {
-      eventDate = aiResult.eventDate;
-      console.log(`📧 [${requestId}] AI Date found: ${eventDate}`);
-    }
-    if (!venue && aiResult.venue) {
-      venue = aiResult.venue;
-      console.log(`📧 [${requestId}] AI Venue found: ${venue}`);
-    }
-    if (!eventType && aiResult.eventType) {
-      eventType = aiResult.eventType;
-      console.log(`📧 [${requestId}] AI Event type found: ${eventType}`);
-    }
-    if (!gigType && aiResult.gigType) {
-      gigType = aiResult.gigType;
-      console.log(`📧 [${requestId}] AI Gig type found: ${gigType}`);
-    }
-    if (!clientPhone && aiResult.clientPhone) {
-      clientPhone = aiResult.clientPhone;
-      console.log(`📧 [${requestId}] AI Phone found: ${clientPhone}`);
-    }
+    // Extract all data from AI results
+    const clientPhone = aiResult.clientPhone;
+    const eventDate = aiResult.eventDate;
+    const venue = aiResult.venue;
+    const eventType = aiResult.eventType;
+    const gigType = aiResult.gigType;
+    const eventTime = aiResult.eventTime;
+    const estimatedValue = aiResult.estimatedValue;
     
-    // Create enquiry with parsed data
+    // Log AI-extracted data
+    if (clientPhone) console.log(`📧 [${requestId}] AI Phone: ${clientPhone}`);
+    if (eventDate) console.log(`📧 [${requestId}] AI Date: ${eventDate}`);
+    if (venue) console.log(`📧 [${requestId}] AI Venue: ${venue}`);
+    if (eventType) console.log(`📧 [${requestId}] AI Event type: ${eventType}`);
+    if (gigType) console.log(`📧 [${requestId}] AI Gig type: ${gigType}`);
+    if (eventTime) console.log(`📧 [${requestId}] AI Event time: ${eventTime}`);
+    if (estimatedValue) console.log(`📧 [${requestId}] AI Budget: ${estimatedValue}`);
+    
+    // Create enquiry with AI-parsed data
     const enquiry = {
       userId: '43963086',
       title: subjectField || `Email from ${clientName}`,
@@ -247,13 +150,13 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientEmail: clientEmail || null,
       clientPhone: clientPhone || null,
       eventDate,
-      eventTime: null,
+      eventTime: eventTime,
       eventEndTime: null,
       performanceDuration: null,
       venue,
       eventType,
       gigType,
-      estimatedValue: null,
+      estimatedValue: estimatedValue,
       status: 'new' as const,
       notes: bodyField || 'Email enquiry with no body content',
       responseNeeded: true,

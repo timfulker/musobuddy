@@ -40,7 +40,7 @@ export const enquiries = pgTable("enquiries", {
   venue: varchar("venue"),
   eventType: varchar("event_type"),
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
-  estimatedValue: decimal("estimated_value", { precision: 10, scale: 2 }),
+  estimatedValue: varchar("estimated_value"),
   status: varchar("status").notNull().default("new"), // new, qualified, contract_sent, confirmed, rejected
   notes: text("notes"),
   responseNeeded: boolean("response_needed").default(true), // Visual indicator for enquiries requiring response
