@@ -7,9 +7,23 @@ const app = express();
 
 console.log('🔧 === STARTING ROUTE REGISTRATION ===');
 
+// CATCH-ALL MIDDLEWARE TO LOG ALL REQUESTS
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.path.includes('webhook')) {
+    console.log(`🌐 ALL WEBHOOK REQUESTS: ${req.method} ${req.path}`);
+    console.log(`🌐 User-Agent: ${req.headers['user-agent']}`);
+    console.log(`🌐 Content-Type: ${req.headers['content-type']}`);
+  }
+  next();
+});
+
 // SIMPLE MAILGUN WEBHOOK - REBUILT FROM SCRATCH
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   console.log('📧 SIMPLE WEBHOOK - Mailgun email received');
+  console.log('📧 Request headers:', JSON.stringify(req.headers, null, 2));
+  console.log('📧 Request method:', req.method);
+  console.log('📧 Request URL:', req.url);
+  console.log('📧 Content-Type:', req.headers['content-type']);
   
   try {
     // Log all incoming data to see what Mailgun actually sends
