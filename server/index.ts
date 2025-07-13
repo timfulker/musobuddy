@@ -174,7 +174,57 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     if (estimatedValue) console.log(`📧 [${requestId}] AI Budget: ${estimatedValue}`);
     if (applyNowLink) console.log(`📧 [${requestId}] 🎯 ENCORE Apply Now Link: ${applyNowLink}`);
     
-    // Create enquiry with AI-parsed data
+    // Check for conflicts BEFORE creating enquiry (better timing)
+    let hasConflicts = false;
+    let conflictCount = 0;
+    
+    if (eventDate) {
+      try {
+        const { ConflictDetectionService } = await import('./conflict-detection');
+        const conflictService = new ConflictDetectionService(storage);
+        
+        // Create temporary enquiry object for conflict checking
+        const tempEnquiry = {
+          id: 0, // Will be set after creation
+          userId: '43963086',
+          title: subjectField || `Email from ${clientName}`,
+          clientName,
+          clientEmail: clientEmail || null,
+          clientPhone: clientPhone || null,
+          eventDate,
+          eventTime: eventTime,
+          eventEndTime: null,
+          performanceDuration: null,
+          venue,
+          eventType,
+          gigType,
+          estimatedValue: estimatedValue,
+          status: 'new' as const,
+          notes: bodyField || 'Email enquiry with no body content',
+          originalEmailContent: bodyField || null,
+          applyNowLink: applyNowLink || null,
+          responseNeeded: true,
+          lastContactedAt: null,
+          hasConflicts: false,
+          conflictCount: 0,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        const { conflicts } = await conflictService.checkEnquiryConflicts(tempEnquiry, '43963086');
+        
+        if (conflicts.length > 0) {
+          hasConflicts = true;
+          conflictCount = conflicts.length;
+          console.log(`⚠️ [${requestId}] CONFLICT DETECTED: ${conflicts.length} conflicts found`);
+          console.log(`⚠️ [${requestId}] Conflicts with:`, conflicts.map(c => `${c.type} #${c.id} - ${c.title}`));
+        }
+      } catch (error) {
+        console.error(`❌ [${requestId}] Error checking conflicts:`, error);
+      }
+    }
+    
+    // Create enquiry with AI-parsed data AND conflict flags
     const enquiry = {
       userId: '43963086',
       title: subjectField || `Email from ${clientName}`,
@@ -194,37 +244,17 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       originalEmailContent: bodyField || null,
       applyNowLink: applyNowLink || null,
       responseNeeded: true,
-      lastContactedAt: null
+      lastContactedAt: null,
+      hasConflicts,
+      conflictCount
     };
     
     console.log(`📧 [${requestId}] Creating enquiry for: ${clientName} (${clientEmail})`);
     console.log(`📧 [${requestId}] Enquiry data:`, JSON.stringify(enquiry, null, 2));
     
     const newEnquiry = await storage.createEnquiry(enquiry);
-    console.log(`✅ [${requestId}] Created enquiry #${newEnquiry.id}`);
+    console.log(`✅ [${requestId}] Created enquiry #${newEnquiry.id}${hasConflicts ? ` (${conflictCount} conflicts detected)` : ''}`);
     
-    // Lightweight conflict flagging for webhook
-    if (newEnquiry.eventDate) {
-      try {
-        const { ConflictDetectionService } = await import('./conflict-detection');
-        const conflictService = new ConflictDetectionService(storage);
-        const { conflicts } = await conflictService.checkEnquiryConflicts(newEnquiry, enquiry.userId);
-        
-        if (conflicts.length > 0) {
-          console.log(`⚠️ [${requestId}] POTENTIAL CONFLICT: ${conflicts.length} conflicts found`);
-          console.log(`⚠️ [${requestId}] Conflicts with:`, conflicts.map(c => `${c.type} #${c.id} - ${c.title}`));
-          
-          // Just flag the enquiry as having potential conflicts - detailed analysis in UI
-          await storage.updateEnquiry(newEnquiry.id, { 
-            ...newEnquiry, 
-            hasConflicts: true,
-            conflictCount: conflicts.length 
-          });
-        }
-      } catch (error) {
-        console.error(`❌ [${requestId}] Error checking conflicts:`, error);
-      }
-    }
     
     res.status(200).json({
       success: true,
