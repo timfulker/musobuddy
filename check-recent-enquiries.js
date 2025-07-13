@@ -8,45 +8,42 @@ async function checkForNewEnquiries() {
     
     if (response.ok) {
       const enquiries = await response.json();
-      console.log(`📋 Total enquiries: ${enquiries.length}`);
       
-      // Show the last 5 enquiries
-      console.log('\n🔍 Most recent enquiries:');
-      const recent = enquiries.slice(-5);
-      recent.forEach((enquiry, index) => {
-        const created = new Date(enquiry.createdAt);
-        console.log(`${index + 1}. #${enquiry.id} - ${enquiry.clientName} - ${enquiry.title}`);
-        console.log(`   Created: ${created.toLocaleString()}`);
-        console.log(`   Status: ${enquiry.status}`);
-        if (enquiry.notes) {
-          console.log(`   Notes: ${enquiry.notes.substring(0, 100)}...`);
-        }
-        console.log('');
+      console.log('📧 Latest enquiries (last 5):');
+      enquiries.slice(0, 5).forEach((enquiry, index) => {
+        console.log(`\n📋 ${index + 1}. Enquiry #${enquiry.id}`);
+        console.log(`   Client: ${enquiry.clientName}`);
+        console.log(`   Email: ${enquiry.clientEmail}`);
+        console.log(`   Subject: ${enquiry.title}`);
+        console.log(`   Content: ${enquiry.notes ? enquiry.notes.substring(0, 100) + '...' : 'No message content'}`);
+        console.log(`   Phone: ${enquiry.clientPhone || 'Not extracted'}`);
+        console.log(`   Created: ${new Date(enquiry.createdAt).toLocaleString()}`);
+        console.log(`   Source: ${enquiry.source || 'Email'}`);
       });
       
-      // Check for very recent enquiries (last 10 minutes)
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-      const veryRecent = enquiries.filter(enquiry => 
-        new Date(enquiry.createdAt) > tenMinutesAgo
-      );
+      // Check for recent enquiries that might be from the test
+      const recentEnquiries = enquiries.filter(e => {
+        const createdTime = new Date(e.createdAt).getTime();
+        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+        return createdTime > fiveMinutesAgo;
+      });
       
-      if (veryRecent.length > 0) {
-        console.log('🎉 RECENT ENQUIRIES FOUND (last 10 minutes):');
-        veryRecent.forEach(enquiry => {
-          console.log(`• #${enquiry.id}: ${enquiry.clientName} - ${enquiry.title}`);
-          console.log(`  Created: ${new Date(enquiry.createdAt).toLocaleString()}`);
+      console.log(`\n🔍 Recent enquiries (last 5 minutes): ${recentEnquiries.length}`);
+      
+      if (recentEnquiries.length > 0) {
+        console.log('✅ Found recent enquiries - emails were processed');
+        recentEnquiries.forEach(e => {
+          console.log(`   - ${e.clientName} (${e.clientEmail}): ${e.notes ? 'HAS CONTENT' : 'NO CONTENT'}`);
         });
       } else {
-        console.log('❌ No enquiries created in the last 10 minutes');
-        console.log('This suggests the email may not have reached the webhook');
+        console.log('❌ No recent enquiries found - emails may not have reached webhook');
       }
       
     } else {
       console.log('❌ Failed to fetch enquiries:', response.status);
     }
-    
   } catch (error) {
-    console.log('❌ Error:', error.message);
+    console.error('❌ Error:', error.message);
   }
 }
 
