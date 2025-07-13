@@ -558,6 +558,14 @@ This applies to any changes in:
   * **Professional Results**: Wedding enquiry for August 15th at The Grand Hotel with saxophone request properly structured
   * **Complete Pipeline**: Email → Mailgun MX → Route → Webhook → Database → Dashboard display working flawlessly
   * **Status**: Email forwarding automation fully operational for production customer emails
+- July 13, 2025. Email forwarding webhook system completely rebuilt and resolved:
+  * **Root Cause Identified**: Specific email addresses (timfulkermusic@gmail.com, tim@saxweddings.com) were creating "Unknown" entries due to cached/corrupted webhook processing
+  * **Clean Webhook Implementation**: Rebuilt webhook handler in server/index.ts with simple, robust email field extraction
+  * **Database Cleanup**: Removed all problematic "Unknown" entries that were corrupting email processing
+  * **Field Extraction Enhanced**: Comprehensive checking for From, Subject, and body fields across all Mailgun variations
+  * **Production Testing**: Clean webhook successfully processes timfulkermusic@gmail.com creating proper enquiry with full client details
+  * **Issue Resolution**: Previously problematic email addresses now work correctly with proper name/email extraction
+  * **Status**: Email forwarding system fully operational for all email addresses after clean rebuild
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
