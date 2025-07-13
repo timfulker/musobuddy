@@ -3,38 +3,48 @@
  */
 
 async function checkForNewEnquiries() {
-  console.log('Checking for new enquiries after #203...');
+  console.log('📧 Checking for new enquiries from your latest email...');
   
-  // Look for webhook activity in the server logs
-  // Since I can't access external API, let me check if webhook is receiving calls
+  // Test the webhook to ensure it's still working
+  try {
+    const testResponse = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        sender: 'Webhook Test <webhook@test.com>',
+        subject: 'Post-Email Test',
+        'body-plain': 'Testing webhook after email was sent'
+      })
+    });
+    
+    if (testResponse.ok) {
+      const result = await testResponse.json();
+      console.log('✅ Webhook is active and working');
+      console.log(`📊 Test enquiry created: ${result.enquiryId}`);
+      console.log(`📧 Processing type: ${result.processing}`);
+      console.log('');
+    }
+  } catch (error) {
+    console.log('❌ Webhook test failed:', error.message);
+  }
   
-  console.log('📊 STATUS CHECK:');
-  console.log('• Last known enquiry: #203');
-  console.log('• Debug webhook deployed successfully');
-  console.log('• Emails sent: 2');
-  console.log('• Expected: [DEBUG] enquiries with your email data');
-  
-  console.log('\n🔍 WHAT TO LOOK FOR IN DASHBOARD:');
-  console.log('• New enquiries with ID > 203');
-  console.log('• Enquiries with "[DEBUG]" in title');
-  console.log('• Client name should be from your email address');
-  console.log('• Notes should contain raw webhook data');
-  
-  console.log('\n📧 IF NO NEW ENQUIRIES APPEAR:');
-  console.log('• Check if emails reached spam/junk folder');
-  console.log('• Verify you sent to: leads@musobuddy.com');
-  console.log('• Wait 2-3 minutes for processing');
-  console.log('• Check Mailgun route configuration');
-  
-  console.log('\n🚨 CRITICAL DEBUG INFO:');
-  console.log('The debug webhook logs EVERYTHING - if no enquiries appear,');
-  console.log('it means emails are not reaching the webhook endpoint.');
-  console.log('This would indicate a Mailgun routing issue, not a code issue.');
-  
-  console.log('\n⏰ NEXT STEPS:');
-  console.log('1. Check your MusoBuddy dashboard now');
-  console.log('2. Look for enquiries with higher ID numbers');
-  console.log('3. If none appear, we need to check Mailgun route config');
+  console.log('🔍 Analysis based on database results:');
+  console.log('');
+  console.log('If you see a new enquiry with:');
+  console.log('✅ Your email address (timfulkermusic@gmail.com) - Email extraction working');
+  console.log('✅ Full message content - Enhanced parsing successful');
+  console.log('✅ Client name extracted - Smart name detection working');
+  console.log('');
+  console.log('❌ If you see "unknown@example.com" and "No message content":');
+  console.log('   - The webhook received the email but Mailgun sent it in an unexpected format');
+  console.log('   - We need to see the webhook inspection logs in the console');
+  console.log('   - Look for "🔍 === WEBHOOK DATA INSPECTION START ===" in the logs above');
+  console.log('');
+  console.log('📈 Expected behavior:');
+  console.log('Your email should have triggered the enhanced webhook with detailed logging');
+  console.log('showing exactly what fields Mailgun sent and how they were processed.');
 }
 
 checkForNewEnquiries();
