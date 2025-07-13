@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,30 +41,6 @@ export default function Calendar() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [location]);
-
-  // Form reset when dialog closes
-  useEffect(() => {
-    if (!isDialogOpen) {
-      form.reset();
-    }
-  }, [isDialogOpen, form]);
-
-  // Close sidebar on route change
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location]);
-
-  // Handle mobile responsiveness
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768 && sidebarOpen) {
-        setSidebarOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [sidebarOpen]);
 
   const form = useForm<z.infer<typeof bookingFormSchema>>({
     resolver: zodResolver(bookingFormSchema),
@@ -328,34 +304,15 @@ export default function Calendar() {
 
   const getBookingsForDate = (date: Date) => {
     try {
-      console.log("Getting bookings for date:", date.toDateString());
-      
+      console.log("Getting bookings for date:", date);
       const filteredBookings = bookings.filter((booking: Booking) => {
         const bookingDate = new Date(booking.eventDate);
-        
-        // Normalize both dates to avoid timezone issues
-        const normalizedBookingDate = new Date(
-          bookingDate.getFullYear(),
-          bookingDate.getMonth(),
-          bookingDate.getDate()
-        );
-        
-        const normalizedSelectedDate = new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate()
-        );
-        
-        const isMatch = normalizedBookingDate.getTime() === normalizedSelectedDate.getTime();
-        
-        if (isMatch) {
-          console.log(`✓ Booking ${booking.id} (${booking.eventDate}) matches ${date.toDateString()}`);
-        }
-        
+        // Use local date comparison to avoid timezone issues
+        const isMatch = bookingDate.toDateString() === date.toDateString();
+        console.log(`Booking ${booking.id} (${booking.eventDate}) matches ${date.toDateString()}:`, isMatch);
         return isMatch;
       });
-      
-      console.log(`Found ${filteredBookings.length} bookings for ${date.toDateString()}`);
+      console.log("Filtered bookings:", filteredBookings);
       return filteredBookings;
     } catch (error) {
       console.error("Error filtering bookings for date:", error);
@@ -374,7 +331,6 @@ export default function Calendar() {
 
   // Get potential bookings from enquiries and contracts
   const getPotentialBookings = () => {
-    console.log("Calculating potential bookings...");
     const potentialEvents = [];
     
     // Add enquiries with dates, filtering expired ones unless toggle is enabled
@@ -425,63 +381,7 @@ export default function Calendar() {
     return potentialEvents;
   };
 
-  // Memoize potential bookings to avoid recalculation on every render
-  const potentialBookings = useMemo(() => {
-    return getPotentialBookings();
-  }, [enquiries, contracts, bookings, showExpiredEnquiries]);
-
-  // Get potential bookings from enquiries and contracts (original function to be replaced)
-  const getPotentialBookingsOriginal = () => {
-    const potentialEvents = [];
-    
-    // Add enquiries with dates, filtering expired ones unless toggle is enabled
-    enquiries.forEach((enquiry: any) => {
-      if (enquiry.eventDate) {
-        const isExpired = isEnquiryExpired(enquiry);
-        
-        // Skip expired enquiries if toggle is off
-        if (isExpired && !showExpiredEnquiries) {
-          return;
-        }
-        
-        potentialEvents.push({
-          id: `enquiry-${enquiry.id}`,
-          title: enquiry.title,
-          clientName: enquiry.clientName,
-          eventDate: enquiry.eventDate,
-          eventTime: enquiry.eventTime || 'TBC',
-          venue: enquiry.venue || 'TBC',
-          fee: enquiry.estimatedValue || 0,
-          status: `enquiry-${enquiry.status}`,
-          source: 'enquiry',
-          isExpired: isExpired
-        });
-      }
-    });
-    
-    // Add signed contracts that don't have bookings yet
-    contracts.forEach((contract: any) => {
-      if (contract.status === 'signed') {
-        const hasBooking = bookings.some((b: Booking) => b.contractId === contract.id);
-        if (!hasBooking) {
-          potentialEvents.push({
-            id: `contract-${contract.id}`,
-            title: `${contract.clientName} Performance`,
-            clientName: contract.clientName,
-            eventDate: contract.eventDate,
-            eventTime: contract.eventTime,
-            venue: contract.venue,
-            fee: contract.fee,
-            status: 'contract-signed',
-            source: 'contract'
-          });
-        }
-      }
-    });
-    
-    return potentialEvents;
-  };
-
+  const potentialBookings = getPotentialBookings();
   const selectedDateBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
   
   const getSelectedDatePotentialBookings = () => {
@@ -1144,8 +1044,7 @@ export default function Calendar() {
                           </Button>
                         </div>
                       </div>
-                    </div>
-                  );
+                    );
                   })}
                   
                   {/* Potential Bookings */}
@@ -1237,8 +1136,8 @@ export default function Calendar() {
                     </div>
                   ))}
                 </div>
-                )
-              )}
+              )
+            )}
             </CardContent>
           </Card>
 
