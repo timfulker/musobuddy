@@ -3,47 +3,55 @@
  */
 
 async function checkForNewEnquiries() {
-  console.log('🔍 Checking for new enquiries...');
-  
-  const testResponse = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      sender: 'monitor@test.com',
-      recipient: 'leads@musobuddy.com',
-      subject: 'Monitor check',
-      'body-plain': 'Checking current enquiry count'
-    })
-  });
-  
-  const result = await testResponse.json();
-  console.log(`📊 Latest enquiry ID: ${result.enquiryId}`);
-  
-  return result.enquiryId;
+  try {
+    const response = await fetch('https://musobuddy.replit.app/api/enquiries', {
+      headers: {
+        'Cookie': 'connect.sid=s%3A9lhgXLFfKsKYMxPqRLgKFjfHJhbXoIHT.xjMH5lQyHLWUNLhFqeqeLgE7HkWFfFmGAHgJRvfDFvU'
+      }
+    });
+    
+    if (response.ok) {
+      const enquiries = await response.json();
+      console.log('📋 Total enquiries:', enquiries.length);
+      
+      // Show the 3 most recent enquiries
+      const recent = enquiries.slice(0, 3);
+      console.log('\n🔍 Recent enquiries:');
+      recent.forEach(enquiry => {
+        console.log(`  ID: ${enquiry.id} | Client: ${enquiry.clientName} | Email: ${enquiry.clientEmail} | Status: ${enquiry.status}`);
+        console.log(`  Title: ${enquiry.title}`);
+        console.log(`  Notes: ${enquiry.notes ? enquiry.notes.substring(0, 100) + '...' : 'No notes'}`);
+        console.log('  ---');
+      });
+    } else {
+      console.log('❌ Failed to fetch enquiries:', response.status);
+    }
+  } catch (error) {
+    console.error('❌ Error fetching enquiries:', error.message);
+  }
 }
 
 async function startMonitoring() {
-  const startingId = await checkForNewEnquiries();
-  console.log(`🎯 Starting monitoring from enquiry ID: ${startingId}`);
-  console.log('Waiting for your email...');
+  console.log('📧 Monitoring for new enquiries from timfulkermusic@gmail.com...');
+  console.log('⏰ Checking every 10 seconds for 2 minutes...');
   
-  // Check every 5 seconds for new enquiries
+  let checks = 0;
+  const maxChecks = 12; // 2 minutes
+  
   const interval = setInterval(async () => {
-    const currentId = await checkForNewEnquiries();
-    if (currentId > startingId) {
-      console.log(`🎉 NEW ENQUIRY DETECTED! ID: ${currentId}`);
-      console.log('Check your dashboard and console logs for webhook data!');
+    checks++;
+    console.log(`\n🔍 Check ${checks}/${maxChecks} - ${new Date().toLocaleTimeString()}`);
+    
+    await checkForNewEnquiries();
+    
+    if (checks >= maxChecks) {
       clearInterval(interval);
+      console.log('\n⏰ Monitoring complete. If no new enquiry appeared, check Mailgun route configuration.');
     }
-  }, 5000);
+  }, 10000);
   
-  // Stop monitoring after 2 minutes
-  setTimeout(() => {
-    clearInterval(interval);
-    console.log('⏰ Monitoring stopped');
-  }, 120000);
+  // Initial check
+  await checkForNewEnquiries();
 }
 
 startMonitoring();

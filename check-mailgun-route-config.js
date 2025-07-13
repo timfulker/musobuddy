@@ -2,85 +2,54 @@
  * Check Mailgun route configuration directly
  */
 
-const https = require('https');
-
 async function testWebhookDirectly() {
-  console.log('🔍 Testing webhook endpoint directly...');
+  console.log('Testing webhook endpoint directly...');
   
-  const testData = JSON.stringify({
-    "timestamp": "1752325000",
-    "token": "test-token-123",
-    "signature": "test-signature-456",
-    "subject": "Test during lunch break",
-    "from": "test@example.com",
-    "to": "leads@musobuddy.com",
-    "body-plain": "This is a test email sent during lunch break to verify webhook functionality.",
-    "stripped-text": "This is a test email sent during lunch break to verify webhook functionality."
-  });
-
-  const options = {
-    hostname: 'musobuddy.replit.app',
-    port: 443,
-    path: '/api/webhook/mailgun',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(testData)
-    }
+  const testData = {
+    sender: 'timfulkermusic@gmail.com',
+    subject: 'Test from check script',
+    'body-plain': 'Testing webhook directly'
   };
-
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
-      let data = '';
-
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      res.on('end', () => {
-        console.log(`📊 Webhook Response Status: ${res.statusCode}`);
-        console.log(`📝 Response: ${data}`);
-        resolve({ status: res.statusCode, data: data });
-      });
+  
+  try {
+    const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(testData)
     });
-
-    req.on('error', (error) => {
-      console.log(`❌ Webhook Test Error: ${error.message}`);
-      resolve({ error: error.message });
-    });
-
-    req.write(testData);
-    req.end();
-  });
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Webhook is working:', result.enquiryId);
+    } else {
+      console.log('❌ Webhook failed:', response.status);
+    }
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+  }
 }
 
 async function checkCurrentStatus() {
-  console.log('🔍 MAILGUN EMAIL FORWARDING STATUS CHECK');
-  console.log('=====================================\n');
+  console.log('=== MAILGUN ROUTE CONFIGURATION CHECK ===');
+  console.log('');
+  console.log('Based on your Mailgun logs showing "OK" status but no webhook activity,');
+  console.log('the issue is likely in the Mailgun route configuration.');
+  console.log('');
+  console.log('🔧 SOLUTION:');
+  console.log('1. Go to Mailgun Dashboard → Receiving → Routes');
+  console.log('2. Find your route and verify the Action URL is:');
+  console.log('   https://musobuddy.replit.app/api/webhook/mailgun');
+  console.log('');
+  console.log('3. If the URL is different, update it to the correct one above');
+  console.log('');
+  console.log('4. Make sure Expression is: catch_all()');
+  console.log('5. Priority should be: 0');
+  console.log('');
+  console.log('Let me test the webhook endpoint to confirm it works:');
   
-  console.log('📧 Test email sent during lunch break');
-  console.log('⏰ Current time: ' + new Date().toISOString());
-  console.log('🎯 Expected: New enquiry creation if email forwarding works\n');
-  
-  // Test webhook directly
-  const webhookResult = await testWebhookDirectly();
-  
-  console.log('\n📋 ANALYSIS:');
-  
-  if (webhookResult.status === 200) {
-    console.log('✅ Webhook endpoint is accessible and working');
-    console.log('🔍 Issue likely: Email not reaching webhook from Mailgun');
-    console.log('🔧 Next steps: Check Mailgun route configuration');
-  } else {
-    console.log('❌ Webhook endpoint has issues');
-    console.log('🔧 Next steps: Fix webhook endpoint first');
-  }
-  
-  console.log('\n🎯 ROOT CAUSE ANALYSIS:');
-  console.log('1. DMARC record exists on Google DNS (Gmail should accept)');
-  console.log('2. Webhook endpoint tested: ' + (webhookResult.status === 200 ? 'WORKING' : 'FAILED'));
-  console.log('3. Email delivery chain: Gmail → Mailgun → Route → Webhook');
-  console.log('4. Most likely issue: Mailgun route configuration or email routing');
+  await testWebhookDirectly();
 }
 
 checkCurrentStatus();

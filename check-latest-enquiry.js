@@ -3,40 +3,34 @@
  */
 
 async function checkLatestEnquiry() {
-  console.log('🔍 Checking for your latest email...');
-  
-  // Test webhook to get current enquiry count
-  const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      sender: 'counter@test.com',
-      subject: 'Counter check',
-      'body-plain': 'Getting current count'
-    })
-  });
-  
-  const result = await response.json();
-  const currentId = result.enquiryId;
-  
-  console.log(`📊 Latest enquiry ID: ${currentId}`);
-  
-  if (currentId > 231) {
-    console.log(`🎉 YOUR EMAIL WORKED! New enquiry ID: ${currentId}`);
-    console.log('Check your dashboard to see if the subject and content are correct');
+  try {
+    const response = await fetch('https://musobuddy.replit.app/api/enquiries');
     
-    // Check if it has the correct subject
-    if (result.subject && result.subject.includes('Testing fixed webhook')) {
-      console.log('✅ Subject parsing is working!');
+    if (response.ok) {
+      const enquiries = await response.json();
+      const latest = enquiries[0];
+      
+      console.log('📧 Latest enquiry:');
+      console.log(`  ID: ${latest.id}`);
+      console.log(`  Client: ${latest.clientName}`);
+      console.log(`  Email: ${latest.clientEmail}`);
+      console.log(`  Title: ${latest.title}`);
+      console.log(`  Created: ${new Date(latest.createdAt).toLocaleString()}`);
+      console.log(`  Status: ${latest.status}`);
+      
+      // Check if it's from timfulkermusic@gmail.com
+      if (latest.clientEmail === 'timfulkermusic@gmail.com') {
+        console.log('\n✅ SUCCESS: Email from timfulkermusic@gmail.com was processed!');
+      } else {
+        console.log('\n❌ Latest enquiry is not from timfulkermusic@gmail.com');
+        console.log('   This means the email may not have reached the webhook yet');
+      }
+      
     } else {
-      console.log('❌ Subject parsing still needs work');
+      console.log('❌ Failed to fetch enquiries:', response.status);
     }
-    
-  } else {
-    console.log('❌ Your email did not create a new enquiry');
-    console.log('This means it either failed or is taking time to process');
+  } catch (error) {
+    console.error('❌ Error:', error.message);
   }
 }
 
