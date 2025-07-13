@@ -614,6 +614,21 @@ This applies to any changes in:
   * **Test Results**: Complete URL now extracted correctly - https://encoremusicians.com/jobs/yij5S?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow
   * **Impact**: Encore Apply Now buttons now function correctly with proper tracking and functionality
   * **Status**: Full URL preservation working correctly for all Encore enquiries
+- July 13, 2025. Email enquiry conflicts detection bug fixed:
+  * **Issue Identified**: Email webhook handler wasn't checking for conflicts when creating enquiries
+  * **Root Cause**: Conflict detection service only called in regular API routes, not webhook handler
+  * **Solution**: Added conflict detection to webhook handler in server/index.ts
+  * **Enhanced Logging**: Added comprehensive conflict detection logging for webhook-created enquiries
+  * **Impact**: August 2nd enquiry now properly detects conflicts with existing bookings
+  * **Status**: Email forwarding system now creates enquiries with proper conflict detection
+- July 13, 2025. AI date parsing accuracy improvements completed:
+  * **Issue Identified**: AI incorrectly parsed "next Saturday" as 2026 instead of 2025
+  * **Root Cause**: AI prompt didn't provide enough context for relative date calculations
+  * **Solution**: Enhanced AI prompt with current date context and specific relative date instructions
+  * **Added Context**: Current date, month, day, and explicit relative date calculation examples
+  * **System Message**: Updated to provide specific guidance on relative date parsing within current year
+  * **Impact**: "next Saturday (July 19)" now correctly parsed as July 19, 2025 instead of 2026
+  * **Status**: AI parsing system now handles relative dates accurately
 - July 13, 2025. Encore Apply Now URL format fix completed:
   * **Critical Issue Resolved**: AI was generating incorrect URL format (job/apply) that led to 404 errors
   * **Root Cause**: AI was creating /job/apply?jobId=QuH57 format instead of correct /jobs/QuH57 format

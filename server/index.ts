@@ -32,6 +32,8 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
 
   try {
     const currentYear = new Date().getFullYear();
+    const currentDate = new Date();
+    
     // Pre-process the email body to replace "next year" with the actual year
     const processedBody = emailBody.replace(/next year/gi, `${currentYear + 1}`);
     const processedSubject = subject.replace(/next year/gi, `${currentYear + 1}`);
@@ -44,9 +46,12 @@ Email Body: "${processedBody}"
 CURRENT CONTEXT:
 - Today's date: ${new Date().toISOString().split('T')[0]}
 - Current year: ${currentYear}
+- Current month: ${currentDate.getMonth() + 1}
+- Current day: ${currentDate.getDate()}
 
 CRITICAL INSTRUCTIONS:
 1. Find the ACTUAL EVENT DATE - look for "Sunday 24 Aug 2025", "Aug 24", "24 Aug 2025" etc. NOT email send dates like "13 Jul 2025 at 15:42"
+2. RELATIVE DATE PARSING: For relative dates like "next Saturday", "next Friday", calculate from today's date (${new Date().toISOString().split('T')[0]}) within the current year (${currentYear}) unless explicitly stated otherwise.
 2. Find the ACTUAL VENUE - look for location names like "Bognor Regis", "Brighton", city names, NOT email addresses or timestamps
 3. Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
 4. ENCORE DETECTION: Look for "Apply Now" buttons or links - these are typically from Encore booking platform
@@ -70,7 +75,7 @@ Return valid JSON only:`;
       messages: [
         { 
           role: "system", 
-          content: `You are parsing emails in July 2025. When someone says "next year", they mean 2026. Current year is ${currentYear}. Next year is ${currentYear + 1}.` 
+          content: `You are parsing emails in July 2025. When someone says "next year", they mean 2026. Current year is ${currentYear}. Next year is ${currentYear + 1}. For relative dates like "next Saturday", "next Friday", calculate from today's date (${new Date().toISOString().split('T')[0]}) within the current year (${currentYear}) unless explicitly stated otherwise. If the email says "next Saturday" and today is July 13, 2025, "next Saturday" would be July 19, 2025 (not 2026).` 
         },
         { role: "user", content: prompt }
       ],
@@ -197,6 +202,26 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     
     const newEnquiry = await storage.createEnquiry(enquiry);
     console.log(`✅ [${requestId}] Created enquiry #${newEnquiry.id}`);
+    
+    // Check for conflicts after creating enquiry
+    if (newEnquiry.eventDate) {
+      try {
+        const { ConflictDetectionService } = await import('./conflict-detection');
+        const conflictService = new ConflictDetectionService(storage);
+        const { conflicts, analysis } = await conflictService.checkEnquiryConflicts(newEnquiry, enquiry.userId);
+        
+        if (conflicts.length > 0 && analysis) {
+          console.log(`⚠️ [${requestId}] CONFLICT DETECTED: ${conflicts.length} conflicts found`);
+          console.log(`⚠️ [${requestId}] Conflict severity: ${analysis.severity}`);
+          console.log(`⚠️ [${requestId}] Conflicts with:`, conflicts.map(c => `${c.type} #${c.id} - ${c.title}`));
+          
+          // Save conflict to database for tracking
+          await conflictService.saveConflict(enquiry.userId, newEnquiry.id, conflicts[0], analysis);
+        }
+      } catch (error) {
+        console.error(`❌ [${requestId}] Error checking conflicts:`, error);
+      }
+    }
     
     res.status(200).json({
       success: true,
