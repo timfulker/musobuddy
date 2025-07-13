@@ -8,6 +8,8 @@ const app = express();
 
 // Initialize OpenAI client
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+console.log('🤖 OpenAI client initialized:', !!openai);
+console.log('🤖 API key exists:', !!process.env.OPENAI_API_KEY);
 
 // AI-Enhanced Email Parsing Function
 async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
