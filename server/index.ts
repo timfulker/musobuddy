@@ -51,15 +51,20 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
   });
   
   try {
-    // Enhanced email extraction with all possible Mailgun field names
+    // Enhanced email extraction with ALL possible Mailgun field names including route forwarding
     console.log('🔍 EMAIL EXTRACTION TEST:');
     const extractedEmail = req.body.sender || req.body.From || req.body.from || 
-                          req.body['From'] || req.body['sender'] || 'NOT_FOUND';
+                          req.body['From'] || req.body['sender'] || 
+                          req.body['envelope[from]'] || req.body.envelope?.from ||
+                          req.body['X-Envelope-From'] || req.body['Return-Path'] ||
+                          req.body['Reply-To'] || req.body['reply-to'] || 'NOT_FOUND';
     const extractedSubject = req.body.subject || req.body.Subject || 
-                           req.body['Subject'] || req.body['subject'] || 'NOT_FOUND';
+                           req.body['Subject'] || req.body['subject'] || 
+                           req.body['X-Subject'] || 'NOT_FOUND';
     const extractedText = req.body['body-plain'] || req.body['stripped-text'] || 
                          req.body.text || req.body['body-text'] || 
                          req.body['stripped-text'] || req.body['Text'] || 
+                         req.body['body-mime'] || req.body['body-calendar'] ||
                          req.body['stripped-html'] || req.body['body-html'] || 'NOT_FOUND';
     
     console.log('📧 Extracted FROM:', extractedEmail);
@@ -74,10 +79,11 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
     // Special handling for HTML content when plain text isn't available
     let bodyText = extractedText;
     if (bodyText === 'NOT_FOUND' || !bodyText || bodyText.trim() === '') {
-      const htmlContent = req.body['body-html'] || req.body['stripped-html'] || req.body.html || 'NOT_FOUND';
+      const htmlContent = req.body['body-html'] || req.body['stripped-html'] || req.body.html || 
+                         req.body['body-mime'] || req.body['attachments'] || 'NOT_FOUND';
       if (htmlContent && htmlContent !== 'NOT_FOUND') {
         // Simple HTML to text conversion for basic content extraction
-        bodyText = htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+        bodyText = htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim();
         console.log('📧 Used HTML content, converted to text:', bodyText.substring(0, 100));
       }
     }

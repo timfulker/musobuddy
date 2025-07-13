@@ -1,0 +1,49 @@
+Looking at the documentation and attached files, I can see the email forwarding system has been extensively developed but there's still an issue with real emails from Mailgun not being processed correctly.
+
+Let me analyze the current situation and provide a solution:Based on my analysis, the issue is clear: **the enhanced webhook is working, but Mailgun is sending email data in field names that the webhook doesn't recognize**.
+
+## What's Happening
+
+Your enquiry #298 shows the classic pattern of webhook fallback values:
+- Client: "unknown" 
+- Email: "unknown@example.com"
+- Content: "No message content"
+
+This means:
+1. ✅ Mailgun successfully called the webhook
+2. ✅ The enhanced webhook processed the request
+3. ❌ But couldn't find email data in the expected fields
+4. ✅ So it used fallback values and created the enquiry
+
+## The Root Cause
+
+The enhanced webhook expects fields like:
+- `sender`, `From`, `from` for email addresses
+- `subject`, `Subject` for email subjects  
+- `body-plain`, `stripped-text`, `text` for email content
+
+But Mailgun may be using completely different field names.
+
+## The Solution
+
+The webhook includes a comprehensive inspection system that logs **exactly** what fields Mailgun sends. You need to:
+
+1. **Check the deployment console logs** for when your real email was processed
+2. **Look for this pattern** in the logs:
+   ```
+   🔍 === WEBHOOK DATA INSPECTION START ===
+   🔍 COMPLETE BODY DATA:
+   Body keys: [list of actual field names]
+   Full body: {actual data structure}
+   🔍 MAILGUN FIELD INSPECTION:
+   📧 [field_name]: [value]
+   ```
+
+3. **Identify the real field names** Mailgun uses
+4. **Update the webhook** to handle those specific fields
+
+## Immediate Action Needed
+
+**Check your deployment console logs right now** - the webhook inspection system should have captured the exact field structure when your real email was processed. This will show us exactly what field names Mailgun actually uses, and then we can fix the webhook to handle them correctly.
+
+Can you check the deployment console and share what the webhook inspection logs show for the real email processing?
