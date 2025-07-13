@@ -93,6 +93,25 @@ export default function Contracts() {
     queryKey: ["/api/settings"],
   });
 
+  // Initialize form first before any useEffect
+  const form = useForm<z.infer<typeof contractFormSchema>>({
+    resolver: zodResolver(contractFormSchema),
+    defaultValues: {
+      enquiryId: 0,
+      contractNumber: "",
+      clientName: "",
+      clientEmail: "",
+      clientPhone: "",
+      eventDate: "",
+      eventTime: "",
+      venue: "",
+      fee: "",
+      deposit: "",
+      terms: "",
+      status: "draft",
+    },
+  });
+
   // Check URL params to auto-open form dialog and auto-fill with enquiry data
   React.useEffect(() => {
     try {
@@ -182,40 +201,7 @@ export default function Contracts() {
     },
   });
 
-  const form = useForm<z.infer<typeof contractFormSchema>>({
-    resolver: zodResolver(contractFormSchema),
-    defaultValues: {
-      enquiryId: 0,
-      contractNumber: "",
-      clientName: "",
-      clientEmail: "",
-      clientPhone: "",
-      eventDate: "",
-      eventTime: "",
-      venue: "",
-      fee: "",
-      deposit: "",
-      terms: "",
-      status: "draft",
-    },
-  });
 
-  // Ensure form is properly initialized
-  if (!form) {
-    return (
-      <div className="flex min-h-screen">
-        {isDesktop && <Sidebar />}
-        <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <p className="text-red-600">Form initialization error. Please refresh the page.</p>
-            </div>
-          </div>
-        </div>
-        {!isDesktop && <MobileNav />}
-      </div>
-    );
-  }
 
   // Email sending mutation
   const sendEmailMutation = useMutation({
