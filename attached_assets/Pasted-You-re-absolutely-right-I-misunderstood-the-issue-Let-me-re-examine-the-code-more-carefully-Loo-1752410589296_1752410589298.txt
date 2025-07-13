@@ -1,0 +1,71 @@
+You're absolutely right - I misunderstood the issue. Let me re-examine the code more carefully.
+
+Looking at the webhook handler in `server/index.ts`, I can see the issue now. The problem is likely in the **email extraction and validation logic** that's specifically rejecting certain email addresses that were "heavily tested."
+
+Let me analyze the actual webhook code:
+
+```javascript
+// Extract client email
+const emailMatch = from.match(/[\w.-]+@[\w.-]+\.\w+/);
+const clientEmail = emailMatch ? emailMatch[0] : from;
+```
+
+And looking at the enquiry creation:
+
+```javascript
+const enquiry = {
+  userId: '43963086',
+  title: subject,
+  clientName,
+  clientEmail,  // This field might be causing validation issues
+  // ... other fields
+};
+
+const newEnquiry = await storage.createEnquiry(enquiry);
+```
+
+The issue is likely in one of these areas:
+
+1. **Database-level email validation/constraints** that reject specific email addresses after heavy testing
+2. **Cached validation state** that remembers previously "problematic" emails
+3. **Rate limiting or spam detection** built into the system
+4. **Database unique constraints** or triggers that block certain emails
+
+Looking at your `storage.ts` file, in the `createEnquiry` method:
+
+```javascript
+async createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry> {
+  console.log('🔍 Storage createEnquiry called');
+  // ... logging
+  
+  const [newEnquiry] = await db
+    .insert(enquiries)
+    .values(processedEnquiry)
+    .returning();
+  return newEnquiry;
+}
+```
+
+The issue is likely that `timfulkermusic@gmail.com` has been flagged or cached somewhere as problematic due to heavy testing, causing the system to either:
+
+1. **Reject the email at database level** (unique constraint, trigger)
+2. **Skip processing** due to some validation rule
+3. **Default to "Unknown" values** when this specific email is encountered
+
+**Questions to investigate:**
+
+1. **Check your PostgreSQL database** - are there any triggers, constraints, or rules that might be blocking `timfulkermusic@gmail.com`?
+
+2. **Check for email validation caching** - is there any caching mechanism that remembers "bad" emails from testing?
+
+3. **Check the `enquiries` table schema** - are there any unique constraints on `clientEmail` that might be causing silent failures?
+
+4. **Check application-level validation** - is there any code that validates email addresses and rejects specific ones?
+
+Can you run this SQL query on your database to check if there are existing records for this email:
+
+```sql
+SELECT * FROM enquiries WHERE client_email = 'timfulkermusic@gmail.com' ORDER BY created_at DESC LIMIT 10;
+```
+
+Also, can you add more detailed logging to see exactly what's happening with this specific email address in the webhook processing?
