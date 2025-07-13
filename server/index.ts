@@ -17,69 +17,47 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// MINIMAL DIAGNOSTIC WEBHOOK
+// CLEAN EMAIL FORWARDING WEBHOOK
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
-  console.log(`🔍 [${requestId}] DIAGNOSTIC WEBHOOK START`);
+  console.log(`📧 [${requestId}] Email webhook received`);
   
   try {
-    // Store webhook data in database for analysis
-    const webhookData = {
-      requestId,
-      timestamp: new Date().toISOString(),
-      allKeys: Object.keys(req.body || {}),
-      fromField: req.body.From || req.body.from || req.body.sender,
-      subjectField: req.body.Subject || req.body.subject,
-      bodyField: req.body['body-plain'] || req.body['stripped-text'] || req.body.text || req.body.message,
-      fullPayload: JSON.stringify(req.body)
-    };
+    // Extract email data with comprehensive field checking
+    const fromField = req.body.From || req.body.from || req.body.sender || req.body['from-field'] || '';
+    const subjectField = req.body.Subject || req.body.subject || req.body['subject-field'] || '';
+    const bodyField = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || req.body.message || req.body.body || '';
     
-    // Insert webhook debug data into database
-    await db.insert(enquiries).values({
-      userId: 'debug-user',
-      title: `WEBHOOK DEBUG ${requestId}`,
-      clientName: `Debug: ${webhookData.fromField}`,
-      clientEmail: `debug@webhook.com`,
-      notes: `Keys: ${webhookData.allKeys.join(', ')}
-From: ${webhookData.fromField}
-Subject: ${webhookData.subjectField}
-Body: ${webhookData.bodyField}
-
-Full payload: ${webhookData.fullPayload}`
-    });
+    console.log(`📧 [${requestId}] From: "${fromField}"`);
+    console.log(`📧 [${requestId}] Subject: "${subjectField}"`);
+    console.log(`📧 [${requestId}] Body length: ${bodyField.length}`);
     
-    // Extract fields with fallbacks
-    const from = req.body.From || req.body.from || req.body.sender || 'NO_FROM_FIELD';
-    const subject = req.body.Subject || req.body.subject || 'NO_SUBJECT_FIELD';
-    const body = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || 'NO_BODY_FIELD';
+    // Extract client email
+    let clientEmail = '';
+    const emailMatch = fromField.match(/[\w.-]+@[\w.-]+\.\w+/);
+    if (emailMatch) {
+      clientEmail = emailMatch[0];
+    }
     
-    console.log(`🔍 [${requestId}] Extracted - From: "${from}"`);
-    console.log(`🔍 [${requestId}] Extracted - Subject: "${subject}"`);
-    console.log(`🔍 [${requestId}] Extracted - Body length: ${body.length}`);
-    
-    // Test email extraction
-    const emailMatch = from.match(/[\w.-]+@[\w.-]+\.\w+/);
-    const clientEmail = emailMatch ? emailMatch[0] : from;
-    console.log(`🔍 [${requestId}] Email extraction - Match: ${!!emailMatch}, Result: "${clientEmail}"`);
-    
-    // Test name extraction
+    // Extract client name
     let clientName = 'Unknown';
-    if (from.includes('<')) {
-      const nameMatch = from.match(/^([^<]+)/);
+    if (fromField.includes('<')) {
+      // Format: "John Doe <john@example.com>"
+      const nameMatch = fromField.match(/^([^<]+)/);
       if (nameMatch) {
         clientName = nameMatch[1].trim();
       }
-    } else if (clientEmail && clientEmail !== 'NO_FROM_FIELD') {
+    } else if (clientEmail) {
+      // Use email username as name
       clientName = clientEmail.split('@')[0];
     }
-    console.log(`🔍 [${requestId}] Name extraction result: "${clientName}"`);
     
-    // Create enquiry object
+    // Create enquiry
     const enquiry = {
       userId: '43963086',
-      title: subject !== 'NO_SUBJECT_FIELD' ? subject : `Email from ${clientName}`,
+      title: subjectField || `Email from ${clientName}`,
       clientName,
-      clientEmail: clientEmail !== 'NO_FROM_FIELD' ? clientEmail : null,
+      clientEmail: clientEmail || null,
       clientPhone: null,
       eventDate: null,
       eventTime: null,
@@ -90,75 +68,27 @@ Full payload: ${webhookData.fullPayload}`
       gigType: null,
       estimatedValue: null,
       status: 'new' as const,
-      notes: body !== 'NO_BODY_FIELD' ? body : 'Email enquiry with no body content',
+      notes: bodyField || 'Email enquiry with no body content',
       responseNeeded: true,
       lastContactedAt: null
     };
     
-    console.log(`🔍 [${requestId}] Enquiry object:`, JSON.stringify(enquiry, null, 2));
+    console.log(`📧 [${requestId}] Creating enquiry for: ${clientName} (${clientEmail})`);
     
-    // Validate critical fields
-    if (!enquiry.userId || !enquiry.title || !enquiry.clientName || !enquiry.status) {
-      console.log(`❌ [${requestId}] VALIDATION FAILED - Missing required fields`);
-      console.log(`❌ [${requestId}] userId: ${!!enquiry.userId}`);
-      console.log(`❌ [${requestId}] title: ${!!enquiry.title}`);
-      console.log(`❌ [${requestId}] clientName: ${!!enquiry.clientName}`);
-      console.log(`❌ [${requestId}] status: ${!!enquiry.status}`);
-      
-      return res.status(200).json({
-        success: false,
-        error: 'Validation failed',
-        enquiry,
-        requestId
-      });
-    }
-    
-    // Database insertion with detailed error logging
-    console.log(`🔍 [${requestId}] Attempting database insertion...`);
-    
-    try {
-      const newEnquiry = await storage.createEnquiry(enquiry);
-      console.log(`✅ [${requestId}] SUCCESS - Database record created: ${newEnquiry.id}`);
-      
-      res.status(200).json({
-        success: true,
-        enquiryId: newEnquiry.id,
-        clientName: enquiry.clientName,
-        clientEmail: enquiry.clientEmail,
-        requestId
-      });
-      
-    } catch (dbError: any) {
-      console.log(`❌ [${requestId}] DATABASE ERROR:`, dbError.message);
-      console.log(`❌ [${requestId}] Error code:`, dbError.code);
-      console.log(`❌ [${requestId}] Error constraint:`, dbError.constraint);
-      console.log(`❌ [${requestId}] Error detail:`, dbError.detail);
-      console.log(`❌ [${requestId}] Error stack:`, dbError.stack);
-      
-      // Return success to Mailgun but log the error
-      res.status(200).json({
-        success: false,
-        error: 'Database error',
-        dbErrorMessage: dbError.message,
-        dbErrorCode: dbError.code,
-        enquiry,
-        requestId
-      });
-    }
-    
-  } catch (generalError: any) {
-    console.log(`❌ [${requestId}] GENERAL ERROR:`, generalError.message);
-    console.log(`❌ [${requestId}] Error stack:`, generalError.stack);
+    const newEnquiry = await storage.createEnquiry(enquiry);
+    console.log(`✅ [${requestId}] Created enquiry #${newEnquiry.id}`);
     
     res.status(200).json({
-      success: false,
-      error: 'General processing error',
-      message: generalError.message,
-      requestId
+      success: true,
+      enquiryId: newEnquiry.id,
+      clientName: enquiry.clientName,
+      clientEmail: enquiry.clientEmail
     });
+    
+  } catch (error: any) {
+    console.error(`❌ [${requestId}] Error:`, error.message);
+    res.status(200).json({ success: false, error: error.message });
   }
-  
-  console.log(`🔍 [${requestId}] DIAGNOSTIC WEBHOOK END`);
 });
 
 console.log('✅ Dedicated webhook handler registered');
