@@ -766,8 +766,7 @@ export default function Calendar() {
             onMonthChange={setCurrentDate}
             modifiers={calendarModifiers}
             modifiersClassNames={calendarModifiersClassNames}
-            className="rounded-md border w-full scale-150 transform-gpu"
-            style={{ fontSize: '1.2rem' }}
+            className="rounded-md border w-full [&_table]:w-full [&_td]:h-12 [&_td]:w-12 [&_th]:h-12 [&_th]:w-12 [&_button]:h-10 [&_button]:w-10 [&_button]:text-base"
           />
         );
       case "year":
@@ -782,8 +781,7 @@ export default function Calendar() {
             onMonthChange={setCurrentDate}
             modifiers={calendarModifiers}
             modifiersClassNames={calendarModifiersClassNames}
-            className="rounded-md border w-full scale-150 transform-gpu"
-            style={{ fontSize: '1.2rem' }}
+            className="rounded-md border w-full [&_table]:w-full [&_td]:h-12 [&_td]:w-12 [&_th]:h-12 [&_th]:w-12 [&_button]:h-10 [&_button]:w-10 [&_button]:text-base"
           />
         );
     }
@@ -1039,11 +1037,9 @@ export default function Calendar() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-8">
-                  <div className="flex justify-center mb-6">
-                    <div className="w-full max-w-none">
-                      {renderCalendarView()}
-                    </div>
+                <CardContent className="p-6">
+                  <div className="mb-6">
+                    {renderCalendarView()}
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2 text-xs">
