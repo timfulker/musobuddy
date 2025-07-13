@@ -331,6 +331,15 @@ export default function Enquiries() {
     return new Date(dateString).toLocaleDateString("en-GB");
   };
 
+  const formatDateBox = (dateString: string) => {
+    if (!dateString) return { dayName: "TBC", dayNum: "-", monthYear: "" };
+    const date = new Date(dateString);
+    const dayName = date.toLocaleDateString("en-GB", { weekday: "long" });
+    const dayNum = date.getDate().toString();
+    const monthYear = date.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+    return { dayName, dayNum, monthYear };
+  };
+
   const formatTime = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -745,159 +754,176 @@ export default function Enquiries() {
               </CardContent>
             </Card>
           ) : (
-            filteredEnquiries.map((enquiry: Enquiry) => (
-              <Card key={enquiry.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="relative">
-                    <div className="absolute top-0 right-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteEnquiry(enquiry)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="pr-12">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{enquiry.title}</h3>
-                        <div className="flex items-center space-x-2">
-                          {needsResponse(enquiry) && (
-                            <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
-                              <AlertCircle className="w-3 h-3" />
-                              <span>Response needed</span>
+            filteredEnquiries.map((enquiry: Enquiry) => {
+              const dateBox = formatDateBox(enquiry.eventDate!);
+              return (
+                <Card key={enquiry.id} className="hover:shadow-md transition-shadow bg-white">
+                  <CardContent className="p-6">
+                    <div className="relative">
+                      <div className="absolute top-0 right-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteEnquiry(enquiry)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="pr-12 flex gap-6">
+                        {/* Date Box - Encore Style */}
+                        <div className="flex-shrink-0 w-20 h-20 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center bg-white">
+                          <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
+                          <div className="text-2xl font-bold text-gray-900">{dateBox.dayNum}</div>
+                          <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+                        </div>
+                        
+                        {/* Main Content */}
+                        <div className="flex-1">
+                          {/* Price and Status Row */}
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-2xl font-bold text-green-600">
+                              {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {needsResponse(enquiry) && (
+                                <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+                                  <AlertCircle className="w-3 h-3" />
+                                  <span>Response needed</span>
+                                </div>
+                              )}
+                              <Badge className={getStatusColor(enquiry.status)}>
+                                {enquiry.status.replace('_', ' ').toUpperCase()}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          {/* Event Title */}
+                          <h3 className="text-xl font-semibold text-gray-900 mb-4">{enquiry.title}</h3>
+                          
+                          {/* Event Details with Icons */}
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center text-gray-600">
+                              <User className="w-4 h-4 mr-2" />
+                              <span className="font-medium">{enquiry.clientName}</span>
+                              {enquiry.clientEmail && <span className="text-sm ml-2">• {enquiry.clientEmail}</span>}
+                            </div>
+                            
+                            {enquiry.eventTime && (
+                              <div className="flex items-center text-gray-600">
+                                <Clock className="w-4 h-4 mr-2" />
+                                <span>{enquiry.eventTime}</span>
+                              </div>
+                            )}
+                            
+                            {enquiry.venue && (
+                              <div className="flex items-center text-gray-600">
+                                <Calendar className="w-4 h-4 mr-2" />
+                                <span>{enquiry.venue}</span>
+                              </div>
+                            )}
+                            
+                            {enquiry.gigType && (
+                              <div className="flex items-center text-gray-600">
+                                <DollarSign className="w-4 h-4 mr-2" />
+                                <span>{enquiry.gigType}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Notes Section */}
+                          {enquiry.notes && (
+                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                              {(() => {
+                                const notes = enquiry.notes || '';
+                                
+                                // Handle both old and new format
+                                let mainNotes = notes;
+                                let metadata = '';
+                                
+                                // Check for old format with "--- Contact Details ---"
+                                if (notes.includes('--- Contact Details ---')) {
+                                  const sourceMatch = notes.match(/Source: ([^\n]+)/);
+                                  const contactMatch = notes.match(/Contact Method: ([^\n]+)/);
+                                  mainNotes = notes.replace(/\n*--- Contact Details ---[\s\S]*$/, '').trim();
+                                  
+                                  if (contactMatch) {
+                                    metadata = `Contact Method - ${contactMatch[1]}`;
+                                  }
+                                }
+                                // Check for new "Contact Method - Phone" format
+                                else if (notes.includes('Contact Method -')) {
+                                  const contactMatch = notes.match(/Contact Method - ([^\n]+)/);
+                                  mainNotes = notes.replace(/\n\nContact Method -.*$/, '').trim();
+                                  
+                                  if (contactMatch) {
+                                    metadata = `Contact Method - ${contactMatch[1]}`;
+                                  }
+                                }
+                                // Check for simple "Source:" format without header
+                                else if (notes.includes('Source:')) {
+                                  const sourceMatch = notes.match(/Source: ([^\n•]+)/);
+                                  const contactMatch = notes.match(/Contact: ([^\n]+)/);
+                                  mainNotes = notes.replace(/\n\nSource:.*$/, '').trim();
+                                  
+                                  if (contactMatch) {
+                                    metadata = `Contact Method - ${contactMatch[1]}`;
+                                  }
+                                }
+                                // Check for new simple format (just "Email • Phone")
+                                else {
+                                  const parts = notes.split('\n\n');
+                                  if (parts.length > 1) {
+                                    const lastPart = parts[parts.length - 1];
+                                    if (lastPart.includes('•')) {
+                                      mainNotes = parts.slice(0, -1).join('\n\n').trim();
+                                      metadata = lastPart;
+                                    }
+                                  } else if (notes.includes('•') && !notes.includes('\n')) {
+                                    // If it's just metadata without main notes
+                                    mainNotes = '';
+                                    metadata = notes;
+                                  }
+                                }
+                                
+                                return (
+                                  <div className="space-y-2">
+                                    {mainNotes && (
+                                      <p className="text-sm text-gray-700">{mainNotes}</p>
+                                    )}
+                                    {metadata && (
+                                      <div className="text-xs text-gray-500 border-t pt-2">
+                                        <span>{metadata}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
-                          <Badge className={getStatusColor(enquiry.status)}>
-                            {enquiry.status.replace('_', ' ').toUpperCase()}
-                          </Badge>
+                          
+                          {/* Response Button */}
+                          <div className="mt-4 flex justify-end">
+                            <Button
+                              onClick={() => {
+                                setSelectedEnquiry(enquiry);
+                                setRespondDialogOpen(true);
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Reply className="w-4 h-4 mr-2" />
+                              Respond
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                        <div>
-                          <p className="font-medium">Client</p>
-                          <p>{enquiry.clientName}</p>
-                          {enquiry.clientEmail && <p className="text-xs">{enquiry.clientEmail}</p>}
-                          {enquiry.clientPhone && <p className="text-xs">{enquiry.clientPhone}</p>}
-                        </div>
-                        
-                        <div>
-                          <p className="font-medium">Event Date</p>
-                          <p className="flex items-center">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            {formatDate(enquiry.eventDate!)}
-                          </p>
-                          {enquiry.eventTime && <p className="text-xs">{enquiry.eventTime}</p>}
-                        </div>
-                        
-                        <div>
-                          <p className="font-medium">Price quoted</p>
-                          <p className="flex items-center">
-                            <DollarSign className="w-3 h-3 mr-1" />
-                            £{enquiry.estimatedValue || "TBC"}
-                          </p>
-                          {enquiry.venue && <p className="text-xs">{enquiry.venue}</p>}
-                        </div>
-                        
-                        <div>
-                          <p className="font-medium">Created</p>
-                          <p className="flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {formatTime(enquiry.createdAt!)}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {enquiry.notes && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                          {(() => {
-                            const notes = enquiry.notes || '';
-                            
-                            // Handle both old and new format
-                            let mainNotes = notes;
-                            let metadata = '';
-                            
-                            // Check for old format with "--- Contact Details ---"
-                            if (notes.includes('--- Contact Details ---')) {
-                              const sourceMatch = notes.match(/Source: ([^\n]+)/);
-                              const contactMatch = notes.match(/Contact Method: ([^\n]+)/);
-                              mainNotes = notes.replace(/\n*--- Contact Details ---[\s\S]*$/, '').trim();
-                              
-                              if (contactMatch) {
-                                metadata = `Contact Method - ${contactMatch[1]}`;
-                              }
-                            }
-                            // Check for new "Contact Method - Phone" format
-                            else if (notes.includes('Contact Method -')) {
-                              const contactMatch = notes.match(/Contact Method - ([^\n]+)/);
-                              mainNotes = notes.replace(/\n\nContact Method -.*$/, '').trim();
-                              
-                              if (contactMatch) {
-                                metadata = `Contact Method - ${contactMatch[1]}`;
-                              }
-                            }
-                            // Check for simple "Source:" format without header
-                            else if (notes.includes('Source:')) {
-                              const sourceMatch = notes.match(/Source: ([^\n•]+)/);
-                              const contactMatch = notes.match(/Contact: ([^\n]+)/);
-                              mainNotes = notes.replace(/\n\nSource:.*$/, '').trim();
-                              
-                              if (contactMatch) {
-                                metadata = `Contact Method - ${contactMatch[1]}`;
-                              }
-                            }
-                            // Check for new simple format (just "Email • Phone")
-                            else {
-                              const parts = notes.split('\n\n');
-                              if (parts.length > 1) {
-                                const lastPart = parts[parts.length - 1];
-                                if (lastPart.includes('•')) {
-                                  mainNotes = parts.slice(0, -1).join('\n\n').trim();
-                                  metadata = lastPart;
-                                }
-                              } else if (notes.includes('•') && !notes.includes('\n')) {
-                                // If it's just metadata without main notes
-                                mainNotes = '';
-                                metadata = notes;
-                              }
-                            }
-                            
-                            return (
-                              <div className="space-y-2">
-                                {mainNotes && (
-                                  <p className="text-sm text-gray-700">{mainNotes}</p>
-                                )}
-                                {metadata && (
-                                  <div className="text-xs text-gray-500 border-t pt-2">
-                                    <span>{metadata}</span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
-                      
-                      <div className="mt-4 flex justify-end">
-                        <Button
-                          onClick={() => {
-                            setSelectedEnquiry(enquiry);
-                            setRespondDialogOpen(true);
-                          }}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <Reply className="w-4 h-4 mr-2" />
-                          Respond
-                        </Button>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))
+              );
+            })
           )}
         </div>
           </div>
