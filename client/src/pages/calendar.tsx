@@ -653,6 +653,42 @@ export default function Calendar() {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* View Mode Controls */}
+            <div className="flex items-center space-x-1 border border-gray-300 rounded-lg p-1">
+              <Button
+                onClick={() => setViewMode("day")}
+                variant={viewMode === "day" ? "default" : "ghost"}
+                size="sm"
+                className="px-3 py-1 text-xs"
+              >
+                Day
+              </Button>
+              <Button
+                onClick={() => setViewMode("week")}
+                variant={viewMode === "week" ? "default" : "ghost"}
+                size="sm"
+                className="px-3 py-1 text-xs"
+              >
+                Week
+              </Button>
+              <Button
+                onClick={() => setViewMode("month")}
+                variant={viewMode === "month" ? "default" : "ghost"}
+                size="sm"
+                className="px-3 py-1 text-xs"
+              >
+                Month
+              </Button>
+              <Button
+                onClick={() => setViewMode("year")}
+                variant={viewMode === "year" ? "default" : "ghost"}
+                size="sm"
+                className="px-3 py-1 text-xs"
+              >
+                Year
+              </Button>
+            </div>
+
             <Button
               onClick={() => setIsDialogOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white"
