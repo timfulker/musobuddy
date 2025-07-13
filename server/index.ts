@@ -88,24 +88,45 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
       }
     }
     
-    // Use the extracted values for processing
-    const sender = extractedEmail !== 'NOT_FOUND' ? extractedEmail : 'unknown@example.com';
-    const subject = extractedSubject !== 'NOT_FOUND' ? extractedSubject : 'Email enquiry';
-    const finalBodyText = bodyText !== 'NOT_FOUND' && bodyText ? bodyText : 'No message content';
+    // Use the extracted values for processing - DO NOT USE FALLBACK VALUES
+    const sender = extractedEmail !== 'NOT_FOUND' ? extractedEmail : null;
+    const subject = extractedSubject !== 'NOT_FOUND' ? extractedSubject : null;
+    const finalBodyText = bodyText !== 'NOT_FOUND' && bodyText ? bodyText : null;
     
-    // Extract email and client name
-    let clientName = 'Unknown Client';
+    if (!sender || !finalBodyText) {
+      console.log('❌ CRITICAL: Missing essential email data');
+      console.log('   Sender:', sender);
+      console.log('   Body text:', finalBodyText ? 'Present' : 'Missing');
+      return res.status(400).json({ 
+        error: 'Missing essential email data',
+        received: {
+          sender: sender,
+          subject: subject,
+          bodyText: finalBodyText ? 'Present' : 'Missing'
+        }
+      });
+    }
+    
+    // Extract email and client name - NEVER use fallback values
     const emailMatch = sender.match(/[\w.-]+@[\w.-]+\.\w+/);
     const email = emailMatch ? emailMatch[0] : sender;
     
+    let clientName = null;
     if (sender.includes('<')) {
       const nameMatch = sender.match(/^([^<]+)/);
       if (nameMatch) {
         clientName = nameMatch[1].trim().replace(/['"]/g, '');
       }
     } else {
-      clientName = email.split('@')[0].replace(/[._]/g, ' ');
+      // Extract from email username part (timfulkermusic@gmail.com -> timfulkermusic)
+      const username = email.split('@')[0];
+      clientName = username.replace(/[._]/g, ' ');
     }
+    
+    console.log('📧 Client name extraction:');
+    console.log('   - Original sender:', sender);
+    console.log('   - Extracted email:', email);
+    console.log('   - Extracted client name:', clientName);
     
     // Enhanced parsing for dates, venues, and other details
     const parseEmailContent = (text: string) => {
@@ -135,8 +156,9 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
         }
       }
       
-      // Extract client name from body ("My name is...")
+      // Extract client name from body ("Best regards, Tim Fulker")
       const namePatterns = [
+        /(?:best regards|regards|sincerely|cheers),?\s*([A-Za-z\s]+?)(?:\s+phone|\s+email|\s+mobile|$)/gi,
         /(?:my name is|i'm|i am|this is)\s+([A-Za-z\s]+?)(?:\s+and|\.|\,|$)/gi,
         /(?:name|called):\s*([A-Za-z\s]+?)(?:\s+and|\.|\,|$)/gi
       ];
@@ -229,7 +251,12 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
     const parsed = parseEmailContent(finalBodyText);
     
     // Use parsed client name if available, otherwise use email-based name
-    const finalClientName = parsed.clientNameFromBody || clientName;
+    const finalClientName = parsed.clientNameFromBody || clientName || 'Client';
+    
+    console.log('📧 Final client name determination:');
+    console.log('   - From email body:', parsed.clientNameFromBody);
+    console.log('   - From email address:', clientName);
+    console.log('   - Final choice:', finalClientName);
     
     const enquiry = {
       userId: '43963086',
