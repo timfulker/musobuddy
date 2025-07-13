@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Inbox, Calendar, DollarSign, User } from "lucide-react";
+import { Home, Inbox, Calendar, PoundSterling, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useResponsive } from "@/hooks/useResponsive";
 
@@ -44,7 +44,7 @@ export default function MobileNav() {
           "flex flex-col items-center space-y-1 py-2",
           isActive("/invoices") ? "text-purple-600" : "text-gray-500 dark:text-gray-400"
         )}>
-          <DollarSign className="w-6 h-6" />
+          <PoundSterling className="w-6 h-6" />
           <span className={cn("text-xs", isActive("/invoices") && "font-medium")}>Invoices</span>
         </Link>
         <Link href="/compliance" className={cn(
