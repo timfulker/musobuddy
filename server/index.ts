@@ -51,26 +51,41 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
   });
   
   try {
-    // Test email extraction with detailed logging
+    // Enhanced email extraction with all possible Mailgun field names
     console.log('🔍 EMAIL EXTRACTION TEST:');
-    const extractedEmail = req.body.sender || req.body.From || req.body.from || 'NOT_FOUND';
-    const extractedSubject = req.body.subject || req.body.Subject || 'NOT_FOUND';
-    const extractedText = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || 'NOT_FOUND';
-    const extractedHtml = req.body['body-html'] || req.body['stripped-html'] || req.body.html || 'NOT_FOUND';
+    const extractedEmail = req.body.sender || req.body.From || req.body.from || 
+                          req.body['From'] || req.body['sender'] || 'NOT_FOUND';
+    const extractedSubject = req.body.subject || req.body.Subject || 
+                           req.body['Subject'] || req.body['subject'] || 'NOT_FOUND';
+    const extractedText = req.body['body-plain'] || req.body['stripped-text'] || 
+                         req.body.text || req.body['body-text'] || 
+                         req.body['stripped-text'] || req.body['Text'] || 
+                         req.body['stripped-html'] || req.body['body-html'] || 'NOT_FOUND';
     
     console.log('📧 Extracted FROM:', extractedEmail);
     console.log('📧 Extracted SUBJECT:', extractedSubject);
     console.log('📧 Extracted TEXT length:', typeof extractedText === 'string' ? extractedText.length : 'Not string');
-    console.log('📧 Extracted HTML length:', typeof extractedHtml === 'string' ? extractedHtml.length : 'Not string');
+    console.log('📧 Extracted TEXT type:', typeof extractedText);
     
     if (extractedText && extractedText !== 'NOT_FOUND') {
-      console.log('📧 TEXT SAMPLE:', extractedText.substring(0, 200));
+      console.log('📧 TEXT SAMPLE (first 200 chars):', extractedText.substring(0, 200));
+    }
+    
+    // Special handling for HTML content when plain text isn't available
+    let bodyText = extractedText;
+    if (bodyText === 'NOT_FOUND' || !bodyText || bodyText.trim() === '') {
+      const htmlContent = req.body['body-html'] || req.body['stripped-html'] || req.body.html || 'NOT_FOUND';
+      if (htmlContent && htmlContent !== 'NOT_FOUND') {
+        // Simple HTML to text conversion for basic content extraction
+        bodyText = htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+        console.log('📧 Used HTML content, converted to text:', bodyText.substring(0, 100));
+      }
     }
     
     // Use the extracted values for processing
     const sender = extractedEmail !== 'NOT_FOUND' ? extractedEmail : 'unknown@example.com';
     const subject = extractedSubject !== 'NOT_FOUND' ? extractedSubject : 'Email enquiry';
-    const bodyText = extractedText !== 'NOT_FOUND' ? extractedText : 'No message content';
+    const finalBodyText = bodyText !== 'NOT_FOUND' && bodyText ? bodyText : 'No message content';
     
     // Extract email and client name
     let clientName = 'Unknown Client';
@@ -205,7 +220,7 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
       return result;
     };
     
-    const parsed = parseEmailContent(bodyText);
+    const parsed = parseEmailContent(finalBodyText);
     
     // Use parsed client name if available, otherwise use email-based name
     const finalClientName = parsed.clientNameFromBody || clientName;
@@ -225,7 +240,7 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
       gigType: parsed.gigType,
       estimatedValue: null,
       status: 'new' as const,
-      notes: bodyText,
+      notes: finalBodyText,
       responseNeeded: true,
       lastContactedAt: null
     };
@@ -257,7 +272,7 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
       debug: {
         extractedEmail: sender,
         extractedSubject: subject,
-        bodyLength: bodyText.length,
+        bodyLength: finalBodyText.length,
         timestamp: new Date().toISOString()
       },
       processing: 'enhanced-parser'

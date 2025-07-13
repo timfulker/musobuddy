@@ -3,35 +3,50 @@
  */
 
 async function checkWebhookActivity() {
-    console.log('=== CHECKING WEBHOOK ACTIVITY ===');
+  console.log('⏰ Checking for webhook activity from your latest email...');
+  console.log('📧 Looking for enquiries created in the last 2 minutes...');
+  
+  // Check for very recent enquiries
+  try {
+    const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        sender: 'Console Check <console@test.com>',
+        subject: 'Webhook Activity Check',
+        'body-plain': 'Checking if webhook is still active and processing'
+      })
+    });
     
-    // Test webhook accessibility
-    try {
-        const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'sender=check@test.com&subject=Activity Check&body-plain=Checking if webhook is receiving requests'
-        });
-        
-        const result = await response.json();
-        console.log('✅ Webhook still active:', result);
-        console.log(`Latest test enquiry: #${result.enquiryId}`);
-    } catch (error) {
-        console.error('❌ Webhook error:', error.message);
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Webhook is active and processing');
+      console.log('📊 Latest test enquiry:', result.enquiryId);
+      console.log('');
     }
-    
-    console.log('\n=== ANALYSIS ===');
-    console.log('If no new enquiry was created from your email to leads@mg.musobuddy.com:');
-    console.log('1. The route might need updating to handle mg.musobuddy.com');
-    console.log('2. DNS propagation might still be pending');
-    console.log('3. The route expression might only match musobuddy.com');
-    console.log('');
-    console.log('Next steps:');
-    console.log('1. Check Mailgun logs for incoming emails');
-    console.log('2. Update route to: match_recipient("leads@mg.musobuddy.com")');
-    console.log('3. Or add catch_all() to handle all domains');
+  } catch (error) {
+    console.log('❌ Webhook test failed:', error.message);
+  }
+  
+  console.log('🔍 Expected webhook behavior for your email:');
+  console.log('');
+  console.log('In the Replit console above, you should see:');
+  console.log('1. "🔍 === WEBHOOK DATA INSPECTION START ===" - Shows webhook received email');
+  console.log('2. "🔍 COMPLETE BODY DATA:" - Shows all fields Mailgun sent');
+  console.log('3. "🔍 MAILGUN FIELD INSPECTION:" - Shows which fields are populated');
+  console.log('4. "🔍 EMAIL EXTRACTION TEST:" - Shows what got extracted');
+  console.log('5. "📧 ✅ Enquiry created:" - Shows the new enquiry ID');
+  console.log('');
+  console.log('📧 Key things to look for:');
+  console.log('- sender field: Should show your email address');
+  console.log('- subject field: Should show your email subject');  
+  console.log('- body-plain field: Should show your email content');
+  console.log('- If any field shows "NOT_FOUND", that explains the parsing issue');
+  console.log('');
+  console.log('🎯 If you see the webhook inspection logs, copy the key details');
+  console.log('   and I can fix the parsing logic to handle your email format properly.');
 }
 
-checkWebhookActivity().catch(console.error);
+checkWebhookActivity();
