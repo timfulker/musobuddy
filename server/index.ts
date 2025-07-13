@@ -47,6 +47,7 @@ CRITICAL INSTRUCTIONS:
 3. Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
 4. ENCORE DETECTION: Look for "Apply Now" buttons or links - these are typically from Encore booking platform
 5. PRESERVE COMPLETE URLs: For applyNowLink, extract the COMPLETE URL including ALL query parameters (utm_source, utm_medium, utm_campaign, utm_content, etc.). DO NOT truncate or modify the URL in any way.
+6. REDIRECT URLS: Encore emails often use redirect URLs that start with https://rbtin183.r.eu-west-1.awstrack.me/ - capture these complete redirect URLs, not just the final destination.
 
 Extract:
 - eventDate: The actual event/performance date in YYYY-MM-DD format (e.g., "Sunday 24 Aug 2025" = "2025-08-24", "14th July 2026" = "2026-07-14")
@@ -56,7 +57,7 @@ Extract:
 - gigType: sax, saxophone, jazz, piano, guitar, dj, band, violin, drums, etc.
 - clientPhone: UK phone number if mentioned
 - estimatedValue: Budget/price range if mentioned (e.g., "£260-£450", "£300", "budget of £500")
-- applyNowLink: If this is an Encore email, extract the COMPLETE "Apply Now" button URL/link with ALL query parameters (utm_source, utm_medium, utm_campaign, utm_content, etc.). Do NOT truncate or modify the URL - return the full hyperlink as it appears in the email HTML.
+- applyNowLink: If this is an Encore email, extract the COMPLETE "Apply Now" button URL/link exactly as it appears in the email HTML. This may be a redirect URL (e.g., starting with https://rbtin183.r.eu-west-1.awstrack.me/) or direct URL. Do NOT truncate, modify, or decode the URL - return the full hyperlink including all tracking parameters and redirect paths.
 
 Return valid JSON only:`;
 
