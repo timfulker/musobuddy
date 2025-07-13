@@ -966,6 +966,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contractId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      // Convert eventDate string to Date if present
+      if (updates.eventDate && typeof updates.eventDate === 'string') {
+        updates.eventDate = new Date(updates.eventDate);
+      }
+      
+      const updatedContract = await storage.updateContract(contractId, updates, userId);
+      if (!updatedContract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      res.json(updatedContract);
+    } catch (error) {
+      console.error("Error updating contract:", error);
+      res.status(500).json({ message: "Failed to update contract" });
+    }
+  });
+
   // Invoice route logging (disabled for production)
   // app.use('/api/invoices*', (req, res, next) => {
   //   console.log(`=== INVOICE ROUTE: ${req.method} ${req.originalUrl} ===`);

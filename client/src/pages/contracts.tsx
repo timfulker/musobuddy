@@ -37,6 +37,7 @@ export default function Contracts() {
   const [selectedContracts, setSelectedContracts] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -160,6 +161,9 @@ export default function Contracts() {
       if (urlParams.get('action') === 'new') {
         window.history.replaceState({}, '', window.location.pathname);
       }
+      // Clear editing state and reset form
+      setEditingContract(null);
+      form.reset();
     }
   };
 
@@ -201,7 +205,38 @@ export default function Contracts() {
     },
   });
 
-
+  const updateContractMutation = useMutation({
+    mutationFn: async ({ id, contractData }: { id: number, contractData: any }) => {
+      const response = await fetch(`/api/contracts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contractData),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      handleDialogClose(false);
+      form.reset();
+      setEditingContract(null);
+      toast({
+        title: "Success",
+        description: "Contract updated successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update contract: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Email sending mutation
   const sendEmailMutation = useMutation({
@@ -312,20 +347,47 @@ export default function Contracts() {
 
   // Additional contract action handlers
   const handleEditContract = (contract: Contract) => {
-    // TODO: Implement edit functionality
-    toast({
-      title: "Edit Contract",
-      description: "Edit functionality will be implemented soon",
-    });
+    setEditingContract(contract);
+    
+    // Pre-populate form with contract data
+    form.setValue('contractNumber', contract.contractNumber);
+    form.setValue('clientName', contract.clientName);
+    form.setValue('clientEmail', contract.clientEmail || '');
+    form.setValue('clientPhone', contract.clientPhone || '');
+    form.setValue('eventDate', contract.eventDate ? new Date(contract.eventDate).toISOString().split('T')[0] : '');
+    form.setValue('eventTime', contract.eventTime || '');
+    form.setValue('venue', contract.venue || '');
+    form.setValue('fee', contract.fee || '');
+    form.setValue('deposit', contract.deposit || '');
+    form.setValue('terms', contract.terms || '');
+    form.setValue('enquiryId', contract.enquiryId || 0);
+    
+    setIsDialogOpen(true);
   };
+
+  const deleteContractMutation = useMutation({
+    mutationFn: async (contractId: number) => {
+      return apiRequest("DELETE", `/api/contracts/${contractId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      toast({
+        title: "Success",
+        description: "Contract deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete contract",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleDeleteContract = (contract: Contract) => {
     if (confirm(`Are you sure you want to delete contract ${contract.contractNumber}?`)) {
-      // TODO: Implement delete functionality
-      toast({
-        title: "Delete Contract",
-        description: "Delete functionality will be implemented soon",
-      });
+      deleteContractMutation.mutate(contract.id);
     }
   };
 
@@ -436,10 +498,21 @@ export default function Contracts() {
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader className="pb-4">
-                <DialogTitle>Generate New Contract</DialogTitle>
+                <DialogTitle>{editingContract ? 'Edit Contract' : 'Generate New Contract'}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => createContractMutation.mutate(data))} className="space-y-6 pt-4">
+                <form onSubmit={form.handleSubmit((data) => {
+                  if (editingContract) {
+                    const contractData = {
+                      ...data,
+                      eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
+                      enquiryId: data.enquiryId || null,
+                    };
+                    updateContractMutation.mutate({ id: editingContract.id, contractData });
+                  } else {
+                    createContractMutation.mutate(data);
+                  }
+                })} className="space-y-6 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
@@ -596,8 +669,12 @@ export default function Contracts() {
                     <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={createContractMutation.isPending}>
-                      {createContractMutation.isPending ? "Generating..." : "Generate Contract"}
+                    <Button type="submit" disabled={createContractMutation.isPending || updateContractMutation.isPending}>
+                      {editingContract ? (
+                        updateContractMutation.isPending ? "Updating..." : "Update Contract"
+                      ) : (
+                        createContractMutation.isPending ? "Generating..." : "Generate Contract"
+                      )}
                     </Button>
                   </div>
                 </form>
