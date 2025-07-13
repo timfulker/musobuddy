@@ -766,7 +766,7 @@ export default function Calendar() {
             onMonthChange={setCurrentDate}
             modifiers={calendarModifiers}
             modifiersClassNames={calendarModifiersClassNames}
-            className="w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-20 [&_td]:w-auto [&_th]:h-12 [&_th]:w-auto [&_button]:h-18 [&_button]:w-full [&_button]:text-xl [&_button]:font-bold [&_th]:text-lg [&_th]:font-semibold [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full"
+            className="w-full max-w-none [&_table]:w-full [&_table]:table-fixed [&_td]:h-16 [&_td]:w-1/7 [&_td]:p-0 [&_td]:text-center [&_th]:h-12 [&_th]:w-1/7 [&_th]:p-2 [&_th]:text-center [&_button]:h-14 [&_button]:w-full [&_button]:text-base [&_button]:font-medium [&_th]:text-sm [&_th]:font-semibold"
           />
         );
       case "year":
@@ -781,7 +781,7 @@ export default function Calendar() {
             onMonthChange={setCurrentDate}
             modifiers={calendarModifiers}
             modifiersClassNames={calendarModifiersClassNames}
-            className="w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-20 [&_td]:w-auto [&_th]:h-12 [&_th]:w-auto [&_button]:h-18 [&_button]:w-full [&_button]:text-xl [&_button]:font-bold [&_th]:text-lg [&_th]:font-semibold [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full"
+            className="w-full max-w-none [&_table]:w-full [&_table]:table-fixed [&_td]:h-16 [&_td]:w-1/7 [&_td]:p-0 [&_td]:text-center [&_th]:h-12 [&_th]:w-1/7 [&_th]:p-2 [&_th]:text-center [&_button]:h-14 [&_button]:w-full [&_button]:text-base [&_button]:font-medium [&_th]:text-sm [&_th]:font-semibold"
           />
         );
     }
