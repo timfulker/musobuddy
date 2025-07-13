@@ -55,31 +55,82 @@ export default function Calendar() {
     },
   });
 
-  const { data: bookings = [], isLoading } = useQuery({
+  const { data: bookings = [], isLoading, error: bookingsError } = useQuery({
     queryKey: ["/api/bookings"],
   });
 
-  const { data: enquiries = [] } = useQuery({
+  const { data: enquiries = [], error: enquiriesError } = useQuery({
     queryKey: ["/api/enquiries"],
   });
 
-  const { data: contracts = [] } = useQuery({
+  const { data: contracts = [], error: contractsError } = useQuery({
     queryKey: ["/api/contracts"],
   });
 
-  const { data: conflicts = [] } = useQuery({
+  const { data: conflicts = [], error: conflictsError } = useQuery({
     queryKey: ["/api/conflicts"],
   });
 
-  const handleCalendarExport = () => {
-    // Create calendar export - works with all calendar apps
-    const icalData = createICalData();
-    downloadICalFile(icalData, "musobuddy-calendar.ics");
-    
-    toast({
-      title: "Calendar Export",
-      description: "Calendar file downloaded - works with Google, Apple, Outlook, and other calendar apps",
+  // Debug logging
+  console.log("Calendar Debug - Bookings data:", bookings);
+  console.log("Calendar Debug - Selected date:", selectedDate);
+  console.log("Calendar Debug - Enquiries:", enquiries);
+  console.log("Calendar Debug - Contracts:", contracts);
+  console.log("Calendar Debug - Conflicts:", conflicts);
+
+  // Handle loading and error states
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading calendar...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (bookingsError || enquiriesError || contractsError || conflictsError) {
+    console.error("Calendar API Errors:", {
+      bookingsError,
+      enquiriesError, 
+      contractsError,
+      conflictsError
     });
+    
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center text-red-600">
+          <p>Error loading calendar data</p>
+          <p className="text-sm mt-2">Check console for details</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleCalendarExport = () => {
+    try {
+      console.log("Starting calendar export...");
+      const icalData = createICalData();
+      
+      if (!icalData) {
+        throw new Error("No calendar data to export");
+      }
+      
+      downloadICalFile(icalData, "musobuddy-calendar.ics");
+      
+      toast({
+        title: "Calendar Export",
+        description: "Calendar file downloaded successfully - works with Google, Apple, Outlook, and other calendar apps",
+      });
+    } catch (error) {
+      console.error("Calendar export failed:", error);
+      toast({
+        title: "Export Failed",
+        description: "Unable to export calendar. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -202,6 +253,21 @@ export default function Calendar() {
   };
 
   const onSubmit = (data: z.infer<typeof bookingFormSchema>) => {
+    // Validate date is not in the past
+    const eventDate = new Date(data.eventDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (eventDate < today) {
+      toast({
+        title: "Error",
+        description: "Cannot create booking for past dates",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Submitting booking data:", data);
     createBookingMutation.mutate(data);
   };
 
@@ -237,10 +303,21 @@ export default function Calendar() {
   };
 
   const getBookingsForDate = (date: Date) => {
-    return bookings.filter((booking: Booking) => {
-      const bookingDate = new Date(booking.eventDate);
-      return bookingDate.toDateString() === date.toDateString();
-    });
+    try {
+      console.log("Getting bookings for date:", date);
+      const filteredBookings = bookings.filter((booking: Booking) => {
+        const bookingDate = new Date(booking.eventDate);
+        // Use local date comparison to avoid timezone issues
+        const isMatch = bookingDate.toDateString() === date.toDateString();
+        console.log(`Booking ${booking.id} (${booking.eventDate}) matches ${date.toDateString()}:`, isMatch);
+        return isMatch;
+      });
+      console.log("Filtered bookings:", filteredBookings);
+      return filteredBookings;
+    } catch (error) {
+      console.error("Error filtering bookings for date:", error);
+      return [];
+    }
   };
 
   // Helper function to check if an enquiry is expired
