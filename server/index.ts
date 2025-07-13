@@ -20,8 +20,9 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     const subject = req.body.Subject || req.body.subject || 'Email enquiry';
     const body = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || '';
     
-    // Log raw request body for debugging
+    // Enhanced debugging for empty data scenarios
     console.log('🔍 Raw request body keys:', Object.keys(req.body));
+    console.log('🔍 Request body size:', Object.keys(req.body).length);
     console.log('🔍 Body-plain field:', req.body['body-plain']);
     console.log('🔍 Stripped-text field:', req.body['stripped-text']);
     console.log('🔍 Text field:', req.body.text);
@@ -30,6 +31,16 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       from: req.body.from,
       sender: req.body.sender
     });
+    
+    // Check for completely empty webhook data
+    if (Object.keys(req.body).length === 0) {
+      console.log('⚠️ EMPTY WEBHOOK DATA - No fields received from Mailgun');
+      return res.status(200).json({ 
+        success: false, 
+        message: 'Empty webhook data received',
+        debug: 'No fields in request body'
+      });
+    }
     
     console.log('📧 From:', from);
     console.log('📧 Subject:', subject);
