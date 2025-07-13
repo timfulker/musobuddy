@@ -242,16 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Invoice creation route removed - now handled at top of file to avoid Vite interference
 
-  // GET endpoint for testing webhook connectivity
-  app.get('/api/webhook/sendgrid', (req, res) => {
-    res.json({ 
-      status: 'webhook_active',
-      message: 'SendGrid webhook endpoint is accessible',
-      timestamp: new Date().toISOString(),
-      endpoint: '/api/webhook/sendgrid',
-      note: 'Ready for POST requests from SendGrid Inbound Parse'
-    });
-  });
+  // REMOVED: SendGrid webhook endpoint - Mailgun-only solution
 
   // GET endpoint for testing Mailgun webhook connectivity removed to avoid conflicts
 
@@ -265,10 +256,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Raw body type:', typeof req.body);
     console.log('Body keys:', req.body ? Object.keys(req.body) : 'No body');
     
-    // Log specific SendGrid fields if present
+    // Log email fields if present
     if (req.body) {
       const { to, from, subject, text, html, envelope, headers } = req.body;
-      console.log('SendGrid fields detected:');
+      console.log('Email fields detected:');
       console.log('- to:', to);
       console.log('- from:', from);
       console.log('- subject:', subject);
@@ -661,8 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userSettings = await storage.getUserSettings(userId);
       const fromName = userSettings?.emailFromName || userSettings?.businessName || "MusoBuddy User";
       
-      // Send email using SendGrid
-      const { sendEmail } = await import('./sendgrid');
+      // REMOVED: SendGrid email sending - Mailgun-only solution
       const emailParams = {
         to: to,
         from: `${fromName} <business@musobuddy.com>`,
@@ -1304,8 +1294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Failed to update invoice status" });
       }
 
-      // Import SendGrid
-      const { sendEmail } = await import('./sendgrid');
+      // REMOVED: SendGrid import - Mailgun-only solution
       
       // Generate invoice view link
       const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
@@ -1419,8 +1408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Client email not found. Please add client email to the contract." });
       }
 
-      // Import SendGrid functions
-      const { sendEmail } = await import('./sendgrid');
+      // REMOVED: SendGrid functions - Mailgun-only solution
       
       // Generate contract signing link instead of PDF attachment
       const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
@@ -1812,127 +1800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Manual test endpoint for email processing
-  app.post('/api/webhook/test', async (req, res) => {
-    console.log('🧪 MANUAL TEST: Simulating email webhook...');
-    try {
-      const testEmailData = {
-        to: 'leads@musobuddy.com',
-        from: 'test@example.com',
-        subject: 'Test Wedding Enquiry',
-        text: `Hi, I'm looking to book a musician for my wedding on September 20th, 2025.
-        
-Event Details:
-- Date: September 20th, 2025
-- Venue: Grand Hotel, Manchester
-- Contact: Jane Smith
-- Phone: 07123 456789
-- Email: jane.smith@email.com
-
-Please let me know availability and pricing.
-
-Best regards,
-Jane`
-      };
-      
-      const { handleSendGridWebhook } = await import('./email-webhook');
-      
-      // Create a mock request object
-      const mockReq = {
-        body: testEmailData,
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
-        method: 'POST',
-        url: '/api/webhook/test'
-      };
-      
-      await handleSendGridWebhook(mockReq as any, res);
-    } catch (error) {
-      console.error("Error in test webhook:", error);
-      res.status(500).json({ message: "Test webhook failed", error: error.message });
-    }
-  });
-
-  // REMOVED: Competing SendGrid webhook handlers that were causing intermittent failures
-  // All email processing now handled by enhanced Mailgun handler in server/index.ts
-  
-  // Redirect old SendGrid webhooks to enhanced Mailgun handler
-  app.post('/api/webhook/parse', async (req, res) => {
-    console.log('🔀 REDIRECTING: Old SendGrid webhook to enhanced Mailgun handler');
-    console.log('Request from IP:', req.ip);
-    // Forward to enhanced Mailgun handler
-    req.url = '/api/webhook/mailgun';
-    return;
-  });
-
-  app.post('/api/parse', async (req, res) => {
-    console.log('🔀 REDIRECTING: Old SendGrid webhook to enhanced Mailgun handler');
-    console.log('Request from IP:', req.ip);
-    // Forward to enhanced Mailgun handler
-    req.url = '/api/webhook/mailgun';
-    return;
-  });
-
-  // REMOVED: Alternative SendGrid webhook that was causing competing email processing
-  // All email processing now handled by enhanced Mailgun handler in server/index.ts
-  
-  app.all('/api/webhook/sendgrid-alt', async (req, res) => {
-    if (req.method === 'GET') {
-      console.log('📋 OLD ENDPOINT: Alternative SendGrid webhook (redirects to Mailgun)');
-      res.json({ 
-        status: 'redirected', 
-        message: 'This endpoint now redirects to enhanced Mailgun handler',
-        timestamp: new Date().toISOString(),
-        path: '/api/webhook/sendgrid-alt',
-        redirectTo: '/api/webhook/mailgun',
-        recommendedUrl: 'https://musobuddy.replit.app/api/webhook/mailgun'
-      });
-    } else if (req.method === 'POST') {
-      console.log('🔀 REDIRECTING: Alternative SendGrid webhook to enhanced Mailgun handler');
-      console.log('Request IP:', req.ip);
-      // All email processing now handled by enhanced Mailgun handler
-      return res.status(200).json({ 
-        message: 'Redirected to enhanced Mailgun handler',
-        redirectTo: '/api/webhook/mailgun'
-      });
-    } else {
-      res.status(405).json({ message: 'Method not allowed' });
-    }
-  });
-
-  // Webhook logging middleware - but don't interfere with routing
-  app.use((req, res, next) => {
-    if (req.url.includes('webhook') && !req.url.includes('mailgun')) {
-      console.log(`📧 Non-Mailgun webhook detected: ${req.method} ${req.url}`);
-    }
-    next();
-  });
-
-  // REMOVED: SendGrid email webhook that was causing competing email processing
-  // All email processing now handled by enhanced Mailgun handler in server/index.ts
-  
-  app.all('/api/webhook/email', async (req, res) => {
-    if (req.method === 'GET') {
-      console.log('📋 OLD ENDPOINT: SendGrid email webhook (redirects to Mailgun)');
-      res.json({ 
-        status: 'redirected', 
-        message: 'This endpoint now redirects to enhanced Mailgun handler',
-        timestamp: new Date().toISOString(),
-        redirectTo: '/api/webhook/mailgun',
-        url: 'https://musobuddy.replit.app/api/webhook/mailgun'
-      });
-    } else if (req.method === 'POST') {
-      console.log('🔀 REDIRECTING: SendGrid email webhook to enhanced Mailgun handler');
-      // All email processing now handled by enhanced Mailgun handler
-      return res.status(200).json({ 
-        message: 'Redirected to enhanced Mailgun handler',
-        redirectTo: '/api/webhook/mailgun'
-      });
-    } else {
-      res.status(405).json({ message: 'Method not allowed' });
-    }
-  });
-
-  // Mailgun webhook endpoint removed - handled by enhanced handler at line 51
+  // Email processing: Single Mailgun webhook handler in server/index.ts
 
   // Booking routes
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
