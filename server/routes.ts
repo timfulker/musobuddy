@@ -1026,16 +1026,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data.performanceDate = new Date(data.performanceDate);
       }
       
-      // Convert string amounts to numbers for decimal fields
-      if (data.amount && typeof data.amount === 'string') {
-        data.amount = parseFloat(data.amount);
-      }
-      if (data.performanceFee && typeof data.performanceFee === 'string') {
-        data.performanceFee = parseFloat(data.performanceFee);
-      }
-      if (data.depositPaid && typeof data.depositPaid === 'string') {
-        data.depositPaid = parseFloat(data.depositPaid);
-      }
+      // Keep decimal amounts as strings for Drizzle ORM compatibility
       
       console.log("🔥 Backend: Data before Zod validation:", JSON.stringify(data, null, 2));
       
