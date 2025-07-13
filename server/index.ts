@@ -47,7 +47,7 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
     console.log('📝 Could not save webhook data to file:', e.message);
   }
   
-  // Check specific Mailgun fields
+  // Check specific Mailgun fields including route forwarding
   const mailgunFields = [
     'sender', 'From', 'from',
     'recipient', 'To', 'to', 
@@ -55,7 +55,9 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
     'body-plain', 'body-html', 'stripped-text', 'stripped-html',
     'text', 'html',
     'timestamp', 'token', 'signature',
-    'message-headers', 'attachments'
+    'message-headers', 'attachments',
+    'Message-Id', 'Received', 'Date',
+    'X-Mailgun-Variables', 'X-Mailgun-Incoming'
   ];
   
   console.log('🔍 MAILGUN FIELD INSPECTION:');
@@ -70,21 +72,50 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
   try {
     // Enhanced email extraction with ALL possible Mailgun field names including route forwarding
     console.log('🔍 EMAIL EXTRACTION TEST:');
+    
+    // Try to extract from message headers if available
+    let headerFrom = null;
+    if (req.body['message-headers']) {
+      try {
+        const headers = JSON.parse(req.body['message-headers']);
+        const fromHeader = headers.find(h => h[0].toLowerCase() === 'from');
+        if (fromHeader) {
+          headerFrom = fromHeader[1];
+        }
+      } catch (e) {
+        console.log('Could not parse message-headers:', e.message);
+      }
+    }
+    
     const extractedEmail = req.body.sender || req.body.From || req.body.from || 
                           req.body['From'] || req.body['sender'] || 
+                          headerFrom ||
                           req.body['envelope[from]'] || req.body.envelope?.from ||
                           req.body['X-Envelope-From'] || req.body['Return-Path'] ||
-                          req.body['Reply-To'] || req.body['reply-to'] ||
-                          req.body['message-headers'] || 'NOT_FOUND';
+                          req.body['Reply-To'] || req.body['reply-to'] || 'NOT_FOUND';
+    // Try to extract subject from message headers if available
+    let headerSubject = null;
+    if (req.body['message-headers']) {
+      try {
+        const headers = JSON.parse(req.body['message-headers']);
+        const subjectHeader = headers.find(h => h[0].toLowerCase() === 'subject');
+        if (subjectHeader) {
+          headerSubject = subjectHeader[1];
+        }
+      } catch (e) {
+        console.log('Could not parse message-headers for subject:', e.message);
+      }
+    }
+    
     const extractedSubject = req.body.subject || req.body.Subject || 
                            req.body['Subject'] || req.body['subject'] || 
+                           headerSubject ||
                            req.body['X-Subject'] || 'NOT_FOUND';
     const extractedText = req.body['body-plain'] || req.body['stripped-text'] || 
                          req.body.text || req.body['body-text'] || 
                          req.body['stripped-text'] || req.body['Text'] || 
                          req.body['body-mime'] || req.body['body-calendar'] ||
-                         req.body['stripped-html'] || req.body['body-html'] ||
-                         req.body['message-headers'] || 'NOT_FOUND';
+                         req.body['stripped-html'] || req.body['body-html'] || 'NOT_FOUND';
     
     console.log('📧 Extracted FROM:', extractedEmail);
     console.log('📧 Extracted SUBJECT:', extractedSubject);
@@ -205,25 +236,27 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
       
       // Extract phone numbers
       const phonePatterns = [
-        /(?:phone|tel|mobile|cell|contact).*?(\d{5}\s?\d{6})/gi,
-        /(?:phone|tel|mobile|cell|contact).*?(\d{4}\s?\d{3}\s?\d{4})/gi,
+        /(?:phone|tel|mobile|cell|contact)[\s:]*(\d{5}\s?\d{6})/gi,
+        /(?:phone|tel|mobile|cell|contact)[\s:]*(\d{4}\s?\d{3}\s?\d{4})/gi,
+        /(?:phone|tel|mobile|cell|contact)[\s:]*(\+44\s?\d{4}\s?\d{3}\s?\d{4})/gi,
         /(\d{5}\s?\d{6})/g,
-        /(\d{4}\s?\d{3}\s?\d{4})/g
+        /(\d{4}\s?\d{3}\s?\d{4})/g,
+        /(\+44\s?\d{4}\s?\d{3}\s?\d{4})/g
       ];
       
       for (const pattern of phonePatterns) {
         const match = text.match(pattern);
         if (match) {
-          result.phone = match[1] || match[0];
+          result.phone = (match[1] || match[0]).replace(/[^\d\s+]/g, '').trim();
           break;
         }
       }
       
       // Extract client name from body ("Best regards, Tim Fulker")
       const namePatterns = [
-        /(?:best regards|regards|sincerely|cheers),?\s*([A-Za-z\s]+?)(?:\s+phone|\s+email|\s+mobile|$)/gi,
-        /(?:my name is|i'm|i am|this is)\s+([A-Za-z\s]+?)(?:\s+and|\.|\,|$)/gi,
-        /(?:name|called):\s*([A-Za-z\s]+?)(?:\s+and|\.|\,|$)/gi
+        /(?:best regards|regards|sincerely|cheers),?\s*([A-Za-z\s]+?)(?:\s+phone|\s+email|\s+mobile|\n|$)/gi,
+        /(?:my name is|i'm|i am|this is)\s+([A-Za-z\s]+?)(?:\s+and|\.|\,|\n|$)/gi,
+        /(?:name|called):\s*([A-Za-z\s]+?)(?:\s+and|\.|\,|\n|$)/gi
       ];
       
       for (const pattern of namePatterns) {
@@ -268,8 +301,8 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
       
       // Extract venue (at The Grand Hotel, venue: Royal Gardens, etc.)
       const venuePatterns = [
-        /(?:at|venue:?\s*|location:?\s*|held at)[\s]*([A-Za-z\s]+(?:Hotel|Hall|Centre|Center|Church|Garden|Club|Room|House|Manor|Castle|Barn|Restaurant|Pub|Bar|Venue))/gi,
-        /(?:at|venue:?\s*|location:?\s*|held at)[\s]*([A-Za-z\s]+(?:Hotel|Hall|Centre|Center|Church|Garden|Club|Room|House|Manor|Castle|Barn|Restaurant|Pub|Bar|Venue)[A-Za-z\s]*)/gi
+        /(?:at|venue:?\s*|location:?\s*|held at)[\s]*([A-Za-z\s&]+(?:Hotel|Hall|Centre|Center|Church|Garden|Club|Room|House|Manor|Castle|Barn|Restaurant|Pub|Bar|Venue)[A-Za-z\s]*)/gi,
+        /(?:venue|location)[\s:]*([A-Za-z\s&]+)/gi
       ];
       
       for (const pattern of venuePatterns) {
@@ -376,9 +409,14 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
     
   } catch (error: any) {
     console.error('📧 Processing error:', error.message);
-    res.status(500).json({
+    console.error('📧 Error stack:', error.stack);
+    
+    // Even on error, try to return 200 to prevent Mailgun retries
+    res.status(200).json({
+      success: false,
       error: 'Webhook processing failed',
-      details: error.message
+      details: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
