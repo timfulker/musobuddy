@@ -3,45 +3,48 @@
  */
 
 async function testDeployedWebhook() {
-  console.log('Testing deployed webhook with enhanced field mapping...');
+  console.log('🔍 TESTING DEPLOYED WEBHOOK');
+  console.log('URL: https://musobuddy.replit.app/api/webhook/mailgun');
+  console.log('');
   
-  // Test with real Mailgun email format
-  const realEmailData = {
+  const testData = {
+    sender: 'timfulkermusic@gmail.com',
+    from: 'timfulkermusic@gmail.com',
+    subject: 'Test Webhook Deployment',
+    'body-plain': 'Testing if deployed webhook is working',
     to: 'leads@musobuddy.com',
-    from: 'sarah.johnson@gmail.com',
-    subject: 'Wedding Reception Inquiry',
-    text: 'Hello! I am planning my wedding reception for September 20th at the Riverside Hotel. Would you be available to provide music for the evening? My phone is 555-987-6543. Thank you! Sarah Johnson'
+    recipient: 'leads@musobuddy.com'
   };
   
   try {
+    console.log('📧 Sending test request to deployed webhook...');
     const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Real-Email-Test/1.0'
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(realEmailData)
+      body: new URLSearchParams(testData).toString()
     });
     
-    console.log('Response status:', response.status);
+    console.log('Status:', response.status);
+    console.log('Status Text:', response.statusText);
     
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ SUCCESS:', result);
-      
-      if (result.enquiryId) {
-        console.log(`🎉 Created enquiry #${result.enquiryId}`);
-        console.log(`📧 Client: ${result.clientName}`);
-        console.log(`🔄 Test data: ${result.isTestData ? 'YES' : 'NO'}`);
-        console.log(`⏱️ Processing time: ${result.processingTime}ms`);
-      }
+      console.log('✅ SUCCESS - Webhook is working!');
+      console.log('Response:', JSON.stringify(result, null, 2));
     } else {
-      const error = await response.text();
-      console.log('❌ ERROR:', error);
+      console.log('❌ WEBHOOK FAILED');
+      const errorText = await response.text();
+      console.log('Error response:', errorText);
     }
     
   } catch (error) {
-    console.log('❌ Request failed:', error.message);
+    console.error('❌ Network error:', error.message);
+    console.log('This could indicate:');
+    console.log('1. Deployment not complete');
+    console.log('2. Network connectivity issues');
+    console.log('3. Webhook endpoint not accessible');
   }
 }
 

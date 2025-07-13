@@ -30,6 +30,23 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
   console.log('Body keys:', Object.keys(req.body || {}));
   console.log('Full body:', JSON.stringify(req.body, null, 2));
   
+  // CRITICAL: Save webhook data to a file for debugging
+  const webhookData = {
+    timestamp: timestamp,
+    headers: req.headers,
+    body: req.body,
+    method: req.method,
+    url: req.url
+  };
+  
+  try {
+    const fs = require('fs');
+    fs.writeFileSync(`webhook-debug-${Date.now()}.json`, JSON.stringify(webhookData, null, 2));
+    console.log('📝 Webhook data saved to file for debugging');
+  } catch (e) {
+    console.log('📝 Could not save webhook data to file:', e.message);
+  }
+  
   // Check specific Mailgun fields
   const mailgunFields = [
     'sender', 'From', 'from',
