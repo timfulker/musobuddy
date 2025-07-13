@@ -92,7 +92,10 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
                           headerFrom ||
                           req.body['envelope[from]'] || req.body.envelope?.from ||
                           req.body['X-Envelope-From'] || req.body['Return-Path'] ||
-                          req.body['Reply-To'] || req.body['reply-to'] || 'NOT_FOUND';
+                          req.body['Reply-To'] || req.body['reply-to'] ||
+                          req.body['Sender'] || req.body['SENDER'] ||
+                          req.body['envelope'] || req.body['ENVELOPE'] ||
+                          req.body['message-url'] || req.body['Message-Url'] || 'NOT_FOUND';
     // Try to extract subject from message headers if available
     let headerSubject = null;
     if (req.body['message-headers']) {
@@ -115,7 +118,10 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
                          req.body.text || req.body['body-text'] || 
                          req.body['stripped-text'] || req.body['Text'] || 
                          req.body['body-mime'] || req.body['body-calendar'] ||
-                         req.body['stripped-html'] || req.body['body-html'] || 'NOT_FOUND';
+                         req.body['stripped-html'] || req.body['body-html'] ||
+                         req.body['plain'] || req.body['PLAIN'] ||
+                         req.body['message'] || req.body['MESSAGE'] ||
+                         req.body['content'] || req.body['CONTENT'] || 'NOT_FOUND';
     
     console.log('📧 Extracted FROM:', extractedEmail);
     console.log('📧 Extracted SUBJECT:', extractedSubject);
