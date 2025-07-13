@@ -599,6 +599,13 @@ This applies to any changes in:
   * **Test Results**: "14th July next year" now correctly parsed as "2026-07-14" instead of "2023-07-14"
   * **Production Ready**: Date parsing accuracy improved for natural language temporal expressions
   * **Status**: AI-only parsing system with enhanced date accuracy ready for deployment
+- July 13, 2025. Encore Apply Now URL parameter preservation fix completed:
+  * **Critical Bug Fixed**: AI parsing was truncating query parameters from Encore Apply Now URLs
+  * **Root Cause**: AI prompt was not specifically instructed to preserve complete URLs with all parameters
+  * **Solution**: Enhanced AI parsing instructions to preserve COMPLETE URLs including utm_source, utm_medium, utm_campaign, utm_content
+  * **Test Results**: Complete URL now extracted correctly - https://encoremusicians.com/jobs/yij5S?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow
+  * **Impact**: Encore Apply Now buttons now function correctly with proper tracking and functionality
+  * **Status**: Full URL preservation working correctly for all Encore enquiries
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**

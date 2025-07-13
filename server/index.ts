@@ -46,6 +46,7 @@ CRITICAL INSTRUCTIONS:
 2. Find the ACTUAL VENUE - look for location names like "Bognor Regis", "Brighton", city names, NOT email addresses or timestamps
 3. Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
 4. ENCORE DETECTION: Look for "Apply Now" buttons or links - these are typically from Encore booking platform
+5. PRESERVE COMPLETE URLs: For applyNowLink, extract the COMPLETE URL including ALL query parameters (utm_source, utm_medium, utm_campaign, utm_content, etc.). DO NOT truncate or modify the URL in any way.
 
 Extract:
 - eventDate: The actual event/performance date in YYYY-MM-DD format (e.g., "Sunday 24 Aug 2025" = "2025-08-24", "14th July 2026" = "2026-07-14")
@@ -55,7 +56,7 @@ Extract:
 - gigType: sax, saxophone, jazz, piano, guitar, dj, band, violin, drums, etc.
 - clientPhone: UK phone number if mentioned
 - estimatedValue: Budget/price range if mentioned (e.g., "£260-£450", "£300", "budget of £500")
-- applyNowLink: If this is an Encore email, extract the "Apply Now" button URL/link (look for green buttons, hyperlinks with "Apply Now" text)
+- applyNowLink: If this is an Encore email, extract the COMPLETE "Apply Now" button URL/link with ALL query parameters (utm_source, utm_medium, utm_campaign, utm_content, etc.). Do NOT truncate or modify the URL - return the full hyperlink as it appears in the email HTML.
 
 Return valid JSON only:`;
 
