@@ -766,7 +766,7 @@ export default function Calendar() {
             onMonthChange={setCurrentDate}
             modifiers={calendarModifiers}
             modifiersClassNames={calendarModifiersClassNames}
-            className="w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-20 [&_th]:h-12 [&_button]:h-18 [&_button]:w-full [&_button]:text-xl [&_button]:font-bold [&_th]:text-lg [&_th]:font-semibold"
+            className="w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-20 [&_td]:w-auto [&_th]:h-12 [&_th]:w-auto [&_button]:h-18 [&_button]:w-full [&_button]:text-xl [&_button]:font-bold [&_th]:text-lg [&_th]:font-semibold [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full"
           />
         );
       case "year":
@@ -781,7 +781,7 @@ export default function Calendar() {
             onMonthChange={setCurrentDate}
             modifiers={calendarModifiers}
             modifiersClassNames={calendarModifiersClassNames}
-            className="w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-20 [&_th]:h-12 [&_button]:h-18 [&_button]:w-full [&_button]:text-xl [&_button]:font-bold [&_th]:text-lg [&_th]:font-semibold"
+            className="w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-20 [&_td]:w-auto [&_th]:h-12 [&_th]:w-auto [&_button]:h-18 [&_button]:w-full [&_button]:text-xl [&_button]:font-bold [&_th]:text-lg [&_th]:font-semibold [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full"
           />
         );
     }
@@ -1039,7 +1039,7 @@ export default function Calendar() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="mb-6">
-                    <div className="w-full">
+                    <div className="w-full flex justify-center">
                       {renderCalendarView()}
                     </div>
                   </div>

@@ -1,0 +1,10 @@
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        month={currentDate}
+                        onMonthChange={setCurrentDate}
+                        modifiers={calendarModifiers}
+                        modifiersClassNames={calendarModifiersClassNames}
+                        className="w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-20 [&_td]:w-auto [&_th]:h-12 [&_th]:w-auto [&_button]:h-18 [&_button]:w-full [&_button]:text-xl [&_button]:font-bold [&_th]:text-lg [&_th]:font-semibold [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full"
+                      />
