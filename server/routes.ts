@@ -64,17 +64,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/test-openai', async (req, res) => {
     try {
       console.log('🤖 Testing OpenAI integration...');
-      console.log('🤖 API Key available:', !!process.env.OPENAI_API_KEY);
+      console.log('🤖 Instrument Mapping Key available:', !!process.env.OPENAI_INSTRUMENT_MAPPING_KEY);
       
-      if (!process.env.OPENAI_API_KEY) {
-        return res.json({ error: 'OpenAI API key not available' });
+      if (!process.env.OPENAI_INSTRUMENT_MAPPING_KEY) {
+        return res.json({ error: 'OpenAI Instrument Mapping key not available' });
       }
 
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+      const instrumentMappingAI = new OpenAI({
+        apiKey: process.env.OPENAI_INSTRUMENT_MAPPING_KEY,
       });
 
-      const response = await openai.chat.completions.create({
+      const response = await instrumentMappingAI.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
           { role: 'system', content: 'You are a helpful assistant.' },
@@ -163,16 +163,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use OpenAI for unknown instruments if available
-      if (unknownInstruments.length > 0 && process.env.OPENAI_API_KEY) {
+      if (unknownInstruments.length > 0 && process.env.OPENAI_INSTRUMENT_MAPPING_KEY) {
         try {
-          console.log('🤖 OpenAI API Key available:', !!process.env.OPENAI_API_KEY);
-          const openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
+          console.log('🤖 Instrument Mapping AI Key available:', !!process.env.OPENAI_INSTRUMENT_MAPPING_KEY);
+          const instrumentMappingAI = new OpenAI({
+            apiKey: process.env.OPENAI_INSTRUMENT_MAPPING_KEY,
           });
 
           console.log('🤖 Calling OpenAI for instruments:', unknownInstruments);
 
-          const response = await openai.chat.completions.create({
+          const response = await instrumentMappingAI.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
               {

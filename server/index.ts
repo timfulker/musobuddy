@@ -10,10 +10,14 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Initialize OpenAI client
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
-console.log('🤖 OpenAI client initialized:', !!openai);
-console.log('🤖 API key exists:', !!process.env.OPENAI_API_KEY);
+// Initialize separate OpenAI clients for different functions
+const emailParsingAI = process.env.OPENAI_EMAIL_PARSING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
+const instrumentMappingAI = process.env.OPENAI_INSTRUMENT_MAPPING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_INSTRUMENT_MAPPING_KEY }) : null;
+const conflictResolutionAI = process.env.OPENAI_CONFLICT_RESOLUTION_KEY ? new OpenAI({ apiKey: process.env.OPENAI_CONFLICT_RESOLUTION_KEY }) : null;
+
+console.log('🤖 Email Parsing AI initialized:', !!emailParsingAI);
+console.log('🤖 Instrument Mapping AI initialized:', !!instrumentMappingAI);
+console.log('🤖 Conflict Resolution AI initialized:', !!conflictResolutionAI);
 
 // AI-Enhanced Email Parsing Function
 async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
@@ -26,7 +30,7 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
   estimatedValue: string | null;
   applyNowLink: string | null;
 }> {
-  if (!openai) {
+  if (!emailParsingAI) {
     return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
   }
 
@@ -70,7 +74,7 @@ Extract:
 
 Return valid JSON only:`;
 
-    const response = await openai.chat.completions.create({
+    const response = await emailParsingAI.chat.completions.create({
       model: "gpt-3.5-turbo", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         { 
