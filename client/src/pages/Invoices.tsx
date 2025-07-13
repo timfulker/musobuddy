@@ -767,6 +767,13 @@ export default function Invoices() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => window.open(`/view-invoice/${invoice.id}`, '_blank')}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => sendInvoiceMutation.mutate(invoice)}
                         >
                           <Send className="h-4 w-4" />
