@@ -52,20 +52,105 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientName = clientEmail.split('@')[0];
     }
     
-    // Create enquiry
+    // Parse phone numbers from email body
+    let clientPhone = null;
+    const phonePatterns = [
+      /(?:call|phone|tel|mobile|contact)[\s:]*(?:me\s+)?(?:on\s+)?([0-9\s\-\(\)]{8,15})/i,
+      /\b(0[0-9]\d{8,10})\b/g,
+      /\b(\+44\s?[0-9\s\-\(\)]{10,15})\b/g
+    ];
+    
+    for (const pattern of phonePatterns) {
+      const phoneMatch = bodyField.match(pattern);
+      if (phoneMatch && phoneMatch[1]) {
+        const cleanPhone = phoneMatch[1].replace(/[^\d\+]/g, '');
+        if (cleanPhone.length >= 8) {
+          clientPhone = phoneMatch[1].trim(); // Keep original formatting
+          console.log(`📧 [${requestId}] Phone found: "${clientPhone}"`);
+          break;
+        }
+      }
+    }
+    
+    // Parse event date from email body
+    let eventDate = null;
+    const datePatterns = [
+      /(?:on|for|date|event)[\s:]*([0-9]{1,2}[\s\/\-][0-9]{1,2}[\s\/\-][0-9]{2,4})/i,
+      /(?:on|for|date|event)[\s:]*([0-9]{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+[0-9]{2,4})/i,
+      /(?:on|for|date|event)[\s:]*([a-z]+\s+[0-9]{1,2}(?:st|nd|rd|th)?\s*,?\s*[0-9]{2,4})/i,
+      /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+[0-9]{1,2}(?:st|nd|rd|th)?\s*,?\s*[0-9]{2,4}\b/i,
+      /\b[0-9]{1,2}(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+[0-9]{2,4}\b/i
+    ];
+    
+    for (const pattern of datePatterns) {
+      const dateMatch = bodyField.match(pattern);
+      if (dateMatch) {
+        const dateStr = dateMatch[1] || dateMatch[0];
+        const parsedDate = new Date(dateStr);
+        if (!isNaN(parsedDate.getTime())) {
+          eventDate = parsedDate.toISOString().split('T')[0];
+          break;
+        }
+      }
+    }
+    
+    // Parse venue from email body
+    let venue = null;
+    const venuePatterns = [
+      /(?:at|venue|location|place)[\s:]+([^,.!?\n]+)/i,
+      /(?:held at|taking place at|located at)[\s:]+([^,.!?\n]+)/i
+    ];
+    
+    for (const pattern of venuePatterns) {
+      const venueMatch = bodyField.match(pattern);
+      if (venueMatch) {
+        venue = venueMatch[1].trim();
+        break;
+      }
+    }
+    
+    // Parse event type from email body
+    let eventType = null;
+    const eventTypePatterns = [
+      /(?:wedding|birthday|corporate|party|celebration|anniversary|graduation|funeral|christmas|new year)/i
+    ];
+    
+    for (const pattern of eventTypePatterns) {
+      const typeMatch = bodyField.match(pattern);
+      if (typeMatch) {
+        eventType = typeMatch[0].toLowerCase();
+        break;
+      }
+    }
+    
+    // Parse gig type from email body
+    let gigType = null;
+    const gigTypePatterns = [
+      /(?:sax|saxophone|jazz|piano|guitar|dj|band|violin|drums|trumpet|clarinet|flute)/i
+    ];
+    
+    for (const pattern of gigTypePatterns) {
+      const gigMatch = bodyField.match(pattern);
+      if (gigMatch) {
+        gigType = gigMatch[0].toLowerCase();
+        break;
+      }
+    }
+    
+    // Create enquiry with parsed data
     const enquiry = {
       userId: '43963086',
       title: subjectField || `Email from ${clientName}`,
       clientName,
       clientEmail: clientEmail || null,
-      clientPhone: null,
-      eventDate: null,
+      clientPhone,
+      eventDate,
       eventTime: null,
       eventEndTime: null,
       performanceDuration: null,
-      venue: null,
-      eventType: null,
-      gigType: null,
+      venue,
+      eventType,
+      gigType,
       estimatedValue: null,
       status: 'new' as const,
       notes: bodyField || 'Email enquiry with no body content',
