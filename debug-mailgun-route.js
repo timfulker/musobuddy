@@ -2,58 +2,34 @@
  * Debug Mailgun route configuration
  */
 
-import https from 'https';
-import { promisify } from 'util';
-
 async function checkMailgunRoute() {
-  console.log('🔍 Checking Mailgun route configuration...');
+  console.log('🔍 MAILGUN ROUTE CONFIGURATION DEBUG');
+  console.log('=====================================');
   
-  // Test if webhook endpoint is accessible
-  console.log('\n1. Testing webhook endpoint accessibility:');
-  try {
-    const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        sender: 'debug@test.com',
-        subject: 'Debug test',
-        'body-plain': 'Testing webhook accessibility'
-      })
-    });
-    
-    const result = await response.json();
-    console.log(`✅ Webhook accessible - Status: ${response.status}`);
-    console.log(`✅ Response: ${JSON.stringify(result)}`);
-  } catch (error) {
-    console.log(`❌ Webhook not accessible: ${error.message}`);
-  }
+  console.log('\n📧 Current understanding:');
+  console.log('- Test emails work perfectly (enquiries #319-321)');
+  console.log('- Real emails arrive with empty fields (enquiry #315)');
+  console.log('- Webhook receives the request but fields are missing');
+  console.log('- This indicates Mailgun route is not forwarding email content');
   
-  // Check MX record
-  console.log('\n2. Checking MX record configuration:');
-  try {
-    const dnsResponse = await fetch('https://dns.google/resolve?name=musobuddy.com&type=MX');
-    const dnsData = await dnsResponse.json();
-    
-    if (dnsData.Answer) {
-      console.log('✅ MX records found:');
-      dnsData.Answer.forEach(record => {
-        console.log(`   ${record.data}`);
-      });
-    } else {
-      console.log('❌ No MX records found');
-    }
-  } catch (error) {
-    console.log(`❌ Error checking MX records: ${error.message}`);
-  }
+  console.log('\n🔍 Likely root cause:');
+  console.log('- Mailgun route expression is too restrictive');
+  console.log('- Route might be: match_recipient("leads@musobuddy.com")');
+  console.log('- Should be: catch_all() for subdomain forwarding');
   
-  // Check if emails are being delivered to Mailgun
-  console.log('\n3. Recommendations:');
-  console.log('- Verify Mailgun route is pointing to: https://musobuddy.replit.app/api/webhook/mailgun');
-  console.log('- Check if MX record is: mxa.mailgun.org or mxb.mailgun.org (not mx.sendgrid.net)');
-  console.log('- Ensure domain is verified in Mailgun dashboard');
-  console.log('- Check Mailgun logs for incoming emails');
+  console.log('\n✅ Solution required:');
+  console.log('1. Update Mailgun route from specific recipient matching to catch_all()');
+  console.log('2. Ensure route forwards ALL email fields (sender, subject, body-plain, etc.)');
+  console.log('3. Verify route priority is set correctly');
+  
+  console.log('\n📋 Expected route configuration:');
+  console.log('Expression: catch_all()');
+  console.log('Action: forward("https://musobuddy.replit.app/api/webhook/mailgun")');
+  console.log('Description: Forward all emails to MusoBuddy webhook');
+  console.log('Priority: 0 (highest)');
+  
+  console.log('\n🔧 Test after route update:');
+  console.log('Send email to leads@musobuddy.com and verify it creates enquiry with proper data');
 }
 
 checkMailgunRoute();

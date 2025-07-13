@@ -2,61 +2,84 @@
  * Investigate email deduplication patterns
  */
 
-console.log('🔍 EMAIL DEDUPLICATION INVESTIGATION');
-console.log('');
-console.log('📊 THE PATTERN YOU\'VE IDENTIFIED:');
-console.log('✅ NEW addresses work: timfulkeramazon@gmail.com → Full data extraction');
-console.log('❌ TESTED addresses fail: timfulkermusic@gmail.com → Fallback values');
-console.log('❌ TESTED addresses fail: timfulker@gmail.com → Fallback values');
-console.log('');
-console.log('🎯 THIS SUGGESTS:');
-console.log('');
-console.log('1. MAILGUN DEDUPLICATION:');
-console.log('   - Mailgun detects "duplicate" emails from same sender');
-console.log('   - First email: Full webhook data');
-console.log('   - Subsequent emails: Minimal webhook data (deduplication)');
-console.log('');
-console.log('2. MESSAGE-ID CACHING:');
-console.log('   - Email clients reuse Message-IDs');
-console.log('   - Mailgun tracks Message-IDs to prevent duplicates');
-console.log('   - Previously seen Message-IDs get stripped content');
-console.log('');
-console.log('3. ROUTE CACHING:');
-console.log('   - Mailgun route caches responses for efficiency');
-console.log('   - Previously processed senders get cached minimal response');
-console.log('');
-console.log('4. SPAM PREVENTION:');
-console.log('   - Multiple emails from same sender flagged as potential spam');
-console.log('   - Content stripped as protective measure');
-console.log('');
-console.log('🔧 SOLUTIONS TO TEST:');
-console.log('');
-console.log('1. UNIQUE SUBJECT LINES:');
-console.log('   Add timestamp: "Test Email - 2025-07-13-10:30"');
-console.log('   This breaks subject-based deduplication');
-console.log('');
-console.log('2. DIFFERENT EMAIL CLIENTS:');
-console.log('   Switch from Gmail to Outlook/Yahoo for testing');
-console.log('   Different clients = different Message-IDs');
-console.log('');
-console.log('3. MAILGUN SETTINGS CHECK:');
-console.log('   Check Mailgun dashboard for deduplication settings');
-console.log('   Look for "Duplicate suppression" or similar options');
-console.log('');
-console.log('4. FRESH EMAIL ADDRESSES:');
-console.log('   Continue testing with completely new addresses');
-console.log('   This confirms the deduplication theory');
-console.log('');
-console.log('💡 KEY INSIGHT:');
-console.log('The webhook field extraction is working perfectly!');
-console.log('The issue is Mailgun\'s duplicate detection treating');
-console.log('repeated test emails as spam/duplicates.');
-console.log('');
-console.log('🚀 NEXT STEPS:');
-console.log('1. Test with unique subject lines from tested addresses');
-console.log('2. Check Mailgun dashboard for duplicate suppression settings');
-console.log('3. Continue testing with fresh email addresses');
-console.log('4. Implement webhook idempotency handling on our end');
-console.log('');
-console.log('This is why weeks of testing the same addresses failed!');
-console.log('The system was working - it was just being too smart about duplicates.');
+async function investigateDeduplication() {
+  console.log('🔍 EMAIL DEDUPLICATION INVESTIGATION');
+  console.log('===================================');
+  
+  // Send the exact same email content multiple times to see if behavior changes
+  const testEmail = {
+    'recipient': 'leads@musobuddy.com',
+    'sender': 'timfulkermusic@gmail.com',
+    'from': 'Tim Fulker <timfulkermusic@gmail.com>',
+    'subject': 'Wedding Gig Enquiry - August 15th',
+    'body-plain': 'Hi, I need a saxophone player for a wedding on August 15th at The Grand Hotel. Please let me know your availability and rates. Thanks, Tim',
+    'timestamp': Math.floor(Date.now() / 1000).toString(),
+    'token': 'duplicate-test-token',
+    'signature': 'duplicate-test-signature'
+  };
+  
+  console.log('\n📧 Sending same email 3 times to test deduplication behavior:');
+  
+  for (let i = 1; i <= 3; i++) {
+    console.log(`\n--- Attempt ${i} ---`);
+    
+    try {
+      const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mailgun'
+        },
+        body: new URLSearchParams(testEmail).toString()
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`✅ SUCCESS - Enquiry ${result.enquiryId} created`);
+        console.log(`   Client: ${result.clientName}`);
+        console.log(`   Processing: ${result.processing}`);
+      } else {
+        console.log(`❌ FAILED - Status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error: ${error.message}`);
+    }
+    
+    // Wait 1 second between attempts
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  
+  console.log('\n📧 Now sending with empty fields to simulate real email behavior:');
+  
+  const emptyEmail = {
+    'timestamp': Math.floor(Date.now() / 1000).toString(),
+    'token': 'empty-test-token',
+    'signature': 'empty-test-signature'
+  };
+  
+  try {
+    const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mailgun'
+      },
+      body: new URLSearchParams(emptyEmail).toString()
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log(`✅ Empty email created enquiry ${result.enquiryId}`);
+      console.log(`   Client: ${result.clientName}`);
+      console.log(`   Processing: ${result.processing}`);
+    } else {
+      console.log(`❌ FAILED - Status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error: ${error.message}`);
+  }
+  
+  console.log('\n🔍 Check database to see if all enquiries were created or if some were deduplicated');
+}
+
+investigateDeduplication();
