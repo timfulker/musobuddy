@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, type Booking } from "@shared/schema";
 import { useLocation, Link } from "wouter";
@@ -65,6 +65,10 @@ export default function Calendar() {
 
   const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
+  });
+
+  const { data: conflicts = [] } = useQuery({
+    queryKey: ["/api/conflicts"],
   });
 
   const handleCalendarExport = () => {
@@ -159,6 +163,32 @@ export default function Calendar() {
       toast({
         title: "Error",
         description: "Failed to mark time as unavailable. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const transferEnquiriesMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("/api/transfer-enquiries-to-calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/enquiries"] });
+      toast({
+        title: "Transfer Complete",
+        description: `Successfully transferred ${data.details.transferred} enquiries to calendar`,
+      });
+    },
+    onError: (error) => {
+      console.error("Error transferring enquiries:", error);
+      toast({
+        title: "Error",
+        description: "Failed to transfer enquiries to calendar. Please try again.",
         variant: "destructive",
       });
     },
@@ -286,6 +316,22 @@ export default function Calendar() {
   };
 
   const selectedDatePotentialBookings = getSelectedDatePotentialBookings();
+
+  const getBookingConflicts = (bookingId: string) => {
+    return conflicts.filter((conflict: any) => 
+      (conflict.enquiryId && `enquiry-${conflict.enquiryId}` === bookingId) ||
+      (conflict.conflictType === 'booking' && conflict.conflictId.toString() === bookingId)
+    );
+  };
+
+  const getConflictSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return 'text-red-600 bg-red-50 border-red-200';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'low': return 'text-blue-600 bg-blue-50 border-blue-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
 
   // Get all bookings and enquiries for the current month
   const getCurrentMonthEvents = () => {
@@ -763,6 +809,15 @@ export default function Calendar() {
                         </>
                       )}
                     </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => transferEnquiriesMutation.mutate()}
+                      disabled={transferEnquiriesMutation.isPending}
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {transferEnquiriesMutation.isPending ? "Transferring..." : "Transfer Enquiries"}
+                    </Button>
                     <CalendarImport />
                     <Button variant="outline" size="sm" onClick={handleCalendarExport}>
                       <Download className="w-4 h-4 mr-2" />
@@ -852,23 +907,40 @@ export default function Calendar() {
                 </div>
               )}
 
-              {selectedDateBookings.length === 0 && selectedDatePotentialBookings.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p>No bookings on this date</p>
-                  <p className="text-sm">Available for new gigs</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
+              {selectedDate && (
+                (selectedDateBookings.length === 0 && selectedDatePotentialBookings.length === 0) ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p>No bookings on this date</p>
+                    <p className="text-sm">Available for new gigs</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
                   {/* Confirmed Bookings */}
-                  {selectedDateBookings.map((booking: Booking) => (
-                    <div key={booking.id} className={`p-4 rounded-lg border-2 ${getStatusColor(booking.status)}`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold">{booking.title}</h4>
-                        <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
-                          {booking.status}
-                        </Badge>
-                      </div>
+                  {selectedDateBookings.map((booking: Booking) => {
+                    const bookingConflicts = getBookingConflicts(booking.id.toString());
+                    const hasConflicts = bookingConflicts.length > 0;
+                    
+                    return (
+                      <div key={booking.id} className={`p-4 rounded-lg border-2 ${getStatusColor(booking.status)}`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold flex items-center space-x-2">
+                            <span>{booking.title}</span>
+                            {hasConflicts && (
+                              <AlertTriangle className="w-4 h-4 text-red-500" />
+                            )}
+                          </h4>
+                          <div className="flex items-center space-x-2">
+                            {hasConflicts && (
+                              <Badge variant="destructive" className="text-xs">
+                                CONFLICT
+                              </Badge>
+                            )}
+                            <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
+                              {booking.status}
+                            </Badge>
+                          </div>
+                        </div>
                       
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center space-x-2 text-gray-600">
@@ -895,29 +967,44 @@ export default function Calendar() {
                           </Button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   
                   {/* Potential Bookings */}
-                  {selectedDatePotentialBookings.map((booking: any) => (
-                    <div key={booking.id} className={`p-4 rounded-lg border-2 ${booking.isExpired ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-amber-50 border-amber-200'}`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className={`font-semibold ${booking.isExpired ? 'text-gray-500' : ''}`}>
-                          {booking.title}
-                          {booking.isExpired && (
-                            <span className="ml-2 text-xs text-gray-400">(Expired)</span>
-                          )}
-                        </h4>
-                        <Badge className={
-                          booking.isExpired ? 'bg-gray-100 text-gray-600' :
-                          booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
-                          booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
-                          booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
-                          booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
-                          'bg-amber-100 text-amber-800'
-                        }>
-                          {booking.isExpired ? 'Expired Enquiry' :
-                           booking.status === 'enquiry-new' ? 'New Enquiry' :
+                  {selectedDatePotentialBookings.map((booking: any) => {
+                    const bookingConflicts = getBookingConflicts(booking.id);
+                    const hasConflicts = bookingConflicts.length > 0;
+                    
+                    return (
+                      <div key={booking.id} className={`p-4 rounded-lg border-2 ${booking.isExpired ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-amber-50 border-amber-200'}`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className={`font-semibold flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : ''}`}>
+                            <span>
+                              {booking.title}
+                              {booking.isExpired && (
+                                <span className="ml-2 text-xs text-gray-400">(Expired)</span>
+                              )}
+                            </span>
+                            {hasConflicts && (
+                              <AlertTriangle className="w-4 h-4 text-red-500" />
+                            )}
+                          </h4>
+                          <div className="flex items-center space-x-2">
+                            {hasConflicts && (
+                              <Badge variant="destructive" className="text-xs">
+                                CONFLICT
+                              </Badge>
+                            )}
+                            <Badge className={
+                              booking.isExpired ? 'bg-gray-100 text-gray-600' :
+                              booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
+                              booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
+                              booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
+                              booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
+                              'bg-amber-100 text-amber-800'
+                            }>
+                              {booking.isExpired ? 'Expired Enquiry' :
+                               booking.status === 'enquiry-new' ? 'New Enquiry' :
                            booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'In Progress' :
                            booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
                            booking.status === 'contract-signed' ? 'Contract Signed' :
@@ -972,11 +1059,10 @@ export default function Calendar() {
                     </div>
                   ))}
                 </div>
+                )
               )}
             </CardContent>
           </Card>
-        </div>
-        )}
 
         {/* Upcoming Gigs Summary */}
         <Card>
@@ -1197,8 +1283,6 @@ export default function Calendar() {
           </Form>
         </DialogContent>
       </Dialog>
-        </div>
-      </div>
     </div>
   );
 }

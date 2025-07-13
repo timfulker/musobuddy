@@ -73,6 +73,7 @@ export interface IStorage {
   getBooking(id: number, userId: string): Promise<Booking | undefined>;
   createBooking(booking: InsertBooking): Promise<Booking>;
   updateBooking(id: number, booking: Partial<InsertBooking>, userId: string): Promise<Booking | undefined>;
+  deleteBooking(id: number, userId: string): Promise<boolean>;
   
   // Compliance operations
   getComplianceDocuments(userId: string): Promise<ComplianceDocument[]>;
@@ -490,6 +491,12 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
       .returning();
     return updatedBooking;
+  }
+
+  async deleteBooking(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
+    return result.rowCount > 0;
   }
 
   // Compliance operations

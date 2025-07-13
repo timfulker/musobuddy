@@ -498,6 +498,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enquiryData = insertEnquirySchema.parse(data);
       const enquiry = await storage.createEnquiry(enquiryData);
       
+      // Auto-create calendar booking for enquiry (if it has a date)
+      if (enquiry.eventDate && enquiry.venue && enquiry.clientName) {
+        try {
+          const bookingData = {
+            userId: userId,
+            contractId: null, // No contract yet
+            title: enquiry.title,
+            clientName: enquiry.clientName,
+            eventDate: enquiry.eventDate,
+            eventTime: enquiry.eventTime || '12:00',
+            eventEndTime: enquiry.eventEndTime,
+            performanceDuration: enquiry.performanceDuration,
+            venue: enquiry.venue,
+            fee: parseFloat(enquiry.estimatedValue || '0'),
+            status: 'confirmed', // Show as confirmed in calendar
+            notes: `Auto-created from enquiry #${enquiry.id}. Status: ${enquiry.status}${enquiry.notes ? '. Notes: ' + enquiry.notes : ''}`
+          };
+          
+          const booking = await storage.createBooking(bookingData);
+          console.log(`✅ Auto-created calendar booking #${booking.id} for enquiry #${enquiry.id}`);
+        } catch (bookingError) {
+          console.error('Failed to auto-create calendar booking:', bookingError);
+          // Don't fail the enquiry creation if booking fails
+        }
+      }
+      
       // Check for conflicts after creating enquiry
       const conflictService = new (await import('./conflict-detection')).ConflictDetectionService(storage);
       const { conflicts, analysis } = await conflictService.checkEnquiryConflicts(enquiry, userId);
@@ -545,6 +571,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const id = parseInt(req.params.id);
+      
+      // Find and delete any auto-created calendar bookings for this enquiry
+      try {
+        const bookings = await storage.getBookings(userId);
+        const relatedBookings = bookings.filter(booking => 
+          booking.notes && booking.notes.includes(`Auto-created from enquiry #${id}`)
+        );
+        
+        for (const booking of relatedBookings) {
+          await storage.deleteBooking(booking.id, userId);
+          console.log(`✅ Deleted calendar booking #${booking.id} for enquiry #${id}`);
+        }
+      } catch (bookingError) {
+        console.error('Failed to delete related calendar bookings:', bookingError);
+        // Don't fail the enquiry deletion if booking cleanup fails
+      }
+      
       const success = await storage.deleteEnquiry(id, userId);
       if (!success) {
         return res.status(404).json({ message: "Enquiry not found" });
@@ -553,6 +596,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting enquiry:", error);
       res.status(500).json({ message: "Failed to delete enquiry" });
+    }
+  });
+
+  // Transfer existing enquiries to calendar (one-time migration)
+  app.post('/api/transfer-enquiries-to-calendar', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const enquiries = await storage.getEnquiries(userId);
+      let transferredCount = 0;
+      let skippedCount = 0;
+      
+      console.log(`📅 Starting transfer of ${enquiries.length} enquiries to calendar for user ${userId}`);
+      
+      for (const enquiry of enquiries) {
+        // Only transfer enquiries that have dates and aren't already in calendar
+        if (enquiry.eventDate && enquiry.venue && enquiry.clientName) {
+          try {
+            // Check if this enquiry already has a calendar booking
+            const existingBookings = await storage.getBookings(userId);
+            const alreadyExists = existingBookings.some(booking => 
+              booking.notes && booking.notes.includes(`Auto-created from enquiry #${enquiry.id}`)
+            );
+            
+            if (!alreadyExists) {
+              const bookingData = {
+                userId: userId,
+                contractId: null,
+                title: enquiry.title,
+                clientName: enquiry.clientName,
+                eventDate: enquiry.eventDate,
+                eventTime: enquiry.eventTime || '12:00',
+                eventEndTime: enquiry.eventEndTime,
+                performanceDuration: enquiry.performanceDuration,
+                venue: enquiry.venue,
+                fee: parseFloat(enquiry.estimatedValue || '0'),
+                status: 'confirmed',
+                notes: `Auto-created from enquiry #${enquiry.id}. Status: ${enquiry.status}${enquiry.notes ? '. Notes: ' + enquiry.notes : ''}`
+              };
+              
+              await storage.createBooking(bookingData);
+              transferredCount++;
+              console.log(`✅ Transferred enquiry #${enquiry.id} to calendar`);
+            } else {
+              skippedCount++;
+              console.log(`⏭️ Skipped enquiry #${enquiry.id} - already exists in calendar`);
+            }
+          } catch (error) {
+            console.error(`❌ Failed to transfer enquiry #${enquiry.id}:`, error);
+            skippedCount++;
+          }
+        } else {
+          skippedCount++;
+          console.log(`⏭️ Skipped enquiry #${enquiry.id} - missing date/venue/client info`);
+        }
+      }
+      
+      console.log(`📅 Transfer complete: ${transferredCount} transferred, ${skippedCount} skipped`);
+      
+      res.json({
+        success: true,
+        message: `Successfully transferred ${transferredCount} enquiries to calendar`,
+        details: {
+          total: enquiries.length,
+          transferred: transferredCount,
+          skipped: skippedCount
+        }
+      });
+    } catch (error) {
+      console.error('Error transferring enquiries to calendar:', error);
+      res.status(500).json({ message: 'Failed to transfer enquiries to calendar' });
     }
   });
 

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Clock, MoreHorizontal, Filter, Eye, User, Calendar, AlertCircle } from "lucide-react";
+import { DollarSign, Clock, MoreHorizontal, Filter, Eye, User, Calendar, AlertCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import type { Enquiry } from "@shared/schema";
@@ -11,11 +11,30 @@ export default function KanbanBoard() {
     queryKey: ["/api/enquiries"],
   });
 
+  const { data: conflicts = [] } = useQuery({
+    queryKey: ["/api/conflicts"],
+  });
+
   const groupedEnquiries = {
     new: enquiries.filter((e: Enquiry) => e.status === "new"),
     qualified: enquiries.filter((e: Enquiry) => e.status === "qualified"),
     contract_sent: enquiries.filter((e: Enquiry) => e.status === "contract_sent"),
     confirmed: enquiries.filter((e: Enquiry) => e.status === "confirmed"),
+  };
+
+  const getEnquiryConflict = (enquiryId: number) => {
+    return conflicts.find((conflict: any) => 
+      conflict.enquiryId === enquiryId && !conflict.resolved
+    );
+  };
+
+  const getConflictSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return 'text-red-600 bg-red-50';
+      case 'medium': return 'text-yellow-600 bg-yellow-50';
+      case 'low': return 'text-blue-600 bg-blue-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
   };
 
 
@@ -148,6 +167,18 @@ export default function KanbanBoard() {
                                     {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
                                   </div>
                                   <div className="flex items-center space-x-2">
+                                    {(() => {
+                                      const conflict = getEnquiryConflict(enquiry.id);
+                                      if (conflict) {
+                                        return (
+                                          <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getConflictSeverityColor(conflict.severity)}`}>
+                                            <AlertTriangle className="w-3 h-3" />
+                                            <span>CONFLICT</span>
+                                          </div>
+                                        );
+                                      }
+                                      return null;
+                                    })()}
                                     {needsResponse(enquiry) && (
                                       <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
                                         <AlertCircle className="w-3 h-3" />
@@ -212,6 +243,8 @@ export default function KanbanBoard() {
               <div className="space-y-3">
                 {groupedEnquiries.qualified.map((enquiry: Enquiry) => {
                   const dateBox = formatDateBox(enquiry.eventDate!);
+                  const conflict = getEnquiryConflict(enquiry.id);
+                  
                   return (
                     <Link key={enquiry.id} href="/enquiries">
                       <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
@@ -231,9 +264,17 @@ export default function KanbanBoard() {
                                 <div className="text-lg font-bold text-green-600">
                                   {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
                                 </div>
-                                <Badge className="bg-blue-100 text-blue-800" variant="secondary">
-                                  IN PROGRESS
-                                </Badge>
+                                <div className="flex items-center space-x-2">
+                                  {conflict && (
+                                    <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getConflictSeverityColor(conflict.severity)}`}>
+                                      <AlertTriangle className="w-3 h-3" />
+                                      <span>CONFLICT</span>
+                                    </div>
+                                  )}
+                                  <Badge className="bg-blue-100 text-blue-800" variant="secondary">
+                                    IN PROGRESS
+                                  </Badge>
+                                </div>
                               </div>
                               
                               {/* Event Title */}
@@ -282,6 +323,8 @@ export default function KanbanBoard() {
               <div className="space-y-3">
                 {groupedEnquiries.contract_sent.map((enquiry: Enquiry) => {
                   const dateBox = formatDateBox(enquiry.eventDate!);
+                  const conflict = getEnquiryConflict(enquiry.id);
+                  
                   return (
                     <Link key={enquiry.id} href="/enquiries">
                       <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
@@ -301,9 +344,17 @@ export default function KanbanBoard() {
                                 <div className="text-lg font-bold text-green-600">
                                   {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
                                 </div>
-                                <Badge className="bg-purple-100 text-purple-800" variant="secondary">
-                                  PENDING
-                                </Badge>
+                                <div className="flex items-center space-x-2">
+                                  {conflict && (
+                                    <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getConflictSeverityColor(conflict.severity)}`}>
+                                      <AlertTriangle className="w-3 h-3" />
+                                      <span>CONFLICT</span>
+                                    </div>
+                                  )}
+                                  <Badge className="bg-purple-100 text-purple-800" variant="secondary">
+                                    PENDING
+                                  </Badge>
+                                </div>
                               </div>
                               
                               {/* Event Title */}
@@ -357,6 +408,8 @@ export default function KanbanBoard() {
               <div className="space-y-3">
                 {groupedEnquiries.confirmed.map((enquiry: Enquiry) => {
                   const dateBox = formatDateBox(enquiry.eventDate!);
+                  const conflict = getEnquiryConflict(enquiry.id);
+                  
                   return (
                     <Link key={enquiry.id} href="/enquiries">
                       <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
@@ -376,9 +429,17 @@ export default function KanbanBoard() {
                                 <div className="text-lg font-bold text-green-600">
                                   {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
                                 </div>
-                                <Badge className="bg-green-100 text-green-800" variant="secondary">
-                                  CONFIRMED
-                                </Badge>
+                                <div className="flex items-center space-x-2">
+                                  {conflict && (
+                                    <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getConflictSeverityColor(conflict.severity)}`}>
+                                      <AlertTriangle className="w-3 h-3" />
+                                      <span>CONFLICT</span>
+                                    </div>
+                                  )}
+                                  <Badge className="bg-green-100 text-green-800" variant="secondary">
+                                    CONFIRMED
+                                  </Badge>
+                                </div>
                               </div>
                               
                               {/* Event Title */}
