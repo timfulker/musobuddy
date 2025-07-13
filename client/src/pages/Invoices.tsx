@@ -20,12 +20,9 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 
 const invoiceFormSchema = z.object({
-  contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
+  contractId: z.number().optional().nullable(), // Allow null for no contract selected
   clientName: z.string().min(1, "Client name is required"),
-  clientEmail: z.string().optional().refine((email) => {
-    if (!email || email.trim() === '') return true;
-    return email.includes('@');
-  }, "Please enter a valid email address"),
+  clientEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
   clientAddress: z.string().optional(),
   venueAddress: z.string().optional(),
   amount: z.string().min(1, "Amount is required").refine((val) => {
@@ -75,7 +72,7 @@ export default function Invoices() {
   const form = useForm<z.infer<typeof invoiceFormSchema>>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
-      contractId: undefined, // Optional contract selection
+      contractId: null, // Start with null instead of undefined
       clientName: "", 
       clientEmail: "",
       clientAddress: "",
@@ -326,22 +323,22 @@ export default function Invoices() {
   };
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
-    console.log("🔥 Frontend: Form submission data:", JSON.stringify(data, null, 2));
-    console.log("🔥 Frontend: Selected contract ID:", selectedContractId);
-    
-    // Debug: Log form values directly
-    console.log("🔥 Frontend: Form values debug:", {
-      clientName: form.getValues("clientName"),
-      amount: form.getValues("amount"),
-      dueDate: form.getValues("dueDate"),
-      clientEmail: form.getValues("clientEmail"),
-    });
+    console.log("🔍 RAW FORM DATA:", JSON.stringify(data, null, 2));
+    console.log("🔍 Form watch values:", form.watch());
+    console.log("🔍 Form getValues():", form.getValues());
+    console.log("🔍 Selected contract ID:", selectedContractId);
     
     // Client-side validation with user-friendly prompts
     const validationIssues = [];
     
     if (!data.clientName || !data.clientName.trim()) {
       validationIssues.push("Client name cannot be empty");
+      console.log("🔍 CLIENT NAME ISSUE:", {
+        clientName: data.clientName,
+        type: typeof data.clientName,
+        trimmed: data.clientName?.trim(),
+        length: data.clientName?.length
+      });
     }
     
     if (!data.amount || !data.amount.trim()) {
@@ -363,7 +360,7 @@ export default function Invoices() {
     
     // Show validation issues as a prompt instead of failing
     if (validationIssues.length > 0) {
-      console.log("🔥 Frontend: Validation issues:", validationIssues);
+      console.log("🔍 VALIDATION ISSUES:", validationIssues);
       toast({
         title: "Please fix the following issues:",
         description: validationIssues.join(", "),
@@ -376,33 +373,55 @@ export default function Invoices() {
     if (!data.clientEmail || !data.clientEmail.trim()) {
       toast({
         title: "Note",
-        description: "No client email provided. Invoice will be created but cannot be sent automatically.",
+        description: "No client email provided. You won't be able to send this invoice via email until you add one.",
       });
+      // Still allow creation but warn the user
     }
     
-    // Prepare data for backend - ensure we have all required fields
-    const formattedData = {
-      contractId: data.contractId || null, // Convert undefined to null for optional integer
-      clientName: data.clientName?.trim() || "",
+    // Send data exactly as expected by the API with proper type handling
+    const finalData = {
+      // Handle contractId - convert empty/undefined to null for optional integer field
+      contractId: selectedContractId && selectedContractId > 0 ? selectedContractId : null,
+      
+      // Required fields - add extra safety checks
+      clientName: (data.clientName || "").trim(),
+      amount: (data.amount || "").trim(), // Keep as string for decimal handling
+      dueDate: data.dueDate || "", // Backend expects string and will convert to Date
+      
+      // Optional string fields - convert empty strings to null
       clientEmail: data.clientEmail?.trim() || null,
       clientAddress: data.clientAddress?.trim() || null,
       venueAddress: data.venueAddress?.trim() || null,
-      amount: data.amount || "",
-      dueDate: data.dueDate || "",
-      performanceDate: data.performanceDate || null,
-      performanceFee: data.performanceFee || null,
-      depositPaid: data.depositPaid || null,
+      
+      // Optional date fields - convert empty strings to null
+      performanceDate: data.performanceDate?.trim() || null,
+      
+      // Optional decimal fields - convert empty strings to null
+      performanceFee: data.performanceFee?.trim() || null,
+      depositPaid: data.depositPaid?.trim() || null,
+      
+      // Status defaults to 'draft' in backend, don't send it
     };
     
-    console.log("🔥 Frontend: Formatted data for backend:", JSON.stringify(formattedData, null, 2));
+    console.log("🔍 FINAL DATA BEING SENT:", JSON.stringify(finalData, null, 2));
+    
+    // Additional validation check before sending
+    if (!finalData.clientName) {
+      console.error("🔍 CRITICAL: clientName is still empty after processing!");
+      toast({
+        title: "Error",
+        description: "Client name is required but appears to be empty. Please try typing it again.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (editingInvoice) {
-      updateInvoiceMutation.mutate({
-        id: editingInvoice.id,
-        data: formattedData,
-      });
+      // Update existing invoice
+      updateInvoiceMutation.mutate({ id: editingInvoice.id, data: finalData });
     } else {
-      createInvoiceMutation.mutate(formattedData);
+      // Create new invoice
+      createInvoiceMutation.mutate(finalData);
     }
   };
 
@@ -524,9 +543,17 @@ export default function Invoices() {
                         name="clientName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Client Name *</FormLabel>
+                            <FormLabel>Client Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter client name" {...field} />
+                              <Input 
+                                placeholder="Client name" 
+                                {...field} 
+                                value={field.value || ""} // Ensure controlled component
+                                onChange={(e) => {
+                                  console.log("🔍 Client name input change:", e.target.value);
+                                  field.onChange(e.target.value);
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -576,9 +603,17 @@ export default function Invoices() {
                         name="amount"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Amount *</FormLabel>
+                            <FormLabel>Amount (£)</FormLabel>
                             <FormControl>
-                              <Input placeholder="0.00" {...field} />
+                              <Input 
+                                placeholder="500.00" 
+                                {...field} 
+                                value={field.value || ""} // Ensure controlled component
+                                onChange={(e) => {
+                                  console.log("🔍 Amount input change:", e.target.value);
+                                  field.onChange(e.target.value);
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
