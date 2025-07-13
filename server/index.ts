@@ -12,14 +12,18 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
   console.log('📧 SIMPLE WEBHOOK - Mailgun email received');
   
   try {
-    // Extract basic email data
-    const from = req.body.from || req.body.sender || '';
-    const subject = req.body.subject || 'Email enquiry';
-    const body = req.body['body-plain'] || req.body.text || '';
+    // Log all incoming data to see what Mailgun actually sends
+    console.log('📧 Full body data:', JSON.stringify(req.body, null, 2));
+    
+    // Extract email data using actual Mailgun field names
+    const from = req.body.From || req.body.sender || req.body.from || '';
+    const subject = req.body.Subject || req.body.subject || 'Email enquiry';
+    const body = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || '';
     
     console.log('📧 From:', from);
     console.log('📧 Subject:', subject);
     console.log('📧 Body length:', body.length);
+    console.log('📧 Body content:', body);
     
     // Extract client email
     const emailMatch = from.match(/[\w.-]+@[\w.-]+\.\w+/);
