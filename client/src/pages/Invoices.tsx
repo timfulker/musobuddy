@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Receipt, Plus, Search, Filter, Download, DollarSign, Calendar } from 'lucide-react';
 
 const fetchInvoices = async () => {
-  const response = await fetch('/api/invoices');
+  const response = await fetch('/api/invoices', {
+    credentials: 'include',
+  });
   if (!response.ok) throw new Error('Failed to fetch invoices');
   return response.json();
 };
@@ -12,6 +14,7 @@ const createInvoice = async (invoice: any) => {
   const response = await fetch('/api/invoices', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(invoice),
   });
   if (!response.ok) throw new Error('Failed to create invoice');
@@ -22,6 +25,7 @@ const updateInvoice = async ({ id, ...updates }: any) => {
   const response = await fetch(`/api/invoices/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(updates),
   });
   if (!response.ok) throw new Error('Failed to update invoice');

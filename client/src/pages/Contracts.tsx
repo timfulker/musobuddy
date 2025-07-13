@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Plus, Search, Filter, Download, Edit, Trash2, Eye } from 'lucide-react';
 
 const fetchContracts = async () => {
-  const response = await fetch('/api/contracts');
+  const response = await fetch('/api/contracts', {
+    credentials: 'include',
+  });
   if (!response.ok) throw new Error('Failed to fetch contracts');
   return response.json();
 };
@@ -12,6 +14,7 @@ const createContract = async (contract: any) => {
   const response = await fetch('/api/contracts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(contract),
   });
   if (!response.ok) throw new Error('Failed to create contract');
@@ -22,6 +25,7 @@ const updateContract = async ({ id, ...updates }: any) => {
   const response = await fetch(`/api/contracts/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(updates),
   });
   if (!response.ok) throw new Error('Failed to update contract');
