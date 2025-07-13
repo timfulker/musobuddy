@@ -20,9 +20,10 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
   gigType: string | null;
   clientPhone: string | null;
   estimatedValue: string | null;
+  applyNowLink: string | null;
 }> {
   if (!openai) {
-    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null };
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
   }
 
   try {
@@ -44,6 +45,7 @@ CRITICAL INSTRUCTIONS:
 1. Find the ACTUAL EVENT DATE - look for "Sunday 24 Aug 2025", "Aug 24", "24 Aug 2025" etc. NOT email send dates like "13 Jul 2025 at 15:42"
 2. Find the ACTUAL VENUE - look for location names like "Bognor Regis", "Brighton", city names, NOT email addresses or timestamps
 3. Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
+4. ENCORE DETECTION: Look for "Apply Now" buttons or links - these are typically from Encore booking platform
 
 Extract:
 - eventDate: The actual event/performance date in YYYY-MM-DD format (e.g., "Sunday 24 Aug 2025" = "2025-08-24", "14th July 2026" = "2026-07-14")
@@ -53,6 +55,7 @@ Extract:
 - gigType: sax, saxophone, jazz, piano, guitar, dj, band, violin, drums, etc.
 - clientPhone: UK phone number if mentioned
 - estimatedValue: Budget/price range if mentioned (e.g., "£260-£450", "£300", "budget of £500")
+- applyNowLink: If this is an Encore email, extract the "Apply Now" button URL/link (look for green buttons, hyperlinks with "Apply Now" text)
 
 Return valid JSON only:`;
 
@@ -78,11 +81,12 @@ Return valid JSON only:`;
       eventType: aiResult.eventType || null,
       gigType: aiResult.gigType || null,
       clientPhone: aiResult.clientPhone || null,
-      estimatedValue: aiResult.estimatedValue || null
+      estimatedValue: aiResult.estimatedValue || null,
+      applyNowLink: aiResult.applyNowLink || null
     };
   } catch (error) {
     console.log('AI parsing failed, using regex fallback');
-    return { eventDate: null, venue: null, eventType: null, gigType: null, clientPhone: null };
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
   }
 }
 
@@ -147,6 +151,7 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     const gigType = aiResult.gigType;
     const eventTime = aiResult.eventTime;
     const estimatedValue = aiResult.estimatedValue;
+    const applyNowLink = aiResult.applyNowLink;
     
     // Log AI-extracted data
     if (clientPhone) console.log(`📧 [${requestId}] AI Phone: ${clientPhone}`);
@@ -156,6 +161,7 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     if (gigType) console.log(`📧 [${requestId}] AI Gig type: ${gigType}`);
     if (eventTime) console.log(`📧 [${requestId}] AI Event time: ${eventTime}`);
     if (estimatedValue) console.log(`📧 [${requestId}] AI Budget: ${estimatedValue}`);
+    if (applyNowLink) console.log(`📧 [${requestId}] 🎯 ENCORE Apply Now Link: ${applyNowLink}`);
     
     // Create enquiry with AI-parsed data
     const enquiry = {
@@ -174,6 +180,8 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       estimatedValue: estimatedValue,
       status: 'new' as const,
       notes: bodyField || 'Email enquiry with no body content',
+      originalEmailContent: bodyField || null,
+      applyNowLink: applyNowLink || null,
       responseNeeded: true,
       lastContactedAt: null
     };

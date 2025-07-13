@@ -706,6 +706,21 @@ export default function Enquiries() {
                     </Button>
                   ))}
                   
+                  {/* Apply Now Button - Only show for Encore enquiries */}
+                  {selectedEnquiry?.applyNowLink && (
+                    <Button 
+                      onClick={() => selectedEnquiry?.applyNowLink && window.open(selectedEnquiry.applyNowLink, '_blank')}
+                      variant="outline"
+                      className="p-6 h-auto flex flex-col items-center space-y-2 border-green-200 hover:border-green-300 hover:bg-green-50"
+                    >
+                      <span className="text-lg">🎯</span>
+                      <span className="font-medium">Apply Now</span>
+                      <span className="text-xs text-gray-500 text-center">
+                        Apply directly on Encore platform
+                      </span>
+                    </Button>
+                  )}
+                  
                   {/* Mark as Confirmed Button */}
                   <Button 
                     onClick={() => selectedEnquiry && updateEnquiryStatusMutation.mutate({ 
@@ -856,6 +871,11 @@ export default function Enquiries() {
                                   <AlertCircle className="w-3 h-3" />
                                   <span>Response needed</span>
                                 </div>
+                              )}
+                              {enquiry.applyNowLink && (
+                                <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                                  🎯 ENCORE
+                                </Badge>
                               )}
                               <Badge className={getStatusColor(enquiry.status)}>
                                 {enquiry.status.replace('_', ' ').toUpperCase()}

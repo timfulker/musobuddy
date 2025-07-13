@@ -43,6 +43,8 @@ export const enquiries = pgTable("enquiries", {
   estimatedValue: varchar("estimated_value"),
   status: varchar("status").notNull().default("new"), // new, qualified, contract_sent, confirmed, rejected
   notes: text("notes"),
+  originalEmailContent: text("original_email_content"), // Store original email content
+  applyNowLink: varchar("apply_now_link"), // Store "Apply Now" link from Encore emails
   responseNeeded: boolean("response_needed").default(true), // Visual indicator for enquiries requiring response
   lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
   createdAt: timestamp("created_at").defaultNow(),
