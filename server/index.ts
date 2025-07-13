@@ -46,8 +46,8 @@ CRITICAL INSTRUCTIONS:
 2. Find the ACTUAL VENUE - look for location names like "Bognor Regis", "Brighton", city names, NOT email addresses or timestamps
 3. Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
 4. ENCORE DETECTION: Look for "Apply Now" buttons or links - these are typically from Encore booking platform
-5. PRESERVE COMPLETE URLs: For applyNowLink, extract the COMPLETE URL including ALL query parameters (utm_source, utm_medium, utm_campaign, utm_content, etc.). DO NOT truncate or modify the URL in any way.
-6. REDIRECT URLS: Encore emails often use redirect URLs that start with https://rbtin183.r.eu-west-1.awstrack.me/ - capture these complete redirect URLs, not just the final destination.
+5. ENCORE URL FORMAT: For Encore emails, extract the job ID from the subject line (e.g., [QuH57], [LM16k], [yij5S]) and create URL: https://encoremusicians.com/jobs/{jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow. Example: Subject contains [QuH57] → URL: https://encoremusicians.com/jobs/QuH57?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow. NEVER use /job/apply format as it leads to 404 errors.
+6. REDIRECT URLS: If you find a complete redirect URL starting with https://rbtin183.r.eu-west-1.awstrack.me/, use that instead of constructing a URL.
 
 Extract:
 - eventDate: The actual event/performance date in YYYY-MM-DD format (e.g., "Sunday 24 Aug 2025" = "2025-08-24", "14th July 2026" = "2026-07-14")
@@ -57,7 +57,7 @@ Extract:
 - gigType: sax, saxophone, jazz, piano, guitar, dj, band, violin, drums, etc.
 - clientPhone: UK phone number if mentioned
 - estimatedValue: Budget/price range if mentioned (e.g., "£260-£450", "£300", "budget of £500")
-- applyNowLink: If this is an Encore email, extract the COMPLETE "Apply Now" button URL/link exactly as it appears in the email HTML. This may be a redirect URL (e.g., starting with https://rbtin183.r.eu-west-1.awstrack.me/) or direct URL. Do NOT truncate, modify, or decode the URL - return the full hyperlink including all tracking parameters and redirect paths.
+- applyNowLink: If this is an Encore email, look for the job ID in square brackets in the subject line (e.g., [QuH57], [LM16k], [yij5S]) and create this exact URL format: https://encoremusicians.com/jobs/{jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow. For example, if subject contains [QuH57], return: https://encoremusicians.com/jobs/QuH57?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow. If you find a complete redirect URL starting with https://rbtin183.r.eu-west-1.awstrack.me/, use that instead. Return null if not an Encore email.
 
 Return valid JSON only:`;
 

@@ -606,6 +606,14 @@ This applies to any changes in:
   * **Test Results**: Complete URL now extracted correctly - https://encoremusicians.com/jobs/yij5S?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow
   * **Impact**: Encore Apply Now buttons now function correctly with proper tracking and functionality
   * **Status**: Full URL preservation working correctly for all Encore enquiries
+- July 13, 2025. Encore Apply Now URL format fix completed:
+  * **Critical Issue Resolved**: AI was generating incorrect URL format (job/apply) that led to 404 errors
+  * **Root Cause**: AI was creating /job/apply?jobId=QuH57 format instead of correct /jobs/QuH57 format
+  * **Solution**: Updated AI parsing to extract job ID from subject line [QuH57] and create proper URL format
+  * **Correct Format**: https://encoremusicians.com/jobs/{jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow
+  * **Testing**: Verified enquiry #399 now generates working URL: https://encoremusicians.com/jobs/QuH57?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow
+  * **Impact**: Encore Apply Now buttons now redirect to correct job pages instead of 404 errors
+  * **Status**: URL format issue completely resolved for all future Encore enquiries
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
