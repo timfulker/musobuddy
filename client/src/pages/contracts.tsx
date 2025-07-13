@@ -293,9 +293,18 @@ export default function Contracts() {
   const deleteContractsMutation = useMutation({
     mutationFn: async (contractIds: number[]) => {
       const responses = await Promise.all(
-        contractIds.map(id => 
-          apiRequest("DELETE", `/api/contracts/${id}`, {})
-        )
+        contractIds.map(async (id) => {
+          const response = await fetch(`/api/contracts/${id}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          return response.json();
+        })
       );
       return responses;
     },
@@ -367,9 +376,24 @@ export default function Contracts() {
 
   const deleteContractMutation = useMutation({
     mutationFn: async (contractId: number) => {
-      return apiRequest("DELETE", `/api/contracts/${contractId}`, {});
+      console.log("🔥 Deleting contract:", contractId);
+      const response = await fetch(`/api/contracts/${contractId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      console.log("🔥 Delete response status:", response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log("🔥 Delete response data:", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("🔥 Delete success, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
         title: "Success",
