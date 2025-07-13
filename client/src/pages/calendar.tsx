@@ -1061,6 +1061,7 @@ export default function Calendar() {
                 </div>
                 )
               )}
+            )}
             </CardContent>
           </Card>
 
