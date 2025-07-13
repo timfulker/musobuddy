@@ -1008,7 +1008,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
+  // Create invoice
+  app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const data = { ...req.body, userId };
+      
+      // Convert date strings to Date objects if present
+      if (data.dueDate && typeof data.dueDate === 'string') {
+        data.dueDate = new Date(data.dueDate);
+      }
+      if (data.performanceDate && typeof data.performanceDate === 'string') {
+        data.performanceDate = new Date(data.performanceDate);
+      }
+      
+      const invoiceData = insertInvoiceSchema.parse(data);
+      const invoice = await storage.createInvoice(invoiceData);
+      res.status(201).json(invoice);
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      res.status(500).json({ message: "Failed to create invoice" });
+    }
+  });
 
   // Debug route to check user session
   app.get('/api/debug-user', isAuthenticated, (req: any, res) => {
