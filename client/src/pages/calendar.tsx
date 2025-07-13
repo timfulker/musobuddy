@@ -766,7 +766,7 @@ export default function Calendar() {
             onMonthChange={setCurrentDate}
             modifiers={calendarModifiers}
             modifiersClassNames={calendarModifiersClassNames}
-            className="rounded-md border w-full [&_table]:w-full [&_td]:h-12 [&_td]:w-12 [&_th]:h-12 [&_th]:w-12 [&_button]:h-10 [&_button]:w-10 [&_button]:text-base"
+            className="rounded-md border w-full h-full [&_table]:w-full [&_table]:h-full [&_td]:h-16 [&_th]:h-12 [&_button]:h-14 [&_button]:w-full [&_button]:text-lg [&_button]:font-medium"
           />
         );
       case "year":
@@ -781,7 +781,7 @@ export default function Calendar() {
             onMonthChange={setCurrentDate}
             modifiers={calendarModifiers}
             modifiersClassNames={calendarModifiersClassNames}
-            className="rounded-md border w-full [&_table]:w-full [&_td]:h-12 [&_td]:w-12 [&_th]:h-12 [&_th]:w-12 [&_button]:h-10 [&_button]:w-10 [&_button]:text-base"
+            className="rounded-md border w-full h-full [&_table]:w-full [&_table]:h-full [&_td]:h-16 [&_th]:h-12 [&_button]:h-14 [&_button]:w-full [&_button]:text-lg [&_button]:font-medium"
           />
         );
     }
@@ -1038,11 +1038,13 @@ export default function Calendar() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="mb-6">
-                    {renderCalendarView()}
+                  <div className="flex justify-center mb-6">
+                    <div className="aspect-square w-full max-w-2xl">
+                      {renderCalendarView()}
+                    </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                  <div className="flex flex-wrap justify-center gap-4 text-xs">
                     <div className="flex items-center space-x-1">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                       <span>Confirmed</span>
