@@ -1059,7 +1059,7 @@ export default function Calendar() {
                     </div>
                   ))}
                 </div>
-              )}
+              )
             )}
             </CardContent>
           </Card>
