@@ -49,9 +49,50 @@ export default function Enquiries() {
     }
   }, []);
 
-  const { data: enquiries = [], isLoading } = useQuery<Enquiry[]>({
+  const { data: enquiries = [], isLoading, error } = useQuery<Enquiry[]>({
     queryKey: ["/api/enquiries"],
   });
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen">
+        {isDesktop && <Sidebar />}
+        <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading enquiries...</p>
+            </div>
+          </div>
+        </div>
+        {!isDesktop && <MobileNav />}
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen">
+        {isDesktop && <Sidebar />}
+        <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-red-600">Error loading enquiries. Please try again.</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+        {!isDesktop && <MobileNav />}
+      </div>
+    );
+  }
 
   const { data: templates = [] } = useQuery({
     queryKey: ["/api/templates"],

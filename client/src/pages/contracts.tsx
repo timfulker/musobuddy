@@ -40,9 +40,50 @@ export default function Contracts() {
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
-  const { data: contracts = [], isLoading } = useQuery<Contract[]>({
+  const { data: contracts = [], isLoading, error } = useQuery<Contract[]>({
     queryKey: ["/api/contracts"],
   });
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen">
+        {isDesktop && <Sidebar />}
+        <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading contracts...</p>
+            </div>
+          </div>
+        </div>
+        {!isDesktop && <MobileNav />}
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen">
+        {isDesktop && <Sidebar />}
+        <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-red-600">Error loading contracts. Please try again.</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+        {!isDesktop && <MobileNav />}
+      </div>
+    );
+  }
 
   const { data: enquiries = [] } = useQuery<Enquiry[]>({
     queryKey: ["/api/enquiries"],
@@ -54,37 +95,42 @@ export default function Contracts() {
 
   // Check URL params to auto-open form dialog and auto-fill with enquiry data
   React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'new') {
-      setIsDialogOpen(true);
-      
-      // Auto-generate contract number
-      const contractNumber = `CON-${new Date().getFullYear()}-${String(contracts.length + 1).padStart(3, '0')}`;
-      form.setValue('contractNumber', contractNumber);
-      
-      // Set default terms from settings if available
-      if (settings?.defaultTerms) {
-        form.setValue('terms', settings.defaultTerms);
-      }
-      
-      // Auto-fill with enquiry data if enquiryId is provided
-      const enquiryId = urlParams.get('enquiryId');
-      if (enquiryId && enquiries.length > 0) {
-        const enquiry = enquiries.find(e => e.id === parseInt(enquiryId));
-        if (enquiry) {
-          // Auto-fill form with enquiry data
-          form.setValue('enquiryId', enquiry.id);
-          form.setValue('clientName', enquiry.clientName || '');
-          form.setValue('clientEmail', enquiry.clientEmail || '');
-          form.setValue('clientPhone', enquiry.clientPhone || '');
-          form.setValue('venue', enquiry.venue || '');
-          form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
-          form.setValue('eventTime', enquiry.eventTime || '');
-          form.setValue('fee', enquiry.estimatedValue || '');
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'new' && !isLoading && contracts.length >= 0) {
+        setIsDialogOpen(true);
+        
+        // Auto-generate contract number
+        const contractNumber = `CON-${new Date().getFullYear()}-${String(contracts.length + 1).padStart(3, '0')}`;
+        form.setValue('contractNumber', contractNumber);
+        
+        // Set default terms from settings if available
+        if (settings?.defaultTerms) {
+          form.setValue('terms', settings.defaultTerms);
+        }
+        
+        // Auto-fill with enquiry data if enquiryId is provided
+        const enquiryId = urlParams.get('enquiryId');
+        if (enquiryId && enquiries.length > 0) {
+          const enquiry = enquiries.find(e => e.id === parseInt(enquiryId));
+          if (enquiry) {
+            // Auto-fill form with enquiry data
+            form.setValue('enquiryId', enquiry.id);
+            form.setValue('clientName', enquiry.clientName || '');
+            form.setValue('clientEmail', enquiry.clientEmail || '');
+            form.setValue('clientPhone', enquiry.clientPhone || '');
+            form.setValue('venue', enquiry.venue || '');
+            form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
+            form.setValue('eventTime', enquiry.eventTime || '');
+            form.setValue('fee', enquiry.estimatedValue || '');
+          }
         }
       }
+    } catch (error) {
+      console.error('Error in useEffect:', error);
+      // Don't crash the app, just log the error
     }
-  }, [enquiries, settings, form]);
+  }, [enquiries, settings, contracts, form, isLoading]);
 
   // Clean up URL when dialog closes
   const handleDialogClose = (open: boolean) => {
@@ -153,6 +199,23 @@ export default function Contracts() {
       status: "draft",
     },
   });
+
+  // Ensure form is properly initialized
+  if (!form) {
+    return (
+      <div className="flex min-h-screen">
+        {isDesktop && <Sidebar />}
+        <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-red-600">Form initialization error. Please refresh the page.</p>
+            </div>
+          </div>
+        </div>
+        {!isDesktop && <MobileNav />}
+      </div>
+    );
+  }
 
   // Email sending mutation
   const sendEmailMutation = useMutation({
