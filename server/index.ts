@@ -14,12 +14,35 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
   }
   
   console.log('📧 MAILGUN WEBHOOK - DEDICATED HANDLER');
-  console.log('📧 Request body:', req.body);
+  console.log('📧 Full request body:', JSON.stringify(req.body, null, 2));
+  console.log('📧 Available fields:', Object.keys(req.body));
+  console.log('📧 sender field:', req.body.sender);
+  console.log('📧 from field:', req.body.from);
+  console.log('📧 subject field:', req.body.subject);
+  console.log('📧 body-plain field:', req.body['body-plain']);
+  console.log('📧 text field:', req.body.text);
   
   try {
-    const sender = req.body.sender || req.body.from || 'unknown@example.com';
-    const subject = req.body.subject || 'Email enquiry';
-    const bodyText = req.body['body-plain'] || req.body.text || 'No message content';
+    // Try multiple field variations for different email formats
+    const sender = req.body.sender || 
+                  req.body.from || 
+                  req.body.From || 
+                  req.body['X-Envelope-From'] || 
+                  req.body['envelope-from'] ||
+                  'unknown@example.com';
+                  
+    const subject = req.body.subject || 
+                   req.body.Subject || 
+                   req.body['X-Subject'] ||
+                   'Email enquiry';
+                   
+    const bodyText = req.body['body-plain'] || 
+                    req.body.text || 
+                    req.body.body || 
+                    req.body['body-text'] ||
+                    req.body['stripped-text'] ||
+                    req.body['stripped-html'] ||
+                    'No message content';
     
     // Extract email and client name
     let clientName = 'Unknown Client';
