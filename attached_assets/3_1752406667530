@@ -1,0 +1,49 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1752406113; x=1753010913; darn=musobuddy.com;
+        h=mime-version:subject:references:message-id:to:from:date:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=Wb8W2oqXC/cpj1iAvki9fOBwuRQ0uwujsVr+pYOzdqk=;
+        b=BAqxW/Xa0ye5bTozDpB4v656097duhPdLpnVCNdtpIpS9BmlmTNU3tRwaFdhduZvRs
+         V8atK3Urlp07Rxs7kt8wmkxNDQsl3P9qEowIpJ602w54RbenfKyE33oAhJJu++U5r90b
+         RUhupWvGaOiIlxfKvxD7hLwsIBj0ylNSFomkE3ZKrEDL70jYHRIZHLh9niwDFrobcgZH
+         VL9R2zJtJlSQ3L8GvwFP5CCtWe3KY7hR/fr+tw09Bx/uB1jx4WfcqeG+pwClUMTPqD9Y
+         JtW35tMxMh1N/XIQMkLcyVekJEFbWUux/aXhGjlZ7tnRfI4O6JTNLYZegLeDVbMIeFNt
+         GXtQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1752406113; x=1753010913;
+        h=mime-version:subject:references:message-id:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Wb8W2oqXC/cpj1iAvki9fOBwuRQ0uwujsVr+pYOzdqk=;
+        b=f84cUdpmQFVjSBE5E0I8KS5Lf3Zv4Do62VbfP5Wp0eTVzR+Q8NwgMppYuVMIHQNxUH
+         5ZFgkkyLQakUNIAZ2Q7gohC0IrrUFkrab1Ph5qC0iszcXZ4uNNXQlLKMqFRS4LVg3K6Y
+         szkvqk21Ge1Y8DL+EHt5ujy9C+PloHCBFYeNuWQ0Uyko011MnqnuWhdWz/lz4IaYgM8N
+         rdSIu+p6wvUAKKtsCyey/JttReMHQ+0ZDjtrxyXj9JdiyKz1vYP448iZOHnJmqFC03LM
+         OASkT2WTV5I7KAdSfrWc1N8byNbQkOcuaSvFeKZu5jS2VuYKbMiDKJ6Rk506WCcpK1zF
+         BPbQ==
+X-Gm-Message-State: AOJu0Yyk6xvmBZD/p067HHD1U2MtpDzuXNpO2Z5HPvTcodGau/fURyxk
+	e6K85lZY2N2UPhyUWy2ctLtk+mCZfwe3n7UqajzpdZwxqkDRVmHIbkyYhG3jenYpdjE=
+X-Gm-Gg: ASbGncv4erOech199XwvfN/Xqg9l0A+gwKCRkZhCoH9pXoJKZ+23COX8N0QPCiur9V1
+	bShJHUOfmK9gEfafgAfIb1eGj7tlQfDaX1fF7hy8btVI04pq5ooPBS99KrPyzvEIhAKmaeNywxB
+	KHqQvcLM7mY8swkAMQTEgkFMgrsRk29RhQFIJSOzqZwaxN3CcFZ+k8Qn/aI7EJYTiaY0TjxBsbg
+	sg93YZmnc56NP9QiQNhTI+GTIfkaLaGwJi7YQEOecXi89beVD4wV7ljNPsitS6tk3sCwx25T8kO
+	4E8C942AwiU9pVzLK9yCqzVLsHnRle7N4SmOYJYm7JTedHDLj43tandvIVZrXYMjdWd8zjsO6wn
+	p5/9tgpX8Zi8yecjGLkHM5jCFQxnxBr2A5fEo32Zd5eg=
+X-Google-Smtp-Source: AGHT+IHyWe+bNb/hDa554VmlR7ekAI9DkP9SdBp4nMnNVHkq6aMPtaLV+7kHkbMx8UWPvY83PiuVzw==
+X-Received: by 2002:a05:600c:45d1:b0:453:9317:8aa0 with SMTP id 5b1f17b1804b1-454f427c6a0mr57936805e9.32.1752319572333;
+        Sat, 12 Jul 2025 04:26:12 -0700 (PDT)
+Return-Path: <timfulkermusic@gmail.com>
+Received: from [192.168.1.13] ([90.243.141.215])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-455f6794a00sm30935495e9.37.2025.07.12.04.26.11
+        for <leads@musobuddy.com>
+        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+        Sat, 12 Jul 2025 04:26:11 -0700 (PDT)
+Date: Sat, 12 Jul 2025 12:26:05 +0100
+From: Tim Fulker <timfulkermusic@gmail.com>
+To: leads@musobuddy.com
+Message-ID: <b9cb75ed-5efe-4ac3-9916-459176fe76db@Spark>
+References: <dc7b634b-696e-4d8b-a24a-e3ffcacfe147@Spark>
+Subject: Wedding enquiry 2
+X-Readdle-Message-ID: b9cb75ed-5efe-4ac3-9916-459176fe76db@Spark
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="68724652_10367353_5a82"
+
