@@ -573,14 +573,27 @@ export default function Invoices() {
 
   const deleteMutation = useMutation({
     mutationFn: async (invoiceIds: number[]) => {
+      console.log("🔥 Frontend: Deleting invoices:", invoiceIds);
       const responses = await Promise.all(
-        invoiceIds.map(id => 
-          apiRequest('DELETE', `/api/invoices/${id}`, {})
-        )
+        invoiceIds.map(async (id) => {
+          const response = await fetch(`/api/invoices/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to delete invoice ${id}`);
+          }
+          
+          return response.json();
+        })
       );
       return responses;
     },
     onSuccess: () => {
+      console.log("🔥 Frontend: Delete successful, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       setSelectedInvoices([]);
       toast({
@@ -588,7 +601,8 @@ export default function Invoices() {
         description: `${selectedInvoices.length} invoice(s) deleted successfully`,
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("🔥 Frontend: Delete error:", error);
       toast({
         title: "Error deleting invoices",
         description: "Failed to delete selected invoices",

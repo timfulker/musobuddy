@@ -1019,14 +1019,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const invoiceId = parseInt(req.params.id);
       
+      console.log("🔥 Backend: DELETE request for invoice:", invoiceId, "by user:", userId);
+      
       const success = await storage.deleteInvoice(invoiceId, userId);
+      console.log("🔥 Backend: Delete result:", success);
+      
       if (success) {
+        console.log("🔥 Backend: Invoice deleted successfully");
         res.json({ message: "Invoice deleted successfully" });
       } else {
+        console.log("🔥 Backend: Invoice not found");
         res.status(404).json({ message: "Invoice not found" });
       }
     } catch (error) {
-      console.error("Error deleting invoice:", error);
+      console.error("🔥 Backend: Error deleting invoice:", error);
       res.status(500).json({ message: "Failed to delete invoice" });
     }
   });

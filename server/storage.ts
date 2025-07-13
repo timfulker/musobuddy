@@ -441,8 +441,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteInvoice(id: number, userId: string): Promise<boolean> {
+    console.log("🔥 Storage: Deleting invoice", id, "for user", userId);
     const result = await db.delete(invoices)
       .where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
+    console.log("🔥 Storage: Delete result - rowCount:", result.rowCount);
     return result.rowCount > 0;
   }
 
