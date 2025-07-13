@@ -26,10 +26,19 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
   }
 
   try {
+    const currentYear = new Date().getFullYear();
+    // Pre-process the email body to replace "next year" with the actual year
+    const processedBody = emailBody.replace(/next year/gi, `${currentYear + 1}`);
+    const processedSubject = subject.replace(/next year/gi, `${currentYear + 1}`);
+    
     const prompt = `Parse this email enquiry for a musician/performer and extract structured information. Return JSON only.
 
-Email Subject: "${subject}"
-Email Body: "${emailBody}"
+Email Subject: "${processedSubject}"
+Email Body: "${processedBody}"
+
+CURRENT CONTEXT:
+- Today's date: ${new Date().toISOString().split('T')[0]}
+- Current year: ${currentYear}
 
 CRITICAL INSTRUCTIONS:
 1. Find the ACTUAL EVENT DATE - look for "Sunday 24 Aug 2025", "Aug 24", "24 Aug 2025" etc. NOT email send dates like "13 Jul 2025 at 15:42"
@@ -37,7 +46,7 @@ CRITICAL INSTRUCTIONS:
 3. Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
 
 Extract:
-- eventDate: The actual event/performance date in YYYY-MM-DD format (e.g., "Sunday 24 Aug 2025" = "2025-08-24")
+- eventDate: The actual event/performance date in YYYY-MM-DD format (e.g., "Sunday 24 Aug 2025" = "2025-08-24", "14th July 2026" = "2026-07-14")
 - eventTime: Start time if mentioned (e.g., "1:00pm - 3:00pm", "7:30pm")
 - venue: Location/venue name including city/area (e.g., "Bognor Regis", "Brighton Hotel", "London venue")
 - eventType: wedding, birthday, corporate, party, celebration, private event, etc.
@@ -49,7 +58,13 @@ Return valid JSON only:`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        { 
+          role: "system", 
+          content: `You are parsing emails in July 2025. When someone says "next year", they mean 2026. Current year is ${currentYear}. Next year is ${currentYear + 1}.` 
+        },
+        { role: "user", content: prompt }
+      ],
       response_format: { type: "json_object" },
       max_tokens: 300,
       temperature: 0.1
