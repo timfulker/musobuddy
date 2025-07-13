@@ -1852,55 +1852,48 @@ Jane`
     }
   });
 
-  // Catch-all webhook routes for different possible SendGrid configurations
+  // REMOVED: Competing SendGrid webhook handlers that were causing intermittent failures
+  // All email processing now handled by enhanced Mailgun handler in server/index.ts
+  
+  // Redirect old SendGrid webhooks to enhanced Mailgun handler
   app.post('/api/webhook/parse', async (req, res) => {
-    console.log('🔥 WEBHOOK HIT! Email received via /api/webhook/parse');
+    console.log('🔀 REDIRECTING: Old SendGrid webhook to enhanced Mailgun handler');
     console.log('Request from IP:', req.ip);
-    try {
-      const { handleSendGridWebhook } = await import('./email-webhook');
-      await handleSendGridWebhook(req, res);
-    } catch (error) {
-      console.error("Error in parse webhook:", error);
-      res.status(500).json({ message: "Failed to process webhook" });
-    }
+    // Forward to enhanced Mailgun handler
+    req.url = '/api/webhook/mailgun';
+    return;
   });
 
   app.post('/api/parse', async (req, res) => {
-    console.log('🔥 WEBHOOK HIT! Email received via /api/parse');
+    console.log('🔀 REDIRECTING: Old SendGrid webhook to enhanced Mailgun handler');
     console.log('Request from IP:', req.ip);
-    try {
-      const { handleSendGridWebhook } = await import('./email-webhook');
-      await handleSendGridWebhook(req, res);
-    } catch (error) {
-      console.error("Error in root parse webhook:", error);
-      res.status(500).json({ message: "Failed to process webhook" });
-    }
+    // Forward to enhanced Mailgun handler
+    req.url = '/api/webhook/mailgun';
+    return;
   });
 
-  // Alternative webhook endpoint with different path (in case of URL issues)
+  // REMOVED: Alternative SendGrid webhook that was causing competing email processing
+  // All email processing now handled by enhanced Mailgun handler in server/index.ts
+  
   app.all('/api/webhook/sendgrid-alt', async (req, res) => {
     if (req.method === 'GET') {
-      console.log('GET request to alternative webhook endpoint');
+      console.log('📋 OLD ENDPOINT: Alternative SendGrid webhook (redirects to Mailgun)');
       res.json({ 
-        status: 'active', 
-        message: 'Alternative SendGrid webhook endpoint is accessible',
+        status: 'redirected', 
+        message: 'This endpoint now redirects to enhanced Mailgun handler',
         timestamp: new Date().toISOString(),
         path: '/api/webhook/sendgrid-alt',
-        method: 'Ready for POST requests',
-        recommendedUrl: 'https://musobuddy.replit.app/api/webhook/sendgrid-alt'
+        redirectTo: '/api/webhook/mailgun',
+        recommendedUrl: 'https://musobuddy.replit.app/api/webhook/mailgun'
       });
     } else if (req.method === 'POST') {
-      console.log('🔥 ALTERNATIVE WEBHOOK HIT! Email received via /api/webhook/sendgrid-alt');
+      console.log('🔀 REDIRECTING: Alternative SendGrid webhook to enhanced Mailgun handler');
       console.log('Request IP:', req.ip);
-      console.log('User-Agent:', req.headers['user-agent']);
-      console.log('Content-Type:', req.headers['content-type']);
-      try {
-        const { handleSendGridWebhook } = await import('./email-webhook');
-        await handleSendGridWebhook(req, res);
-      } catch (error) {
-        console.error("Error in alternative SendGrid webhook:", error);
-        res.status(500).json({ message: "Failed to process SendGrid webhook" });
-      }
+      // All email processing now handled by enhanced Mailgun handler
+      return res.status(200).json({ 
+        message: 'Redirected to enhanced Mailgun handler',
+        redirectTo: '/api/webhook/mailgun'
+      });
     } else {
       res.status(405).json({ message: 'Method not allowed' });
     }
@@ -1914,28 +1907,26 @@ Jane`
     next();
   });
 
-  // Working webhook endpoint for SendGrid
+  // REMOVED: SendGrid email webhook that was causing competing email processing
+  // All email processing now handled by enhanced Mailgun handler in server/index.ts
+  
   app.all('/api/webhook/email', async (req, res) => {
-    console.log(`📧 EMAIL WEBHOOK: ${req.method} ${req.url}`);
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    
     if (req.method === 'GET') {
+      console.log('📋 OLD ENDPOINT: SendGrid email webhook (redirects to Mailgun)');
       res.json({ 
-        status: 'active', 
-        message: 'Email webhook endpoint is working',
+        status: 'redirected', 
+        message: 'This endpoint now redirects to enhanced Mailgun handler',
         timestamp: new Date().toISOString(),
-        url: 'https://musobuddy.replit.app/api/webhook/email'
+        redirectTo: '/api/webhook/mailgun',
+        url: 'https://musobuddy.replit.app/api/webhook/mailgun'
       });
     } else if (req.method === 'POST') {
-      console.log('🔥 EMAIL WEBHOOK HIT! Processing email...');
-      try {
-        const { handleSendGridWebhook } = await import('./email-webhook');
-        await handleSendGridWebhook(req, res);
-      } catch (error) {
-        console.error("Error in email webhook:", error);
-        res.status(500).json({ message: "Failed to process email webhook" });
-      }
+      console.log('🔀 REDIRECTING: SendGrid email webhook to enhanced Mailgun handler');
+      // All email processing now handled by enhanced Mailgun handler
+      return res.status(200).json({ 
+        message: 'Redirected to enhanced Mailgun handler',
+        redirectTo: '/api/webhook/mailgun'
+      });
     } else {
       res.status(405).json({ message: 'Method not allowed' });
     }
