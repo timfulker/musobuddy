@@ -47,6 +47,8 @@ export const enquiries = pgTable("enquiries", {
   applyNowLink: varchar("apply_now_link"), // Store "Apply Now" link from Encore emails
   responseNeeded: boolean("response_needed").default(true), // Visual indicator for enquiries requiring response
   lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
+  hasConflicts: boolean("has_conflicts").default(false), // Flag for potential conflicts
+  conflictCount: integer("conflict_count").default(0), // Number of potential conflicts
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

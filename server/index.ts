@@ -203,20 +203,23 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     const newEnquiry = await storage.createEnquiry(enquiry);
     console.log(`✅ [${requestId}] Created enquiry #${newEnquiry.id}`);
     
-    // Check for conflicts after creating enquiry
+    // Lightweight conflict flagging for webhook
     if (newEnquiry.eventDate) {
       try {
         const { ConflictDetectionService } = await import('./conflict-detection');
         const conflictService = new ConflictDetectionService(storage);
-        const { conflicts, analysis } = await conflictService.checkEnquiryConflicts(newEnquiry, enquiry.userId);
+        const { conflicts } = await conflictService.checkEnquiryConflicts(newEnquiry, enquiry.userId);
         
-        if (conflicts.length > 0 && analysis) {
-          console.log(`⚠️ [${requestId}] CONFLICT DETECTED: ${conflicts.length} conflicts found`);
-          console.log(`⚠️ [${requestId}] Conflict severity: ${analysis.severity}`);
+        if (conflicts.length > 0) {
+          console.log(`⚠️ [${requestId}] POTENTIAL CONFLICT: ${conflicts.length} conflicts found`);
           console.log(`⚠️ [${requestId}] Conflicts with:`, conflicts.map(c => `${c.type} #${c.id} - ${c.title}`));
           
-          // Save conflict to database for tracking
-          await conflictService.saveConflict(enquiry.userId, newEnquiry.id, conflicts[0], analysis);
+          // Just flag the enquiry as having potential conflicts - detailed analysis in UI
+          await storage.updateEnquiry(newEnquiry.id, { 
+            ...newEnquiry, 
+            hasConflicts: true,
+            conflictCount: conflicts.length 
+          });
         }
       } catch (error) {
         console.error(`❌ [${requestId}] Error checking conflicts:`, error);
