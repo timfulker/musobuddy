@@ -1,396 +1,742 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Receipt, Plus, Search, Filter, Download, DollarSign, Calendar } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Search, Filter, MoreHorizontal, DollarSign, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye } from "lucide-react";
+import { insertInvoiceSchema, type Invoice } from "@shared/schema";
+import { useLocation, Link } from "wouter";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import Sidebar from "@/components/sidebar";
+import MobileNav from "@/components/mobile-nav";
+import { useResponsive } from "@/hooks/useResponsive";
 
-const fetchInvoices = async () => {
-  const response = await fetch('/api/invoices', {
-    credentials: 'include',
+const invoiceFormSchema = z.object({
+  contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
+  clientName: z.string().min(1, "Client name is required"),
+  clientEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
+  clientAddress: z.string().optional(),
+  venueAddress: z.string().optional(),
+  amount: z.string().min(1, "Amount is required").refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num > 0;
+  }, "Amount must be a valid number greater than 0"),
+  dueDate: z.string().min(1, "Due date is required"),
+  performanceDate: z.string().optional(),
+  performanceFee: z.string().optional(),
+  depositPaid: z.string().optional(),
+});
+
+export default function Invoices() {
+  const { toast } = useToast();
+  const [location] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [editAndResendMode, setEditAndResendMode] = useState(false);
+  const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isDesktop } = useResponsive();
+
+  // Check for URL parameters to auto-open dialog
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const createNew = params.get('create');
+    if (createNew === 'true') {
+      setIsDialogOpen(true);
+    }
+  }, [location]);
+
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ['/api/invoices'],
   });
-  if (!response.ok) throw new Error('Failed to fetch invoices');
-  return response.json();
-};
 
-const createInvoice = async (invoice: any) => {
-  const response = await fetch('/api/invoices', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(invoice),
-  });
-  if (!response.ok) throw new Error('Failed to create invoice');
-  return response.json();
-};
-
-const updateInvoice = async ({ id, ...updates }: any) => {
-  const response = await fetch(`/api/invoices/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(updates),
-  });
-  if (!response.ok) throw new Error('Failed to update invoice');
-  return response.json();
-};
-
-const Invoices = () => {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [formData, setFormData] = useState({
-    contractId: '',
-    clientName: '',
-    clientEmail: '',
-    amount: '',
-    vatAmount: '0',
-    dueDate: '',
-    description: '',
-    lineItems: ['']
+  const { data: contracts = [] } = useQuery({
+    queryKey: ['/api/contracts'],
   });
 
-  const queryClient = useQueryClient();
-
-  const { data: invoices = [], isLoading, error } = useQuery({
-    queryKey: ['invoices'],
-    queryFn: fetchInvoices,
+  const { data: userSettings } = useQuery({
+    queryKey: ['/api/settings'],
   });
 
-  const createMutation = useMutation({
-    mutationFn: createInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      setShowAddForm(false);
-      setFormData({
-        contractId: '',
-        clientName: '',
-        clientEmail: '',
-        amount: '',
-        vatAmount: '0',
-        dueDate: '',
-        description: '',
-        lineItems: ['']
+  const form = useForm<z.infer<typeof invoiceFormSchema>>({
+    resolver: zodResolver(invoiceFormSchema),
+    defaultValues: {
+      contractId: undefined, // Optional contract selection
+      clientName: "", 
+      clientEmail: "",
+      clientAddress: "",
+      venueAddress: "",
+      amount: "",
+      dueDate: "",
+      performanceDate: "",
+      performanceFee: "",
+      depositPaid: "",
+    },
+  });
+
+  // Auto-set due date (invoice numbers are now auto-generated by backend)
+  useEffect(() => {
+    // Set due date to 30 days from now
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+    form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
+  }, [form]);
+
+  // Watch contract ID changes
+  const selectedContractId = form.watch("contractId");
+
+  // Auto-fill fields when contract is selected (for convenience)
+  // Only auto-fill when user explicitly selects a contract (not when form first loads)
+  const [contractHasBeenSelected, setContractHasBeenSelected] = useState(false);
+  
+  useEffect(() => {
+    // Only auto-fill if a contract is explicitly selected AND we have contracts loaded
+    if (selectedContractId && contracts.length > 0 && contractHasBeenSelected) {
+      const selectedContract = contracts.find((c: any) => c.id === selectedContractId);
+      if (selectedContract) {
+        // Only fill empty fields to preserve user edits
+        if (!form.getValues("clientName")) {
+          form.setValue("clientName", selectedContract.clientName);
+        }
+        if (!form.getValues("clientEmail")) {
+          form.setValue("clientEmail", selectedContract.clientEmail || "");
+        }
+        if (!form.getValues("venueAddress")) {
+          form.setValue("venueAddress", selectedContract.venue || "");
+        }
+        if (!form.getValues("performanceDate") && selectedContract.eventDate) {
+          form.setValue("performanceDate", new Date(selectedContract.eventDate).toISOString().split('T')[0]);
+        }
+        if (!form.getValues("amount") && selectedContract.fee) {
+          // Set the performance fee and calculate amount due (fee minus any deposit)
+          const fee = Number(selectedContract.fee);
+          const deposit = Number(selectedContract.deposit) || 0;
+          const amountDue = fee - deposit;
+          form.setValue("amount", amountDue.toString());
+          // Store fee and deposit for backend
+          form.setValue("performanceFee", fee.toString());
+          form.setValue("depositPaid", deposit.toString());
+        }
+      }
+    }
+  }, [selectedContractId, contracts, form, contractHasBeenSelected]);
+
+  // Auto-fill business address and phone from settings
+  useEffect(() => {
+    if (userSettings?.businessAddress) {
+      form.setValue("businessAddress", userSettings.businessAddress);
+    }
+    if (userSettings?.phone) {
+      form.setValue("businessPhone", userSettings.phone);
+    }
+  }, [userSettings, form]);
+
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (data: any) => {
+      console.log("🔥 Frontend: Making invoice creation request");
+      console.log("🔥 Frontend: Request data:", JSON.stringify(data, null, 2));
+      console.log("🔥 Frontend: Request URL:", '/api/invoices');
+      
+      // Use fetch directly to ensure we hit the priority route
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important for session handling
+        body: JSON.stringify(data),
+      });
+      
+      console.log("🔥 Frontend: Response status:", response.status);
+      console.log("🔥 Frontend: Response ok:", response.ok);
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("🔥 Frontend: Error response:", errorData);
+        throw new Error(errorData || 'Failed to create invoice');
+      }
+      
+      const result = await response.json();
+      console.log("🔥 Frontend: Success response:", result);
+      return result;
+    },
+    onSuccess: (data) => {
+      console.log("🔥 Frontend: Mutation success:", data);
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      form.reset();
+      setIsDialogOpen(false);
+      setEditingInvoice(null);
+      toast({
+        title: "Success",
+        description: "Invoice created successfully!",
+      });
+    },
+    onError: (error: any) => {
+      console.error("🔥 Frontend: Mutation error:", error);
+      console.error("🔥 Frontend: Error message:", error.message);
+      console.error("🔥 Frontend: Error stack:", error.stack);
+      
+      // Show specific error message if available
+      const errorMessage = error.message || "Failed to create invoice. Please try again.";
+      
+      toast({
+        title: "Error Creating Invoice",
+        description: errorMessage,
+        variant: "destructive",
       });
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: updateInvoice,
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      console.log("Updating invoice with data:", JSON.stringify(data, null, 2));
+      const response = await fetch(`/api/invoices/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error Response:", errorData);
+        throw new Error(errorData.message || 'Failed to update invoice');
+      }
+      return response.json();
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      form.reset();
+      setIsDialogOpen(false);
+      setEditingInvoice(null);
+      
+      // If in edit & resend mode, automatically send the invoice
+      if (editAndResendMode && editingInvoice) {
+        setEditAndResendMode(false);
+        setTimeout(() => {
+          sendInvoiceMutation.mutate(editingInvoice);
+        }, 500);
+        toast({
+          title: "Success",
+          description: "Invoice updated and being sent...",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Invoice updated successfully!",
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error("Update invoice error:", error);
+      setEditAndResendMode(false);
+      
+      // Show specific error message if available
+      const errorMessage = error.message || "Failed to update invoice. Please try again.";
+      
+      toast({
+        title: "Error Updating Invoice",
+        description: errorMessage,
+        variant: "destructive",
+      });
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const amount = parseFloat(formData.amount);
-    const vatAmount = parseFloat(formData.vatAmount || '0');
-    const totalAmount = amount + vatAmount;
-    
-    createMutation.mutate({
-      ...formData,
-      amount,
-      vatAmount,
-      totalAmount,
-      lineItems: formData.lineItems.filter(item => item.trim() !== '')
+  const sendInvoiceMutation = useMutation({
+    mutationFn: async (invoice: Invoice) => {
+      const response = await fetch(`/api/invoices/${invoice.id}/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to send invoice');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({
+        title: "Success",
+        description: "Invoice sent successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send invoice",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setEditingInvoice(invoice);
+    setEditAndResendMode(false);
+    // Pre-fill form with invoice data
+    form.reset({
+      contractId: invoice.contractId || undefined,
+      clientName: invoice.clientName,
+      clientEmail: invoice.clientEmail || "",
+      clientAddress: invoice.clientAddress || "",
+      venueAddress: invoice.venueAddress || "",
+      amount: invoice.amount.toString(),
+      dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
+      performanceDate: invoice.performanceDate ? new Date(invoice.performanceDate).toISOString().split('T')[0] : "",
+      performanceFee: invoice.performanceFee || "",
+      depositPaid: invoice.depositPaid || "",
     });
+    setIsDialogOpen(true);
   };
 
-  const handleStatusChange = (id: string, status: string) => {
-    const updates: any = { id, status };
-    if (status === 'paid') {
-      updates.paidAt = new Date().toISOString();
-      updates.paidAmount = invoices.find((inv: any) => inv.id === id)?.totalAmount;
+  const handleEditAndResend = (invoice: Invoice) => {
+    setEditingInvoice(invoice);
+    setEditAndResendMode(true);
+    // Pre-fill form with invoice data
+    form.reset({
+      contractId: invoice.contractId || undefined,
+      clientName: invoice.clientName,
+      clientEmail: invoice.clientEmail || "",
+      clientAddress: invoice.clientAddress || "",
+      venueAddress: invoice.venueAddress || "",
+      amount: invoice.amount.toString(),
+      dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
+      performanceDate: invoice.performanceDate ? new Date(invoice.performanceDate).toISOString().split('T')[0] : "",
+      performanceFee: invoice.performanceFee || "",
+      depositPaid: invoice.depositPaid || "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
+    console.log("Form submission data:", JSON.stringify(data, null, 2));
+    console.log("Selected contract ID:", selectedContractId);
+    
+    // Client-side validation with user-friendly prompts
+    const validationIssues = [];
+    
+    if (!data.clientName.trim()) {
+      validationIssues.push("Client name cannot be empty");
     }
-    updateMutation.mutate(updates);
+    
+    if (!data.amount.trim()) {
+      validationIssues.push("Amount is required");
+    } else {
+      const amount = parseFloat(data.amount);
+      if (isNaN(amount) || amount <= 0) {
+        validationIssues.push("Amount must be a valid number greater than 0");
+      }
+    }
+    
+    if (!data.dueDate) {
+      validationIssues.push("Due date is required");
+    }
+    
+    if (data.clientEmail && data.clientEmail.trim() && !data.clientEmail.includes('@')) {
+      validationIssues.push("Please enter a valid email address");
+    }
+    
+    // Show validation issues as a prompt instead of failing
+    if (validationIssues.length > 0) {
+      toast({
+        title: "Please fix the following issues:",
+        description: validationIssues.join(", "),
+        variant: "destructive",
+      });
+      return; // Don't submit the form
+    }
+    
+    // Warn if no client email provided
+    if (!data.clientEmail || !data.clientEmail.trim()) {
+      toast({
+        title: "Note",
+        description: "No client email provided. Invoice will be created but cannot be sent automatically.",
+      });
+    }
+    
+    // Prepare data for backend - match the exact format the backend expects
+    const formattedData = {
+      contractId: data.contractId || null, // Convert undefined to null for optional integer
+      clientName: data.clientName.trim(),
+      clientEmail: data.clientEmail?.trim() || null,
+      clientAddress: data.clientAddress?.trim() || null,
+      venueAddress: data.venueAddress?.trim() || null,
+      amount: data.amount, // Keep as string - backend will convert to decimal
+      dueDate: data.dueDate, // Keep as string - backend will convert to Date
+      performanceDate: data.performanceDate || null, // Keep as string - backend will convert
+      performanceFee: data.performanceFee || null, // Keep as string - backend will convert
+      depositPaid: data.depositPaid || null, // Keep as string - backend will convert
+    };
+    
+    console.log("🔥 Formatted data for backend:", JSON.stringify(formattedData, null, 2));
+    
+    if (editingInvoice) {
+      updateInvoiceMutation.mutate({
+        id: editingInvoice.id,
+        data: formattedData,
+      });
+    } else {
+      createInvoiceMutation.mutate(formattedData);
+    }
   };
 
-  const filteredInvoices = invoices.filter((invoice: any) => {
-    const matchesSearch = invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredInvoices = invoices.filter((invoice: Invoice) => {
+    const matchesSearch = invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'sent': return 'bg-blue-100 text-blue-800';
+      case 'paid': return 'bg-green-100 text-green-800';
+      case 'overdue': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const statusOptions = [
-    { value: 'draft', label: 'Draft', color: 'status-draft' },
-    { value: 'sent', label: 'Sent', color: 'status-sent' },
-    { value: 'paid', label: 'Paid', color: 'status-paid' },
-    { value: 'overdue', label: 'Overdue', color: 'status-overdue' },
-    { value: 'cancelled', label: 'Cancelled', color: 'status-cancelled' },
+    { value: 'all', label: 'All Status' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'sent', label: 'Sent' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'overdue', label: 'Overdue' },
   ];
-
-  // Calculate totals
-  const totalOutstanding = filteredInvoices
-    .filter((inv: any) => inv.status === 'sent' || inv.status === 'overdue')
-    .reduce((sum: number, inv: any) => sum + parseFloat(inv.totalAmount || 0), 0);
-
-  const totalPaid = filteredInvoices
-    .filter((inv: any) => inv.status === 'paid')
-    .reduce((sum: number, inv: any) => sum + parseFloat(inv.totalAmount || 0), 0);
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-foreground">Invoices</h1>
-        <div className="animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-card rounded-lg p-6 shadow-sm">
-              <div className="h-4 bg-muted rounded w-1/4 mb-2"></div>
-              <div className="h-6 bg-muted rounded w-1/2"></div>
+      <div className="flex h-screen">
+        {isDesktop ? (
+          <Sidebar />
+        ) : (
+          <MobileNav sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        )}
+        <div className={`flex-1 ${isDesktop ? 'ml-64' : ''}`}>
+          <div className="p-6">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="space-y-3">
+                <div className="h-4 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Receipt className="h-8 w-8 text-primary" />
-            Invoices
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage invoices and track payments
-          </p>
-        </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          New Invoice
-        </button>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-card rounded-lg p-6 shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
-              <p className="text-2xl font-bold text-orange-600">£{totalOutstanding.toFixed(2)}</p>
-            </div>
-            <div className="p-3 rounded-full bg-orange-50 dark:bg-orange-900/20">
-              <DollarSign className="h-6 w-6 text-orange-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-lg p-6 shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Paid</p>
-              <p className="text-2xl font-bold text-green-600">£{totalPaid.toFixed(2)}</p>
-            </div>
-            <div className="p-3 rounded-full bg-green-50 dark:bg-green-900/20">
-              <DollarSign className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-lg p-6 shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
-              <p className="text-2xl font-bold text-foreground">{filteredInvoices.length}</p>
-            </div>
-            <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-900/20">
-              <Receipt className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-card p-4 rounded-lg shadow-sm">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search invoices..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="all">All Status</option>
-            {statusOptions.map(status => (
-              <option key={status.value} value={status.value}>{status.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Add Invoice Form */}
-      {showAddForm && (
-        <div className="bg-card rounded-lg p-6 shadow-sm border">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Create New Invoice</h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Client Name *</label>
-              <input
-                type="text"
-                required
-                value={formData.clientName}
-                onChange={(e) => setFormData({...formData, clientName: e.target.value})}
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Client Email *</label>
-              <input
-                type="email"
-                required
-                value={formData.clientEmail}
-                onChange={(e) => setFormData({...formData, clientEmail: e.target.value})}
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Amount (£) *</label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={formData.amount}
-                onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">VAT Amount (£)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.vatAmount}
-                onChange={(e) => setFormData({...formData, vatAmount: e.target.value})}
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Due Date *</label>
-              <input
-                type="date"
-                required
-                value={formData.dueDate}
-                onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Total Amount</label>
-              <input
-                type="text"
-                disabled
-                value={`£${(parseFloat(formData.amount || '0') + parseFloat(formData.vatAmount || '0')).toFixed(2)}`}
-                className="w-full px-3 py-2 border border-input rounded-md bg-muted text-muted-foreground"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-foreground mb-1">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                rows={2}
-                placeholder="Invoice description"
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div className="md:col-span-2 flex gap-2">
-              <button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {createMutation.isPending ? 'Creating...' : 'Create Invoice'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAddForm(false)}
-                className="bg-muted text-muted-foreground px-4 py-2 rounded-md hover:bg-muted/80 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+    <div className="flex h-screen">
+      {isDesktop ? (
+        <Sidebar />
+      ) : (
+        <MobileNav sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       )}
-
-      {/* Invoices List */}
-      <div className="space-y-4">
-        {filteredInvoices.length === 0 ? (
-          <div className="text-center py-12 bg-card rounded-lg">
-            <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No invoices found</h3>
-            <p className="text-muted-foreground">
-              {searchTerm || statusFilter !== 'all' 
-                ? 'Try adjusting your search or filter criteria'
-                : 'Create your first invoice to get started'
-              }
-            </p>
-          </div>
-        ) : (
-          filteredInvoices.map((invoice: any) => (
-            <div key={invoice.id} className="bg-card rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-foreground">{invoice.invoiceNumber}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium status-${invoice.status}`}>
-                      {invoice.status}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div className="text-muted-foreground">
-                      <span className="font-medium">Client:</span> {invoice.clientName}
-                    </div>
-                    <div className="text-muted-foreground">
-                      <span className="font-medium">Amount:</span> £{invoice.totalAmount}
-                    </div>
-                    <div className="text-muted-foreground">
-                      <span className="font-medium">Due:</span> {new Date(invoice.dueDate).toLocaleDateString()}
-                    </div>
-                    <div className="text-muted-foreground">
-                      <span className="font-medium">Created:</span> {new Date(invoice.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  {invoice.description && (
-                    <p className="text-muted-foreground mt-3 text-sm">{invoice.description}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <select
-                    value={invoice.status}
-                    onChange={(e) => handleStatusChange(invoice.id, e.target.value)}
-                    className="text-sm px-2 py-1 border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    {statusOptions.map(status => (
-                      <option key={status.value} value={status.value}>{status.label}</option>
-                    ))}
-                  </select>
-                  <button
-                    className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
-                    title="Download PDF"
-                  >
-                    <Download className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
+      <div className={`flex-1 ${isDesktop ? 'ml-64' : ''}`}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
+              <p className="text-gray-600">Manage your invoices and track payments</p>
             </div>
-          ))
-        )}
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Invoice
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingInvoice ? 'Edit Invoice' : 'Create New Invoice'}
+                  </DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="contractId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contract (optional - for auto-fill)</FormLabel>
+                            <Select
+                              value={field.value?.toString() || ""}
+                              onValueChange={(value) => {
+                                const numValue = value ? Number(value) : undefined;
+                                field.onChange(numValue);
+                                setContractHasBeenSelected(true);
+                              }}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Choose a contract to auto-fill fields" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {contracts.map((contract: any) => (
+                                  <SelectItem key={contract.id} value={contract.id.toString()}>
+                                    {contract.clientName} - {contract.venue}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div></div>
+                      <FormField
+                        control={form.control}
+                        name="clientName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Client Name *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter client name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="clientEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Client Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="client@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="clientAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Client Address</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Client's billing address" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="venueAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Venue Address</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Performance venue address" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Amount *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="0.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="dueDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Due Date *</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="performanceDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Performance Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="performanceFee"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Performance Fee</FormLabel>
+                            <FormControl>
+                              <Input placeholder="0.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="depositPaid"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Deposit Paid</FormLabel>
+                            <FormControl>
+                              <Input placeholder="0.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={createInvoiceMutation.isPending || updateInvoiceMutation.isPending}>
+                        {editingInvoice ? 'Update Invoice' : 'Create Invoice'}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search invoices..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Invoices List */}
+          <div className="space-y-4">
+            {filteredInvoices.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No invoices found</h3>
+                <p className="text-gray-600">
+                  {searchQuery || statusFilter !== 'all' 
+                    ? 'Try adjusting your search or filter criteria'
+                    : 'Create your first invoice to get started'
+                  }
+                </p>
+              </div>
+            ) : (
+              filteredInvoices.map((invoice: Invoice) => (
+                <Card key={invoice.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {invoice.invoiceNumber}
+                          </h3>
+                          <Badge className={getStatusColor(invoice.status)}>
+                            {invoice.status}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                          <div>
+                            <span className="font-medium">Client:</span> {invoice.clientName}
+                          </div>
+                          <div>
+                            <span className="font-medium">Amount:</span> £{invoice.amount}
+                          </div>
+                          <div>
+                            <span className="font-medium">Due:</span> {new Date(invoice.dueDate).toLocaleDateString()}
+                          </div>
+                          <div>
+                            <span className="font-medium">Status:</span> {invoice.status}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditInvoice(invoice)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => sendInvoiceMutation.mutate(invoice)}
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default Invoices;
+}

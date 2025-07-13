@@ -1011,7 +1011,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create invoice
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
+      console.log("🔥 Backend: Invoice creation request received");
       const userId = req.user.claims.sub;
+      console.log("🔥 Backend: User ID:", userId);
+      console.log("🔥 Backend: Request body:", JSON.stringify(req.body, null, 2));
+      
       const data = { ...req.body, userId };
       
       // Convert date strings to Date objects if present
@@ -1022,12 +1026,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data.performanceDate = new Date(data.performanceDate);
       }
       
+      // Convert string amounts to numbers for decimal fields
+      if (data.amount && typeof data.amount === 'string') {
+        data.amount = parseFloat(data.amount);
+      }
+      if (data.performanceFee && typeof data.performanceFee === 'string') {
+        data.performanceFee = parseFloat(data.performanceFee);
+      }
+      if (data.depositPaid && typeof data.depositPaid === 'string') {
+        data.depositPaid = parseFloat(data.depositPaid);
+      }
+      
+      console.log("🔥 Backend: Data before Zod validation:", JSON.stringify(data, null, 2));
+      
       const invoiceData = insertInvoiceSchema.parse(data);
+      console.log("🔥 Backend: Data after Zod validation:", JSON.stringify(invoiceData, null, 2));
+      
       const invoice = await storage.createInvoice(invoiceData);
+      console.log("🔥 Backend: Invoice created successfully:", invoice.id);
+      
       res.status(201).json(invoice);
     } catch (error) {
-      console.error("Error creating invoice:", error);
-      res.status(500).json({ message: "Failed to create invoice" });
+      console.error("🔥 Backend: Error creating invoice:", error);
+      if (error instanceof Error) {
+        console.error("🔥 Backend: Error message:", error.message);
+        console.error("🔥 Backend: Error stack:", error.stack);
+      }
+      res.status(500).json({ message: "Failed to create invoice", error: error.message });
     }
   });
 
