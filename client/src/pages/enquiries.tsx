@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature } from "lucide-react";
 import { z } from "zod";
 import { insertClientSchema, type InsertClient } from "@shared/schema";
 import { Link } from "wouter";
@@ -720,6 +720,20 @@ export default function Enquiries() {
                       </span>
                     </Button>
                   )}
+                  
+                  {/* Create Contract Button */}
+                  <Link href={`/contracts?action=new&enquiryId=${selectedEnquiry?.id}`}>
+                    <Button 
+                      variant="outline"
+                      className="p-6 h-auto flex flex-col items-center space-y-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50 w-full"
+                    >
+                      <FileSignature className="w-5 h-5 text-purple-600" />
+                      <span className="font-medium">Create Contract</span>
+                      <span className="text-xs text-gray-500 text-center">
+                        Generate contract with enquiry details
+                      </span>
+                    </Button>
+                  </Link>
                   
                   {/* Mark as Confirmed Button */}
                   <Button 

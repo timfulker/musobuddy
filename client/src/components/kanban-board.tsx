@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Clock, MoreHorizontal, Filter, Eye } from "lucide-react";
+import { DollarSign, Clock, MoreHorizontal, Filter, Eye, User, Calendar, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import type { Enquiry } from "@shared/schema";
@@ -18,25 +18,7 @@ export default function KanbanBoard() {
     confirmed: enquiries.filter((e: Enquiry) => e.status === "confirmed"),
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "new": return "bg-gray-50 border-l-gray-300";
-      case "qualified": return "bg-blue-50 border-l-blue-400";
-      case "contract_sent": return "bg-purple-50 border-l-purple-400";
-      case "confirmed": return "bg-green-50 border-l-green-400";
-      default: return "bg-gray-50 border-l-gray-300";
-    }
-  };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "new": return <Badge variant="secondary">NEW</Badge>;
-      case "qualified": return <Badge className="bg-blue-100 text-blue-800">IN PROGRESS</Badge>;
-      case "contract_sent": return <Badge className="bg-purple-100 text-purple-800">PENDING</Badge>;
-      case "confirmed": return <Badge className="bg-green-100 text-green-800">CONFIRMED</Badge>;
-      default: return <Badge variant="secondary">NEW</Badge>;
-    }
-  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
@@ -56,6 +38,35 @@ export default function KanbanBoard() {
       const diffDays = Math.floor(diffHours / 24);
       return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     }
+  };
+
+  const formatDateBox = (dateString: string) => {
+    if (!dateString) return { dayName: "", dayNum: "", monthYear: "" };
+    const date = new Date(dateString);
+    const dayName = date.toLocaleDateString("en-GB", { weekday: "short" }).toUpperCase();
+    const dayNum = date.getDate().toString();
+    const monthYear = date.toLocaleDateString("en-GB", { month: "short", year: "2-digit" });
+    return { dayName, dayNum, monthYear };
+  };
+
+  const formatReceivedDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffHours < 1) {
+      return "Just now";
+    } else if (diffHours < 24) {
+      return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    } else {
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    }
+  };
+
+  const needsResponse = (enquiry: Enquiry) => {
+    return enquiry.status === "new" || enquiry.status === "qualified";
   };
 
   if (isLoading) {
@@ -95,37 +106,84 @@ export default function KanbanBoard() {
       
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="flex space-x-3 md:space-x-6 min-w-max">
+          <div className="flex space-x-6 min-w-max">
             {/* New Enquiries Column */}
-            <div className="w-64 md:w-80">
-              <div className="flex items-center justify-between mb-2 md:mb-4">
-                <h4 className="font-medium text-gray-900 text-sm md:text-base">New Enquiries</h4>
+            <div className="w-96">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-medium text-gray-900">New Enquiries</h4>
                 <Badge variant="secondary">{groupedEnquiries.new.length}</Badge>
               </div>
-              <div className="space-y-2 md:space-y-3">
-                {groupedEnquiries.new.map((enquiry: Enquiry) => (
-                  <Link key={enquiry.id} href="/enquiries">
-                    <div className={`p-3 md:p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                      <div className="flex items-start justify-between mb-1 md:mb-2">
-                        <h5 className="font-medium text-gray-900 text-sm md:text-base">{enquiry.title}</h5>
-                        {getStatusBadge(enquiry.status)}
-                      </div>
-                      <p className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">{enquiry.clientName}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span className="flex items-center">
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          £{enquiry.estimatedValue || "TBC"}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {formatTime(enquiry.createdAt!)}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+              <div className="space-y-3">
+                {groupedEnquiries.new.map((enquiry: Enquiry) => {
+                  const dateBox = formatDateBox(enquiry.eventDate!);
+                  return (
+                    <Link key={enquiry.id} href="/enquiries">
+                      <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            {/* Date Box */}
+                            <div className="flex-shrink-0 w-16 h-16 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center bg-white">
+                              <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
+                              <div className="text-lg font-bold text-gray-900">{dateBox.dayNum}</div>
+                              <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+                            </div>
+                            
+                            {/* Main Content */}
+                            <div className="flex-1">
+                              {/* Price and Status Row */}
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="text-lg font-bold text-green-600">
+                                  {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {needsResponse(enquiry) && (
+                                    <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+                                      <AlertCircle className="w-3 h-3" />
+                                      <span>Response needed</span>
+                                    </div>
+                                  )}
+                                  {enquiry.applyNowLink && (
+                                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200 text-xs">
+                                      🎯 ENCORE
+                                    </Badge>
+                                  )}
+                                  <Badge className={getStatusColor(enquiry.status)} variant="secondary">
+                                    {enquiry.status.replace('_', ' ').toUpperCase()}
+                                  </Badge>
+                                </div>
+                              </div>
+                              
+                              {/* Event Title */}
+                              <h3 className="text-sm font-semibold text-gray-900 mb-2">{enquiry.title}</h3>
+                              
+                              {/* Event Details */}
+                              <div className="space-y-1 text-xs text-gray-600">
+                                <div className="flex items-center">
+                                  <User className="w-3 h-3 mr-1" />
+                                  <span>{enquiry.clientName}</span>
+                                </div>
+                                {enquiry.eventTime && (
+                                  <div className="flex items-center">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.eventTime}</span>
+                                  </div>
+                                )}
+                                {enquiry.venue && (
+                                  <div className="flex items-center">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.venue}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
                 {groupedEnquiries.new.length === 0 && (
-                  <div className="text-center py-4 md:py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500">
                     <p className="text-sm">No new enquiries</p>
                   </div>
                 )}
@@ -133,120 +191,220 @@ export default function KanbanBoard() {
             </div>
 
             {/* In Progress Column */}
-            <div className="w-80">
+            <div className="w-96">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium text-gray-900">In Progress</h4>
                 <Badge className="bg-blue-100 text-blue-600">{groupedEnquiries.qualified.length}</Badge>
               </div>
               <div className="space-y-3">
-                {groupedEnquiries.qualified.map((enquiry: Enquiry) => (
-                  <Link key={enquiry.id} href="/enquiries">
-                    <div className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
-                        {getStatusBadge(enquiry.status)}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span className="flex items-center">
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          £{enquiry.estimatedValue || "TBC"}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {formatTime(enquiry.createdAt!)}
-                        </span>
-                      </div>
-                      {enquiry.eventDate && (
-                        <div className="mt-2 text-xs text-blue-600">
-                          Event: {formatDate(enquiry.eventDate)}
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                ))}
+                {groupedEnquiries.qualified.map((enquiry: Enquiry) => {
+                  const dateBox = formatDateBox(enquiry.eventDate!);
+                  return (
+                    <Link key={enquiry.id} href="/enquiries">
+                      <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            {/* Date Box */}
+                            <div className="flex-shrink-0 w-16 h-16 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center bg-white">
+                              <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
+                              <div className="text-lg font-bold text-gray-900">{dateBox.dayNum}</div>
+                              <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+                            </div>
+                            
+                            {/* Main Content */}
+                            <div className="flex-1">
+                              {/* Price and Status Row */}
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="text-lg font-bold text-green-600">
+                                  {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                                </div>
+                                <Badge className="bg-blue-100 text-blue-800" variant="secondary">
+                                  IN PROGRESS
+                                </Badge>
+                              </div>
+                              
+                              {/* Event Title */}
+                              <h3 className="text-sm font-semibold text-gray-900 mb-2">{enquiry.title}</h3>
+                              
+                              {/* Event Details */}
+                              <div className="space-y-1 text-xs text-gray-600">
+                                <div className="flex items-center">
+                                  <User className="w-3 h-3 mr-1" />
+                                  <span>{enquiry.clientName}</span>
+                                </div>
+                                {enquiry.eventTime && (
+                                  <div className="flex items-center">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.eventTime}</span>
+                                  </div>
+                                )}
+                                {enquiry.venue && (
+                                  <div className="flex items-center">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.venue}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
                 {groupedEnquiries.qualified.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    <p>No enquiries in progress</p>
+                    <p className="text-sm">No enquiries in progress</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Contract Sent Column */}
-            <div className="w-80">
+            <div className="w-96">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium text-gray-900">Contract Sent</h4>
                 <Badge className="bg-purple-100 text-purple-600">{groupedEnquiries.contract_sent.length}</Badge>
               </div>
               <div className="space-y-3">
-                {groupedEnquiries.contract_sent.map((enquiry: Enquiry) => (
-                  <Link key={enquiry.id} href="/enquiries">
-                    <div className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
-                        {getStatusBadge(enquiry.status)}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span className="flex items-center">
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          £{enquiry.estimatedValue || "TBC"}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {formatTime(enquiry.createdAt!)}
-                        </span>
-                      </div>
-                      <div className="mt-2 text-xs text-purple-600">
-                        Contract sent, awaiting signature
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                {groupedEnquiries.contract_sent.map((enquiry: Enquiry) => {
+                  const dateBox = formatDateBox(enquiry.eventDate!);
+                  return (
+                    <Link key={enquiry.id} href="/enquiries">
+                      <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            {/* Date Box */}
+                            <div className="flex-shrink-0 w-16 h-16 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center bg-white">
+                              <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
+                              <div className="text-lg font-bold text-gray-900">{dateBox.dayNum}</div>
+                              <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+                            </div>
+                            
+                            {/* Main Content */}
+                            <div className="flex-1">
+                              {/* Price and Status Row */}
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="text-lg font-bold text-green-600">
+                                  {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                                </div>
+                                <Badge className="bg-purple-100 text-purple-800" variant="secondary">
+                                  PENDING
+                                </Badge>
+                              </div>
+                              
+                              {/* Event Title */}
+                              <h3 className="text-sm font-semibold text-gray-900 mb-2">{enquiry.title}</h3>
+                              
+                              {/* Event Details */}
+                              <div className="space-y-1 text-xs text-gray-600">
+                                <div className="flex items-center">
+                                  <User className="w-3 h-3 mr-1" />
+                                  <span>{enquiry.clientName}</span>
+                                </div>
+                                {enquiry.eventTime && (
+                                  <div className="flex items-center">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.eventTime}</span>
+                                  </div>
+                                )}
+                                {enquiry.venue && (
+                                  <div className="flex items-center">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.venue}</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Status Message */}
+                              <div className="mt-2 text-xs text-purple-600 font-medium">
+                                Contract sent, awaiting signature
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
                 {groupedEnquiries.contract_sent.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    <p>No pending contracts</p>
+                    <p className="text-sm">No pending contracts</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Confirmed Column */}
-            <div className="w-80">
+            <div className="w-96">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium text-gray-900">Confirmed</h4>
                 <Badge className="bg-green-100 text-green-600">{groupedEnquiries.confirmed.length}</Badge>
               </div>
               <div className="space-y-3">
-                {groupedEnquiries.confirmed.map((enquiry: Enquiry) => (
-                  <Link key={enquiry.id} href="/enquiries">
-                    <div className={`p-4 rounded-lg border-l-4 hover:shadow-md transition-shadow cursor-pointer ${getStatusColor(enquiry.status)}`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <h5 className="font-medium text-gray-900">{enquiry.title}</h5>
-                        {getStatusBadge(enquiry.status)}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{enquiry.clientName}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span className="flex items-center">
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          £{enquiry.estimatedValue || "TBC"}
-                        </span>
-                        {enquiry.venue && (
-                          <span className="flex items-center">
-                            {enquiry.venue}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 text-xs text-green-600">
-                        All documents signed, ready to perform
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                {groupedEnquiries.confirmed.map((enquiry: Enquiry) => {
+                  const dateBox = formatDateBox(enquiry.eventDate!);
+                  return (
+                    <Link key={enquiry.id} href="/enquiries">
+                      <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            {/* Date Box */}
+                            <div className="flex-shrink-0 w-16 h-16 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center bg-white">
+                              <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
+                              <div className="text-lg font-bold text-gray-900">{dateBox.dayNum}</div>
+                              <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+                            </div>
+                            
+                            {/* Main Content */}
+                            <div className="flex-1">
+                              {/* Price and Status Row */}
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="text-lg font-bold text-green-600">
+                                  {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                                </div>
+                                <Badge className="bg-green-100 text-green-800" variant="secondary">
+                                  CONFIRMED
+                                </Badge>
+                              </div>
+                              
+                              {/* Event Title */}
+                              <h3 className="text-sm font-semibold text-gray-900 mb-2">{enquiry.title}</h3>
+                              
+                              {/* Event Details */}
+                              <div className="space-y-1 text-xs text-gray-600">
+                                <div className="flex items-center">
+                                  <User className="w-3 h-3 mr-1" />
+                                  <span>{enquiry.clientName}</span>
+                                </div>
+                                {enquiry.eventTime && (
+                                  <div className="flex items-center">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.eventTime}</span>
+                                  </div>
+                                )}
+                                {enquiry.venue && (
+                                  <div className="flex items-center">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.venue}</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Status Message */}
+                              <div className="mt-2 text-xs text-green-600 font-medium">
+                                Ready to perform
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
                 {groupedEnquiries.confirmed.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    <p>No confirmed bookings</p>
+                    <p className="text-sm">No confirmed bookings</p>
                   </div>
                 )}
               </div>

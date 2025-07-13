@@ -52,13 +52,39 @@ export default function Contracts() {
     queryKey: ["/api/settings"],
   });
 
-  // Check URL params to auto-open form dialog
+  // Check URL params to auto-open form dialog and auto-fill with enquiry data
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'new') {
       setIsDialogOpen(true);
+      
+      // Auto-generate contract number
+      const contractNumber = `CON-${new Date().getFullYear()}-${String(contracts.length + 1).padStart(3, '0')}`;
+      form.setValue('contractNumber', contractNumber);
+      
+      // Set default terms from settings if available
+      if (settings?.defaultTerms) {
+        form.setValue('terms', settings.defaultTerms);
+      }
+      
+      // Auto-fill with enquiry data if enquiryId is provided
+      const enquiryId = urlParams.get('enquiryId');
+      if (enquiryId && enquiries.length > 0) {
+        const enquiry = enquiries.find(e => e.id === parseInt(enquiryId));
+        if (enquiry) {
+          // Auto-fill form with enquiry data
+          form.setValue('enquiryId', enquiry.id);
+          form.setValue('clientName', enquiry.clientName || '');
+          form.setValue('clientEmail', enquiry.clientEmail || '');
+          form.setValue('clientPhone', enquiry.clientPhone || '');
+          form.setValue('venue', enquiry.venue || '');
+          form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
+          form.setValue('eventTime', enquiry.eventTime || '');
+          form.setValue('fee', enquiry.estimatedValue || '');
+        }
+      }
     }
-  }, []);
+  }, [enquiries, settings, form]);
 
   // Clean up URL when dialog closes
   const handleDialogClose = (open: boolean) => {
@@ -77,7 +103,7 @@ export default function Contracts() {
       const contractData = {
         ...data,
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
-        enquiryId: 1, // Default enquiry ID for now
+        enquiryId: data.enquiryId || null, // Use actual enquiry ID from form
       };
       
       const response = await fetch("/api/contracts", {
@@ -116,6 +142,8 @@ export default function Contracts() {
       enquiryId: 0,
       contractNumber: "",
       clientName: "",
+      clientEmail: "",
+      clientPhone: "",
       eventDate: "",
       eventTime: "",
       venue: "",
