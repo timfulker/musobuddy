@@ -95,6 +95,38 @@ export default function Calendar() {
     queryKey: ["/api/conflicts"],
   });
 
+  const createBookingMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof bookingFormSchema>) => {
+      const bookingData = {
+        ...data,
+        eventDate: new Date(data.eventDate).toISOString(),
+        fee: parseFloat(data.fee) || 0,
+        contractId: data.contractId === 0 ? null : data.contractId,
+      };
+      return apiRequest("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Date marked as unavailable successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      setIsDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to mark date as unavailable",
+        variant: "destructive",
+      });
+      console.error("Create booking error:", error);
+    },
+  });
+
   // Debug logging
   console.log("Calendar Debug - Bookings data:", bookings);
   console.log("Calendar Debug - Selected date:", selectedDate);
@@ -209,37 +241,7 @@ export default function Calendar() {
     URL.revokeObjectURL(url);
   };
 
-  const createBookingMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof bookingFormSchema>) => {
-      const bookingData = {
-        ...data,
-        eventDate: new Date(data.eventDate).toISOString(),
-        fee: parseFloat(data.fee) || 0,
-        contractId: data.contractId === 0 ? null : data.contractId,
-      };
-      return apiRequest("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingData),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
-      toast({
-        title: "Success",
-        description: "Time marked as unavailable successfully",
-      });
-      setIsDialogOpen(false);
-      form.reset();
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to mark time as unavailable. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const transferEnquiriesMutation = useMutation({
     mutationFn: async () => {
