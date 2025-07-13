@@ -85,6 +85,28 @@
   }
 }
 
+/* Force React Day Picker to use full width */
+.rdp {
+  width: 100% !important;
+}
+
+.rdp-months {
+  width: 100% !important;
+}
+
+.rdp-month {
+  width: 100% !important;
+}
+
+.rdp-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.rdp-head_cell, .rdp-cell {
+  width: 14.28% !important; /* 1/7 of the container */
+}
+
 /* Custom styles for MusoBuddy */
 .glass-effect {
   background: rgba(255, 255, 255, 0.1);

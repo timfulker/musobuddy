@@ -758,16 +758,19 @@ export default function Calendar() {
         return renderWeekView();
       case "month":
         return (
-          <CalendarComponent
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            month={currentDate}
-            onMonthChange={setCurrentDate}
-            modifiers={calendarModifiers}
-            modifiersClassNames={calendarModifiersClassNames}
-            className="w-full max-w-none [&_.rdp]:w-full [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-16 [&_td]:p-0 [&_td]:text-center [&_th]:h-12 [&_th]:p-2 [&_th]:text-center [&_button]:h-14 [&_button]:w-full [&_button]:text-base [&_button]:font-medium [&_th]:text-sm [&_th]:font-semibold"
-          />
+          <div className="w-full" style={{ width: '100%' }}>
+            <CalendarComponent
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              month={currentDate}
+              onMonthChange={setCurrentDate}
+              modifiers={calendarModifiers}
+              modifiersClassNames={calendarModifiersClassNames}
+              className="w-full"
+              style={{ width: '100%' }}
+            />
+          </div>
         );
       case "year":
         return renderYearView();
