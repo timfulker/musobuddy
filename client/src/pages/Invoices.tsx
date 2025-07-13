@@ -22,7 +22,10 @@ import { useResponsive } from "@/hooks/useResponsive";
 const invoiceFormSchema = z.object({
   contractId: z.number().optional(), // Made optional - contracts are just for auto-fill
   clientName: z.string().min(1, "Client name is required"),
-  clientEmail: z.string().email("Please enter a valid email address").or(z.literal("")).optional(),
+  clientEmail: z.string().optional().refine((email) => {
+    if (!email || email.trim() === '') return true;
+    return email.includes('@');
+  }, "Please enter a valid email address"),
   clientAddress: z.string().optional(),
   venueAddress: z.string().optional(),
   amount: z.string().min(1, "Amount is required").refine((val) => {
@@ -323,17 +326,25 @@ export default function Invoices() {
   };
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
-    console.log("Form submission data:", JSON.stringify(data, null, 2));
-    console.log("Selected contract ID:", selectedContractId);
+    console.log("🔥 Frontend: Form submission data:", JSON.stringify(data, null, 2));
+    console.log("🔥 Frontend: Selected contract ID:", selectedContractId);
+    
+    // Debug: Log form values directly
+    console.log("🔥 Frontend: Form values debug:", {
+      clientName: form.getValues("clientName"),
+      amount: form.getValues("amount"),
+      dueDate: form.getValues("dueDate"),
+      clientEmail: form.getValues("clientEmail"),
+    });
     
     // Client-side validation with user-friendly prompts
     const validationIssues = [];
     
-    if (!data.clientName.trim()) {
+    if (!data.clientName || !data.clientName.trim()) {
       validationIssues.push("Client name cannot be empty");
     }
     
-    if (!data.amount.trim()) {
+    if (!data.amount || !data.amount.trim()) {
       validationIssues.push("Amount is required");
     } else {
       const amount = parseFloat(data.amount);
@@ -352,6 +363,7 @@ export default function Invoices() {
     
     // Show validation issues as a prompt instead of failing
     if (validationIssues.length > 0) {
+      console.log("🔥 Frontend: Validation issues:", validationIssues);
       toast({
         title: "Please fix the following issues:",
         description: validationIssues.join(", "),
@@ -368,21 +380,21 @@ export default function Invoices() {
       });
     }
     
-    // Prepare data for backend - match the exact format the backend expects
+    // Prepare data for backend - ensure we have all required fields
     const formattedData = {
       contractId: data.contractId || null, // Convert undefined to null for optional integer
-      clientName: data.clientName.trim(),
+      clientName: data.clientName?.trim() || "",
       clientEmail: data.clientEmail?.trim() || null,
       clientAddress: data.clientAddress?.trim() || null,
       venueAddress: data.venueAddress?.trim() || null,
-      amount: data.amount, // Keep as string - backend will convert to decimal
-      dueDate: data.dueDate, // Keep as string - backend will convert to Date
-      performanceDate: data.performanceDate || null, // Keep as string - backend will convert
-      performanceFee: data.performanceFee || null, // Keep as string - backend will convert
-      depositPaid: data.depositPaid || null, // Keep as string - backend will convert
+      amount: data.amount || "",
+      dueDate: data.dueDate || "",
+      performanceDate: data.performanceDate || null,
+      performanceFee: data.performanceFee || null,
+      depositPaid: data.depositPaid || null,
     };
     
-    console.log("🔥 Formatted data for backend:", JSON.stringify(formattedData, null, 2));
+    console.log("🔥 Frontend: Formatted data for backend:", JSON.stringify(formattedData, null, 2));
     
     if (editingInvoice) {
       updateInvoiceMutation.mutate({
@@ -471,7 +483,9 @@ export default function Invoices() {
                   </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                    console.log("🔥 Frontend: Form validation errors:", errors);
+                  })} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
