@@ -440,6 +440,21 @@ This represents a complete, production-ready state with all core features workin
 ## 🚀 PRODUCTION READY - July 07, 2025
 **System Status: FULLY OPTIMIZED FOR DEPLOYMENT**
 
+## ⚠️ CRITICAL DEPLOYMENT REQUIREMENT
+**ANY CHANGES TO EMAIL WEBHOOK PROCESSING REQUIRE IMMEDIATE REDEPLOYMENT**
+
+The email forwarding system uses Mailgun routes pointing to the production URL:
+- Mailgun route: `https://musobuddy.replit.app/api/webhook/mailgun`
+- Development changes only affect the preview environment
+- Real emails from `leads@musobuddy.com` only reach the deployed production webhook
+- ALWAYS redeploy immediately after webhook modifications for email forwarding to work
+
+This applies to any changes in:
+- `server/index.ts` (webhook handler)
+- Email parsing logic
+- Enquiry creation processing
+- Webhook response handling
+
 ✅ **Email Delivery System:**
 - Lightning-fast invoice and contract emails using link-based delivery
 - Universal email compatibility (Gmail, Yahoo, Outlook, etc.)
