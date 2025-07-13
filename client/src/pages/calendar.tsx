@@ -677,6 +677,79 @@ export default function Calendar() {
     expiredEnquiry: "bg-gray-400 text-white opacity-50",
   };
 
+  const getEventColorScheme = (event: any) => {
+    if (event.isExpired) {
+      return {
+        background: 'bg-gray-100',
+        border: 'border-gray-200',
+        text: 'text-gray-500',
+        accent: 'bg-gray-400'
+      };
+    }
+    
+    if (event.status === 'confirmed' || event.status === 'enquiry-confirmed') {
+      return {
+        background: 'bg-green-50',
+        border: 'border-green-200',
+        text: 'text-green-800',
+        accent: 'bg-green-500'
+      };
+    }
+    
+    if (event.status === 'completed') {
+      return {
+        background: 'bg-purple-50',
+        border: 'border-purple-200',
+        text: 'text-purple-800',
+        accent: 'bg-purple-500'
+      };
+    }
+    
+    if (event.status === 'cancelled') {
+      return {
+        background: 'bg-red-50',
+        border: 'border-red-200',
+        text: 'text-red-800',
+        accent: 'bg-red-500'
+      };
+    }
+    
+    if (event.status === 'enquiry-new') {
+      return {
+        background: 'bg-yellow-50',
+        border: 'border-yellow-200',
+        text: 'text-yellow-800',
+        accent: 'bg-yellow-500'
+      };
+    }
+    
+    if (event.status === 'enquiry-qualified' || event.status === 'enquiry-contract_sent') {
+      return {
+        background: 'bg-blue-50',
+        border: 'border-blue-200',
+        text: 'text-blue-800',
+        accent: 'bg-blue-500'
+      };
+    }
+    
+    if (event.status === 'contract-signed') {
+      return {
+        background: 'bg-emerald-50',
+        border: 'border-emerald-200',
+        text: 'text-emerald-800',
+        accent: 'bg-emerald-500'
+      };
+    }
+    
+    // Default
+    return {
+      background: 'bg-gray-50',
+      border: 'border-gray-200',
+      text: 'text-gray-800',
+      accent: 'bg-gray-500'
+    };
+  };
+
   const renderCalendarView = () => {
     switch (viewMode) {
       case "day":
@@ -943,9 +1016,9 @@ export default function Calendar() {
         </div>
 
         <div className="flex-1 overflow-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Calendar */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-3">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -1004,7 +1077,7 @@ export default function Calendar() {
             </div>
 
             {/* Selected Date Details */}
-            <div>
+            <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -1220,23 +1293,25 @@ export default function Calendar() {
                       try {
                         const isRegularBooking = event.contractId !== undefined;
                         const isExpired = event.isExpired;
+                        const colorScheme = getEventColorScheme(event);
 
                         return (
-                          <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg ${
-                            isExpired ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
-                          }`}>
+                          <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg border-2 ${colorScheme.background} ${colorScheme.border} ${isExpired ? 'opacity-60' : ''}`}>
                             <div className="flex items-center space-x-4">
-                              <div className="text-center">
-                                <div className="text-sm font-medium">
-                                  {new Date(event.eventDate).toLocaleDateString("en-GB", { day: "numeric" })}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" })}
+                              <div className="flex items-center space-x-2">
+                                <div className={`w-3 h-3 rounded-full ${colorScheme.accent}`}></div>
+                                <div className="text-center">
+                                  <div className="text-sm font-medium">
+                                    {new Date(event.eventDate).toLocaleDateString("en-GB", { day: "numeric" })}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" })}
+                                  </div>
                                 </div>
                               </div>
                               <div className="flex-1">
                                 <div className="flex items-center space-x-2">
-                                  <h4 className={`font-medium ${isExpired ? 'text-gray-500' : 'text-gray-900'}`}>
+                                  <h4 className={`font-medium ${colorScheme.text}`}>
                                     {event.title || `${event.clientName} Performance`}
                                   </h4>
                                   {isExpired && (
@@ -1251,7 +1326,7 @@ export default function Calendar() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className={`font-medium ${isExpired ? 'text-gray-400' : 'text-gray-900'}`}>
+                              <div className={`font-medium ${colorScheme.text}`}>
                                 £{Number(event.fee).toLocaleString()}
                               </div>
                               <div className={`text-xs ${isExpired ? 'text-gray-400' : 'text-gray-500'}`}>
