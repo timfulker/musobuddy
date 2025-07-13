@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { DollarSign, Calendar, FileText, TrendingUp, ArrowUp, Clock } from "lucide-react";
+import { PoundSterling, Calendar, FileText, TrendingUp, ArrowUp, Clock } from "lucide-react";
 
 export default function StatsCards() {
   const { data: stats, isLoading } = useQuery({
@@ -46,7 +46,7 @@ export default function StatsCards() {
               </p>
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-green-600" />
+              <PoundSterling className="w-5 h-5 md:w-6 md:h-6 text-green-600" />
             </div>
           </div>
         </CardContent>
