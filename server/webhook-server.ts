@@ -111,8 +111,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'healthy', server: 'webhook-server' });
 });
 
-// Start the webhook server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`📧 Webhook server running on port ${PORT}`);
-  console.log(`📧 Webhook URL: http://localhost:${PORT}/api/webhook/mailgun`);
-});
+// DISABLED: This duplicate webhook server is causing conflicts
+// The main webhook handler is now in server/index.ts
+// app.listen(PORT, '0.0.0.0', () => {
+//   console.log(`📧 Webhook server running on port ${PORT}`);
+//   console.log(`📧 Webhook URL: http://localhost:${PORT}/api/webhook/mailgun`);
+// });

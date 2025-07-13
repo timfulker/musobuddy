@@ -1,49 +1,39 @@
 /**
- * Test webhook with real Mailgun email format
+ * Test webhook with real email format that matches your previous emails
  */
 
 async function testRealEmailFormat() {
-  console.log('Testing webhook with real Mailgun email field format...');
+  console.log('Testing webhook with real email format...');
   
-  // This simulates what real Mailgun emails actually send
-  const realEmailData = {
-    // Real Mailgun email fields (not test data)
-    to: 'leads@musobuddy.com',
-    from: 'johndoe@gmail.com',
-    subject: 'Booking Inquiry for Wedding',
-    text: 'Hi there! I am getting married on June 15th and would love to book you for our wedding reception at The Grand Hotel. Please let me know if you are available. My phone number is 555-123-4567. Thanks! John Doe',
-    html: '<p>Hi there! I am getting married on June 15th and would love to book you for our wedding reception at The Grand Hotel. Please let me know if you are available. My phone number is 555-123-4567. Thanks! John Doe</p>',
-    timestamp: Math.floor(Date.now() / 1000).toString()
+  const testData = {
+    sender: 'timfulkermusic@gmail.com',
+    subject: 'Wedding Enquiry - August 15th',
+    'body-plain': 'Hi, I am looking for a saxophonist for my wedding on August 15th at The Grand Hotel. My name is Sarah Johnson and you can reach me at 07123 456789. Please let me know if you are available. Thanks!'
   };
   
   try {
     const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mailgun/Real-Email-Test'
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(realEmailData)
+      body: new URLSearchParams(testData)
     });
-    
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
     
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ SUCCESS - Real email format processed:', result);
-      
-      if (result.enquiryId) {
-        console.log(`🎉 Created enquiry #${result.enquiryId} with client: ${result.clientName}`);
-        console.log('✅ This proves the webhook can handle real Mailgun emails!');
-      }
+      console.log('✅ Real email format test successful!');
+      console.log('Response:', result);
+      console.log('Created enquiry ID:', result.enquiryId);
+      console.log('Client name extracted:', result.clientName);
+      console.log('Enhanced parsing data:', result.extracted);
     } else {
+      console.log('❌ Test failed:', response.status);
       const error = await response.text();
-      console.log('❌ ERROR:', error);
+      console.log('Error:', error);
     }
-    
   } catch (error) {
-    console.log('❌ Request failed:', error.message);
+    console.error('❌ Network error:', error.message);
   }
 }
 

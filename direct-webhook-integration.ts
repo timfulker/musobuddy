@@ -71,10 +71,11 @@ webhookApp.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), 
   }
 });
 
-// Start webhook server on different port
-const PORT = process.env.WEBHOOK_PORT || 3001;
-webhookApp.listen(PORT, () => {
-  console.log(`📧 Direct webhook server running on port ${PORT}`);
-});
+// DISABLED: This duplicate webhook server is causing conflicts
+// The main webhook handler is now in server/index.ts
+// const PORT = process.env.WEBHOOK_PORT || 3001;
+// webhookApp.listen(PORT, () => {
+//   console.log(`📧 Direct webhook server running on port ${PORT}`);
+// });
 
 export { webhookApp };
