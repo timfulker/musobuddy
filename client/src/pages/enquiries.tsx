@@ -53,6 +53,14 @@ export default function Enquiries() {
     queryKey: ["/api/enquiries"],
   });
 
+  const { data: templates = [] } = useQuery({
+    queryKey: ["/api/templates"],
+  });
+
+  const { data: settings = {} } = useQuery({
+    queryKey: ["/api/settings"],
+  });
+
   // Handle loading state
   if (isLoading) {
     return (
@@ -93,14 +101,6 @@ export default function Enquiries() {
       </div>
     );
   }
-
-  const { data: templates = [] } = useQuery({
-    queryKey: ["/api/templates"],
-  });
-
-  const { data: settings = {} } = useQuery({
-    queryKey: ["/api/settings"],
-  });
 
   // Parse gig types from settings - handle the specific format from database
   const gigTypes = React.useMemo(() => {
