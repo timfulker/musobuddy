@@ -919,7 +919,6 @@ export default function Enquiries() {
                         </div>
                       </div>
                     </div>
-                  </div>
                 </CardContent>
               </Card>
               );
