@@ -326,31 +326,45 @@ export default function Calendar() {
 
   const getBookingsForDate = (date: Date) => {
     try {
+      if (!date || !Array.isArray(bookings)) {
+        console.log("Invalid date or bookings array");
+        return [];
+      }
+      
       console.log("Getting bookings for date:", date.toDateString());
       
       const filteredBookings = bookings.filter((booking: Booking) => {
-        const bookingDate = new Date(booking.eventDate);
-        
-        // Normalize both dates to avoid timezone issues
-        const normalizedBookingDate = new Date(
-          bookingDate.getFullYear(),
-          bookingDate.getMonth(),
-          bookingDate.getDate()
-        );
-        
-        const normalizedSelectedDate = new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate()
-        );
-        
-        const isMatch = normalizedBookingDate.getTime() === normalizedSelectedDate.getTime();
-        
-        if (isMatch) {
-          console.log(`✓ Booking ${booking.id} (${booking.eventDate}) matches ${date.toDateString()}`);
+        try {
+          if (!booking || !booking.eventDate) {
+            return false;
+          }
+          
+          const bookingDate = new Date(booking.eventDate);
+          
+          // Normalize both dates to avoid timezone issues
+          const normalizedBookingDate = new Date(
+            bookingDate.getFullYear(),
+            bookingDate.getMonth(),
+            bookingDate.getDate()
+          );
+          
+          const normalizedSelectedDate = new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+          );
+          
+          const isMatch = normalizedBookingDate.getTime() === normalizedSelectedDate.getTime();
+          
+          if (isMatch) {
+            console.log(`✓ Booking ${booking.id} (${booking.eventDate}) matches ${date.toDateString()}`);
+          }
+          
+          return isMatch;
+        } catch (bookingError) {
+          console.error("Error processing booking:", booking, bookingError);
+          return false;
         }
-        
-        return isMatch;
       });
       
       console.log(`Found ${filteredBookings.length} bookings for ${date.toDateString()}`);
@@ -372,55 +386,74 @@ export default function Calendar() {
 
   // Get potential bookings from enquiries and contracts
   const getPotentialBookings = () => {
-    console.log("Calculating potential bookings...");
-    const potentialEvents = [];
-    
-    // Add enquiries with dates, filtering expired ones unless toggle is enabled
-    enquiries.forEach((enquiry: any) => {
-      if (enquiry.eventDate) {
-        const isExpired = isEnquiryExpired(enquiry);
-        
-        // Skip expired enquiries if toggle is off
-        if (isExpired && !showExpiredEnquiries) {
-          return;
-        }
-        
-        potentialEvents.push({
-          id: `enquiry-${enquiry.id}`,
-          title: enquiry.title,
-          clientName: enquiry.clientName,
-          eventDate: enquiry.eventDate,
-          eventTime: enquiry.eventTime || 'TBC',
-          venue: enquiry.venue || 'TBC',
-          fee: enquiry.estimatedValue || 0,
-          status: `enquiry-${enquiry.status}`,
-          source: 'enquiry',
-          isExpired: isExpired
+    try {
+      console.log("Calculating potential bookings...");
+      const potentialEvents = [];
+      
+      // Safely process enquiries
+      if (Array.isArray(enquiries)) {
+        enquiries.forEach((enquiry: any) => {
+          try {
+            if (enquiry && enquiry.eventDate) {
+              const isExpired = isEnquiryExpired(enquiry);
+              
+              // Skip expired enquiries if toggle is off
+              if (isExpired && !showExpiredEnquiries) {
+                return;
+              }
+              
+              potentialEvents.push({
+                id: `enquiry-${enquiry.id}`,
+                title: enquiry.title || 'Untitled Enquiry',
+                clientName: enquiry.clientName || 'Unknown Client',
+                eventDate: enquiry.eventDate,
+                eventTime: enquiry.eventTime || 'TBC',
+                venue: enquiry.venue || 'TBC',
+                fee: enquiry.estimatedValue || 0,
+                status: `enquiry-${enquiry.status || 'new'}`,
+                source: 'enquiry',
+                isExpired: isExpired
+              });
+            }
+          } catch (enquiryError) {
+            console.error("Error processing enquiry:", enquiry, enquiryError);
+          }
         });
       }
-    });
-    
-    // Add signed contracts that don't have bookings yet
-    contracts.forEach((contract: any) => {
-      if (contract.status === 'signed') {
-        const hasBooking = bookings.some((b: Booking) => b.contractId === contract.id);
-        if (!hasBooking) {
-          potentialEvents.push({
-            id: `contract-${contract.id}`,
-            title: `${contract.clientName} Performance`,
-            clientName: contract.clientName,
-            eventDate: contract.eventDate,
-            eventTime: contract.eventTime,
-            venue: contract.venue,
-            fee: contract.fee,
-            status: 'contract-signed',
-            source: 'contract'
-          });
-        }
+      
+      // Safely process contracts
+      if (Array.isArray(contracts)) {
+        contracts.forEach((contract: any) => {
+          try {
+            if (contract && contract.status === 'signed') {
+              const hasBooking = Array.isArray(bookings) ? 
+                bookings.some((b: Booking) => b.contractId === contract.id) : false;
+              
+              if (!hasBooking) {
+                potentialEvents.push({
+                  id: `contract-${contract.id}`,
+                  title: `${contract.clientName || 'Unknown Client'} Performance`,
+                  clientName: contract.clientName || 'Unknown Client',
+                  eventDate: contract.eventDate,
+                  eventTime: contract.eventTime,
+                  venue: contract.venue,
+                  fee: contract.fee || 0,
+                  status: 'contract-signed',
+                  source: 'contract'
+                });
+              }
+            }
+          } catch (contractError) {
+            console.error("Error processing contract:", contract, contractError);
+          }
+        });
       }
-    });
-    
-    return potentialEvents;
+      
+      return potentialEvents;
+    } catch (error) {
+      console.error("Error in getPotentialBookings:", error);
+      return [];
+    }
   };
 
   // Memoize potential bookings to avoid recalculation on every render
