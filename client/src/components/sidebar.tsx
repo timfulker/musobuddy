@@ -18,7 +18,7 @@ import {
   Users,
   User
 } from "lucide-react";
-import logoImage from "/musobuddy-logo-purple.svg";
+import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
 
 interface SidebarProps {

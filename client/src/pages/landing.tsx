@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Music, Calendar, FileText, DollarSign, Shield, BarChart3, CheckCircle } from "lucide-react";
+import logoImage from "/musobuddy-logo-purple.png";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -13,9 +14,7 @@ export default function Landing() {
       <header className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center">
-              <Music className="w-6 h-6 text-white" />
-            </div>
+            <img src={logoImage} alt="MusoBuddy" className="w-12 h-12 rounded-xl" />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">MusoBuddy</h1>
               <p className="text-sm text-gray-600">Admin made easy</p>
@@ -194,9 +193,7 @@ export default function Landing() {
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-center space-x-3 mb-8">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Music className="w-5 h-5" />
-            </div>
+            <img src={logoImage} alt="MusoBuddy" className="w-10 h-10 rounded-lg" />
             <span className="text-xl font-bold">MusoBuddy</span>
           </div>
           <p className="text-center text-gray-400">

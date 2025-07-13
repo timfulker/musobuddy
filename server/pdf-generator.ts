@@ -5,7 +5,7 @@ import type { Contract, UserSettings, Invoice } from '@shared/schema';
 
 function getLogoBase64(): string {
   try {
-    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo.png');
+    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-purple.png');
     const logoBuffer = readFileSync(logoPath);
     return logoBuffer.toString('base64');
   } catch (error) {
