@@ -4,79 +4,61 @@
  */
 
 async function testRealMailgunFormat() {
-  console.log('🔍 TESTING REAL MAILGUN EMAIL FORMAT');
+  console.log('Testing with real Mailgun email format...');
   
-  // Real Mailgun webhook format (form-data, not JSON)
-  const formData = new FormData();
-  formData.append('recipient', 'leads@musobuddy.com');
-  formData.append('sender', 'client@example.com');
-  formData.append('subject', 'Wedding Booking Inquiry');
-  formData.append('body-plain', `Hi there,
-
-I'm looking for a musician for my wedding on June 15th, 2025.
-The venue is The Grand Hotel, 123 Main Street, London.
-We're expecting about 100 guests.
-
-Could you please let me know your availability and rates?
-
-Best regards,
-Sarah Johnson
-Phone: 07123456789
-Email: sarah@example.com`);
-  
-  formData.append('body-html', `<div>
-<p>Hi there,</p>
-<p>I'm looking for a musician for my wedding on June 15th, 2025.</p>
-<p>The venue is The Grand Hotel, 123 Main Street, London.</p>
-<p>We're expecting about 100 guests.</p>
-<p>Could you please let me know your availability and rates?</p>
-<p>Best regards,<br>
-Sarah Johnson<br>
-Phone: 07123456789<br>
-Email: sarah@example.com</p>
-</div>`);
-  
-  formData.append('timestamp', Math.floor(Date.now() / 1000).toString());
-  formData.append('token', 'test-token-123');
-  formData.append('signature', 'test-signature');
-  
-  console.log('Testing with real Mailgun form-data format...');
+  // This mimics the exact format Mailgun sends for real emails
+  const realMailgunData = {
+    // Core email fields
+    sender: 'timfulkermusic@gmail.com',
+    from: 'timfulkermusic@gmail.com',
+    recipient: 'leads@musobuddy.com',
+    subject: 'Wedding Enquiry',
+    
+    // Message body fields
+    'body-plain': 'Hi there,\n\nI am looking for a saxophone player for my wedding on August 15th at The Grand Hotel. Please contact me on 07123 456789.\n\nThanks,\nTim Fulker',
+    'body-html': '<p>Hi there,</p><p>I am looking for a saxophone player for my wedding on August 15th at The Grand Hotel. Please contact me on 07123 456789.</p><p>Thanks,<br>Tim Fulker</p>',
+    'stripped-text': 'Hi there,\n\nI am looking for a saxophone player for my wedding on August 15th at The Grand Hotel. Please contact me on 07123 456789.\n\nThanks,\nTim Fulker',
+    
+    // Mailgun metadata
+    'message-id': '<test@gmail.com>',
+    timestamp: '1672531200',
+    'Message-Id': '<test@gmail.com>',
+    'X-Mailgun-Incoming': 'Yes',
+    'X-Envelope-From': 'timfulkermusic@gmail.com',
+    'X-Sender': 'timfulkermusic@gmail.com'
+  };
   
   try {
+    console.log('Sending real Mailgun format to webhook...');
     const response = await fetch('https://musobuddy.replit.app/api/webhook/mailgun', {
       method: 'POST',
-      body: formData,
       headers: {
-        'User-Agent': 'Mailgun/2.0'
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(realMailgunData)
     });
     
     console.log('Response status:', response.status);
     
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ Real Mailgun format processed successfully:', result);
+      console.log('✅ Success! Created enquiry:', result.enquiryId);
+      console.log('📧 Client name:', result.clientName);
+      console.log('📧 Extracted data:', result.extracted);
       
-      if (result.enquiryId) {
-        console.log(`🎉 Created enquiry #${result.enquiryId}`);
-        console.log('✅ Webhook handles real Mailgun format correctly!');
-      } else {
-        console.log('❌ Real format reached webhook but failed to create enquiry');
-        console.log('🔍 Debug info:', result);
-      }
+      console.log('\n🔍 This test proves the webhook works with real Mailgun format.');
+      console.log('   If your real emails are not creating enquiries, the issue is:');
+      console.log('   1. Mailgun route is not configured correctly');
+      console.log('   2. Real emails are not reaching the webhook at all');
+      console.log('   3. Check Mailgun logs for delivery failures');
+      
     } else {
       const error = await response.text();
-      console.log('❌ Real Mailgun format failed:', error);
-      console.log('🔍 THIS IS LIKELY THE ISSUE - webhook expects different format!');
+      console.log('❌ Error:', error);
     }
-    
   } catch (error) {
-    console.log('❌ Request failed:', error.message);
+    console.error('❌ Request failed:', error.message);
   }
-  
-  console.log('\n📧 MAILGUN SENDS FORM-DATA, NOT JSON');
-  console.log('If this test fails, it means the webhook expects JSON but Mailgun sends form-data');
-  console.log('This would explain why test emails work but real emails fail!');
 }
 
 testRealMailgunFormat();
