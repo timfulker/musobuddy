@@ -327,7 +327,7 @@ export default function Calendar() {
     const day = startOfWeek.getDay();
     const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
     startOfWeek.setDate(diff);
-
+    
     const days = [];
     for (let i = 0; i < 7; i++) {
       const currentDay = new Date(startOfWeek);
@@ -686,7 +686,7 @@ export default function Calendar() {
         accent: 'bg-gray-400'
       };
     }
-
+    
     if (event.status === 'confirmed' || event.status === 'enquiry-confirmed') {
       return {
         background: 'bg-green-50',
@@ -695,7 +695,7 @@ export default function Calendar() {
         accent: 'bg-green-500'
       };
     }
-
+    
     if (event.status === 'completed') {
       return {
         background: 'bg-purple-50',
@@ -704,7 +704,7 @@ export default function Calendar() {
         accent: 'bg-purple-500'
       };
     }
-
+    
     if (event.status === 'cancelled') {
       return {
         background: 'bg-red-50',
@@ -713,7 +713,7 @@ export default function Calendar() {
         accent: 'bg-red-500'
       };
     }
-
+    
     if (event.status === 'enquiry-new') {
       return {
         background: 'bg-yellow-50',
@@ -722,7 +722,7 @@ export default function Calendar() {
         accent: 'bg-yellow-500'
       };
     }
-
+    
     if (event.status === 'enquiry-qualified' || event.status === 'enquiry-contract_sent') {
       return {
         background: 'bg-blue-50',
@@ -731,7 +731,7 @@ export default function Calendar() {
         accent: 'bg-blue-500'
       };
     }
-
+    
     if (event.status === 'contract-signed') {
       return {
         background: 'bg-emerald-50',
@@ -740,7 +740,7 @@ export default function Calendar() {
         accent: 'bg-emerald-500'
       };
     }
-
+    
     // Default
     return {
       background: 'bg-gray-50',
@@ -758,7 +758,7 @@ export default function Calendar() {
         return renderWeekView();
       case "month":
         return (
-          <div className="w-full">
+          <div className="w-full" style={{ width: '100%' }}>
             <CalendarComponent
               mode="single"
               selected={selectedDate}
@@ -767,55 +767,32 @@ export default function Calendar() {
               onMonthChange={setCurrentDate}
               modifiers={calendarModifiers}
               modifiersClassNames={calendarModifiersClassNames}
-              className="w-full max-w-none mx-auto"
-              style={{
-                width: '100%',
-                maxWidth: 'none'
-              }}
+              className="w-full"
+              style={{ width: '100%' }}
             />
-            <style jsx>{`
-              .rdp {
-                width: 100% !important;
-                max-width: none !important;
-              }
-              .rdp-months {
-                width: 100% !important;
-              }
-              .rdp-month {
-                width: 100% !important;
-              }
-              .rdp-table {
-                width: 100% !important;
-                table-layout: fixed !important;
-              }
-              .rdp-head_cell {
-                width: 14.28% !important;
-                text-align: center !important;
-                padding: 0.5rem !important;
-                font-size: 0.875rem !important;
-                font-weight: 600 !important;
-              }
-              .rdp-cell {
-                width: 14.28% !important;
-                height: 4rem !important;
-                padding: 0 !important;
-                text-align: center !important;
-              }
-              .rdp-button {
-                width: 100% !important;
-                height: 3.5rem !important;
-                font-size: 1rem !important;
-                font-weight: 500 !important;
-              }
-            `}</style>
           </div>
+        );
+      case "year":
+        return renderYearView();
+      default:
+        return (
+          <CalendarComponent
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            month={currentDate}
+            onMonthChange={setCurrentDate}
+            modifiers={calendarModifiers}
+            modifiersClassNames={calendarModifiersClassNames}
+            className="w-full max-w-none [&_.rdp]:w-full [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-16 [&_td]:p-0 [&_td]:text-center [&_th]:h-12 [&_th]:p-2 [&_th]:text-center [&_button]:h-14 [&_button]:w-full [&_button]:text-base [&_button]:font-medium [&_th]:text-sm [&_th]:font-semibold"
+          />
         );
     }
   };
 
   const renderDayView = () => {
     const dayBookings = getBookingsForDate(currentDate);
-
+    
     return (
       <div className="p-4">
         <div className="text-center mb-4">
@@ -832,7 +809,7 @@ export default function Calendar() {
             </Button>
           </div>
         </div>
-
+        
         <div className="space-y-2">
           {dayBookings.length > 0 ? (
             dayBookings.map((booking: any) => (
@@ -863,7 +840,7 @@ export default function Calendar() {
 
   const renderWeekView = () => {
     const weekDays = getWeekDays(currentDate);
-
+    
     return (
       <div className="p-4">
         <div className="text-center mb-4">
@@ -882,19 +859,19 @@ export default function Calendar() {
             </Button>
           </div>
         </div>
-
+        
         <div className="grid grid-cols-7 gap-2">
           {weekDays.map((day, index) => {
             const dayBookings = getBookingsForDate(day);
             const isToday = day.toDateString() === new Date().toDateString();
-
+            
             return (
               <div key={index} className={`border rounded-lg p-2 min-h-32 ${isToday ? 'bg-blue-50 border-blue-200' : 'bg-white'}`}>
                 <div className="text-center mb-2">
                   <div className="text-sm font-medium">{day.toLocaleDateString("en-GB", { weekday: 'short' })}</div>
                   <div className={`text-2xl font-bold ${isToday ? 'text-blue-600' : ''}`}>{day.getDate()}</div>
                 </div>
-
+                
                 <div className="space-y-1">
                   {dayBookings.map((booking: any) => (
                     <div key={booking.id} className="text-xs p-1 bg-gray-100 rounded truncate">
@@ -913,7 +890,7 @@ export default function Calendar() {
   const renderYearView = () => {
     const currentYear = currentDate.getFullYear();
     const months = Array.from({ length: 12 }, (_, i) => new Date(currentYear, i, 1));
-
+    
     return (
       <div className="p-4">
         <div className="text-center mb-4">
@@ -930,17 +907,17 @@ export default function Calendar() {
             </Button>
           </div>
         </div>
-
+        
         <div className="grid grid-cols-3 gap-4">
           {months.map((month, index) => {
             const monthBookings = getBookingsForMonth(month);
-
+            
             return (
               <div key={index} className="border rounded-lg p-3">
                 <div className="text-center mb-2">
                   <h4 className="font-medium">{month.toLocaleDateString("en-GB", { month: 'long' })}</h4>
                 </div>
-
+                
                 <div className="text-sm space-y-1">
                   {monthBookings.length > 0 ? (
                     <>
@@ -1064,7 +1041,7 @@ export default function Calendar() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="mb-6 w-full">
+                  <div className="mb-6">
                     {renderCalendarView()}
                   </div>
 
@@ -1467,60 +1444,4 @@ export default function Calendar() {
       </Dialog>
     </div>
   );
-}rdp {
-                width: 100% !important;
-                max-width: none !important;
-              }
-              .rdp-months {
-                width: 100% !important;
-              }
-              .rdp-month {
-                width: 100% !important;
-              }
-              .rdp-table {
-                width: 100% !important;
-                table-layout: fixed !important;
-              }
-              .rdp-head_cell {
-                width: 14.28% !important;
-                text-align: center !important;
-                padding: 0.5rem !important;
-                font-size: 0.875rem !important;
-                font-weight: 600 !important;
-              }
-              .rdp-cell {
-                width: 14.28% !important;
-                height: 4rem !important;
-                padding: 0 !important;
-                text-align: center !important;
-              }
-              .rdp-button {
-                width: 100% !important;
-                height: 3.5rem !important;
-                font-size: 1rem !important;
-                font-weight: 500 !important;
-              }
-            `}</style>
-          </div>
-        );
-      case "year":
-        return renderYearView();
-      default:
-        return (
-          <div className="w-full">
-            <CalendarComponent
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              month={currentDate}
-              onMonthChange={setCurrentDate}
-              modifiers={calendarModifiers}
-              modifiersClassNames={calendarModifiersClassNames}
-              className="w-full max-w-none mx-auto"
-              style={{
-                width: '100%',
-                maxWidth: 'none'
-              }}
-            />
-            <style jsx>{`
-              .
+}
