@@ -1,22 +1,39 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { storage } from "./storage";
+# Silent Webhook Failure - Debugging and Fix
 
-const app = express();
+## Problem Analysis
 
-console.log('🔧 === STARTING ROUTE REGISTRATION ===');
+The database confirms:
+- `timfulker@gmail.com` → Creates enquiry #331 successfully
+- `timfulkermusic@gmail.com` → **NO database records** (silent failure)
 
-// CATCH-ALL MIDDLEWARE TO LOG ALL REQUESTS
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.path.includes('webhook')) {
-    console.log(`🌐 ALL WEBHOOK REQUESTS: ${req.method} ${req.path}`);
-    console.log(`🌐 User-Agent: ${req.headers['user-agent']}`);
-    console.log(`🌐 Content-Type: ${req.headers['content-type']}`);
-  }
-  next();
-});
+This means the webhook receives the email but fails **before** calling `storage.createEnquiry()`.
 
+## Potential Failure Points in server/index.ts
+
+### 1. Email Regex Extraction Failure
+```javascript
+// Line ~65 in webhook handler
+const emailMatch = from.match(/[\w.-]+@[\w.-]+\.\w+/);
+const clientEmail = emailMatch ? emailMatch[0] : from;
+```
+
+**Issue**: The regex might not match `timfulkermusic@gmail.com` properly if the email comes with additional formatting.
+
+### 2. Silent Exception in Enquiry Creation
+```javascript
+const newEnquiry = await storage.createEnquiry(enquiry);
+```
+
+**Issue**: If this throws an exception, the current catch block might not be logging it properly.
+
+### 3. Data Validation Failure
+The enquiry object construction might be failing validation for specific email formats.
+
+## Complete Debugging Solution
+
+Replace the webhook handler in `server/index.ts` with this comprehensive debugging version:
+
+```typescript
 // COMPREHENSIVE DEBUG MAILGUN WEBHOOK
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const startTime = Date.now();
@@ -232,51 +249,30 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     });
   }
 });
+```
 
-console.log('✅ Dedicated webhook handler registered');
+## What This Will Reveal
 
-// STEP 3: REGISTER ALL OTHER ROUTES
-console.log('🔧 Starting clean route registration...');
+This debugging version will show exactly:
 
-// Initialize the server
-const server = await registerRoutes(app);
+1. **What data Mailgun sends** for `timfulkermusic@gmail.com`
+2. **Where the processing fails** (regex, validation, database)
+3. **The exact error message** if any step throws an exception
+4. **Field extraction results** for problematic emails
 
-console.log('✅ All routes registered successfully');
+## Expected Findings
 
-// Debug: Show all registered routes
-const routes = app._router.stack.map((middleware: any, index: number) => {
-  if (middleware.route) {
-    return `${index}: ${Object.keys(middleware.route.methods).join(', ')} ${middleware.route.path}`;
-  } else {
-    return `${index}: middleware - ${middleware.name || '<anonymous>'}`;
-  }
-}).filter(Boolean);
+Based on the silent failure pattern, I suspect:
 
-console.log('🔍 Registered routes:');
-routes.forEach(route => console.log('  ' + route));
+1. **Email regex failure** - the original regex might not match the email format
+2. **Validation failure** - some field might be empty/invalid
+3. **Silent database exception** - the error isn't being caught properly
 
-// STEP 4: SETUP VITE MIDDLEWARE
-console.log('🔧 Setting up Vite middleware...');
+## Next Steps
 
-if (app.get('env') === 'development') {
-  await setupVite(app);
-  console.log('✅ Vite middleware set up');
-} else {
-  serveStatic(app);
-  console.log('✅ Static files served');
-}
+1. **Deploy this debugging version**
+2. **Send a test email** from `timfulkermusic@gmail.com`
+3. **Check the logs** for the specific failure point
+4. **Apply the targeted fix** based on what the logs reveal
 
-console.log('✅ Vite middleware setup completed');
-
-// Catch all unmatched routes for debugging
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.path.startsWith('/api/')) {
-    console.log(`=== UNMATCHED ROUTE: ${req.method} ${req.path} ===`);
-  }
-  next();
-});
-
-const PORT = Number(process.env.PORT) || 5000;
-server.listen(PORT, "0.0.0.0", () => {
-  log(`Server running on port ${PORT}`);
-});
+The logs will show exactly where and why the webhook is failing for this specific email address.
