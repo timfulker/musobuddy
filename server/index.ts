@@ -20,6 +20,20 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     const subject = req.body.Subject || req.body.subject || 'Email enquiry';
     const body = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || '';
     
+    // SPECIAL DEBUG FOR PROBLEM EMAILS
+    if (from.includes('timfulkermusic@gmail.com') || from.includes('tim@saxweddings.com')) {
+      console.log('🔍 DEBUGGING PROBLEM EMAIL:', from);
+      console.log('🔍 Raw request body keys:', Object.keys(req.body));
+      console.log('🔍 Body-plain field:', req.body['body-plain']);
+      console.log('🔍 Stripped-text field:', req.body['stripped-text']);
+      console.log('🔍 Text field:', req.body.text);
+      console.log('🔍 From field variants:', {
+        From: req.body.From,
+        from: req.body.from,
+        sender: req.body.sender
+      });
+    }
+    
     console.log('📧 From:', from);
     console.log('📧 Subject:', subject);
     console.log('📧 Body length:', body.length);
