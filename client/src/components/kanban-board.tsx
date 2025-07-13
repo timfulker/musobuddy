@@ -124,80 +124,82 @@ export default function KanbanBoard() {
                 <h4 className="font-medium text-gray-900">New Enquiries</h4>
                 <Badge variant="secondary">{groupedEnquiries.new.length}</Badge>
               </div>
-              <div className="space-y-3">
-                {groupedEnquiries.new.map((enquiry: Enquiry) => {
-                  const dateBox = formatDateBox(enquiry.eventDate!);
-                  return (
-                    <Link key={enquiry.id} href="/enquiries">
-                      <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
-                        <CardContent className="p-4">
-                          <div className="flex gap-4">
-                            {/* Date Box */}
-                            <div className="flex-shrink-0 w-16 h-16 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center bg-white">
-                              <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
-                              <div className="text-lg font-bold text-gray-900">{dateBox.dayNum}</div>
-                              <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
-                            </div>
-                            
-                            {/* Main Content */}
-                            <div className="flex-1">
-                              {/* Price and Status Row */}
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="text-lg font-bold text-green-600">
-                                  {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+              <div className="h-96 overflow-y-auto border rounded-lg bg-gray-50 p-2">
+                <div className="space-y-3">
+                  {groupedEnquiries.new.map((enquiry: Enquiry) => {
+                    const dateBox = formatDateBox(enquiry.eventDate!);
+                    return (
+                      <Link key={enquiry.id} href="/enquiries">
+                        <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
+                          <CardContent className="p-4">
+                            <div className="flex gap-4">
+                              {/* Date Box */}
+                              <div className="flex-shrink-0 w-16 h-16 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center bg-white">
+                                <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
+                                <div className="text-lg font-bold text-gray-900">{dateBox.dayNum}</div>
+                                <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+                              </div>
+                              
+                              {/* Main Content */}
+                              <div className="flex-1">
+                                {/* Price and Status Row */}
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="text-lg font-bold text-green-600">
+                                    {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    {needsResponse(enquiry) && (
+                                      <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+                                        <AlertCircle className="w-3 h-3" />
+                                        <span>Response needed</span>
+                                      </div>
+                                    )}
+                                    {enquiry.applyNowLink && (
+                                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200 text-xs">
+                                        🎯 ENCORE
+                                      </Badge>
+                                    )}
+                                    <Badge className={getStatusColor(enquiry.status)} variant="secondary">
+                                      {enquiry.status.replace('_', ' ').toUpperCase()}
+                                    </Badge>
+                                  </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                  {needsResponse(enquiry) && (
-                                    <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
-                                      <AlertCircle className="w-3 h-3" />
-                                      <span>Response needed</span>
+                                
+                                {/* Event Title */}
+                                <h3 className="text-sm font-semibold text-gray-900 mb-2">{enquiry.title}</h3>
+                                
+                                {/* Event Details */}
+                                <div className="space-y-1 text-xs text-gray-600">
+                                  <div className="flex items-center">
+                                    <User className="w-3 h-3 mr-1" />
+                                    <span>{enquiry.clientName}</span>
+                                  </div>
+                                  {enquiry.eventTime && (
+                                    <div className="flex items-center">
+                                      <Clock className="w-3 h-3 mr-1" />
+                                      <span>{enquiry.eventTime}</span>
                                     </div>
                                   )}
-                                  {enquiry.applyNowLink && (
-                                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200 text-xs">
-                                      🎯 ENCORE
-                                    </Badge>
+                                  {enquiry.venue && (
+                                    <div className="flex items-center">
+                                      <Calendar className="w-3 h-3 mr-1" />
+                                      <span>{enquiry.venue}</span>
+                                    </div>
                                   )}
-                                  <Badge className={getStatusColor(enquiry.status)} variant="secondary">
-                                    {enquiry.status.replace('_', ' ').toUpperCase()}
-                                  </Badge>
                                 </div>
-                              </div>
-                              
-                              {/* Event Title */}
-                              <h3 className="text-sm font-semibold text-gray-900 mb-2">{enquiry.title}</h3>
-                              
-                              {/* Event Details */}
-                              <div className="space-y-1 text-xs text-gray-600">
-                                <div className="flex items-center">
-                                  <User className="w-3 h-3 mr-1" />
-                                  <span>{enquiry.clientName}</span>
-                                </div>
-                                {enquiry.eventTime && (
-                                  <div className="flex items-center">
-                                    <Clock className="w-3 h-3 mr-1" />
-                                    <span>{enquiry.eventTime}</span>
-                                  </div>
-                                )}
-                                {enquiry.venue && (
-                                  <div className="flex items-center">
-                                    <Calendar className="w-3 h-3 mr-1" />
-                                    <span>{enquiry.venue}</span>
-                                  </div>
-                                )}
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  );
-                })}
-                {groupedEnquiries.new.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">No new enquiries</p>
-                  </div>
-                )}
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                  {groupedEnquiries.new.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">No new enquiries</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
