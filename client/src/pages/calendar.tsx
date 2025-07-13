@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, type Booking } from "@shared/schema";
 import { useLocation, Link } from "wouter";
@@ -318,6 +318,49 @@ export default function Calendar() {
       return filteredBookings;
     } catch (error) {
       console.error("Error filtering bookings for date:", error);
+      return [];
+    }
+  };
+
+  const getWeekDays = (date: Date) => {
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
+    startOfWeek.setDate(diff);
+    
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const currentDay = new Date(startOfWeek);
+      currentDay.setDate(startOfWeek.getDate() + i);
+      days.push(currentDay);
+    }
+    return days;
+  };
+
+  const getBookingsForMonth = (month: Date) => {
+    try {
+      if (!month || !Array.isArray(bookings)) {
+        return [];
+      }
+
+      const monthBookings = bookings.filter((booking: Booking) => {
+        try {
+          if (!booking || !booking.eventDate) {
+            return false;
+          }
+
+          const bookingDate = new Date(booking.eventDate);
+          return bookingDate.getMonth() === month.getMonth() && 
+                 bookingDate.getFullYear() === month.getFullYear();
+        } catch (bookingError) {
+          console.error("Error processing booking:", booking, bookingError);
+          return false;
+        }
+      });
+
+      return monthBookings;
+    } catch (error) {
+      console.error("Error filtering bookings for month:", error);
       return [];
     }
   };
@@ -634,6 +677,196 @@ export default function Calendar() {
     expiredEnquiry: "bg-gray-400 text-white opacity-50",
   };
 
+  const renderCalendarView = () => {
+    switch (viewMode) {
+      case "day":
+        return renderDayView();
+      case "week":
+        return renderWeekView();
+      case "month":
+        return (
+          <CalendarComponent
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            month={currentDate}
+            onMonthChange={setCurrentDate}
+            modifiers={calendarModifiers}
+            modifiersClassNames={calendarModifiersClassNames}
+            className="rounded-md border w-full"
+          />
+        );
+      case "year":
+        return renderYearView();
+      default:
+        return (
+          <CalendarComponent
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            month={currentDate}
+            onMonthChange={setCurrentDate}
+            modifiers={calendarModifiers}
+            modifiersClassNames={calendarModifiersClassNames}
+            className="rounded-md border w-full"
+          />
+        );
+    }
+  };
+
+  const renderDayView = () => {
+    const dayBookings = getBookingsForDate(currentDate);
+    
+    return (
+      <div className="p-4">
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold">{currentDate.toLocaleDateString("en-GB", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h3>
+          <div className="flex justify-center space-x-2 mt-2">
+            <Button onClick={() => setCurrentDate(new Date(currentDate.getTime() - 86400000))} variant="outline" size="sm">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => setCurrentDate(new Date())} variant="outline" size="sm">
+              Today
+            </Button>
+            <Button onClick={() => setCurrentDate(new Date(currentDate.getTime() + 86400000))} variant="outline" size="sm">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          {dayBookings.length > 0 ? (
+            dayBookings.map((booking: any) => (
+              <div key={booking.id} className="p-3 bg-gray-50 rounded-lg border">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium">{booking.title}</h4>
+                    <p className="text-sm text-gray-600">{booking.clientName}</p>
+                    <p className="text-sm text-gray-600">{booking.venue}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm">{formatTime(booking.eventTime)}</p>
+                    <p className="text-sm font-medium">£{Number(booking.fee).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p>No events scheduled for this day</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderWeekView = () => {
+    const weekDays = getWeekDays(currentDate);
+    
+    return (
+      <div className="p-4">
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold">
+            {weekDays[0].toLocaleDateString("en-GB", { month: 'long', year: 'numeric' })}
+          </h3>
+          <div className="flex justify-center space-x-2 mt-2">
+            <Button onClick={() => setCurrentDate(new Date(currentDate.getTime() - 7 * 86400000))} variant="outline" size="sm">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => setCurrentDate(new Date())} variant="outline" size="sm">
+              This Week
+            </Button>
+            <Button onClick={() => setCurrentDate(new Date(currentDate.getTime() + 7 * 86400000))} variant="outline" size="sm">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-7 gap-2">
+          {weekDays.map((day, index) => {
+            const dayBookings = getBookingsForDate(day);
+            const isToday = day.toDateString() === new Date().toDateString();
+            
+            return (
+              <div key={index} className={`border rounded-lg p-2 min-h-32 ${isToday ? 'bg-blue-50 border-blue-200' : 'bg-white'}`}>
+                <div className="text-center mb-2">
+                  <div className="text-sm font-medium">{day.toLocaleDateString("en-GB", { weekday: 'short' })}</div>
+                  <div className={`text-2xl font-bold ${isToday ? 'text-blue-600' : ''}`}>{day.getDate()}</div>
+                </div>
+                
+                <div className="space-y-1">
+                  {dayBookings.map((booking: any) => (
+                    <div key={booking.id} className="text-xs p-1 bg-gray-100 rounded truncate">
+                      {formatTime(booking.eventTime)} - {booking.title}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderYearView = () => {
+    const currentYear = currentDate.getFullYear();
+    const months = Array.from({ length: 12 }, (_, i) => new Date(currentYear, i, 1));
+    
+    return (
+      <div className="p-4">
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold">{currentYear}</h3>
+          <div className="flex justify-center space-x-2 mt-2">
+            <Button onClick={() => setCurrentDate(new Date(currentYear - 1, currentDate.getMonth(), currentDate.getDate()))} variant="outline" size="sm">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => setCurrentDate(new Date())} variant="outline" size="sm">
+              This Year
+            </Button>
+            <Button onClick={() => setCurrentDate(new Date(currentYear + 1, currentDate.getMonth(), currentDate.getDate()))} variant="outline" size="sm">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-4">
+          {months.map((month, index) => {
+            const monthBookings = getBookingsForMonth(month);
+            
+            return (
+              <div key={index} className="border rounded-lg p-3">
+                <div className="text-center mb-2">
+                  <h4 className="font-medium">{month.toLocaleDateString("en-GB", { month: 'long' })}</h4>
+                </div>
+                
+                <div className="text-sm space-y-1">
+                  {monthBookings.length > 0 ? (
+                    <>
+                      <div className="font-medium text-gray-600">{monthBookings.length} events</div>
+                      {monthBookings.slice(0, 3).map((booking: any) => (
+                        <div key={booking.id} className="text-xs text-gray-500 truncate">
+                          {new Date(booking.eventDate).getDate()} - {booking.title}
+                        </div>
+                      ))}
+                      {monthBookings.length > 3 && (
+                        <div className="text-xs text-gray-400">+{monthBookings.length - 3} more</div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-xs text-gray-400">No events</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -732,16 +965,7 @@ export default function Calendar() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CalendarComponent
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    month={currentDate}
-                    onMonthChange={setCurrentDate}
-                    modifiers={calendarModifiers}
-                    modifiersClassNames={calendarModifiersClassNames}
-                    className="rounded-md border w-full"
-                  />
+                  {renderCalendarView()}
 
                   <div className="mt-4 flex flex-wrap gap-2 text-xs">
                     <div className="flex items-center space-x-1">
