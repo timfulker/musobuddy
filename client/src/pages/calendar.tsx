@@ -27,11 +27,13 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewMode, setViewMode] = useState<"year" | "month" | "week" | "day">("month");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [location, navigate] = useLocation();
-  const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showExpiredEnquiries, setShowExpiredEnquiries] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Always call hooks in the same order
+  const [location, navigate] = useLocation();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof bookingFormSchema>>({
     resolver: zodResolver(bookingFormSchema),
@@ -46,53 +48,29 @@ export default function Calendar() {
     },
   });
 
-  // Check URL parameters to auto-open dialog
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'block') {
-      setIsDialogOpen(true);
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [location]);
-
-  // Form reset when dialog closes
-  useEffect(() => {
-    if (!isDialogOpen) {
-      form.reset();
-    }
-  }, [isDialogOpen, form]);
-
-  // Close sidebar on route change
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location]);
-
-  // Handle mobile responsiveness
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768 && sidebarOpen) {
-        setSidebarOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [sidebarOpen]);
-
+  // All data fetching hooks - always called
   const { data: bookings = [], isLoading, error: bookingsError } = useQuery({
     queryKey: ["/api/bookings"],
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: enquiries = [], error: enquiriesError } = useQuery({
     queryKey: ["/api/enquiries"],
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: contracts = [], error: contractsError } = useQuery({
     queryKey: ["/api/contracts"],
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: conflicts = [], error: conflictsError } = useQuery({
     queryKey: ["/api/conflicts"],
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const createBookingMutation = useMutation({
@@ -127,122 +105,6 @@ export default function Calendar() {
     },
   });
 
-  // Debug logging
-  console.log("Calendar Debug - Bookings data:", bookings);
-  console.log("Calendar Debug - Selected date:", selectedDate);
-  console.log("Calendar Debug - Enquiries:", enquiries);
-  console.log("Calendar Debug - Contracts:", contracts);
-  console.log("Calendar Debug - Conflicts:", conflicts);
-
-  // Handle loading and error states
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading calendar...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (bookingsError || enquiriesError || contractsError || conflictsError) {
-    console.error("Calendar API Errors:", {
-      bookingsError,
-      enquiriesError, 
-      contractsError,
-      conflictsError
-    });
-    
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center text-red-600">
-          <p>Error loading calendar data</p>
-          <p className="text-sm mt-2">Check console for details</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleCalendarExport = () => {
-    try {
-      console.log("Starting calendar export...");
-      const icalData = createICalData();
-      
-      if (!icalData) {
-        throw new Error("No calendar data to export");
-      }
-      
-      downloadICalFile(icalData, "musobuddy-calendar.ics");
-      
-      toast({
-        title: "Calendar Export",
-        description: "Calendar file downloaded successfully - works with Google, Apple, Outlook, and other calendar apps",
-      });
-    } catch (error) {
-      console.error("Calendar export failed:", error);
-      toast({
-        title: "Export Failed",
-        description: "Unable to export calendar. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const createICalData = () => {
-    const icalHeader = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//MusoBuddy//Calendar//EN',
-      'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH',
-      'X-WR-CALNAME:MusoBuddy Performances',
-      'X-WR-TIMEZONE:Europe/London'
-    ].join('\r\n');
-
-    const icalFooter = 'END:VCALENDAR';
-
-    const events = bookings
-      .filter((b: Booking) => b.status === 'confirmed')
-      .map((booking: Booking) => {
-        const startDate = new Date(booking.eventDate);
-        const endDate = new Date(startDate.getTime() + 4 * 60 * 60 * 1000); // 4 hours duration
-        
-        return [
-          'BEGIN:VEVENT',
-          `DTSTART:${formatICalDate(startDate)}`,
-          `DTEND:${formatICalDate(endDate)}`,
-          `SUMMARY:${booking.title}`,
-          `DESCRIPTION:Performance for ${booking.clientName}\\nVenue: ${booking.venue}\\nFee: £${booking.fee}`,
-          `LOCATION:${booking.venue}`,
-          `STATUS:CONFIRMED`,
-          `UID:${booking.id}@musobuddy.com`,
-          `DTSTAMP:${formatICalDate(new Date())}`,
-          'END:VEVENT'
-        ].join('\r\n');
-      });
-
-    return [icalHeader, ...events, icalFooter].join('\r\n');
-  };
-
-  const formatICalDate = (date: Date) => {
-    return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  };
-
-  const downloadICalFile = (icalData: string, filename: string = 'musobuddy-calendar.ics') => {
-    const blob = new Blob([icalData], { type: 'text/calendar' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-
-
   const transferEnquiriesMutation = useMutation({
     mutationFn: async () => {
       return apiRequest("/api/transfer-enquiries-to-calendar", {
@@ -256,7 +118,7 @@ export default function Calendar() {
       queryClient.invalidateQueries({ queryKey: ["/api/enquiries"] });
       toast({
         title: "Transfer Complete",
-        description: `Successfully transferred ${data.details.transferred} enquiries to calendar`,
+        description: `Successfully transferred ${data?.details?.transferred || 0} enquiries to calendar`,
       });
     },
     onError: (error) => {
@@ -269,141 +131,68 @@ export default function Calendar() {
     },
   });
 
-  const handleDialogClose = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open) {
+  // All useEffect hooks
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'block') {
+        setIsDialogOpen(true);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (error) {
+      console.error("Error checking URL parameters:", error);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    if (!isDialogOpen) {
       form.reset();
     }
-  };
+  }, [isDialogOpen, form]);
 
-  const onSubmit = (data: z.infer<typeof bookingFormSchema>) => {
-    // Validate date is not in the past
-    const eventDate = new Date(data.eventDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (eventDate < today) {
-      toast({
-        title: "Error",
-        description: "Cannot create booking for past dates",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    console.log("Submitting booking data:", data);
-    createBookingMutation.mutate(data);
-  };
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed": return "bg-green-100 text-green-800 border-green-200";
-      case "completed": return "bg-purple-100 text-purple-800 border-purple-200";
-      case "cancelled": return "bg-red-100 text-red-800 border-red-200";
-      default: return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    }
-  };
-
-  const getCalendarModifierColor = (status: string) => {
-    switch (status) {
-      case "confirmed": return "bg-green-200 text-green-900 hover:bg-green-300";
-      case "completed": return "bg-purple-200 text-purple-900 hover:bg-purple-300";
-      case "cancelled": return "bg-red-200 text-red-900 hover:bg-red-300";
-      default: return "bg-yellow-200 text-yellow-900 hover:bg-yellow-300";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatTime = (timeString: string) => {
-    return timeString || "Time TBC";
-  };
-
-  const getBookingsForDate = (date: Date) => {
-    try {
-      if (!date || !Array.isArray(bookings)) {
-        console.log("Invalid date or bookings array");
-        return [];
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && sidebarOpen) {
+        setSidebarOpen(false);
       }
-      
-      console.log("Getting bookings for date:", date.toDateString());
-      
-      const filteredBookings = bookings.filter((booking: Booking) => {
-        try {
-          if (!booking || !booking.eventDate) {
-            return false;
-          }
-          
-          const bookingDate = new Date(booking.eventDate);
-          
-          // Normalize both dates to avoid timezone issues
-          const normalizedBookingDate = new Date(
-            bookingDate.getFullYear(),
-            bookingDate.getMonth(),
-            bookingDate.getDate()
-          );
-          
-          const normalizedSelectedDate = new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate()
-          );
-          
-          const isMatch = normalizedBookingDate.getTime() === normalizedSelectedDate.getTime();
-          
-          if (isMatch) {
-            console.log(`✓ Booking ${booking.id} (${booking.eventDate}) matches ${date.toDateString()}`);
-          }
-          
-          return isMatch;
-        } catch (bookingError) {
-          console.error("Error processing booking:", booking, bookingError);
-          return false;
-        }
-      });
-      
-      console.log(`Found ${filteredBookings.length} bookings for ${date.toDateString()}`);
-      return filteredBookings;
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sidebarOpen]);
+
+  // Helper functions (no hooks inside)
+  const isEnquiryExpired = (enquiry: any) => {
+    try {
+      if (!enquiry || !enquiry.eventDate) return false;
+      const eventDate = new Date(enquiry.eventDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return eventDate < today;
     } catch (error) {
-      console.error("Error filtering bookings for date:", error);
-      return [];
+      console.error("Error checking if enquiry is expired:", error);
+      return false;
     }
   };
 
-  // Helper function to check if an enquiry is expired
-  const isEnquiryExpired = (enquiry: any) => {
-    if (!enquiry.eventDate) return false;
-    const eventDate = new Date(enquiry.eventDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return eventDate < today;
-  };
-
-  // Get potential bookings from enquiries and contracts
   const getPotentialBookings = () => {
     try {
-      console.log("Calculating potential bookings...");
       const potentialEvents = [];
-      
-      // Safely process enquiries
+
       if (Array.isArray(enquiries)) {
         enquiries.forEach((enquiry: any) => {
           try {
             if (enquiry && enquiry.eventDate) {
               const isExpired = isEnquiryExpired(enquiry);
-              
-              // Skip expired enquiries if toggle is off
+
               if (isExpired && !showExpiredEnquiries) {
                 return;
               }
-              
+
               potentialEvents.push({
                 id: `enquiry-${enquiry.id}`,
                 title: enquiry.title || 'Untitled Enquiry',
@@ -422,15 +211,14 @@ export default function Calendar() {
           }
         });
       }
-      
-      // Safely process contracts
+
       if (Array.isArray(contracts)) {
         contracts.forEach((contract: any) => {
           try {
             if (contract && contract.status === 'signed') {
               const hasBooking = Array.isArray(bookings) ? 
                 bookings.some((b: Booking) => b.contractId === contract.id) : false;
-              
+
               if (!hasBooking) {
                 potentialEvents.push({
                   id: `contract-${contract.id}`,
@@ -450,7 +238,7 @@ export default function Calendar() {
           }
         });
       }
-      
+
       return potentialEvents;
     } catch (error) {
       console.error("Error in getPotentialBookings:", error);
@@ -458,123 +246,381 @@ export default function Calendar() {
     }
   };
 
-  // Memoize potential bookings to avoid recalculation on every render
+  const getStatusColor = (status: string) => {
+    try {
+      switch (status) {
+        case "confirmed": return "bg-green-100 text-green-800 border-green-200";
+        case "completed": return "bg-purple-100 text-purple-800 border-purple-200";
+        case "cancelled": return "bg-red-100 text-red-800 border-red-200";
+        default: return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      }
+    } catch (error) {
+      console.error("Error getting status color:", error);
+      return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-GB", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", dateString, error);
+      return "Invalid Date";
+    }
+  };
+
+  const formatTime = (timeString: string) => {
+    try {
+      return timeString || "Time TBC";
+    } catch (error) {
+      console.error("Error formatting time:", timeString, error);
+      return "Time TBC";
+    }
+  };
+
+  const getBookingsForDate = (date: Date) => {
+    try {
+      if (!date || !Array.isArray(bookings)) {
+        return [];
+      }
+
+      const filteredBookings = bookings.filter((booking: Booking) => {
+        try {
+          if (!booking || !booking.eventDate) {
+            return false;
+          }
+
+          const bookingDate = new Date(booking.eventDate);
+          const normalizedBookingDate = new Date(
+            bookingDate.getFullYear(),
+            bookingDate.getMonth(),
+            bookingDate.getDate()
+          );
+
+          const normalizedSelectedDate = new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+          );
+
+          return normalizedBookingDate.getTime() === normalizedSelectedDate.getTime();
+        } catch (bookingError) {
+          console.error("Error processing booking:", booking, bookingError);
+          return false;
+        }
+      });
+
+      return filteredBookings;
+    } catch (error) {
+      console.error("Error filtering bookings for date:", error);
+      return [];
+    }
+  };
+
+  const getBookingConflicts = (bookingId: string) => {
+    try {
+      if (!Array.isArray(conflicts)) return [];
+      return conflicts.filter((conflict: any) => 
+        (conflict?.enquiryId && `enquiry-${conflict.enquiryId}` === bookingId) ||
+        (conflict?.conflictType === 'booking' && conflict?.conflictId?.toString() === bookingId)
+      );
+    } catch (error) {
+      console.error("Error getting booking conflicts:", error);
+      return [];
+    }
+  };
+
+  const getCurrentMonthEvents = () => {
+    try {
+      const potentialBookings = getPotentialBookings();
+
+      const monthBookings = Array.isArray(bookings) ? bookings.filter((booking: Booking) => {
+        try {
+          if (!booking?.eventDate) return false;
+          const bookingDate = new Date(booking.eventDate);
+          return bookingDate.getMonth() === currentDate.getMonth() && 
+                 bookingDate.getFullYear() === currentDate.getFullYear();
+        } catch (error) {
+          console.error("Error filtering month booking:", booking, error);
+          return false;
+        }
+      }) : [];
+
+      const monthPotentialBookings = Array.isArray(potentialBookings) ? potentialBookings.filter((booking: any) => {
+        try {
+          if (!booking?.eventDate) return false;
+          const bookingDate = new Date(booking.eventDate);
+          return bookingDate.getMonth() === currentDate.getMonth() && 
+                 bookingDate.getFullYear() === currentDate.getFullYear();
+        } catch (error) {
+          console.error("Error filtering month potential booking:", booking, error);
+          return false;
+        }
+      }) : [];
+
+      return [...monthBookings, ...monthPotentialBookings].sort((a, b) => {
+        try {
+          return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+        } catch (error) {
+          console.error("Error sorting events:", error);
+          return 0;
+        }
+      });
+    } catch (error) {
+      console.error("Error getting current month events:", error);
+      return [];
+    }
+  };
+
+  const createICalData = () => {
+    try {
+      const icalHeader = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//MusoBuddy//Calendar//EN',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'X-WR-CALNAME:MusoBuddy Performances',
+        'X-WR-TIMEZONE:Europe/London'
+      ].join('\r\n');
+
+      const icalFooter = 'END:VCALENDAR';
+
+      const events = Array.isArray(bookings) ? bookings
+        .filter((b: Booking) => b && b.status === 'confirmed' && b.eventDate)
+        .map((booking: Booking) => {
+          try {
+            const startDate = new Date(booking.eventDate);
+            const endDate = new Date(startDate.getTime() + 4 * 60 * 60 * 1000);
+
+            return [
+              'BEGIN:VEVENT',
+              `DTSTART:${formatICalDate(startDate)}`,
+              `DTEND:${formatICalDate(endDate)}`,
+              `SUMMARY:${booking.title || 'Untitled Event'}`,
+              `DESCRIPTION:Performance for ${booking.clientName || 'Unknown Client'}\\nVenue: ${booking.venue || 'TBC'}\\nFee: £${booking.fee || 0}`,
+              `LOCATION:${booking.venue || 'TBC'}`,
+              `STATUS:CONFIRMED`,
+              `UID:${booking.id}@musobuddy.com`,
+              `DTSTAMP:${formatICalDate(new Date())}`,
+              'END:VEVENT'
+            ].join('\r\n');
+          } catch (eventError) {
+            console.error("Error creating event for booking:", booking, eventError);
+            return '';
+          }
+        })
+        .filter(event => event.length > 0) : [];
+
+      return [icalHeader, ...events, icalFooter].join('\r\n');
+    } catch (error) {
+      console.error("Error creating iCal data:", error);
+      return null;
+    }
+  };
+
+  const formatICalDate = (date: Date) => {
+    try {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    } catch (error) {
+      console.error("Error formatting iCal date:", error);
+      return new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    }
+  };
+
+  const downloadICalFile = (icalData: string, filename: string = 'musobuddy-calendar.ics') => {
+    try {
+      const blob = new Blob([icalData], { type: 'text/calendar' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading iCal file:", error);
+      throw error;
+    }
+  };
+
+  // Memoized calculations - no hooks inside
   const potentialBookings = useMemo(() => {
     return getPotentialBookings();
   }, [enquiries, contracts, bookings, showExpiredEnquiries]);
 
-  const selectedDateBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
-  
-  const getSelectedDatePotentialBookings = () => {
-    if (!selectedDate) return [];
-    return potentialBookings.filter((booking: any) => {
-      const bookingDate = new Date(booking.eventDate);
-      return bookingDate.toDateString() === selectedDate.toDateString();
-    });
-  };
+  const selectedDateBookings = useMemo(() => {
+    return selectedDate ? getBookingsForDate(selectedDate) : [];
+  }, [selectedDate, bookings]);
 
-  const selectedDatePotentialBookings = getSelectedDatePotentialBookings();
-
-  const getBookingConflicts = (bookingId: string) => {
-    return conflicts.filter((conflict: any) => 
-      (conflict.enquiryId && `enquiry-${conflict.enquiryId}` === bookingId) ||
-      (conflict.conflictType === 'booking' && conflict.conflictId.toString() === bookingId)
-    );
-  };
-
-  const getConflictSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'low': return 'text-blue-600 bg-blue-50 border-blue-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+  const selectedDatePotentialBookings = useMemo(() => {
+    try {
+      if (!selectedDate) return [];
+      return potentialBookings.filter((booking: any) => {
+        try {
+          const bookingDate = new Date(booking.eventDate);
+          return bookingDate.toDateString() === selectedDate.toDateString();
+        } catch (error) {
+          console.error("Error filtering potential booking:", booking, error);
+          return false;
+        }
+      });
+    } catch (error) {
+      console.error("Error getting selected date potential bookings:", error);
+      return [];
     }
-  };
-
-  // Get all bookings and enquiries for the current month
-  const getCurrentMonthEvents = () => {
-    const monthBookings = bookings.filter((booking: Booking) => {
-      const bookingDate = new Date(booking.eventDate);
-      return bookingDate.getMonth() === currentDate.getMonth() && 
-             bookingDate.getFullYear() === currentDate.getFullYear();
-    });
-
-    const monthPotentialBookings = potentialBookings.filter((booking: any) => {
-      const bookingDate = new Date(booking.eventDate);
-      return bookingDate.getMonth() === currentDate.getMonth() && 
-             bookingDate.getFullYear() === currentDate.getFullYear();
-    });
-
-    return [...monthBookings, ...monthPotentialBookings].sort((a, b) => 
-      new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
-    );
-  };
-
-  const getWeekDays = (date: Date) => {
-    const week = [];
-    const startDate = new Date(date);
-    startDate.setDate(date.getDate() - date.getDay());
-    
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(startDate);
-      day.setDate(startDate.getDate() + i);
-      week.push(day);
-    }
-    
-    return week;
-  };
-
-  const getBookingsForMonth = (month: Date) => {
-    const monthBookings = bookings.filter((booking: Booking) => {
-      const bookingDate = new Date(booking.eventDate);
-      return bookingDate.getMonth() === month.getMonth() && 
-             bookingDate.getFullYear() === month.getFullYear();
-    });
-
-    const monthPotentialBookings = potentialBookings.filter((booking: any) => {
-      const bookingDate = new Date(booking.eventDate);
-      return bookingDate.getMonth() === month.getMonth() && 
-             bookingDate.getFullYear() === month.getFullYear();
-    });
-
-    return [...monthBookings, ...monthPotentialBookings];
-  };
+  }, [selectedDate, potentialBookings]);
 
   const calendarModifiers = useMemo(() => {
-    console.log("Calculating calendar modifiers...");
-    const normalizeDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    };
+    try {
+      const normalizeDate = (dateString: string) => {
+        try {
+          const date = new Date(dateString);
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        } catch (error) {
+          console.error("Error normalizing date:", dateString, error);
+          return new Date();
+        }
+      };
 
-    return {
-      today: [new Date()],
-      confirmed: bookings
-        .filter((b: Booking) => b.status === 'confirmed')
-        .map((booking: Booking) => normalizeDate(booking.eventDate)),
-      completed: bookings
-        .filter((b: Booking) => b.status === 'completed')
-        .map((booking: Booking) => normalizeDate(booking.eventDate)),
-      cancelled: bookings
-        .filter((b: Booking) => b.status === 'cancelled')
-        .map((booking: Booking) => normalizeDate(booking.eventDate)),
-      newEnquiry: potentialBookings
-        .filter((b: any) => b.status === 'enquiry-new' && !b.isExpired)
-        .map((booking: any) => normalizeDate(booking.eventDate)),
-      inProgressEnquiry: potentialBookings
-        .filter((b: any) => (b.status === 'enquiry-qualified' || b.status === 'enquiry-contract_sent') && !b.isExpired)
-        .map((booking: any) => normalizeDate(booking.eventDate)),
-      confirmedEnquiry: potentialBookings
-        .filter((b: any) => b.status === 'enquiry-confirmed' && !b.isExpired)
-        .map((booking: any) => normalizeDate(booking.eventDate)),
-      signedContract: potentialBookings
-        .filter((b: any) => b.status === 'contract-signed')
-        .map((booking: any) => normalizeDate(booking.eventDate)),
-      expiredEnquiry: showExpiredEnquiries ? potentialBookings
-        .filter((b: any) => b.isExpired && b.source === 'enquiry')
-        .map((booking: any) => normalizeDate(booking.eventDate)) : [],
-    };
+      return {
+        today: [new Date()],
+        confirmed: Array.isArray(bookings) ? bookings
+          .filter((b: Booking) => b?.status === 'confirmed' && b?.eventDate)
+          .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
+        completed: Array.isArray(bookings) ? bookings
+          .filter((b: Booking) => b?.status === 'completed' && b?.eventDate)
+          .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
+        cancelled: Array.isArray(bookings) ? bookings
+          .filter((b: Booking) => b?.status === 'cancelled' && b?.eventDate)
+          .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
+        newEnquiry: Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => b?.status === 'enquiry-new' && !b?.isExpired && b?.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+        inProgressEnquiry: Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => (b?.status === 'enquiry-qualified' || b?.status === 'enquiry-contract_sent') && !b?.isExpired && b?.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+        confirmedEnquiry: Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => b?.status === 'enquiry-confirmed' && !b?.isExpired && b?.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+        signedContract: Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => b?.status === 'contract-signed' && b?.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+        expiredEnquiry: showExpiredEnquiries && Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => b?.isExpired && b?.source === 'enquiry' && b?.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+      };
+    } catch (error) {
+      console.error("Error calculating calendar modifiers:", error);
+      return {
+        today: [new Date()],
+        confirmed: [],
+        completed: [],
+        cancelled: [],
+        newEnquiry: [],
+        inProgressEnquiry: [],
+        confirmedEnquiry: [],
+        signedContract: [],
+        expiredEnquiry: [],
+      };
+    }
   }, [bookings, potentialBookings, showExpiredEnquiries]);
+
+  // Event handlers
+  const handleCalendarExport = () => {
+    try {
+      console.log("Starting calendar export...");
+      const icalData = createICalData();
+
+      if (!icalData) {
+        throw new Error("No calendar data to export");
+      }
+
+      downloadICalFile(icalData, "musobuddy-calendar.ics");
+
+      toast({
+        title: "Calendar Export",
+        description: "Calendar file downloaded successfully - works with Google, Apple, Outlook, and other calendar apps",
+      });
+    } catch (error) {
+      console.error("Calendar export failed:", error);
+      toast({
+        title: "Export Failed",
+        description: "Unable to export calendar. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      form.reset();
+    }
+  };
+
+  const onSubmit = (data: z.infer<typeof bookingFormSchema>) => {
+    try {
+      const eventDate = new Date(data.eventDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (eventDate < today) {
+        toast({
+          title: "Error",
+          description: "Cannot create booking for past dates",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Submitting booking data:", data);
+      createBookingMutation.mutate(data);
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process form data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Early returns for loading and error states
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading calendar...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (bookingsError || enquiriesError || contractsError || conflictsError) {
+    console.error("Calendar API Errors:", {
+      bookingsError,
+      enquiriesError, 
+      contractsError,
+      conflictsError
+    });
+
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center text-red-600">
+          <p>Error loading calendar data</p>
+          <p className="text-sm mt-2">Check console for details</p>
+        </div>
+      </div>
+    );
+  }
 
   const calendarModifiersClassNames = {
     today: "bg-blue-500 text-white",
@@ -589,10 +635,10 @@ export default function Calendar() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      <div className="flex-1 flex flex-col min-w-0">
+
+      <div className="md:ml-64 flex flex-col min-w-0">
         <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
           <div className="flex items-center space-x-4">
             <Button
@@ -605,7 +651,7 @@ export default function Calendar() {
             </Button>
             <h1 className="text-2xl font-bold text-gray-900 ml-12 md:ml-0">Calendar</h1>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button
               onClick={() => setIsDialogOpen(true)}
@@ -614,7 +660,7 @@ export default function Calendar() {
               <Plus className="w-4 h-4 mr-2" />
               Mark Unavailable
             </Button>
-            
+
             <Button
               onClick={() => setShowExpiredEnquiries(!showExpiredEnquiries)}
               variant="outline"
@@ -660,7 +706,7 @@ export default function Calendar() {
                     modifiersClassNames={calendarModifiersClassNames}
                     className="rounded-md border w-full"
                   />
-                  
+
                   <div className="mt-4 flex flex-wrap gap-2 text-xs">
                     <div className="flex items-center space-x-1">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -729,148 +775,158 @@ export default function Calendar() {
                       <div className="space-y-4">
                         {/* Confirmed Bookings */}
                         {selectedDateBookings.map((booking: Booking) => {
-                          const bookingConflicts = getBookingConflicts(booking.id.toString());
-                          const hasConflicts = bookingConflicts.length > 0;
-                          
-                          return (
-                            <div key={booking.id} className={`p-4 rounded-lg border-2 ${getStatusColor(booking.status)}`}>
-                              <div className="flex items-start justify-between mb-2">
-                                <h4 className="font-semibold flex items-center space-x-2">
-                                  <span>{booking.title}</span>
-                                  {hasConflicts && (
-                                    <AlertTriangle className="w-4 h-4 text-red-500" />
-                                  )}
-                                </h4>
-                                <div className="flex items-center space-x-2">
-                                  {hasConflicts && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      CONFLICT
+                          try {
+                            const bookingConflicts = getBookingConflicts(booking.id.toString());
+                            const hasConflicts = bookingConflicts.length > 0;
+
+                            return (
+                              <div key={booking.id} className={`p-4 rounded-lg border-2 ${getStatusColor(booking.status)}`}>
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className="font-semibold flex items-center space-x-2">
+                                    <span>{booking.title}</span>
+                                    {hasConflicts && (
+                                      <AlertTriangle className="w-4 h-4 text-red-500" />
+                                    )}
+                                  </h4>
+                                  <div className="flex items-center space-x-2">
+                                    {hasConflicts && (
+                                      <Badge variant="destructive" className="text-xs">
+                                        CONFLICT
+                                      </Badge>
+                                    )}
+                                    <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
+                                      {booking.status}
                                     </Badge>
-                                  )}
-                                  <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
-                                    {booking.status}
-                                  </Badge>
+                                  </div>
                                 </div>
-                              </div>
-                            
-                              <div className="space-y-2 text-sm">
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <User className="w-4 h-4" />
-                                  <span>{booking.clientName}</span>
-                                </div>
-                                
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <Clock className="w-4 h-4" />
-                                  <span>{formatTime(booking.eventTime)}</span>
-                                </div>
-                                
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <MapPin className="w-4 h-4" />
-                                  <span>{booking.venue}</span>
-                                </div>
-                                
-                                <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                                  <span className="font-semibold text-green-600">
-                                    £{Number(booking.fee).toLocaleString()}
-                                  </span>
-                                  <Button size="sm" variant="outline">
-                                    View Details
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        
-                        {/* Potential Bookings */}
-                        {selectedDatePotentialBookings.map((booking: any) => {
-                          const bookingConflicts = getBookingConflicts(booking.id);
-                          const hasConflicts = bookingConflicts.length > 0;
-                          
-                          return (
-                            <div key={booking.id} className={`p-4 rounded-lg border-2 ${booking.isExpired ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-amber-50 border-amber-200'}`}>
-                              <div className="flex items-start justify-between mb-2">
-                                <h4 className={`font-semibold flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : ''}`}>
-                                  <span>
-                                    {booking.title}
-                                    {booking.isExpired && (
-                                      <span className="ml-2 text-xs text-gray-400">(Expired)</span>
-                                    )}
-                                  </span>
-                                  {hasConflicts && (
-                                    <AlertTriangle className="w-4 h-4 text-red-500" />
-                                  )}
-                                </h4>
-                                <div className="flex items-center space-x-2">
-                                  {hasConflicts && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      CONFLICT
-                                    </Badge>
-                                  )}
-                                  <Badge className={
-                                    booking.isExpired ? 'bg-gray-100 text-gray-600' :
-                                    booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
-                                    booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
-                                    booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
-                                    booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
-                                    'bg-amber-100 text-amber-800'
-                                  }>
-                                    {booking.isExpired ? 'Expired Enquiry' :
-                                     booking.status === 'enquiry-new' ? 'New Enquiry' :
-                                     booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'In Progress' :
-                                     booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
-                                     booking.status === 'contract-signed' ? 'Contract Signed' :
-                                     'Potential'}
-                                  </Badge>
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-2 text-sm">
-                                <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
-                                  <User className="w-4 h-4" />
-                                  <span>{booking.clientName}</span>
-                                </div>
-                                
-                                <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
-                                  <Clock className="w-4 h-4" />
-                                  <span>{formatTime(booking.eventTime)}</span>
-                                </div>
-                                
-                                <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
-                                  <MapPin className="w-4 h-4" />
-                                  <span>{booking.venue}</span>
-                                </div>
-                                
-                                <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                                  <span className={`font-semibold ${booking.isExpired ? 'text-gray-500' : 'text-amber-600'}`}>
-                                    £{Number(booking.fee).toLocaleString()}
-                                  </span>
-                                  <div className="flex space-x-2">
-                                    {booking.source === 'enquiry' && (
-                                      <Button 
-                                        size="sm" 
-                                        variant="outline" 
-                                        className={booking.isExpired ? 'opacity-50' : ''}
-                                        onClick={() => window.location.href = '/enquiries'}
-                                      >
-                                        View Enquiry
-                                      </Button>
-                                    )}
-                                    {booking.source === 'contract' && (
-                                      <Button 
-                                        size="sm" 
-                                        variant="outline" 
-                                        className={booking.isExpired ? 'opacity-50' : ''}
-                                        onClick={() => window.location.href = '/contracts'}
-                                      >
-                                        View Contract
-                                      </Button>
-                                    )}
+
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex items-center space-x-2 text-gray-600">
+                                    <User className="w-4 h-4" />
+                                    <span>{booking.clientName}</span>
+                                  </div>
+
+                                  <div className="flex items-center space-x-2 text-gray-600">
+                                    <Clock className="w-4 h-4" />
+                                    <span>{formatTime(booking.eventTime)}</span>
+                                  </div>
+
+                                  <div className="flex items-center space-x-2 text-gray-600">
+                                    <MapPin className="w-4 h-4" />
+                                    <span>{booking.venue}</span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between mt-3 pt-2 border-t">
+                                    <span className="font-semibold text-green-600">
+                                      £{Number(booking.fee).toLocaleString()}
+                                    </span>
+                                    <Button size="sm" variant="outline">
+                                      View Details
+                                    </Button>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          );
+                            );
+                          } catch (error) {
+                            console.error("Error rendering booking:", booking, error);
+                            return null;
+                          }
+                        })}
+
+                        {/* Potential Bookings */}
+                        {selectedDatePotentialBookings.map((booking: any) => {
+                          try {
+                            const bookingConflicts = getBookingConflicts(booking.id);
+                            const hasConflicts = bookingConflicts.length > 0;
+
+                            return (
+                              <div key={booking.id} className={`p-4 rounded-lg border-2 ${booking.isExpired ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-amber-50 border-amber-200'}`}>
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className={`font-semibold flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : ''}`}>
+                                    <span>
+                                      {booking.title}
+                                      {booking.isExpired && (
+                                        <span className="ml-2 text-xs text-gray-400">(Expired)</span>
+                                      )}
+                                    </span>
+                                    {hasConflicts && (
+                                      <AlertTriangle className="w-4 h-4 text-red-500" />
+                                    )}
+                                  </h4>
+                                  <div className="flex items-center space-x-2">
+                                    {hasConflicts && (
+                                      <Badge variant="destructive" className="text-xs">
+                                        CONFLICT
+                                      </Badge>
+                                    )}
+                                    <Badge className={
+                                      booking.isExpired ? 'bg-gray-100 text-gray-600' :
+                                      booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
+                                      booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
+                                      booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
+                                      booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
+                                      'bg-amber-100 text-amber-800'
+                                    }>
+                                      {booking.isExpired ? 'Expired Enquiry' :
+                                       booking.status === 'enquiry-new' ? 'New Enquiry' :
+                                       booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'In Progress' :
+                                       booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
+                                       booking.status === 'contract-signed' ? 'Contract Signed' :
+                                       'Potential'}
+                                    </Badge>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2 text-sm">
+                                  <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                    <User className="w-4 h-4" />
+                                    <span>{booking.clientName}</span>
+                                  </div>
+
+                                  <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                    <Clock className="w-4 h-4" />
+                                    <span>{formatTime(booking.eventTime)}</span>
+                                  </div>
+
+                                  <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                    <MapPin className="w-4 h-4" />
+                                    <span>{booking.venue}</span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between mt-3 pt-2 border-t">
+                                    <span className={`font-semibold ${booking.isExpired ? 'text-gray-500' : 'text-amber-600'}`}>
+                                      £{Number(booking.fee).toLocaleString()}
+                                    </span>
+                                    <div className="flex space-x-2">
+                                      {booking.source === 'enquiry' && (
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          className={booking.isExpired ? 'opacity-50' : ''}
+                                          onClick={() => window.location.href = '/enquiries'}
+                                        >
+                                          View Enquiry
+                                        </Button>
+                                      )}
+                                      {booking.source === 'contract' && (
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          className={booking.isExpired ? 'opacity-50' : ''}
+                                          onClick={() => window.location.href = '/contracts'}
+                                        >
+                                          View Contract
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          } catch (error) {
+                            console.error("Error rendering potential booking:", booking, error);
+                            return null;
+                          }
                         })}
                       </div>
                     )
@@ -901,50 +957,55 @@ export default function Calendar() {
                 <CardContent>
                   <div className="space-y-3">
                     {getCurrentMonthEvents().map((event: any) => {
-                      const isRegularBooking = event.contractId !== undefined;
-                      const isExpired = event.isExpired;
-                      
-                      return (
-                        <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg ${
-                          isExpired ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
-                        }`}>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-center">
-                              <div className="text-sm font-medium">
-                                {new Date(event.eventDate).toLocaleDateString("en-GB", { day: "numeric" })}
+                      try {
+                        const isRegularBooking = event.contractId !== undefined;
+                        const isExpired = event.isExpired;
+
+                        return (
+                          <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg ${
+                            isExpired ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
+                          }`}>
+                            <div className="flex items-center space-x-4">
+                              <div className="text-center">
+                                <div className="text-sm font-medium">
+                                  {new Date(event.eventDate).toLocaleDateString("en-GB", { day: "numeric" })}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" })}
+                                </div>
                               </div>
-                              <div className="text-xs text-gray-500">
-                                {new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" })}
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <h4 className={`font-medium ${isExpired ? 'text-gray-500' : 'text-gray-900'}`}>
+                                    {event.title || `${event.clientName} Performance`}
+                                  </h4>
+                                  {isExpired && (
+                                    <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600">
+                                      Expired
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className={`text-sm ${isExpired ? 'text-gray-400' : 'text-gray-600'}`}>
+                                  {event.clientName} • {event.venue}
+                                </div>
                               </div>
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <h4 className={`font-medium ${isExpired ? 'text-gray-500' : 'text-gray-900'}`}>
-                                  {event.title || `${event.clientName} Performance`}
-                                </h4>
-                                {isExpired && (
-                                  <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600">
-                                    Expired
-                                  </Badge>
-                                )}
+                            <div className="text-right">
+                              <div className={`font-medium ${isExpired ? 'text-gray-400' : 'text-gray-900'}`}>
+                                £{Number(event.fee).toLocaleString()}
                               </div>
-                              <div className={`text-sm ${isExpired ? 'text-gray-400' : 'text-gray-600'}`}>
-                                {event.clientName} • {event.venue}
+                              <div className={`text-xs ${isExpired ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {formatTime(event.eventTime)}
                               </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className={`font-medium ${isExpired ? 'text-gray-400' : 'text-gray-900'}`}>
-                              £{Number(event.fee).toLocaleString()}
-                            </div>
-                            <div className={`text-xs ${isExpired ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {formatTime(event.eventTime)}
-                            </div>
-                          </div>
-                        </div>
-                      );
+                        );
+                      } catch (error) {
+                        console.error("Error rendering month event:", event, error);
+                        return null;
+                      }
                     })}
-                    
+
                     {getCurrentMonthEvents().length === 0 && (
                       <div className="text-center py-8 text-gray-500">
                         <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -980,7 +1041,7 @@ export default function Calendar() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="eventDate"
@@ -1004,7 +1065,7 @@ export default function Calendar() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="eventTime"
@@ -1021,7 +1082,7 @@ export default function Calendar() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex justify-end space-x-2">
                 <Button
                   type="button"
