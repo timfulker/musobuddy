@@ -13,36 +13,64 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
     return res.status(405).json({ error: 'Method not allowed' });
   }
   
-  console.log('📧 MAILGUN WEBHOOK - DEDICATED HANDLER');
-  console.log('📧 Full request body:', JSON.stringify(req.body, null, 2));
-  console.log('📧 Available fields:', Object.keys(req.body));
-  console.log('📧 sender field:', req.body.sender);
-  console.log('📧 from field:', req.body.from);
-  console.log('📧 subject field:', req.body.subject);
-  console.log('📧 body-plain field:', req.body['body-plain']);
-  console.log('📧 text field:', req.body.text);
+  const timestamp = new Date().toISOString();
+  console.log('🔍 === WEBHOOK DATA INSPECTION START ===');
+  console.log('🔍 Timestamp:', timestamp);
+  
+  // Log ALL raw data
+  console.log('🔍 RAW REQUEST DATA:');
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Content-Type:', req.headers['content-type']);
+  
+  // Log the complete body
+  console.log('🔍 COMPLETE BODY DATA:');
+  console.log('Body type:', typeof req.body);
+  console.log('Body keys:', Object.keys(req.body || {}));
+  console.log('Full body:', JSON.stringify(req.body, null, 2));
+  
+  // Check specific Mailgun fields
+  const mailgunFields = [
+    'sender', 'From', 'from',
+    'recipient', 'To', 'to', 
+    'subject', 'Subject',
+    'body-plain', 'body-html', 'stripped-text', 'stripped-html',
+    'text', 'html',
+    'timestamp', 'token', 'signature',
+    'message-headers', 'attachments'
+  ];
+  
+  console.log('🔍 MAILGUN FIELD INSPECTION:');
+  mailgunFields.forEach(field => {
+    const value = req.body[field];
+    if (value !== undefined) {
+      console.log(`📧 ${field}:`, typeof value === 'string' && value.length > 100 ? 
+        `"${value.substring(0, 100)}..."` : value);
+    }
+  });
   
   try {
-    // Try multiple field variations for different email formats
-    const sender = req.body.sender || 
-                  req.body.from || 
-                  req.body.From || 
-                  req.body['X-Envelope-From'] || 
-                  req.body['envelope-from'] ||
-                  'unknown@example.com';
-                  
-    const subject = req.body.subject || 
-                   req.body.Subject || 
-                   req.body['X-Subject'] ||
-                   'Email enquiry';
-                   
-    const bodyText = req.body['body-plain'] || 
-                    req.body.text || 
-                    req.body.body || 
-                    req.body['body-text'] ||
-                    req.body['stripped-text'] ||
-                    req.body['stripped-html'] ||
-                    'No message content';
+    // Test email extraction with detailed logging
+    console.log('🔍 EMAIL EXTRACTION TEST:');
+    const extractedEmail = req.body.sender || req.body.From || req.body.from || 'NOT_FOUND';
+    const extractedSubject = req.body.subject || req.body.Subject || 'NOT_FOUND';
+    const extractedText = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || 'NOT_FOUND';
+    const extractedHtml = req.body['body-html'] || req.body['stripped-html'] || req.body.html || 'NOT_FOUND';
+    
+    console.log('📧 Extracted FROM:', extractedEmail);
+    console.log('📧 Extracted SUBJECT:', extractedSubject);
+    console.log('📧 Extracted TEXT length:', typeof extractedText === 'string' ? extractedText.length : 'Not string');
+    console.log('📧 Extracted HTML length:', typeof extractedHtml === 'string' ? extractedHtml.length : 'Not string');
+    
+    if (extractedText && extractedText !== 'NOT_FOUND') {
+      console.log('📧 TEXT SAMPLE:', extractedText.substring(0, 200));
+    }
+    
+    // Use the extracted values for processing
+    const sender = extractedEmail !== 'NOT_FOUND' ? extractedEmail : 'unknown@example.com';
+    const subject = extractedSubject !== 'NOT_FOUND' ? extractedSubject : 'Email enquiry';
+    const bodyText = extractedText !== 'NOT_FOUND' ? extractedText : 'No message content';
     
     // Extract email and client name
     let clientName = 'Unknown Client';
@@ -225,6 +253,12 @@ app.use('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (r
         venue: parsed.venue,
         eventType: parsed.eventType,
         gigType: parsed.gigType
+      },
+      debug: {
+        extractedEmail: sender,
+        extractedSubject: subject,
+        bodyLength: bodyText.length,
+        timestamp: new Date().toISOString()
       },
       processing: 'enhanced-parser'
     });
