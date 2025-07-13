@@ -61,6 +61,62 @@ export default function Enquiries() {
     queryKey: ["/api/settings"],
   });
 
+  // Fetch bookings data for conflict detection
+  const { data: bookings = [] } = useQuery({
+    queryKey: ["/api/bookings"],
+  });
+
+  // Client-side conflict detection using already loaded data
+  const detectConflicts = (enquiry: Enquiry) => {
+    if (!enquiry.eventDate) return [];
+    
+    const conflicts = [];
+    const enquiryDate = new Date(enquiry.eventDate);
+    
+    // Check against confirmed bookings
+    bookings.forEach((booking: any) => {
+      if (booking.eventDate) {
+        const bookingDate = new Date(booking.eventDate);
+        if (isSameDay(enquiryDate, bookingDate)) {
+          conflicts.push({
+            type: 'booking',
+            id: booking.id,
+            title: booking.title || 'Booking',
+            eventDate: booking.eventDate,
+            venue: booking.venue
+          });
+        }
+      }
+    });
+    
+    // Check against other confirmed enquiries
+    enquiries.forEach((otherEnquiry: Enquiry) => {
+      if (otherEnquiry.id !== enquiry.id && 
+          otherEnquiry.eventDate && 
+          otherEnquiry.status === 'confirmed') {
+        const otherDate = new Date(otherEnquiry.eventDate);
+        if (isSameDay(enquiryDate, otherDate)) {
+          conflicts.push({
+            type: 'enquiry',
+            id: otherEnquiry.id,
+            title: otherEnquiry.title || `${otherEnquiry.clientName} - ${otherEnquiry.eventType}`,
+            eventDate: otherEnquiry.eventDate,
+            venue: otherEnquiry.venue
+          });
+        }
+      }
+    });
+    
+    return conflicts;
+  };
+
+  // Helper function to check if two dates are on the same day
+  const isSameDay = (date1: Date, date2: Date) => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
+
   // Handle loading state
   if (isLoading) {
     return (
@@ -890,8 +946,11 @@ export default function Enquiries() {
           ) : (
             sortedEnquiries.map((enquiry: Enquiry) => {
               const dateBox = formatDateBox(enquiry.eventDate!);
+              const conflicts = detectConflicts(enquiry);
+              const hasConflicts = conflicts.length > 0;
+              
               return (
-                <Card key={enquiry.id} className="hover:shadow-md transition-shadow bg-white">
+                <Card key={enquiry.id} className={`hover:shadow-md transition-shadow ${hasConflicts ? 'border-red-200 bg-red-50' : 'bg-white'}`}>
                   <CardContent className="p-6">
                     <div className="relative">
                       <div className="absolute top-0 right-0">
@@ -906,11 +965,16 @@ export default function Enquiries() {
                       </div>
                       
                       <div className="pr-12 flex gap-6">
-                        {/* Date Box - Encore Style */}
-                        <div className="flex-shrink-0 w-20 h-20 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center bg-white">
+                        {/* Date Box - Encore Style with Conflict Indicator */}
+                        <div className={`relative flex-shrink-0 w-20 h-20 border-2 ${hasConflicts ? 'border-red-300 bg-red-100' : 'border-gray-200 bg-white'} rounded-lg flex flex-col items-center justify-center`}>
                           <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
                           <div className="text-2xl font-bold text-gray-900">{dateBox.dayNum}</div>
                           <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+                          {hasConflicts && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">!</span>
+                            </div>
+                          )}
                         </div>
                         
                         {/* Main Content */}
@@ -921,6 +985,11 @@ export default function Enquiries() {
                               {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
                             </div>
                             <div className="flex items-center space-x-2">
+                              {hasConflicts && (
+                                <div className="flex items-center space-x-1 bg-red-500 text-white px-2 py-1 rounded-full text-xs">
+                                  <span>⚠️ {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}</span>
+                                </div>
+                              )}
                               {needsResponse(enquiry) && (
                                 <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
                                   <AlertCircle className="w-3 h-3" />
@@ -1045,6 +1114,42 @@ export default function Enquiries() {
                                   </div>
                                 );
                               })()}
+                            </div>
+                          )}
+                          
+                          {/* Conflict Analysis Section */}
+                          {hasConflicts && (
+                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                              <div className="flex items-center space-x-2 mb-3">
+                                <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs font-bold">!</span>
+                                </div>
+                                <h4 className="text-sm font-semibold text-red-800">
+                                  Potential Conflicts Detected
+                                </h4>
+                              </div>
+                              <div className="space-y-2">
+                                {conflicts.map((conflict, index) => (
+                                  <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                                    <div className="flex items-center space-x-3">
+                                      <div className={`w-3 h-3 rounded-full ${conflict.type === 'booking' ? 'bg-purple-500' : 'bg-blue-500'}`}></div>
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">{conflict.title}</p>
+                                        <p className="text-xs text-gray-500">
+                                          {conflict.type === 'booking' ? 'Confirmed Booking' : 'Confirmed Enquiry'}
+                                          {conflict.venue && ` • ${conflict.venue}`}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {new Date(conflict.eventDate).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="mt-3 p-2 bg-yellow-50 rounded text-xs text-yellow-800">
+                                💡 Consider adjusting the date or declining if this conflicts with existing commitments
+                              </div>
                             </div>
                           )}
                           
