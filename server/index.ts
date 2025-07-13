@@ -55,9 +55,10 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     // Parse phone numbers from email body
     let clientPhone = null;
     const phonePatterns = [
+      /(?:phone|mobile|tel|contact)[\s:]*(?:is|number)[\s:]*([0-9\s\-\(\)]{8,15})/i,
       /(?:call|phone|tel|mobile|contact)[\s:]*(?:me\s+)?(?:on\s+)?([0-9\s\-\(\)]{8,15})/i,
-      /\b(0[0-9]\d{8,10})\b/g,
-      /\b(\+44\s?[0-9\s\-\(\)]{10,15})\b/g
+      /\b(0[0-9]\d{8,10})\b/,
+      /\b(\+44\s?[0-9\s\-\(\)]{10,15})\b/
     ];
     
     for (const pattern of phonePatterns) {
@@ -78,6 +79,7 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       /(?:on|for|date|event)[\s:]*([0-9]{1,2}[\s\/\-][0-9]{1,2}[\s\/\-][0-9]{2,4})/i,
       /(?:on|for|date|event)[\s:]*([0-9]{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+[0-9]{2,4})/i,
       /(?:on|for|date|event)[\s:]*([a-z]+\s+[0-9]{1,2}(?:st|nd|rd|th)?\s*,?\s*[0-9]{2,4})/i,
+      /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+[0-9]{1,2}(?:st|nd|rd|th)?/i,
       /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+[0-9]{1,2}(?:st|nd|rd|th)?\s*,?\s*[0-9]{2,4}\b/i,
       /\b[0-9]{1,2}(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+[0-9]{2,4}\b/i
     ];
@@ -86,9 +88,14 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       const dateMatch = bodyField.match(pattern);
       if (dateMatch) {
         const dateStr = dateMatch[1] || dateMatch[0];
-        const parsedDate = new Date(dateStr);
+        // Try to parse the date, add current year if missing
+        let parsedDate = new Date(dateStr);
+        if (isNaN(parsedDate.getTime()) && !dateStr.includes('20')) {
+          parsedDate = new Date(dateStr + ', ' + new Date().getFullYear());
+        }
         if (!isNaN(parsedDate.getTime())) {
           eventDate = parsedDate.toISOString().split('T')[0];
+          console.log(`📧 [${requestId}] Date found: "${dateStr}" -> ${eventDate}`);
           break;
         }
       }
@@ -97,14 +104,17 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     // Parse venue from email body
     let venue = null;
     const venuePatterns = [
-      /(?:at|venue|location|place)[\s:]+([^,.!?\n]+)/i,
-      /(?:held at|taking place at|located at)[\s:]+([^,.!?\n]+)/i
+      /(?:at|venue|location|place)[\s:]+([^,.!?\n]+?)(?:\s+on|\s+in|\s+for|\.|\n|$)/i,
+      /(?:held at|taking place at|located at)[\s:]+([^,.!?\n]+?)(?:\s+on|\s+in|\s+for|\.|\n|$)/i,
+      /(?:in|at)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)(?:\s+on|\s+in|\s+for|\.|\n|$)/g,
+      /(?:wedding|event|party|celebration)[\s\w]*?(?:in|at)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)(?:\s+on|\s+in|\s+for|\.|\n|$)/i
     ];
     
     for (const pattern of venuePatterns) {
       const venueMatch = bodyField.match(pattern);
-      if (venueMatch) {
+      if (venueMatch && venueMatch[1]) {
         venue = venueMatch[1].trim();
+        console.log(`📧 [${requestId}] Venue found: "${venue}"`);
         break;
       }
     }
@@ -137,13 +147,15 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       }
     }
     
+
+    
     // Create enquiry with parsed data
     const enquiry = {
       userId: '43963086',
       title: subjectField || `Email from ${clientName}`,
       clientName,
       clientEmail: clientEmail || null,
-      clientPhone,
+      clientPhone: clientPhone || null,
       eventDate,
       eventTime: null,
       eventEndTime: null,
@@ -159,6 +171,7 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     };
     
     console.log(`📧 [${requestId}] Creating enquiry for: ${clientName} (${clientEmail})`);
+    console.log(`📧 [${requestId}] Enquiry data:`, JSON.stringify(enquiry, null, 2));
     
     const newEnquiry = await storage.createEnquiry(enquiry);
     console.log(`✅ [${requestId}] Created enquiry #${newEnquiry.id}`);
