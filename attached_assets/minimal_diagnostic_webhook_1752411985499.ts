@@ -1,23 +1,5 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { storage } from "./storage";
+// Replace the webhook handler in server/index.ts with this minimal diagnostic version
 
-const app = express();
-
-console.log('🔧 === STARTING ROUTE REGISTRATION ===');
-
-// CATCH-ALL MIDDLEWARE TO LOG ALL REQUESTS
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.path.includes('webhook')) {
-    console.log(`🌐 ALL WEBHOOK REQUESTS: ${req.method} ${req.path}`);
-    console.log(`🌐 User-Agent: ${req.headers['user-agent']}`);
-    console.log(`🌐 Content-Type: ${req.headers['content-type']}`);
-  }
-  next();
-});
-
-// MINIMAL DIAGNOSTIC WEBHOOK
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
   console.log(`🔍 [${requestId}] DIAGNOSTIC WEBHOOK START`);
@@ -138,52 +120,4 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
   }
   
   console.log(`🔍 [${requestId}] DIAGNOSTIC WEBHOOK END`);
-});
-
-console.log('✅ Dedicated webhook handler registered');
-
-// STEP 3: REGISTER ALL OTHER ROUTES
-console.log('🔧 Starting clean route registration...');
-
-// Initialize the server
-const server = await registerRoutes(app);
-
-console.log('✅ All routes registered successfully');
-
-// Debug: Show all registered routes
-const routes = app._router.stack.map((middleware: any, index: number) => {
-  if (middleware.route) {
-    return `${index}: ${Object.keys(middleware.route.methods).join(', ')} ${middleware.route.path}`;
-  } else {
-    return `${index}: middleware - ${middleware.name || '<anonymous>'}`;
-  }
-}).filter(Boolean);
-
-console.log('🔍 Registered routes:');
-routes.forEach(route => console.log('  ' + route));
-
-// STEP 4: SETUP VITE MIDDLEWARE
-console.log('🔧 Setting up Vite middleware...');
-
-if (app.get('env') === 'development') {
-  await setupVite(app);
-  console.log('✅ Vite middleware set up');
-} else {
-  serveStatic(app);
-  console.log('✅ Static files served');
-}
-
-console.log('✅ Vite middleware setup completed');
-
-// Catch all unmatched routes for debugging
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.path.startsWith('/api/')) {
-    console.log(`=== UNMATCHED ROUTE: ${req.method} ${req.path} ===`);
-  }
-  next();
-});
-
-const PORT = Number(process.env.PORT) || 5000;
-server.listen(PORT, "0.0.0.0", () => {
-  log(`Server running on port ${PORT}`);
 });
