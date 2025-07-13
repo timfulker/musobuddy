@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, FileText, DollarSign, Shield, BarChart3, CheckCircle } from "lucide-react";
+import { Music, Calendar, FileText, PoundSterling, Shield, BarChart3, CheckCircle } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 
 export default function Landing() {
@@ -78,7 +78,7 @@ export default function Landing() {
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <DollarSign className="w-6 h-6 text-green-600" />
+                <PoundSterling className="w-6 h-6 text-green-600" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-2">Invoice Management</h4>
               <p className="text-gray-600">

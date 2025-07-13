@@ -122,7 +122,10 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || req.hostname;
-    console.log(`Login attempt - req.hostname: ${req.hostname}, using domain: ${domain}`);
+    console.log(`🔍 Login attempt - req.hostname: ${req.hostname}, using domain: ${domain}`);
+    console.log(`🔍 Available domains: ${process.env.REPLIT_DOMAINS}`);
+    console.log(`🔍 Request headers host: ${req.headers.host}`);
+    
     passport.authenticate(`replitauth:${domain}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
