@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, type Booking } from "@shared/schema";
 import { useLocation, Link } from "wouter";
@@ -32,6 +32,19 @@ export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showExpiredEnquiries, setShowExpiredEnquiries] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const form = useForm<z.infer<typeof bookingFormSchema>>({
+    resolver: zodResolver(bookingFormSchema),
+    defaultValues: {
+      title: "",
+      clientName: "",
+      eventDate: "",
+      eventTime: "",
+      venue: "",
+      fee: "",
+      contractId: 0,
+    },
+  });
 
   // Check URL parameters to auto-open dialog
   useEffect(() => {
@@ -65,19 +78,6 @@ export default function Calendar() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [sidebarOpen]);
-
-  const form = useForm<z.infer<typeof bookingFormSchema>>({
-    resolver: zodResolver(bookingFormSchema),
-    defaultValues: {
-      title: "",
-      clientName: "",
-      eventDate: "",
-      eventTime: "",
-      venue: "",
-      fee: "",
-      contractId: 0,
-    },
-  });
 
   const { data: bookings = [], isLoading, error: bookingsError } = useQuery({
     queryKey: ["/api/bookings"],
@@ -156,8 +156,6 @@ export default function Calendar() {
       });
     }
   };
-
-
 
   const createICalData = () => {
     const icalHeader = [
@@ -430,58 +428,6 @@ export default function Calendar() {
     return getPotentialBookings();
   }, [enquiries, contracts, bookings, showExpiredEnquiries]);
 
-  // Get potential bookings from enquiries and contracts (original function to be replaced)
-  const getPotentialBookingsOriginal = () => {
-    const potentialEvents = [];
-    
-    // Add enquiries with dates, filtering expired ones unless toggle is enabled
-    enquiries.forEach((enquiry: any) => {
-      if (enquiry.eventDate) {
-        const isExpired = isEnquiryExpired(enquiry);
-        
-        // Skip expired enquiries if toggle is off
-        if (isExpired && !showExpiredEnquiries) {
-          return;
-        }
-        
-        potentialEvents.push({
-          id: `enquiry-${enquiry.id}`,
-          title: enquiry.title,
-          clientName: enquiry.clientName,
-          eventDate: enquiry.eventDate,
-          eventTime: enquiry.eventTime || 'TBC',
-          venue: enquiry.venue || 'TBC',
-          fee: enquiry.estimatedValue || 0,
-          status: `enquiry-${enquiry.status}`,
-          source: 'enquiry',
-          isExpired: isExpired
-        });
-      }
-    });
-    
-    // Add signed contracts that don't have bookings yet
-    contracts.forEach((contract: any) => {
-      if (contract.status === 'signed') {
-        const hasBooking = bookings.some((b: Booking) => b.contractId === contract.id);
-        if (!hasBooking) {
-          potentialEvents.push({
-            id: `contract-${contract.id}`,
-            title: `${contract.clientName} Performance`,
-            clientName: contract.clientName,
-            eventDate: contract.eventDate,
-            eventTime: contract.eventTime,
-            venue: contract.venue,
-            fee: contract.fee,
-            status: 'contract-signed',
-            source: 'contract'
-          });
-        }
-      }
-    });
-    
-    return potentialEvents;
-  };
-
   const selectedDateBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
   
   const getSelectedDatePotentialBookings = () => {
@@ -512,839 +458,475 @@ export default function Calendar() {
 
   // Get all bookings and enquiries for the current month
   const getCurrentMonthEvents = () => {
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    
-    // Get confirmed bookings for the month
     const monthBookings = bookings.filter((booking: Booking) => {
       const bookingDate = new Date(booking.eventDate);
-      return bookingDate.getMonth() === currentMonth && 
-             bookingDate.getFullYear() === currentYear;
+      return bookingDate.getMonth() === currentDate.getMonth() && 
+             bookingDate.getFullYear() === currentDate.getFullYear();
     });
-    
-    // Get potential bookings (enquiries/contracts) for the month
-    const monthPotentialBookings = getPotentialBookings().filter((booking: any) => {
+
+    const monthPotentialBookings = potentialBookings.filter((booking: any) => {
       const bookingDate = new Date(booking.eventDate);
-      return bookingDate.getMonth() === currentMonth && 
-             bookingDate.getFullYear() === currentYear &&
-             (showExpiredEnquiries || !booking.isExpired);
+      return bookingDate.getMonth() === currentDate.getMonth() && 
+             bookingDate.getFullYear() === currentDate.getFullYear();
     });
-    
-    // Combine and sort by date
-    const allEvents = [...monthBookings, ...monthPotentialBookings];
-    return allEvents.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+
+    return [...monthBookings, ...monthPotentialBookings].sort((a, b) => 
+      new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
+    );
   };
 
-  // Helper functions for different view modes
   const getWeekDays = (date: Date) => {
     const week = [];
-    const startOfWeek = new Date(date);
-    startOfWeek.setDate(date.getDate() - date.getDay());
+    const startDate = new Date(date);
+    startDate.setDate(date.getDate() - date.getDay());
     
     for (let i = 0; i < 7; i++) {
-      const day = new Date(startOfWeek);
-      day.setDate(startOfWeek.getDate() + i);
+      const day = new Date(startDate);
+      day.setDate(startDate.getDate() + i);
       week.push(day);
     }
+    
     return week;
   };
 
-  const getMonthsInYear = (year: number) => {
-    const months = [];
-    for (let i = 0; i < 12; i++) {
-      months.push(new Date(year, i, 1));
-    }
-    return months;
-  };
-
   const getBookingsForMonth = (month: Date) => {
-    // Get confirmed bookings for the month
     const monthBookings = bookings.filter((booking: Booking) => {
       const bookingDate = new Date(booking.eventDate);
       return bookingDate.getMonth() === month.getMonth() && 
              bookingDate.getFullYear() === month.getFullYear();
     });
-    
-    // Get potential bookings (enquiries/contracts) for the month
-    const monthPotentialBookings = getPotentialBookings().filter((booking: any) => {
+
+    const monthPotentialBookings = potentialBookings.filter((booking: any) => {
       const bookingDate = new Date(booking.eventDate);
       return bookingDate.getMonth() === month.getMonth() && 
              bookingDate.getFullYear() === month.getFullYear();
     });
-    
+
     return [...monthBookings, ...monthPotentialBookings];
   };
 
-  const renderYearView = () => {
-    const months = getMonthsInYear(currentDate.getFullYear());
-    
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">{currentDate.getFullYear()}</h2>
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentDate(new Date(currentDate.getFullYear() - 1, 0, 1))}
-            >
-              ← Previous Year
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentDate(new Date(currentDate.getFullYear() + 1, 0, 1))}
-            >
-              Next Year →
-            </Button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {months.map((month, index) => {
-            const monthBookings = getBookingsForMonth(month);
-            const monthName = month.toLocaleDateString("en-GB", { month: "long" });
-            
-            return (
-              <Card key={index} className="p-4">
-                <div className="text-center mb-3">
-                  <h3 className="font-semibold text-lg">{monthName}</h3>
-                  <p className="text-sm text-gray-600">{monthBookings.length} events</p>
-                </div>
-                
-                <div className="space-y-2">
-                  {monthBookings.slice(0, 3).map((booking: any) => {
-                    // Handle both regular bookings and potential bookings
-                    const isRegularBooking = booking.contractId !== undefined;
-                    const statusColor = isRegularBooking 
-                      ? getStatusColor(booking.status)
-                      : booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                        booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                        booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800 border-green-200' :
-                        booking.status === 'contract-signed' ? 'bg-green-100 text-green-800 border-green-200' :
-                        booking.isExpired ? 'bg-gray-100 text-gray-600 border-gray-200 opacity-60' :
-                        'bg-amber-100 text-amber-800 border-amber-200';
-                    
-                    return (
-                      <div key={booking.id} className={`p-2 rounded text-xs ${statusColor}`}>
-                        <div className="font-medium truncate">{booking.title}</div>
-                        <div className="text-xs opacity-75">
-                          {new Date(booking.eventDate).getDate()} - {booking.clientName}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  
-                  {monthBookings.length > 3 && (
-                    <div className="text-xs text-gray-500 text-center">
-                      +{monthBookings.length - 3} more
-                    </div>
-                  )}
-                  
-                  {monthBookings.length === 0 && (
-                    <div className="text-xs text-gray-400 text-center py-2">
-                      No events
-                    </div>
-                  )}
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-3"
-                  onClick={() => {
-                    setCurrentDate(month);
-                    setSelectedDate(month);
-                    setViewMode("month");
-                  }}
-                >
-                  View Month
-                </Button>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
+  const calendarModifiers = useMemo(() => {
+    console.log("Calculating calendar modifiers...");
+    const normalizeDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    };
 
-  const renderWeekView = () => {
-    const weekDays = getWeekDays(currentDate);
-    
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">
-            Week of {weekDays[0].toLocaleDateString("en-GB", { month: "long", day: "numeric" })}
-          </h2>
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const prevWeek = new Date(currentDate);
-                prevWeek.setDate(currentDate.getDate() - 7);
-                setCurrentDate(prevWeek);
-              }}
-            >
-              ← Previous Week
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const nextWeek = new Date(currentDate);
-                nextWeek.setDate(currentDate.getDate() + 7);
-                setCurrentDate(nextWeek);
-              }}
-            >
-              Next Week →
-            </Button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-7 gap-2">
-          {weekDays.map((day, index) => {
-            const dayBookings = getBookingsForDate(day);
-            const dayName = day.toLocaleDateString("en-GB", { weekday: "short" });
-            
-            return (
-              <Card key={index} className="p-3">
-                <div className="text-center mb-2">
-                  <div className="font-medium">{dayName}</div>
-                  <div className="text-2xl font-bold">{day.getDate()}</div>
-                </div>
-                
-                <div className="space-y-1">
-                  {dayBookings.map((booking: Booking) => (
-                    <div key={booking.id} className={`p-1 rounded text-xs ${getStatusColor(booking.status)}`}>
-                      <div className="font-medium truncate">{booking.title}</div>
-                      <div className="text-xs opacity-75">{booking.eventTime}</div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
+    return {
+      today: [new Date()],
+      confirmed: bookings
+        .filter((b: Booking) => b.status === 'confirmed')
+        .map((booking: Booking) => normalizeDate(booking.eventDate)),
+      completed: bookings
+        .filter((b: Booking) => b.status === 'completed')
+        .map((booking: Booking) => normalizeDate(booking.eventDate)),
+      cancelled: bookings
+        .filter((b: Booking) => b.status === 'cancelled')
+        .map((booking: Booking) => normalizeDate(booking.eventDate)),
+      newEnquiry: potentialBookings
+        .filter((b: any) => b.status === 'enquiry-new' && !b.isExpired)
+        .map((booking: any) => normalizeDate(booking.eventDate)),
+      inProgressEnquiry: potentialBookings
+        .filter((b: any) => (b.status === 'enquiry-qualified' || b.status === 'enquiry-contract_sent') && !b.isExpired)
+        .map((booking: any) => normalizeDate(booking.eventDate)),
+      confirmedEnquiry: potentialBookings
+        .filter((b: any) => b.status === 'enquiry-confirmed' && !b.isExpired)
+        .map((booking: any) => normalizeDate(booking.eventDate)),
+      signedContract: potentialBookings
+        .filter((b: any) => b.status === 'contract-signed')
+        .map((booking: any) => normalizeDate(booking.eventDate)),
+      expiredEnquiry: showExpiredEnquiries ? potentialBookings
+        .filter((b: any) => b.isExpired && b.source === 'enquiry')
+        .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+    };
+  }, [bookings, potentialBookings, showExpiredEnquiries]);
 
-  const renderDayView = () => {
-    const dayBookings = getBookingsForDate(currentDate);
-    
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">
-            {currentDate.toLocaleDateString("en-GB", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-          </h2>
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const prevDay = new Date(currentDate);
-                prevDay.setDate(currentDate.getDate() - 1);
-                setCurrentDate(prevDay);
-              }}
-            >
-              ← Previous Day
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const nextDay = new Date(currentDate);
-                nextDay.setDate(currentDate.getDate() + 1);
-                setCurrentDate(nextDay);
-              }}
-            >
-              Next Day →
-            </Button>
-          </div>
-        </div>
-        
-        <Card className="p-6">
-          {dayBookings.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p>No bookings on this date</p>
-              <p className="text-sm">Available for new gigs</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {dayBookings.map((booking: Booking) => (
-                <div key={booking.id} className={`p-4 rounded-lg border-2 ${getStatusColor(booking.status)}`}>
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-lg">{booking.title}</h4>
-                    <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
-                      {booking.status}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <User className="w-4 h-4" />
-                      <span>{booking.clientName}</span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <Clock className="w-4 h-4" />
-                      <span>{formatTime(booking.eventTime)}</span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span>{booking.venue}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <span className="font-semibold text-green-600 text-lg">
-                      £{Number(booking.fee).toLocaleString()}
-                    </span>
-                    <Button size="sm" variant="outline">
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
-    );
+  const calendarModifiersClassNames = {
+    today: "bg-blue-500 text-white",
+    confirmed: "bg-green-500 text-white",
+    completed: "bg-purple-500 text-white",
+    cancelled: "bg-red-500 text-white",
+    newEnquiry: "bg-yellow-500 text-white",
+    inProgressEnquiry: "bg-blue-500 text-white",
+    confirmedEnquiry: "bg-green-500 text-white",
+    signedContract: "bg-emerald-500 text-white",
+    expiredEnquiry: "bg-gray-400 text-white opacity-50",
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 bg-gray-200 rounded"></div>
-            <div className="h-96 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile menu toggle */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="bg-card p-2 rounded-lg shadow-lg"
-        >
-          <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
-
+    <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      {/* Main Content */}
-      <div className="md:ml-64 min-h-screen">
-        <div className="p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Calendar</h1>
-                <p className="text-gray-600 dark:text-gray-400">View and manage your performance schedule</p>
-              </div>
+      
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-900 ml-12 md:ml-0">Calendar</h1>
+          </div>
           
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-1 bg-white rounded-lg border p-1">
-              <Button
-                variant={viewMode === "year" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("year")}
-                className={viewMode === "year" ? "bg-purple-600 hover:bg-purple-700 text-white" : ""}
-              >
-                Year
-              </Button>
-              <Button
-                variant={viewMode === "month" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("month")}
-              >
-                Month
-              </Button>
-              <Button
-                variant={viewMode === "week" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("week")}
-              >
-                Week
-              </Button>
-              <Button
-                variant={viewMode === "day" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("day")}
-              >
-                Day
-              </Button>
-            </div>
-            
-            <Button 
-              className="bg-purple-600 hover:bg-purple-700"
+          <div className="flex items-center space-x-2">
+            <Button
               onClick={() => setIsDialogOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Mark Unavailable
             </Button>
+            
+            <Button
+              onClick={() => setShowExpiredEnquiries(!showExpiredEnquiries)}
+              variant="outline"
+              size="sm"
+              className="text-sm"
+            >
+              {showExpiredEnquiries ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
+              {showExpiredEnquiries ? 'Hide' : 'Show'} Expired Enquiries
+            </Button>
           </div>
         </div>
 
-        {/* Calendar Views */}
-        {viewMode === "year" && (
-          <Card className="col-span-full">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Performance Calendar - Year View</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={handleCalendarExport}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Calendar
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {renderYearView()}
-            </CardContent>
-          </Card>
-        )}
-
-        {viewMode === "week" && (
-          <Card className="col-span-full">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Performance Calendar - Week View</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={handleCalendarExport}>
-                    <Download className="w-4 h-4 mr-1" />
-                    Export Calendar
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {renderWeekView()}
-            </CardContent>
-          </Card>
-        )}
-
-        {viewMode === "day" && (
-          <Card className="col-span-full">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Performance Calendar - Day View</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={handleCalendarExport}>
-                    <Download className="w-4 h-4 mr-1" />
-                    Export Calendar
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {renderDayView()}
-            </CardContent>
-          </Card>
-        )}
-
-        {viewMode === "month" && (
+        <div className="flex-1 overflow-auto p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Calendar */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Performance Calendar</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      variant={showExpiredEnquiries ? "default" : "outline"} 
-                      size="sm" 
-                      onClick={() => setShowExpiredEnquiries(!showExpiredEnquiries)}
-                      className="text-xs"
-                    >
-                      {showExpiredEnquiries ? (
-                        <>
-                          <Eye className="w-3 h-3 mr-1" />
-                          Hide Expired
-                        </>
-                      ) : (
-                        <>
-                          <EyeOff className="w-3 h-3 mr-1" />
-                          Show Expired
-                        </>
-                      )}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => transferEnquiriesMutation.mutate()}
-                      disabled={transferEnquiriesMutation.isPending}
-                    >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {transferEnquiriesMutation.isPending ? "Transferring..." : "Transfer Enquiries"}
-                    </Button>
-                    <CalendarImport />
-                    <Button variant="outline" size="sm" onClick={handleCalendarExport}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export Calendar
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CalendarComponent
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border"
-                  modifiers={{
-                    today: [new Date()],
-                    confirmed: bookings.filter((b: Booking) => b.status === 'confirmed').map((booking: Booking) => new Date(booking.eventDate)),
-                    completed: bookings.filter((b: Booking) => b.status === 'completed').map((booking: Booking) => new Date(booking.eventDate)),
-                    cancelled: bookings.filter((b: Booking) => b.status === 'cancelled').map((booking: Booking) => new Date(booking.eventDate)),
-                    newEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-new' && !b.isExpired).map((booking: any) => new Date(booking.eventDate)),
-                    inProgressEnquiry: potentialBookings.filter((b: any) => (b.status === 'enquiry-qualified' || b.status === 'enquiry-contract_sent') && !b.isExpired).map((booking: any) => new Date(booking.eventDate)),
-                    confirmedEnquiry: potentialBookings.filter((b: any) => b.status === 'enquiry-confirmed' && !b.isExpired).map((booking: any) => new Date(booking.eventDate)),
-                    signedContract: potentialBookings.filter((b: any) => b.status === 'contract-signed').map((booking: any) => new Date(booking.eventDate)),
-                    expiredEnquiry: potentialBookings.filter((b: any) => b.isExpired && b.source === 'enquiry').map((booking: any) => new Date(booking.eventDate)),
-                  }}
-                  modifiersClassNames={{
-                    today: "bg-purple-100 text-purple-900 font-bold ring-2 ring-purple-400",
-                    confirmed: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
-                    completed: "bg-purple-200 text-purple-900 font-semibold hover:bg-purple-300",
-                    cancelled: "bg-red-200 text-red-900 font-semibold hover:bg-red-300",
-                    newEnquiry: "bg-yellow-200 text-yellow-900 font-semibold hover:bg-yellow-300",
-                    inProgressEnquiry: "bg-blue-200 text-blue-900 font-semibold hover:bg-blue-300",
-                    confirmedEnquiry: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
-                    signedContract: "bg-green-200 text-green-900 font-semibold hover:bg-green-300",
-                    expiredEnquiry: "bg-gray-200 text-gray-500 font-normal opacity-50 hover:bg-gray-300",
-                  }}
-                />
-                
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-gray-600">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-yellow-200 border border-yellow-300 rounded"></div>
-                    <span>New Enquiry</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-200 border border-blue-300 rounded"></div>
-                    <span>In Progress</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-200 border border-green-300 rounded"></div>
-                    <span>Confirmed</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-200 border border-red-300 rounded"></div>
-                    <span>Cancelled</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-purple-100 border border-purple-400 rounded ring-1 ring-purple-400"></div>
-                    <span>Today</span>
-                  </div>
-                  {showExpiredEnquiries && (
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Calendar</CardTitle>
                     <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-gray-200 border border-gray-300 rounded opacity-50"></div>
-                      <span className="text-gray-500">Expired Enquiry</span>
+                      <CalendarImport />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCalendarExport}
+                        className="text-sm"
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        Export Calendar
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    month={currentDate}
+                    onMonthChange={setCurrentDate}
+                    modifiers={calendarModifiers}
+                    modifiersClassNames={calendarModifiersClassNames}
+                    className="rounded-md border w-full"
+                  />
+                  
+                  <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span>Confirmed</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                      <span>Completed</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span>New Enquiry</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <span>In Progress</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                      <span>Contract Signed</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span>Cancelled</span>
+                    </div>
+                    {showExpiredEnquiries && (
+                      <div className="flex items-center space-x-1">
+                        <div className="w-3 h-3 bg-gray-400 rounded-full opacity-50"></div>
+                        <span className="text-gray-500">Expired Enquiry</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Selected Date Details */}
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <CalendarIcon className="w-5 h-5" />
+                    <span>
+                      {selectedDate ? 
+                        selectedDate.toLocaleDateString("en-GB", { month: "short", day: "numeric" }) :
+                        "Select Date"
+                      }
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedDate && (
+                    <div className="text-sm text-gray-600 mb-4">
+                      {formatDate(selectedDate.toISOString())}
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
 
-          {/* Selected Date Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <CalendarIcon className="w-5 h-5" />
-                <span>
-                  {selectedDate ? 
-                    selectedDate.toLocaleDateString("en-GB", { month: "short", day: "numeric" }) :
-                    "Select Date"
-                  }
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {selectedDate && (
-                <div className="text-sm text-gray-600 mb-4">
-                  {formatDate(selectedDate.toISOString())}
-                </div>
-              )}
+                  {selectedDate && (
+                    (selectedDateBookings.length === 0 && selectedDatePotentialBookings.length === 0) ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p>No bookings on this date</p>
+                        <p className="text-sm">Available for new gigs</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Confirmed Bookings */}
+                        {selectedDateBookings.map((booking: Booking) => {
+                          const bookingConflicts = getBookingConflicts(booking.id.toString());
+                          const hasConflicts = bookingConflicts.length > 0;
+                          
+                          return (
+                            <div key={booking.id} className={`p-4 rounded-lg border-2 ${getStatusColor(booking.status)}`}>
+                              <div className="flex items-start justify-between mb-2">
+                                <h4 className="font-semibold flex items-center space-x-2">
+                                  <span>{booking.title}</span>
+                                  {hasConflicts && (
+                                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                                  )}
+                                </h4>
+                                <div className="flex items-center space-x-2">
+                                  {hasConflicts && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      CONFLICT
+                                    </Badge>
+                                  )}
+                                  <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
+                                    {booking.status}
+                                  </Badge>
+                                </div>
+                              </div>
+                            
+                              <div className="space-y-2 text-sm">
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <User className="w-4 h-4" />
+                                  <span>{booking.clientName}</span>
+                                </div>
+                                
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <Clock className="w-4 h-4" />
+                                  <span>{formatTime(booking.eventTime)}</span>
+                                </div>
+                                
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{booking.venue}</span>
+                                </div>
+                                
+                                <div className="flex items-center justify-between mt-3 pt-2 border-t">
+                                  <span className="font-semibold text-green-600">
+                                    £{Number(booking.fee).toLocaleString()}
+                                  </span>
+                                  <Button size="sm" variant="outline">
+                                    View Details
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Potential Bookings */}
+                        {selectedDatePotentialBookings.map((booking: any) => {
+                          const bookingConflicts = getBookingConflicts(booking.id);
+                          const hasConflicts = bookingConflicts.length > 0;
+                          
+                          return (
+                            <div key={booking.id} className={`p-4 rounded-lg border-2 ${booking.isExpired ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-amber-50 border-amber-200'}`}>
+                              <div className="flex items-start justify-between mb-2">
+                                <h4 className={`font-semibold flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : ''}`}>
+                                  <span>
+                                    {booking.title}
+                                    {booking.isExpired && (
+                                      <span className="ml-2 text-xs text-gray-400">(Expired)</span>
+                                    )}
+                                  </span>
+                                  {hasConflicts && (
+                                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                                  )}
+                                </h4>
+                                <div className="flex items-center space-x-2">
+                                  {hasConflicts && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      CONFLICT
+                                    </Badge>
+                                  )}
+                                  <Badge className={
+                                    booking.isExpired ? 'bg-gray-100 text-gray-600' :
+                                    booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
+                                    booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
+                                    booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
+                                    booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
+                                    'bg-amber-100 text-amber-800'
+                                  }>
+                                    {booking.isExpired ? 'Expired Enquiry' :
+                                     booking.status === 'enquiry-new' ? 'New Enquiry' :
+                                     booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'In Progress' :
+                                     booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
+                                     booking.status === 'contract-signed' ? 'Contract Signed' :
+                                     'Potential'}
+                                  </Badge>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2 text-sm">
+                                <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                  <User className="w-4 h-4" />
+                                  <span>{booking.clientName}</span>
+                                </div>
+                                
+                                <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                  <Clock className="w-4 h-4" />
+                                  <span>{formatTime(booking.eventTime)}</span>
+                                </div>
+                                
+                                <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{booking.venue}</span>
+                                </div>
+                                
+                                <div className="flex items-center justify-between mt-3 pt-2 border-t">
+                                  <span className={`font-semibold ${booking.isExpired ? 'text-gray-500' : 'text-amber-600'}`}>
+                                    £{Number(booking.fee).toLocaleString()}
+                                  </span>
+                                  <div className="flex space-x-2">
+                                    {booking.source === 'enquiry' && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className={booking.isExpired ? 'opacity-50' : ''}
+                                        onClick={() => window.location.href = '/enquiries'}
+                                      >
+                                        View Enquiry
+                                      </Button>
+                                    )}
+                                    {booking.source === 'contract' && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className={booking.isExpired ? 'opacity-50' : ''}
+                                        onClick={() => window.location.href = '/contracts'}
+                                      >
+                                        View Contract
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )
+                  )}
+                </CardContent>
+              </Card>
 
-              {selectedDate && (
-                (selectedDateBookings.length === 0 && selectedDatePotentialBookings.length === 0) ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p>No bookings on this date</p>
-                    <p className="text-sm">Available for new gigs</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                  {/* Confirmed Bookings */}
-                  {selectedDateBookings.map((booking: Booking) => {
-                    const bookingConflicts = getBookingConflicts(booking.id.toString());
-                    const hasConflicts = bookingConflicts.length > 0;
-                    
-                    return (
-                      <div key={booking.id} className={`p-4 rounded-lg border-2 ${getStatusColor(booking.status)}`}>
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-semibold flex items-center space-x-2">
-                            <span>{booking.title}</span>
-                            {hasConflicts && (
-                              <AlertTriangle className="w-4 h-4 text-red-500" />
-                            )}
-                          </h4>
-                          <div className="flex items-center space-x-2">
-                            {hasConflicts && (
-                              <Badge variant="destructive" className="text-xs">
-                                CONFLICT
-                              </Badge>
-                            )}
-                            <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
-                              {booking.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <User className="w-4 h-4" />
-                          <span>{booking.clientName}</span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <Clock className="w-4 h-4" />
-                          <span>{formatTime(booking.eventTime)}</span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <MapPin className="w-4 h-4" />
-                          <span>{booking.venue}</span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                          <span className="font-semibold text-green-600">
-                            £{Number(booking.fee).toLocaleString()}
-                          </span>
-                          <Button size="sm" variant="outline">
-                            View Details
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                  })}
-                  
-                  {/* Potential Bookings */}
-                  {selectedDatePotentialBookings.map((booking: any) => {
-                    const bookingConflicts = getBookingConflicts(booking.id);
-                    const hasConflicts = bookingConflicts.length > 0;
-                    
-                    return (
-                      <div key={booking.id} className={`p-4 rounded-lg border-2 ${booking.isExpired ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-amber-50 border-amber-200'}`}>
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className={`font-semibold flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : ''}`}>
-                            <span>
-                              {booking.title}
-                              {booking.isExpired && (
-                                <span className="ml-2 text-xs text-gray-400">(Expired)</span>
-                              )}
-                            </span>
-                            {hasConflicts && (
-                              <AlertTriangle className="w-4 h-4 text-red-500" />
-                            )}
-                          </h4>
-                          <div className="flex items-center space-x-2">
-                            {hasConflicts && (
-                              <Badge variant="destructive" className="text-xs">
-                                CONFLICT
-                              </Badge>
-                            )}
-                            <Badge className={
-                              booking.isExpired ? 'bg-gray-100 text-gray-600' :
-                              booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
-                              booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
-                              booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
-                              booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
-                              'bg-amber-100 text-amber-800'
-                            }>
-                              {booking.isExpired ? 'Expired Enquiry' :
-                               booking.status === 'enquiry-new' ? 'New Enquiry' :
-                           booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'In Progress' :
-                           booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
-                           booking.status === 'contract-signed' ? 'Contract Signed' :
-                           'Potential'}
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-2 text-sm">
-                        <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
-                          <User className="w-4 h-4" />
-                          <span>{booking.clientName}</span>
-                        </div>
-                        
-                        <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
-                          <Clock className="w-4 h-4" />
-                          <span>{formatTime(booking.eventTime)}</span>
-                        </div>
-                        
-                        <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
-                          <MapPin className="w-4 h-4" />
-                          <span>{booking.venue}</span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                          <span className={`font-semibold ${booking.isExpired ? 'text-gray-500' : 'text-amber-600'}`}>
-                            £{Number(booking.fee).toLocaleString()}
-                          </span>
-                          <div className="flex space-x-2">
-                            {booking.source === 'enquiry' && (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className={booking.isExpired ? 'opacity-50' : ''}
-                                onClick={() => window.location.href = '/enquiries'}
-                              >
-                                View Enquiry
-                              </Button>
-                            )}
-                            {booking.source === 'contract' && (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className={booking.isExpired ? 'opacity-50' : ''}
-                                onClick={() => window.location.href = '/contracts'}
-                              >
-                                View Contract
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                )
-              )}
-            </CardContent>
-          </Card>
-
-        {/* Upcoming Gigs Summary */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>
-                {currentDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })} Events
-              </CardTitle>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCalendarExport}
-                  className="text-sm"
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Export Calendar
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {getCurrentMonthEvents().map((event: any) => {
-                const isRegularBooking = event.contractId !== undefined;
-                const isExpired = event.isExpired;
-                
-                return (
-                  <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg ${
-                    isExpired ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
-                  }`}>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-center">
-                        <div className={`text-sm font-medium ${
-                          isExpired ? 'text-gray-500' : 'text-purple-600'
-                        }`}>
-                          {new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" }).toUpperCase()}
-                        </div>
-                        <div className={`text-lg font-bold ${
-                          isExpired ? 'text-gray-500' : ''
-                        }`}>
-                          {new Date(event.eventDate).getDate()}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className={`font-medium ${
-                          isExpired ? 'text-gray-500' : ''
-                        }`}>
-                          {event.title}
-                          {isExpired && <span className="ml-2 text-xs text-gray-400">(Expired)</span>}
-                        </h4>
-                        <p className={`text-sm ${
-                          isExpired ? 'text-gray-500' : 'text-gray-600'
-                        }`}>
-                          {event.venue} • {event.eventTime}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <p className={`font-semibold ${
-                        isExpired ? 'text-gray-500' : 
-                        isRegularBooking ? 'text-green-600' : 'text-amber-600'
-                      }`}>
-                        £{Number(event.fee).toLocaleString()}
-                      </p>
-                      <Badge className={
-                        isExpired ? 'bg-gray-100 text-gray-600' :
-                        isRegularBooking ? getStatusColor(event.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-') :
-                        event.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
-                        event.status === 'enquiry-qualified' || event.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
-                        event.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
-                        event.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
-                        'bg-amber-100 text-amber-800'
-                      }>
-                        {isExpired ? 'Expired' :
-                         isRegularBooking ? event.status :
-                         event.status === 'enquiry-new' ? 'New Enquiry' :
-                         event.status === 'enquiry-qualified' || event.status === 'enquiry-contract_sent' ? 'In Progress' :
-                         event.status === 'enquiry-confirmed' ? 'Confirmed' :
-                         event.status === 'contract-signed' ? 'Signed' :
-                         'Potential'}
-                      </Badge>
+              {/* Upcoming Gigs Summary */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>
+                      {currentDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })} Events
+                    </CardTitle>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCalendarExport}
+                        className="text-sm"
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        Export Calendar
+                      </Button>
                     </div>
                   </div>
-                );
-              })}
-              
-              {getCurrentMonthEvents().length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-lg">No events this month</p>
-                  <p>Your bookings and enquiries will appear here</p>
-                </div>
-              )}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {getCurrentMonthEvents().map((event: any) => {
+                      const isRegularBooking = event.contractId !== undefined;
+                      const isExpired = event.isExpired;
+                      
+                      return (
+                        <div key={event.id} className={`flex items-center justify-between p-3 rounded-lg ${
+                          isExpired ? 'bg-gray-50 opacity-60' : 'bg-gray-50'
+                        }`}>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-center">
+                              <div className="text-sm font-medium">
+                                {new Date(event.eventDate).toLocaleDateString("en-GB", { day: "numeric" })}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {new Date(event.eventDate).toLocaleDateString("en-GB", { month: "short" })}
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <h4 className={`font-medium ${isExpired ? 'text-gray-500' : 'text-gray-900'}`}>
+                                  {event.title || `${event.clientName} Performance`}
+                                </h4>
+                                {isExpired && (
+                                  <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600">
+                                    Expired
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className={`text-sm ${isExpired ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {event.clientName} • {event.venue}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`font-medium ${isExpired ? 'text-gray-400' : 'text-gray-900'}`}>
+                              £{Number(event.fee).toLocaleString()}
+                            </div>
+                            <div className={`text-xs ${isExpired ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {formatTime(event.eventTime)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {getCurrentMonthEvents().length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p>No events this month</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Mark Unavailable Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Mark Unavailable</DialogTitle>
           </DialogHeader>
@@ -1355,9 +937,9 @@ export default function Calendar() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Title</FormLabel>
+                    <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Wedding Reception, Private Party" {...field} />
+                      <Input placeholder="e.g., Personal time, Holiday, etc." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1366,95 +948,58 @@ export default function Calendar() {
               
               <FormField
                 control={form.control}
-                name="clientName"
+                name="eventDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Client Name</FormLabel>
+                    <FormLabel>Date</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter client name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="eventDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="eventTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Time</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="venue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Venue</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter venue address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="fee"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fee (£)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01" 
-                        placeholder="0.00" 
-                        {...field} 
+                      <Input
+                        type="date"
+                        {...field}
+                        value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          if (e.target.value) {
+                            setSelectedDate(new Date(e.target.value));
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+              
+              <FormField
+                control={form.control}
+                name="eventTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Time (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => handleDialogClose(false)}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-purple-600 hover:bg-purple-700"
+                <Button
+                  type="submit"
                   disabled={createBookingMutation.isPending}
                 >
-                  {createBookingMutation.isPending ? "Marking..." : "Mark Unavailable"}
+                  {createBookingMutation.isPending ? "Saving..." : "Mark Unavailable"}
                 </Button>
               </div>
             </form>
