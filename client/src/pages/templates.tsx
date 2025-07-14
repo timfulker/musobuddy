@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit3, Trash2, Star } from 'lucide-react';
+import { Plus, Edit3, Trash2, Star, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/sidebar';
+import MobileNav from '@/components/mobile-nav';
 
 interface EmailTemplate {
   id: number;
@@ -208,14 +209,14 @@ export default function Templates() {
     <div className="min-h-screen bg-background">
       {/* Mobile menu toggle */}
       <div className="md:hidden fixed top-4 left-4 z-50">
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setSidebarOpen(true)}
-          className="bg-card p-2 rounded-lg shadow-lg"
+          className="bg-card shadow-lg"
         >
-          <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+          <Menu className="h-4 w-4" />
+        </Button>
       </div>
 
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -451,6 +452,9 @@ export default function Templates() {
       </Dialog>
         </div>
       </div>
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 }

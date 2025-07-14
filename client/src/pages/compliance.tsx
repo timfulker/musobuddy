@@ -12,10 +12,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertComplianceDocumentSchema, type ComplianceDocument } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Shield, Zap, Music, Upload, Download, AlertTriangle, CheckCircle, Clock, ArrowLeft, FileUp, X } from "lucide-react";
+import { Plus, Search, Shield, Zap, Music, Upload, Download, AlertTriangle, CheckCircle, Clock, ArrowLeft, FileUp, X, Menu } from "lucide-react";
 import { Link } from "wouter";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
+import MobileNav from "@/components/mobile-nav";
 
 const complianceFormSchema = insertComplianceDocumentSchema.extend({
   expiryDate: z.string().optional(),
@@ -313,14 +314,14 @@ export default function Compliance() {
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="md:hidden mr-3 p-2 rounded-md hover:bg-gray-100"
+                className="md:hidden mr-3"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
+                <Menu className="h-4 w-4" />
+              </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Compliance</h1>
                 <p className="text-gray-600">Manage your insurance, licenses, and certifications</p>
@@ -709,6 +710,9 @@ export default function Compliance() {
           </Card>
         </div>
       </div>
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 }

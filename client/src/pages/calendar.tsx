@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import CalendarImport from "@/components/calendar-import";
 import Sidebar from "@/components/sidebar";
+import MobileNav from "@/components/mobile-nav";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
 
@@ -1504,6 +1505,9 @@ export default function Calendar() {
         open={statusUpdateDialogOpen}
         onOpenChange={setStatusUpdateDialogOpen}
       />
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 }

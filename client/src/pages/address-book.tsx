@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import Sidebar from "@/components/sidebar";
+import MobileNav from "@/components/mobile-nav";
 import { Link } from "wouter";
 
 export default function AddressBook() {
@@ -712,6 +713,9 @@ export default function AddressBook() {
           )}
         </div>
       </div>
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 }
