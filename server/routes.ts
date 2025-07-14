@@ -1701,6 +1701,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <div style="background: #f0f9ff; border-left: 4px solid #0EA5E9; padding: 15px; margin: 20px 0;">
               <h4 style="margin-top: 0; color: #0EA5E9;">Personal Message:</h4>
               <p style="margin: 0; color: #333; line-height: 1.5;">${customMessage.replace(/\n/g, '<br>')}</p>
+              <p style="margin: 10px 0 0 0; color: #6B7280; font-size: 12px; font-style: italic;">
+                Note: This personal message does not modify any contract terms. All official terms and conditions are detailed in the contract document below.
+              </p>
             </div>
             ` : ''}
             

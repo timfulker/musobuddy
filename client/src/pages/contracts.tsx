@@ -1264,11 +1264,18 @@ export default function Contracts() {
                     <label className="text-sm font-medium text-gray-700">
                       Add a personal message (optional)
                     </label>
+                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
+                      <p className="text-xs text-amber-700">
+                        <strong>Important:</strong> This message is for personal communication only. 
+                        Do not include payment terms, event details, or contractual changes here - 
+                        these should be made in the contract itself.
+                      </p>
+                    </div>
                     <p className="text-xs text-gray-500">
-                      This will be added to the standard contract email. If left blank, only the standard message will be sent.
+                      Use this space for friendly greetings, additional context, or special instructions that don't modify the contract terms.
                     </p>
                     <Textarea
-                      placeholder="Add a personal message for your client..."
+                      placeholder="e.g., 'Looking forward to performing at your special event!' or 'Please let me know if you have any questions.'"
                       value={customMessage}
                       onChange={(e) => setCustomMessage(e.target.value)}
                       rows={4}
