@@ -111,13 +111,27 @@ export async function sendContractEmail(
   }
 ): Promise<boolean> {
   try {
-    console.log('📧 Sending contract email with attachment:', contract.contractNumber);
+    console.log('📧 Sending contract email with cloud storage signing page:', contract.contractNumber);
     
     // Generate PDF buffer
     const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
     
-    // Simple attachment approach - signing page hosted on app
-    console.log('📎 Using attachment approach with app-based signing page');
+    const isSignedContract = !!signatureDetails;
+    let cloudSigningUrl = '';
+    
+    // For unsigned contracts, create cloud storage signing page
+    if (!isSignedContract) {
+      try {
+        const { uploadContractSigningPage } = await import('./cloud-storage');
+        cloudSigningUrl = await uploadContractSigningPage(contract, userSettings);
+        console.log('☁️ Contract signing page uploaded to cloud storage:', cloudSigningUrl);
+      } catch (error) {
+        console.error('⚠️ Failed to upload contract signing page to cloud storage:', error);
+        // Fallback to app-based signing page
+        cloudSigningUrl = `https://musobuddy.replit.app/sign-contract/${contract.id}`;
+        console.log('🔄 Using app-based signing page as fallback:', cloudSigningUrl);
+      }
+    }
     
     // Prepare email content
     const businessName = userSettings?.businessName || 'MusoBuddy';
@@ -125,17 +139,17 @@ export async function sendContractEmail(
     const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
     const replyToEmail = userSettings?.emailAddress || 'noreply@mg.musobuddy.com';
     
-    const isSignedContract = !!signatureDetails;
     const subject = isSignedContract 
       ? `Contract Signed - ${contract.contractNumber}`
       : `Contract for ${contract.clientName} - ${contract.contractNumber}`;
     
-    // Generate email HTML with app-based signing URL
+    // Generate email HTML with cloud storage signing URL
     const emailHtml = generateContractEmailHtml(
       contract,
       userSettings,
       customMessage,
-      isSignedContract
+      isSignedContract,
+      cloudSigningUrl
     );
     
     // Create email with PDF attachment
@@ -161,7 +175,7 @@ export async function sendContractEmail(
     if (success) {
       console.log('✅ Contract email sent successfully with attachment');
       console.log('📎 PDF attached to email for client access');
-      console.log('🔗 Signing page available at: https://musobuddy.replit.app/sign-contract/' + contract.id);
+      console.log('☁️ Cloud signing page available at:', cloudSigningUrl);
     }
     
     return success;
@@ -266,7 +280,8 @@ function generateContractEmailHtml(
   contract: Contract,
   userSettings: UserSettings | null,
   customMessage?: string,
-  isSignedContract: boolean = false
+  isSignedContract: boolean = false,
+  cloudSigningUrl?: string
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   const signInstructions = isSignedContract ? '' : `
@@ -274,11 +289,14 @@ function generateContractEmailHtml(
       <h3 style="color: #1e40af; margin-top: 0;">📝 Action Required</h3>
       <p style="margin: 10px 0;">Please review and sign this contract to confirm your booking.</p>
       <div style="text-align: center; margin: 20px 0;">
-        <a href="https://musobuddy.replit.app/sign-contract/${contract.id}" 
+        <a href="${cloudSigningUrl || `https://musobuddy.replit.app/sign-contract/${contract.id}`}" 
            style="background-color: #059669; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px; border: 2px solid #047857; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           📝 Sign Contract Online
         </a>
       </div>
+      <p style="margin: 10px 0; font-size: 12px; color: #6b7280; text-align: center;">
+        ${cloudSigningUrl ? '☁️ Signing page hosted independently - works even if app is offline' : '🔗 Signing page hosted on app'}
+      </p>
     </div>
   `;
   
