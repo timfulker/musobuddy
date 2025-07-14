@@ -1,5 +1,9 @@
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
+import type { Contract, Invoice, UserSettings } from '@shared/schema';
+import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
+import { uploadContractToCloud, uploadInvoiceToCloud, isCloudStorageConfigured } from './cloud-storage';
+import { storage } from './storage';
 
 // Initialize Mailgun client
 const mailgun = new Mailgun(formData);
@@ -88,6 +92,332 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
     console.error('Full error object:', JSON.stringify(error, null, 2));
     return false;
   }
+}
+
+/**
+ * Enhanced contract email sending with hybrid approach
+ * - Generates PDF and uploads to cloud storage for permanent access
+ * - Attaches PDF to email for immediate access
+ * - Includes both attachment and static backup link
+ */
+export async function sendContractEmail(
+  contract: Contract,
+  userSettings: UserSettings | null,
+  customMessage?: string,
+  signatureDetails?: {
+    signedAt: Date;
+    signatureName?: string;
+    clientIpAddress?: string;
+  }
+): Promise<boolean> {
+  try {
+    console.log('📧 Sending contract email with hybrid approach:', contract.contractNumber);
+    
+    // Generate PDF buffer
+    const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+    
+    // Upload to cloud storage first (if configured)
+    let cloudStorageUrl: string | null = null;
+    if (isCloudStorageConfigured()) {
+      console.log('☁️ Uploading contract to cloud storage...');
+      const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
+      
+      if (cloudResult.success) {
+        cloudStorageUrl = cloudResult.url!;
+        
+        // Update contract with cloud storage URL
+        await storage.updateContractCloudStorage(
+          contract.id,
+          cloudResult.url!,
+          cloudResult.key!,
+          contract.userId
+        );
+      } else {
+        console.warn('⚠️ Cloud storage upload failed:', cloudResult.error);
+      }
+    }
+    
+    // Prepare email content
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    const fromName = userSettings?.emailFromName || businessName;
+    const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
+    const replyToEmail = userSettings?.emailAddress || 'noreply@mg.musobuddy.com';
+    
+    const isSignedContract = !!signatureDetails;
+    const subject = isSignedContract 
+      ? `Contract Signed - ${contract.contractNumber}`
+      : `Contract for ${contract.clientName} - ${contract.contractNumber}`;
+    
+    // Generate email HTML with hybrid approach
+    const emailHtml = generateContractEmailHtml(
+      contract,
+      userSettings,
+      customMessage,
+      isSignedContract,
+      cloudStorageUrl
+    );
+    
+    // Create email with PDF attachment
+    const emailData: EmailData = {
+      to: contract.clientEmail,
+      from: fromEmail,
+      subject: subject,
+      html: emailHtml,
+      replyTo: replyToEmail,
+      attachments: [
+        {
+          content: pdfBuffer.toString('base64'),
+          filename: `${contract.contractNumber}.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }
+      ]
+    };
+    
+    // Send email
+    const success = await sendEmail(emailData);
+    
+    if (success) {
+      console.log('✅ Contract email sent successfully with hybrid approach');
+      console.log('📎 PDF attached to email for immediate access');
+      if (cloudStorageUrl) {
+        console.log('🔗 Static link included for permanent access');
+      }
+    }
+    
+    return success;
+    
+  } catch (error) {
+    console.error('❌ Error sending contract email:', error);
+    return false;
+  }
+}
+
+/**
+ * Enhanced invoice email sending with hybrid approach
+ */
+export async function sendInvoiceEmail(
+  invoice: Invoice,
+  contract: Contract | null,
+  userSettings: UserSettings | null
+): Promise<boolean> {
+  try {
+    console.log('📧 Sending invoice email with hybrid approach:', invoice.invoiceNumber);
+    
+    // Generate PDF buffer
+    const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+    
+    // Upload to cloud storage first (if configured)
+    let cloudStorageUrl: string | null = null;
+    if (isCloudStorageConfigured()) {
+      console.log('☁️ Uploading invoice to cloud storage...');
+      const cloudResult = await uploadInvoiceToCloud(invoice, contract, userSettings);
+      
+      if (cloudResult.success) {
+        cloudStorageUrl = cloudResult.url!;
+        
+        // Update invoice with cloud storage URL
+        await storage.updateInvoiceCloudStorage(
+          invoice.id,
+          cloudResult.url!,
+          cloudResult.key!,
+          invoice.userId
+        );
+      } else {
+        console.warn('⚠️ Cloud storage upload failed:', cloudResult.error);
+      }
+    }
+    
+    // Prepare email content
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    const fromName = userSettings?.emailFromName || businessName;
+    const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
+    const replyToEmail = userSettings?.emailAddress || 'noreply@mg.musobuddy.com';
+    
+    const subject = `Invoice ${invoice.invoiceNumber} - Payment Due`;
+    
+    // Generate email HTML with hybrid approach
+    const emailHtml = generateInvoiceEmailHtml(
+      invoice,
+      contract,
+      userSettings,
+      cloudStorageUrl
+    );
+    
+    // Create email with PDF attachment
+    const emailData: EmailData = {
+      to: invoice.clientEmail,
+      from: fromEmail,
+      subject: subject,
+      html: emailHtml,
+      replyTo: replyToEmail,
+      attachments: [
+        {
+          content: pdfBuffer.toString('base64'),
+          filename: `${invoice.invoiceNumber}.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }
+      ]
+    };
+    
+    // Send email
+    const success = await sendEmail(emailData);
+    
+    if (success) {
+      console.log('✅ Invoice email sent successfully with hybrid approach');
+      console.log('📎 PDF attached to email for immediate access');
+      if (cloudStorageUrl) {
+        console.log('🔗 Static link included for permanent access');
+      }
+    }
+    
+    return success;
+    
+  } catch (error) {
+    console.error('❌ Error sending invoice email:', error);
+    return false;
+  }
+}
+
+/**
+ * Generate HTML for contract email with hybrid approach
+ */
+function generateContractEmailHtml(
+  contract: Contract,
+  userSettings: UserSettings | null,
+  customMessage?: string,
+  isSignedContract: boolean = false,
+  cloudStorageUrl?: string | null
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  const signInstructions = isSignedContract ? '' : `
+    <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+      <h3 style="color: #1e40af; margin-top: 0;">📝 Action Required</h3>
+      <p style="margin: 10px 0;">Please review and sign this contract to confirm your booking.</p>
+      <div style="text-align: center; margin: 20px 0;">
+        <a href="https://musobuddy.replit.app/sign-contract/${contract.id}" 
+           style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          📝 Sign Contract Online
+        </a>
+      </div>
+    </div>
+  `;
+  
+  const customMessageHtml = customMessage ? `
+    <div style="background-color: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+      <h4 style="color: #1e40af; margin-top: 0;">Personal Message:</h4>
+      <p style="margin: 0; white-space: pre-wrap;">${customMessage}</p>
+    </div>
+  ` : '';
+  
+  const cloudLinkHtml = cloudStorageUrl ? `
+    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
+      <h4 style="color: #64748b; margin-top: 0;">📎 Document Access</h4>
+      <p style="margin: 5px 0;">This email includes your contract as a PDF attachment.</p>
+      <p style="margin: 5px 0;">You can also download it anytime from: <a href="${cloudStorageUrl}" style="color: #3b82f6;">View Contract PDF</a></p>
+    </div>
+  ` : `
+    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
+      <p style="margin: 0; color: #64748b;">📎 Your contract is attached as a PDF to this email.</p>
+    </div>
+  `;
+  
+  return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2563eb;">Contract from ${businessName}</h2>
+        
+        <p>Dear ${contract.clientName},</p>
+        
+        ${isSignedContract ? 
+          `<p>Thank you for signing the contract! Your booking is now confirmed.</p>` : 
+          `<p>Please find attached your contract for the performance on ${new Date(contract.eventDate).toLocaleDateString()}.</p>`
+        }
+        
+        ${customMessageHtml}
+        ${signInstructions}
+        
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #374151; margin-top: 0;">📋 Event Details</h3>
+          <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString()}</p>
+          <p><strong>Time:</strong> ${contract.eventTime}</p>
+          <p><strong>Venue:</strong> ${contract.venue}</p>
+          <p><strong>Fee:</strong> £${contract.fee}</p>
+        </div>
+        
+        ${cloudLinkHtml}
+        
+        <p>If you have any questions, please don't hesitate to contact me.</p>
+        
+        <p>Best regards,<br>
+        ${businessName}</p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        <p style="font-size: 12px; color: #6b7280; text-align: center;">
+          Powered by MusoBuddy – less admin, more music
+        </p>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Generate HTML for invoice email with hybrid approach
+ */
+function generateInvoiceEmailHtml(
+  invoice: Invoice,
+  contract: Contract | null,
+  userSettings: UserSettings | null,
+  cloudStorageUrl?: string | null
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  
+  const cloudLinkHtml = cloudStorageUrl ? `
+    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
+      <h4 style="color: #64748b; margin-top: 0;">📎 Document Access</h4>
+      <p style="margin: 5px 0;">This email includes your invoice as a PDF attachment.</p>
+      <p style="margin: 5px 0;">You can also download it anytime from: <a href="${cloudStorageUrl}" style="color: #3b82f6;">View Invoice PDF</a></p>
+    </div>
+  ` : `
+    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
+      <p style="margin: 0; color: #64748b;">📎 Your invoice is attached as a PDF to this email.</p>
+    </div>
+  `;
+  
+  return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2563eb;">Invoice from ${businessName}</h2>
+        
+        <p>Dear ${invoice.clientName},</p>
+        
+        <p>Please find attached your invoice for the performance services.</p>
+        
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #374151; margin-top: 0;">💰 Payment Details</h3>
+          <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
+          <p><strong>Amount Due:</strong> £${invoice.amount}</p>
+          <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+          ${invoice.performanceDate ? `<p><strong>Performance Date:</strong> ${new Date(invoice.performanceDate).toLocaleDateString()}</p>` : ''}
+        </div>
+        
+        ${cloudLinkHtml}
+        
+        <p>Payment can be made via bank transfer to the account details shown on the invoice.</p>
+        
+        <p>Thank you for your business!</p>
+        
+        <p>Best regards,<br>
+        ${businessName}</p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        <p style="font-size: 12px; color: #6b7280; text-align: center;">
+          Powered by MusoBuddy – less admin, more music
+        </p>
+      </body>
+    </html>
+  `;
 }
 
 // Test function for sandbox testing

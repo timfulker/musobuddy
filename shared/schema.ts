@@ -78,6 +78,8 @@ export const contracts = pgTable("contracts", {
   reminderDays: integer("reminder_days").default(7), // Days between reminders
   lastReminderSent: timestamp("last_reminder_sent"),
   reminderCount: integer("reminder_count").default(0),
+  cloudStorageUrl: text("cloud_storage_url"),
+  cloudStorageKey: text("cloud_storage_key"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -99,6 +101,8 @@ export const invoices = pgTable("invoices", {
   dueDate: timestamp("due_date").notNull(),
   status: varchar("status").notNull().default("draft"), // draft, sent, paid, overdue
   paidAt: timestamp("paid_at"),
+  cloudStorageUrl: text("cloud_storage_url"),
+  cloudStorageKey: text("cloud_storage_key"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

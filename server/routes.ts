@@ -1506,10 +1506,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Send invoice email
+  // Send invoice email using hybrid approach
   app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
     try {
-
       const userId = req.user.claims.sub;
       const { invoiceId } = req.body;
       
@@ -1541,106 +1540,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Failed to update invoice status" });
       }
 
-      // REMOVED: SendGrid import - Mailgun-only solution
+      console.log('📧 Sending invoice email with hybrid approach:', updatedInvoice.invoiceNumber);
       
-      // Generate invoice view link
-      const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
-      const invoiceViewUrl = `https://${currentDomain}/view-invoice/${updatedInvoice.id}`;
-      const invoiceDownloadUrl = `https://${currentDomain}/api/invoices/${updatedInvoice.id}/download`;
+      // Use enhanced hybrid email function with PDF attachment + cloud storage
+      const { sendInvoiceEmail } = await import('./mailgun-email');
+      const success = await sendInvoiceEmail(updatedInvoice, contract, userSettings);
       
-      console.log('=== SENDING INVOICE EMAIL WITH LINK ===');
-      console.log('Invoice view URL:', invoiceViewUrl);
-      console.log('Invoice download URL:', invoiceDownloadUrl);
-      
-      // Smart email handling - use authenticated domain for sending, Gmail for replies
-      const userBusinessEmail = userSettings?.businessEmail;
-      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
-      
-      // Always use authenticated domain for FROM to avoid SPF issues
-      const fromEmail = 'noreply@musobuddy.com';
-      
-      // If user has Gmail (or other non-authenticated domain), use it as reply-to
-      const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
-      
-      console.log('=== EMAIL DETAILS ===');
-      console.log('To:', clientEmail);
-      console.log('From:', `${fromName} <${fromEmail}>`);
-      console.log('Reply-To:', replyToEmail);
-      console.log('Subject:', `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`);
-      
-      const emailData: any = {
-        to: clientEmail,
-        from: `${fromName} <${fromEmail}>`,
-        subject: `Invoice ${updatedInvoice.invoiceNumber} from ${fromName}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #0EA5E9; margin-bottom: 20px;">Invoice ${updatedInvoice.invoiceNumber}</h1>
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-              <p><strong>Amount:</strong> £${updatedInvoice.amount}</p>
-              <p><strong>Due Date:</strong> ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}</p>
-              <p><strong>Client:</strong> ${updatedInvoice.clientName}</p>
-            </div>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${invoiceViewUrl}" style="background: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Invoice Online</a>
-            </div>
-            <div style="text-align: center; margin: 20px 0;">
-              <a href="${invoiceDownloadUrl}" style="background: #6B7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;">Download PDF</a>
-            </div>
-            <p>Thank you for your business!</p>
-            <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
-              <small>Powered by MusoBuddy – less admin, more music</small>
-            </p>
-          </div>
-        `,
-        text: `Invoice ${updatedInvoice.invoiceNumber}. Amount: £${updatedInvoice.amount}. Due date: ${new Date(updatedInvoice.dueDate).toLocaleDateString('en-GB')}. View your invoice online: ${invoiceViewUrl} or download PDF: ${invoiceDownloadUrl}`
-      };
-      
-      // Add reply-to if user has Gmail or other external email
-      if (replyToEmail) {
-        emailData.replyTo = replyToEmail;
-      }
-      
-      // Import and use Mailgun email function
-      console.log('📧 Attempting to send invoice email...');
-      const { sendEmail } = await import('./mailgun-email');
-      const emailSent = await sendEmail(emailData);
-      console.log('📧 Email send result:', emailSent);
-
-      if (emailSent) {
-        console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${clientEmail}`);
-        res.json({ 
-          message: "Invoice sent successfully via email",
-          debug: {
-            invoiceId: invoiceId,
-            clientEmail: clientEmail,
-            invoiceNumber: updatedInvoice.invoiceNumber,
-            emailSent: true
-          }
-        });
+      if (success) {
+        res.json({ message: "Invoice email sent successfully with PDF attachment and static backup link" });
       } else {
-        // If email failed, revert status back to draft
-        await storage.updateInvoice(invoiceId, { status: "draft" }, userId);
-        res.status(500).json({ 
-          message: "Failed to send email. Please check your email settings.",
-          debug: {
-            invoiceId: invoiceId,
-            clientEmail: clientEmail,
-            invoiceNumber: updatedInvoice.invoiceNumber,
-            emailSent: false
-          }
-        });
+        res.status(500).json({ message: "Failed to send invoice email" });
       }
-    } catch (error: any) {
+      
+    } catch (error) {
       console.error("Error sending invoice email:", error);
-      res.status(500).json({ 
-        message: "Failed to send invoice email", 
-        error: error.message || "Unknown error",
-        debug: { invoiceId: req.body.invoiceId }
-      });
+      res.status(500).json({ message: "Failed to send invoice email" });
     }
   });
 
-  // Send contract email
+  // Send contract email using hybrid approach
   app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1659,122 +1577,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Client email not found. Please add client email to the contract." });
       }
 
-      // REMOVED: SendGrid functions - Mailgun-only solution
+      console.log('📧 Sending contract email with hybrid approach:', contract.contractNumber);
       
-      // Generate contract signing link instead of PDF attachment
-      const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
-      const contractSignUrl = `https://${currentDomain}/sign-contract/${contract.id}`;
-      const contractViewUrl = `https://${currentDomain}/view-contract/${contract.id}`;
+      // Use enhanced hybrid email function with PDF attachment + cloud storage
+      const { sendContractEmail } = await import('./mailgun-email');
+      const success = await sendContractEmail(contract, userSettings, customMessage);
       
-      console.log('=== SENDING CONTRACT EMAIL WITH SIGNING LINK ===');
-      console.log('Contract sign URL:', contractSignUrl);
-      console.log('Contract view URL:', contractViewUrl);
-      
-      // Smart email handling - use authenticated domain for sending, Gmail for replies
-      const userBusinessEmail = userSettings?.businessEmail;
-      const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
-      
-      // Always use authenticated domain for FROM to avoid SPF issues
-      const fromEmail = 'noreply@musobuddy.com';
-      
-      // If user has Gmail (or other non-authenticated domain), use it as reply-to
-      const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
-      
-      console.log('=== CONTRACT EMAIL DETAILS ===');
-      console.log('To:', contract.clientEmail);
-      console.log('From:', `${fromName} <${fromEmail}>`);
-      console.log('Reply-To:', replyToEmail);
-      console.log('Subject:', `Performance Contract ${contract.contractNumber} from ${fromName}`);
-      
-      const emailData: any = {
-        to: contract.clientEmail,
-        from: `${fromName} <${fromEmail}>`,
-        subject: `Performance Contract ${contract.contractNumber} from ${fromName} - Please Sign`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #0EA5E9; margin-bottom: 20px;">Performance Contract ${contract.contractNumber}</h1>
-            
-            <p>Dear ${contract.clientName},</p>
-            <p>Please find your performance contract ready for signing.</p>
-            
-            ${customMessage ? `
-            <div style="background: #f0f9ff; border-left: 4px solid #0EA5E9; padding: 15px; margin: 20px 0;">
-              <h4 style="margin-top: 0; color: #0EA5E9;">Personal Message:</h4>
-              <p style="margin: 0; color: #333; line-height: 1.5;">${customMessage.replace(/\n/g, '<br>')}</p>
-              <p style="margin: 10px 0 0 0; color: #6B7280; font-size: 12px; font-style: italic;">
-                Note: This personal message does not modify any contract terms. All official terms and conditions are detailed in the contract document below.
-              </p>
-            </div>
-            ` : ''}
-            
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #333;">Event Details</h3>
-              <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
-              <p><strong>Time:</strong> ${contract.eventTime}</p>
-              <p><strong>Venue:</strong> ${contract.venue}</p>
-              <p><strong>Fee:</strong> £${contract.fee}</p>
-              <p><strong>Deposit:</strong> £${contract.deposit}</p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${contractSignUrl}" style="background: #0EA5E9; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Sign Contract Online</a>
-            </div>
-            
-            <div style="text-align: center; margin: 20px 0;">
-              <a href="${contractViewUrl}" style="background: #6B7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;">View Contract Details</a>
-            </div>
-            
-            <p style="color: #6B7280; font-size: 14px;">
-              By clicking "Sign Contract Online" you'll be taken to a secure page where you can review and digitally sign the contract. No downloads or printing required.
-            </p>
-            
-            <p>Thank you for choosing our services!</p>
-            <p>Best regards,<br><strong>${userSettings?.businessName || fromName}</strong></p>
-            
-            <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
-              <small>Powered by MusoBuddy – less admin, more music</small>
-            </p>
-          </div>
-        `,
-        text: `Performance Contract ${contract.contractNumber}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. ${customMessage ? `Personal message: ${customMessage}` : ''} Sign online: ${contractSignUrl}`
-      };
-      
-      // Add reply-to if user has Gmail or other external email
-      if (replyToEmail) {
-        emailData.replyTo = replyToEmail;
-      }
-      
-      // Import and use Mailgun email function
-      console.log('📧 Attempting to send contract email...');
-      const { sendEmail } = await import('./mailgun-email');
-      const emailSent = await sendEmail(emailData);
-      console.log('📧 Contract email send result:', emailSent);
-
-      if (emailSent) {
-        // Update contract status to sent
-        await storage.updateContract(contractId, { status: "sent" }, userId);
-        console.log(`✅ Contract ${contract.contractNumber} sent successfully to ${contract.clientEmail}`);
-        res.json({ 
-          message: "Contract sent successfully via email",
-          debug: {
-            contractId: contractId,
-            clientEmail: contract.clientEmail,
-            contractNumber: contract.contractNumber,
-            emailSent: true
-          }
-        });
+      if (success) {
+        res.json({ message: "Contract email sent successfully with PDF attachment and static backup link" });
       } else {
-        console.log('❌ Contract email failed to send');
-        res.status(500).json({ 
-          message: "Failed to send email. Please check your email settings.",
-          debug: {
-            contractId: contractId,
-            clientEmail: contract.clientEmail,
-            contractNumber: contract.contractNumber,
-            emailSent: false
-          }
-        });
+        res.status(500).json({ message: "Failed to send contract email" });
       }
+      
     } catch (error) {
       console.error("Error sending contract email:", error);
       res.status(500).json({ message: "Failed to send contract email" });

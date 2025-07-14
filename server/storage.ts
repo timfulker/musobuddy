@@ -238,6 +238,23 @@ export class DatabaseStorage implements IStorage {
     return updatedContract;
   }
 
+  async updateContractCloudStorage(id: number, cloudStorageUrl: string, cloudStorageKey: string, userId: string): Promise<Contract | undefined> {
+    console.log('☁️ Storage updateContractCloudStorage called:', { id, userId, cloudStorageUrl });
+    
+    const [updatedContract] = await db
+      .update(contracts)
+      .set({ 
+        cloudStorageUrl,
+        cloudStorageKey,
+        updatedAt: new Date()
+      })
+      .where(and(eq(contracts.id, id), eq(contracts.userId, userId)))
+      .returning();
+    
+    console.log('✅ Contract cloud storage updated:', updatedContract?.contractNumber);
+    return updatedContract;
+  }
+
   async deleteContract(id: number, userId: string): Promise<boolean> {
     const result = await db.delete(contracts)
       .where(and(eq(contracts.id, id), eq(contracts.userId, userId)));
@@ -455,6 +472,23 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
     console.log("🔥 Storage: Delete result - rowCount:", result.rowCount);
     return result.rowCount > 0;
+  }
+
+  async updateInvoiceCloudStorage(id: number, cloudStorageUrl: string, cloudStorageKey: string, userId: string): Promise<Invoice | undefined> {
+    console.log('☁️ Storage updateInvoiceCloudStorage called:', { id, userId, cloudStorageUrl });
+    
+    const [updatedInvoice] = await db
+      .update(invoices)
+      .set({ 
+        cloudStorageUrl,
+        cloudStorageKey,
+        updatedAt: new Date()
+      })
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
+      .returning();
+    
+    console.log('✅ Invoice cloud storage updated:', updatedInvoice?.invoiceNumber);
+    return updatedInvoice;
   }
 
   // Booking operations
