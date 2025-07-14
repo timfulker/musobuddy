@@ -247,28 +247,6 @@ export default function Contracts() {
     },
   });
 
-  const regenerateLinkMutation = useMutation({
-    mutationFn: async (contractId: number) => {
-      return apiRequest(`/api/contracts/${contractId}/regenerate-link`, {
-        method: "POST",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      toast({
-        title: "Success",
-        description: "Signing link regenerated successfully!",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to regenerate link: ${error.message}`,
-        variant: "destructive",
-      });
-    },
-  });
-
   const deleteContractMutation = useMutation({
     mutationFn: async (contractId: number) => {
       console.log("🔥 Deleting contract:", contractId);
@@ -1015,29 +993,17 @@ export default function Contracts() {
                                   Resend
                                 </Button>
                                 {isContractUnsigned(contract) && (
-                                  <>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      className="text-xs whitespace-nowrap bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200" 
-                                      onClick={() => sendReminderMutation.mutate(contract.id)}
-                                      disabled={sendReminderMutation.isPending}
-                                    >
-                                      <Mail className="w-3 h-3 mr-1" />
-                                      {sendReminderMutation.isPending ? "Sending..." : "Send Reminder"}
-                                    </Button>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      className="text-xs whitespace-nowrap bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200" 
-                                      onClick={() => regenerateLinkMutation.mutate(contract.id)}
-                                      disabled={regenerateLinkMutation.isPending}
-                                      title="Generate fresh signing link (useful when date is approaching)"
-                                    >
-                                      <RefreshCw className="w-3 h-3 mr-1" />
-                                      {regenerateLinkMutation.isPending ? "Regenerating..." : "Regenerate Link"}
-                                    </Button>
-                                  </>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="text-xs whitespace-nowrap bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200" 
+                                    onClick={() => sendReminderMutation.mutate(contract.id)}
+                                    disabled={sendReminderMutation.isPending}
+                                    title="Send reminder email to client (automatically refreshes signing link if needed)"
+                                  >
+                                    <Mail className="w-3 h-3 mr-1" />
+                                    {sendReminderMutation.isPending ? "Sending..." : "Send Reminder"}
+                                  </Button>
                                 )}
                               </>
                             )}
