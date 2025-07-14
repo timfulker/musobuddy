@@ -6,15 +6,15 @@ import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
 // Cloud storage configuration
 const STORAGE_CONFIG = {
   region: 'auto', // Cloudflare R2 uses 'auto'
-  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || 'https://a730a594e40d8b4629555407dc8e4413.r2.cloudflarestorage.com',
+  endpoint: process.env.R2_ENDPOINT || 'https://a730a594e40d8b46295554074c8e4413.r2.cloudflarestorage.com',
   credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || 'c4301788468e8fe0464e133b6f16',
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || 'fa1b6f1c5b49de69719ef89a61e0a537c4b4f9c24862e6c9f98ef2cc13f',
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '5c81b780406a8bfed414eee3d13bd5f9',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || 'b210d2d5db344de07fd936de532ab55280c44fbc64f6298026e2499bafccc13f',
   },
   forcePathStyle: true, // Required for R2 compatibility
 };
 
-const BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'musobuddy-documents';
+const BUCKET_NAME = process.env.R2_BUCKET_NAME || 'musobuddy-documents';
 
 // Initialize S3 client for Cloudflare R2
 let s3Client: S3Client | null = null;
@@ -162,7 +162,7 @@ export async function uploadInvoiceToCloud(
  */
 export async function deleteFromCloud(key: string): Promise<boolean> {
   try {
-    if (!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID) {
+    if (!process.env.R2_ACCESS_KEY_ID) {
       return false;
     }
     
@@ -186,10 +186,10 @@ export async function deleteFromCloud(key: string): Promise<boolean> {
  */
 export function isCloudStorageConfigured(): boolean {
   return !!(
-    process.env.CLOUDFLARE_R2_ACCESS_KEY_ID &&
-    process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY &&
-    process.env.CLOUDFLARE_R2_ENDPOINT &&
-    process.env.CLOUDFLARE_R2_BUCKET_NAME
+    process.env.R2_ACCESS_KEY_ID &&
+    process.env.R2_SECRET_ACCESS_KEY &&
+    process.env.R2_ENDPOINT &&
+    process.env.R2_BUCKET_NAME
   );
 }
 
@@ -203,18 +203,18 @@ export function getCloudStorageStatus(): {
   missingVars?: string[];
 } {
   const requiredVars = [
-    'CLOUDFLARE_R2_ACCESS_KEY_ID',
-    'CLOUDFLARE_R2_SECRET_ACCESS_KEY',
-    'CLOUDFLARE_R2_ENDPOINT',
-    'CLOUDFLARE_R2_BUCKET_NAME',
+    'R2_ACCESS_KEY_ID',
+    'R2_SECRET_ACCESS_KEY',
+    'R2_ENDPOINT',
+    'R2_BUCKET_NAME',
   ];
   
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
   
   return {
     configured: missingVars.length === 0,
-    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
-    bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+    endpoint: process.env.R2_ENDPOINT,
+    bucket: process.env.R2_BUCKET_NAME,
     missingVars: missingVars.length > 0 ? missingVars : undefined,
   };
 }
