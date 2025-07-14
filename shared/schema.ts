@@ -41,7 +41,7 @@ export const enquiries = pgTable("enquiries", {
   eventType: varchar("event_type"),
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
   estimatedValue: varchar("estimated_value"),
-  status: varchar("status").notNull().default("new"), // new, qualified, contract_sent, confirmed, rejected
+  status: varchar("status").notNull().default("new"), // new, booking_in_progress, contract_sent, confirmed, rejected
   notes: text("notes"),
   originalEmailContent: text("original_email_content"), // Store original email content
   applyNowLink: varchar("apply_now_link"), // Store "Apply Now" link from Encore emails

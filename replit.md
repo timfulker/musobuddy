@@ -1039,6 +1039,8 @@ All core features implemented and operational:
 - July 14, 2025. Page naming improvement for better user understanding:
   * **Renamed "Enquiries" to "Bookings"**: Updated navigation sidebar and page header to reflect full booking lifecycle
   * **Enhanced Page Description**: Changed from "Manage your client enquiries and track your pipeline" to "Manage your booking lifecycle from enquiry to confirmed gig"
+  * **Conservative Implementation**: Maintained all underlying code structure (database, API routes, file names) as "enquiries" for system stability
+  * **User Experience Focus**: Changed only user-facing labels while preserving technical infrastructure to avoid breaking changes
   * **Better User Understanding**: Page name now accurately reflects that it handles enquiries, follow-ups, and confirmed bookings
   * **Improved Navigation**: Sidebar now shows "Bookings" to better communicate the page's comprehensive functionality
   * **Status**: Page naming updated throughout interface for clearer user experience

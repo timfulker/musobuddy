@@ -17,7 +17,7 @@ export default function KanbanBoard() {
 
   const groupedEnquiries = {
     new: enquiries.filter((e: Enquiry) => e.status === "new"),
-    qualified: enquiries.filter((e: Enquiry) => e.status === "qualified"),
+    booking_in_progress: enquiries.filter((e: Enquiry) => e.status === "booking_in_progress"),
     contract_sent: enquiries.filter((e: Enquiry) => e.status === "contract_sent"),
     confirmed: enquiries.filter((e: Enquiry) => e.status === "confirmed"),
   };
@@ -87,7 +87,7 @@ export default function KanbanBoard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "new": return "bg-gray-100 text-gray-800";
-      case "qualified": return "bg-blue-100 text-blue-800";
+      case "booking_in_progress": return "bg-blue-100 text-blue-800";
       case "contract_sent": return "bg-purple-100 text-purple-800";
       case "confirmed": return "bg-green-100 text-green-800";
       case "rejected": return "bg-red-100 text-red-800";
@@ -96,7 +96,7 @@ export default function KanbanBoard() {
   };
 
   const needsResponse = (enquiry: Enquiry) => {
-    return enquiry.status === "new" || enquiry.status === "qualified";
+    return enquiry.status === "new" || enquiry.status === "booking_in_progress";
   };
 
   if (isLoading) {
@@ -238,10 +238,10 @@ export default function KanbanBoard() {
             <div className="w-96">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium text-gray-900">In Progress</h4>
-                <Badge className="bg-blue-100 text-blue-600">{groupedEnquiries.qualified.length}</Badge>
+                <Badge className="bg-blue-100 text-blue-600">{groupedEnquiries.booking_in_progress.length}</Badge>
               </div>
               <div className="space-y-3">
-                {groupedEnquiries.qualified.map((enquiry: Enquiry) => {
+                {groupedEnquiries.booking_in_progress.map((enquiry: Enquiry) => {
                   const dateBox = formatDateBox(enquiry.eventDate!);
                   const conflict = getEnquiryConflict(enquiry.id);
                   
@@ -306,7 +306,7 @@ export default function KanbanBoard() {
                     </Link>
                   );
                 })}
-                {groupedEnquiries.qualified.length === 0 && (
+                {groupedEnquiries.booking_in_progress.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <p className="text-sm">No enquiries in progress</p>
                   </div>

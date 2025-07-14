@@ -427,7 +427,7 @@ export default function Enquiries() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "new": return "bg-gray-100 text-gray-800";
-      case "qualified": return "bg-blue-100 text-blue-800";
+      case "booking_in_progress": return "bg-blue-100 text-blue-800";
       case "contract_sent": return "bg-purple-100 text-purple-800";
       case "confirmed": return "bg-green-100 text-green-800";
       case "rejected": return "bg-red-100 text-red-800";
@@ -498,7 +498,7 @@ export default function Enquiries() {
         if (!b.eventDate) return -1;
         return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
       case "status":
-        const statusOrder = { "new": 0, "qualified": 1, "contract_sent": 2, "confirmed": 3, "rejected": 4 };
+        const statusOrder = { "new": 0, "booking_in_progress": 1, "contract_sent": 2, "confirmed": 3, "rejected": 4 };
         return (statusOrder[a.status as keyof typeof statusOrder] || 99) - (statusOrder[b.status as keyof typeof statusOrder] || 99);
       default:
         return 0;
@@ -517,7 +517,7 @@ export default function Enquiries() {
     }
     
     // Check if last contact was over 72 hours ago for in-progress enquiries
-    if (enquiry.status === "qualified" && enquiry.lastContactedAt) {
+    if (enquiry.status === "booking_in_progress" && enquiry.lastContactedAt) {
       const hoursSinceContact = (new Date().getTime() - new Date(enquiry.lastContactedAt).getTime()) / (1000 * 60 * 60);
       return hoursSinceContact > 72;
     }
@@ -896,7 +896,7 @@ export default function Enquiries() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="qualified">Qualified</SelectItem>
+                  <SelectItem value="booking_in_progress">Booking in Progress</SelectItem>
                   <SelectItem value="contract_sent">Contract Sent</SelectItem>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
