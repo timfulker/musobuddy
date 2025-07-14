@@ -1954,9 +1954,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Status is required' });
       }
       
-      const allowedStatuses = ['confirmed', 'completed', 'cancelled'];
+      const allowedStatuses = ['confirmed', 'signed', 'completed', 'cancelled'];
       if (!allowedStatuses.includes(status)) {
-        return res.status(400).json({ error: 'Invalid status. Must be one of: confirmed, completed, cancelled' });
+        return res.status(400).json({ error: 'Invalid status. Must be one of: confirmed, signed, completed, cancelled' });
       }
       
       const updatedBooking = await storage.updateBooking(bookingId, { status }, userId);

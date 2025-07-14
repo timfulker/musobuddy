@@ -111,7 +111,7 @@ export const bookings = pgTable("bookings", {
   performanceDuration: integer("performance_duration"), // Duration in minutes
   venue: varchar("venue").notNull(),
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
-  status: varchar("status").notNull().default("confirmed"), // confirmed, completed, cancelled
+  status: varchar("status").notNull().default("confirmed"), // confirmed, signed, completed, cancelled
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
