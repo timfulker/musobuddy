@@ -1176,9 +1176,9 @@ export default function Invoices() {
                         
                         {/* Data grid and buttons container */}
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                          {/* Invoice details */}
-                          <div className="lg:w-2/3">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          {/* Invoice details - fixed width to prevent button interference */}
+                          <div className="lg:min-w-0 lg:flex-1">
+                            <div className="grid grid-cols-4 gap-4 text-sm">
                               <div>
                                 <span className="font-medium text-gray-600 dark:text-gray-400">Client:</span>
                                 <p className="text-gray-900 dark:text-gray-100 truncate">{invoice.clientName}</p>
@@ -1199,7 +1199,7 @@ export default function Invoices() {
                           </div>
                           
                           {/* Action buttons */}
-                          <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end lg:w-1/3">
+                          <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
                         {/* View button - available for all statuses */}
                         <Button 
                           size="sm" 
