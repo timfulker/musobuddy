@@ -8,9 +8,10 @@ const STORAGE_CONFIG = {
   region: 'auto', // Cloudflare R2 uses 'auto'
   endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || 'https://a730a594e40d8b4629555407dc8e4413.r2.cloudflarestorage.com',
   credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || 'Hkmu_3Tbqq2DYHLo24b8oMAoV2vHbLcGTOOFHq',
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || 'Hkmu_3Tbqq2DYHLo24b8oMAoV2vHbLcGTOOFHq',
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || 'c4301788468e8fe0464e133b6f16',
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || 'fa1b6f1c5b49de69719ef89a61e0a537c4b4f9c24862e6c9f98ef2cc13f',
   },
+  forcePathStyle: true, // Required for R2 compatibility
 };
 
 const BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'musobuddy-documents';

@@ -8,14 +8,15 @@ async function testR2Direct() {
   try {
     console.log('🧪 Testing R2 direct connection...');
     
-    // R2 configuration
+    // R2 configuration - try jurisdiction-specific endpoint
     const s3Client = new S3Client({
       region: 'auto',
-      endpoint: 'https://a730a594e40d8b4629555407dc8e4413.r2.cloudflarestorage.com',
+      endpoint: 'https://a730a594e40d8b4629555407dc8e4413.eu.r2.cloudflarestorage.com',
       credentials: {
-        accessKeyId: 'Hkmu_3Tbqq2DYHLo24b8oMAoV2vHbLcGTOOFHq',
-        secretAccessKey: 'Hkmu_3Tbqq2DYHLo24b8oMAoV2vHbLcGTOOFHq',
+        accessKeyId: 'c4301788468e8fe0464e133b6f16',
+        secretAccessKey: 'fa1b6f1c5b49de69719ef89a61e0a537c4b4f9c24862e6c9f98ef2cc13f',
       },
+      forcePathStyle: true,
     });
     
     // Create test content
