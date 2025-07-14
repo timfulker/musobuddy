@@ -1182,7 +1182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data.reminderEnabled = false;
       }
       if (!data.hasOwnProperty('reminderDays')) {
-        data.reminderDays = 7;
+        data.reminderDays = 3;
       }
       
       console.log('🔥 CONTRACT CREATION: About to parse with schema');
@@ -1222,6 +1222,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: 'Failed to process contract reminders',
+        error: error.message 
+      });
+    }
+  });
+
+  // Silent URL maintenance (no emails sent, just keeps URLs fresh)
+  app.post('/api/contracts/maintain-urls', isAuthenticated, async (req: any, res) => {
+    try {
+      const { urlMaintenanceService } = await import('./url-maintenance-service');
+      
+      const result = await urlMaintenanceService.maintainContractSigningUrls();
+      
+      res.json({
+        success: true,
+        message: `URL maintenance completed: ${result.regenerated} regenerated, ${result.failed} failed`,
+        result
+      });
+    } catch (error) {
+      console.error('Error maintaining contract URLs:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to maintain contract URLs',
         error: error.message 
       });
     }

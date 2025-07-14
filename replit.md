@@ -835,8 +835,11 @@ This applies to any changes in:
   * **UI Simplification**: Removed separate "Regenerate Link" button - "Send Reminder" now automatically handles URL regeneration
   * **Improved User Experience**: Single "Send Reminder" button combines email notification with automatic URL refresh when needed
   * **Reminder Interval Optimization**: Updated reminder options to 1, 3, or 5 days maximum (removed 7+ day options)
-  * **Automatic System Integration**: Short-term reminders complement 6-day automatic URL regeneration system
+  * **Silent URL Maintenance System**: Created separate URLMaintenanceService that regenerates URLs without sending emails
+  * **Eliminated Redundant Notifications**: Automatic Day 6 reminder removed - user's chosen schedule handles all client communication
+  * **Intelligent URL Regeneration**: URLs silently regenerated at 6 days, user reminders only sent at chosen intervals
   * **Default Reminder Frequency**: Changed from 7 days to 3 days for better client follow-up
+  * **Separate Maintenance Endpoint**: Added /api/contracts/maintain-urls for silent URL maintenance
   * **Status**: Complete URL regeneration system operational - contract signing guaranteed accessible for urgent situations
 
 ## Phase 1 Complete - July 09, 2025 ✅
