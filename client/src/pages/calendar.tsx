@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, type Booking } from "@shared/schema";
 import { useLocation, Link } from "wouter";
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import CalendarImport from "@/components/calendar-import";
 import Sidebar from "@/components/sidebar";
+import BookingStatusDialog from "@/components/BookingStatusDialog";
 
 const bookingFormSchema = insertBookingSchema.extend({
   eventDate: z.string(),
@@ -30,6 +31,8 @@ export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showExpiredEnquiries, setShowExpiredEnquiries] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [statusUpdateDialogOpen, setStatusUpdateDialogOpen] = useState(false);
 
   // Always call hooks in the same order
   const [location, navigate] = useLocation();
@@ -126,6 +129,32 @@ export default function Calendar() {
       toast({
         title: "Error",
         description: "Failed to transfer enquiries to calendar. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateBookingStatusMutation = useMutation({
+    mutationFn: async ({ bookingId, status }: { bookingId: number; status: string }) => {
+      return await apiRequest(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      setStatusUpdateDialogOpen(false);
+      setSelectedBooking(null);
+      toast({
+        title: "Success",
+        description: "Booking status updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -1148,8 +1177,16 @@ export default function Calendar() {
                                     <span className="font-semibold text-green-600">
                                       £{Number(booking.fee).toLocaleString()}
                                     </span>
-                                    <Button size="sm" variant="outline">
-                                      View Details
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => {
+                                        setSelectedBooking(booking);
+                                        setStatusUpdateDialogOpen(true);
+                                      }}
+                                    >
+                                      <Settings className="w-4 h-4 mr-1" />
+                                      Update Status
                                     </Button>
                                   </div>
                                 </div>
@@ -1432,6 +1469,13 @@ export default function Calendar() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Booking Status Update Dialog */}
+      <BookingStatusDialog
+        booking={selectedBooking}
+        open={statusUpdateDialogOpen}
+        onOpenChange={setStatusUpdateDialogOpen}
+      />
     </div>
   );
 }

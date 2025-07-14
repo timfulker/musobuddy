@@ -20,6 +20,7 @@ import { Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
+import BookingStatusDialog from "@/components/BookingStatusDialog";
 import { 
   analyzeConflictSeverity, 
   getConflictCardStyling, 
@@ -44,6 +45,8 @@ export default function Enquiries() {
   const [respondDialogOpen, setRespondDialogOpen] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
+  const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -562,8 +565,8 @@ export default function Enquiries() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Enquiries</h1>
-                <p className="text-gray-600 dark:text-gray-400">Manage your client enquiries and track your pipeline</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Bookings</h1>
+                <p className="text-gray-600 dark:text-gray-400">Manage your booking lifecycle from enquiry to confirmed gig</p>
               </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

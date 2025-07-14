@@ -1943,6 +1943,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update booking status
+  app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bookingId = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ error: 'Status is required' });
+      }
+      
+      const allowedStatuses = ['confirmed', 'completed', 'cancelled'];
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status. Must be one of: confirmed, completed, cancelled' });
+      }
+      
+      const updatedBooking = await storage.updateBooking(bookingId, { status }, userId);
+      
+      if (!updatedBooking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error("Error updating booking:", error);
+      res.status(500).json({ message: "Failed to update booking" });
+    }
+  });
+
   // Compliance document routes
   app.get('/api/compliance', isAuthenticated, async (req: any, res) => {
     try {
