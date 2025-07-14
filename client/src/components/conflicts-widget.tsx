@@ -39,7 +39,8 @@ export default function ConflictsWidget() {
 
   const { data: conflicts = [], isLoading } = useQuery({
     queryKey: ["/api/conflicts"],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 30000, // 30 seconds
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const unresolvedConflicts = conflicts.filter((c: BookingConflict) => !c.resolved);

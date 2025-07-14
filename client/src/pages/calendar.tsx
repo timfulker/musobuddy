@@ -74,6 +74,8 @@ export default function Calendar() {
 
   const { data: conflicts = [], error: conflictsError } = useQuery({
     queryKey: ["/api/conflicts"],
+    staleTime: 30000, // 30 seconds
+    cacheTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
     retryDelay: 1000,
   });

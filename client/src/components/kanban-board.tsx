@@ -13,6 +13,8 @@ export default function KanbanBoard() {
 
   const { data: conflicts = [] } = useQuery({
     queryKey: ["/api/conflicts"],
+    staleTime: 30000, // 30 seconds
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const groupedEnquiries = {
