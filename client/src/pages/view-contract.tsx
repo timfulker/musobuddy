@@ -46,15 +46,40 @@ export default function ViewContract() {
     
     const fetchContract = async () => {
       try {
-        // For public routes, we can use fetch directly since they don't require authentication
-        const response = await fetch(`/api/contracts/public/${contractId}`);
+        // First try authenticated route (for logged-in users to view their own contracts including drafts)
+        let response = await fetch(`/api/contracts`, {
+          credentials: 'include' // Include cookies for authentication
+        });
+        
+        if (response.ok) {
+          const allContracts = await response.json();
+          const contractData = allContracts.find((c: Contract) => c.id === parseInt(contractId));
+          
+          if (contractData) {
+            setContract(contractData);
+            
+            // Get user settings for business details (authenticated route)
+            const settingsResponse = await fetch(`/api/settings`, {
+              credentials: 'include'
+            });
+            if (settingsResponse.ok) {
+              const settings = await settingsResponse.json();
+              setUserSettings(settings);
+            }
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // Fallback to public route (for clients viewing sent/signed contracts)
+        response = await fetch(`/api/contracts/public/${contractId}`);
         if (!response.ok) {
           throw new Error('Contract not found');
         }
         const contractData = await response.json();
         setContract(contractData);
         
-        // Get user settings for business details
+        // Get user settings for business details (public route)
         const settingsResponse = await fetch(`/api/settings/public/${contractData.userId}`);
         if (settingsResponse.ok) {
           const settings = await settingsResponse.json();
