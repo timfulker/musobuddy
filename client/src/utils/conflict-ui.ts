@@ -24,7 +24,7 @@ export function analyzeConflictSeverity(
   enquiry: any,
   analysis: ConflictAnalysis
 ): ConflictSeverity {
-  // No conflicts
+  // No conflicts - align with calendar's positive green
   if (analysis.conflictCount === 0) {
     return {
       level: 'none',
@@ -38,28 +38,28 @@ export function analyzeConflictSeverity(
     };
   }
 
-  // Critical conflicts (Red + Block Action) - Confirmed booking conflicts
+  // Critical conflicts - Use crimson to avoid calendar's red (cancelled)
   if (analysis.confirmedBooking) {
     return {
       level: 'critical',
-      color: 'red',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-300',
-      textColor: 'text-red-800',
+      color: 'crimson',
+      bgColor: 'bg-rose-50',
+      borderColor: 'border-rose-300',
+      textColor: 'text-rose-800',
       icon: '🚫',
       message: 'CONFIRMED BOOKING CONFLICT - Double booking risk',
       canProceed: false
     };
   }
 
-  // Warning conflicts (Orange + Proceed with Caution) - Time/venue overlaps between enquiries
+  // Warning conflicts - Use amber to avoid calendar's blue (in progress)
   if (analysis.hasTimeOverlap && !analysis.sameClient) {
     return {
       level: 'warning',
-      color: 'orange',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-300',
-      textColor: 'text-orange-800',
+      color: 'amber',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-300',
+      textColor: 'text-amber-800',
       icon: '⚠️',
       message: 'Time overlap with other enquiries - review carefully',
       canProceed: true
@@ -70,37 +70,37 @@ export function analyzeConflictSeverity(
   if (analysis.sameVenue && !analysis.sameClient) {
     return {
       level: 'warning',
-      color: 'orange',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-300',
-      textColor: 'text-orange-800',
+      color: 'amber',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-300',
+      textColor: 'text-amber-800',
       icon: '📍',
       message: 'Same venue with other enquiries - check logistics',
       canProceed: true
     };
   }
 
-  // Same client conflicts (Blue - often resolvable)
+  // Same client conflicts - Use teal to avoid calendar's blue
   if (analysis.sameClient) {
     return {
       level: 'info',
-      color: 'blue',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-300',
-      textColor: 'text-blue-800',
+      color: 'teal',
+      bgColor: 'bg-teal-50',
+      borderColor: 'border-teal-300',
+      textColor: 'text-teal-800',
       icon: '👤',
       message: 'Same client - multiple events possible',
       canProceed: true
     };
   }
 
-  // Soft conflicts (Yellow/Amber - same day between enquiries)
+  // Soft conflicts - Use slate for neutral same-day conflicts
   return {
     level: 'info',
-    color: 'amber',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-300',
-    textColor: 'text-amber-800',
+    color: 'slate',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-800',
     icon: '📅',
     message: 'Same day as other enquiries - check timing',
     canProceed: true
@@ -127,13 +127,13 @@ export function getConflictBadge(severity: ConflictSeverity, conflictCount: numb
   
   switch (severity.level) {
     case 'critical':
-      return `${baseClasses} bg-red-100 text-red-800 border border-red-200`;
+      return `${baseClasses} bg-rose-100 text-rose-800 border border-rose-200`;
     case 'warning':
-      return `${baseClasses} bg-orange-100 text-orange-800 border border-orange-200`;
-    case 'info':
-      return `${baseClasses} bg-blue-100 text-blue-800 border border-blue-200`;
-    default:
       return `${baseClasses} bg-amber-100 text-amber-800 border border-amber-200`;
+    case 'info':
+      return `${baseClasses} ${severity.color === 'teal' ? 'bg-teal-100 text-teal-800 border border-teal-200' : 'bg-slate-100 text-slate-800 border border-slate-200'}`;
+    default:
+      return `${baseClasses} bg-slate-100 text-slate-800 border border-slate-200`;
   }
 }
 

@@ -670,7 +670,7 @@ export default function Calendar() {
     confirmed: "bg-green-500 text-white",
     completed: "bg-purple-500 text-white",
     cancelled: "bg-red-500 text-white",
-    newEnquiry: "bg-yellow-500 text-white",
+    newEnquiry: "bg-yellow-400 text-white",
     inProgressEnquiry: "bg-blue-500 text-white",
     confirmedEnquiry: "bg-green-500 text-white",
     signedContract: "bg-emerald-500 text-white",
@@ -719,7 +719,7 @@ export default function Calendar() {
         background: 'bg-yellow-50',
         border: 'border-yellow-200',
         text: 'text-yellow-800',
-        accent: 'bg-yellow-500'
+        accent: 'bg-yellow-400'
       };
     }
     
@@ -1055,7 +1055,7 @@ export default function Calendar() {
                       <span>Completed</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                       <span>New Enquiry</span>
                     </div>
                     <div className="flex items-center space-x-1">

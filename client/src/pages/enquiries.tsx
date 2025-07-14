@@ -941,23 +941,23 @@ export default function Enquiries() {
               <h3 className="font-medium text-blue-900">Conflict Indicators</h3>
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-red-800">🚫 CONFIRMED BOOKING</span>
+                  <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
+                  <span className="text-rose-800">🚫 CONFIRMED BOOKING</span>
                   <span className="text-gray-500 hidden sm:inline">- Double booking risk</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                  <span className="text-orange-800">⚠️ Warning</span>
+                  <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                  <span className="text-amber-800">⚠️ Warning</span>
                   <span className="text-gray-500 hidden sm:inline">- Time/venue conflict</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-blue-800">👤 Same Client</span>
+                  <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+                  <span className="text-teal-800">👤 Same Client</span>
                   <span className="text-gray-500 hidden sm:inline">- Multiple events</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                  <span className="text-amber-800">📅 Same Day</span>
+                  <div className="w-3 h-3 bg-slate-500 rounded-full"></div>
+                  <span className="text-slate-800">📅 Same Day</span>
                   <span className="text-gray-500 hidden sm:inline">- Check timing</span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1012,9 +1012,10 @@ export default function Enquiries() {
                       <div className="pr-12 flex gap-6">
                         {/* Date Box - Encore Style with Graduated Conflict Indicator */}
                         <div className={`relative flex-shrink-0 w-20 h-20 border-2 ${
-                          severity.level === 'critical' ? 'border-red-300 bg-red-100' :
-                          severity.level === 'warning' ? 'border-orange-300 bg-orange-100' :
-                          severity.level === 'info' ? 'border-blue-300 bg-blue-100' :
+                          severity.level === 'critical' ? 'border-rose-300 bg-rose-100' :
+                          severity.level === 'warning' ? 'border-amber-300 bg-amber-100' :
+                          severity.level === 'info' && severity.color === 'teal' ? 'border-teal-300 bg-teal-100' :
+                          severity.level === 'info' ? 'border-slate-300 bg-slate-100' :
                           'border-gray-200 bg-white'
                         } rounded-lg flex flex-col items-center justify-center`}>
                           <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
@@ -1022,10 +1023,11 @@ export default function Enquiries() {
                           <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
                           {hasConflicts && (
                             <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
-                              severity.level === 'critical' ? 'bg-red-500' :
-                              severity.level === 'warning' ? 'bg-orange-500' :
-                              severity.level === 'info' ? 'bg-blue-500' :
-                              'bg-amber-500'
+                              severity.level === 'critical' ? 'bg-rose-500' :
+                              severity.level === 'warning' ? 'bg-amber-500' :
+                              severity.level === 'info' && severity.color === 'teal' ? 'bg-teal-500' :
+                              severity.level === 'info' ? 'bg-slate-500' :
+                              'bg-gray-500'
                             }`}>
                               <span className="text-white text-xs font-bold">!</span>
                             </div>
