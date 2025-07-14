@@ -1235,24 +1235,7 @@ export default function Enquiries() {
                                 💡 {severity.message}
                               </div>
 
-                              {/* Quick Action Buttons */}
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {getConflictActions(severity).map((action, index) => (
-                                  <Button
-                                    key={index}
-                                    variant={action.variant}
-                                    size="sm"
-                                    className="text-xs"
-                                    onClick={() => {
-                                      // Handle action - this could be expanded with specific handlers
-                                      console.log(`${action.action} clicked for enquiry ${enquiry.id}`);
-                                    }}
-                                  >
-                                    <span className="mr-1">{action.icon}</span>
-                                    {action.label}
-                                  </Button>
-                                ))}
-                              </div>
+
                             </div>
                           )}
                           
