@@ -821,6 +821,16 @@ This applies to any changes in:
   * **Professional Typography**: Typed signatures use "Brush Script MT" font for authentic appearance
   * **Cross-Origin Security**: Proper CORS configuration allows cloud-hosted pages to securely communicate with app
   * **Status**: Cloud signing system now fully operational with improved usability for both mobile and desktop users
+- July 14, 2025. Manual URL regeneration system implemented for urgent contract situations:
+  * **Manual Regeneration API**: Added `/api/contracts/:id/regenerate-link` endpoint for on-demand URL refresh
+  * **Smart URL Regeneration**: Uses existing cloud storage key when available, creates new signing page if needed
+  * **Database Tracking**: Updates `signingUrlCreatedAt` field when links are manually regenerated
+  * **Frontend UI Enhancement**: Added purple "Regenerate Link" button next to "Send Reminder" for unsigned contracts
+  * **User Experience**: Shows "Regenerating..." loading state with helpful tooltip explaining usage
+  * **Dual Regeneration System**: Provides both automatic 7-day URL regeneration AND manual on-demand refresh
+  * **Email Button Readability**: Fixed contract email button styling - changed from dark green to bright blue for better text contrast
+  * **Professional Appearance**: Bright blue button (#2563eb) with white text ensures excellent readability in all email clients
+  * **Status**: Complete URL regeneration system operational - contract signing guaranteed accessible for urgent situations
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
