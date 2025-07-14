@@ -586,7 +586,20 @@ function generateContractSigningPageHtml(
             <p>Contract Signing - ${contract.contractNumber}</p>
         </div>
         
-        <div class="contract-details">
+        <!-- Contract Status Check -->
+        <div id="contractStatus" style="display: none;">
+            <div style="background: #d1fae5; color: #065f46; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <h2>✅ Contract Already Signed</h2>
+                <p>This contract has already been signed and is now complete.</p>
+                <p><strong>Signed on:</strong> <span id="signedDate"></span></p>
+                <p><strong>Signed by:</strong> <span id="signedBy"></span></p>
+                <div style="margin-top: 20px;">
+                    <a href="${appUrl}/api/contracts/${contract.id}/download" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Download Signed Contract</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="contract-details" id="contractDetails">
             <h2>Contract Details</h2>
             
             <div class="detail-grid">
@@ -612,7 +625,7 @@ function generateContractSigningPageHtml(
                 
                 <div class="detail-item">
                     <div class="detail-label">Performance Fee</div>
-                    <div class="detail-value">£${contract.performanceFee}</div>
+                    <div class="detail-value">£${contract.fee}</div>
                 </div>
                 
                 <div class="detail-item">
@@ -627,7 +640,7 @@ function generateContractSigningPageHtml(
             </div>
         </div>
         
-        <div class="signing-section">
+        <div class="signing-section" id="signing-section">
             <h2>Digital Signature</h2>
             <p style="margin-bottom: 30px; color: #64748b;">
                 Please review the contract details above and provide your digital signature below to confirm acceptance.
@@ -699,6 +712,33 @@ function generateContractSigningPageHtml(
     </div>
     
     <script>
+        // Check contract status on page load
+        async function checkContractStatus() {
+            try {
+                const response = await fetch('${appUrl}/api/contracts/public/${contract.id}');
+                if (response.ok) {
+                    const contractData = await response.json();
+                    if (contractData.status === 'signed') {
+                        // Contract is already signed, show completion message
+                        document.getElementById('contractStatus').style.display = 'block';
+                        document.getElementById('contractDetails').style.display = 'none';
+                        document.getElementById('signing-section').style.display = 'none';
+                        
+                        // Update signed details
+                        const signedDate = new Date(contractData.signedAt).toLocaleString('en-GB');
+                        document.getElementById('signedDate').textContent = signedDate;
+                        document.getElementById('signedBy').textContent = contractData.clientName;
+                        
+                        return true; // Contract is signed
+                    }
+                }
+                return false; // Contract not signed
+            } catch (error) {
+                console.error('Error checking contract status:', error);
+                return false; // Assume not signed on error
+            }
+        }
+
         // Signature canvas functionality
         const canvas = document.getElementById('signatureCanvas');
         const ctx = canvas.getContext('2d');
@@ -834,6 +874,9 @@ function generateContractSigningPageHtml(
         document.getElementById('clientName').addEventListener('input', updateSubmitButton);
         document.getElementById('typedSignature').addEventListener('input', updateSubmitButton);
         
+        // Check contract status on page load
+        checkContractStatus();
+
         // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();

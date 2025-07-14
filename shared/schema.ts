@@ -68,6 +68,14 @@ export const contracts = pgTable("contracts", {
   eventEndTime: varchar("event_end_time"), // End time for performance
   performanceDuration: integer("performance_duration"), // Duration in minutes
   venue: varchar("venue").notNull(),
+  venueAddress: text("venue_address"), // Full venue address
+  eventType: varchar("event_type"), // Wedding, Corporate, Birthday, etc.
+  gigType: varchar("gig_type"), // Saxophone, DJ, Band, etc.
+  setupTime: varchar("setup_time"), // Time needed for setup
+  soundCheckTime: varchar("sound_check_time"), // Time for sound check
+  equipmentProvided: text("equipment_provided"), // What equipment performer will bring
+  clientRequirements: text("client_requirements"), // Special client requests
+  dressCode: varchar("dress_code"), // Dress code requirements
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
   deposit: decimal("deposit", { precision: 10, scale: 2 }),
   terms: text("terms"),

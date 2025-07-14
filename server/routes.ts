@@ -2056,6 +2056,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         console.log('🔥 CONTRACT SIGNING: Sending client confirmation email...');
+        console.log('🔥 CONTRACT SIGNING: Client email data:', {
+          to: clientEmailData.to,
+          from: clientEmailData.from,
+          subject: clientEmailData.subject,
+          hasReplyTo: !!clientEmailData.replyTo
+        });
         const clientEmailResult = await sendEmail(clientEmailData);
         console.log('🔥 CONTRACT SIGNING: Client email result:', clientEmailResult);
         
@@ -2110,6 +2116,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           console.log('🔥 CONTRACT SIGNING: Sending performer confirmation email...');
+          console.log('🔥 CONTRACT SIGNING: Performer email data:', {
+            to: performerEmailData.to,
+            from: performerEmailData.from,
+            subject: performerEmailData.subject,
+            hasReplyTo: !!performerEmailData.replyTo
+          });
           const performerEmailResult = await sendEmail(performerEmailData);
           console.log('🔥 CONTRACT SIGNING: Performer email result:', performerEmailResult);
         }
