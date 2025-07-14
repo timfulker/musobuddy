@@ -111,31 +111,13 @@ export async function sendContractEmail(
   }
 ): Promise<boolean> {
   try {
-    console.log('📧 Sending contract email with hybrid approach:', contract.contractNumber);
+    console.log('📧 Sending contract email with attachment:', contract.contractNumber);
     
     // Generate PDF buffer
     const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
     
-    // Upload to cloud storage first (if configured)
-    let cloudStorageUrl: string | null = null;
-    if (isCloudStorageConfigured()) {
-      console.log('☁️ Uploading contract to cloud storage...');
-      const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
-      
-      if (cloudResult.success) {
-        cloudStorageUrl = cloudResult.url!;
-        
-        // Update contract with cloud storage URL
-        await storage.updateContractCloudStorage(
-          contract.id,
-          cloudResult.url!,
-          cloudResult.key!,
-          contract.userId
-        );
-      } else {
-        console.warn('⚠️ Cloud storage upload failed:', cloudResult.error);
-      }
-    }
+    // Simple attachment-only approach - no cloud storage needed
+    console.log('📎 Using attachment-only approach for reliable delivery');
     
     // Prepare email content
     const businessName = userSettings?.businessName || 'MusoBuddy';
@@ -148,13 +130,12 @@ export async function sendContractEmail(
       ? `Contract Signed - ${contract.contractNumber}`
       : `Contract for ${contract.clientName} - ${contract.contractNumber}`;
     
-    // Generate email HTML with hybrid approach
+    // Generate email HTML - attachment-only approach
     const emailHtml = generateContractEmailHtml(
       contract,
       userSettings,
       customMessage,
-      isSignedContract,
-      cloudStorageUrl
+      isSignedContract
     );
     
     // Create email with PDF attachment
@@ -178,11 +159,8 @@ export async function sendContractEmail(
     const success = await sendEmail(emailData);
     
     if (success) {
-      console.log('✅ Contract email sent successfully with hybrid approach');
-      console.log('📎 PDF attached to email for immediate access');
-      if (cloudStorageUrl) {
-        console.log('🔗 Static link included for permanent access');
-      }
+      console.log('✅ Contract email sent successfully with attachment');
+      console.log('📎 PDF attached to email for client access');
     }
     
     return success;
@@ -207,7 +185,7 @@ export async function sendInvoiceEmail(
     // Generate PDF buffer
     const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
     
-    // Upload to cloud storage first (if configured)
+    // Upload to cloud storage first (if configured) for hybrid reliability
     let cloudStorageUrl: string | null = null;
     if (isCloudStorageConfigured()) {
       console.log('☁️ Uploading invoice to cloud storage...');
@@ -223,9 +201,12 @@ export async function sendInvoiceEmail(
           cloudResult.key!,
           invoice.userId
         );
+        console.log('✅ Invoice uploaded to cloud storage successfully');
       } else {
         console.warn('⚠️ Cloud storage upload failed:', cloudResult.error);
       }
+    } else {
+      console.log('📎 Cloud storage not configured, using attachment-only approach');
     }
     
     // Prepare email content
@@ -265,11 +246,8 @@ export async function sendInvoiceEmail(
     const success = await sendEmail(emailData);
     
     if (success) {
-      console.log('✅ Invoice email sent successfully with hybrid approach');
-      console.log('📎 PDF attached to email for immediate access');
-      if (cloudStorageUrl) {
-        console.log('🔗 Static link included for permanent access');
-      }
+      console.log('✅ Invoice email sent successfully with attachment');
+      console.log('📎 PDF attached to email for client access');
     }
     
     return success;
@@ -287,8 +265,7 @@ function generateContractEmailHtml(
   contract: Contract,
   userSettings: UserSettings | null,
   customMessage?: string,
-  isSignedContract: boolean = false,
-  cloudStorageUrl?: string | null
+  isSignedContract: boolean = false
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   const signInstructions = isSignedContract ? '' : `
@@ -311,13 +288,7 @@ function generateContractEmailHtml(
     </div>
   ` : '';
   
-  const cloudLinkHtml = cloudStorageUrl ? `
-    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
-      <h4 style="color: #64748b; margin-top: 0;">📎 Document Access</h4>
-      <p style="margin: 5px 0;">This email includes your contract as a PDF attachment.</p>
-      <p style="margin: 5px 0;">You can also download it anytime from: <a href="${cloudStorageUrl}" style="color: #3b82f6;">View Contract PDF</a></p>
-    </div>
-  ` : `
+  const attachmentHtml = `
     <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
       <p style="margin: 0; color: #64748b;">📎 Your contract is attached as a PDF to this email.</p>
     </div>
@@ -346,7 +317,7 @@ function generateContractEmailHtml(
           <p><strong>Fee:</strong> £${contract.fee}</p>
         </div>
         
-        ${cloudLinkHtml}
+        ${attachmentHtml}
         
         <p>If you have any questions, please don't hesitate to contact me.</p>
         
