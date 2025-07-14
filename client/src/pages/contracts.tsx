@@ -449,7 +449,7 @@ export default function Contracts() {
         </div>
         {!isDesktop && <MobileNav />}
       </div>
-  }
+    );
   }
 
   // Handle error state
@@ -1027,7 +1027,7 @@ export default function Contracts() {
                     {/* Agreement Statement */}
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-gray-800 leading-relaxed">
-                        An agreement made on <strong>{formatDate(new Date())}</strong> between the Hirer and the Musician 
+                        An agreement made on <strong>{formatDate(new Date().toISOString())}</strong> between the Hirer and the Musician 
                         for the performance engagement detailed below.
                       </p>
                     </div>
@@ -1221,3 +1221,4 @@ export default function Contracts() {
       <MobileNav />
     </div>
   );
+}
