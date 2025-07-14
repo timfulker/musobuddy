@@ -250,20 +250,9 @@ export default function Contracts() {
   const deleteContractMutation = useMutation({
     mutationFn: async (contractId: number) => {
       console.log("🔥 Deleting contract:", contractId);
-      const response = await fetch(`/api/contracts/${contractId}`, {
+      return apiRequest(`/api/contracts/${contractId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
       });
-
-      console.log("🔥 Delete response status:", response.status);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("🔥 Delete response data:", result);
-      return result;
     },
     onSuccess: (data) => {
       console.log("🔥 Delete success, invalidating cache");
@@ -338,17 +327,10 @@ export default function Contracts() {
 
     setBulkActionLoading(true);
     try {
-      const response = await fetch('/api/contracts/bulk-delete', {
+      const result = await apiRequest('/api/contracts/bulk-delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contractIds: selectedContracts })
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
 
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       setSelectedContracts([]);
@@ -400,18 +382,12 @@ export default function Contracts() {
 
   const handleDownloadContract = async (contract: Contract) => {
     try {
-      const response = await fetch(`/api/contracts/${contract.id}/pdf`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // For PDF downloads, we'll use the direct download route
+      const downloadLink = `/api/contracts/${contract.id}/download`;
       const a = document.createElement('a');
-      a.href = url;
+      a.href = downloadLink;
       a.download = `Contract-${contract.contractNumber}.pdf`;
       a.click();
-      window.URL.revokeObjectURL(url);
 
       toast({
         title: "Success",
