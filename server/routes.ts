@@ -1759,7 +1759,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send confirmation emails with download links (no PDF generation)
       try {
         const userSettings = await storage.getUserSettings(contract.userId);
-        // Email sending disabled - clean slate rebuild
+        const { sendEmail } = await import('./mailgun-email');
+        
+        console.log('🔥 CONTRACT SIGNING: Starting confirmation email process');
         
         // Generate contract download links
         const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
@@ -1771,7 +1773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
         
         // Always use authenticated domain for FROM to avoid SPF issues
-        const fromEmail = 'noreply@musobuddy.com';
+        const fromEmail = 'noreply@mg.musobuddy.com';
         
         // If user has Gmail (or other non-authenticated domain), use it as reply-to
         const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
@@ -1782,6 +1784,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Reply-To:', replyToEmail);
         console.log('Contract download URL:', contractDownloadUrl);
         console.log('Contract view URL:', contractViewUrl);
+        console.log('User settings:', userSettings);
+        console.log('Performer email:', userSettings?.businessEmail);
         
         // Email to client with download link
         const clientEmailData: any = {
@@ -1829,7 +1833,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clientEmailData.replyTo = replyToEmail;
         }
         
-        await sendEmail(clientEmailData);
+        console.log('🔥 CONTRACT SIGNING: Sending client confirmation email...');
+        const clientEmailResult = await sendEmail(clientEmailData);
+        console.log('🔥 CONTRACT SIGNING: Client email result:', clientEmailResult);
         
         // Email to performer (business owner) with download link
         if (userSettings?.businessEmail) {
@@ -1880,7 +1886,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             performerEmailData.replyTo = replyToEmail;
           }
           
-          await sendEmail(performerEmailData);
+          console.log('🔥 CONTRACT SIGNING: Sending performer confirmation email...');
+          const performerEmailResult = await sendEmail(performerEmailData);
+          console.log('🔥 CONTRACT SIGNING: Performer email result:', performerEmailResult);
         }
       } catch (emailError) {
         console.error("Error sending confirmation emails:", emailError);
