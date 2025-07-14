@@ -6,15 +6,15 @@ import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
 // Cloud storage configuration
 const STORAGE_CONFIG = {
   region: 'auto', // Cloudflare R2 uses 'auto'
-  endpoint: process.env.R2_ENDPOINT || 'https://a730a594e40d8b46295554074c8e4413.r2.cloudflarestorage.com',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || '5c81b780406a8bfed414eee3d13bd5f9',
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || 'b210d2d5db344de07fd936de532ab55280c44fbc64f6298026e2499bafccc13f',
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
   },
   forcePathStyle: true, // Required for R2 compatibility
 };
 
-const BUCKET_NAME = process.env.R2_BUCKET_NAME || 'musobuddy-documents';
+const BUCKET_NAME = process.env.R2_BUCKET_NAME;
 
 // Initialize S3 client for Cloudflare R2
 let s3Client: S3Client | null = null;
@@ -49,8 +49,14 @@ export async function uploadContractToCloud(
     console.log('☁️ Uploading contract to cloud storage:', contract.contractNumber);
     
     // Check if cloud storage is configured
-    if (!STORAGE_CONFIG.credentials.accessKeyId) {
+    if (!process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_ACCOUNT_ID || !process.env.R2_BUCKET_NAME) {
       console.log('⚠️ Cloud storage not configured, skipping upload');
+      console.log('Missing:', {
+        accessKey: !process.env.R2_ACCESS_KEY_ID ? 'R2_ACCESS_KEY_ID' : 'OK',
+        secretKey: !process.env.R2_SECRET_ACCESS_KEY ? 'R2_SECRET_ACCESS_KEY' : 'OK',
+        accountId: !process.env.R2_ACCOUNT_ID ? 'R2_ACCOUNT_ID' : 'OK',
+        bucketName: !process.env.R2_BUCKET_NAME ? 'R2_BUCKET_NAME' : 'OK',
+      });
       return {
         success: false,
         error: 'Cloud storage not configured',
@@ -109,8 +115,14 @@ export async function uploadInvoiceToCloud(
     console.log('☁️ Uploading invoice to cloud storage:', invoice.invoiceNumber);
     
     // Check if cloud storage is configured
-    if (!STORAGE_CONFIG.credentials.accessKeyId) {
+    if (!process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_ACCOUNT_ID || !process.env.R2_BUCKET_NAME) {
       console.log('⚠️ Cloud storage not configured, skipping upload');
+      console.log('Missing:', {
+        accessKey: !process.env.R2_ACCESS_KEY_ID ? 'R2_ACCESS_KEY_ID' : 'OK',
+        secretKey: !process.env.R2_SECRET_ACCESS_KEY ? 'R2_SECRET_ACCESS_KEY' : 'OK',
+        accountId: !process.env.R2_ACCOUNT_ID ? 'R2_ACCOUNT_ID' : 'OK',
+        bucketName: !process.env.R2_BUCKET_NAME ? 'R2_BUCKET_NAME' : 'OK',
+      });
       return {
         success: false,
         error: 'Cloud storage not configured',
