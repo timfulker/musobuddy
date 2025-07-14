@@ -803,7 +803,7 @@ This applies to any changes in:
 - July 14, 2025. **CRITICAL BUSINESS PROTECTION**: Cloud-hosted contract signing system implemented for client relationship protection:
   * **Independent Contract Signing Pages**: Each contract generates standalone HTML signing page hosted on Cloudflare R2 with presigned URLs
   * **Always-Available Signing**: Contract signing works independently of app availability - protecting paramount client relationships
-  * **30-Day Validity**: Presigned URLs valid for 30 days giving clients ample time to sign without dependency on app uptime
+  * **7-Day Validity**: Presigned URLs valid for 7 days (AWS/R2 maximum) giving clients ample time to sign without dependency on app uptime
   * **Professional Mobile Interface**: Complete responsive signing experience with digital signature canvas and contract details
   * **Automatic Fallback**: If cloud storage fails, system automatically falls back to app-based signing page
   * **Business Continuity**: Eliminates risk of dead signing pages that could compromise user-client relationships
@@ -811,6 +811,16 @@ This applies to any changes in:
   * **Complete Implementation**: `uploadContractSigningPage()` function creates fully functional signing pages with JavaScript
   * **Production Ready**: Cloud storage configuration verified and operational for contract signing workflow
   * **Status**: Critical business protection feature fully implemented - contract signing guaranteed to work regardless of app status
+- July 14, 2025. Cloud-hosted contract signing system enhanced with dual signature options and CORS fixes:
+  * **Typed Signature Option**: Added desktop-friendly typed signature alternative to trackpad drawing for better user experience
+  * **CORS Integration Fixed**: Added proper CORS headers and OPTIONS handling for cloud-hosted pages to communicate with main app
+  * **Dual Signature Support**: Users can choose between drawing signature (mobile-friendly) or typing signature (desktop-friendly)
+  * **Enhanced API Compatibility**: Contract signing endpoint now accepts both legacy and cloud-hosted page data formats
+  * **Signature Canvas Generation**: Typed signatures automatically converted to stylized canvas format for consistent storage
+  * **Improved Error Handling**: Better error messages and validation for both signature types
+  * **Professional Typography**: Typed signatures use "Brush Script MT" font for authentic appearance
+  * **Cross-Origin Security**: Proper CORS configuration allows cloud-hosted pages to securely communicate with app
+  * **Status**: Cloud signing system now fully operational with improved usability for both mobile and desktop users
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**

@@ -603,9 +603,33 @@ function generateContractSigningPageHtml(
                 
                 <div class="form-group">
                     <label class="form-label">Digital Signature *</label>
-                    <canvas id="signatureCanvas" class="signature-canvas" width="350" height="150"></canvas>
-                    <div class="signature-buttons">
-                        <button type="button" class="btn btn-secondary" id="clearSignature">Clear</button>
+                    
+                    <!-- Signature Type Selection -->
+                    <div class="signature-type-selection" style="margin-bottom: 15px;">
+                        <label style="margin-right: 20px;">
+                            <input type="radio" name="signatureType" value="draw" checked style="margin-right: 5px;">
+                            Draw Signature
+                        </label>
+                        <label>
+                            <input type="radio" name="signatureType" value="type" style="margin-right: 5px;">
+                            Type Signature
+                        </label>
+                    </div>
+                    
+                    <!-- Draw Signature Section -->
+                    <div id="drawSignatureSection">
+                        <canvas id="signatureCanvas" class="signature-canvas" width="350" height="150"></canvas>
+                        <div class="signature-buttons">
+                            <button type="button" class="btn btn-secondary" id="clearSignature">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Type Signature Section -->
+                    <div id="typeSignatureSection" style="display: none;">
+                        <input type="text" id="typedSignature" class="form-input" placeholder="Type your full name here" style="font-family: 'Brush Script MT', cursive, serif; font-size: 1.5rem; text-align: center; padding: 20px;">
+                        <p style="font-size: 0.9rem; color: #64748b; margin-top: 10px; text-align: center;">
+                            Your typed signature will be formatted in a stylized font
+                        </p>
                     </div>
                 </div>
                 
@@ -731,27 +755,85 @@ function generateContractSigningPageHtml(
             updateSubmitButton();
         });
         
+        // Signature type selection
+        const signatureTypeRadios = document.querySelectorAll('input[name="signatureType"]');
+        const drawSection = document.getElementById('drawSignatureSection');
+        const typeSection = document.getElementById('typeSignatureSection');
+        const typedSignatureInput = document.getElementById('typedSignature');
+        
+        signatureTypeRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.value === 'draw') {
+                    drawSection.style.display = 'block';
+                    typeSection.style.display = 'none';
+                    typedSignatureInput.value = '';
+                } else {
+                    drawSection.style.display = 'none';
+                    typeSection.style.display = 'block';
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    hasSignature = false;
+                }
+                updateSubmitButton();
+            });
+        });
+        
         function updateSubmitButton() {
             const nameField = document.getElementById('clientName');
-            const canSubmit = hasSignature && nameField.value.trim() !== '';
+            const selectedType = document.querySelector('input[name="signatureType"]:checked').value;
+            const typedSignature = document.getElementById('typedSignature').value.trim();
+            
+            let canSubmit = nameField.value.trim() !== '';
+            
+            if (selectedType === 'draw') {
+                canSubmit = canSubmit && hasSignature;
+            } else {
+                canSubmit = canSubmit && typedSignature !== '';
+            }
+            
             submitBtn.disabled = !canSubmit;
         }
         
         document.getElementById('clientName').addEventListener('input', updateSubmitButton);
+        document.getElementById('typedSignature').addEventListener('input', updateSubmitButton);
         
         // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (!hasSignature) {
+            const selectedType = document.querySelector('input[name="signatureType"]:checked').value;
+            const typedSignature = document.getElementById('typedSignature').value.trim();
+            
+            // Validate signature based on type
+            if (selectedType === 'draw' && !hasSignature) {
                 alert('Please provide your signature before submitting.');
                 return;
             }
             
-            const formData = new FormData();
-            formData.append('clientName', document.getElementById('clientName').value);
-            formData.append('signature', canvas.toDataURL());
-            formData.append('contractId', '${contract.id}');
+            if (selectedType === 'type' && !typedSignature) {
+                alert('Please type your signature before submitting.');
+                return;
+            }
+            
+            // Create signature data
+            let signatureData;
+            if (selectedType === 'draw') {
+                signatureData = canvas.toDataURL();
+            } else {
+                // Create a typed signature canvas
+                const typeCanvas = document.createElement('canvas');
+                typeCanvas.width = 350;
+                typeCanvas.height = 150;
+                const typeCtx = typeCanvas.getContext('2d');
+                
+                // Style the typed signature
+                typeCtx.fillStyle = '#1e293b';
+                typeCtx.font = '2rem "Brush Script MT", cursive, serif';
+                typeCtx.textAlign = 'center';
+                typeCtx.textBaseline = 'middle';
+                typeCtx.fillText(typedSignature, typeCanvas.width / 2, typeCanvas.height / 2);
+                
+                signatureData = typeCanvas.toDataURL();
+            }
             
             // Show loading
             document.getElementById('loading').style.display = 'block';
@@ -760,19 +842,27 @@ function generateContractSigningPageHtml(
             try {
                 const response = await fetch('${appUrl}/api/contracts/sign/${contract.id}', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        clientName: document.getElementById('clientName').value,
+                        signature: signatureData,
+                        contractId: '${contract.id}'
+                    })
                 });
                 
                 if (response.ok) {
                     document.getElementById('successMessage').style.display = 'block';
                     document.getElementById('signingForm').style.display = 'none';
                 } else {
-                    throw new Error('Failed to sign contract');
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to sign contract');
                 }
             } catch (error) {
                 console.error('Error signing contract:', error);
                 document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('errorText').textContent = 'There was an error processing your signature. Please try again or contact support.';
+                document.getElementById('errorText').textContent = error.message || 'There was an error processing your signature. Please try again or contact support.';
                 submitBtn.disabled = false;
             } finally {
                 document.getElementById('loading').style.display = 'none';

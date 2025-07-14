@@ -1749,12 +1749,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OPTIONS handler for CORS preflight requests
+  app.options('/api/contracts/sign/:id', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.sendStatus(200);
+  });
+
   app.post('/api/contracts/sign/:id', async (req, res) => {
+    // Add CORS headers for cloud-hosted signing pages
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    
     try {
       const contractId = parseInt(req.params.id);
-      const { signatureName } = req.body;
+      const { signatureName, clientName, signature } = req.body;
       
-      if (!signatureName || !signatureName.trim()) {
+      // Support both formats: old format (signatureName) and new format (clientName from cloud page)
+      const finalSignatureName = signatureName || clientName;
+      
+      if (!finalSignatureName || !finalSignatureName.trim()) {
         return res.status(400).json({ message: "Signature name is required" });
       }
       
@@ -1773,7 +1789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update contract with signature
       const signedContract = await storage.signContract(contractId, {
-        signatureName: signatureName.trim(),
+        signatureName: finalSignatureName.trim(),
         clientIP,
         signedAt: new Date()
       });
