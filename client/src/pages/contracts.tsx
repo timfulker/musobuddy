@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square } from "lucide-react";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square, MapPin } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
@@ -887,26 +887,26 @@ export default function Contracts() {
                                 </Badge>
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <User className="w-4 h-4" />
-                                  <div>
-                                    <p className="font-medium">{contract.clientName}</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                <div className="flex items-start space-x-2 text-gray-600">
+                                  <User className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="font-medium truncate">{contract.clientName}</p>
                                     <p className="text-xs text-gray-500">Client</p>
                                   </div>
                                 </div>
 
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <Calendar className="w-4 h-4" />
-                                  <div>
+                                <div className="flex items-start space-x-2 text-gray-600">
+                                  <Calendar className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                  <div className="min-w-0">
                                     <p className="font-medium">{formatDate(contract.eventDate)}</p>
                                     <p className="text-xs text-gray-500">{contract.eventTime}</p>
                                   </div>
                                 </div>
 
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <DollarSign className="w-4 h-4" />
-                                  <div>
+                                <div className="flex items-start space-x-2 text-gray-600">
+                                  <DollarSign className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                  <div className="min-w-0">
                                     <p className="font-medium">£{contract.fee}</p>
                                     {contract.deposit && (
                                       <p className="text-xs text-gray-500">Deposit: £{contract.deposit}</p>
@@ -914,9 +914,12 @@ export default function Contracts() {
                                   </div>
                                 </div>
 
-                                <div className="text-gray-600">
-                                  <p className="font-medium text-sm">{contract.venue}</p>
-                                  <p className="text-xs text-gray-500">Venue</p>
+                                <div className="flex items-start space-x-2 text-gray-600">
+                                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm truncate">{contract.venue}</p>
+                                    <p className="text-xs text-gray-500">Venue</p>
+                                  </div>
                                 </div>
                               </div>
 
