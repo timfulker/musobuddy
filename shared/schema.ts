@@ -75,7 +75,7 @@ export const contracts = pgTable("contracts", {
   signedAt: timestamp("signed_at"),
   // Automatic reminder system
   reminderEnabled: boolean("reminder_enabled").default(false),
-  reminderDays: integer("reminder_days").default(7), // Days between reminders
+  reminderDays: integer("reminder_days").default(3), // Days between reminders
   lastReminderSent: timestamp("last_reminder_sent"),
   reminderCount: integer("reminder_count").default(0),
   cloudStorageUrl: text("cloud_storage_url"),
