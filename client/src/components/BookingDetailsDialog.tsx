@@ -237,14 +237,26 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
               <Info className="h-5 w-5" />
               Booking Details - {booking.clientName}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              <Edit3 className="h-4 w-4 mr-2" />
-              {isEditing ? 'View Mode' : 'Edit Mode'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+              >
+                <Edit3 className="h-4 w-4 mr-2" />
+                {isEditing ? 'View Mode' : 'Edit Mode'}
+              </Button>
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Close
+                </Button>
+              )}
+            </div>
           </DialogTitle>
         </DialogHeader>
 
