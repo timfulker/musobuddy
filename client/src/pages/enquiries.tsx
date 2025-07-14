@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature } from "lucide-react";
+import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature, Info } from "lucide-react";
 import { z } from "zod";
 import { insertClientSchema, type InsertClient } from "@shared/schema";
 import { Link } from "wouter";
@@ -21,6 +21,7 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
+import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
 import { 
   analyzeConflictSeverity, 
   getConflictCardStyling, 
@@ -47,6 +48,8 @@ export default function Enquiries() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
+  const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
+  const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -1253,8 +1256,30 @@ export default function Enquiries() {
                             </div>
                           )}
                           
-                          {/* Response Button */}
-                          <div className="mt-4 flex justify-end">
+                          {/* Action Buttons */}
+                          <div className="mt-4 flex justify-end gap-2">
+                            <Button
+                              onClick={() => {
+                                setSelectedBookingForDetails(enquiry);
+                                setBookingDetailsDialogOpen(true);
+                              }}
+                              variant="outline"
+                              className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                            >
+                              <Info className="w-4 h-4 mr-2" />
+                              Details
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setSelectedBookingForUpdate(enquiry);
+                                setBookingStatusDialogOpen(true);
+                              }}
+                              variant="outline"
+                              className="border-green-300 text-green-600 hover:bg-green-50"
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Update Status
+                            </Button>
                             <Button
                               onClick={() => {
                                 setSelectedEnquiry(enquiry);
@@ -1280,6 +1305,20 @@ export default function Enquiries() {
       </div>
 
       <MobileNav />
+      
+      {/* Booking Status Dialog */}
+      <BookingStatusDialog
+        open={bookingStatusDialogOpen}
+        onOpenChange={setBookingStatusDialogOpen}
+        booking={selectedBookingForUpdate}
+      />
+      
+      {/* Booking Details Dialog */}
+      <BookingDetailsDialog
+        open={bookingDetailsDialogOpen}
+        onOpenChange={setBookingDetailsDialogOpen}
+        booking={selectedBookingForDetails}
+      />
     </div>
   );
 }
