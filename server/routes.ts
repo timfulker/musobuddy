@@ -1643,16 +1643,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Import and use Mailgun email function
+      console.log('📧 Attempting to send contract email...');
       const { sendEmail } = await import('./mailgun-email');
       const emailSent = await sendEmail(emailData);
+      console.log('📧 Contract email send result:', emailSent);
 
       if (emailSent) {
         // Update contract status to sent
         await storage.updateContract(contractId, { status: "sent" }, userId);
-        console.log(`Contract ${contract.contractNumber} sent successfully to ${contract.clientEmail}`);
-        res.json({ message: "Contract sent successfully via email" });
+        console.log(`✅ Contract ${contract.contractNumber} sent successfully to ${contract.clientEmail}`);
+        res.json({ 
+          message: "Contract sent successfully via email",
+          debug: {
+            contractId: contractId,
+            clientEmail: contract.clientEmail,
+            contractNumber: contract.contractNumber,
+            emailSent: true
+          }
+        });
       } else {
-        res.status(500).json({ message: "Failed to send email. Please check your email settings." });
+        console.log('❌ Contract email failed to send');
+        res.status(500).json({ 
+          message: "Failed to send email. Please check your email settings.",
+          debug: {
+            contractId: contractId,
+            clientEmail: contract.clientEmail,
+            contractNumber: contract.contractNumber,
+            emailSent: false
+          }
+        });
       }
     } catch (error) {
       console.error("Error sending contract email:", error);
