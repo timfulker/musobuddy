@@ -1452,7 +1452,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailData.replyTo = replyToEmail;
       }
       
-      const emailSent = false; // Email sending disabled - rebuilding
+      // Import and use Mailgun email function
+      const { sendEmail } = await import('./mailgun-email');
+      const emailSent = await sendEmail(emailData);
 
       if (emailSent) {
         console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${clientEmail}`);
@@ -1582,7 +1584,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emailData.replyTo = replyToEmail;
       }
       
-      const emailSent = false; // Email sending disabled - rebuilding
+      // Import and use Mailgun email function
+      const { sendEmail } = await import('./mailgun-email');
+      const emailSent = await sendEmail(emailData);
 
       if (emailSent) {
         // Update contract status to sent
