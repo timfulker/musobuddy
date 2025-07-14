@@ -1585,6 +1585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (success) {
         // Update contract status to "sent" after successful email delivery
+        // Note: Cloud storage metadata (URL, key, creation time) is handled by the email function
         await storage.updateContract(contractId, { status: 'sent' }, userId);
         console.log('✅ Contract status updated to "sent" after successful email delivery');
         res.json({ message: "Contract email sent successfully with PDF attachment and static backup link" });
@@ -1702,6 +1703,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending contract reminder:", error);
       res.status(500).json({ message: "Failed to send contract reminder" });
+    }
+  });
+
+  // Regenerate contract signing link (manual on-demand regeneration)
+  app.post('/api/contracts/:id/regenerate-link', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contractId = parseInt(req.params.id);
+      
+      // Get the contract details
+      const contract = await storage.getContract(contractId, userId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+
+      if (contract.status === 'signed') {
+        return res.status(400).json({ message: "Cannot regenerate link for signed contracts" });
+      }
+
+      console.log('🔄 Manual regeneration of signing link for contract:', contract.contractNumber);
+      
+      // Get user settings for business details
+      const userSettings = await storage.getUserSettings(userId);
+      
+      try {
+        const { uploadContractSigningPage, regenerateContractSigningUrl, isCloudStorageConfigured } = await import('./cloud-storage');
+        
+        if (!isCloudStorageConfigured()) {
+          return res.status(500).json({ message: "Cloud storage not configured" });
+        }
+        
+        let newSigningUrl = '';
+        let storageKey = '';
+        
+        if (contract.cloudStorageKey) {
+          // Try to regenerate existing URL first
+          console.log('🔄 Attempting to regenerate existing signing URL...');
+          newSigningUrl = await regenerateContractSigningUrl(contract.cloudStorageKey);
+          storageKey = contract.cloudStorageKey;
+        }
+        
+        if (!newSigningUrl) {
+          // Create new signing page if regeneration failed
+          console.log('🔄 Creating new signing page...');
+          const uploadResult = await uploadContractSigningPage(contract, userSettings);
+          newSigningUrl = uploadResult.url;
+          storageKey = uploadResult.storageKey;
+        }
+        
+        if (newSigningUrl) {
+          // Update contract with new signing URL metadata
+          await storage.updateContract(contractId, {
+            cloudStorageUrl: newSigningUrl,
+            cloudStorageKey: storageKey,
+            signingUrlCreatedAt: new Date()
+          }, userId);
+          
+          console.log('✅ Signing link regenerated successfully');
+          res.json({ 
+            message: "Signing link regenerated successfully",
+            signingUrl: newSigningUrl
+          });
+        } else {
+          throw new Error('Failed to generate signing URL');
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to regenerate signing link:', error);
+        res.status(500).json({ message: "Failed to regenerate signing link" });
+      }
+    } catch (error) {
+      console.error('Error regenerating signing link:', error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 

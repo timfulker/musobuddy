@@ -80,6 +80,7 @@ export const contracts = pgTable("contracts", {
   reminderCount: integer("reminder_count").default(0),
   cloudStorageUrl: text("cloud_storage_url"),
   cloudStorageKey: text("cloud_storage_key"),
+  signingUrlCreatedAt: timestamp("signing_url_created_at"), // Track when URL was generated
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

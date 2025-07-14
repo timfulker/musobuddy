@@ -119,20 +119,48 @@ export async function sendContractEmail(
     const isSignedContract = !!signatureDetails;
     let cloudSigningUrl = '';
     
-    // For unsigned contracts, create cloud storage signing page
+    // For unsigned contracts, create or regenerate cloud storage signing page
     if (!isSignedContract) {
       try {
-        console.log('🔍 Attempting to upload contract signing page to cloud storage...');
-        const { uploadContractSigningPage, isCloudStorageConfigured } = await import('./cloud-storage');
+        console.log('🔍 Attempting to handle cloud storage signing page...');
+        const { uploadContractSigningPage, regenerateContractSigningUrl, isCloudStorageConfigured } = await import('./cloud-storage');
         
         if (!isCloudStorageConfigured()) {
           throw new Error('Cloud storage not configured - missing environment variables');
         }
         
-        console.log('🔧 Cloud storage configured, uploading signing page...');
-        cloudSigningUrl = await uploadContractSigningPage(contract, userSettings);
-        console.log('✅ SUCCESS: Contract signing page uploaded to cloud storage');
-        console.log('🔗 Cloud signing URL:', cloudSigningUrl);
+        // Check if we need to regenerate URL (for reminders sent > 7 days after initial send)
+        const shouldRegenerateUrl = contract.cloudStorageKey && 
+                                  contract.signingUrlCreatedAt &&
+                                  (Date.now() - contract.signingUrlCreatedAt.getTime()) > (6 * 24 * 60 * 60 * 1000); // 6 days for safety
+        
+        if (shouldRegenerateUrl) {
+          console.log('🔄 Regenerating fresh signing URL for reminder (>6 days old)...');
+          cloudSigningUrl = await regenerateContractSigningUrl(contract.cloudStorageKey!);
+          if (cloudSigningUrl) {
+            console.log('✅ SUCCESS: Fresh signing URL generated for reminder');
+            console.log('🔗 Regenerated URL:', cloudSigningUrl);
+          } else {
+            throw new Error('Failed to regenerate signing URL');
+          }
+        } else {
+          console.log('🔧 Cloud storage configured, uploading new signing page...');
+          const uploadResult = await uploadContractSigningPage(contract, userSettings);
+          cloudSigningUrl = uploadResult.url;
+          console.log('✅ SUCCESS: Contract signing page uploaded to cloud storage');
+          console.log('🔗 Cloud signing URL:', cloudSigningUrl);
+          
+          // Update contract with cloud storage metadata
+          if (uploadResult.storageKey) {
+            const storage = await import('./storage');
+            await storage.updateContract(contract.id, {
+              cloudStorageUrl: cloudSigningUrl,
+              cloudStorageKey: uploadResult.storageKey,
+              signingUrlCreatedAt: new Date()
+            }, contract.userId);
+            console.log('✅ Contract updated with cloud storage metadata');
+          }
+        }
         
         // Verify the URL starts with expected cloud storage domain
         if (!cloudSigningUrl.includes('r2.cloudflarestorage.com')) {
@@ -140,7 +168,7 @@ export async function sendContractEmail(
         }
         
       } catch (error) {
-        console.error('❌ FAILED to upload contract signing page to cloud storage:', error);
+        console.error('❌ FAILED to handle contract signing page:', error);
         console.error('🔧 Error details:', error.message);
         // Fallback to app-based signing page
         cloudSigningUrl = `https://musobuddy.replit.app/sign-contract/${contract.id}`;

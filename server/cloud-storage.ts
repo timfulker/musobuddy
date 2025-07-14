@@ -233,13 +233,48 @@ export function isCloudStorageConfigured(): boolean {
 }
 
 /**
+ * Regenerate fresh presigned URL for existing cloud-hosted signing page
+ * This solves the 7-day expiry problem for reminder periods > 7 days
+ */
+export async function regenerateContractSigningUrl(storageKey: string): Promise<string | null> {
+  try {
+    console.log('🔄 Regenerating fresh presigned URL for:', storageKey);
+    
+    // Check if cloud storage is configured
+    if (!isCloudStorageConfigured()) {
+      console.log('⚠️ Cloud storage not configured, cannot regenerate URL');
+      return null;
+    }
+    
+    const client = getS3Client();
+    const getCommand = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: storageKey,
+    });
+    
+    // Generate fresh presigned URL (valid for another 7 days)
+    const presignedUrl = await getSignedUrl(client, getCommand, { 
+      expiresIn: 7 * 24 * 60 * 60 // 7 days (maximum allowed)
+    });
+    
+    console.log('✅ Fresh presigned URL generated');
+    return presignedUrl;
+    
+  } catch (error) {
+    console.error('❌ Error regenerating presigned URL:', error);
+    return null;
+  }
+}
+
+/**
  * Upload contract signing page to cloud storage
  * Creates a standalone HTML page that works independently of the app
+ * Note: URLs expire after 7 days (AWS/R2 limit). Use regenerateContractSigningUrl() for longer reminder periods.
  */
 export async function uploadContractSigningPage(
   contract: Contract,
   userSettings: UserSettings | null
-): Promise<string> {
+): Promise<{ url: string; storageKey: string }> {
   try {
     console.log('☁️ Creating cloud-hosted contract signing page:', contract.contractNumber);
     
@@ -268,7 +303,7 @@ export async function uploadContractSigningPage(
     
     await client.send(command);
     
-    // Generate presigned URL for public access (valid for 30 days)
+    // Generate presigned URL for public access (valid for 7 days - AWS/R2 maximum)
     const getCommand = new GetObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
@@ -281,7 +316,10 @@ export async function uploadContractSigningPage(
     console.log('✅ Contract signing page uploaded to cloud storage');
     console.log('🔗 Presigned URL:', presignedUrl);
     
-    return presignedUrl;
+    return {
+      url: presignedUrl,
+      storageKey: key
+    };
     
   } catch (error) {
     console.error('❌ Error uploading contract signing page:', error);
