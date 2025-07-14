@@ -507,14 +507,21 @@ ${contract.terms}
         </div>
         
         <div style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-radius: 5px; font-size: 14px;">
-          <h4 style="margin-top: 0; color: #2563eb;">Payment Terms</h4>
-          <p><strong>Payment Due:</strong> Full payment of £${contract.fee} due on or before the day of performance.</p>
-          <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account.</p>
-          ${contract.deposit ? `<p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking.</p>` : ''}
+          <h4 style="margin-top: 0; color: #2563eb;">Payment Terms & Conditions</h4>
+          <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
+          <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
+          ${contract.deposit ? `<p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>` : ''}
+          <p><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</p>
           
-          <h4 style="color: #2563eb; margin-top: 20px;">Cancellation Policy</h4>
-          <p><strong>Client Cancellation:</strong> If cancelled more than 30 days before the event, any deposit paid will be refunded minus a £50 administration fee. If cancelled within 30 days, the full fee becomes due.</p>
-          <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel, all payments will be refunded and reasonable assistance will be provided to find a replacement.</p>
+          <h4 style="color: #2563eb; margin-top: 20px;">Cancellation & Refund Policy</h4>
+          <p><strong>Client Cancellation:</strong></p>
+          <ul style="margin-left: 20px;">
+            <li>More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee</li>
+            <li>30 days or less before event: Full performance fee becomes due regardless of cancellation</li>
+            <li>Same day cancellation: Full fee due plus any additional costs incurred</li>
+          </ul>
+          <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</p>
+          <p><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</p>
           
           <h4 style="color: #2563eb; margin-top: 20px;">Force Majeure</h4>
           <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
@@ -523,13 +530,14 @@ ${contract.terms}
           <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
           
           <h4 style="color: #2563eb; margin-top: 20px;">Professional Performance Standards</h4>
-          <p><strong>Payment Schedule:</strong> The agreed performance fee${contract.deposit ? ' (including applicable VAT)' : ''} becomes due and payable on the performance date.</p>
-          <p><strong>Equipment Protection:</strong> All musical instruments and equipment remain the exclusive property of the performer. Third-party use is prohibited without explicit written permission.</p>
-          <p><strong>Venue Responsibilities:</strong> The client must provide safe electrical connections and ensure the security of the performer and their equipment throughout the engagement.</p>
-          <p><strong>Recording Policy:</strong> No audio, video, or broadcast recording of the performance may be made without the performer's prior written authorization.</p>
-          <p><strong>Agreement Changes:</strong> This contract can only be amended through written agreement signed by both parties. Verbal modifications are not binding.</p>
-          <p><strong>Additional Requirements:</strong> Any performance rider or technical requirements agreed upon in writing become part of this contract.</p>
-          <p><strong>Professional Environment:</strong> Both parties commit to maintaining a respectful, harassment-free working environment throughout the engagement.</p>
+          <p><strong>Payment Schedule:</strong> The agreed performance fee${contract.deposit ? ' (including applicable VAT)' : ''} becomes due and payable on the date of performance of the engagement.</p>
+          <p><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</p>
+          <p><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</p>
+          <p><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</p>
+          <p><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</p>
+          <p><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</p>
+          <p><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</p>
+          <p><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</p>
         </div>
       </div>
 
@@ -561,12 +569,15 @@ ${contract.terms}
       </div>
 
       <div style="margin-top: 50px; padding: 20px; background-color: #f0f0f0; border-radius: 5px; font-size: 12px; color: #666;">
-        <p><strong>Legal Information:</strong></p>
+        <p><strong>Legal Information & Governing Terms:</strong></p>
         <p>Contract Number: ${contract.contractNumber}</p>
         <p>Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
-        <p><strong>This is a legally binding agreement between the parties named above.</strong></p>
-        <p><strong>Governing Law:</strong> This contract shall be governed by and construed in accordance with the laws of England and Wales. Any disputes arising from this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
-        <p><strong>Digital Signatures:</strong> Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation.</p>
+        <p><strong>Binding Agreement:</strong> This is a legally binding agreement between the parties named above. Both parties acknowledge they have read, understood, and agree to be bound by all terms and conditions set forth herein.</p>
+        <p><strong>Governing Law & Jurisdiction:</strong> This contract shall be governed by and construed in accordance with the laws of England and Wales. Any disputes, claims, or legal proceedings arising from or relating to this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+        <p><strong>Digital Signatures:</strong> Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation. Electronic acceptance constitutes agreement to all terms.</p>
+        <p><strong>Entire Agreement:</strong> This contract represents the entire agreement between the parties and supersedes all prior negotiations, representations, or agreements. No modification shall be valid unless in writing and signed by both parties.</p>
+        <p><strong>Severability:</strong> If any provision of this contract is found to be unenforceable, the remaining provisions shall continue in full force and effect.</p>
+        <p><strong>Contract Validity:</strong> This contract remains valid and enforceable regardless of changes in circumstances, location, or contact information of either party.</p>
       </div>
 
       <div style="margin-top: 30px; padding: 15px; text-align: center; border-top: 1px solid #ccc; color: #999; font-size: 12px;">

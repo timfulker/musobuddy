@@ -737,6 +737,38 @@ export default function Settings() {
                         className="min-h-[120px]"
                         {...field} 
                       />
+                      <div className="mt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const professionalTerms = `PROFESSIONAL PERFORMANCE AGREEMENT
+
+This agreement is made between the performer and client for professional musical services.
+
+PERFORMANCE DETAILS:
+- Performance shall be delivered professionally and punctually
+- Setup and sound check time as agreed
+- Equipment and technical requirements as specified
+- Dress code and professional appearance standards maintained
+
+TERMS & CONDITIONS:
+- Payment due on date of performance unless otherwise agreed
+- Cancellation policy: 30+ days = deposit refund minus admin fee, <30 days = full fee due
+- Equipment remains property of performer, not available for third-party use
+- Venue must provide safe electrical supply and security
+- No recording without written consent
+- Performance rider (if any) forms part of this agreement
+- Safe, harassment-free working environment required
+
+This agreement is governed by the laws of England and Wales.`;
+                            
+                            form.setValue('defaultTerms', professionalTerms);
+                          }}
+                          className="text-sm text-blue-600 hover:text-blue-800 underline"
+                        >
+                          Load Professional Template (Based on Musicians' Union Standards)
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
