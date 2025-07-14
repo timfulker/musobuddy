@@ -23,14 +23,20 @@ interface EmailData {
 // Send email function
 export async function sendEmail(emailData: EmailData): Promise<boolean> {
   try {
+    // Debug environment variables
+    console.log('🔍 Checking Mailgun environment variables...');
+    console.log('MAILGUN_API_KEY exists:', !!process.env.MAILGUN_API_KEY);
+    console.log('MAILGUN_DOMAIN:', process.env.MAILGUN_DOMAIN);
+    
     // Check for required environment variables
     if (!process.env.MAILGUN_API_KEY) {
-      console.error('MAILGUN_API_KEY environment variable is required');
+      console.error('❌ MAILGUN_API_KEY environment variable is required');
       return false;
     }
 
     // Use custom subdomain in production, sandbox for development
     const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
+    console.log('🌐 Using domain:', domain);
     
     // Create Mailgun client with EU endpoint
     const mg = mailgun.client({

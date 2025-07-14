@@ -1453,8 +1453,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Import and use Mailgun email function
+      console.log('📧 Attempting to send invoice email...');
       const { sendEmail } = await import('./mailgun-email');
       const emailSent = await sendEmail(emailData);
+      console.log('📧 Email send result:', emailSent);
 
       if (emailSent) {
         console.log(`Invoice ${updatedInvoice.invoiceNumber} sent successfully to ${clientEmail}`);
