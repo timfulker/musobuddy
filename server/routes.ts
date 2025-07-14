@@ -915,8 +915,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Invoice PDF download route (authenticated)
-  // Invoice PDF endpoint - supports both authenticated and public access
+  // Invoice PDF download route - forces download with Content-Disposition header
+  app.get('/api/invoices/:id/download', async (req: any, res) => {
+    console.log('Download request for invoice:', req.params.id);
+    
+    try {
+      const invoiceId = parseInt(req.params.id);
+      let invoice = null;
+      let userSettings = null;
+      let contract = null;
+
+      // Try authenticated access first
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        const userId = req.user.claims.sub;
+        invoice = await storage.getInvoice(invoiceId, userId);
+        if (invoice) {
+          userSettings = await storage.getUserSettings(userId);
+          if (invoice.contractId) {
+            contract = await storage.getContract(invoice.contractId, userId);
+          }
+        }
+      }
+
+      // If not found via authenticated access, try public access
+      if (!invoice) {
+        invoice = await storage.getInvoiceById(invoiceId);
+        if (invoice) {
+          userSettings = await storage.getUserSettings(invoice.userId);
+          if (invoice.contractId) {
+            contract = await storage.getContractById(invoice.contractId);
+          }
+        }
+      }
+
+      if (!invoice) {
+        console.log('Invoice not found:', invoiceId);
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      console.log('Starting PDF generation for invoice:', invoice.invoiceNumber);
+      const { generateInvoicePDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
+      console.log('PDF generated successfully:', invoice.invoiceNumber);
+      
+      // Send PDF for download with Content-Disposition header
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      res.setHeader('Cache-Control', 'no-cache');
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error("Error generating invoice PDF:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to generate PDF" });
+      }
+    }
+  });
+
+  // Invoice PDF endpoint - supports both authenticated and public access (inline viewing)
   app.get('/api/invoices/:id/pdf', async (req: any, res) => {
     console.log('PDF request for invoice:', req.params.id);
     

@@ -645,6 +645,13 @@ This applies to any changes in:
   * **Testing**: Verified enquiry #399 now generates working URL: https://encoremusicians.com/jobs/QuH57?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow
   * **Impact**: Encore Apply Now buttons now redirect to correct job pages instead of 404 errors
   * **Status**: URL format issue completely resolved for all future Encore enquiries
+- July 14, 2025. Invoice download route implementation completed:
+  * **Missing Route Issue**: Email download links were pointing to non-existent /api/invoices/:id/download route
+  * **Added Download Route**: Created dedicated download endpoint with proper Content-Disposition header
+  * **Working Configuration**: Route now generates PDF with attachment filename "Invoice-{number}.pdf"
+  * **Production Testing**: Verified 200 OK response with proper PDF headers and file download
+  * **Email Integration**: Download links in invoice emails now work correctly without 404 errors
+  * **Status**: Invoice download functionality fully operational from email links
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
