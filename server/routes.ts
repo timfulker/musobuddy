@@ -1584,6 +1584,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const success = await sendContractEmail(contract, userSettings, customMessage);
       
       if (success) {
+        // Update contract status to "sent" after successful email delivery
+        await storage.updateContract(contractId, { status: 'sent' }, userId);
+        console.log('✅ Contract status updated to "sent" after successful email delivery');
         res.json({ message: "Contract email sent successfully with PDF attachment and static backup link" });
       } else {
         res.status(500).json({ message: "Failed to send contract email" });

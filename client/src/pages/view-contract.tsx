@@ -46,6 +46,7 @@ export default function ViewContract() {
     
     const fetchContract = async () => {
       try {
+        // For public routes, we can use fetch directly since they don't require authentication
         const response = await fetch(`/api/contracts/public/${contractId}`);
         if (!response.ok) {
           throw new Error('Contract not found');
