@@ -1223,6 +1223,23 @@ export default function Invoices() {
                               <Send className="w-3 h-3 mr-1" />
                               {sendInvoiceMutation.isPending ? 'Sending...' : 'Send'}
                             </Button>
+                            {/* Placeholder buttons for alignment */}
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs whitespace-nowrap invisible"
+                              disabled
+                            >
+                              Placeholder
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs whitespace-nowrap invisible"
+                              disabled
+                            >
+                              Placeholder
+                            </Button>
                           </>
                         )}
                         
