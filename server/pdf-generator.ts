@@ -522,14 +522,14 @@ ${contract.terms}
           <h4 style="color: #2563eb; margin-top: 20px;">Performance Contingencies</h4>
           <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
           
-          <h4 style="color: #2563eb; margin-top: 20px;">Musicians Union Standard Conditions</h4>
-          <p><strong>Payment Terms:</strong> The fee${contract.deposit ? ', plus VAT if applicable,' : ''} shall be payable on the date of performance of the engagement.</p>
-          <p><strong>Equipment Security:</strong> The performer and client agree that the equipment and instruments are not available for use by any other person, except by specific permission of the performer.</p>
-          <p><strong>Venue Safety:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue.</p>
-          <p><strong>Recording Restrictions:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without prior written consent.</p>
-          <p><strong>Contract Modifications:</strong> This Agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties.</p>
-          <p><strong>Additional Terms:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this Agreement.</p>
-          <p><strong>Safe Space Policy:</strong> The client and performer agree to provide a working environment free from harassment and discrimination in accordance with Musicians Union guidelines.</p>
+          <h4 style="color: #2563eb; margin-top: 20px;">Professional Performance Standards</h4>
+          <p><strong>Payment Schedule:</strong> The agreed performance fee${contract.deposit ? ' (including applicable VAT)' : ''} becomes due and payable on the performance date.</p>
+          <p><strong>Equipment Protection:</strong> All musical instruments and equipment remain the exclusive property of the performer. Third-party use is prohibited without explicit written permission.</p>
+          <p><strong>Venue Responsibilities:</strong> The client must provide safe electrical connections and ensure the security of the performer and their equipment throughout the engagement.</p>
+          <p><strong>Recording Policy:</strong> No audio, video, or broadcast recording of the performance may be made without the performer's prior written authorization.</p>
+          <p><strong>Agreement Changes:</strong> This contract can only be amended through written agreement signed by both parties. Verbal modifications are not binding.</p>
+          <p><strong>Additional Requirements:</strong> Any performance rider or technical requirements agreed upon in writing become part of this contract.</p>
+          <p><strong>Professional Environment:</strong> Both parties commit to maintaining a respectful, harassment-free working environment throughout the engagement.</p>
         </div>
       </div>
 

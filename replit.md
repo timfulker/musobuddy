@@ -676,16 +676,16 @@ This applies to any changes in:
   * **Legal Jurisdiction**: Governed by England & Wales law, court jurisdiction specified, digital signature legal validity confirmed
   * **Professional Compliance**: Addresses all legal weaknesses identified in contract review - cancellation terms, payment deadlines, jurisdiction clauses
   * **Status**: Contracts now legally robust and professionally compliant with UK law requirements
-- July 14, 2025. Musicians Union standard conditions integrated into contract template:
-  * **Payment Terms**: Fee payable on date of performance with VAT considerations
-  * **Equipment Security**: Protection against unauthorized use of performer's equipment and instruments
-  * **Venue Safety**: Client responsibility for safe electricity supply and security of performer and property
-  * **Recording Restrictions**: Written consent required for any audio/visual recording or transmission
-  * **Contract Modifications**: Changes only permitted with mutual written consent from both parties
-  * **Additional Terms**: Rider incorporation provisions for complex bookings
-  * **Safe Space Policy**: Anti-harassment and discrimination protections aligned with Musicians Union guidelines
-  * **Professional Standards**: All contracts now include industry-standard protections used by professional musicians
-  * **Status**: Contracts fully compliant with Musicians Union professional standards and UK music industry practices
+- July 14, 2025. Professional performance standards integrated into contract template:
+  * **Payment Schedule**: Performance fee (including applicable VAT) becomes due and payable on performance date
+  * **Equipment Protection**: Musical instruments and equipment remain exclusive property of performer, third-party use prohibited without written permission
+  * **Venue Responsibilities**: Client must provide safe electrical connections and ensure security of performer and equipment
+  * **Recording Policy**: No audio, video, or broadcast recording without performer's prior written authorization
+  * **Agreement Changes**: Contract amendments only permitted through written agreement signed by both parties, verbal modifications not binding
+  * **Additional Requirements**: Performance rider or technical requirements become part of contract when agreed in writing
+  * **Professional Environment**: Both parties commit to maintaining respectful, harassment-free working environment
+  * **Copyright Compliant**: All clauses reworded to avoid copyright issues while maintaining professional industry standards
+  * **Status**: Contracts include comprehensive professional protections without copyright concerns
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
