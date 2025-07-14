@@ -1786,7 +1786,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log('🔥 CONTRACT SIGNING: Starting confirmation email process');
         
-        // Generate contract download links
+        // Upload signed contract to cloud storage (if configured)
+        let cloudStorageUrl: string | null = null;
+        const { isCloudStorageConfigured, uploadContractToCloud } = await import('./cloud-storage');
+        
+        if (isCloudStorageConfigured()) {
+          console.log('☁️ Uploading signed contract to cloud storage...');
+          const cloudResult = await uploadContractToCloud(signedContract, userSettings);
+          
+          if (cloudResult.success) {
+            cloudStorageUrl = cloudResult.url!;
+            
+            // Update contract with cloud storage URL
+            await storage.updateContractCloudStorage(
+              signedContract.id,
+              cloudResult.url!,
+              cloudResult.key!,
+              signedContract.userId
+            );
+            console.log('✅ Signed contract uploaded to cloud storage successfully');
+          } else {
+            console.warn('⚠️ Cloud storage upload failed:', cloudResult.error);
+          }
+        }
+        
+        // Generate contract download links (app-dependent - fallback if cloud storage fails)
         const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
         const contractDownloadUrl = `https://${currentDomain}/api/contracts/${signedContract.id}/download`;
         const contractViewUrl = `https://${currentDomain}/view-contract/${signedContract.id}`;
@@ -1835,6 +1859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${contractViewUrl}" style="background: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin-right: 10px;">View Signed Contract</a>
                 <a href="${contractDownloadUrl}" style="background: #6B7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Download PDF</a>
+                ${cloudStorageUrl ? `<br><br><a href="${cloudStorageUrl}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">📱 Permanent Download Link</a>` : ''}
               </div>
               
               <p style="color: #6B7280; font-size: 14px;">
@@ -1890,6 +1915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <div style="text-align: center; margin: 30px 0;">
                   <a href="${contractViewUrl}" style="background: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin-right: 10px;">View Signed Contract</a>
                   <a href="${contractDownloadUrl}" style="background: #6B7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Download PDF</a>
+                  ${cloudStorageUrl ? `<br><br><a href="${cloudStorageUrl}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">📱 Permanent Download Link</a>` : ''}
                 </div>
                 
                 <p style="background: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">

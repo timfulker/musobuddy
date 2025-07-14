@@ -344,13 +344,8 @@ function generateInvoiceEmailHtml(
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
-  const cloudLinkHtml = cloudStorageUrl ? `
-    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
-      <h4 style="color: #64748b; margin-top: 0;">📎 Document Access</h4>
-      <p style="margin: 5px 0;">This email includes your invoice as a PDF attachment.</p>
-      <p style="margin: 5px 0;">You can also download it anytime from: <a href="${cloudStorageUrl}" style="color: #3b82f6;">View Invoice PDF</a></p>
-    </div>
-  ` : `
+  // Invoice emails: attachment-only approach (no cloud link needed)
+  const attachmentHtml = `
     <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
       <p style="margin: 0; color: #64748b;">📎 Your invoice is attached as a PDF to this email.</p>
     </div>
@@ -373,7 +368,7 @@ function generateInvoiceEmailHtml(
           ${invoice.performanceDate ? `<p><strong>Performance Date:</strong> ${new Date(invoice.performanceDate).toLocaleDateString()}</p>` : ''}
         </div>
         
-        ${cloudLinkHtml}
+        ${attachmentHtml}
         
         <p>Payment can be made via bank transfer to the account details shown on the invoice.</p>
         
