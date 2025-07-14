@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -25,14 +24,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Info, Plus, X, Edit3, Save, Calendar, Clock, MapPin, User, Phone, Mail, Music } from "lucide-react";
+import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
-
-const customFieldSchema = z.object({
-  name: z.string().min(1, "Field name is required"),
-  value: z.string().min(1, "Field value is required"),
-});
 
 const bookingDetailsSchema = z.object({
   clientEmail: z.string().email().optional().or(z.literal("")),
@@ -57,16 +52,14 @@ const bookingDetailsSchema = z.object({
 });
 
 interface BookingDetailsDialogProps {
-  booking: Booking;
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  booking: Booking | null;
 }
 
-export function BookingDetailsDialog({ booking, children }: BookingDetailsDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDetailsDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [customFields, setCustomFields] = useState<Array<{id: string, name: string, value: string}>>(
-    booking.customFields ? JSON.parse(booking.customFields) : []
-  );
+  const [customFields, setCustomFields] = useState<Array<{id: string, name: string, value: string}>>([]);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldValue, setNewFieldValue] = useState("");
   const { toast } = useToast();
@@ -75,51 +68,85 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
     defaultValues: {
-      clientEmail: booking.clientEmail || "",
-      clientPhone: booking.clientPhone || "",
-      clientAddress: booking.clientAddress || "",
-      eventType: booking.eventType || "",
-      gigType: booking.gigType || "",
-      equipmentNeeded: booking.equipmentNeeded || "",
-      specialRequests: booking.specialRequests || "",
-      setupTime: booking.setupTime || "",
-      soundCheckTime: booking.soundCheckTime || "",
-      packupTime: booking.packupTime || "",
-      travelTime: booking.travelTime || "",
-      parkingInfo: booking.parkingInfo || "",
-      contactPerson: booking.contactPerson || "",
-      contactPhone: booking.contactPhone || "",
-      venueAddress: booking.venueAddress || "",
-      venueContactInfo: booking.venueContactInfo || "",
-      dressCode: booking.dressCode || "",
-      repertoire: booking.repertoire || "",
-      notes: booking.notes || "",
+      clientEmail: "",
+      clientPhone: "",
+      clientAddress: "",
+      eventType: "",
+      gigType: "",
+      equipmentNeeded: "",
+      specialRequests: "",
+      setupTime: "",
+      soundCheckTime: "",
+      packupTime: "",
+      travelTime: "",
+      parkingInfo: "",
+      contactPerson: "",
+      contactPhone: "",
+      venueAddress: "",
+      venueContactInfo: "",
+      dressCode: "",
+      repertoire: "",
+      notes: "",
     },
   });
 
+  // Initialize form when booking changes
+  useEffect(() => {
+    if (booking) {
+      form.reset({
+        clientEmail: booking.clientEmail || "",
+        clientPhone: booking.clientPhone || "",
+        clientAddress: booking.clientAddress || "",
+        eventType: booking.eventType || "",
+        gigType: booking.gigType || "",
+        equipmentNeeded: booking.equipmentNeeded || "",
+        specialRequests: booking.specialRequests || "",
+        setupTime: booking.setupTime || "",
+        soundCheckTime: booking.soundCheckTime || "",
+        packupTime: booking.packupTime || "",
+        travelTime: booking.travelTime || "",
+        parkingInfo: booking.parkingInfo || "",
+        contactPerson: booking.contactPerson || "",
+        contactPhone: booking.contactPhone || "",
+        venueAddress: booking.venueAddress || "",
+        venueContactInfo: booking.venueContactInfo || "",
+        dressCode: booking.dressCode || "",
+        repertoire: booking.repertoire || "",
+        notes: booking.notes || "",
+      });
+      
+      // Initialize custom fields
+      setCustomFields(booking.customFields ? JSON.parse(booking.customFields) : []);
+    }
+  }, [booking, form]);
+
   const updateBookingMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof bookingDetailsSchema> & { customFields: any }) => {
-      const response = await fetch(`/api/bookings/${booking.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/bookings/${booking?.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(data),
       });
       
       if (!response.ok) {
-        throw new Error("Failed to update booking");
+        throw new Error('Failed to update booking');
       }
       
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
       toast({
         title: "Success",
         description: "Booking details updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
       setIsEditing(false);
     },
     onError: (error) => {
+      console.error('Error updating booking:', error);
       toast({
         title: "Error",
         description: "Failed to update booking details",
@@ -127,6 +154,19 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
       });
     },
   });
+
+  // Save function
+  const handleSave = async () => {
+    if (!booking) return;
+    
+    const formData = form.getValues();
+    const updateData = {
+      ...formData,
+      customFields: JSON.stringify(customFields),
+    };
+    
+    updateBookingMutation.mutate(updateData);
+  };
 
   const addCustomField = () => {
     if (newFieldName.trim() && newFieldValue.trim()) {
@@ -145,181 +185,152 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
     setCustomFields(customFields.filter(field => field.id !== id));
   };
 
-  const updateCustomField = (id: string, name: string, value: string) => {
-    setCustomFields(customFields.map(field => 
-      field.id === id ? { ...field, name, value } : field
-    ));
+  const handleClose = () => {
+    setIsEditing(false);
+    onOpenChange(false);
   };
 
-  const onSubmit = (data: z.infer<typeof bookingDetailsSchema>) => {
-    updateBookingMutation.mutate({
-      ...data,
-      customFields: JSON.stringify(customFields),
-    });
+  const handleCancel = () => {
+    // Reset form to original values
+    if (booking) {
+      form.reset({
+        clientEmail: booking.clientEmail || "",
+        clientPhone: booking.clientPhone || "",
+        clientAddress: booking.clientAddress || "",
+        eventType: booking.eventType || "",
+        gigType: booking.gigType || "",
+        equipmentNeeded: booking.equipmentNeeded || "",
+        specialRequests: booking.specialRequests || "",
+        setupTime: booking.setupTime || "",
+        soundCheckTime: booking.soundCheckTime || "",
+        packupTime: booking.packupTime || "",
+        travelTime: booking.travelTime || "",
+        parkingInfo: booking.parkingInfo || "",
+        contactPerson: booking.contactPerson || "",
+        contactPhone: booking.contactPhone || "",
+        venueAddress: booking.venueAddress || "",
+        venueContactInfo: booking.venueContactInfo || "",
+        dressCode: booking.dressCode || "",
+        repertoire: booking.repertoire || "",
+        notes: booking.notes || "",
+      });
+      setCustomFields(booking.customFields ? JSON.parse(booking.customFields) : []);
+    }
+    setIsEditing(false);
   };
 
-  const formatDateTime = (date: string, time?: string) => {
-    const eventDate = new Date(date);
-    const dateStr = eventDate.toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    return time ? `${dateStr} at ${time}` : dateStr;
-  };
+  if (!booking) return null;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed": return "bg-purple-500";
-      case "signed": return "bg-green-500";
-      case "completed": return "bg-blue-500";
-      case "cancelled": return "bg-red-500";
-      default: return "bg-gray-500";
+  const handleDialogOpenChange = (open: boolean) => {
+    // Only allow closing if not in editing mode
+    if (!isEditing) {
+      onOpenChange(open);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto [&>button]:hidden">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              Booking Details
-            </DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Badge className={`${getStatusColor(booking.status)} text-white`}>
-                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-              </Badge>
-              {!isEditing ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                  className="gap-2"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  Edit
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={form.handleSubmit(onSubmit)}
-                    disabled={updateBookingMutation.isPending}
-                    className="gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    {updateBookingMutation.isPending ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              )}
+              <Info className="h-5 w-5" />
+              Booking Details - {booking.clientName}
             </div>
-          </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              <Edit3 className="h-4 w-4 mr-2" />
+              {isEditing ? 'View Mode' : 'Edit Mode'}
+            </Button>
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Event Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Event</Label>
-                  <p className="text-sm font-semibold">{booking.title}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Client</Label>
-                  <p className="text-sm font-semibold">{booking.clientName}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Date & Time</Label>
-                  <p className="text-sm">{formatDateTime(booking.eventDate, booking.eventTime)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Duration</Label>
-                  <p className="text-sm">
-                    {booking.performanceDuration 
-                      ? `${booking.performanceDuration} minutes`
-                      : booking.eventEndTime 
-                        ? `${booking.eventTime} - ${booking.eventEndTime}`
-                        : "Not specified"
-                    }
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Venue</Label>
-                  <p className="text-sm">{booking.venue}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Fee</Label>
-                  <p className="text-sm font-semibold">£{booking.fee}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Detailed Information Form */}
+        <div className="space-y-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
-              {/* Client Details */}
+            <form className="space-y-6">
+              {/* Basic Information */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Client Details
+                    <Calendar className="h-5 w-5" />
+                    Basic Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="clientEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <Mail className="h-4 w-4" />
-                            Email
-                          </FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={!isEditing} type="email" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <Label>Client Name</Label>
+                      <div className="p-2 bg-gray-50 rounded-md">{booking.clientName}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Event Date</Label>
+                      <div className="p-2 bg-gray-50 rounded-md">
+                        {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'Not set'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Event Time</Label>
+                      <div className="p-2 bg-gray-50 rounded-md">{booking.eventTime || 'Not set'}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Venue</Label>
+                      <div className="p-2 bg-gray-50 rounded-md">{booking.venue || 'Not set'}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Fee</Label>
+                      <div className="p-2 bg-gray-50 rounded-md">£{booking.fee || 'Not set'}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Status</Label>
+                      <div className="p-2 bg-gray-50 rounded-md">
+                        <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                          {booking.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Client Contact Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Client Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <FormField
+                    control={form.control}
+                    name="clientEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled={!isEditing} type="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="clientPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            Phone
-                          </FormLabel>
+                          <FormLabel>Phone</FormLabel>
                           <FormControl>
                             <Input {...field} disabled={!isEditing} />
                           </FormControl>
@@ -362,7 +373,7 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
                         <FormItem>
                           <FormLabel>Event Type</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="e.g., Wedding, Corporate" />
+                            <Input {...field} disabled={!isEditing} placeholder="Wedding, Corporate, etc." />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -375,7 +386,23 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
                         <FormItem>
                           <FormLabel>Gig Type</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="e.g., Saxophone, DJ" />
+                            <Input {...field} disabled={!isEditing} placeholder="Saxophone, DJ, etc." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="dressCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dress Code</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditing} placeholder="Black tie, casual, etc." />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -385,26 +412,12 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
                   
                   <FormField
                     control={form.control}
-                    name="dressCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dress Code</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled={!isEditing} placeholder="e.g., Black tie, Smart casual" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
                     name="repertoire"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Repertoire / Song List</FormLabel>
+                        <FormLabel>Repertoire/Song Requests</FormLabel>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={3} placeholder="Songs, style, special requests..." />
+                          <Textarea {...field} disabled={!isEditing} rows={3} placeholder="Special songs, style requests, etc." />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -413,12 +426,12 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
                 </CardContent>
               </Card>
 
-              {/* Venue & Logistics */}
+              {/* Venue Information */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
-                    Venue & Logistics
+                    Venue Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
@@ -525,7 +538,7 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
                         <FormItem>
                           <FormLabel>Sound Check Time</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="e.g., 15 minutes" />
+                            <Input {...field} disabled={!isEditing} placeholder="e.g., 15 minutes before start" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -539,9 +552,9 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
                       name="packupTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Pack Up Time</FormLabel>
+                          <FormLabel>Pack-up Time</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="e.g., 20 minutes after" />
+                            <Input {...field} disabled={!isEditing} placeholder="e.g., 15 minutes after finish" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -671,6 +684,28 @@ export function BookingDetailsDialog({ booking, children }: BookingDetailsDialog
                   />
                 </CardContent>
               </Card>
+              
+              {/* Save/Cancel Buttons */}
+              {isEditing && (
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={updateBookingMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={updateBookingMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {updateBookingMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              )}
             </form>
           </Form>
         </div>
