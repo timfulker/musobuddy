@@ -23,15 +23,34 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 
-const contractFormSchema = insertContractSchema.extend({
-  eventDate: z.string().optional(),
+const contractFormSchema = z.object({
+  // Required fields only
+  contractNumber: z.string().min(1, "Contract number is required"),
+  clientName: z.string().min(1, "Client name is required"),
+  clientEmail: z.string().email("Valid email required").optional().or(z.literal("")),
+  clientPhone: z.string().optional(),
+  eventDate: z.string().min(1, "Event date is required"),
+  eventTime: z.string().min(1, "Event time is required"),
+  venue: z.string().min(1, "Venue is required"),
+  fee: z.string().min(1, "Performance fee is required"),
+  
+  // Optional professional fields
+  venueAddress: z.string().optional(),
+  eventType: z.string().optional(),
+  gigType: z.string().optional(),
+  setupTime: z.string().optional(),
+  soundCheckTime: z.string().optional(),
+  equipmentProvided: z.string().optional(),
+  clientRequirements: z.string().optional(),
+  dressCode: z.string().optional(),
+  deposit: z.string().optional(),
+  terms: z.string().optional(),
+  
+  // System fields
+  enquiryId: z.number().optional(),
+  status: z.string().default("draft"),
   reminderEnabled: z.boolean().default(false),
-  reminderDays: z.number().min(1).max(30).default(7),
-}).omit({
-  userId: true,
-  signedAt: true,
-  lastReminderSent: true,
-  reminderCount: true,
+  reminderDays: z.number().min(1).max(30).default(3),
 });
 
 export default function Contracts() {
