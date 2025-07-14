@@ -667,13 +667,12 @@ export default function Calendar() {
 
   const calendarModifiersClassNames = {
     today: "bg-blue-500 text-white",
-    confirmed: "bg-green-500 text-white",
-    completed: "bg-purple-500 text-white",
+    confirmed: "bg-purple-500 text-white",
     cancelled: "bg-red-500 text-white",
-    newEnquiry: "bg-yellow-400 text-white",
+    newEnquiry: "bg-yellow-300 text-black",
     inProgressEnquiry: "bg-blue-500 text-white",
-    confirmedEnquiry: "bg-green-500 text-white",
-    signedContract: "bg-emerald-500 text-white",
+    confirmedEnquiry: "bg-purple-500 text-white",
+    signedContract: "bg-green-500 text-white",
     expiredEnquiry: "bg-gray-400 text-white opacity-50",
   };
 
@@ -688,15 +687,6 @@ export default function Calendar() {
     }
     
     if (event.status === 'confirmed' || event.status === 'enquiry-confirmed') {
-      return {
-        background: 'bg-green-50',
-        border: 'border-green-200',
-        text: 'text-green-800',
-        accent: 'bg-green-500'
-      };
-    }
-    
-    if (event.status === 'completed') {
       return {
         background: 'bg-purple-50',
         border: 'border-purple-200',
@@ -719,7 +709,7 @@ export default function Calendar() {
         background: 'bg-yellow-50',
         border: 'border-yellow-200',
         text: 'text-yellow-800',
-        accent: 'bg-yellow-400'
+        accent: 'bg-yellow-300'
       };
     }
     
@@ -734,10 +724,10 @@ export default function Calendar() {
     
     if (event.status === 'contract-signed') {
       return {
-        background: 'bg-emerald-50',
-        border: 'border-emerald-200',
-        text: 'text-emerald-800',
-        accent: 'bg-emerald-500'
+        background: 'bg-green-50',
+        border: 'border-green-200',
+        text: 'text-green-800',
+        accent: 'bg-green-500'
       };
     }
     
@@ -1047,15 +1037,15 @@ export default function Calendar() {
 
                   <div className="flex flex-wrap justify-center gap-4 text-xs">
                     <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                       <span>Confirmed</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                      <span>Completed</span>
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span>Contract Signed</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                      <div className="w-3 h-3 bg-yellow-300 rounded-full"></div>
                       <span>New Enquiry</span>
                     </div>
                     <div className="flex items-center space-x-1">
