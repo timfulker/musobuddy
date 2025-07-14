@@ -92,6 +92,8 @@ export default function BookingStatusDialog({
         return "bg-green-100 text-green-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "signed":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -105,6 +107,8 @@ export default function BookingStatusDialog({
         return "Completed";
       case "cancelled":
         return "Cancelled";
+      case "signed":
+        return "Contract Signed";
       default:
         return "Unknown";
     }
@@ -169,6 +173,7 @@ export default function BookingStatusDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="signed">Contract Signed</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
