@@ -759,10 +759,10 @@ This applies to any changes in:
   * **Unified Design**: Both contracts and invoices now use identical layout patterns and button styling
   * **Status**: Contracts page layout now matches invoice page for consistent user experience
 - July 14, 2025. Invoice button alignment optimization completed:
-  * **Draft Status Alignment**: Added invisible placeholder buttons to draft invoices to maintain consistent View button positioning
+  * **Fixed-Width Layout**: Used lg:w-2/3 for details section and lg:w-1/3 for button container to ensure consistent positioning
   * **Vertical Alignment Fixed**: Draft invoice View buttons now align vertically with sent/overdue invoice View buttons
-  * **Consistent Button Count**: All invoice statuses now have 5 buttons total (View + 4 action buttons) for uniform layout
-  * **Invisible Placeholders**: Draft status uses invisible placeholder buttons to maintain grid alignment without visual clutter
+  * **Proportional Layout**: Details section and button container use fixed proportions for predictable button positioning
+  * **Consistent Grid**: All invoice statuses now use grid-cols-4 layout for uniform column distribution
   * **Status**: Invoice View buttons now maintain consistent vertical alignment across all statuses (draft, sent, overdue)
 
 ## Phase 1 Complete - July 09, 2025 ✅
