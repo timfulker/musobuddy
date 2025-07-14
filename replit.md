@@ -710,6 +710,14 @@ This applies to any changes in:
   * **Clean UI Design**: Eliminated visual clutter and conflicting status colors
   * **Consistent Styling**: Status badges use unified color scheme from getStatusColor function
   * **Status**: Contract cards now display clean, single status indicators without duplication
+- July 14, 2025. Manual contract reminder system and unsigned status implemented:
+  * **Unsigned Status Display**: Contracts sent but not signed now show "UNSIGNED" in red instead of "SENT"
+  * **Manual Send Reminder Button**: Added amber "Send Reminder" button for unsigned contracts
+  * **Reminder Email Template**: Professional reminder email with contract details and sign button
+  * **Status Logic Enhancement**: Smart contract status detection distinguishes between sent and unsigned contracts
+  * **Reminder Tracking**: Backend updates lastReminderSent and reminderCount fields for tracking
+  * **Visual Indicators**: Red "UNSIGNED" status makes it clear which contracts need attention
+  * **Status**: Manual reminder system fully operational alongside automated reminder system
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**

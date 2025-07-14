@@ -1781,6 +1781,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send contract reminder
+  app.post('/api/contracts/:id/send-reminder', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contractId = parseInt(req.params.id);
+      
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      // Only send reminders for sent contracts that aren't signed yet
+      if (contract.status !== 'sent' || contract.signedAt) {
+        return res.status(400).json({ message: "Contract reminder not applicable for this status" });
+      }
+      
+      // Get user settings for email branding
+      const userSettings = await storage.getUserSettings(userId);
+      const fromName = userSettings?.emailFromName || userSettings?.businessName || "MusoBuddy";
+      const fromEmail = "noreply@mg.musobuddy.com";
+      const replyToEmail = userSettings?.businessEmail || req.user.email;
+      
+      // Create reminder email
+      const contractSignUrl = `${process.env.REPLIT_DOMAIN || 'https://musobuddy.replit.app'}/sign-contract/${contract.id}`;
+      const contractViewUrl = `${process.env.REPLIT_DOMAIN || 'https://musobuddy.replit.app'}/view-contract/${contract.id}`;
+      
+      const emailData: any = {
+        to: contract.clientEmail,
+        from: `${fromName} <${fromEmail}>`,
+        subject: `Contract Reminder: ${contract.contractNumber} - Please Sign`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #0EA5E9; margin-bottom: 20px;">Contract Reminder</h1>
+            
+            <p>Dear ${contract.clientName},</p>
+            <p>This is a friendly reminder that your performance contract is ready for signing.</p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #333;">Contract Details</h3>
+              <p><strong>Contract:</strong> ${contract.contractNumber}</p>
+              <p><strong>Event Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+              <p><strong>Time:</strong> ${contract.eventTime}</p>
+              <p><strong>Venue:</strong> ${contract.venue}</p>
+              <p><strong>Fee:</strong> £${contract.fee}</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${contractSignUrl}" style="background: #0EA5E9; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Sign Contract Now</a>
+            </div>
+            
+            <p style="color: #6B7280; font-size: 14px;">
+              Please sign your contract at your earliest convenience to confirm your booking.
+            </p>
+            
+            <p>Thank you!</p>
+            <p>Best regards,<br><strong>${userSettings?.businessName || fromName}</strong></p>
+            
+            <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
+              <small>Powered by MusoBuddy – less admin, more music</small>
+            </p>
+          </div>
+        `,
+        text: `Contract Reminder - ${contract.contractNumber}. Please sign your contract for the event on ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Sign online: ${contractSignUrl}`
+      };
+      
+      // Add reply-to if user has external email
+      if (replyToEmail) {
+        emailData.replyTo = replyToEmail;
+      }
+      
+      // Send reminder email
+      const { sendEmail } = await import('./mailgun-email');
+      const emailSent = await sendEmail(emailData);
+      
+      if (emailSent) {
+        // Update contract reminder tracking
+        await storage.updateContract(contractId, { 
+          lastReminderSent: new Date().toISOString(),
+          reminderCount: (contract.reminderCount || 0) + 1
+        }, userId);
+        
+        res.json({ 
+          message: "Reminder sent successfully",
+          debug: {
+            contractId: contractId,
+            clientEmail: contract.clientEmail,
+            contractNumber: contract.contractNumber,
+            emailSent: true
+          }
+        });
+      } else {
+        res.status(500).json({ 
+          message: "Failed to send reminder email",
+          debug: {
+            contractId: contractId,
+            clientEmail: contract.clientEmail,
+            contractNumber: contract.contractNumber,
+            emailSent: false
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error sending contract reminder:", error);
+      res.status(500).json({ message: "Failed to send contract reminder" });
+    }
+  });
+
   // Public contract routes for signing (no authentication required)
   app.get('/api/contracts/public/:id', async (req, res) => {
     try {

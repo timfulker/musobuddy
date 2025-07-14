@@ -250,6 +250,35 @@ export default function Contracts() {
     },
   });
 
+  const sendReminderMutation = useMutation({
+    mutationFn: async (contractId: number) => {
+      const response = await fetch(`/api/contracts/${contractId}/send-reminder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      toast({
+        title: "Success",
+        description: "Reminder sent successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to send reminder: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteContractMutation = useMutation({
     mutationFn: async (contractId: number) => {
       console.log("🔥 Deleting contract:", contractId);
@@ -436,8 +465,21 @@ export default function Contracts() {
       case "sent": return "bg-blue-100 text-blue-800";
       case "signed": return "bg-green-100 text-green-800";
       case "completed": return "bg-purple-100 text-purple-800";
+      case "unsigned": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const getContractDisplayStatus = (contract: Contract) => {
+    // Check if contract is unsigned (sent but not signed)
+    if (contract.status === "sent" && !contract.signedAt) {
+      return "unsigned";
+    }
+    return contract.status;
+  };
+
+  const isContractUnsigned = (contract: Contract) => {
+    return contract.status === "sent" && !contract.signedAt;
   };
 
   const formatDate = (dateString: string) => {
@@ -903,8 +945,8 @@ export default function Contracts() {
                                 <h3 className="text-lg font-semibold text-gray-900">
                                   Contract #{contract.contractNumber}
                                 </h3>
-                                <Badge className={getStatusColor(contract.status)}>
-                                  {contract.status.toUpperCase()}
+                                <Badge className={getStatusColor(getContractDisplayStatus(contract))}>
+                                  {getContractDisplayStatus(contract).toUpperCase()}
                                 </Badge>
                               </div>
 
@@ -994,6 +1036,18 @@ export default function Contracts() {
                                     <Button size="sm" variant="outline" className="text-xs" onClick={() => handleSendContract(contract)}>
                                       Resend
                                     </Button>
+                                    {isContractUnsigned(contract) && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200" 
+                                        onClick={() => sendReminderMutation.mutate(contract.id)}
+                                        disabled={sendReminderMutation.isPending}
+                                      >
+                                        <Mail className="w-3 h-3 mr-1" />
+                                        {sendReminderMutation.isPending ? "Sending..." : "Send Reminder"}
+                                      </Button>
+                                    )}
                                   </>
                                 )}
 
