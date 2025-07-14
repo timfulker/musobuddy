@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight, Settings, Info } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, type Booking } from "@shared/schema";
 import { useLocation, Link } from "wouter";
@@ -19,6 +19,7 @@ import { z } from "zod";
 import CalendarImport from "@/components/calendar-import";
 import Sidebar from "@/components/sidebar";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
+import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
 
 const bookingFormSchema = insertBookingSchema.extend({
   eventDate: z.string(),
@@ -1192,17 +1193,29 @@ export default function Calendar() {
                                     <span className="font-semibold text-green-600">
                                       £{Number(booking.fee).toLocaleString()}
                                     </span>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => {
-                                        setSelectedBooking(booking);
-                                        setStatusUpdateDialogOpen(true);
-                                      }}
-                                    >
-                                      <Settings className="w-4 h-4 mr-1" />
-                                      Update Status
-                                    </Button>
+                                    <div className="flex items-center space-x-2">
+                                      <BookingDetailsDialog booking={booking}>
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline"
+                                          className="flex items-center space-x-1"
+                                        >
+                                          <Info className="w-4 h-4" />
+                                          <span>Details</span>
+                                        </Button>
+                                      </BookingDetailsDialog>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        onClick={() => {
+                                          setSelectedBooking(booking);
+                                          setStatusUpdateDialogOpen(true);
+                                        }}
+                                      >
+                                        <Settings className="w-4 h-4 mr-1" />
+                                        Update Status
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>

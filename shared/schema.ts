@@ -113,6 +113,28 @@ export const bookings = pgTable("bookings", {
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
   status: varchar("status").notNull().default("confirmed"), // confirmed, signed, completed, cancelled
   notes: text("notes"),
+  
+  // Enhanced booking details
+  clientEmail: varchar("client_email"),
+  clientPhone: varchar("client_phone"),
+  clientAddress: text("client_address"),
+  eventType: varchar("event_type"), // Wedding, Corporate, Private Party, etc.
+  gigType: varchar("gig_type"), // Saxophone, DJ, Band, etc.
+  equipmentNeeded: text("equipment_needed"), // PA system, microphones, etc.
+  specialRequests: text("special_requests"), // Song requests, dress code, etc.
+  setupTime: varchar("setup_time"), // Time needed for setup
+  soundCheckTime: varchar("sound_check_time"), // Time for sound check
+  packupTime: varchar("pack_up_time"), // Time needed for pack up
+  travelTime: varchar("travel_time"), // Travel time to venue
+  parkingInfo: text("parking_info"), // Parking details
+  contactPerson: varchar("contact_person"), // Day-of contact person
+  contactPhone: varchar("contact_phone"), // Day-of contact phone
+  venueAddress: text("venue_address"), // Full venue address
+  venueContactInfo: text("venue_contact_info"), // Venue contact details
+  dressCode: varchar("dress_code"), // Dress code requirements
+  repertoire: text("repertoire"), // Song list or repertoire notes
+  customFields: jsonb("custom_fields"), // For user-defined fields
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

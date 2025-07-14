@@ -1943,23 +1943,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update booking status
+  // Update booking (supports both status updates and detailed information updates)
   app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const bookingId = parseInt(req.params.id);
-      const { status } = req.body;
+      const updateData = { ...req.body };
       
-      if (!status) {
-        return res.status(400).json({ error: 'Status is required' });
+      // If it's a status-only update, validate the status
+      if (updateData.status && Object.keys(updateData).length === 1) {
+        const allowedStatuses = ['confirmed', 'signed', 'completed', 'cancelled'];
+        if (!allowedStatuses.includes(updateData.status)) {
+          return res.status(400).json({ error: 'Invalid status. Must be one of: confirmed, signed, completed, cancelled' });
+        }
       }
       
-      const allowedStatuses = ['confirmed', 'signed', 'completed', 'cancelled'];
-      if (!allowedStatuses.includes(status)) {
-        return res.status(400).json({ error: 'Invalid status. Must be one of: confirmed, signed, completed, cancelled' });
+      // Parse custom fields if present
+      if (updateData.customFields && typeof updateData.customFields === 'string') {
+        try {
+          updateData.customFields = JSON.parse(updateData.customFields);
+        } catch (error) {
+          console.error("Error parsing custom fields:", error);
+          return res.status(400).json({ error: 'Invalid custom fields format' });
+        }
       }
       
-      const updatedBooking = await storage.updateBooking(bookingId, { status }, userId);
+      // Update the booking with all provided data
+      const updatedBooking = await storage.updateBooking(bookingId, updateData, userId);
       
       if (!updatedBooking) {
         return res.status(404).json({ error: 'Booking not found' });
