@@ -169,10 +169,11 @@ export function getConflictActions(severity: ConflictSeverity): Array<{
 }> {
   switch (severity.level) {
     case 'critical':
+      // For confirmed booking conflicts - NO PROCEED option to prevent double booking
       return [
-        { label: 'Reschedule', action: 'reschedule', variant: 'default', icon: '📅' },
-        { label: 'Decline', action: 'decline', variant: 'destructive', icon: '❌' },
-        { label: 'Review Details', action: 'review', variant: 'outline', icon: '🔍' }
+        { label: 'Decline Enquiry', action: 'decline', variant: 'destructive', icon: '❌' },
+        { label: 'Reschedule Enquiry', action: 'reschedule', variant: 'default', icon: '📅' },
+        { label: 'View Booking Details', action: 'review', variant: 'outline', icon: '🔍' }
       ];
     case 'warning':
       return [
