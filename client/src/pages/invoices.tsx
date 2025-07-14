@@ -1158,7 +1158,7 @@ export default function Invoices() {
                   <Card key={invoice.id} className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                     <CardContent className="p-6">
                       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                        <div className="flex items-start gap-3 lg:w-2/3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -1176,7 +1176,7 @@ export default function Invoices() {
                             </div>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-600 dark:text-gray-300">
-                              <div>
+                              <div className="lg:col-span-2">
                                 <span className="font-medium">Client:</span>
                                 <p className="text-gray-900 dark:text-gray-100 truncate">{invoice.clientName}</p>
                               </div>
@@ -1184,19 +1184,15 @@ export default function Invoices() {
                                 <span className="font-medium">Amount:</span>
                                 <p className="text-gray-900 dark:text-gray-100 font-semibold">£{Number(invoice.amount).toLocaleString()}</p>
                               </div>
-                              <div>
-                                <span className="font-medium">Due Date:</span>
+                              <div className="lg:col-span-1">
+                                <span className="font-medium">Due:</span>
                                 <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.dueDate)}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium">Created:</span>
-                                <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.createdAt!)}</p>
                               </div>
                             </div>
                           </div>
                         </div>
                       
-                      <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:w-1/3 lg:justify-start">
+                      <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:flex-shrink-0 lg:justify-start">
                         {/* View button - available for all statuses */}
                         <Button 
                           size="sm" 
