@@ -34,16 +34,18 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
       return false;
     }
 
-    // Use custom subdomain in production, sandbox for development
-    const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
+    // Use custom domain for production email sending
+    const domain = 'mg.musobuddy.com'; // Force custom domain instead of sandbox
     console.log('🌐 Using domain:', domain);
     
-    // Create Mailgun client with EU endpoint
+    // Create Mailgun client with EU endpoint (mg.musobuddy.com is on EU)
     const mg = mailgun.client({
       username: 'api',
       key: process.env.MAILGUN_API_KEY,
-      url: 'https://api.eu.mailgun.net' // EU endpoint for better performance
+      url: 'https://api.eu.mailgun.net' // EU endpoint for mg.musobuddy.com
     });
+    
+    console.log('🔑 Mailgun client initialized with key:', process.env.MAILGUN_API_KEY ? 'Present' : 'Missing');
 
     // Prepare message data
     const messageData: any = {
@@ -81,6 +83,9 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
   } catch (error: any) {
     console.error('❌ Failed to send email:', error.message);
     console.error('Error details:', error);
+    console.error('Error status:', error.status);
+    console.error('Error type:', error.type);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
     return false;
   }
 }
