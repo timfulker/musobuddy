@@ -72,9 +72,9 @@ export default function ViewInvoice() {
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               The invoice you're looking for could not be found.
             </p>
-            <Button onClick={() => window.close()} variant="outline">
+            <Button onClick={() => setLocation('/invoices')} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Close
+              Back to Invoices
             </Button>
           </CardContent>
         </Card>
@@ -91,9 +91,9 @@ export default function ViewInvoice() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Invoice Details</span>
-                <Button onClick={() => window.close()} variant="outline" size="sm">
+                <Button onClick={() => setLocation('/invoices')} variant="outline" size="sm">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Close
+                  Back to Invoices
                 </Button>
               </CardTitle>
             </CardHeader>

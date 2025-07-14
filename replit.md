@@ -718,6 +718,12 @@ This applies to any changes in:
   * **Reminder Tracking**: Backend updates lastReminderSent and reminderCount fields for tracking
   * **Visual Indicators**: Red "UNSIGNED" status makes it clear which contracts need attention
   * **Status**: Manual reminder system fully operational alongside automated reminder system
+- July 14, 2025. Invoice view navigation updated to match contracts pattern:
+  * **Same-Page Navigation**: Invoice "View" button now opens invoices in the same page instead of direct PDF
+  * **Solid Green Styling**: Changed "View" button from outline to solid green (bg-green-600) to match contracts page
+  * **Back Navigation**: Updated view-invoice page back buttons to navigate to /invoices instead of window.close()
+  * **Consistent UX**: Both contracts and invoices now use identical navigation patterns for better user experience
+  * **Status**: Invoice and contract view navigation now fully consistent across the application
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**

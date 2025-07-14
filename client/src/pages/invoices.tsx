@@ -37,7 +37,7 @@ const invoiceFormSchema = z.object({
 
 export default function Invoices() {
   const { toast } = useToast();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -729,8 +729,8 @@ export default function Invoices() {
   };
 
   const handleViewInvoice = (invoice: Invoice) => {
-    // Open invoice PDF in new tab
-    window.open(`/api/invoices/${invoice.id}/pdf`, '_blank');
+    // Navigate to view invoice page in same window
+    setLocation(`/view-invoice/${invoice.id}`);
   };
 
   const filteredInvoices = invoices.filter((invoice: Invoice) => {
@@ -1200,8 +1200,7 @@ export default function Invoices() {
                         {/* View button - available for all statuses */}
                         <Button 
                           size="sm" 
-                          variant="outline" 
-                          className="text-xs whitespace-nowrap"
+                          className="text-xs whitespace-nowrap bg-green-600 hover:bg-green-700 text-white"
                           onClick={() => handleViewInvoice(invoice)}
                         >
                           <Eye className="w-3 h-3 mr-1" />
