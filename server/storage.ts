@@ -51,6 +51,7 @@ export interface IStorage {
   
   // Contract operations
   getContracts(userId: string): Promise<Contract[]>;
+  getAllContracts(): Promise<Contract[]>; // For reminder service
   getContract(id: number, userId: string): Promise<Contract | undefined>;
   getContractById(id: number): Promise<Contract | undefined>; // Public access for signing
   createContract(contract: InsertContract): Promise<Contract>;
@@ -202,6 +203,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(contracts)
       .where(eq(contracts.userId, userId))
+      .orderBy(desc(contracts.createdAt));
+  }
+
+  async getAllContracts(): Promise<Contract[]> {
+    return await db
+      .select()
+      .from(contracts)
       .orderBy(desc(contracts.createdAt));
   }
 

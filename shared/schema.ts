@@ -73,6 +73,11 @@ export const contracts = pgTable("contracts", {
   terms: text("terms"),
   status: varchar("status").notNull().default("draft"), // draft, sent, signed, completed
   signedAt: timestamp("signed_at"),
+  // Automatic reminder system
+  reminderEnabled: boolean("reminder_enabled").default(false),
+  reminderDays: integer("reminder_days").default(7), // Days between reminders
+  lastReminderSent: timestamp("last_reminder_sent"),
+  reminderCount: integer("reminder_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

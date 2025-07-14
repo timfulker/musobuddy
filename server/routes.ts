@@ -1116,6 +1116,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk contract deletion
+  app.post('/api/contracts/bulk-delete', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { contractIds } = req.body;
+      
+      if (!Array.isArray(contractIds) || contractIds.length === 0) {
+        return res.status(400).json({ message: "Contract IDs array is required" });
+      }
+
+      const results = [];
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const contractId of contractIds) {
+        try {
+          const success = await storage.deleteContract(parseInt(contractId), userId);
+          if (success) {
+            successCount++;
+            results.push({ contractId, success: true });
+          } else {
+            failCount++;
+            results.push({ contractId, success: false, error: "Contract not found" });
+          }
+        } catch (error) {
+          failCount++;
+          results.push({ contractId, success: false, error: error.message });
+        }
+      }
+
+      res.json({
+        message: `Bulk deletion completed: ${successCount} successful, ${failCount} failed`,
+        results,
+        summary: {
+          total: contractIds.length,
+          successful: successCount,
+          failed: failCount
+        }
+      });
+    } catch (error) {
+      console.error("Error in bulk contract deletion:", error);
+      res.status(500).json({ message: "Failed to delete contracts" });
+    }
+  });
+
   app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
       console.log('🔥 CONTRACT CREATION: Starting contract creation process');
@@ -1130,6 +1175,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (data.eventDate && typeof data.eventDate === 'string') {
         console.log('🔥 CONTRACT CREATION: Converting eventDate from string to Date');
         data.eventDate = new Date(data.eventDate);
+      }
+      
+      // Set reminder defaults if not provided
+      if (!data.hasOwnProperty('reminderEnabled')) {
+        data.reminderEnabled = false;
+      }
+      if (!data.hasOwnProperty('reminderDays')) {
+        data.reminderDays = 7;
       }
       
       console.log('🔥 CONTRACT CREATION: About to parse with schema');
@@ -1148,6 +1201,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("🔥 CONTRACT CREATION ERROR name:", error.name);
       console.error("🔥 CONTRACT CREATION ERROR code:", error.code);
       res.status(500).json({ message: "Failed to create contract", error: error.message });
+    }
+  });
+
+  // Process contract reminders
+  app.post('/api/contracts/process-reminders', isAuthenticated, async (req: any, res) => {
+    try {
+      const { ContractReminderService } = await import('./contract-reminder-service');
+      const reminderService = new ContractReminderService();
+      
+      const result = await reminderService.processContractReminders();
+      
+      res.json({
+        success: true,
+        message: `Reminder processing completed: ${result.sent} sent, ${result.failed} failed`,
+        result
+      });
+    } catch (error) {
+      console.error('Error processing contract reminders:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to process contract reminders',
+        error: error.message 
+      });
     }
   });
 
