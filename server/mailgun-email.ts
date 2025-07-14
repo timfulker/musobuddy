@@ -122,11 +122,26 @@ export async function sendContractEmail(
     // For unsigned contracts, create cloud storage signing page
     if (!isSignedContract) {
       try {
-        const { uploadContractSigningPage } = await import('./cloud-storage');
+        console.log('🔍 Attempting to upload contract signing page to cloud storage...');
+        const { uploadContractSigningPage, isCloudStorageConfigured } = await import('./cloud-storage');
+        
+        if (!isCloudStorageConfigured()) {
+          throw new Error('Cloud storage not configured - missing environment variables');
+        }
+        
+        console.log('🔧 Cloud storage configured, uploading signing page...');
         cloudSigningUrl = await uploadContractSigningPage(contract, userSettings);
-        console.log('☁️ Contract signing page uploaded to cloud storage:', cloudSigningUrl);
+        console.log('✅ SUCCESS: Contract signing page uploaded to cloud storage');
+        console.log('🔗 Cloud signing URL:', cloudSigningUrl);
+        
+        // Verify the URL starts with expected cloud storage domain
+        if (!cloudSigningUrl.includes('r2.cloudflarestorage.com')) {
+          console.log('⚠️ WARNING: Cloud URL does not appear to be from cloud storage:', cloudSigningUrl);
+        }
+        
       } catch (error) {
-        console.error('⚠️ Failed to upload contract signing page to cloud storage:', error);
+        console.error('❌ FAILED to upload contract signing page to cloud storage:', error);
+        console.error('🔧 Error details:', error.message);
         // Fallback to app-based signing page
         cloudSigningUrl = `https://musobuddy.replit.app/sign-contract/${contract.id}`;
         console.log('🔄 Using app-based signing page as fallback:', cloudSigningUrl);

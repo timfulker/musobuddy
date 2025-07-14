@@ -275,7 +275,7 @@ export async function uploadContractSigningPage(
     });
     
     const presignedUrl = await getSignedUrl(client, getCommand, { 
-      expiresIn: 30 * 24 * 60 * 60 // 30 days for contract signing
+      expiresIn: 7 * 24 * 60 * 60 // 7 days (maximum allowed) for contract signing
     });
     
     console.log('✅ Contract signing page uploaded to cloud storage');
