@@ -1175,7 +1175,7 @@ export default function Invoices() {
                               </Badge>
                             </div>
                             
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-600 dark:text-gray-300 lg:max-w-2xl">
                               <div>
                                 <span className="font-medium">Client:</span>
                                 <p className="text-gray-900 dark:text-gray-100 truncate">{invoice.clientName}</p>
@@ -1196,7 +1196,7 @@ export default function Invoices() {
                           </div>
                         </div>
                       
-                      <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:ml-4">
+                      <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:ml-2">
                         {/* View button - available for all statuses */}
                         <Button 
                           size="sm" 
