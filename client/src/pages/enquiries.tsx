@@ -942,8 +942,8 @@ export default function Enquiries() {
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-red-800">🚫 Hard Conflict</span>
-                  <span className="text-gray-500 hidden sm:inline">- Confirmed booking overlap</span>
+                  <span className="text-red-800">🚫 CONFIRMED BOOKING</span>
+                  <span className="text-gray-500 hidden sm:inline">- Double booking risk</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
@@ -1190,19 +1190,23 @@ export default function Enquiries() {
                               </div>
                               <div className="space-y-2">
                                 {conflicts.map((conflict, index) => (
-                                  <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                                  <div key={index} className={`flex items-center justify-between p-2 rounded border ${
+                                    conflict.type === 'booking' ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
+                                  }`}>
                                     <div className="flex items-center space-x-3">
-                                      <div className={`w-3 h-3 rounded-full ${conflict.type === 'booking' ? 'bg-purple-500' : 'bg-blue-500'}`}></div>
+                                      <div className={`w-3 h-3 rounded-full ${conflict.type === 'booking' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
                                       <div>
-                                        <p className="text-sm font-medium text-gray-900">{conflict.title}</p>
-                                        <p className="text-xs text-gray-500">
-                                          {conflict.type === 'booking' ? 'Confirmed Booking' : 'Confirmed Enquiry'}
+                                        <p className={`text-sm font-medium ${conflict.type === 'booking' ? 'text-red-900' : 'text-gray-900'}`}>
+                                          {conflict.title}
+                                        </p>
+                                        <p className={`text-xs ${conflict.type === 'booking' ? 'text-red-600' : 'text-gray-500'}`}>
+                                          {conflict.type === 'booking' ? '🚫 CONFIRMED BOOKING' : 'Enquiry'}
                                           {conflict.venue && ` • ${conflict.venue}`}
                                           {conflict.eventTime && ` • ${conflict.eventTime}`}
                                         </p>
                                       </div>
                                     </div>
-                                    <div className="text-xs text-gray-500">
+                                    <div className={`text-xs ${conflict.type === 'booking' ? 'text-red-600' : 'text-gray-500'}`}>
                                       {new Date(conflict.eventDate).toLocaleDateString()}
                                     </div>
                                   </div>

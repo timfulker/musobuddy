@@ -38,8 +38,8 @@ export function analyzeConflictSeverity(
     };
   }
 
-  // Critical conflicts (Red + Block Action)
-  if (analysis.confirmedBooking && analysis.hasTimeOverlap) {
+  // Critical conflicts (Red + Block Action) - Confirmed booking conflicts
+  if (analysis.confirmedBooking) {
     return {
       level: 'critical',
       color: 'red',
@@ -47,12 +47,12 @@ export function analyzeConflictSeverity(
       borderColor: 'border-red-300',
       textColor: 'text-red-800',
       icon: '🚫',
-      message: 'Hard conflict: Confirmed booking at same time',
+      message: 'CONFIRMED BOOKING CONFLICT - Double booking risk',
       canProceed: false
     };
   }
 
-  // Warning conflicts (Orange + Proceed with Caution)
+  // Warning conflicts (Orange + Proceed with Caution) - Time/venue overlaps between enquiries
   if (analysis.hasTimeOverlap && !analysis.sameClient) {
     return {
       level: 'warning',
@@ -61,12 +61,12 @@ export function analyzeConflictSeverity(
       borderColor: 'border-orange-300',
       textColor: 'text-orange-800',
       icon: '⚠️',
-      message: 'Time overlap detected - review carefully',
+      message: 'Time overlap with other enquiries - review carefully',
       canProceed: true
     };
   }
 
-  // Same venue conflicts
+  // Same venue conflicts between enquiries
   if (analysis.sameVenue && !analysis.sameClient) {
     return {
       level: 'warning',
@@ -75,7 +75,7 @@ export function analyzeConflictSeverity(
       borderColor: 'border-orange-300',
       textColor: 'text-orange-800',
       icon: '📍',
-      message: 'Same venue conflict - check logistics',
+      message: 'Same venue with other enquiries - check logistics',
       canProceed: true
     };
   }
@@ -94,7 +94,7 @@ export function analyzeConflictSeverity(
     };
   }
 
-  // Soft conflicts (Yellow/Amber - same day, different times)
+  // Soft conflicts (Yellow/Amber - same day between enquiries)
   return {
     level: 'info',
     color: 'amber',
@@ -102,7 +102,7 @@ export function analyzeConflictSeverity(
     borderColor: 'border-amber-300',
     textColor: 'text-amber-800',
     icon: '📅',
-    message: 'Same day events - check timing',
+    message: 'Same day as other enquiries - check timing',
     canProceed: true
   };
 }

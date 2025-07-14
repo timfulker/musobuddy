@@ -1028,6 +1028,14 @@ All core features implemented and operational:
   * **Multiple Fix Attempts**: Attempted several fixes for parentheses matching but error persists
   * **File Edit Challenges**: Encountered difficulties with edit tool properly saving changes to resolve syntax errors
   * **Current Status**: Calendar component still has compilation errors preventing app from running
+- July 14, 2025. Enhanced conflict indicator system with booking distinction implemented:
+  * **User-Requested Feature**: Added visual distinction between enquiry-vs-enquiry conflicts and enquiry-vs-confirmed-booking conflicts
+  * **Critical Visual Enhancement**: Confirmed bookings now highlighted in red background with red text when conflicting with enquiries
+  * **Graduated Conflict System**: Red (confirmed booking conflicts), Orange (enquiry warnings), Blue (same client), Amber (same day)
+  * **Enhanced Visual Key**: Updated conflict indicators legend to clearly show "CONFIRMED BOOKING" vs other conflict types
+  * **Improved UX**: Users can now immediately identify dangerous double-booking situations vs manageable enquiry conflicts
+  * **Visual Hierarchy**: Confirmed booking conflicts use red backgrounds, icons, and text to emphasize severity
+  * **Status**: Complete visual distinction system operational for better conflict management
 ```
 
 ## User Preferences
