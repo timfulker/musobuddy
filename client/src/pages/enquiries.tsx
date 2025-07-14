@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature, Info } from "lucide-react";
+import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature, Info, FileText } from "lucide-react";
 import { z } from "zod";
 import { insertClientSchema, type InsertClient } from "@shared/schema";
 import { Link } from "wouter";
@@ -22,6 +22,7 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
+import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import { 
   analyzeConflictSeverity, 
   getConflictCardStyling, 
@@ -50,6 +51,8 @@ export default function Enquiries() {
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
+  const [complianceDialogOpen, setComplianceDialogOpen] = useState(false);
+  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -1263,6 +1266,19 @@ export default function Enquiries() {
                               <Edit className="w-4 h-4 mr-2" />
                               Update Status
                             </Button>
+                            {enquiry.status === 'confirmed' && (
+                              <Button
+                                onClick={() => {
+                                  setSelectedBookingForCompliance(enquiry);
+                                  setComplianceDialogOpen(true);
+                                }}
+                                variant="outline"
+                                className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Send Compliance
+                              </Button>
+                            )}
                             <Button
                               onClick={() => {
                                 setSelectedEnquiry(enquiry);
@@ -1302,6 +1318,18 @@ export default function Enquiries() {
         onOpenChange={setBookingDetailsDialogOpen}
         booking={selectedBookingForDetails}
       />
+      
+      {/* Send Compliance Dialog */}
+      {selectedBookingForCompliance && (
+        <SendComplianceDialog
+          booking={selectedBookingForCompliance}
+          isOpen={complianceDialogOpen}
+          onClose={() => {
+            setComplianceDialogOpen(false);
+            setSelectedBookingForCompliance(null);
+          }}
+        />
+      )}
     </div>
   );
 }

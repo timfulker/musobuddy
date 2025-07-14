@@ -2386,6 +2386,216 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send compliance documents to booking client
+  app.post('/api/bookings/:bookingId/send-compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bookingId = parseInt(req.params.bookingId);
+      const { documentIds, recipientEmail, customMessage } = req.body;
+
+      // Validate inputs
+      if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+        return res.status(400).json({ message: "Document IDs are required" });
+      }
+
+      if (!recipientEmail) {
+        return res.status(400).json({ message: "Recipient email is required" });
+      }
+
+      // Get booking details
+      const booking = await storage.getBooking(bookingId, userId);
+      if (!booking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+
+      // Get user settings for business details
+      const userSettings = await storage.getUserSettings(userId);
+      const businessName = userSettings?.businessName || userSettings?.emailFromName || 'MusoBuddy User';
+
+      // Get selected compliance documents
+      const documents = await Promise.all(
+        documentIds.map(async (id: number) => {
+          const doc = await storage.getComplianceDocument(id, userId);
+          if (!doc) {
+            throw new Error(`Document with ID ${id} not found`);
+          }
+          return doc;
+        })
+      );
+
+      // Validate that all documents are valid
+      const invalidDocuments = documents.filter(doc => doc.status !== 'valid');
+      if (invalidDocuments.length > 0) {
+        return res.status(400).json({ 
+          message: `Cannot send expired or expiring documents: ${invalidDocuments.map(d => d.name).join(', ')}` 
+        });
+      }
+
+      // Prepare email attachments
+      const attachments = documents.map(doc => {
+        // Convert data URL to base64 content
+        const dataUrlMatch = doc.documentUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (!dataUrlMatch) {
+          throw new Error(`Invalid document URL format for ${doc.name}`);
+        }
+
+        const [, mimeType, base64Content] = dataUrlMatch;
+        const fileExtension = mimeType.includes('pdf') ? 'pdf' : 
+                            mimeType.includes('image') ? 'jpg' : 'doc';
+
+        return {
+          content: base64Content,
+          filename: `${doc.name}.${fileExtension}`,
+          type: mimeType,
+          disposition: 'attachment'
+        };
+      });
+
+      // Format event date
+      const eventDate = new Date(booking.eventDate).toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      // Create email content
+      const documentsList = documents.map(doc => `• ${doc.name}`).join('\n');
+      
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 24px;">Compliance Documents</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Required documentation for your upcoming event</p>
+          </div>
+          
+          <div style="padding: 30px; background: white;">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+              <h2 style="color: #2d3748; margin: 0 0 15px 0; font-size: 18px;">Event Details</h2>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                <div>
+                  <strong style="color: #4a5568;">Event:</strong><br>
+                  ${booking.title}
+                </div>
+                <div>
+                  <strong style="color: #4a5568;">Date:</strong><br>
+                  ${eventDate}
+                </div>
+                <div>
+                  <strong style="color: #4a5568;">Venue:</strong><br>
+                  ${booking.venue}
+                </div>
+                <div>
+                  <strong style="color: #4a5568;">Performer:</strong><br>
+                  ${businessName}
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #2d3748; margin: 0 0 15px 0; font-size: 16px;">Attached Documents</h3>
+              <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #48bb78;">
+                <pre style="margin: 0; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #2d3748; white-space: pre-wrap;">${documentsList}</pre>
+              </div>
+            </div>
+
+            ${customMessage ? `
+              <div style="margin-bottom: 25px;">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0; font-size: 16px;">Personal Message</h3>
+                <div style="background: #edf2f7; padding: 15px; border-radius: 6px; border-left: 4px solid #667eea;">
+                  <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #2d3748; white-space: pre-wrap;">${customMessage}</p>
+                </div>
+              </div>
+            ` : ''}
+
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #2d3748; margin: 0 0 15px 0; font-size: 16px;">Document Information</h3>
+              <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #4a5568;">
+                These compliance documents demonstrate that I maintain the necessary insurance coverage, 
+                safety certifications, and legal requirements for professional music performance services. 
+                All documents are current and valid for the event date.
+              </p>
+            </div>
+
+            <div style="background: #f0fff4; padding: 20px; border-radius: 8px; border: 1px solid #9ae6b4;">
+              <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <div style="width: 20px; height: 20px; background: #48bb78; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px;">
+                  <span style="color: white; font-size: 12px;">✓</span>
+                </div>
+                <strong style="color: #276749; font-size: 14px;">Professional Assurance</strong>
+              </div>
+              <p style="margin: 0; font-size: 13px; color: #22543d; line-height: 1.5;">
+                All attached documents are verified and current. If you have any questions about these 
+                compliance requirements, please don't hesitate to contact me.
+              </p>
+            </div>
+          </div>
+          
+          <div style="background: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0; font-size: 12px; color: #718096;">
+              <span style="color: #667eea; font-weight: 500;">Powered by MusoBuddy</span> – less admin, more music
+            </p>
+          </div>
+        </div>
+      `;
+
+      const emailText = `
+Compliance Documents for ${booking.title}
+
+Event Details:
+- Event: ${booking.title}
+- Date: ${eventDate}
+- Venue: ${booking.venue}
+- Performer: ${businessName}
+
+Attached Documents:
+${documentsList}
+
+${customMessage ? `Personal Message:\n${customMessage}\n\n` : ''}
+
+Document Information:
+These compliance documents demonstrate that I maintain the necessary insurance coverage, 
+safety certifications, and legal requirements for professional music performance services. 
+All documents are current and valid for the event date.
+
+If you have any questions about these compliance requirements, please don't hesitate to contact me.
+
+---
+Powered by MusoBuddy – less admin, more music
+      `;
+
+      // Send email using Mailgun
+      const { sendEmail } = await import('./mailgun-email');
+      
+      const emailSuccess = await sendEmail({
+        to: recipientEmail,
+        from: `${businessName} <noreply@mg.musobuddy.com>`,
+        subject: `Compliance Documents - ${booking.title}`,
+        text: emailText,
+        html: emailHtml,
+        replyTo: userSettings?.businessEmail || undefined,
+        attachments: attachments
+      });
+
+      if (!emailSuccess) {
+        throw new Error('Failed to send email');
+      }
+
+      res.json({ 
+        message: "Compliance documents sent successfully",
+        documentsCount: documents.length,
+        recipient: recipientEmail 
+      });
+
+    } catch (error: any) {
+      console.error("Error sending compliance documents:", error);
+      res.status(500).json({ 
+        message: "Failed to send compliance documents",
+        error: error.message 
+      });
+    }
+  });
+
   // User settings routes
   app.get('/api/settings', isAuthenticated, async (req: any, res) => {
     try {

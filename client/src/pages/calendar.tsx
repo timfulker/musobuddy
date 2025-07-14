@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight, Settings, Info } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight, Settings, Info, FileText } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, type Booking } from "@shared/schema";
 import { useLocation, Link } from "wouter";
@@ -21,6 +21,7 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
+import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 
 const bookingFormSchema = insertBookingSchema.extend({
   eventDate: z.string(),
@@ -35,6 +36,8 @@ export default function Calendar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [statusUpdateDialogOpen, setStatusUpdateDialogOpen] = useState(false);
+  const [complianceDialogOpen, setComplianceDialogOpen] = useState(false);
+  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
 
   // Always call hooks in the same order
   const [location, navigate] = useLocation();
@@ -1218,6 +1221,20 @@ export default function Calendar() {
                                         <Settings className="w-4 h-4 mr-1" />
                                         Update Status
                                       </Button>
+                                      {booking.status === 'confirmed' && (
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline"
+                                          onClick={() => {
+                                            setSelectedBookingForCompliance(booking);
+                                            setComplianceDialogOpen(true);
+                                          }}
+                                          className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                                        >
+                                          <FileText className="w-4 h-4 mr-1" />
+                                          Send Compliance
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1507,6 +1524,18 @@ export default function Calendar() {
         open={statusUpdateDialogOpen}
         onOpenChange={setStatusUpdateDialogOpen}
       />
+
+      {/* Send Compliance Dialog */}
+      {selectedBookingForCompliance && (
+        <SendComplianceDialog
+          booking={selectedBookingForCompliance}
+          isOpen={complianceDialogOpen}
+          onClose={() => {
+            setComplianceDialogOpen(false);
+            setSelectedBookingForCompliance(null);
+          }}
+        />
+      )}
 
       {/* Mobile Navigation */}
       <MobileNav />

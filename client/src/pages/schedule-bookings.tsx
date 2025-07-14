@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight, Settings, Info, Search, DollarSign, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, User, Plus, Filter, Download, ExternalLink, Eye, EyeOff, AlertTriangle, Menu, ChevronLeft, ChevronRight, Settings, Info, Search, DollarSign, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature, FileText } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { insertBookingSchema, insertEnquirySchema, type Booking, type Enquiry } from "@shared/schema";
 import { useLocation, Link } from "wouter";
@@ -22,6 +22,7 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
+import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import { useResponsive } from "@/hooks/useResponsive";
 import { insertClientSchema, type InsertClient } from "@shared/schema";
 import { 
@@ -68,6 +69,8 @@ export default function ScheduleBookings() {
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
+  const [complianceDialogOpen, setComplianceDialogOpen] = useState(false);
+  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   
   // Mobile states
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1427,6 +1430,20 @@ export default function ScheduleBookings() {
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add to Address Book
                 </Button>
+                {selectedEnquiry.status === 'confirmed' && (
+                  <Button
+                    onClick={() => {
+                      setSelectedBookingForCompliance(selectedEnquiry);
+                      setComplianceDialogOpen(true);
+                      setRespondDialogOpen(false);
+                    }}
+                    variant="outline"
+                    className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Send Compliance Documents
+                  </Button>
+                )}
                 <Link href={`/contracts?enquiry=${selectedEnquiry.id}`}>
                   <Button variant="outline" className="text-purple-600 border-purple-600 hover:bg-purple-50">
                     <FileSignature className="h-4 w-4 mr-2" />
@@ -1437,6 +1454,18 @@ export default function ScheduleBookings() {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Send Compliance Dialog */}
+      {selectedBookingForCompliance && (
+        <SendComplianceDialog
+          booking={selectedBookingForCompliance}
+          isOpen={complianceDialogOpen}
+          onClose={() => {
+            setComplianceDialogOpen(false);
+            setSelectedBookingForCompliance(null);
+          }}
+        />
       )}
 
       <MobileNav />
