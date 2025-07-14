@@ -244,7 +244,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                 onClick={() => setIsEditing(!isEditing)}
               >
                 <Edit3 className="h-4 w-4 mr-2" />
-                {isEditing ? 'View Mode' : 'Edit Mode'}
+                {isEditing ? 'Switch to View Mode' : 'Switch to Edit Mode'}
               </Button>
               {!isEditing && (
                 <Button
