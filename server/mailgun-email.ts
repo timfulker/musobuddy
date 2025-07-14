@@ -274,7 +274,7 @@ function generateContractEmailHtml(
       <p style="margin: 10px 0;">Please review and sign this contract to confirm your booking.</p>
       <div style="text-align: center; margin: 20px 0;">
         <a href="https://musobuddy.replit.app/sign-contract/${contract.id}" 
-           style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+           style="background-color: #059669; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px; border: 2px solid #047857; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           📝 Sign Contract Online
         </a>
       </div>
