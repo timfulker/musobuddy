@@ -1175,7 +1175,7 @@ export default function Invoices() {
                               </Badge>
                             </div>
                             
-                            <div className="grid grid-cols-4 gap-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="grid grid-cols-5 gap-3 text-sm text-gray-600 dark:text-gray-300">
                               <div className="col-span-2">
                                 <span className="font-medium">Client:</span>
                                 <p className="text-gray-900 dark:text-gray-100 truncate">{invoice.clientName}</p>
@@ -1187,6 +1187,10 @@ export default function Invoices() {
                               <div className="col-span-1">
                                 <span className="font-medium">Due:</span>
                                 <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.dueDate)}</p>
+                              </div>
+                              <div className="col-span-1">
+                                <span className="font-medium">Created:</span>
+                                <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.createdAt)}</p>
                               </div>
                             </div>
                           </div>
@@ -1208,7 +1212,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700 w-20"
+                              className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
                               onClick={() => handleEditInvoice(invoice)}
                             >
                               <Edit className="w-3 h-3 mr-1" />
@@ -1216,7 +1220,7 @@ export default function Invoices() {
                             </Button>
                             <Button 
                               size="sm" 
-                              className="text-xs whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white w-20" 
+                              className="text-xs whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white" 
                               onClick={() => handleSendInvoice(invoice)}
                               disabled={sendInvoiceMutation.isPending}
                             >
@@ -1231,7 +1235,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap w-24" 
+                              className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap" 
                               onClick={() => handleMarkAsPaid(invoice)}
                               disabled={markPaidMutation.isPending}
                             >
@@ -1241,7 +1245,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap w-20" 
+                              className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap" 
                               onClick={() => handleResendInvoice(invoice)}
                               disabled={resendInvoiceMutation.isPending}
                             >
@@ -1251,7 +1255,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap w-28" 
+                              className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap" 
                               onClick={() => handleEditAndResend(invoice)}
                             >
                               <Edit className="w-3 h-3 mr-1" />
@@ -1260,7 +1264,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap w-24" 
+                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap" 
                               onClick={() => handleDownloadInvoice(invoice)}
                             >
                               <Download className="w-3 h-3 mr-1" />
@@ -1274,7 +1278,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap w-24" 
+                              className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap" 
                               onClick={() => handleMarkAsPaid(invoice)}
                               disabled={markPaidMutation.isPending}
                             >
@@ -1284,7 +1288,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap w-20" 
+                              className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap" 
                               onClick={() => handleResendInvoice(invoice)}
                               disabled={resendInvoiceMutation.isPending}
                             >
@@ -1294,7 +1298,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap w-28" 
+                              className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap" 
                               onClick={() => handleEditAndResend(invoice)}
                             >
                               <Edit className="w-3 h-3 mr-1" />
@@ -1303,7 +1307,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-red-600 hover:text-red-700 whitespace-nowrap w-32" 
+                              className="text-xs text-red-600 hover:text-red-700 whitespace-nowrap" 
                               onClick={() => handleSendReminder(invoice)}
                               disabled={sendReminderMutation.isPending}
                             >
@@ -1313,7 +1317,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap w-24" 
+                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap" 
                               onClick={() => handleDownloadInvoice(invoice)}
                             >
                               <Download className="w-3 h-3 mr-1" />
@@ -1327,7 +1331,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap w-28" 
+                              className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap" 
                               onClick={() => handleResendInvoice(invoice)}
                               disabled={resendInvoiceMutation.isPending}
                             >
@@ -1337,7 +1341,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap w-28" 
+                              className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap" 
                               onClick={() => handleEditAndResend(invoice)}
                             >
                               <Edit className="w-3 h-3 mr-1" />
@@ -1346,7 +1350,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap w-24" 
+                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap" 
                               onClick={() => handleDownloadInvoice(invoice)}
                             >
                               <Download className="w-3 h-3 mr-1" />

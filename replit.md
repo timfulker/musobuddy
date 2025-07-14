@@ -764,14 +764,12 @@ This applies to any changes in:
   * **Proportional Layout**: Details section and button container use fixed proportions for predictable button positioning
   * **Consistent Grid**: All invoice statuses now use grid-cols-4 layout for uniform column distribution
   * **Status**: Invoice View buttons now maintain consistent vertical alignment across all statuses (draft, sent, overdue)
-- July 14, 2025. Invoice button width consistency improvements completed:
-  * **Consistent Button Widths**: Applied fixed widths to all invoice buttons for uniform visual appearance
-  * **Draft Status**: Edit button (w-20), Send button (w-20) for balanced alignment
-  * **Sent Status**: Mark Paid (w-24), Resend (w-20), Edit & Resend (w-28), Download (w-24)
-  * **Overdue Status**: Mark Paid (w-24), Resend (w-20), Edit & Resend (w-28), Overdue Notice (w-32), Download (w-24)
-  * **Paid Status**: Resend Copy (w-28), Edit & Resend (w-28), Download (w-24)
-  * **Visual Enhancement**: All buttons now have consistent widths matching their content for better visual harmony
-  * **Status**: Invoice buttons maintain consistent widths across all statuses for improved visual alignment
+- July 14, 2025. Invoice layout reverted and create date restored:
+  * **Button Width Changes Reverted**: Removed fixed button widths (w-20, w-24, w-28, w-32) and restored natural button sizing
+  * **Create Date Column Restored**: Added "Created" column back to invoice grid using grid-cols-5 layout
+  * **Grid Layout Enhanced**: Invoice details now display Client (2 cols), Amount (1 col), Due (1 col), Created (1 col)
+  * **User Preference Applied**: Reverted changes per user feedback while maintaining proper column structure
+  * **Status**: Invoice layout restored to previous state with create date visibility and natural button widths
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
