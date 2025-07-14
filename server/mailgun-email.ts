@@ -152,7 +152,7 @@ export async function sendContractEmail(
           
           // Update contract with cloud storage metadata
           if (uploadResult.storageKey) {
-            const storage = await import('./storage');
+            const { storage } = await import('./storage');
             await storage.updateContract(contract.id, {
               cloudStorageUrl: cloudSigningUrl,
               cloudStorageKey: uploadResult.storageKey,
