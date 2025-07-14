@@ -561,29 +561,8 @@ export default function Calendar() {
         }
       };
 
-      // Generate all past dates for the current month
-      const today = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      const pastDates = [];
-      
-      // Only add past dates if we're viewing the current month
-      if (currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
-        for (let day = 1; day < today.getDate(); day++) {
-          pastDates.push(new Date(currentYear, currentMonth, day));
-        }
-      } else if (currentYear < today.getFullYear() || 
-                 (currentYear === today.getFullYear() && currentMonth < today.getMonth())) {
-        // If viewing a past month, all dates are past dates
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        for (let day = 1; day <= daysInMonth; day++) {
-          pastDates.push(new Date(currentYear, currentMonth, day));
-        }
-      }
-
       return {
         today: [new Date()],
-        pastDate: pastDates,
         confirmed: Array.isArray(bookings) ? bookings
           .filter((b: Booking) => b?.status === 'confirmed' && b?.eventDate)
           .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
@@ -613,7 +592,6 @@ export default function Calendar() {
       console.error("Error calculating calendar modifiers:", error);
       return {
         today: [new Date()],
-        pastDate: [],
         confirmed: [],
         completed: [],
         cancelled: [],
@@ -718,7 +696,6 @@ export default function Calendar() {
 
   const calendarModifiersClassNames = {
     today: "bg-blue-500 text-white ring-2 ring-red-500 ring-offset-2",
-    pastDate: "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-500 opacity-60",
     confirmed: "bg-purple-500 text-white",
     cancelled: "bg-red-500 text-white",
     newEnquiry: "bg-yellow-300 text-black",
