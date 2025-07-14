@@ -6,10 +6,10 @@ import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
 // Cloud storage configuration
 const STORAGE_CONFIG = {
   region: 'auto', // Cloudflare R2 uses 'auto'
-  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || 'https://your-account-id.r2.cloudflarestorage.com',
+  endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || 'https://a730a594e40d8b4629555407dc8e4413.r2.cloudflarestorage.com',
   credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || 'Hkmu_3Tbqq2DYHLo24b8oMAoV2vHbLcGTOOFHq',
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || 'Hkmu_3Tbqq2DYHLo24b8oMAoV2vHbLcGTOOFHq',
   },
 };
 
@@ -48,7 +48,7 @@ export async function uploadContractToCloud(
     console.log('☁️ Uploading contract to cloud storage:', contract.contractNumber);
     
     // Check if cloud storage is configured
-    if (!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID) {
+    if (!STORAGE_CONFIG.credentials.accessKeyId) {
       console.log('⚠️ Cloud storage not configured, skipping upload');
       return {
         success: false,
@@ -108,7 +108,7 @@ export async function uploadInvoiceToCloud(
     console.log('☁️ Uploading invoice to cloud storage:', invoice.invoiceNumber);
     
     // Check if cloud storage is configured
-    if (!process.env.CLOUDFLARE_R2_ACCESS_KEY_ID) {
+    if (!STORAGE_CONFIG.credentials.accessKeyId) {
       console.log('⚠️ Cloud storage not configured, skipping upload');
       return {
         success: false,
