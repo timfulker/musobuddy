@@ -241,7 +241,25 @@ export default function Contracts() {
   // Email sending mutation
   const sendEmailMutation = useMutation({
     mutationFn: async (contract: Contract) => {
-      return apiRequest("POST", "/api/contracts/send-email", { contractId: contract.id });
+      console.log('🔥 FRONTEND: Sending contract email for contract:', contract.id);
+      
+      const response = await fetch("/api/contracts/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contractId: contract.id }),
+      });
+      
+      console.log('🔥 FRONTEND: Contract email response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log('🔥 FRONTEND: Contract email error:', errorData);
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('🔥 FRONTEND: Contract email success:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
@@ -251,6 +269,7 @@ export default function Contracts() {
       });
     },
     onError: (error) => {
+      console.error('🔥 FRONTEND: Contract email mutation error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to send contract email",
@@ -265,6 +284,9 @@ export default function Contracts() {
   };
 
   const handleSendEmail = (contract: Contract) => {
+    console.log('🔥 FRONTEND: handleSendEmail called with contract:', contract.id);
+    console.log('🔥 FRONTEND: Contract details:', contract);
+    console.log('🔥 FRONTEND: sendEmailMutation.isPending:', sendEmailMutation.isPending);
     sendEmailMutation.mutate(contract);
   };
 
@@ -838,8 +860,13 @@ export default function Contracts() {
                             <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewContract(contract)}>
                               Preview
                             </Button>
-                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs" onClick={() => handleSendEmail(contract)}>
-                              Send
+                            <Button 
+                              size="sm" 
+                              className="bg-blue-600 hover:bg-blue-700 text-xs" 
+                              onClick={() => handleSendEmail(contract)}
+                              disabled={sendEmailMutation.isPending}
+                            >
+                              {sendEmailMutation.isPending ? "Sending..." : "Send"}
                             </Button>
                             <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 text-xs" onClick={() => handleDeleteContract(contract)}>
                               Delete
