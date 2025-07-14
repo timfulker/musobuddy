@@ -338,6 +338,31 @@ export const insertContractSchema = createInsertSchema(contracts).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  cloudStorageUrl: true,
+  cloudStorageKey: true,
+  signingUrlCreatedAt: true,
+  signedAt: true,
+  lastReminderSent: true,
+  reminderCount: true,
+}).partial({
+  // Make professional fields optional
+  enquiryId: true,
+  clientEmail: true,
+  clientPhone: true,
+  eventEndTime: true,
+  performanceDuration: true,
+  venueAddress: true,
+  eventType: true,
+  gigType: true,
+  setupTime: true,
+  soundCheckTime: true,
+  equipmentProvided: true,
+  clientRequirements: true,
+  dressCode: true,
+  deposit: true,
+  terms: true,
+  reminderEnabled: true,
+  reminderDays: true,
 });
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
