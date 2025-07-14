@@ -959,19 +959,6 @@ export default function Contracts() {
                             </div>
 
                             <div className="flex flex-col items-end space-y-2">
-                              <div className="text-right mb-2">
-                                <p className="text-xs text-gray-500 mb-1">Status</p>
-                                <Badge 
-                                  variant={
-                                    contract.status === "signed" ? "default" : 
-                                    contract.status === "sent" ? "secondary" :
-                                    contract.status === "completed" ? "default" : "outline"
-                                  }
-                                >
-                                  {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
-                                </Badge>
-                              </div>
-
                               <div className="flex flex-col space-y-1">
                                 {contract.status === "draft" && (
                                   <>
