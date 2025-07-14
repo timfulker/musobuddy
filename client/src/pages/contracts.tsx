@@ -43,6 +43,9 @@ export default function Contracts() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
+  const [customMessageDialog, setCustomMessageDialog] = useState(false);
+  const [contractToSend, setContractToSend] = useState<Contract | null>(null);
+  const [customMessage, setCustomMessage] = useState("");
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -206,13 +209,13 @@ export default function Contracts() {
 
   // Email sending mutation
   const sendEmailMutation = useMutation({
-    mutationFn: async (contract: Contract) => {
-      console.log('🔥 FRONTEND: Sending contract email for contract:', contract.id);
+    mutationFn: async ({ contractId, customMessage }: { contractId: number, customMessage?: string }) => {
+      console.log('🔥 FRONTEND: Sending contract email for contract:', contractId);
 
       const response = await fetch("/api/contracts/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contractId: contract.id }),
+        body: JSON.stringify({ contractId, customMessage }),
       });
 
       console.log('🔥 FRONTEND: Contract email response status:', response.status);
@@ -229,6 +232,9 @@ export default function Contracts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      setCustomMessageDialog(false);
+      setContractToSend(null);
+      setCustomMessage("");
       toast({
         title: "Success",
         description: "Contract sent to client successfully!",
@@ -377,6 +383,21 @@ export default function Contracts() {
   const handleDeleteContract = (contract: Contract) => {
     if (confirm(`Are you sure you want to delete contract ${contract.contractNumber}?`)) {
       deleteContractMutation.mutate(contract.id);
+    }
+  };
+
+  const handleSendContract = (contract: Contract) => {
+    setContractToSend(contract);
+    setCustomMessage("");
+    setCustomMessageDialog(true);
+  };
+
+  const handleConfirmSendContract = () => {
+    if (contractToSend) {
+      sendEmailMutation.mutate({ 
+        contractId: contractToSend.id, 
+        customMessage: customMessage.trim() || undefined 
+      });
     }
   };
 
@@ -963,7 +984,7 @@ export default function Contracts() {
                                     <Button 
                                       size="sm" 
                                       className="bg-blue-600 hover:bg-blue-700 text-xs" 
-                                      onClick={() => handleSendEmail(contract)}
+                                      onClick={() => handleSendContract(contract)}
                                       disabled={sendEmailMutation.isPending}
                                     >
                                       {sendEmailMutation.isPending ? "Sending..." : "Send"}
@@ -983,7 +1004,7 @@ export default function Contracts() {
                                       <Download className="w-3 h-3 mr-1" />
                                       Download
                                     </Button>
-                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handleSendEmail(contract)}>
+                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handleSendContract(contract)}>
                                       Resend
                                     </Button>
                                   </>
@@ -1215,6 +1236,63 @@ export default function Contracts() {
                     </div>
                   </div>
                 )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Custom Message Dialog */}
+            <Dialog open={customMessageDialog} onOpenChange={setCustomMessageDialog}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Send Contract Email</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {contractToSend && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        Contract #{contractToSend.contractNumber}
+                      </h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Client:</strong> {contractToSend.clientName}</p>
+                        <p><strong>Email:</strong> {contractToSend.clientEmail}</p>
+                        <p><strong>Event:</strong> {formatDate(contractToSend.eventDate)} at {contractToSend.venue}</p>
+                        <p><strong>Fee:</strong> £{contractToSend.fee}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Add a personal message (optional)
+                    </label>
+                    <p className="text-xs text-gray-500">
+                      This will be added to the standard contract email. If left blank, only the standard message will be sent.
+                    </p>
+                    <Textarea
+                      placeholder="Add a personal message for your client..."
+                      value={customMessage}
+                      onChange={(e) => setCustomMessage(e.target.value)}
+                      rows={4}
+                      className="resize-none"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCustomMessageDialog(false)}
+                      disabled={sendEmailMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleConfirmSendContract}
+                      disabled={sendEmailMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {sendEmailMutation.isPending ? "Sending..." : "Send Contract"}
+                    </Button>
+                  </div>
+                </div>
               </DialogContent>
             </Dialog>
           </div>

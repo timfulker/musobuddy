@@ -695,6 +695,14 @@ This applies to any changes in:
   * **API Endpoints**: Manual reminder processing (/api/contracts/process-reminders) and bulk operations (/api/contracts/bulk-delete)
   * **Storage Layer**: Enhanced with getAllContracts() method for reminder service access
   * **Status**: Backend fully operational, frontend JSX syntax requires resolution for complete functionality
+- July 14, 2025. Adobe Sign-style custom message feature implemented for contract emails:
+  * **Custom Message Dialog**: Interactive popup appears after clicking "Send Contract" allowing users to add personal messages
+  * **Optional Customization**: Users can add custom text or send with standard generic message if left blank
+  * **Enhanced Email Template**: Personal messages appear in highlighted blue section within professional email layout
+  * **Improved User Experience**: Similar to Adobe Sign workflow - click send → customize message → confirm send
+  * **Backend Integration**: API endpoint modified to accept and process customMessage parameter
+  * **Professional Presentation**: Custom messages formatted with proper line breaks and styling in email
+  * **Status**: Complete workflow operational - standard message used as fallback, custom messages enhance client communication
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**

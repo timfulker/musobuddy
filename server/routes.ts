@@ -1644,7 +1644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { contractId } = req.body;
+      const { contractId, customMessage } = req.body;
       
       // Get the contract details
       const contract = await storage.getContract(contractId, userId);
@@ -1697,6 +1697,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <p>Dear ${contract.clientName},</p>
             <p>Please find your performance contract ready for signing.</p>
             
+            ${customMessage ? `
+            <div style="background: #f0f9ff; border-left: 4px solid #0EA5E9; padding: 15px; margin: 20px 0;">
+              <h4 style="margin-top: 0; color: #0EA5E9;">Personal Message:</h4>
+              <p style="margin: 0; color: #333; line-height: 1.5;">${customMessage.replace(/\n/g, '<br>')}</p>
+            </div>
+            ` : ''}
+            
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #333;">Event Details</h3>
               <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
@@ -1726,7 +1733,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             </p>
           </div>
         `,
-        text: `Performance Contract ${contract.contractNumber}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. Sign online: ${contractSignUrl}`
+        text: `Performance Contract ${contract.contractNumber}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. Fee: £${contract.fee}. ${customMessage ? `Personal message: ${customMessage}` : ''} Sign online: ${contractSignUrl}`
       };
       
       // Add reply-to if user has Gmail or other external email
