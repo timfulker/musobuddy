@@ -16,7 +16,8 @@ import {
   X,
   MessageSquare,
   Users,
-  User
+  User,
+  BookOpen
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -165,6 +166,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           )}>
             <MessageSquare className="w-5 h-5" />
             <span>Templates</span>
+          </Link>
+          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/user-guide") 
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+          )}>
+            <BookOpen className="w-5 h-5" />
+            <span>User Guide</span>
           </Link>
         </nav>
 

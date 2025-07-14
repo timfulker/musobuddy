@@ -1249,6 +1249,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Support chat API
+  app.post('/api/support-chat', isAuthenticated, async (req: any, res) => {
+    try {
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+
+      // Initialize OpenAI for support chat
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({ 
+        apiKey: process.env.OPENAI_CONFLICT_RESOLUTION_KEY 
+      });
+
+      const systemPrompt = `You are a helpful support assistant for MusoBuddy, a music business management platform. 
+      
+      You help musicians with:
+      - Email forwarding setup (leads@musobuddy.com)
+      - Contract creation and digital signing
+      - Invoice management and payment tracking
+      - Calendar and booking management
+      - Client management and address book
+      - Settings and business configuration
+      - Troubleshooting common issues
+      
+      Key features to mention:
+      - Email forwarding automatically creates enquiries from leads@musobuddy.com
+      - Contract signing works 24/7 with cloud-hosted pages
+      - URLs automatically regenerate every 6 days
+      - Reminders can be set for 1, 3, or 5 days
+      - Invoices auto-fill from contracts with UK tax compliance
+      - Calendar supports .ics import/export for all major calendar apps
+      - Mobile-optimized with responsive design
+      
+      Be helpful, concise, and professional. If you're unsure about something, suggest they check the User Guide or contact support.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      });
+
+      const response = completion.choices[0]?.message?.content || "I'm sorry, I couldn't process your request. Please try again.";
+      
+      res.json({ response });
+    } catch (error) {
+      console.error('Support chat error:', error);
+      res.status(500).json({ 
+        error: 'Failed to process support request',
+        response: 'I apologize, but I\'m having trouble responding right now. Please try again in a moment or check the User Guide for help.'
+      });
+    }
+  });
+
   app.patch('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

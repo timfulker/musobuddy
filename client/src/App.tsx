@@ -21,6 +21,8 @@ import ViewContract from "@/pages/view-contract";
 import ViewInvoice from "@/pages/view-invoice";
 import QuickAdd from "@/pages/quick-add";
 import AddressBook from "@/pages/address-book";
+import UserGuide from "@/pages/user-guide";
+import SupportChat from "@/components/support-chat";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -58,6 +60,7 @@ function Router() {
           <Route path="/compliance" component={Compliance} />
           <Route path="/settings" component={Settings} />
           <Route path="/templates" component={Templates} />
+          <Route path="/user-guide" component={UserGuide} />
         </>
       )}
       <Route component={NotFound} />
@@ -73,6 +76,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <SupportChat />
           </TooltipProvider>
         </ThemeProvider>
       </QueryClientProvider>
