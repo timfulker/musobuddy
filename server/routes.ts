@@ -1261,7 +1261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Initialize OpenAI for support chat
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({ 
-        apiKey: process.env.OPENAI_CONFLICT_RESOLUTION_KEY 
+        apiKey: process.env.OPENAI_SUPPORT_CHAT_KEY 
       });
 
       const systemPrompt = `You are a helpful support assistant for MusoBuddy, a music business management platform. 

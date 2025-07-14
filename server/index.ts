@@ -14,10 +14,12 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 const emailParsingAI = process.env.OPENAI_EMAIL_PARSING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
 const instrumentMappingAI = process.env.OPENAI_INSTRUMENT_MAPPING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_INSTRUMENT_MAPPING_KEY }) : null;
 const conflictResolutionAI = process.env.OPENAI_CONFLICT_RESOLUTION_KEY ? new OpenAI({ apiKey: process.env.OPENAI_CONFLICT_RESOLUTION_KEY }) : null;
+const supportChatAI = process.env.OPENAI_SUPPORT_CHAT_KEY ? new OpenAI({ apiKey: process.env.OPENAI_SUPPORT_CHAT_KEY }) : null;
 
 console.log('🤖 Email Parsing AI initialized:', !!emailParsingAI);
 console.log('🤖 Instrument Mapping AI initialized:', !!instrumentMappingAI);
 console.log('🤖 Conflict Resolution AI initialized:', !!conflictResolutionAI);
+console.log('🤖 Support Chat AI initialized:', !!supportChatAI);
 
 // AI-Enhanced Email Parsing Function
 async function parseEmailWithAI(emailBody: string, subject: string): Promise<{

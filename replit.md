@@ -849,6 +849,7 @@ This applies to any changes in:
   * **Interactive User Guide**: Step-by-step tutorials with progress tracking and completion badges
   * **Navigation Enhancement**: Added User Guide to both sidebar and mobile navigation for easy access
   * **AI Knowledge Base**: Support chat trained on email forwarding, contracts, invoices, calendar, and all platform features
+  * **Dedicated API Key**: Added OPENAI_SUPPORT_CHAT_KEY for granular usage monitoring and cost tracking
   * **Status**: Phase 1 COMPLETE - All core features operational with comprehensive support system
 
 ## Phase 1 Complete - July 14, 2025 ✅
