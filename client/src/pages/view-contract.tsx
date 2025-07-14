@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Calendar, MapPin, Clock, DollarSign, Download, CheckCircle } from "lucide-react";
+import { FileText, Calendar, MapPin, Clock, DollarSign, Download, CheckCircle, ArrowLeft } from "lucide-react";
 
 interface Contract {
   id: number;
@@ -34,6 +34,7 @@ interface UserSettings {
 export default function ViewContract() {
   const params = useParams();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const contractId = params.id;
   
   const [contract, setContract] = useState<Contract | null>(null);
@@ -130,6 +131,18 @@ export default function ViewContract() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => setLocation('/contracts')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Contracts
+          </Button>
+        </div>
+        
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

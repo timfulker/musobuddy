@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ export default function Contracts() {
   const [customMessage, setCustomMessage] = useState("");
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
 
   const { data: contracts = [], isLoading, error } = useQuery<Contract[]>({
     queryKey: ["/api/contracts"],
@@ -345,8 +347,8 @@ export default function Contracts() {
   };
 
   const handleViewSignedContract = (contract: Contract) => {
-    // Open the public view contract page in a new tab
-    window.open(`/view-contract/${contract.id}`, '_blank');
+    // Navigate to view contract page in same window
+    setLocation(`/view-contract/${contract.id}`);
   };
 
   const handleSelectContract = (contractId: number) => {
