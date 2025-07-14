@@ -1118,20 +1118,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('🔥 CONTRACT CREATION: Starting contract creation process');
       const userId = req.user.claims.sub;
+      console.log('🔥 CONTRACT CREATION: User ID:', userId);
+      console.log('🔥 CONTRACT CREATION: Request body:', JSON.stringify(req.body, null, 2));
+      
       const data = { ...req.body, userId };
+      console.log('🔥 CONTRACT CREATION: Data with userId:', JSON.stringify(data, null, 2));
       
       // Convert eventDate string to Date if present
       if (data.eventDate && typeof data.eventDate === 'string') {
+        console.log('🔥 CONTRACT CREATION: Converting eventDate from string to Date');
         data.eventDate = new Date(data.eventDate);
       }
       
+      console.log('🔥 CONTRACT CREATION: About to parse with schema');
       const contractData = insertContractSchema.parse(data);
+      console.log('🔥 CONTRACT CREATION: Schema validation passed');
+      
+      console.log('🔥 CONTRACT CREATION: About to create contract in storage');
       const contract = await storage.createContract(contractData);
+      console.log('🔥 CONTRACT CREATION: Contract created successfully:', contract.id);
+      
       res.status(201).json(contract);
     } catch (error) {
-      console.error("Error creating contract:", error);
-      res.status(500).json({ message: "Failed to create contract" });
+      console.error("🔥 CONTRACT CREATION ERROR:", error);
+      console.error("🔥 CONTRACT CREATION ERROR message:", error.message);
+      console.error("🔥 CONTRACT CREATION ERROR stack:", error.stack);
+      console.error("🔥 CONTRACT CREATION ERROR name:", error.name);
+      console.error("🔥 CONTRACT CREATION ERROR code:", error.code);
+      res.status(500).json({ message: "Failed to create contract", error: error.message });
     }
   });
 
