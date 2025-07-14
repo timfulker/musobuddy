@@ -1157,46 +1157,49 @@ export default function Invoices() {
                 return (
                   <Card key={invoice.id} className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                     <CardContent className="p-6">
-                      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                        <div className="flex items-start gap-3 lg:w-2/3">
+                      <div className="flex flex-col gap-4">
+                        {/* Header with title, status, and checkbox */}
+                        <div className="flex items-center gap-3">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={(e) => handleSelectInvoice(invoice.id, e.target.checked)}
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 mt-1"
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                           />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-3">
-                              <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
-                                Invoice #{invoice.invoiceNumber}
-                              </h3>
-                              <Badge className={getStatusColor(invoice.status)}>
-                                {invoice.status}
-                              </Badge>
-                            </div>
-                            
-                            <div className="grid grid-cols-5 gap-3 text-sm text-gray-600 dark:text-gray-300">
-                              <div className="col-span-2">
-                                <span className="font-medium">Client:</span>
+                          <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                            Invoice #{invoice.invoiceNumber}
+                          </h3>
+                          <Badge className={getStatusColor(invoice.status)}>
+                            {invoice.status}
+                          </Badge>
+                        </div>
+                        
+                        {/* Data grid and buttons container */}
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                          {/* Invoice details */}
+                          <div className="flex-1">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">Client:</span>
                                 <p className="text-gray-900 dark:text-gray-100 truncate">{invoice.clientName}</p>
                               </div>
-                              <div className="col-span-1">
-                                <span className="font-medium">Amount:</span>
+                              <div>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">Amount:</span>
                                 <p className="text-gray-900 dark:text-gray-100 font-semibold">£{Number(invoice.amount).toLocaleString()}</p>
                               </div>
-                              <div className="col-span-1">
-                                <span className="font-medium">Due:</span>
+                              <div>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">Due:</span>
                                 <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.dueDate)}</p>
                               </div>
-                              <div className="col-span-1">
-                                <span className="font-medium">Created:</span>
+                              <div>
+                                <span className="font-medium text-gray-600 dark:text-gray-400">Created:</span>
                                 <p className="text-gray-900 dark:text-gray-100">{formatDate(invoice.createdAt)}</p>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      
-                      <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:w-1/3 lg:justify-start">
+                          
+                          {/* Action buttons */}
+                          <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
                         {/* View button - available for all statuses */}
                         <Button 
                           size="sm" 
@@ -1382,10 +1385,11 @@ export default function Invoices() {
                             </Button>
                           </>
                         )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </>
