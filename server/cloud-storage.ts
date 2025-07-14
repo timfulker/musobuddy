@@ -213,7 +213,7 @@ export function isCloudStorageConfigured(): boolean {
   return !!(
     process.env.R2_ACCESS_KEY_ID &&
     process.env.R2_SECRET_ACCESS_KEY &&
-    process.env.R2_ENDPOINT &&
+    process.env.R2_ACCOUNT_ID &&
     process.env.R2_BUCKET_NAME
   );
 }
@@ -230,7 +230,7 @@ export function getCloudStorageStatus(): {
   const requiredVars = [
     'R2_ACCESS_KEY_ID',
     'R2_SECRET_ACCESS_KEY',
-    'R2_ENDPOINT',
+    'R2_ACCOUNT_ID',
     'R2_BUCKET_NAME',
   ];
   
@@ -238,7 +238,7 @@ export function getCloudStorageStatus(): {
   
   return {
     configured: missingVars.length === 0,
-    endpoint: process.env.R2_ENDPOINT,
+    endpoint: process.env.R2_ACCOUNT_ID ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : undefined,
     bucket: process.env.R2_BUCKET_NAME,
     missingVars: missingVars.length > 0 ? missingVars : undefined,
   };
