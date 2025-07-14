@@ -724,6 +724,13 @@ This applies to any changes in:
   * **Back Navigation**: Updated view-invoice page back buttons to navigate to /invoices instead of window.close()
   * **Consistent UX**: Both contracts and invoices now use identical navigation patterns for better user experience
   * **Status**: Invoice and contract view navigation now fully consistent across the application
+- July 14, 2025. Invoice layout consistency improvements completed:
+  * **Uniform Button Styling**: Standardized button colors across all invoice states - View (green), Edit (gray), Send (blue), Download (gray)
+  * **Consistent Layout Structure**: All invoice statuses now use identical layout patterns for better visual harmony
+  * **Status-Specific Actions**: Draft (View, Edit, Send), Sent (View, Mark Paid, Resend, Edit & Resend, Download), Overdue (View, Mark Paid, Resend, Edit & Resend, Overdue Notice, Download)
+  * **Visual Hierarchy**: Primary actions use solid colors, secondary actions use outline styling with color-coded text
+  * **Responsive Design**: Button layouts remain consistent across mobile and desktop breakpoints
+  * **Status**: Invoice layout now matches the visual consistency shown in the provided design reference
 
 ## Phase 1 Complete - July 09, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**

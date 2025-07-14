@@ -1212,7 +1212,7 @@ export default function Invoices() {
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="text-xs whitespace-nowrap"
+                              className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
                               onClick={() => handleEditInvoice(invoice)}
                             >
                               <Edit className="w-3 h-3 mr-1" />
@@ -1220,7 +1220,7 @@ export default function Invoices() {
                             </Button>
                             <Button 
                               size="sm" 
-                              className="text-xs whitespace-nowrap" 
+                              className="text-xs whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white" 
                               onClick={() => handleSendInvoice(invoice)}
                               disabled={sendInvoiceMutation.isPending}
                             >
@@ -1261,7 +1261,12 @@ export default function Invoices() {
                               <Edit className="w-3 h-3 mr-1" />
                               Edit & Resend
                             </Button>
-                            <Button size="sm" variant="outline" className="text-xs whitespace-nowrap" onClick={() => handleDownloadInvoice(invoice)}>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap" 
+                              onClick={() => handleDownloadInvoice(invoice)}
+                            >
                               <Download className="w-3 h-3 mr-1" />
                               Download
                             </Button>
@@ -1309,7 +1314,12 @@ export default function Invoices() {
                               <AlertTriangle className="w-3 h-3 mr-1" />
                               Overdue Notice
                             </Button>
-                            <Button size="sm" variant="outline" className="text-xs whitespace-nowrap" onClick={() => handleDownloadInvoice(invoice)}>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap" 
+                              onClick={() => handleDownloadInvoice(invoice)}
+                            >
                               <Download className="w-3 h-3 mr-1" />
                               Download
                             </Button>
@@ -1337,7 +1347,12 @@ export default function Invoices() {
                               <Edit className="w-3 h-3 mr-1" />
                               Edit & Resend
                             </Button>
-                            <Button size="sm" variant="outline" className="text-xs whitespace-nowrap" onClick={() => handleDownloadInvoice(invoice)}>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap" 
+                              onClick={() => handleDownloadInvoice(invoice)}
+                            >
                               <Download className="w-3 h-3 mr-1" />
                               Download
                             </Button>
@@ -1356,7 +1371,12 @@ export default function Invoices() {
                               <RefreshCw className="w-3 h-3 mr-1" />
                               Restore
                             </Button>
-                            <Button size="sm" variant="outline" className="text-xs whitespace-nowrap" onClick={() => handleDownloadInvoice(invoice)}>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap" 
+                              onClick={() => handleDownloadInvoice(invoice)}
+                            >
                               <Download className="w-3 h-3 mr-1" />
                               Download
                             </Button>
