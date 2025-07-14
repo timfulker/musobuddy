@@ -567,6 +567,9 @@ export default function Calendar() {
         confirmed: Array.isArray(bookings) ? bookings
           .filter((b: Booking) => b?.status === 'confirmed' && b?.eventDate)
           .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
+        signed: Array.isArray(bookings) ? bookings
+          .filter((b: Booking) => b?.status === 'signed' && b?.eventDate)
+          .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
         completed: Array.isArray(bookings) ? bookings
           .filter((b: Booking) => b?.status === 'completed' && b?.eventDate)
           .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
@@ -594,6 +597,7 @@ export default function Calendar() {
       return {
         today: [new Date()],
         confirmed: [],
+        signed: [],
         completed: [],
         cancelled: [],
         newEnquiry: [],
@@ -698,6 +702,7 @@ export default function Calendar() {
   const calendarModifiersClassNames = {
     today: "bg-blue-500 text-white ring-2 ring-red-500 ring-offset-2",
     confirmed: "bg-purple-500 text-white",
+    signed: "bg-green-500 text-white",
     cancelled: "bg-red-500 text-white",
     newEnquiry: "bg-yellow-300 text-black",
     inProgressEnquiry: "bg-blue-500 text-white",
@@ -722,6 +727,15 @@ export default function Calendar() {
         border: 'border-purple-200',
         text: 'text-purple-800',
         accent: 'bg-purple-500'
+      };
+    }
+    
+    if (event.status === 'signed') {
+      return {
+        background: 'bg-green-50',
+        border: 'border-green-200',
+        text: 'text-green-800',
+        accent: 'bg-green-500'
       };
     }
     
