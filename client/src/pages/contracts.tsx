@@ -929,22 +929,22 @@ export default function Contracts() {
                   {filteredContracts.map((contract: Contract) => (
                     <Card key={contract.id} className={`hover:shadow-md transition-shadow cursor-pointer ${selectedContracts.includes(contract.id) ? 'bg-blue-50 border-blue-200' : ''}`}>
                       <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4 flex-1">
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleSelectContract(contract.id)}
-                              className="p-1 h-8 w-8"
+                              className="p-1 h-8 w-8 mt-1"
                             >
                               {selectedContracts.includes(contract.id) ? 
                                 <CheckSquare className="w-4 h-4 text-blue-600" /> : 
                                 <Square className="w-4 h-4 text-gray-400" />
                               }
                             </Button>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center space-x-3 mb-3">
-                                <h3 className="text-lg font-semibold text-gray-900">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                                   Contract #{contract.contractNumber}
                                 </h3>
                                 <Badge className={getStatusColor(getContractDisplayStatus(contract))}>
@@ -952,121 +952,111 @@ export default function Contracts() {
                                 </Badge>
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                                <div className="flex items-start space-x-2 text-gray-600">
-                                  <User className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="font-medium truncate">{contract.clientName}</p>
-                                    <p className="text-xs text-gray-500">Client</p>
-                                  </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-gray-600 dark:text-gray-300">
+                                <div className="lg:col-span-2">
+                                  <span className="font-medium">Client:</span>
+                                  <p className="text-gray-900 dark:text-gray-100 truncate">{contract.clientName}</p>
                                 </div>
-
-                                <div className="flex items-start space-x-2 text-gray-600">
-                                  <Calendar className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="font-medium">{formatDate(contract.eventDate)}</p>
-                                    <p className="text-xs text-gray-500">{contract.eventTime}</p>
-                                  </div>
+                                <div>
+                                  <span className="font-medium">Fee:</span>
+                                  <p className="text-gray-900 dark:text-gray-100 font-semibold">£{contract.fee}</p>
                                 </div>
-
-                                <div className="flex items-start space-x-2 text-gray-600">
-                                  <DollarSign className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="font-medium">£{contract.fee}</p>
-                                    {contract.deposit && (
-                                      <p className="text-xs text-gray-500">Deposit: £{contract.deposit}</p>
-                                    )}
-                                  </div>
+                                <div>
+                                  <span className="font-medium">Date:</span>
+                                  <p className="text-gray-900 dark:text-gray-100">{formatDate(contract.eventDate)}</p>
                                 </div>
-
-                                <div className="flex items-start space-x-2 text-gray-600">
-                                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="font-medium text-sm truncate">{contract.venue}</p>
-                                    <p className="text-xs text-gray-500">Venue</p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {contract.terms && (
-                                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                                  <p className="text-sm text-gray-700 line-clamp-2">{contract.terms}</p>
-                                </div>
-                              )}
-
-                              <div className="mt-3 flex items-center space-x-4 text-xs text-gray-500">
-                                <span>Created: {formatDate(contract.createdAt!)}</span>
-                                {contract.signedAt && (
-                                  <span>Signed: {formatDate(contract.signedAt)}</span>
-                                )}
                               </div>
                             </div>
+                          </div>
 
-                            <div className="flex flex-col items-end space-y-2">
-                              <div className="flex flex-col space-y-1">
-                                {contract.status === "draft" && (
-                                  <>
-                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handleEditContract(contract)}>
-                                      Edit
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewContract(contract)}>
-                                      Preview
-                                    </Button>
-                                    <Button 
-                                      size="sm" 
-                                      className="bg-blue-600 hover:bg-blue-700 text-xs" 
-                                      onClick={() => handleSendContract(contract)}
-                                      disabled={sendEmailMutation.isPending}
-                                    >
-                                      {sendEmailMutation.isPending ? "Sending..." : "Send"}
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 text-xs" onClick={() => handleDeleteContract(contract)}>
-                                      Delete
-                                    </Button>
-                                  </>
-                                )}
+                          <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:flex-shrink-0 lg:justify-start">
+                            {/* View button - available for all statuses */}
+                            <Button 
+                              size="sm" 
+                              className="text-xs whitespace-nowrap bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => handleViewSignedContract(contract)}
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              View
+                            </Button>
 
-                                {contract.status === "sent" && (
-                                  <>
-                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handlePreviewContract(contract)}>
-                                      Preview
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadContract(contract)}>
-                                      <Download className="w-3 h-3 mr-1" />
-                                      Download
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handleSendContract(contract)}>
-                                      Resend
-                                    </Button>
-                                    {isContractUnsigned(contract) && (
-                                      <Button 
-                                        size="sm" 
-                                        variant="outline" 
-                                        className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200" 
-                                        onClick={() => sendReminderMutation.mutate(contract.id)}
-                                        disabled={sendReminderMutation.isPending}
-                                      >
-                                        <Mail className="w-3 h-3 mr-1" />
-                                        {sendReminderMutation.isPending ? "Sending..." : "Send Reminder"}
-                                      </Button>
-                                    )}
-                                  </>
-                                )}
+                            {contract.status === "draft" && (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
+                                  onClick={() => handleEditContract(contract)}
+                                >
+                                  <Edit className="w-3 h-3 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  className="text-xs whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white" 
+                                  onClick={() => handleSendContract(contract)}
+                                  disabled={sendEmailMutation.isPending}
+                                >
+                                  {sendEmailMutation.isPending ? "Sending..." : "Send"}
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs whitespace-nowrap text-red-600 hover:text-red-700"
+                                  onClick={() => handleDeleteContract(contract)}
+                                >
+                                  Delete
+                                </Button>
+                              </>
+                            )}
 
-                                {contract.status === "signed" && (
-                                  <>
-                                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-xs" onClick={() => handleViewSignedContract(contract)}>
-                                      <Eye className="w-3 h-3 mr-1" />
-                                      View Signed
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadContract(contract)}>
-                                      <Download className="w-3 h-3 mr-1" />
-                                      Download
-                                    </Button>
-                                  </>
+                            {contract.status === "sent" && (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
+                                  onClick={() => handleDownloadContract(contract)}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Download
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs whitespace-nowrap text-blue-600 hover:text-blue-700"
+                                  onClick={() => handleSendContract(contract)}
+                                >
+                                  Resend
+                                </Button>
+                                {isContractUnsigned(contract) && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="text-xs whitespace-nowrap bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200" 
+                                    onClick={() => sendReminderMutation.mutate(contract.id)}
+                                    disabled={sendReminderMutation.isPending}
+                                  >
+                                    <Mail className="w-3 h-3 mr-1" />
+                                    {sendReminderMutation.isPending ? "Sending..." : "Send Reminder"}
+                                  </Button>
                                 )}
-                              </div>
-                            </div>
+                              </>
+                            )}
+
+                            {contract.status === "signed" && (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs whitespace-nowrap text-gray-600 hover:text-gray-700"
+                                  onClick={() => handleDownloadContract(contract)}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Download
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </CardContent>
