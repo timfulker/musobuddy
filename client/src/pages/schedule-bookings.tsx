@@ -629,140 +629,324 @@ export default function ScheduleBookings() {
     }
   };
 
+  // Calendar modifiers for different booking types
+  const calendarModifiers = useMemo(() => {
+    try {
+      const potentialBookings = getPotentialBookings();
+      
+      return {
+        today: [new Date()],
+        confirmed: Array.isArray(bookings) ? bookings
+          .filter((b: Booking) => b.status === 'confirmed')
+          .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
+        signed: Array.isArray(bookings) ? bookings
+          .filter((b: Booking) => b.status === 'signed')
+          .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
+        completed: Array.isArray(bookings) ? bookings
+          .filter((b: Booking) => b.status === 'completed')
+          .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
+        cancelled: Array.isArray(bookings) ? bookings
+          .filter((b: Booking) => b.status === 'cancelled')
+          .map((booking: Booking) => normalizeDate(booking.eventDate)) : [],
+        newEnquiry: Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => b.status === 'enquiry-new' && !b.isExpired && b.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+        inProgressEnquiry: Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => (b.status === 'enquiry-qualified' || b.status === 'enquiry-contract_sent') && !b.isExpired && b.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+        confirmedEnquiry: Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => b.status === 'enquiry-confirmed' && !b.isExpired && b.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+        signedContract: Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => b.status === 'contract-signed' && b.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+        expiredEnquiry: showExpiredEnquiries && Array.isArray(potentialBookings) ? potentialBookings
+          .filter((b: any) => b.isExpired && b.source === 'enquiry' && b.eventDate)
+          .map((booking: any) => normalizeDate(booking.eventDate)) : [],
+      };
+    } catch (error) {
+      console.error("Error calculating calendar modifiers:", error);
+      return {
+        today: [new Date()],
+        confirmed: [],
+        signed: [],
+        completed: [],
+        cancelled: [],
+        newEnquiry: [],
+        inProgressEnquiry: [],
+        confirmedEnquiry: [],
+        signedContract: [],
+        expiredEnquiry: [],
+      };
+    }
+  }, [bookings, showExpiredEnquiries]);
+
+  const calendarModifiersClassNames = {
+    today: "bg-blue-500 text-white ring-2 ring-red-500 ring-offset-2",
+    confirmed: "bg-purple-500 text-white",
+    signed: "bg-green-500 text-white",
+    cancelled: "bg-red-500 text-white",
+    newEnquiry: "bg-yellow-300 text-black",
+    inProgressEnquiry: "bg-blue-500 text-white",
+    confirmedEnquiry: "bg-purple-500 text-white",
+    signedContract: "bg-green-500 text-white",
+    expiredEnquiry: "bg-gradient-to-r from-gray-300 to-gray-400 text-white opacity-60",
+  };
+
+  const selectedDateBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
+  const selectedDatePotentialBookings = selectedDate ? getPotentialBookingsForDate(selectedDate) : [];
+
   const renderCalendarView = () => {
-    const potentialBookings = getPotentialBookings();
-    
     if (calendarView === "month") {
       return (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const prevMonth = new Date(currentDate);
-                  prevMonth.setMonth(prevMonth.getMonth() - 1);
-                  setCurrentDate(prevMonth);
-                }}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <h3 className="text-lg font-semibold">
-                {currentDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
-              </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const nextMonth = new Date(currentDate);
-                  nextMonth.setMonth(nextMonth.getMonth() + 1);
-                  setCurrentDate(nextMonth);
-                }}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowExpiredEnquiries(!showExpiredEnquiries)}
-            >
-              {showExpiredEnquiries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showExpiredEnquiries ? "Hide" : "Show"} Expired
-            </Button>
-          </div>
-          
-          <CalendarComponent
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            month={currentDate}
-            onMonthChange={setCurrentDate}
-            className="rounded-md border"
-            components={{
-              DayContent: ({ date, ...props }) => {
-                const dayBookings = getBookingsForDate(date);
-                const dayPotentialBookings = getPotentialBookingsForDate(date);
-                
-                return (
-                  <div className="relative w-full h-full">
-                    <div className="text-center">{date.getDate()}</div>
-                    {dayBookings.length > 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-green-500 rounded-full"></div>
-                    )}
-                    {dayPotentialBookings.length > 0 && (
-                      <div className="absolute bottom-0.5 left-0 right-0 h-0.5 bg-purple-400 rounded-full"></div>
-                    )}
-                  </div>
-                );
-              },
-            }}
-          />
-          
-          {selectedDate && (
+        <div className="lg:grid lg:grid-cols-7 lg:gap-6">
+          {/* Calendar */}
+          <div className="lg:col-span-5">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">
-                  {formatDate(selectedDate.toISOString())}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2">
+                    <CalendarIcon className="w-5 h-5" />
+                    <span>Calendar</span>
+                  </CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowExpiredEnquiries(!showExpiredEnquiries)}
+                    >
+                      {showExpiredEnquiries ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showExpiredEnquiries ? "Hide" : "Show"} Expired
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {getBookingsForDate(selectedDate).map((booking: Booking) => (
-                    <div key={booking.id} className="border rounded-lg p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">{booking.title}</h4>
-                          <p className="text-sm text-gray-600">
-                            {booking.clientName} • {formatTime(booking.eventTime)}
-                          </p>
-                          {booking.venue && (
-                            <p className="text-sm text-gray-600 flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {booking.venue}
-                            </p>
-                          )}
-                        </div>
-                        <Badge className={getStatusColor(booking.status)}>
-                          {booking.status}
-                        </Badge>
-                      </div>
+              <CardContent className="p-6">
+                <div className="mb-6">
+                  <div className="w-full">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      month={currentDate}
+                      onMonthChange={setCurrentDate}
+                      modifiers={calendarModifiers}
+                      modifiersClassNames={calendarModifiersClassNames}
+                      className="w-full max-w-none [&_.rdp]:w-full [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_table]:w-full [&_table]:table-fixed [&_td]:h-16 [&_td]:p-0 [&_td]:text-center [&_th]:h-12 [&_th]:p-2 [&_th]:text-center [&_button]:h-14 [&_button]:w-full [&_button]:text-base [&_button]:font-medium [&_th]:text-sm [&_th]:font-semibold"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-4 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span>Confirmed</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Contract Signed</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-yellow-300 rounded-full"></div>
+                    <span>New Enquiry</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span>In Progress</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Cancelled</span>
+                  </div>
+                  {showExpiredEnquiries && (
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-gray-400 rounded-full opacity-50"></div>
+                      <span className="text-gray-500">Expired Enquiry</span>
                     </div>
-                  ))}
-                  
-                  {getPotentialBookingsForDate(selectedDate).map((booking: any) => (
-                    <div key={booking.id} className={`border rounded-lg p-3 ${booking.isExpired ? 'opacity-50' : ''}`}>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">{booking.title}</h4>
-                          <p className="text-sm text-gray-600">
-                            {booking.clientName} • {formatTime(booking.eventTime)}
-                          </p>
-                          {booking.venue && (
-                            <p className="text-sm text-gray-600 flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {booking.venue}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {booking.isExpired && <Badge variant="secondary">Expired</Badge>}
-                          <Badge className={getStatusColor(booking.status.replace('enquiry-', ''))}>
-                            {booking.status.replace('enquiry-', '').replace('_', ' ')}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {getBookingsForDate(selectedDate).length === 0 && getPotentialBookingsForDate(selectedDate).length === 0 && (
-                    <p className="text-gray-500 text-center py-4">No bookings for this date</p>
                   )}
                 </div>
               </CardContent>
             </Card>
-          )}
+          </div>
+
+          {/* Selected Date Details */}
+          <div className="lg:col-span-2 mt-6 lg:mt-0">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CalendarIcon className="w-5 h-5" />
+                  <span>
+                    {selectedDate ? 
+                      selectedDate.toLocaleDateString("en-GB", { month: "short", day: "numeric" }) :
+                      "Select Date"
+                    }
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {selectedDate && (
+                  <div className="text-sm text-gray-600 mb-4">
+                    {formatDate(selectedDate.toISOString())}
+                  </div>
+                )}
+
+                {selectedDate && (
+                  (selectedDateBookings.length === 0 && selectedDatePotentialBookings.length === 0) ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p>No bookings on this date</p>
+                      <p className="text-sm">Available for new gigs</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Confirmed Bookings */}
+                      {selectedDateBookings.map((booking: Booking) => {
+                        const conflicts = detectConflicts(booking as any);
+                        const hasConflicts = conflicts.length > 0;
+
+                        return (
+                          <div key={booking.id} className={`p-4 rounded-lg border-2 ${getStatusColor(booking.status)}`}>
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-semibold flex items-center space-x-2">
+                                <span>{booking.title}</span>
+                                {hasConflicts && (
+                                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                                )}
+                              </h4>
+                              <div className="flex items-center space-x-2">
+                                {hasConflicts && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    CONFLICT
+                                  </Badge>
+                                )}
+                                <Badge className={getStatusColor(booking.status).replace('border-', '').replace('bg-', 'bg-').replace('text-', 'text-')}>
+                                  {booking.status}
+                                </Badge>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center space-x-2 text-gray-600">
+                                <User className="w-4 h-4" />
+                                <span>{booking.clientName}</span>
+                              </div>
+
+                              <div className="flex items-center space-x-2 text-gray-600">
+                                <Clock className="w-4 h-4" />
+                                <span>{formatTime(booking.eventTime)}</span>
+                              </div>
+
+                              <div className="flex items-center space-x-2 text-gray-600">
+                                <MapPin className="w-4 h-4" />
+                                <span>{booking.venue}</span>
+                              </div>
+
+                              <div className="flex items-center justify-between mt-3 pt-2 border-t">
+                                <span className="font-semibold text-green-600">
+                                  £{Number(booking.fee).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* Potential Bookings */}
+                      {selectedDatePotentialBookings.map((booking: any) => {
+                        const conflicts = detectConflicts(booking);
+                        const hasConflicts = conflicts.length > 0;
+
+                        return (
+                          <div key={booking.id} className={`p-4 rounded-lg border-2 ${booking.isExpired ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-amber-50 border-amber-200'}`}>
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className={`font-semibold flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : ''}`}>
+                                <span>
+                                  {booking.title}
+                                  {booking.isExpired && (
+                                    <span className="ml-2 text-xs text-gray-400">(Expired)</span>
+                                  )}
+                                </span>
+                                {hasConflicts && (
+                                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                                )}
+                              </h4>
+                              <div className="flex items-center space-x-2">
+                                {hasConflicts && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    CONFLICT
+                                  </Badge>
+                                )}
+                                <Badge className={
+                                  booking.isExpired ? 'bg-gray-100 text-gray-600' :
+                                  booking.status === 'enquiry-new' ? 'bg-yellow-100 text-yellow-800' :
+                                  booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'bg-blue-100 text-blue-800' :
+                                  booking.status === 'enquiry-confirmed' ? 'bg-green-100 text-green-800' :
+                                  booking.status === 'contract-signed' ? 'bg-green-100 text-green-800' :
+                                  'bg-amber-100 text-amber-800'
+                                }>
+                                  {booking.isExpired ? 'Expired Enquiry' :
+                                   booking.status === 'enquiry-new' ? 'New Enquiry' :
+                                   booking.status === 'enquiry-qualified' || booking.status === 'enquiry-contract_sent' ? 'In Progress' :
+                                   booking.status === 'enquiry-confirmed' ? 'Confirmed Enquiry' :
+                                   booking.status === 'contract-signed' ? 'Contract Signed' :
+                                   'Potential'}
+                                </Badge>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 text-sm">
+                              <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                <User className="w-4 h-4" />
+                                <span>{booking.clientName}</span>
+                              </div>
+
+                              <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                <Clock className="w-4 h-4" />
+                                <span>{formatTime(booking.eventTime)}</span>
+                              </div>
+
+                              <div className={`flex items-center space-x-2 ${booking.isExpired ? 'text-gray-500' : 'text-gray-600'}`}>
+                                <MapPin className="w-4 h-4" />
+                                <span>{booking.venue}</span>
+                              </div>
+
+                              <div className="flex items-center justify-between mt-3 pt-2 border-t">
+                                <span className={`font-semibold ${booking.isExpired ? 'text-gray-500' : 'text-amber-600'}`}>
+                                  £{Number(booking.fee).toLocaleString()}
+                                </span>
+                                <div className="flex space-x-2">
+                                  {booking.source === 'enquiry' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className={booking.isExpired ? 'opacity-50' : ''}
+                                      onClick={() => setViewMode('pipeline')}
+                                    >
+                                      View Enquiry
+                                    </Button>
+                                  )}
+                                  {booking.source === 'contract' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className={booking.isExpired ? 'opacity-50' : ''}
+                                      onClick={() => navigate('/contracts')}
+                                    >
+                                      View Contract
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       );
     }
