@@ -146,17 +146,10 @@ export default function Contracts() {
         enquiryId: data.enquiryId || null, // Use actual enquiry ID from form
       };
 
-      const response = await fetch("/api/contracts", {
+      return apiRequest("/api/contracts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contractData),
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
@@ -178,17 +171,10 @@ export default function Contracts() {
 
   const updateContractMutation = useMutation({
     mutationFn: async ({ id, contractData }: { id: number, contractData: any }) => {
-      const response = await fetch(`/api/contracts/${id}`, {
+      return apiRequest(`/api/contracts/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contractData),
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
@@ -214,23 +200,10 @@ export default function Contracts() {
     mutationFn: async ({ contractId, customMessage }: { contractId: number, customMessage?: string }) => {
       console.log('🔥 FRONTEND: Sending contract email for contract:', contractId);
 
-      const response = await fetch("/api/contracts/send-email", {
+      return apiRequest("/api/contracts/send-email", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contractId, customMessage }),
       });
-
-      console.log('🔥 FRONTEND: Contract email response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log('🔥 FRONTEND: Contract email error:', errorData);
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('🔥 FRONTEND: Contract email success:', result);
-      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
@@ -254,16 +227,9 @@ export default function Contracts() {
 
   const sendReminderMutation = useMutation({
     mutationFn: async (contractId: number) => {
-      const response = await fetch(`/api/contracts/${contractId}/send-reminder`, {
+      return apiRequest(`/api/contracts/${contractId}/send-reminder`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
