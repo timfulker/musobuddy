@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertComplianceDocumentSchema, type ComplianceDocument } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Shield, Zap, Music, Upload, Download, AlertTriangle, CheckCircle, Clock, ArrowLeft } from "lucide-react";
+import { Plus, Search, Shield, Zap, Music, Upload, Download, AlertTriangle, CheckCircle, Clock, ArrowLeft, FileUp, X } from "lucide-react";
 import { Link } from "wouter";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
@@ -24,6 +24,10 @@ const complianceFormSchema = insertComplianceDocumentSchema.extend({
 export default function Compliance() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('file');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const { data: documents = [], isLoading } = useQuery({
@@ -46,6 +50,8 @@ export default function Compliance() {
       queryClient.invalidateQueries({ queryKey: ["/api/compliance"] });
       setIsDialogOpen(false);
       form.reset();
+      setSelectedFile(null);
+      setUploadMethod('file');
       toast({
         title: "Success",
         description: "Compliance document added successfully!",
@@ -55,6 +61,41 @@ export default function Compliance() {
       toast({
         title: "Error",
         description: "Failed to add document. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadDocumentMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/compliance/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Upload failed');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/compliance"] });
+      setIsDialogOpen(false);
+      form.reset();
+      setSelectedFile(null);
+      setUploadMethod('file');
+      toast({
+        title: "Success",
+        description: "Document uploaded successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Upload Error",
+        description: error.message || "Failed to upload document. Please try again.",
         variant: "destructive",
       });
     },
@@ -71,8 +112,120 @@ export default function Compliance() {
     },
   });
 
+  // File handling functions
+  const handleFileSelect = useCallback((file: File) => {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please select a file smaller than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload PDF, Word, text, or image files",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    // Auto-fill document name if not set
+    if (!form.getValues('name')) {
+      form.setValue('name', file.name);
+    }
+  }, [form, toast]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  }, [handleFileSelect]);
+
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileSelect(e.target.files[0]);
+    }
+  }, [handleFileSelect]);
+
+  const removeSelectedFile = useCallback(() => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
+  const handleDialogClose = useCallback(() => {
+    setIsDialogOpen(false);
+    setSelectedFile(null);
+    setUploadMethod('file');
+    setIsDragging(false);
+    form.reset();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [form]);
+
+  const downloadDocument = useCallback((document: ComplianceDocument) => {
+    if (document.documentUrl) {
+      if (document.documentUrl.startsWith('data:')) {
+        // Handle base64 data URLs
+        const link = document.createElement('a');
+        link.href = document.documentUrl;
+        link.download = document.name || 'document';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // Handle regular URLs
+        window.open(document.documentUrl, '_blank');
+      }
+    }
+  }, []);
+
   const onSubmit = (data: z.infer<typeof complianceFormSchema>) => {
-    createDocumentMutation.mutate(data);
+    if (uploadMethod === 'file' && selectedFile) {
+      // Upload file
+      const formData = new FormData();
+      formData.append('documentFile', selectedFile);
+      formData.append('type', data.type);
+      formData.append('name', data.name);
+      if (data.expiryDate) {
+        formData.append('expiryDate', data.expiryDate);
+      }
+      uploadDocumentMutation.mutate(formData);
+    } else {
+      // Create document with URL
+      createDocumentMutation.mutate(data);
+    }
   };
 
   const getIcon = (type: string) => {
@@ -173,7 +326,7 @@ export default function Compliance() {
                 <p className="text-gray-600">Manage your insurance, licenses, and certifications</p>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
               <DialogTrigger asChild>
                 <Button className="bg-purple-600 hover:bg-purple-700">
                   <Plus className="w-4 h-4 mr-2" />
@@ -237,26 +390,131 @@ export default function Compliance() {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="documentUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Document URL (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/* Upload Method Selector */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">Document Source</label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={uploadMethod === 'file' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setUploadMethod('file')}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload File
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={uploadMethod === 'url' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setUploadMethod('url')}
+                        >
+                          <FileUp className="w-4 h-4 mr-2" />
+                          Enter URL
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* File Upload Section */}
+                    {uploadMethod === 'file' && (
+                      <div className="space-y-3">
+                        <label className="text-sm font-medium">Upload Document</label>
+                        
+                        {/* File Drop Zone */}
+                        <div
+                          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                            isDragging
+                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                        >
+                          {selectedFile ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-center space-x-2">
+                                <FileUp className="w-5 h-5 text-green-600" />
+                                <span className="text-sm font-medium text-green-600">
+                                  {selectedFile.name}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={removeSelectedFile}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <p className="text-xs text-gray-500">
+                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <Upload className="w-8 h-8 text-gray-400 mx-auto" />
+                              <div>
+                                <p className="text-sm text-gray-600">
+                                  Drag and drop your document here, or{' '}
+                                  <Button
+                                    type="button"
+                                    variant="link"
+                                    className="p-0 h-auto text-purple-600"
+                                    onClick={() => fileInputRef.current?.click()}
+                                  >
+                                    browse files
+                                  </Button>
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  PDF, Word, images, or text files (max 10MB)
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Hidden File Input */}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                          onChange={handleFileInputChange}
+                        />
+                      </div>
+                    )}
+
+                    {/* URL Input Section */}
+                    {uploadMethod === 'url' && (
+                      <FormField
+                        control={form.control}
+                        name="documentUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Document URL</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     <div className="flex justify-end space-x-3">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      <Button type="button" variant="outline" onClick={handleDialogClose}>
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createDocumentMutation.isPending}>
-                        {createDocumentMutation.isPending ? "Adding..." : "Add Document"}
+                      <Button 
+                        type="submit" 
+                        disabled={createDocumentMutation.isPending || uploadDocumentMutation.isPending}
+                      >
+                        {(createDocumentMutation.isPending || uploadDocumentMutation.isPending) ? (
+                          uploadMethod === 'file' ? "Uploading..." : "Adding..."
+                        ) : (
+                          uploadMethod === 'file' ? "Upload Document" : "Add Document"
+                        )}
                       </Button>
                     </div>
                   </form>
@@ -387,7 +645,11 @@ export default function Compliance() {
                         
                         <div className="flex items-center space-x-2">
                           {document.documentUrl && (
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => downloadDocument(document)}
+                            >
                               <Download className="w-4 h-4 mr-1" />
                               Download
                             </Button>

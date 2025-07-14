@@ -2280,6 +2280,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Setup multer for file uploads
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
   // Compliance document routes
   app.get('/api/compliance', isAuthenticated, async (req: any, res) => {
     try {
@@ -2301,6 +2307,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating compliance document:", error);
       res.status(500).json({ message: "Failed to create compliance document" });
+    }
+  });
+
+  // File upload endpoint for compliance documents
+  app.post('/api/compliance/upload', isAuthenticated, upload.single('documentFile'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Validate file type (PDF, images, common document formats)
+      const allowedTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain'
+      ];
+
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ 
+          message: "Invalid file type. Please upload PDF, Word, text, or image files." 
+        });
+      }
+
+      // Convert file to base64 for storage
+      const fileBase64 = req.file.buffer.toString('base64');
+      const fileName = req.file.originalname;
+      const fileSize = req.file.size;
+      const mimeType = req.file.mimetype;
+
+      // Create data URL for storage
+      const documentUrl = `data:${mimeType};base64,${fileBase64}`;
+
+      // Parse form data
+      const { type, name, expiryDate } = req.body;
+
+      // Create compliance document with file data
+      const documentData = {
+        userId,
+        type,
+        name: name || fileName,
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
+        documentUrl,
+        status: 'valid'
+      };
+
+      const document = await storage.createComplianceDocument(documentData);
+      
+      res.status(201).json({
+        ...document,
+        fileName,
+        fileSize,
+        mimeType
+      });
+    } catch (error) {
+      console.error("Error uploading compliance document:", error);
+      res.status(500).json({ message: "Failed to upload document" });
     }
   });
 
@@ -2426,12 +2494,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error resolving conflict:", error);
       res.status(500).json({ message: "Failed to resolve conflict" });
     }
-  });
-
-  // Setup multer for file uploads
-  const upload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
   });
 
   // Calendar Import Routes
