@@ -695,21 +695,21 @@ export default function Calendar() {
   }
 
   const calendarModifiersClassNames = {
-    today: "bg-blue-500 text-white",
+    today: "bg-blue-500 text-white ring-2 ring-red-500 ring-offset-2",
     confirmed: "bg-purple-500 text-white",
     cancelled: "bg-red-500 text-white",
     newEnquiry: "bg-yellow-300 text-black",
     inProgressEnquiry: "bg-blue-500 text-white",
     confirmedEnquiry: "bg-purple-500 text-white",
     signedContract: "bg-green-500 text-white",
-    expiredEnquiry: "bg-gray-400 text-white opacity-50",
+    expiredEnquiry: "bg-gradient-to-r from-gray-300 to-gray-400 text-white opacity-60",
   };
 
   const getEventColorScheme = (event: any) => {
     if (event.isExpired) {
       return {
-        background: 'bg-gray-100',
-        border: 'border-gray-200',
+        background: 'bg-gradient-to-r from-gray-100 to-gray-200',
+        border: 'border-gray-300',
         text: 'text-gray-500',
         accent: 'bg-gray-400'
       };

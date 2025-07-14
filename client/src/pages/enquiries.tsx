@@ -997,8 +997,11 @@ export default function Enquiries() {
               const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
               const hasConflicts = conflicts.length > 0;
               
+              // Check if enquiry date is in the past
+              const isPastDate = enquiry.eventDate && new Date(enquiry.eventDate) < new Date();
+              
               return (
-                <Card key={enquiry.id} className={`hover:shadow-md transition-shadow ${getConflictCardStyling(severity)}`}>
+                <Card key={enquiry.id} className={`hover:shadow-md transition-shadow ${getConflictCardStyling(severity)} ${isPastDate ? 'opacity-60 bg-gradient-to-r from-gray-50 to-gray-100' : ''}`}>
                   <CardContent className="p-6">
                     <div className="relative">
                       <div className="absolute top-0 right-0">
@@ -1015,15 +1018,16 @@ export default function Enquiries() {
                       <div className="pr-12 flex gap-6">
                         {/* Date Box - Encore Style with Graduated Conflict Indicator */}
                         <div className={`relative flex-shrink-0 w-20 h-20 border-2 ${
+                          isPastDate ? 'border-gray-300 bg-gray-200' :
                           severity.level === 'critical' ? 'border-rose-300 bg-rose-100' :
                           severity.level === 'warning' ? 'border-amber-300 bg-amber-100' :
                           severity.level === 'info' && severity.color === 'teal' ? 'border-teal-300 bg-teal-100' :
                           severity.level === 'info' ? 'border-slate-300 bg-slate-100' :
                           'border-gray-200 bg-white'
                         } rounded-lg flex flex-col items-center justify-center`}>
-                          <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
-                          <div className="text-2xl font-bold text-gray-900">{dateBox.dayNum}</div>
-                          <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+                          <div className={`text-xs font-medium ${isPastDate ? 'text-gray-500' : 'text-red-500'}`}>{dateBox.dayName}</div>
+                          <div className={`text-2xl font-bold ${isPastDate ? 'text-gray-600' : 'text-gray-900'}`}>{dateBox.dayNum}</div>
+                          <div className={`text-xs ${isPastDate ? 'text-gray-500' : 'text-gray-500'}`}>{dateBox.monthYear}</div>
                           {hasConflicts && (
                             <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
                               severity.level === 'critical' ? 'bg-rose-500' :
