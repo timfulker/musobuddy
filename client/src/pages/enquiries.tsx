@@ -568,7 +568,7 @@ export default function Enquiries() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Bookings</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white ml-12 md:ml-0">Bookings</h1>
                 <p className="text-gray-600 dark:text-gray-400">Manage your booking lifecycle from enquiry to confirmed gig</p>
               </div>
           

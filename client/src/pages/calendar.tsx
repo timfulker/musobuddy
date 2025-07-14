@@ -993,7 +993,7 @@ export default function Calendar() {
             >
               <Menu className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900 ml-12 md:ml-0">Calendar</h1>
+            <h1 className="text-2xl font-bold text-gray-900 md:ml-0">Calendar</h1>
           </div>
 
           <div className="flex items-center space-x-2">
