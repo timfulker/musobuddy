@@ -84,7 +84,7 @@ export async function uploadContractToCloud(
     await client.send(command);
     
     // Generate public URL
-    const publicUrl = `${STORAGE_CONFIG.endpoint}/${BUCKET_NAME}/${key}`;
+    const publicUrl = `https://${BUCKET_NAME}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
     
     console.log('✅ Contract uploaded to cloud storage successfully');
     console.log('🔗 Public URL:', publicUrl);
@@ -149,8 +149,8 @@ export async function uploadInvoiceToCloud(
     
     await client.send(command);
     
-    // Generate public URL
-    const publicUrl = `${STORAGE_CONFIG.endpoint}/${BUCKET_NAME}/${key}`;
+    // Generate public URL  
+    const publicUrl = `https://${BUCKET_NAME}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
     
     console.log('✅ Invoice uploaded to cloud storage successfully');
     console.log('🔗 Public URL:', publicUrl);
@@ -162,6 +162,19 @@ export async function uploadInvoiceToCloud(
     };
   } catch (error) {
     console.error('❌ Error uploading invoice to cloud storage:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name,
+      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      bucket: BUCKET_NAME,
+      hasCredentials: {
+        accessKey: !!process.env.R2_ACCESS_KEY_ID,
+        secretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+        accountId: !!process.env.R2_ACCOUNT_ID,
+        bucketName: !!process.env.R2_BUCKET_NAME,
+      }
+    });
     return {
       success: false,
       error: error.message,
