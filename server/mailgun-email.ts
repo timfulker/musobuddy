@@ -111,23 +111,13 @@ export async function sendContractEmail(
   }
 ): Promise<boolean> {
   try {
-    console.log('📧 Sending contract email with hybrid approach:', contract.contractNumber);
+    console.log('📧 Sending contract email with attachment:', contract.contractNumber);
     
     // Generate PDF buffer
     const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
     
-    // Use hybrid approach: cloud storage for signing page + PDF attachment
-    console.log('☁️ Using hybrid approach with cloud storage for signing page');
-    
-    let cloudStorageUrl = '';
-    const isSignedContract = !!signatureDetails;
-    
-    // For unsigned contracts, create cloud storage signing page
-    if (!isSignedContract) {
-      const { uploadContractSigningPage } = await import('./cloud-storage');
-      cloudStorageUrl = await uploadContractSigningPage(contract, userSettings);
-      console.log('☁️ Contract signing page uploaded to cloud storage:', cloudStorageUrl);
-    }
+    // Simple attachment approach - signing page hosted on app
+    console.log('📎 Using attachment approach with app-based signing page');
     
     // Prepare email content
     const businessName = userSettings?.businessName || 'MusoBuddy';
@@ -135,17 +125,17 @@ export async function sendContractEmail(
     const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
     const replyToEmail = userSettings?.emailAddress || 'noreply@mg.musobuddy.com';
     
+    const isSignedContract = !!signatureDetails;
     const subject = isSignedContract 
       ? `Contract Signed - ${contract.contractNumber}`
       : `Contract for ${contract.clientName} - ${contract.contractNumber}`;
     
-    // Generate email HTML with cloud storage URL for signing
+    // Generate email HTML with app-based signing URL
     const emailHtml = generateContractEmailHtml(
       contract,
       userSettings,
       customMessage,
-      isSignedContract,
-      cloudStorageUrl
+      isSignedContract
     );
     
     // Create email with PDF attachment
@@ -169,9 +159,9 @@ export async function sendContractEmail(
     const success = await sendEmail(emailData);
     
     if (success) {
-      console.log('✅ Contract email sent successfully with attachment and cloud signing page');
+      console.log('✅ Contract email sent successfully with attachment');
       console.log('📎 PDF attached to email for client access');
-      console.log('☁️ Cloud signing page available at:', cloudStorageUrl);
+      console.log('🔗 Signing page available at: https://musobuddy.replit.app/sign-contract/' + contract.id);
     }
     
     return success;
