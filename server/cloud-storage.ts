@@ -83,15 +83,22 @@ export async function uploadContractToCloud(
     
     await client.send(command);
     
-    // Generate public URL
-    const publicUrl = `https://${BUCKET_NAME}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
+    // Generate presigned URL for secure access (valid for 7 days)
+    const getCommand = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    });
+    
+    const presignedUrl = await getSignedUrl(client, getCommand, { 
+      expiresIn: 7 * 24 * 60 * 60 // 7 days in seconds
+    });
     
     console.log('✅ Contract uploaded to cloud storage successfully');
-    console.log('🔗 Public URL:', publicUrl);
+    console.log('🔗 Presigned URL:', presignedUrl);
     
     return {
       success: true,
-      url: publicUrl,
+      url: presignedUrl,
       key: key,
     };
   } catch (error) {
@@ -149,15 +156,22 @@ export async function uploadInvoiceToCloud(
     
     await client.send(command);
     
-    // Generate public URL  
-    const publicUrl = `https://${BUCKET_NAME}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
+    // Generate presigned URL for secure access (valid for 7 days)
+    const getCommand = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    });
+    
+    const presignedUrl = await getSignedUrl(client, getCommand, { 
+      expiresIn: 7 * 24 * 60 * 60 // 7 days in seconds
+    });
     
     console.log('✅ Invoice uploaded to cloud storage successfully');
-    console.log('🔗 Public URL:', publicUrl);
+    console.log('🔗 Presigned URL:', presignedUrl);
     
     return {
       success: true,
-      url: publicUrl,
+      url: presignedUrl,
       key: key,
     };
   } catch (error) {
