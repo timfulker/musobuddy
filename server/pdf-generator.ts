@@ -505,6 +505,23 @@ function generateContractHTML(
         <div style="white-space: pre-wrap; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
 ${contract.terms}
         </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-radius: 5px; font-size: 14px;">
+          <h4 style="margin-top: 0; color: #2563eb;">Payment Terms</h4>
+          <p><strong>Payment Due:</strong> Full payment of £${contract.fee} due on or before the day of performance.</p>
+          <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account.</p>
+          ${contract.deposit ? `<p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking.</p>` : ''}
+          
+          <h4 style="color: #2563eb; margin-top: 20px;">Cancellation Policy</h4>
+          <p><strong>Client Cancellation:</strong> If cancelled more than 30 days before the event, any deposit paid will be refunded minus a £50 administration fee. If cancelled within 30 days, the full fee becomes due.</p>
+          <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel, all payments will be refunded and reasonable assistance will be provided to find a replacement.</p>
+          
+          <h4 style="color: #2563eb; margin-top: 20px;">Force Majeure</h4>
+          <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
+          
+          <h4 style="color: #2563eb; margin-top: 20px;">Performance Contingencies</h4>
+          <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
+        </div>
       </div>
 
       <div class="signature-section">
@@ -535,10 +552,12 @@ ${contract.terms}
       </div>
 
       <div style="margin-top: 50px; padding: 20px; background-color: #f0f0f0; border-radius: 5px; font-size: 12px; color: #666;">
-        <p><strong>Document Information:</strong></p>
+        <p><strong>Legal Information:</strong></p>
         <p>Contract Number: ${contract.contractNumber}</p>
         <p>Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
-        <p>This is a legally binding agreement between the parties named above.</p>
+        <p><strong>This is a legally binding agreement between the parties named above.</strong></p>
+        <p><strong>Governing Law:</strong> This contract shall be governed by and construed in accordance with the laws of England and Wales. Any disputes arising from this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+        <p><strong>Digital Signatures:</strong> Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation.</p>
       </div>
 
       <div style="margin-top: 30px; padding: 15px; text-align: center; border-top: 1px solid #ccc; color: #999; font-size: 12px;">
