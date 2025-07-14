@@ -20,6 +20,14 @@ import { Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
+import { 
+  analyzeConflictSeverity, 
+  getConflictCardStyling, 
+  getConflictBadge, 
+  parseConflictAnalysis, 
+  getConflictActions, 
+  formatConflictTooltip 
+} from "@/utils/conflict-ui";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
@@ -926,6 +934,41 @@ export default function Enquiries() {
           </CardContent>
         </Card>
 
+        {/* Conflict Indicators Visual Key */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+              <h3 className="font-medium text-blue-900">Conflict Indicators</h3>
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-red-800">🚫 Hard Conflict</span>
+                  <span className="text-gray-500 hidden sm:inline">- Confirmed booking overlap</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                  <span className="text-orange-800">⚠️ Warning</span>
+                  <span className="text-gray-500 hidden sm:inline">- Time/venue conflict</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-blue-800">👤 Same Client</span>
+                  <span className="text-gray-500 hidden sm:inline">- Multiple events</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                  <span className="text-amber-800">📅 Same Day</span>
+                  <span className="text-gray-500 hidden sm:inline">- Check timing</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-green-800">✅ No Conflicts</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Enquiries List */}
         <div className="space-y-4">
           {sortedEnquiries.length === 0 ? (
@@ -947,10 +990,12 @@ export default function Enquiries() {
             sortedEnquiries.map((enquiry: Enquiry) => {
               const dateBox = formatDateBox(enquiry.eventDate!);
               const conflicts = detectConflicts(enquiry);
+              const conflictAnalysis = parseConflictAnalysis(enquiry);
+              const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
               const hasConflicts = conflicts.length > 0;
               
               return (
-                <Card key={enquiry.id} className={`hover:shadow-md transition-shadow ${hasConflicts ? 'border-red-200 bg-red-50' : 'bg-white'}`}>
+                <Card key={enquiry.id} className={`hover:shadow-md transition-shadow ${getConflictCardStyling(severity)}`}>
                   <CardContent className="p-6">
                     <div className="relative">
                       <div className="absolute top-0 right-0">
@@ -965,13 +1010,23 @@ export default function Enquiries() {
                       </div>
                       
                       <div className="pr-12 flex gap-6">
-                        {/* Date Box - Encore Style with Conflict Indicator */}
-                        <div className={`relative flex-shrink-0 w-20 h-20 border-2 ${hasConflicts ? 'border-red-300 bg-red-100' : 'border-gray-200 bg-white'} rounded-lg flex flex-col items-center justify-center`}>
+                        {/* Date Box - Encore Style with Graduated Conflict Indicator */}
+                        <div className={`relative flex-shrink-0 w-20 h-20 border-2 ${
+                          severity.level === 'critical' ? 'border-red-300 bg-red-100' :
+                          severity.level === 'warning' ? 'border-orange-300 bg-orange-100' :
+                          severity.level === 'info' ? 'border-blue-300 bg-blue-100' :
+                          'border-gray-200 bg-white'
+                        } rounded-lg flex flex-col items-center justify-center`}>
                           <div className="text-xs text-red-500 font-medium">{dateBox.dayName}</div>
                           <div className="text-2xl font-bold text-gray-900">{dateBox.dayNum}</div>
                           <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
                           {hasConflicts && (
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                            <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
+                              severity.level === 'critical' ? 'bg-red-500' :
+                              severity.level === 'warning' ? 'bg-orange-500' :
+                              severity.level === 'info' ? 'bg-blue-500' :
+                              'bg-amber-500'
+                            }`}>
                               <span className="text-white text-xs font-bold">!</span>
                             </div>
                           )}
@@ -986,8 +1041,8 @@ export default function Enquiries() {
                             </div>
                             <div className="flex items-center space-x-2">
                               {hasConflicts && (
-                                <div className="flex items-center space-x-1 bg-red-500 text-white px-2 py-1 rounded-full text-xs">
-                                  <span>⚠️ {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}</span>
+                                <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getConflictBadge(severity, conflicts.length)}`} title={formatConflictTooltip(severity, conflictAnalysis)}>
+                                  <span>{severity.icon} {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}</span>
                                 </div>
                               )}
                               {needsResponse(enquiry) && (
@@ -1117,15 +1172,20 @@ export default function Enquiries() {
                             </div>
                           )}
                           
-                          {/* Conflict Analysis Section */}
+                          {/* Enhanced Conflict Analysis Section */}
                           {hasConflicts && (
-                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <div className={`mt-4 p-4 ${severity.bgColor} border ${severity.borderColor} rounded-lg`}>
                               <div className="flex items-center space-x-2 mb-3">
-                                <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                                  <span className="text-white text-xs font-bold">!</span>
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                                  severity.level === 'critical' ? 'bg-red-500' :
+                                  severity.level === 'warning' ? 'bg-orange-500' :
+                                  severity.level === 'info' ? 'bg-blue-500' :
+                                  'bg-amber-500'
+                                }`}>
+                                  <span className="text-white text-xs font-bold">{severity.icon}</span>
                                 </div>
-                                <h4 className="text-sm font-semibold text-red-800">
-                                  Potential Conflicts Detected
+                                <h4 className={`text-sm font-semibold ${severity.textColor}`}>
+                                  {severity.message}
                                 </h4>
                               </div>
                               <div className="space-y-2">
@@ -1138,6 +1198,7 @@ export default function Enquiries() {
                                         <p className="text-xs text-gray-500">
                                           {conflict.type === 'booking' ? 'Confirmed Booking' : 'Confirmed Enquiry'}
                                           {conflict.venue && ` • ${conflict.venue}`}
+                                          {conflict.eventTime && ` • ${conflict.eventTime}`}
                                         </p>
                                       </div>
                                     </div>
@@ -1147,8 +1208,34 @@ export default function Enquiries() {
                                   </div>
                                 ))}
                               </div>
-                              <div className="mt-3 p-2 bg-yellow-50 rounded text-xs text-yellow-800">
-                                💡 Consider adjusting the date or declining if this conflicts with existing commitments
+                              
+                              {/* Smart Recommendation */}
+                              <div className={`mt-3 p-2 rounded text-xs ${
+                                severity.level === 'critical' ? 'bg-red-100 text-red-800' :
+                                severity.level === 'warning' ? 'bg-orange-100 text-orange-800' :
+                                severity.level === 'info' ? 'bg-blue-100 text-blue-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                💡 {severity.message}
+                              </div>
+
+                              {/* Quick Action Buttons */}
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {getConflictActions(severity).map((action, index) => (
+                                  <Button
+                                    key={index}
+                                    variant={action.variant}
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => {
+                                      // Handle action - this could be expanded with specific handlers
+                                      console.log(`${action.action} clicked for enquiry ${enquiry.id}`);
+                                    }}
+                                  >
+                                    <span className="mr-1">{action.icon}</span>
+                                    {action.label}
+                                  </Button>
+                                ))}
                               </div>
                             </div>
                           )}
