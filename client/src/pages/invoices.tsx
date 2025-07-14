@@ -783,7 +783,7 @@ export default function Invoices() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
+                <h1 className="text-2xl font-bold text-gray-900 ml-12 md:ml-0">Invoices</h1>
                 <p className="text-gray-600">Manage your invoices and payments</p>
               </div>
             </div>

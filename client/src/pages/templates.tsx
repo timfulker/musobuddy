@@ -225,7 +225,7 @@ export default function Templates() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Email Templates</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white ml-12 md:ml-0">Email Templates</h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
                 Manage your automated response templates for enquiries
               </p>

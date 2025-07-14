@@ -565,7 +565,7 @@ export default function Contracts() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Contracts</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white ml-12 md:ml-0">Contracts</h1>
                 <p className="text-gray-600 dark:text-gray-400">Manage your performance contracts and agreements</p>
               </div>
 
