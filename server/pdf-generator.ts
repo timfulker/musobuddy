@@ -521,6 +521,15 @@ ${contract.terms}
           
           <h4 style="color: #2563eb; margin-top: 20px;">Performance Contingencies</h4>
           <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
+          
+          <h4 style="color: #2563eb; margin-top: 20px;">Musicians Union Standard Conditions</h4>
+          <p><strong>Payment Terms:</strong> The fee${contract.deposit ? ', plus VAT if applicable,' : ''} shall be payable on the date of performance of the engagement.</p>
+          <p><strong>Equipment Security:</strong> The performer and client agree that the equipment and instruments are not available for use by any other person, except by specific permission of the performer.</p>
+          <p><strong>Venue Safety:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue.</p>
+          <p><strong>Recording Restrictions:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without prior written consent.</p>
+          <p><strong>Contract Modifications:</strong> This Agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties.</p>
+          <p><strong>Additional Terms:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this Agreement.</p>
+          <p><strong>Safe Space Policy:</strong> The client and performer agree to provide a working environment free from harassment and discrimination in accordance with Musicians Union guidelines.</p>
         </div>
       </div>
 
