@@ -49,6 +49,7 @@ export const enquiries = pgTable("enquiries", {
   lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
   hasConflicts: boolean("has_conflicts").default(false), // Flag for potential conflicts
   conflictCount: integer("conflict_count").default(0), // Number of potential conflicts
+  conflictDetails: text("conflict_details"), // JSON string with conflict details
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
