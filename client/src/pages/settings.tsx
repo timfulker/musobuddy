@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, FileText, User, Music, Settings as SettingsIcon, Plus, X, Loader2, Sparkles, Target } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, FileText, User, Music, Settings as SettingsIcon, Plus, X, Loader2, Sparkles, Target, Check, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 // Schema for form validation
@@ -73,16 +73,95 @@ export default function Settings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Instrument management state
-  const [newInstrument, setNewInstrument] = useState("");
-  const [isCategorizingInstrument, setIsCategorizingInstrument] = useState(false);
-  const [selectedInstruments, setSelectedInstruments] = useState<Array<{
-    instrument: string;
-    category: string;
-    gigTypes: string[];
+  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
+  const [gigTypes, setGigTypes] = useState<Array<{
+    title: string;
+    description: string;
     isCustom?: boolean;
   }>>([]);
-  const [gigTypes, setGigTypes] = useState<string[]>([]);
   const [isGeneratingGigTypes, setIsGeneratingGigTypes] = useState(false);
+  const [newGigType, setNewGigType] = useState({ title: "", description: "" });
+
+  // Predefined instrument data from CSV
+  const instrumentData = [
+    { instrument: "Violin", category: "Strings" },
+    { instrument: "Cello", category: "Strings" },
+    { instrument: "Double Bass", category: "Strings" },
+    { instrument: "Electric Guitar", category: "Strings" },
+    { instrument: "Acoustic Guitar", category: "Strings" },
+    { instrument: "Bass Guitar", category: "Strings" },
+    { instrument: "Flute", category: "Woodwind" },
+    { instrument: "Clarinet", category: "Woodwind" },
+    { instrument: "Alto Saxophone", category: "Woodwind" },
+    { instrument: "Tenor Saxophone", category: "Woodwind" },
+    { instrument: "Baritone Saxophone", category: "Woodwind" },
+    { instrument: "Trumpet", category: "Brass" },
+    { instrument: "Trombone", category: "Brass" },
+    { instrument: "French Horn", category: "Brass" },
+    { instrument: "Tuba", category: "Brass" },
+    { instrument: "Piano", category: "Keyboard" },
+    { instrument: "Electric Keyboard", category: "Keyboard" },
+    { instrument: "Synthesizer", category: "Keyboard" },
+    { instrument: "Drum Kit", category: "Percussion" },
+    { instrument: "Cajón", category: "Percussion" },
+    { instrument: "Congas", category: "Percussion" },
+    { instrument: "Bongos", category: "Percussion" },
+    { instrument: "Djembe", category: "Percussion" },
+    { instrument: "Tambourine", category: "Percussion" },
+    { instrument: "Triangle", category: "Percussion" },
+    { instrument: "Lead Vocals", category: "Vocals" },
+    { instrument: "Backing Vocals", category: "Vocals" },
+    { instrument: "DJ Controller", category: "Electronic" },
+    { instrument: "Laptop", category: "Electronic" },
+    { instrument: "Sampler", category: "Electronic" }
+  ];
+
+  // Group instruments by category
+  const instrumentsByCategory = instrumentData.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item.instrument);
+    return acc;
+  }, {} as Record<string, string[]>);
+
+  // Handle instrument selection
+  const handleInstrumentToggle = (instrument: string) => {
+    setSelectedInstruments(prev => 
+      prev.includes(instrument) 
+        ? prev.filter(i => i !== instrument)
+        : [...prev, instrument]
+    );
+  };
+
+
+
+  // Add custom gig type
+  const addCustomGigType = () => {
+    if (newGigType.title.trim() && newGigType.description.trim()) {
+      setGigTypes(prev => [...prev, {
+        ...newGigType,
+        isCustom: true
+      }]);
+      setNewGigType({ title: "", description: "" });
+      toast({
+        title: "Custom gig type added",
+        description: "Your custom gig type has been added successfully.",
+      });
+    }
+  };
+
+  // Delete gig type
+  const deleteGigType = (index: number) => {
+    setGigTypes(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Edit gig type
+  const editGigType = (index: number, field: 'title' | 'description', value: string) => {
+    setGigTypes(prev => prev.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    ));
+  };
 
   // Fetch existing settings
   const { data: settings, isLoading: isLoadingSettings } = useQuery({
@@ -270,11 +349,11 @@ export default function Settings() {
     try {
       const response = await apiRequest('/api/instruments/gig-types', {
         method: 'POST',
-        body: JSON.stringify({ instruments: selectedInstruments.map(i => i.instrument) }),
+        body: JSON.stringify({ instruments: selectedInstruments }),
       });
       
       setGigTypes(response.gigTypes);
-      form.setValue('gigTypes', response.gigTypes);
+      form.setValue('gigTypes', response.gigTypes.map((gt: any) => gt.title));
       
       toast({
         title: "Gig types generated",
@@ -312,6 +391,12 @@ export default function Settings() {
   const handleGenerateGigTypes = () => {
     generateGigTypes();
   };
+
+
+
+
+
+
 
   // Get category for instrument
   const getInstrumentCategory = (instrument: string) => {
@@ -490,102 +575,165 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              {/* Instrument Management Section */}
+              {/* Instrument Selection and AI Gig Type Generation */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Music className="h-5 w-5" />
-                    Instrument Management
-                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    <Music className="w-5 h-5" />
+                    Instrument Selection & AI Gig Types
                   </CardTitle>
+                  <CardDescription>
+                    Select your instruments and let AI generate personalized gig types for your business
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Add New Instrument */}
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Enter instrument name (e.g., saxophone, violin, piano)"
-                        value={newInstrument}
-                        onChange={(e) => setNewInstrument(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && addInstrument()}
-                      />
+                <CardContent className="space-y-6">
+                  {/* Instrument Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Select Your Instruments</Label>
+                    <div className="space-y-4">
+                      {Object.entries(instrumentsByCategory).map(([category, instruments]) => (
+                        <div key={category} className="space-y-2">
+                          <h4 className="text-sm font-medium text-muted-foreground">{category}</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {instruments.map((instrument) => (
+                              <Button
+                                key={instrument}
+                                variant={selectedInstruments.includes(instrument) ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => handleInstrumentToggle(instrument)}
+                                className="h-8 text-xs"
+                              >
+                                {selectedInstruments.includes(instrument) && <Check className="w-3 h-3 mr-1" />}
+                                {instrument}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <Button 
-                      type="button"
-                      onClick={addInstrument}
-                      disabled={!newInstrument.trim() || isCategorizingInstrument}
-                    >
-                      {isCategorizingInstrument ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Plus className="h-4 w-4" />
-                      )}
-                      {isCategorizingInstrument ? 'Categorizing...' : 'Add Instrument'}
-                    </Button>
                   </div>
 
                   {/* Selected Instruments Display */}
                   {selectedInstruments.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Your Instruments</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedInstruments.map((instrument) => {
-                          const category = getInstrumentCategory(instrument);
-                          return (
-                            <Badge
-                              key={instrument}
-                              variant="secondary"
-                              className={`${categoryColors[category as keyof typeof categoryColors]} flex items-center gap-1`}
+                      <Label className="text-sm font-medium">Selected Instruments ({selectedInstruments.length})</Label>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedInstruments.map((instrument) => (
+                          <Badge key={instrument} variant="secondary" className="text-xs">
+                            {instrument}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleInstrumentToggle(instrument)}
+                              className="h-4 w-4 p-0 ml-1"
                             >
-                              {instrument}
-                              <button
-                                type="button"
-                                onClick={() => removeInstrument(instrument)}
-                                className="ml-1 hover:bg-black/10 rounded-full p-0.5"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          );
-                        })}
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </Badge>
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Generate Gig Types */}
-                  {selectedInstruments.length > 0 && (
-                    <div className="space-y-2">
+                  {/* Generate Gig Types Button */}
+                  <Button
+                    onClick={generateGigTypes}
+                    disabled={selectedInstruments.length === 0 || isGeneratingGigTypes}
+                    className="w-full"
+                  >
+                    {isGeneratingGigTypes ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating Gig Types...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate AI Gig Types
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Generated Gig Types */}
+                  {gigTypes.length > 0 && (
+                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">AI-Generated Gig Types</Label>
+                        <Label className="text-sm font-medium">Your Gig Types ({gigTypes.length})</Label>
                         <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
                           onClick={generateGigTypes}
                           disabled={isGeneratingGigTypes}
+                          variant="outline"
+                          size="sm"
                         >
-                          {isGeneratingGigTypes ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <Target className="h-4 w-4 mr-2" />
-                          )}
-                          {isGeneratingGigTypes ? 'Generating...' : 'Generate Gig Types'}
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Regenerate
                         </Button>
                       </div>
                       
-                      {gigTypes.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {gigTypes.map((gigType) => (
-                            <Badge
-                              key={gigType}
-                              variant="outline"
-                              className="bg-blue-50 text-blue-700 border-blue-200"
-                            >
-                              {gigType}
-                            </Badge>
-                          ))}
+                      <div className="space-y-3">
+                        {gigTypes.map((gigType, index) => (
+                          <Card key={index} className="p-3">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Input
+                                  value={gigType.title}
+                                  onChange={(e) => editGigType(index, 'title', e.target.value)}
+                                  className="font-medium"
+                                  placeholder="Gig type title"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteGigType(index)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <Textarea
+                                value={gigType.description}
+                                onChange={(e) => editGigType(index, 'description', e.target.value)}
+                                placeholder="Gig type description"
+                                className="min-h-[60px]"
+                              />
+                              {gigType.isCustom && (
+                                <Badge variant="outline" className="text-xs">
+                                  Custom
+                                </Badge>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+
+                      {/* Add Custom Gig Type */}
+                      <Card className="p-3 border-dashed">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Plus className="w-4 h-4" />
+                            <Label className="text-sm font-medium">Add Custom Gig Type</Label>
+                          </div>
+                          <Input
+                            value={newGigType.title}
+                            onChange={(e) => setNewGigType(prev => ({ ...prev, title: e.target.value }))}
+                            placeholder="Enter custom gig type title"
+                          />
+                          <Textarea
+                            value={newGigType.description}
+                            onChange={(e) => setNewGigType(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Enter custom gig type description"
+                            className="min-h-[60px]"
+                          />
+                          <Button
+                            onClick={addCustomGigType}
+                            disabled={!newGigType.title.trim() || !newGigType.description.trim()}
+                            size="sm"
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Add Custom Gig Type
+                          </Button>
                         </div>
-                      )}
+                      </Card>
                     </div>
                   )}
 
@@ -593,8 +741,7 @@ export default function Settings() {
                   <div className="bg-muted/50 p-3 rounded-lg">
                     <p className="text-sm text-muted-foreground">
                       <Sparkles className="h-4 w-4 inline mr-1" />
-                      Add your instruments to get AI-powered categorization and personalized gig type suggestions.
-                      Each instrument is automatically sorted into musical categories for better organization.
+                      Select your instruments to get AI-powered gig type suggestions. Each gig type includes a title and description that can be used to autofill enquiries and contracts.
                     </p>
                   </div>
                 </CardContent>
