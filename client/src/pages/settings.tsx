@@ -125,20 +125,45 @@ export default function Settings() {
       const mockSuggestions = await new Promise<string[]>((resolve) => {
         setTimeout(() => {
           const suggestions: { [key: string]: string[] } = {
-            "Piano": ["Wedding Ceremony", "Corporate Event", "Restaurant Performance", "Private Party"],
-            "Guitar": ["Wedding Reception", "Acoustic Set", "Open Mic Night", "Street Performance"],
-            "Violin": ["Wedding Ceremony", "Classical Concert", "Chamber Music", "String Quartet"],
-            "Drum Kit": ["Wedding Reception", "Corporate Event", "Band Performance", "Music Festival"],
-            "Vocals": ["Wedding Ceremony", "Karaoke Night", "Tribute Show", "Acoustic Set"],
+            "Piano": ["Wedding Ceremony", "Corporate Event", "Restaurant Performance", "Private Party", "Hotel Lobby", "Jazz Club", "Cocktail Hour", "Background Music", "Classical Concert", "Wine Tasting", "Art Gallery Opening", "Funeral Service"],
+            "Acoustic Guitar": ["Wedding Reception", "Acoustic Set", "Open Mic Night", "Street Performance", "Coffee Shop", "Restaurant Dining", "Private Party", "Garden Party", "Busking", "House Concert", "Folk Festival", "Intimate Venue"],
+            "Electric Guitar": ["Wedding Reception", "Corporate Event", "Band Performance", "Music Festival", "Bar Gig", "Club Night", "Rock Concert", "Tribute Show", "Function Band", "Dance Event", "Birthday Party", "Pub Performance"],
+            "Bass Guitar": ["Wedding Reception", "Corporate Event", "Band Performance", "Music Festival", "Jazz Club", "Function Band", "Dance Event", "Club Night", "Rock Concert", "Tribute Show", "Session Work", "Bar Gig"],
+            "Violin": ["Wedding Ceremony", "Classical Concert", "Chamber Music", "String Quartet", "Corporate Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Funeral Service", "Church Service", "Cocktail Hour"],
+            "Cello": ["Wedding Ceremony", "Classical Concert", "Chamber Music", "String Quartet", "Corporate Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Funeral Service", "Church Service", "Cocktail Hour"],
+            "Double Bass": ["Jazz Club", "Wedding Reception", "Corporate Event", "Restaurant Performance", "Private Party", "Classical Concert", "Chamber Music", "Function Band", "Acoustic Set", "Wine Bar", "Hotel Lobby", "Art Gallery"],
+            "Alto Saxophone": ["Jazz Club", "Wedding Reception", "Corporate Event", "Restaurant Performance", "Private Party", "Function Band", "Cocktail Hour", "Dance Event", "Hotel Lobby", "Wine Bar", "Art Gallery", "Smooth Jazz Event"],
+            "Tenor Saxophone": ["Jazz Club", "Wedding Reception", "Corporate Event", "Restaurant Performance", "Private Party", "Function Band", "Cocktail Hour", "Dance Event", "Hotel Lobby", "Wine Bar", "Art Gallery", "Smooth Jazz Event"],
+            "Baritone Saxophone": ["Jazz Club", "Wedding Reception", "Corporate Event", "Restaurant Performance", "Private Party", "Function Band", "Cocktail Hour", "Dance Event", "Hotel Lobby", "Wine Bar", "Big Band", "Smooth Jazz Event"],
+            "Flute": ["Wedding Ceremony", "Classical Concert", "Chamber Music", "Corporate Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Cocktail Hour", "Garden Party", "Acoustic Set", "Background Music"],
+            "Clarinet": ["Wedding Ceremony", "Classical Concert", "Chamber Music", "Corporate Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Cocktail Hour", "Garden Party", "Jazz Club", "Background Music"],
+            "Trumpet": ["Wedding Reception", "Corporate Event", "Jazz Club", "Function Band", "Dance Event", "Big Band", "Brass Band", "Classical Concert", "Private Party", "Hotel Lobby", "Art Gallery", "Cocktail Hour"],
+            "Trombone": ["Wedding Reception", "Corporate Event", "Jazz Club", "Function Band", "Dance Event", "Big Band", "Brass Band", "Classical Concert", "Private Party", "Hotel Lobby", "Art Gallery", "Cocktail Hour"],
+            "French Horn": ["Classical Concert", "Chamber Music", "Wedding Ceremony", "Corporate Event", "Private Party", "Art Gallery", "Wine Tasting", "Background Music", "Orchestra", "Brass Quintet", "Church Service", "Formal Event"],
+            "Tuba": ["Classical Concert", "Chamber Music", "Wedding Reception", "Corporate Event", "Big Band", "Brass Band", "Function Band", "Private Party", "Art Gallery", "Orchestra", "Brass Quintet", "Formal Event"],
+            "Drum Kit": ["Wedding Reception", "Corporate Event", "Band Performance", "Music Festival", "Bar Gig", "Club Night", "Rock Concert", "Tribute Show", "Function Band", "Dance Event", "Birthday Party", "Pub Performance"],
+            "Cajón": ["Acoustic Set", "Restaurant Performance", "Coffee Shop", "Private Party", "Garden Party", "Busking", "House Concert", "Folk Festival", "Intimate Venue", "Street Performance", "Wine Bar", "Background Music"],
+            "Congas": ["Latin Music", "Salsa Dancing", "Wedding Reception", "Corporate Event", "Private Party", "Restaurant Performance", "Dance Event", "Cultural Event", "World Music", "Jazz Club", "Cocktail Hour", "Festival"],
+            "Bongos": ["Latin Music", "Salsa Dancing", "Wedding Reception", "Corporate Event", "Private Party", "Restaurant Performance", "Dance Event", "Cultural Event", "World Music", "Jazz Club", "Cocktail Hour", "Festival"],
+            "Djembe": ["World Music", "Cultural Event", "Private Party", "Corporate Event", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Background Music", "Festival", "Acoustic Set", "Spiritual Event", "Drum Circle"],
+            "Tambourine": ["Wedding Reception", "Corporate Event", "Private Party", "Restaurant Performance", "Dance Event", "Cultural Event", "Background Music", "Acoustic Set", "Folk Festival", "Church Service", "Cocktail Hour", "Function Band"],
+            "Triangle": ["Classical Concert", "Chamber Music", "Orchestra", "Wedding Ceremony", "Corporate Event", "Private Party", "Art Gallery", "Background Music", "Formal Event", "Church Service", "Wine Tasting", "Cocktail Hour"],
+            "Lead Vocals": ["Wedding Reception", "Corporate Event", "Private Party", "Restaurant Performance", "Bar Gig", "Club Night", "Tribute Show", "Function Band", "Dance Event", "Karaoke Night", "Acoustic Set", "Live Concert"],
+            "Backing Vocals": ["Wedding Reception", "Corporate Event", "Private Party", "Restaurant Performance", "Bar Gig", "Club Night", "Tribute Show", "Function Band", "Dance Event", "Live Concert", "Recording Session", "Acoustic Set"],
+            "Electric Keyboard": ["Wedding Reception", "Corporate Event", "Restaurant Performance", "Private Party", "Hotel Lobby", "Jazz Club", "Cocktail Hour", "Background Music", "Function Band", "Dance Event", "Bar Gig", "Club Night"],
+            "Synthesizer": ["Wedding Reception", "Corporate Event", "Function Band", "Dance Event", "Club Night", "Electronic Music", "Pop Concert", "Tribute Show", "Private Party", "Bar Gig", "Music Festival", "Studio Session"],
+            "DJ Controller": ["Wedding Reception", "Corporate Event", "Private Party", "Club Night", "Dance Event", "Birthday Party", "Bar Gig", "Music Festival", "Function Event", "Cocktail Hour", "Background Music", "Youth Event"],
+            "Laptop": ["DJ Set", "Electronic Music", "Club Night", "Dance Event", "Corporate Event", "Private Party", "Music Festival", "Bar Gig", "Background Music", "Cocktail Hour", "Function Event", "Youth Event"],
+            "Sampler": ["Electronic Music", "Club Night", "Dance Event", "Corporate Event", "Private Party", "Music Festival", "Bar Gig", "Hip Hop Event", "Function Event", "Studio Session", "Live Performance", "DJ Set"],
           };
           
           const allSuggestions = instruments.flatMap(instrument => 
-            suggestions[instrument] || ["Live Performance", "Private Event"]
+            suggestions[instrument] || ["Live Performance", "Private Event", "Corporate Function", "Background Music"]
           );
           
           // Remove duplicates and return unique suggestions
           const uniqueSuggestions = Array.from(new Set(allSuggestions));
-          resolve(uniqueSuggestions.slice(0, 8)); // Limit to 8 suggestions
+          resolve(uniqueSuggestions.slice(0, 12)); // Increased to 12 suggestions
         }, 1000);
       });
       
