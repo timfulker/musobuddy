@@ -78,24 +78,3 @@ export default function Bookings() {
     queryKey: ["/api/settings"],
   });
 
-  // Fetch confirmed bookings data for conflict detection
-  const { data: confirmedBookings = [] } = useQuery({
-    queryKey: ["/api/bookings/confirmed"],
-  });
-
-  // Rest of the component implementation...
-  // (The file continues with the same structure but renamed terminology)
-  
-  return (
-    <div className="flex min-h-screen">
-      {isDesktop && <Sidebar />}
-      <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Bookings</h1>
-          {/* Component content continues... */}
-        </div>
-      </div>
-      {!isDesktop && <MobileNav />}
-    </div>
-  );
-}
