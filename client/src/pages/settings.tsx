@@ -26,6 +26,8 @@ const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).exten
 
 export default function Settings() {
   const { toast } = useToast();
+  
+  // ✅ MOVE ALL STATE DECLARATIONS TO THE TOP
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   
@@ -47,7 +49,7 @@ export default function Settings() {
   const [customInstruments, setCustomInstruments] = useState<string[]>([]);
   const [newInstrument, setNewInstrument] = useState("");
   
-  // Debug logging for authentication context
+  // ✅ NOW THIS useEffect CAN SAFELY REFERENCE ALL STATE VARIABLES
   React.useEffect(() => {
     console.log("Settings page loaded");
     console.log("Current URL:", window.location.href);
@@ -56,14 +58,14 @@ export default function Settings() {
     console.log("All state variables defined:", {
       sidebarOpen,
       hasInitialized,
-      eventTypes,
-      gigTypes,
-      selectedInstruments,
-      customInstruments
+      eventTypes,        // ✅ Now defined above
+      gigTypes,          // ✅ Now defined above  
+      selectedInstruments, // ✅ Now defined above
+      customInstruments    // ✅ Now defined above
     });
   }, []);
   
-  // Define instrument categories
+  // Define instrument categories AFTER state but BEFORE queries
   const instrumentCategories = {
     "Band / Pop / Function": ["saxophone", "guitar", "piano", "vocals", "bass", "drums", "dj", "keyboard", "synth", "singer-songwriter"],
     "Classical / Traditional": ["violin", "viola", "cello", "flute", "clarinet", "oboe", "harp"],
