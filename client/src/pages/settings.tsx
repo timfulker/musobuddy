@@ -34,6 +34,15 @@ export default function Settings() {
     console.log("Settings page loaded");
     console.log("Current URL:", window.location.href);
     console.log("Document cookies:", document.cookie);
+    console.log("hasInitialized state:", hasInitialized);
+    console.log("All state variables defined:", {
+      sidebarOpen,
+      hasInitialized,
+      eventTypes,
+      gigTypes,
+      selectedInstruments,
+      customInstruments
+    });
   }, []);
   const [bankDetails, setBankDetails] = useState({
     bankName: "",
