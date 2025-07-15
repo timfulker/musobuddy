@@ -25,8 +25,8 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Bookings table (renamed from enquiries)
-export const bookings = pgTable("enquiries", {
+// Enquiries table
+export const enquiries = pgTable("enquiries", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   title: varchar("title").notNull(),
@@ -126,8 +126,8 @@ export const invoices = pgTable("invoices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Actual bookings/gigs table (separate from enquiries)
-export const actualBookings = pgTable("bookings", {
+// Bookings/Gigs table
+export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   contractId: integer("contract_id"), // Made optional - can be null for calendar imports
@@ -273,10 +273,10 @@ export const bookingConflicts = pgTable("booking_conflicts", {
 
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
-  bookings: many(bookings),
+  enquiries: many(enquiries),
   contracts: many(contracts),
   invoices: many(invoices),
-  actualBookings: many(actualBookings),
+  bookings: many(bookings),
   complianceDocuments: many(complianceDocuments),
   settings: one(userSettings, {
     fields: [users.id],
@@ -284,9 +284,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one, many }) => ({
+export const enquiriesRelations = relations(enquiries, ({ one, many }) => ({
   user: one(users, {
-    fields: [bookings.userId],
+    fields: [enquiries.userId],
     references: [users.id],
   }),
   contracts: many(contracts),
@@ -297,9 +297,9 @@ export const contractsRelations = relations(contracts, ({ one, many }) => ({
     fields: [contracts.userId],
     references: [users.id],
   }),
-  booking: one(bookings, {
+  enquiry: one(enquiries, {
     fields: [contracts.enquiryId],
-    references: [bookings.id],
+    references: [enquiries.id],
   }),
   invoices: many(invoices),
   bookings: many(bookings),
@@ -316,13 +316,13 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
   }),
 }));
 
-export const actualBookingsRelations = relations(actualBookings, ({ one }) => ({
+export const bookingsRelations = relations(bookings, ({ one }) => ({
   user: one(users, {
-    fields: [actualBookings.userId],
+    fields: [bookings.userId],
     references: [users.id],
   }),
   contract: one(contracts, {
-    fields: [actualBookings.contractId],
+    fields: [bookings.contractId],
     references: [contracts.id],
   }),
 }));
@@ -342,6 +342,12 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 }));
 
 // Insert schemas
+export const insertEnquirySchema = createInsertSchema(enquiries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertContractSchema = createInsertSchema(contracts).omit({
   id: true,
   createdAt: true,

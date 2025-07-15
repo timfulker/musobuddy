@@ -1,9 +1,9 @@
 import {
   users,
-  bookings,
+  enquiries,
   contracts,
   invoices,
-  actualBookings,
+  bookings,
   complianceDocuments,
   userSettings,
   type User,
@@ -145,16 +145,16 @@ export class DatabaseStorage implements IStorage {
   async getEnquiries(userId: string): Promise<Enquiry[]> {
     return await db
       .select()
-      .from(bookings)
-      .where(eq(bookings.userId, userId))
-      .orderBy(desc(bookings.createdAt));
+      .from(enquiries)
+      .where(eq(enquiries.userId, userId))
+      .orderBy(desc(enquiries.createdAt));
   }
 
   async getEnquiry(id: number, userId: string): Promise<Enquiry | undefined> {
     const [enquiry] = await db
       .select()
-      .from(bookings)
-      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
+      .from(enquiries)
+      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
     return enquiry;
   }
 
@@ -175,7 +175,7 @@ export class DatabaseStorage implements IStorage {
     console.log('🔍 Processed enquiry - eventDate:', processedEnquiry.eventDate);
     
     const [newEnquiry] = await db
-      .insert(bookings)
+      .insert(enquiries)
       .values(processedEnquiry)
       .returning();
     return newEnquiry;
@@ -183,17 +183,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateEnquiry(id: number, enquiry: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | undefined> {
     const [updatedEnquiry] = await db
-      .update(bookings)
+      .update(enquiries)
       .set({ ...enquiry, updatedAt: new Date() })
-      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
+      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)))
       .returning();
     return updatedEnquiry;
   }
 
   async deleteEnquiry(id: number, userId: string): Promise<boolean> {
     const result = await db
-      .delete(bookings)
-      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
+      .delete(enquiries)
+      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
     return result.rowCount > 0;
   }
 
@@ -654,16 +654,16 @@ export class DatabaseStorage implements IStorage {
     // Conversion rate (confirmed bookings / total enquiries)
     const totalEnquiries = await db
       .select()
-      .from(bookings)
-      .where(eq(bookings.userId, userId));
+      .from(enquiries)
+      .where(eq(enquiries.userId, userId));
 
     const confirmedBookingsCount = await db
       .select()
-      .from(bookings)
+      .from(enquiries)
       .where(
         and(
-          eq(bookings.userId, userId),
-          eq(bookings.status, "confirmed")
+          eq(enquiries.userId, userId),
+          eq(enquiries.status, "confirmed")
         )
       );
 

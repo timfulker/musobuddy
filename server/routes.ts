@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertBookingSchema, insertContractSchema, insertInvoiceSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema } from "@shared/schema";
+import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema } from "@shared/schema";
 import { 
   parseAppleCalendar,
   convertEventsToBookings
@@ -630,56 +630,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Transfer existing bookings to calendar (one-time migration)
-  app.post('/api/transfer-bookings-to-calendar', isAuthenticated, async (req: any, res) => {
+  // Transfer existing enquiries to calendar (one-time migration)
+  app.post('/api/transfer-enquiries-to-calendar', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const bookings = await storage.getBookings(userId);
+      const enquiries = await storage.getEnquiries(userId);
       let transferredCount = 0;
       let skippedCount = 0;
       
-      console.log(`📅 Starting transfer of ${bookings.length} bookings to calendar for user ${userId}`);
+      console.log(`📅 Starting transfer of ${enquiries.length} enquiries to calendar for user ${userId}`);
       
-      for (const booking of bookings) {
-        // Only transfer bookings that have dates and aren't already in calendar
-        if (booking.eventDate && booking.venue && booking.clientName) {
+      for (const enquiry of enquiries) {
+        // Only transfer enquiries that have dates and aren't already in calendar
+        if (enquiry.eventDate && enquiry.venue && enquiry.clientName) {
           try {
-            // Check if this booking already has a calendar booking
+            // Check if this enquiry already has a calendar booking
             const existingBookings = await storage.getBookings(userId);
-            const alreadyExists = existingBookings.some(existingBooking => 
-              existingBooking.notes && existingBooking.notes.includes(`Auto-created from booking #${booking.id}`)
+            const alreadyExists = existingBookings.some(booking => 
+              booking.notes && booking.notes.includes(`Auto-created from enquiry #${enquiry.id}`)
             );
             
             if (!alreadyExists) {
               const bookingData = {
                 userId: userId,
                 contractId: null,
-                title: booking.title,
-                clientName: booking.clientName,
-                eventDate: booking.eventDate,
-                eventTime: booking.eventTime || '12:00',
-                eventEndTime: booking.eventEndTime,
-                performanceDuration: booking.performanceDuration,
-                venue: booking.venue,
-                fee: parseFloat(booking.estimatedValue || '0'),
+                title: enquiry.title,
+                clientName: enquiry.clientName,
+                eventDate: enquiry.eventDate,
+                eventTime: enquiry.eventTime || '12:00',
+                eventEndTime: enquiry.eventEndTime,
+                performanceDuration: enquiry.performanceDuration,
+                venue: enquiry.venue,
+                fee: parseFloat(enquiry.estimatedValue || '0'),
                 status: 'confirmed',
-                notes: `Auto-created from booking #${booking.id}. Status: ${booking.status}${booking.notes ? '. Notes: ' + booking.notes : ''}`
+                notes: `Auto-created from enquiry #${enquiry.id}. Status: ${enquiry.status}${enquiry.notes ? '. Notes: ' + enquiry.notes : ''}`
               };
               
               await storage.createBooking(bookingData);
               transferredCount++;
-              console.log(`✅ Transferred booking #${booking.id} to calendar`);
+              console.log(`✅ Transferred enquiry #${enquiry.id} to calendar`);
             } else {
               skippedCount++;
-              console.log(`⏭️ Skipped booking #${booking.id} - already exists in calendar`);
+              console.log(`⏭️ Skipped enquiry #${enquiry.id} - already exists in calendar`);
             }
           } catch (error) {
-            console.error(`❌ Failed to transfer booking #${booking.id}:`, error);
+            console.error(`❌ Failed to transfer enquiry #${enquiry.id}:`, error);
             skippedCount++;
           }
         } else {
           skippedCount++;
-          console.log(`⏭️ Skipped booking #${booking.id} - missing date/venue/client info`);
+          console.log(`⏭️ Skipped enquiry #${enquiry.id} - missing date/venue/client info`);
         }
       }
       
@@ -687,16 +687,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         success: true,
-        message: `Successfully transferred ${transferredCount} bookings to calendar`,
+        message: `Successfully transferred ${transferredCount} enquiries to calendar`,
         details: {
-          total: bookings.length,
+          total: enquiries.length,
           transferred: transferredCount,
           skipped: skippedCount
         }
       });
     } catch (error) {
-      console.error('Error transferring bookings to calendar:', error);
-      res.status(500).json({ message: 'Failed to transfer bookings to calendar' });
+      console.error('Error transferring enquiries to calendar:', error);
+      res.status(500).json({ message: 'Failed to transfer enquiries to calendar' });
     }
   });
 
