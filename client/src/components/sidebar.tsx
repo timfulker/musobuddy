@@ -95,9 +95,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
           </Link>
-          <Link href="/enquiries" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
+          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/enquiries") 
+            isActive("/bookings") 
               ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
