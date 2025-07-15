@@ -74,6 +74,7 @@ export const contracts = pgTable("contracts", {
   eventTime: varchar("event_time").notNull(),
   eventEndTime: varchar("event_end_time").notNull(), // Finish time required by Musicians' Union
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
+  deposit: decimal("deposit", { precision: 10, scale: 2 }).default("0.00"), // Deposit amount with 7-day payment clause
   
   // Essential rider/payment information
   paymentInstructions: text("payment_instructions"), // How payment should be made

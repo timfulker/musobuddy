@@ -641,7 +641,48 @@ function generateContractSigningPageHtml(
             
             <div class="terms-section">
                 <h3>Terms and Conditions</h3>
-                <div class="terms-content">${contract.terms}</div>
+                <div class="terms-content">
+                    <h4>Payment Terms & Conditions</h4>
+                    <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
+                    <p><strong>Deposit:</strong> ${contract.deposit && parseFloat(contract.deposit) > 0 ? `A deposit of £${contract.deposit} is required and must be paid within 7 days of receipt of this signed contract.` : 'No deposit required.'}</p>
+                    <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
+                    <p><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</p>
+                    
+                    <h4>Cancellation & Refund Policy</h4>
+                    <p><strong>Client Cancellation:</strong></p>
+                    <ul>
+                        <li>More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee</li>
+                        <li>30 days or less before event: Full performance fee becomes due regardless of cancellation</li>
+                        <li>Same day cancellation: Full fee due plus any additional costs incurred</li>
+                    </ul>
+                    <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</p>
+                    <p><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</p>
+                    
+                    <h4>Force Majeure</h4>
+                    <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
+                    
+                    <h4>Performance Contingencies</h4>
+                    <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
+                    
+                    <h4>Professional Performance Standards</h4>
+                    <p><strong>Payment Schedule:</strong> The agreed performance fee becomes due and payable on the date of performance of the engagement.</p>
+                    <p><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</p>
+                    <p><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</p>
+                    <p><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</p>
+                    <p><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</p>
+                    <p><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</p>
+                    <p><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</p>
+                    <p><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</p>
+                    
+                    <h4>Payment Instructions</h4>
+                    <p>${contract.paymentInstructions || 'Payment instructions will be provided separately.'}</p>
+                    
+                    <h4>Equipment Requirements</h4>
+                    <p>${contract.equipmentRequirements || 'Equipment requirements will be confirmed separately.'}</p>
+                    
+                    <h4>Special Requirements</h4>
+                    <p>${contract.specialRequirements || 'No special requirements specified.'}</p>
+                </div>
             </div>
         </div>
         
@@ -659,15 +700,15 @@ function generateContractSigningPageHtml(
                 
                 <!-- Client-fillable fields (highlighted in blue) -->
                 <div class="form-group">
-                    <label class="form-label" for="clientPhone" style="color: #2563eb;">Phone Number (Optional)</label>
-                    <input type="tel" id="clientPhone" class="form-input" value="${contract.clientPhone || ''}" placeholder="e.g., 07123 456789" style="border-color: #2563eb; background-color: #eff6ff;">
-                    <p style="font-size: 0.9rem; color: #2563eb; margin-top: 5px;">This field can be filled by either the musician or client</p>
+                    <label class="form-label" for="clientPhone" style="color: #2563eb;">Phone Number ${!contract.clientPhone ? '(Required)' : '(Optional)'} *</label>
+                    <input type="tel" id="clientPhone" class="form-input" value="${contract.clientPhone || ''}" placeholder="e.g., 07123 456789" style="border-color: #2563eb; background-color: #eff6ff;" ${!contract.clientPhone ? 'required' : ''}>
+                    <p style="font-size: 0.9rem; color: #2563eb; margin-top: 5px;">${!contract.clientPhone ? 'This field must be completed before signing' : 'This field can be filled by either the musician or client'}</p>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="clientAddress" style="color: #2563eb;">Address (Optional)</label>
-                    <textarea id="clientAddress" class="form-input" rows="3" placeholder="e.g., 123 Main Street, London, SW1A 1AA" style="border-color: #2563eb; background-color: #eff6ff; resize: vertical;">${contract.clientAddress || ''}</textarea>
-                    <p style="font-size: 0.9rem; color: #2563eb; margin-top: 5px;">This field can be filled by either the musician or client</p>
+                    <label class="form-label" for="clientAddress" style="color: #2563eb;">Address ${!contract.clientAddress ? '(Required)' : '(Optional)'} *</label>
+                    <textarea id="clientAddress" class="form-input" rows="3" placeholder="e.g., 123 Main Street, London, SW1A 1AA" style="border-color: #2563eb; background-color: #eff6ff; resize: vertical;" ${!contract.clientAddress ? 'required' : ''}>${contract.clientAddress || ''}</textarea>
+                    <p style="font-size: 0.9rem; color: #2563eb; margin-top: 5px;">${!contract.clientAddress ? 'This field must be completed before signing' : 'This field can be filled by either the musician or client'}</p>
                 </div>
                 
                 <div class="form-group">
@@ -722,6 +763,18 @@ function generateContractSigningPageHtml(
                 <h3>Error</h3>
                 <p id="errorText">There was an error processing your signature. Please try again.</p>
             </div>
+        </div>
+        
+        <div class="legal-footer" style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem; color: #64748b;">
+            <h4 style="color: #374151; margin-bottom: 15px;">Legal Information & Governing Terms</h4>
+            <p><strong>Contract Number:</strong> ${contract.contractNumber}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
+            <p><strong>Binding Agreement:</strong> This is a legally binding agreement between the parties named above. Both parties acknowledge they have read, understood, and agree to be bound by all terms and conditions set forth herein.</p>
+            <p><strong>Governing Law & Jurisdiction:</strong> This contract shall be governed by and construed in accordance with the laws of England and Wales. Any disputes, claims, or legal proceedings arising from or relating to this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+            <p><strong>Digital Signatures:</strong> Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation. Electronic acceptance constitutes agreement to all terms.</p>
+            <p><strong>Entire Agreement:</strong> This contract represents the entire agreement between the parties and supersedes all prior negotiations, representations, or agreements. No modification shall be valid unless in writing and signed by both parties.</p>
+            <p><strong>Severability:</strong> If any provision of this contract is found to be unenforceable, the remaining provisions shall continue in full force and effect.</p>
+            <p><strong>Contract Validity:</strong> This contract remains valid and enforceable regardless of changes in circumstances, location, or contact information of either party.</p>
         </div>
         
         <div class="footer">

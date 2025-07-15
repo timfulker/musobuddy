@@ -35,6 +35,7 @@ const contractFormSchema = z.object({
   eventTime: z.string().min(1, "Start time is required"),
   eventEndTime: z.string().min(1, "Finish time is required"),
   fee: z.string().min(1, "Performance fee is required"),
+  deposit: z.string().optional(),
   
   // Optional fields (can be filled by musician or marked as client-fillable)
   clientAddress: z.string().optional(),
@@ -102,6 +103,7 @@ export default function Contracts() {
       venue: "",
       venueAddress: "",
       fee: "",
+      deposit: "",
       paymentInstructions: "",
       equipmentRequirements: "",
       specialRequirements: "",
@@ -367,6 +369,7 @@ export default function Contracts() {
     form.setValue('venue', contract.venue || '');
     form.setValue('venueAddress', contract.venueAddress || '');
     form.setValue('fee', contract.fee);
+    form.setValue('deposit', contract.deposit || '');
     form.setValue('paymentInstructions', contract.paymentInstructions || '');
     form.setValue('equipmentRequirements', contract.equipmentRequirements || '');
     form.setValue('specialRequirements', contract.specialRequirements || '');
@@ -752,6 +755,22 @@ export default function Contracts() {
                               </FormItem>
                             )}
                           />
+                          <FormField
+                            control={form.control}
+                            name="deposit"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Deposit (£)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" placeholder="100" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                           <FormField
                             control={form.control}
                             name="clientEmail"
