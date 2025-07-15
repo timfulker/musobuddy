@@ -75,7 +75,12 @@ export default function Settings() {
   // Instrument management state
   const [newInstrument, setNewInstrument] = useState("");
   const [isCategorizingInstrument, setIsCategorizingInstrument] = useState(false);
-  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
+  const [selectedInstruments, setSelectedInstruments] = useState<Array<{
+    instrument: string;
+    category: string;
+    gigTypes: string[];
+    isCustom?: boolean;
+  }>>([]);
   const [gigTypes, setGigTypes] = useState<string[]>([]);
   const [isGeneratingGigTypes, setIsGeneratingGigTypes] = useState(false);
 
@@ -139,7 +144,15 @@ export default function Settings() {
       });
       
       // Set local state for instrument management
-      setSelectedInstruments(settings.instruments || []);
+      if (settings.instruments && settings.customInstruments) {
+        const instrumentsWithCategories = settings.instruments.map((instrument: string) => {
+          const mapping = settings.customInstruments.find((item: any) => item.instrument === instrument);
+          return mapping || { instrument, category: 'custom', gigTypes: [], isCustom: true };
+        });
+        setSelectedInstruments(instrumentsWithCategories);
+      } else {
+        setSelectedInstruments([]);
+      }
       setGigTypes(settings.gigTypes || []);
     }
   }, [settings, form]);
@@ -184,9 +197,15 @@ export default function Settings() {
       
       if (existingMapping) {
         // Use existing mapping
-        const updatedInstruments = [...selectedInstruments, newInstrument];
+        const instrumentObj = {
+          instrument: newInstrument,
+          category: existingMapping.category,
+          gigTypes: existingMapping.gigTypes,
+          isCustom: existingMapping.isCustom || false,
+        };
+        const updatedInstruments = [...selectedInstruments, instrumentObj];
         setSelectedInstruments(updatedInstruments);
-        form.setValue('instruments', updatedInstruments);
+        form.setValue('instruments', updatedInstruments.map(i => i.instrument));
         setNewInstrument("");
         
         toast({
@@ -214,9 +233,15 @@ export default function Settings() {
         form.setValue('customInstruments', updatedCustomInstruments);
         
         // Add to selected instruments
-        const updatedInstruments = [...selectedInstruments, newInstrument];
+        const instrumentObj = {
+          instrument: newInstrument,
+          category: response.category,
+          gigTypes: response.gigTypes,
+          isCustom: response.isCustom || false,
+        };
+        const updatedInstruments = [...selectedInstruments, instrumentObj];
         setSelectedInstruments(updatedInstruments);
-        form.setValue('instruments', updatedInstruments);
+        form.setValue('instruments', updatedInstruments.map(i => i.instrument));
         
         setNewInstrument("");
         
@@ -245,7 +270,7 @@ export default function Settings() {
     try {
       const response = await apiRequest('/api/instruments/gig-types', {
         method: 'POST',
-        body: JSON.stringify({ instruments: selectedInstruments }),
+        body: JSON.stringify({ instruments: selectedInstruments.map(i => i.instrument) }),
       });
       
       setGigTypes(response.gigTypes);
@@ -267,10 +292,25 @@ export default function Settings() {
   };
 
   // Remove instrument
-  const removeInstrument = (instrumentToRemove: string) => {
-    const updatedInstruments = selectedInstruments.filter(inst => inst !== instrumentToRemove);
+  const removeInstrument = (index: number) => {
+    const updatedInstruments = selectedInstruments.filter((_, i) => i !== index);
     setSelectedInstruments(updatedInstruments);
     form.setValue('instruments', updatedInstruments);
+  };
+
+  // Get category color for badges
+  const getCategoryColor = (category: string) => {
+    return categoryColors[category as keyof typeof categoryColors] || categoryColors.custom;
+  };
+
+  // Handle adding instrument
+  const handleAddInstrument = () => {
+    addInstrument();
+  };
+
+  // Handle generating gig types
+  const handleGenerateGigTypes = () => {
+    generateGigTypes();
   };
 
   // Get category for instrument
@@ -696,7 +736,7 @@ export default function Settings() {
                     Musical Services
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                   <FormField
                     control={form.control}
                     name="instruments"
@@ -728,15 +768,85 @@ export default function Settings() {
                     )}
                   />
 
+                  {/* Advanced Instrument Categorization */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Sparkles className="h-5 w-5 text-purple-500" />
+                      <h3 className="font-semibold">AI-Powered Instrument Categorization</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Add custom instruments and let AI automatically categorize them into musical groups (band, strings, woodwind, brass, etc.)
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter instrument name (e.g., didgeridoo, harmonica, ukulele)"
+                          value={newInstrument}
+                          onChange={(e) => setNewInstrument(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleAddInstrument}
+                          disabled={!newInstrument.trim() || isCategorizingInstrument}
+                          className="shrink-0"
+                        >
+                          {isCategorizingInstrument ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Categorizing...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add Instrument
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Display categorized instruments */}
+                      {selectedInstruments.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-sm">Your Categorized Instruments:</h4>
+                          <div className="grid gap-2">
+                            {selectedInstruments.map((instrument, index) => (
+                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className={getCategoryColor(instrument.category)}>
+                                    {instrument.category}
+                                  </Badge>
+                                  <span className="font-medium">{instrument.instrument}</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeInstrument(index)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="gigTypes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gig Types</FormLabel>
+                        <FormLabel className="flex items-center gap-2">
+                          <Target className="h-4 w-4" />
+                          Gig Types
+                        </FormLabel>
                         <FormControl>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {["Wedding", "Corporate", "Birthday Party", "Jazz Club", "Private Event", "Restaurant"].map((gigType) => (
+                            {gigTypes.map((gigType) => (
                               <div key={gigType} className="flex items-center space-x-2">
                                 <Checkbox
                                   id={gigType}
@@ -758,6 +868,28 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
+
+                  {/* Generate Gig Types Button */}
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGenerateGigTypes}
+                      disabled={selectedInstruments.length === 0 || isGeneratingGigTypes}
+                    >
+                      {isGeneratingGigTypes ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate Gig Types
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
