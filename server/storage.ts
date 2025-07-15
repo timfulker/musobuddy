@@ -145,16 +145,16 @@ export class DatabaseStorage implements IStorage {
   async getEnquiries(userId: string): Promise<Enquiry[]> {
     return await db
       .select()
-      .from(enquiries)
-      .where(eq(enquiries.userId, userId))
-      .orderBy(desc(enquiries.createdAt));
+      .from(bookings)
+      .where(eq(bookings.userId, userId))
+      .orderBy(desc(bookings.createdAt));
   }
 
   async getEnquiry(id: number, userId: string): Promise<Enquiry | undefined> {
     const [enquiry] = await db
       .select()
-      .from(enquiries)
-      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
+      .from(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
     return enquiry;
   }
 
@@ -175,7 +175,7 @@ export class DatabaseStorage implements IStorage {
     console.log('🔍 Processed enquiry - eventDate:', processedEnquiry.eventDate);
     
     const [newEnquiry] = await db
-      .insert(enquiries)
+      .insert(bookings)
       .values(processedEnquiry)
       .returning();
     return newEnquiry;
@@ -183,17 +183,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateEnquiry(id: number, enquiry: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | undefined> {
     const [updatedEnquiry] = await db
-      .update(enquiries)
+      .update(bookings)
       .set({ ...enquiry, updatedAt: new Date() })
-      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)))
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
       .returning();
     return updatedEnquiry;
   }
 
   async deleteEnquiry(id: number, userId: string): Promise<boolean> {
     const result = await db
-      .delete(enquiries)
-      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
+      .delete(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
     return result.rowCount > 0;
   }
 
