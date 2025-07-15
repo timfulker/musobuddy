@@ -684,21 +684,40 @@ export class DatabaseStorage implements IStorage {
   async getUserSettings(userId: string): Promise<UserSettings | undefined> {
     try {
       const [settings] = await db
-        .select()
+        .select({
+          userId: userSettings.userId,
+          businessName: userSettings.businessName,
+          businessEmail: userSettings.businessEmail,
+          businessAddress: userSettings.businessAddress,
+          phone: userSettings.phone,
+          website: userSettings.website,
+          taxNumber: userSettings.taxNumber,
+          bankDetails: userSettings.bankDetails,
+          defaultTerms: userSettings.defaultTerms,
+          emailFromName: userSettings.emailFromName,
+          nextInvoiceNumber: userSettings.nextInvoiceNumber,
+          defaultSetupTime: userSettings.defaultSetupTime,
+          defaultBreakdownTime: userSettings.defaultBreakdownTime,
+          weddingBufferTime: userSettings.weddingBufferTime,
+          corporateBufferTime: userSettings.corporateBufferTime,
+          defaultBufferTime: userSettings.defaultBufferTime,
+          maxTravelDistance: userSettings.maxTravelDistance,
+        })
         .from(userSettings)
         .where(eq(userSettings.userId, userId));
       
-      // Handle missing columns gracefully
+      // Handle missing columns gracefully by only returning what exists
       if (settings) {
         return {
           ...settings,
-          selectedInstruments: settings.selectedInstruments || null,
-          aiGeneratedGigTypes: settings.aiGeneratedGigTypes || null,
-          customGigTypes: settings.customGigTypes || null,
-          gigTypes: settings.gigTypes || null,
-          eventTypes: settings.eventTypes || null,
-          instrumentsPlayed: settings.instrumentsPlayed || null,
-          customInstruments: settings.customInstruments || null,
+          // Add default values for new columns that might not exist yet
+          selectedInstruments: null,
+          aiGeneratedGigTypes: null,
+          customGigTypes: null,
+          gigTypes: null,
+          eventTypes: null,
+          instrumentsPlayed: null,
+          customInstruments: null,
         };
       }
       return settings;

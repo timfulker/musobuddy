@@ -207,7 +207,7 @@ export default function Settings() {
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+      <div className="lg:ml-64">
         <div className="p-6 lg:p-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold ml-12 md:ml-0">Settings</h1>
