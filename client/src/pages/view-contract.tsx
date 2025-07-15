@@ -20,11 +20,13 @@ interface Contract {
   venue: string;
   venueAddress?: string;
   fee: string;
+  deposit?: string;
   paymentInstructions?: string;
   equipmentRequirements?: string;
   specialRequirements?: string;
   status: string;
   signedAt?: string;
+  createdAt?: string;
 }
 
 interface UserSettings {
