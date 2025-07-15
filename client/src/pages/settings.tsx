@@ -140,6 +140,30 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
+                  
+                  <FormField
+                    control={form.control}
+                    name="gigTypes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gig Types</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select gig types" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="wedding">Wedding</SelectItem>
+                            <SelectItem value="corporate">Corporate</SelectItem>
+                            <SelectItem value="party">Party</SelectItem>
+                            <SelectItem value="jazz">Jazz</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
 
