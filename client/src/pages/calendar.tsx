@@ -216,82 +216,91 @@ export default function Calendar() {
                   <div
                     key={index}
                     className={`
-                      h-24 p-3 cursor-pointer rounded-xl transition-all duration-200
+                      h-24 cursor-pointer rounded-xl transition-all duration-200 relative
                       hover:scale-105 hover:shadow-md
-                      ${day.isCurrentMonth 
-                        ? 'bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-700' 
-                        : 'bg-gray-50 dark:bg-slate-700 opacity-40 border border-gray-50 dark:border-slate-600'
+                      ${day.hasEvents && day.events.length === 1
+                        ? day.events[0].type === 'booking'
+                          ? 'bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700 shadow-sm'
+                          : 'bg-purple-100 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-700 shadow-sm'
+                        : day.isCurrentMonth 
+                          ? 'bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-700' 
+                          : 'bg-gray-50 dark:bg-slate-700 opacity-40 border border-gray-50 dark:border-slate-600'
                       }
                       ${day.isToday 
                         ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg scale-105' 
                         : ''
                       }
-                      ${day.hasEvents 
+                      ${day.hasEvents && day.events.length > 1
                         ? 'ring-2 ring-purple-300 dark:ring-purple-600 shadow-purple-100 dark:shadow-purple-900/20' 
                         : ''
                       }
                     `}
                     onClick={() => handleDateClick(day.date)}
                   >
-                    <div className="flex flex-col h-full">
-                      {/* Date number */}
-                      <div className={`
-                        text-right text-sm font-bold mb-1
-                        ${day.isToday 
-                          ? 'text-white' 
+                    {/* Date number - positioned absolutely in top right */}
+                    <div className={`
+                      absolute top-2 right-2 text-sm font-bold z-10
+                      ${day.isToday 
+                        ? 'text-white' 
+                        : day.hasEvents && day.events.length === 1
+                          ? day.events[0].type === 'booking'
+                            ? 'text-emerald-800 dark:text-emerald-300'
+                            : 'text-purple-800 dark:text-purple-300'
                           : day.isCurrentMonth 
                             ? 'text-gray-900 dark:text-white' 
                             : 'text-gray-400 dark:text-gray-500'
-                        }
-                      `}>
-                        {day.day}
-                      </div>
-
-                      {/* Events indicator */}
-                      {day.hasEvents && (
-                        <div className="flex-1 flex flex-col">
-                          {day.events.length === 1 ? (
-                            // Single event - fill entire space
-                            <div
-                              className={`
-                                flex-1 px-2 py-1 rounded-lg text-xs font-medium truncate shadow-sm
-                                flex items-center justify-center text-center
-                                ${day.events[0].type === 'booking' 
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
-                                  : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
-                                }
-                              `}
-                            >
-                              {day.events[0].title}
-                            </div>
-                          ) : (
-                            // Multiple events - split space
-                            <div className="flex-1 flex flex-col space-y-1">
-                              {day.events.slice(0, 2).map((event, eventIndex) => (
-                                <div
-                                  key={eventIndex}
-                                  className={`
-                                    flex-1 px-2 py-1 rounded-lg text-xs font-medium truncate shadow-sm
-                                    flex items-center justify-center text-center
-                                    ${event.type === 'booking' 
-                                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
-                                      : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
-                                    }
-                                  `}
-                                >
-                                  {event.title}
-                                </div>
-                              ))}
-                              {day.events.length > 2 && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium text-center">
-                                  +{day.events.length - 2} more
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      }
+                    `}>
+                      {day.day}
                     </div>
+
+                    {/* Events display */}
+                    {day.hasEvents && (
+                      <div className="h-full flex flex-col p-2">
+                        {day.events.length === 1 ? (
+                          // Single event - fill entire cell
+                          <div
+                            className={`
+                              flex-1 flex items-center justify-center text-center p-2
+                              ${day.events[0].type === 'booking' 
+                                ? 'text-emerald-800 dark:text-emerald-300' 
+                                : 'text-purple-800 dark:text-purple-300'
+                              }
+                            `}
+                          >
+                            <span className="text-xs font-medium leading-tight whitespace-pre-wrap break-words">
+                              {day.events[0].title}
+                            </span>
+                          </div>
+                        ) : (
+                          // Multiple events - split space
+                          <div className="flex-1 flex flex-col space-y-1">
+                            {day.events.slice(0, 2).map((event, eventIndex) => (
+                              <div
+                                key={eventIndex}
+                                className={`
+                                  flex-1 px-2 py-1 rounded-lg text-xs font-medium shadow-sm
+                                  flex items-center justify-center text-center
+                                  ${event.type === 'booking' 
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
+                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
+                                  }
+                                `}
+                              >
+                                <span className="leading-tight whitespace-pre-wrap break-words">
+                                  {event.title}
+                                </span>
+                              </div>
+                            ))}
+                            {day.events.length > 2 && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium text-center">
+                                +{day.events.length - 2} more
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
