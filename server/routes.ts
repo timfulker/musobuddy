@@ -2873,7 +2873,54 @@ Powered by MusoBuddy – less admin, more music
     }
   });
 
+  // Gig suggestions API route
+  app.post('/api/gig-suggestions', isAuthenticated, async (req: any, res) => {
+    try {
+      const { instruments } = req.body;
+      
+      if (!instruments || !Array.isArray(instruments) || instruments.length === 0) {
+        return res.status(400).json({ error: 'Instruments array is required' });
+      }
 
+      // Use the existing OpenAI API key for instrument mapping
+      const { OpenAI } = await import('openai');
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_INSTRUMENT_MAPPING_KEY || process.env.OPENAI_EMAIL_PARSING_KEY,
+      });
+
+      const prompt = `Given these musical instruments: ${instruments.join(', ')}
+
+Generate 8-12 specific gig types that would be perfect for a musician who plays these instruments. Focus on:
+- Specific event types (weddings, corporate events, etc.)
+- Venue types (restaurants, hotels, etc.)
+- Musical styles/genres
+- Performance contexts
+
+Return only the gig type names, one per line, no explanations or formatting. Examples:
+Wedding Ceremony Music
+Corporate Event Background Music
+Restaurant Jazz Performances
+Hotel Lobby Entertainment`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 200,
+        temperature: 0.7,
+      });
+
+      const gigTypes = response.choices[0]?.message?.content
+        ?.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && !line.startsWith('-'))
+        .slice(0, 12) || [];
+
+      res.json({ gigTypes });
+    } catch (error) {
+      console.error('Error generating gig suggestions:', error);
+      res.status(500).json({ error: 'Failed to generate gig suggestions' });
+    }
+  });
 
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {

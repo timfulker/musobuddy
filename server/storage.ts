@@ -683,26 +683,9 @@ export class DatabaseStorage implements IStorage {
   // User settings operations
   async getUserSettings(userId: string): Promise<UserSettings | undefined> {
     try {
+      // Select all columns to handle missing columns gracefully
       const [settings] = await db
-        .select({
-          userId: userSettings.userId,
-          businessName: userSettings.businessName,
-          businessEmail: userSettings.businessEmail,
-          businessAddress: userSettings.businessAddress,
-          phone: userSettings.phone,
-          website: userSettings.website,
-          taxNumber: userSettings.taxNumber,
-          bankDetails: userSettings.bankDetails,
-          defaultTerms: userSettings.defaultTerms,
-          emailFromName: userSettings.emailFromName,
-          nextInvoiceNumber: userSettings.nextInvoiceNumber,
-          defaultSetupTime: userSettings.defaultSetupTime,
-          defaultBreakdownTime: userSettings.defaultBreakdownTime,
-          weddingBufferTime: userSettings.weddingBufferTime,
-          corporateBufferTime: userSettings.corporateBufferTime,
-          defaultBufferTime: userSettings.defaultBufferTime,
-          maxTravelDistance: userSettings.maxTravelDistance,
-        })
+        .select()
         .from(userSettings)
         .where(eq(userSettings.userId, userId));
       
@@ -711,13 +694,13 @@ export class DatabaseStorage implements IStorage {
         return {
           ...settings,
           // Add default values for new columns that might not exist yet
-          selectedInstruments: null,
-          aiGeneratedGigTypes: null,
-          customGigTypes: null,
-          gigTypes: null,
-          eventTypes: null,
-          instrumentsPlayed: null,
-          customInstruments: null,
+          selectedInstruments: settings.selectedInstruments || null,
+          aiGeneratedGigTypes: settings.aiGeneratedGigTypes || null,
+          customGigTypes: settings.customGigTypes || null,
+          gigTypes: settings.gigTypes || null,
+          eventTypes: settings.eventTypes || null,
+          instrumentsPlayed: settings.instrumentsPlayed || null,
+          customInstruments: settings.customInstruments || null,
         };
       }
       return settings;
