@@ -52,146 +52,129 @@ export default function Settings() {
     "Brass / Jazz / Marching": ["trumpet", "trombone", "percussion"]
   };
 
-  const { data: settings = {}, isLoading } = useQuery({
+  const { data: settings = {}, isLoading, error } = useQuery({
     queryKey: ["/api/settings"],
   });
 
   const form = useForm<z.infer<typeof settingsFormSchema>>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
-      businessName: settings.businessName || "",
-      businessEmail: settings.businessEmail || "",
-      businessAddress: settings.businessAddress || "",
-      phone: settings.phone || "",
-      website: settings.website || "",
-      taxNumber: settings.taxNumber || "",
-      bankDetails: settings.bankDetails || "",
-      defaultTerms: settings.defaultTerms || "",
-      emailFromName: settings.emailFromName || "",
-      nextInvoiceNumber: settings.nextInvoiceNumber || 256,
-      gigTypes: (() => {
-        // Convert gigTypes to newline-separated string for form display
-        if (settings.gigTypes) {
-          try {
-            const parsed = JSON.parse(settings.gigTypes);
-            return Array.isArray(parsed) ? parsed.join('\n') : settings.gigTypes;
-          } catch (e) {
-            return settings.gigTypes;
-          }
-        }
-        return "";
-      })(),
-      eventTypes: settings.eventTypes || "",
-      instrumentsPlayed: settings.instrumentsPlayed || "",
-      customInstruments: settings.customInstruments || "",
+      businessName: "",
+      businessEmail: "",
+      businessAddress: "",
+      phone: "",
+      website: "",
+      taxNumber: "",
+      bankDetails: "",
+      defaultTerms: "",
+      emailFromName: "",
+      nextInvoiceNumber: 256,
+      gigTypes: "",
+      eventTypes: "",
+      instrumentsPlayed: "",
+      customInstruments: "",
     },
   });
 
   // Update form when settings data loads
-  const [hasInitialized, setHasInitialized] = useState(false);
-  if (settings.businessName && !hasInitialized) {
-    form.reset({
-      businessName: settings.businessName || "",
-      businessEmail: settings.businessEmail || "",
-      businessAddress: settings.businessAddress || "",
-      phone: settings.phone || "",
-      website: settings.website || "",
-      taxNumber: settings.taxNumber || "",
-      bankDetails: settings.bankDetails || "",
-      defaultTerms: settings.defaultTerms || "",
-      emailFromName: settings.emailFromName || "",
-      nextInvoiceNumber: settings.nextInvoiceNumber || 256,
-      gigTypes: (() => {
-        // Convert gigTypes to newline-separated string for form display
-        if (settings.gigTypes) {
-          try {
-            const parsed = JSON.parse(settings.gigTypes);
-            return Array.isArray(parsed) ? parsed.join('\n') : settings.gigTypes;
-          } catch (e) {
-            return settings.gigTypes;
+  React.useEffect(() => {
+    if (settings && Object.keys(settings).length > 0) {
+      // Reset form with loaded settings
+      form.reset({
+        businessName: settings.businessName || "",
+        businessEmail: settings.businessEmail || "",
+        businessAddress: settings.businessAddress || "",
+        phone: settings.phone || "",
+        website: settings.website || "",
+        taxNumber: settings.taxNumber || "",
+        bankDetails: settings.bankDetails || "",
+        defaultTerms: settings.defaultTerms || "",
+        emailFromName: settings.emailFromName || "",
+        nextInvoiceNumber: settings.nextInvoiceNumber || 256,
+        gigTypes: (() => {
+          // Convert gigTypes to newline-separated string for form display
+          if (settings.gigTypes) {
+            try {
+              const parsed = JSON.parse(settings.gigTypes);
+              return Array.isArray(parsed) ? parsed.join('\n') : settings.gigTypes;
+            } catch (e) {
+              return settings.gigTypes;
+            }
           }
-        }
-        return "";
-      })(),
-      eventTypes: settings.eventTypes || "",
-      instrumentsPlayed: settings.instrumentsPlayed || "",
-      customInstruments: settings.customInstruments || "",
-    });
-    
-    // Initialize tag arrays
-    setEventTypes(settings.eventTypes ? settings.eventTypes.split('\n').filter(Boolean) : []);
-    
-    // Handle gigTypes - they could be stored as JSON or newline-separated string
-    let gigTypesArray = [];
-    if (settings.gigTypes) {
-      try {
-        // Try to parse as JSON first
-        gigTypesArray = JSON.parse(settings.gigTypes);
-      } catch (e) {
-        // If JSON parsing fails, treat as newline-separated string
-        gigTypesArray = settings.gigTypes.split('\n').filter(Boolean);
-      }
-    }
-    setGigTypes(gigTypesArray);
-    
-    // Load selected instruments from instrumentsPlayed field
-    let selectedInstrumentsFromDB = [];
-    if (settings.instrumentsPlayed) {
-      try {
-        selectedInstrumentsFromDB = JSON.parse(settings.instrumentsPlayed);
-        console.log('🎯 Selected instruments from DB:', selectedInstrumentsFromDB);
-      } catch (e) {
-        // If JSON parsing fails, treat as newline-separated string
-        selectedInstrumentsFromDB = settings.instrumentsPlayed.split('\n').filter(Boolean);
-        console.log('🎯 Selected instruments from string:', selectedInstrumentsFromDB);
-      }
-    }
-    
-    // Load custom instruments from customInstruments field
-    let customInstrumentsFromDB = [];
-    if (settings.customInstruments) {
-      try {
-        customInstrumentsFromDB = JSON.parse(settings.customInstruments);
-        console.log('🎯 Custom instruments from DB:', customInstrumentsFromDB);
-      } catch (e) {
-        // If JSON parsing fails, treat as newline-separated string
-        customInstrumentsFromDB = settings.customInstruments.split('\n').filter(Boolean);
-        console.log('🎯 Custom instruments from string:', customInstrumentsFromDB);
-      }
-    }
-    
-    console.log('🎯 Final selected instruments:', selectedInstrumentsFromDB);
-    console.log('🎯 Final custom instruments:', customInstrumentsFromDB);
-    
-    setSelectedInstruments(selectedInstrumentsFromDB);
-    setCustomInstruments(customInstrumentsFromDB);
-    
-    // ✅ KEY FIX: Initialize form with actual instrument data
-    form.setValue('instrumentsPlayed', JSON.stringify(selectedInstrumentsFromDB));
-    form.setValue('customInstruments', JSON.stringify(customInstrumentsFromDB));
-    
-    // Parse bank details from stored string format
-    const bankDetailsString = settings.bankDetails || "";
-    const parsedBankDetails = {
-      bankName: "",
-      accountName: "",
-      sortCode: "",
-      accountNumber: ""
-    };
-    
-    if (bankDetailsString) {
-      const lines = bankDetailsString.split('\n');
-      lines.forEach(line => {
-        if (line.includes('Bank Name:')) parsedBankDetails.bankName = line.split('Bank Name:')[1]?.trim() || "";
-        if (line.includes('Account Name:')) parsedBankDetails.accountName = line.split('Account Name:')[1]?.trim() || "";
-        if (line.includes('Sort Code:')) parsedBankDetails.sortCode = line.split('Sort Code:')[1]?.trim() || "";
-        if (line.includes('Account Number:')) parsedBankDetails.accountNumber = line.split('Account Number:')[1]?.trim() || "";
+          return "";
+        })(),
+        eventTypes: settings.eventTypes || "",
+        instrumentsPlayed: settings.instrumentsPlayed || "",
+        customInstruments: settings.customInstruments || "",
       });
+      
+      // Initialize tag arrays
+      setEventTypes(settings.eventTypes ? settings.eventTypes.split('\n').filter(Boolean) : []);
+      
+      // Handle gigTypes - they could be stored as JSON or newline-separated string
+      let gigTypesArray = [];
+      if (settings.gigTypes) {
+        try {
+          // Try to parse as JSON first
+          gigTypesArray = JSON.parse(settings.gigTypes);
+        } catch (e) {
+          // If JSON parsing fails, treat as newline-separated string
+          gigTypesArray = settings.gigTypes.split('\n').filter(Boolean);
+        }
+      }
+      setGigTypes(gigTypesArray);
+      
+      // Load selected instruments from instrumentsPlayed field
+      let selectedInstrumentsFromDB = [];
+      if (settings.instrumentsPlayed) {
+        try {
+          selectedInstrumentsFromDB = JSON.parse(settings.instrumentsPlayed);
+        } catch (e) {
+          // If JSON parsing fails, treat as newline-separated string
+          selectedInstrumentsFromDB = settings.instrumentsPlayed.split('\n').filter(Boolean);
+        }
+      }
+      
+      // Load custom instruments from customInstruments field
+      let customInstrumentsFromDB = [];
+      if (settings.customInstruments) {
+        try {
+          customInstrumentsFromDB = JSON.parse(settings.customInstruments);
+        } catch (e) {
+          // If JSON parsing fails, treat as newline-separated string
+          customInstrumentsFromDB = settings.customInstruments.split('\n').filter(Boolean);
+        }
+      }
+      
+      setSelectedInstruments(selectedInstrumentsFromDB);
+      setCustomInstruments(customInstrumentsFromDB);
+      
+      // Initialize form with actual instrument data
+      form.setValue('instrumentsPlayed', JSON.stringify(selectedInstrumentsFromDB));
+      form.setValue('customInstruments', JSON.stringify(customInstrumentsFromDB));
+      
+      // Parse bank details from stored string format
+      const bankDetailsString = settings.bankDetails || "";
+      const parsedBankDetails = {
+        bankName: "",
+        accountName: "",
+        sortCode: "",
+        accountNumber: ""
+      };
+      
+      if (bankDetailsString) {
+        const lines = bankDetailsString.split('\n');
+        lines.forEach(line => {
+          if (line.includes('Bank Name:')) parsedBankDetails.bankName = line.split('Bank Name:')[1]?.trim() || "";
+          if (line.includes('Account Name:')) parsedBankDetails.accountName = line.split('Account Name:')[1]?.trim() || "";
+          if (line.includes('Sort Code:')) parsedBankDetails.sortCode = line.split('Sort Code:')[1]?.trim() || "";
+          if (line.includes('Account Number:')) parsedBankDetails.accountNumber = line.split('Account Number:')[1]?.trim() || "";
+        });
+      }
+      
+      setBankDetails(parsedBankDetails);
     }
-    
-    setBankDetails(parsedBankDetails);
-    setHasInitialized(true);
-  }
+  }, [settings, form]);
 
   // Helper functions for tag management
   const addEventType = () => {
@@ -508,6 +491,26 @@ export default function Settings() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading settings...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Something went wrong</h2>
+            <p className="text-gray-600">The application encountered an error. Please try refreshing the page.</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="mt-4"
+              variant="outline"
+            >
+              Refresh Page
+            </Button>
+          </div>
         </div>
       </div>
     );
