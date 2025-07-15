@@ -243,7 +243,19 @@ export const clients = pgTable("clients", {
 export const instrumentMappings = pgTable("instrument_mappings", {
   id: serial("id").primaryKey(),
   instrument: varchar("instrument").notNull().unique(), // lowercase instrument name
+  category: varchar("category").notNull(), // band, strings, woodwind, brass, percussion, keyboards, vocals, electronic, custom
   gigTypes: text("gig_types").notNull(), // JSON array of gig types
+  isCustom: boolean("is_custom").default(false), // true if created by user
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User instrument categories table - stores user's categorized instrument selections
+export const userInstrumentCategories = pgTable("user_instrument_categories", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  category: varchar("category").notNull(),
+  instruments: text("instruments").notNull(), // JSON array of instrument names
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
