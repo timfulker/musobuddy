@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -160,6 +161,36 @@ export default function Settings() {
                             <SelectItem value="jazz">Jazz</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="instruments"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Instruments</FormLabel>
+                        <div className="space-y-2">
+                          {["Piano", "Guitar", "Saxophone", "Violin", "Drums"].map((instrument) => (
+                            <div key={instrument} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={instrument}
+                                checked={field.value?.includes(instrument)}
+                                onCheckedChange={(checked) => {
+                                  const currentValue = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentValue, instrument]);
+                                  } else {
+                                    field.onChange(currentValue.filter((item) => item !== instrument));
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={instrument}>{instrument}</Label>
+                            </div>
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
