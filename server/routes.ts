@@ -1195,6 +1195,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
       console.log('🔥 CONTRACT CREATION: Starting contract creation process');
+      console.log('🔥 CONTRACT CREATION: req.user:', req.user);
+      console.log('🔥 CONTRACT CREATION: req.isAuthenticated():', req.isAuthenticated());
+      
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+        console.log('🔥 CONTRACT CREATION: User object is missing or invalid');
+        return res.status(401).json({ message: "User authentication failed - please log in again" });
+      }
+      
       const userId = req.user.claims.sub;
       console.log('🔥 CONTRACT CREATION: User ID:', userId);
       console.log('🔥 CONTRACT CREATION: Request body:', JSON.stringify(req.body, null, 2));
