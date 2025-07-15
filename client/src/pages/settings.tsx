@@ -32,17 +32,39 @@ const settingsFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
   businessAddress: z.string().min(1, "Business address is required"),
   phone: z.string().min(1, "Phone number is required"),
-  website: z.string().optional(),
-  taxNumber: z.string().optional(),
+  website: z.string().optional().or(z.literal("")),
+  taxNumber: z.string().optional().or(z.literal("")),
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.string().min(1, "Next invoice number is required"),
-  defaultTerms: z.string().optional(),
-  bankDetails: z.string().optional(),
+  defaultTerms: z.string().optional().or(z.literal("")),
+  bankDetails: z.string().optional().or(z.literal("")),
   selectedInstruments: z.array(z.string()).optional(),
   gigTypes: z.array(z.string()).optional(),
 });
 
 type SettingsFormData = z.infer<typeof settingsFormSchema>;
+
+// Mock API function for fetching settings
+const fetchSettings = async (): Promise<SettingsFormData> => {
+  // Simulate API call
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        businessName: "Sample Music Business",
+        businessAddress: "123 Music Street, City, State 12345",
+        phone: "+1 (555) 123-4567",
+        website: "https://example.com",
+        taxNumber: "TAX123456",
+        emailFromName: "John Doe",
+        nextInvoiceNumber: "00001",
+        defaultTerms: "Payment due within 30 days",
+        bankDetails: "Bank Name: Sample Bank\nAccount: 12345678\nSort Code: 12-34-56",
+        selectedInstruments: ["Piano", "Guitar"],
+        gigTypes: ["Wedding", "Corporate Event"],
+      });
+    }, 1000);
+  });
+};
 
 export default function Settings() {
   const { toast } = useToast();
@@ -75,7 +97,8 @@ export default function Settings() {
 
   // Load existing settings data
   const { data: settings, isLoading: settingsLoading } = useQuery({
-    queryKey: ['/api/settings'],
+    queryKey: ['settings'],
+    queryFn: fetchSettings,
     select: (data) => {
       console.log('Settings data loaded:', data);
       return data;
@@ -98,20 +121,28 @@ export default function Settings() {
     
     setIsGeneratingGigTypes(true);
     try {
-      const response = await fetch('/api/gig-suggestions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ instruments }),
+      // Mock API call - replace with actual API endpoint
+      const mockSuggestions = await new Promise<string[]>((resolve) => {
+        setTimeout(() => {
+          const suggestions: { [key: string]: string[] } = {
+            "Piano": ["Wedding Ceremony", "Corporate Event", "Restaurant Performance", "Private Party"],
+            "Guitar": ["Wedding Reception", "Acoustic Set", "Open Mic Night", "Street Performance"],
+            "Violin": ["Wedding Ceremony", "Classical Concert", "Chamber Music", "String Quartet"],
+            "Drum Kit": ["Wedding Reception", "Corporate Event", "Band Performance", "Music Festival"],
+            "Vocals": ["Wedding Ceremony", "Karaoke Night", "Tribute Show", "Acoustic Set"],
+          };
+          
+          const allSuggestions = instruments.flatMap(instrument => 
+            suggestions[instrument] || ["Live Performance", "Private Event"]
+          );
+          
+          // Remove duplicates and return unique suggestions
+          const uniqueSuggestions = Array.from(new Set(allSuggestions));
+          resolve(uniqueSuggestions.slice(0, 8)); // Limit to 8 suggestions
+        }, 1000);
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to generate gig types');
-      }
-      
-      const suggestions = await response.json();
-      return suggestions || [];
+      return mockSuggestions;
     } catch (error) {
       console.error('Error generating gig types:', error);
       toast({
@@ -160,26 +191,20 @@ export default function Settings() {
   // Save settings mutation
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: SettingsFormData) => {
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      // Mock API call - replace with actual API endpoint
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          console.log('Saving settings:', data);
+          resolve(data);
+        }, 1000);
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save settings');
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Settings saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
     onError: (error) => {
       console.error('Error saving settings:', error);
@@ -202,18 +227,29 @@ export default function Settings() {
     saveSettingsMutation.mutate(formData);
   };
 
+  if (settingsLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <span>Loading settings...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <div className="lg:ml-64">
-        <div className="p-6 lg:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold ml-12 md:ml-0">Settings</h1>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold">Settings</h1>
             {isMobile && (
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="lg:hidden"
               >
@@ -221,57 +257,87 @@ export default function Settings() {
               </Button>
             )}
           </div>
+        </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
-              {/* Business Information Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5" />
-                    Business Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="businessName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Business Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your business name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="emailFromName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email From Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Your name for email sending" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4 overflow-y-auto">
+            
+            {/* Business Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  Business Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="businessAddress"
+                    name="businessName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Business Address</FormLabel>
+                        <FormLabel>Business Name</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Enter your full business address" {...field} />
+                          <Input placeholder="Enter your business name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="emailFromName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email From Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your email display name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="businessAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Address</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Enter your business address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your phone number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://your-website.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -280,233 +346,209 @@ export default function Settings() {
 
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="taxNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
+                        <FormLabel>Tax Number (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your phone number" {...field} />
+                          <Input placeholder="Enter your tax number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
+              </CardContent>
+            </Card>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="website"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Website (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://your-website.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+            {/* Payment & Banking */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Payment & Banking
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="nextInvoiceNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Next Invoice Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="00001" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="taxNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tax Number (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your tax/VAT number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                <FormField
+                  control={form.control}
+                  name="bankDetails"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bank Details</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Enter your bank details" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-              {/* Payment & Banking Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Payment & Banking
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="nextInvoiceNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Next Invoice Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="00001" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            {/* Contract & Legal */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Contract & Legal
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="defaultTerms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Default Contract Terms</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter default contract terms..."
+                          className="min-h-[100px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-                  <FormField
-                    control={form.control}
-                    name="bankDetails"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bank Details</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Enter your bank details (bank name, account name, sort code, account number)" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Contract & Legal Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Contract & Legal
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="defaultTerms"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Default Contract Terms</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Enter your standard contract terms and conditions..."
-                            className="min-h-[100px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Musical Services Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Music className="h-5 w-5" />
-                    Musical Services
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Instruments Selection */}
-                  <div className="space-y-3">
-                    <Label>Instruments You Play</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            {/* Musical Services */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Music className="h-5 w-5" />
+                  Musical Services
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium">Instruments You Play</h3>
+                    <div className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-gray-500" />
                       <Input
                         placeholder="Search instruments..."
                         value={instrumentSearch}
                         onChange={(e) => setInstrumentSearch(e.target.value)}
-                        className="pl-10"
+                        className="w-48"
                       />
                     </div>
-                    
-                    {/* Available Instruments - Filterable Chips */}
-                    <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
-                      {filteredInstruments.map((instrument) => (
-                        <Button
-                          key={instrument}
-                          type="button"
-                          variant={selectedInstruments.includes(instrument) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleInstrumentToggle(instrument)}
-                          className="text-sm"
-                        >
+                  </div>
+                  
+                  <div className="max-h-60 overflow-y-auto border rounded-lg p-4">
+                    {filteredInstruments.map((instrument) => (
+                      <Button
+                        key={instrument}
+                        type="button"
+                        variant={selectedInstruments.includes(instrument) ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => handleInstrumentToggle(instrument)}
+                        className="mr-2 mb-2"
+                      >
+                        {selectedInstruments.includes(instrument) ? (
+                          <X className="h-3 w-3 mr-1" />
+                        ) : (
+                          <Plus className="h-3 w-3 mr-1" />
+                        )}
+                        {instrument}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {selectedInstruments.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Selected Instruments:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedInstruments.map((instrument) => (
+                        <Badge key={instrument} variant="secondary" className="px-2 py-1">
                           {instrument}
-                          {selectedInstruments.includes(instrument) && (
-                            <X className="ml-1 h-3 w-3" />
-                          )}
-                        </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleInstrumentToggle(instrument)}
+                            className="ml-1 h-auto p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
                       ))}
                     </div>
                   </div>
+                )}
 
-                  {/* AI-Generated Gig Types */}
-                  {selectedInstruments.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label>AI-Generated Gig Types</Label>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => generateGigTypes(selectedInstruments)}
-                          disabled={isGeneratingGigTypes}
-                        >
-                          {isGeneratingGigTypes ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Generating...
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="mr-2 h-4 w-4" />
-                              Generate Gig Types
-                            </>
-                          )}
-                        </Button>
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium">Suggested Gig Types</h3>
+                    {isGeneratingGigTypes && (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Generating...</span>
                       </div>
-                      
-                      {gigTypes.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {gigTypes.map((gigType, index) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                              onClick={() => handleRemoveGigType(gigType)}
-                            >
-                              {gigType}
-                              <X className="ml-1 h-3 w-3" />
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
+                    )}
+                  </div>
+                  
+                  {gigTypes.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {gigTypes.map((gigType) => (
+                        <Badge key={gigType} variant="outline" className="px-2 py-1">
+                          {gigType}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveGigType(gigType)}
+                            className="ml-1 h-auto p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-
-              {/* Save Button */}
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={saveSettingsMutation.isPending}
-                  className="min-w-[120px]"
-                >
-                  {saveSettingsMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Settings
-                    </>
+                  
+                  {selectedInstruments.length === 0 && (
+                    <p className="text-sm text-gray-500">Select instruments to see suggested gig types.</p>
                   )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Save Button */}
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="min-w-32"
+                disabled={saveSettingsMutation.isPending}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {saveSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </div>
       
-      <MobileNav />
+      {isMobile && <MobileNav />}
     </div>
   );
 }
