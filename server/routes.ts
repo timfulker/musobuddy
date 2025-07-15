@@ -31,7 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const testResult = await sendEmail({
         to: 'test@example.com',
-        from: 'MusoBuddy <noreply@sandbox2e23cfec6e14ec6b880912ce39e4926.mailgun.org>',
+        from: 'MusoBuddy <noreply@mg.musobuddy.com>',
         subject: 'MusoBuddy Email Test',
         text: 'This is a test email to verify Mailgun integration is working.',
         html: '<h1>Email Test</h1><p>This is a test email to verify Mailgun integration is working.</p>'
@@ -44,6 +44,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Test email error:', error);
       res.status(500).json({ error: 'Failed to send test email' });
+    }
+  });
+
+  // Test endpoint for confirmation email format (no auth for testing)
+  app.post('/api/test-confirmation-email', async (req: any, res) => {
+    try {
+      const { sendEmail } = await import('./mailgun-email');
+      
+      // Simulate the exact format used in contract confirmation emails
+      const testResult = await sendEmail({
+        to: 'test@example.com',
+        from: 'MusoBuddy <noreply@mg.musobuddy.com>',
+        subject: 'Contract TEST-001 Successfully Signed ✓',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #4CAF50; margin-bottom: 20px;">Contract Signed Successfully ✓</h2>
+            <p>Dear Test Client,</p>
+            <p>Your performance contract <strong>TEST-001</strong> has been successfully signed!</p>
+            <p>This is a test of the confirmation email system.</p>
+          </div>
+        `,
+        text: 'Contract TEST-001 successfully signed by Test Client.'
+      });
+      
+      res.json({ 
+        success: testResult,
+        message: testResult ? 'Confirmation email test sent successfully' : 'Confirmation email test failed to send'
+      });
+    } catch (error: any) {
+      console.error('Test confirmation email error:', error);
+      res.status(500).json({ error: 'Failed to send test confirmation email' });
     }
   });
 
@@ -1919,23 +1950,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     
     try {
+      console.log('🔥 CONTRACT SIGNING: Starting contract signing process');
+      console.log('🔥 CONTRACT SIGNING: Request params:', req.params);
+      console.log('🔥 CONTRACT SIGNING: Request body:', req.body);
+      
       const contractId = parseInt(req.params.id);
       const { signatureName, clientName, signature } = req.body;
       
       // Support both formats: old format (signatureName) and new format (clientName from cloud page)
       const finalSignatureName = signatureName || clientName;
       
+      console.log('🔥 CONTRACT SIGNING: Final signature name:', finalSignatureName);
+      
       if (!finalSignatureName || !finalSignatureName.trim()) {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Signature name is required');
         return res.status(400).json({ message: "Signature name is required" });
       }
       
       // Get contract
+      console.log('🔥 CONTRACT SIGNING: Retrieving contract with ID:', contractId);
       const contract = await storage.getContractById(contractId);
       if (!contract) {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Contract not found');
         return res.status(404).json({ message: "Contract not found" });
       }
       
+      console.log('🔥 CONTRACT SIGNING: Contract retrieved:', contract.contractNumber, 'status:', contract.status);
+      
       if (contract.status !== 'sent') {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Contract is not available for signing, status:', contract.status);
         return res.status(400).json({ message: "Contract is not available for signing" });
       }
       
@@ -1955,10 +1998,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send confirmation emails with download links (no PDF generation)
       try {
+        console.log('🔥 CONTRACT SIGNING: Attempting to retrieve user settings for userId:', contract.userId);
         const userSettings = await storage.getUserSettings(contract.userId);
+        console.log('🔥 CONTRACT SIGNING: User settings retrieved successfully:', !!userSettings);
+        
+        console.log('🔥 CONTRACT SIGNING: Importing sendEmail function...');
         const { sendEmail } = await import('./mailgun-email');
+        console.log('🔥 CONTRACT SIGNING: sendEmail function imported successfully');
         
         console.log('🔥 CONTRACT SIGNING: Starting confirmation email process');
+        console.log('🔥 CONTRACT SIGNING: User settings:', userSettings);
+        console.log('🔥 CONTRACT SIGNING: Contract data:', {
+          id: contract.id,
+          contractNumber: contract.contractNumber,
+          clientName: contract.clientName,
+          clientEmail: contract.clientEmail,
+          eventDate: contract.eventDate,
+          eventTime: contract.eventTime,
+          venue: contract.venue,
+          fee: contract.fee,
+          userId: contract.userId
+        });
         
         // Upload signed contract to cloud storage (if configured)
         let cloudStorageUrl: string | null = null;
@@ -1988,6 +2048,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
         const contractDownloadUrl = `https://${currentDomain}/api/contracts/${signedContract.id}/download`;
         const contractViewUrl = `https://${currentDomain}/view-contract/${signedContract.id}`;
+        
+        console.log('🔥 CONTRACT SIGNING: Domain configuration:', {
+          REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
+          currentDomain,
+          contractDownloadUrl,
+          contractViewUrl
+        });
         
         // Smart email handling - use authenticated domain for sending, Gmail for replies
         const userBusinessEmail = userSettings?.businessEmail;
