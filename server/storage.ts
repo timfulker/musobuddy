@@ -57,7 +57,7 @@ export interface IStorage {
   createContract(contract: InsertContract): Promise<Contract>;
   updateContract(id: number, contract: Partial<InsertContract>, userId: string): Promise<Contract | undefined>;
   deleteContract(id: number, userId: string): Promise<boolean>;
-  signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date; clientPhone?: string; clientAddress?: string }): Promise<Contract | undefined>;
+  signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date; clientPhone?: string; clientAddress?: string; venueAddress?: string }): Promise<Contract | undefined>;
   
   // Invoice operations
   getInvoices(userId: string): Promise<Invoice[]>;
@@ -269,7 +269,7 @@ export class DatabaseStorage implements IStorage {
     return contract;
   }
 
-  async signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date; clientPhone?: string; clientAddress?: string }): Promise<Contract | undefined> {
+  async signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date; clientPhone?: string; clientAddress?: string; venueAddress?: string }): Promise<Contract | undefined> {
     const updateData: any = {
       status: 'signed',
       signedAt: signatureData.signedAt,
@@ -282,6 +282,9 @@ export class DatabaseStorage implements IStorage {
     }
     if (signatureData.clientAddress) {
       updateData.clientAddress = signatureData.clientAddress;
+    }
+    if (signatureData.venueAddress) {
+      updateData.venueAddress = signatureData.venueAddress;
     }
     
     const [signedContract] = await db

@@ -1963,7 +1963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔥 CONTRACT SIGNING: Request body:', req.body);
       
       const contractId = parseInt(req.params.id);
-      const { signatureName, clientName, signature, clientPhone, clientAddress } = req.body;
+      const { signatureName, clientName, signature, clientPhone, clientAddress, venueAddress } = req.body;
       
       // Support both formats: old format (signatureName) and new format (clientName from cloud page)
       const finalSignatureName = signatureName || clientName;
@@ -1999,7 +1999,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientIP,
         signedAt: new Date(),
         clientPhone: clientPhone?.trim(),
-        clientAddress: clientAddress?.trim()
+        clientAddress: clientAddress?.trim(),
+        venueAddress: venueAddress?.trim()
       });
       
       if (!signedContract) {
