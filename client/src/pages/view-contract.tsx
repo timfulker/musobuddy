@@ -180,7 +180,7 @@ export default function ViewContract() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Performance Contract {contract.contractNumber}
           </h1>
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center gap-4">
             <Badge variant={contract.status === 'signed' ? 'default' : 'secondary'}>
               {contract.status === 'signed' ? (
                 <><CheckCircle className="w-4 h-4 mr-1" /> Signed</>
@@ -188,6 +188,15 @@ export default function ViewContract() {
                 <><FileText className="w-4 h-4 mr-1" /> {contract.status}</>
               )}
             </Badge>
+          </div>
+          
+          {/* Preview Notice */}
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700">
+              <strong>Preview Version:</strong> This online view shows the essential contract details. 
+              For the complete contract including full terms & conditions and signature sections, 
+              please download the PDF version below.
+            </p>
           </div>
         </div>
 
@@ -216,6 +225,9 @@ export default function ViewContract() {
                 </div>
                 <div className="space-y-2">
                   <p><strong>Performance Fee:</strong> £{contract.fee}</p>
+                  {contract.deposit && parseFloat(contract.deposit) > 0 && (
+                    <p><strong>Deposit:</strong> £{contract.deposit}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -324,20 +336,19 @@ export default function ViewContract() {
 
         {/* Actions */}
         <div className="text-center space-y-4">
-          <Button 
-            onClick={handleDownloadPDF} 
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            disabled={contract.status !== 'signed'}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download PDF {contract.status === 'signed' ? '(Signed)' : '(Draft)'}
-          </Button>
+          <div className="flex justify-center gap-4">
+            <Button 
+              onClick={handleDownloadPDF}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 text-lg"
+            >
+              <Download className="w-5 h-5 mr-2" />
+              Download Complete PDF Contract
+            </Button>
+          </div>
           
-          {contract.status !== 'signed' && (
-            <p className="text-sm text-gray-500">
-              PDF download will be available after the contract is signed
-            </p>
-          )}
+          <p className="text-sm text-gray-600">
+            The PDF version contains the complete contract with full terms & conditions and signature sections.
+          </p>
         </div>
 
         {/* Footer */}
