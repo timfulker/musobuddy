@@ -885,6 +885,20 @@ This applies to any changes in:
   * **Solution**: All date formatting now explicitly uses `toLocaleDateString('en-GB')` for consistent DD/MM/YYYY format
   * **Impact**: Contract emails, signing pages, and system notes now display dates in proper UK format matching contract documents
   * **Status**: Date format consistency achieved across entire contract workflow system
+- July 15, 2025. Cloud signing page signed contract detection completely fixed:
+  * **Critical Issue Resolved**: Signed contracts were showing signing form instead of "Contract Already Signed" message
+  * **Root Cause**: Cloud signing pages were making cross-origin API calls to check contract status, which failed due to CORS restrictions
+  * **Technical Solution**: Embedded contract status directly in HTML template instead of relying on JavaScript API calls
+  * **Files Updated**: Modified generateContractSigningPageHtml() function in server/cloud-storage.ts
+  * **Implementation**: Added isAlreadySigned logic that controls element visibility using inline styles
+  * **Key Changes**:
+    - Contract status section: `display: ${isAlreadySigned ? 'block' : 'none'}`
+    - Contract details section: `display: ${isAlreadySigned ? 'none' : 'block'}`
+    - Signing form section: `display: ${isAlreadySigned ? 'none' : 'block'}`
+    - Embedded signedDate and signedBy directly in HTML template
+  * **Removed Dependencies**: Eliminated checkContractStatus() JavaScript function and cross-origin API calls
+  * **Business Impact**: Signed contracts now immediately show completion message without requiring app availability
+  * **Status**: Cloud signing pages now work correctly for both signed and unsigned contracts with proper offline capability
 
 ## Phase 1 Complete - July 14, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**

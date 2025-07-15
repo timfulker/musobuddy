@@ -337,6 +337,11 @@ function generateContractSigningPageHtml(
   const businessName = userSettings?.businessName || 'MusoBuddy';
   const appUrl = 'https://musobuddy.replit.app';
   
+  // Check if contract is already signed
+  const isAlreadySigned = contract.status === 'signed';
+  const signedDate = isAlreadySigned && contract.signedAt ? new Date(contract.signedAt).toLocaleString('en-GB') : '';
+  const signedBy = isAlreadySigned ? contract.clientName : '';
+  
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -587,19 +592,19 @@ function generateContractSigningPageHtml(
         </div>
         
         <!-- Contract Status Check -->
-        <div id="contractStatus" style="display: none;">
+        <div id="contractStatus" style="display: ${isAlreadySigned ? 'block' : 'none'};">
             <div style="background: #d1fae5; color: #065f46; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
                 <h2>✅ Contract Already Signed</h2>
                 <p>This contract has already been signed and is now complete.</p>
-                <p><strong>Signed on:</strong> <span id="signedDate"></span></p>
-                <p><strong>Signed by:</strong> <span id="signedBy"></span></p>
+                <p><strong>Signed on:</strong> <span id="signedDate">${signedDate}</span></p>
+                <p><strong>Signed by:</strong> <span id="signedBy">${signedBy}</span></p>
                 <div style="margin-top: 20px;">
                     <a href="${appUrl}/api/contracts/${contract.id}/download" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Download Signed Contract</a>
                 </div>
             </div>
         </div>
         
-        <div class="contract-details" id="contractDetails">
+        <div class="contract-details" id="contractDetails" style="display: ${isAlreadySigned ? 'none' : 'block'};">
             <h2>Contract Details</h2>
             
             <div class="detail-grid">
@@ -640,7 +645,7 @@ function generateContractSigningPageHtml(
             </div>
         </div>
         
-        <div class="signing-section" id="signing-section">
+        <div class="signing-section" id="signing-section" style="display: ${isAlreadySigned ? 'none' : 'block'};">
             <h2>Digital Signature</h2>
             <p style="margin-bottom: 30px; color: #64748b;">
                 Please review the contract details above and provide your digital signature below to confirm acceptance.
@@ -712,32 +717,7 @@ function generateContractSigningPageHtml(
     </div>
     
     <script>
-        // Check contract status on page load
-        async function checkContractStatus() {
-            try {
-                const response = await fetch('${appUrl}/api/contracts/public/${contract.id}');
-                if (response.ok) {
-                    const contractData = await response.json();
-                    if (contractData.status === 'signed') {
-                        // Contract is already signed, show completion message
-                        document.getElementById('contractStatus').style.display = 'block';
-                        document.getElementById('contractDetails').style.display = 'none';
-                        document.getElementById('signing-section').style.display = 'none';
-                        
-                        // Update signed details
-                        const signedDate = new Date(contractData.signedAt).toLocaleString('en-GB');
-                        document.getElementById('signedDate').textContent = signedDate;
-                        document.getElementById('signedBy').textContent = contractData.clientName;
-                        
-                        return true; // Contract is signed
-                    }
-                }
-                return false; // Contract not signed
-            } catch (error) {
-                console.error('Error checking contract status:', error);
-                return false; // Assume not signed on error
-            }
-        }
+        // Contract status is now embedded directly in HTML - no API call needed
 
         // Signature canvas functionality
         const canvas = document.getElementById('signatureCanvas');
@@ -874,8 +854,7 @@ function generateContractSigningPageHtml(
         document.getElementById('clientName').addEventListener('input', updateSubmitButton);
         document.getElementById('typedSignature').addEventListener('input', updateSubmitButton);
         
-        // Check contract status on page load
-        checkContractStatus();
+        // Contract status is now embedded directly in HTML - no page load check needed
 
         // Form submission
         form.addEventListener('submit', async (e) => {
