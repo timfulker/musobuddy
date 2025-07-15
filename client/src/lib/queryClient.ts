@@ -3,6 +3,12 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    
+    // Handle authentication errors with user-friendly messages
+    if (res.status === 401) {
+      throw new Error("Your session has expired. Please log in again to continue.");
+    }
+    
     throw new Error(`${res.status}: ${text}`);
   }
 }
@@ -29,6 +35,11 @@ export async function apiRequest(
     body,
     credentials: "include",
   });
+
+  // Check for authentication errors and provide user-friendly messages
+  if (res.status === 401) {
+    throw new Error("Your session has expired. Please log in again to continue.");
+  }
 
   await throwIfResNotOk(res);
   return res;

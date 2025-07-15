@@ -878,6 +878,14 @@ This applies to any changes in:
 - July 15, 2025. Date format consistency fix completed across all contract-related systems:
   * **Issue Identified**: Contract emails displaying dates in American format (MM/DD/YYYY) instead of UK format (DD/MM/YYYY)
   * **Root Cause**: Server environment defaulting to US locale, causing `toLocaleDateString()` without locale parameter to use American format
+- July 15, 2025. Enhanced authentication error handling and session management improvements:
+  * **User-Friendly Error Messages**: 401 errors now display "Your session has expired. Please log in again to continue." instead of generic "Unauthorized"
+  * **Quick Re-login Action**: Authentication error toasts now include a "Log Out" button for immediate session refresh
+  * **Improved Session Persistence**: Added rolling sessions and sameSite cookie settings to reduce random logouts
+  * **Universal Error Handling**: Applied consistent authentication error handling across contracts and invoices pages
+  * **Better Token Refresh**: Enhanced token refresh logic with clearer error messages when refresh fails
+  * **Session Debugging**: Added comprehensive logging for authentication failures to improve troubleshooting
+  * **Status**: Users now receive clear guidance when sessions expire instead of confusing error messages
   * **Files Updated**: Fixed date formatting in three key locations:
     - server/static-pdf-storage.ts: Line 264 (contract signing page)
     - server/cloud-storage.ts: Line 613 (cloud contract signing page)  

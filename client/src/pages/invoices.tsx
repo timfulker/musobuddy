@@ -187,14 +187,32 @@ export default function Invoices() {
       console.error("🔥 Frontend: Error message:", error.message);
       console.error("🔥 Frontend: Error stack:", error.stack);
       
-      // Show specific error message if available
-      const errorMessage = error.message || "Failed to create invoice. Please try again.";
-      
-      toast({
-        title: "Error Creating Invoice",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      // Check if it's an authentication error and provide helpful guidance
+      if (error.message && error.message.includes("session has expired")) {
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please log out and log back in to continue.",
+          variant: "destructive",
+          action: (
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = "/api/logout"}
+              className="ml-2 text-sm"
+            >
+              Log Out
+            </Button>
+          ),
+        });
+      } else {
+        // Show specific error message if available
+        const errorMessage = error.message || "Failed to create invoice. Please try again.";
+        
+        toast({
+          title: "Error Creating Invoice",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -428,11 +446,30 @@ export default function Invoices() {
       console.error('🔥 Email Send: Full error object:', error);
       console.error('🔥 Email Send: Error message:', error.message);
       console.error('🔥 Email Send: Error stack:', error.stack);
-      toast({
-        title: "Error",
-        description: `Failed to send invoice email: ${error.message}`,
-        variant: "destructive",
-      });
+      
+      // Check if it's an authentication error and provide helpful guidance
+      if (error.message && error.message.includes("session has expired")) {
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please log out and log back in to continue.",
+          variant: "destructive",
+          action: (
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = "/api/logout"}
+              className="ml-2 text-sm"
+            >
+              Log Out
+            </Button>
+          ),
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to send invoice email: ${error.message}`,
+          variant: "destructive",
+        });
+      }
     },
   });
 

@@ -36,10 +36,12 @@ export function getSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Extend session on each request
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
+      sameSite: 'lax', // Helps with session persistence
     },
   });
 }
@@ -160,7 +162,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
     if (!req.isAuthenticated() || !user?.expires_at) {
       console.log('AUTH FAILED - not authenticated or no expires_at');
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "User authentication failed - please log in again" });
     }
 
     // Add user ID to request for easy access
@@ -174,7 +176,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     const refreshToken = user.refresh_token;
     if (!refreshToken) {
       console.log('NO REFRESH TOKEN - returning 401');
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "Your session has expired. Please log in again to continue." });
     }
 
     try {
@@ -186,7 +188,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       return next();
     } catch (error) {
       console.log('TOKEN REFRESH FAILED:', error);
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "Your session has expired. Please log in again to continue." });
     }
   } catch (error) {
     console.log('AUTHENTICATION ERROR:', error);

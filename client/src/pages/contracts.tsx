@@ -245,11 +245,29 @@ export default function Contracts() {
       });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to generate contract: ${error.message}`,
-        variant: "destructive",
-      });
+      // Check if it's an authentication error and provide helpful guidance
+      if (error.message && error.message.includes("session has expired")) {
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please log out and log back in to continue.",
+          variant: "destructive",
+          action: (
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = "/api/logout"}
+              className="ml-2 text-sm"
+            >
+              Log Out
+            </Button>
+          ),
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to generate contract: ${error.message}`,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -271,11 +289,29 @@ export default function Contracts() {
       });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to update contract: ${error.message}`,
-        variant: "destructive",
-      });
+      // Check if it's an authentication error and provide helpful guidance
+      if (error.message && error.message.includes("session has expired")) {
+        toast({
+          title: "Session Expired",
+          description: "Your session has expired. Please log out and log back in to continue.",
+          variant: "destructive",
+          action: (
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = "/api/logout"}
+              className="ml-2 text-sm"
+            >
+              Log Out
+            </Button>
+          ),
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to update contract: ${error.message}`,
+          variant: "destructive",
+        });
+      }
     },
   });
 
