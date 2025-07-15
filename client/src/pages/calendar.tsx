@@ -249,24 +249,44 @@ export default function Calendar() {
 
                       {/* Events indicator */}
                       {day.hasEvents && (
-                        <div className="flex-1 flex flex-col space-y-1">
-                          {day.events.slice(0, 2).map((event, eventIndex) => (
+                        <div className="flex-1 flex flex-col">
+                          {day.events.length === 1 ? (
+                            // Single event - fill entire space
                             <div
-                              key={eventIndex}
                               className={`
-                                px-2 py-1 rounded-lg text-xs font-medium truncate shadow-sm
-                                ${event.type === 'booking' 
+                                flex-1 px-2 py-1 rounded-lg text-xs font-medium truncate shadow-sm
+                                flex items-center justify-center text-center
+                                ${day.events[0].type === 'booking' 
                                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
                                   : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
                                 }
                               `}
                             >
-                              {event.title}
+                              {day.events[0].title}
                             </div>
-                          ))}
-                          {day.events.length > 2 && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium">
-                              +{day.events.length - 2} more
+                          ) : (
+                            // Multiple events - split space
+                            <div className="flex-1 flex flex-col space-y-1">
+                              {day.events.slice(0, 2).map((event, eventIndex) => (
+                                <div
+                                  key={eventIndex}
+                                  className={`
+                                    flex-1 px-2 py-1 rounded-lg text-xs font-medium truncate shadow-sm
+                                    flex items-center justify-center text-center
+                                    ${event.type === 'booking' 
+                                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
+                                      : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
+                                    }
+                                  `}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                              {day.events.length > 2 && (
+                                <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium text-center">
+                                  +{day.events.length - 2} more
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
