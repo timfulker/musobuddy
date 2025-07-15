@@ -365,7 +365,7 @@ function generateContractEmailHtml(
         
         ${isSignedContract ? 
           `<p>Thank you for signing the contract! Your booking is now confirmed.</p>` : 
-          `<p>Please find attached your contract for the performance on ${new Date(contract.eventDate).toLocaleDateString()}.</p>`
+          `<p>Please find attached your contract for the performance on ${new Date(contract.eventDate).toLocaleDateString('en-GB')}.</p>`
         }
         
         ${customMessageHtml}
@@ -373,7 +373,7 @@ function generateContractEmailHtml(
         
         <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #374151; margin-top: 0;">📋 Event Details</h3>
-          <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString()}</p>
+          <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
           <p><strong>Time:</strong> ${contract.eventTime}</p>
           <p><strong>Venue:</strong> ${contract.venue}</p>
           <p><strong>Fee:</strong> £${contract.fee}</p>
@@ -426,8 +426,8 @@ function generateInvoiceEmailHtml(
           <h3 style="color: #374151; margin-top: 0;">💰 Payment Details</h3>
           <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
           <p><strong>Amount Due:</strong> £${invoice.amount}</p>
-          <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
-          ${invoice.performanceDate ? `<p><strong>Performance Date:</strong> ${new Date(invoice.performanceDate).toLocaleDateString()}</p>` : ''}
+          <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</p>
+          ${invoice.performanceDate ? `<p><strong>Performance Date:</strong> ${new Date(invoice.performanceDate).toLocaleDateString('en-GB')}</p>` : ''}
         </div>
         
         ${attachmentHtml}

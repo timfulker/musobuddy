@@ -57,7 +57,7 @@ export interface IStorage {
   createContract(contract: InsertContract): Promise<Contract>;
   updateContract(id: number, contract: Partial<InsertContract>, userId: string): Promise<Contract | undefined>;
   deleteContract(id: number, userId: string): Promise<boolean>;
-  signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date }): Promise<Contract | undefined>;
+  signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date; clientPhone?: string; clientAddress?: string }): Promise<Contract | undefined>;
   
   // Invoice operations
   getInvoices(userId: string): Promise<Invoice[]>;
@@ -269,14 +269,24 @@ export class DatabaseStorage implements IStorage {
     return contract;
   }
 
-  async signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date }): Promise<Contract | undefined> {
+  async signContract(id: number, signatureData: { signatureName: string; clientIP: string; signedAt: Date; clientPhone?: string; clientAddress?: string }): Promise<Contract | undefined> {
+    const updateData: any = {
+      status: 'signed',
+      signedAt: signatureData.signedAt,
+      updatedAt: new Date()
+    };
+    
+    // Add client-fillable fields if provided
+    if (signatureData.clientPhone) {
+      updateData.clientPhone = signatureData.clientPhone;
+    }
+    if (signatureData.clientAddress) {
+      updateData.clientAddress = signatureData.clientAddress;
+    }
+    
     const [signedContract] = await db
       .update(contracts)
-      .set({
-        status: 'signed',
-        signedAt: signatureData.signedAt,
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(eq(contracts.id, id))
       .returning();
     return signedContract;

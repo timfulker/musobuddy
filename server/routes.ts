@@ -1955,7 +1955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔥 CONTRACT SIGNING: Request body:', req.body);
       
       const contractId = parseInt(req.params.id);
-      const { signatureName, clientName, signature } = req.body;
+      const { signatureName, clientName, signature, clientPhone, clientAddress } = req.body;
       
       // Support both formats: old format (signatureName) and new format (clientName from cloud page)
       const finalSignatureName = signatureName || clientName;
@@ -1985,11 +1985,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get client IP for audit trail
       const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
       
-      // Update contract with signature
+      // Update contract with signature and client-fillable fields
       const signedContract = await storage.signContract(contractId, {
         signatureName: finalSignatureName.trim(),
         clientIP,
-        signedAt: new Date()
+        signedAt: new Date(),
+        clientPhone: clientPhone?.trim(),
+        clientAddress: clientAddress?.trim()
       });
       
       if (!signedContract) {

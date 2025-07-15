@@ -15,6 +15,7 @@ interface Contract {
   clientName: string;
   clientEmail: string;
   clientPhone?: string;
+  clientAddress?: string;
   eventDate: string;
   eventTime: string;
   venue: string;
@@ -22,6 +23,7 @@ interface Contract {
   terms?: string;
   status: string;
   signedAt?: string;
+  clientFillableFields?: string[];
 }
 
 interface UserSettings {
@@ -44,6 +46,9 @@ export default function SignContract() {
   const [signing, setSigning] = useState(false);
   const [signatureName, setSignatureName] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   // Load contract details
   useEffect(() => {
@@ -70,6 +75,22 @@ export default function SignContract() {
         
         // Pre-fill signature name with client name
         setSignatureName(contractData.clientName || "");
+        
+        // Pre-fill client fields if they exist
+        setClientPhone(contractData.clientPhone || "");
+        setClientAddress(contractData.clientAddress || "");
+        
+        // Check for missing client-fillable fields
+        const missing = [];
+        if (contractData.clientFillableFields) {
+          if (contractData.clientFillableFields.includes('clientPhone') && !contractData.clientPhone) {
+            missing.push('clientPhone');
+          }
+          if (contractData.clientFillableFields.includes('clientAddress') && !contractData.clientAddress) {
+            missing.push('clientAddress');
+          }
+        }
+        setMissingFields(missing);
         
       } catch (error) {
         console.error("Error loading contract:", error);
@@ -106,6 +127,22 @@ export default function SignContract() {
       return;
     }
 
+    // Check for missing required client-fillable fields
+    const requiredMissingFields = missingFields.filter(field => {
+      if (field === 'clientPhone' && !clientPhone.trim()) return true;
+      if (field === 'clientAddress' && !clientAddress.trim()) return true;
+      return false;
+    });
+
+    if (requiredMissingFields.length > 0) {
+      toast({
+        title: "Error",
+        description: "Please complete all required fields before signing",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSigning(true);
     try {
       const response = await fetch(`/api/contracts/sign/${contractId}`, {
@@ -115,6 +152,8 @@ export default function SignContract() {
         },
         body: JSON.stringify({
           signatureName: signatureName.trim(),
+          clientPhone: clientPhone.trim() || undefined,
+          clientAddress: clientAddress.trim() || undefined,
         }),
       });
 
@@ -313,8 +352,11 @@ export default function SignContract() {
                 <div className="space-y-2">
                   <p className="font-semibold">{contract.clientName}</p>
                   <p className="text-gray-600">Email: {contract.clientEmail}</p>
-                  {contract.clientPhone && (
-                    <p className="text-gray-600">Phone: {contract.clientPhone}</p>
+                  {(contract.clientPhone || clientPhone) && (
+                    <p className="text-gray-600">Phone: {contract.clientPhone || clientPhone}</p>
+                  )}
+                  {(contract.clientAddress || clientAddress) && (
+                    <p className="text-gray-600">Address: {contract.clientAddress || clientAddress}</p>
                   )}
                 </div>
               </CardContent>
@@ -342,6 +384,51 @@ export default function SignContract() {
                 <CardTitle>Digital Signature</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Client-fillable fields section */}
+                {missingFields.length > 0 && (
+                  <div className="space-y-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                    <h3 className="font-semibold text-blue-900 text-sm">
+                      Please complete your information:
+                    </h3>
+                    
+                    {missingFields.includes('clientPhone') && (
+                      <div>
+                        <Label htmlFor="clientPhone" className="text-blue-700 font-medium">
+                          Phone Number
+                        </Label>
+                        <Input
+                          id="clientPhone"
+                          type="tel"
+                          value={clientPhone}
+                          onChange={(e) => setClientPhone(e.target.value)}
+                          placeholder="07123 456789"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+                    
+                    {missingFields.includes('clientAddress') && (
+                      <div>
+                        <Label htmlFor="clientAddress" className="text-blue-700 font-medium">
+                          Address
+                        </Label>
+                        <Input
+                          id="clientAddress"
+                          type="text"
+                          value={clientAddress}
+                          onChange={(e) => setClientAddress(e.target.value)}
+                          placeholder="123 Main Street, London, SW1A 1AA"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-blue-600">
+                      These fields are required to complete the contract signing process.
+                    </p>
+                  </div>
+                )}
+                
                 <div>
                   <Label htmlFor="signatureName">Full Name</Label>
                   <Input
