@@ -333,7 +333,7 @@ function generateContractEmailHtml(
       <p style="margin: 10px 0;">Please review and sign this contract to confirm your booking.</p>
       <div style="text-align: center; margin: 20px 0;">
         <a href="${cloudSigningUrl || `https://musobuddy.replit.app/sign-contract/${contract.id}`}" 
-           style="background-color: #2563eb; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px; border: 2px solid #1d4ed8; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.2s;">
+           style="background-color: #1e40af; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px; border: none; box-shadow: 0 3px 6px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">
           📝 Sign Contract Online
         </a>
       </div>

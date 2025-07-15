@@ -2109,9 +2109,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </div>
               
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${contractViewUrl}" style="background: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin-right: 10px;">View Signed Contract</a>
-                <a href="${contractDownloadUrl}" style="background: #6B7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Download PDF</a>
-                ${cloudStorageUrl ? `<br><br><a href="${cloudStorageUrl}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">📱 Permanent Download Link</a>` : ''}
+                <div style="margin-bottom: 15px;">
+                  <a href="${contractViewUrl}" style="background: #1e40af; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin: 5px; font-size: 16px; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">📄 View Contract Online</a>
+                </div>
+                <div style="margin-bottom: 15px;">
+                  <a href="${contractDownloadUrl}" style="background: #dc2626; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin: 5px; font-size: 16px; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">📥 Download PDF</a>
+                </div>
+                ${cloudStorageUrl ? `<div style="margin-bottom: 15px;"><a href="${cloudStorageUrl}" style="background: #059669; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin: 5px; font-size: 16px; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">💾 Backup Download Link</a></div>` : ''}
               </div>
               
               <p style="color: #6B7280; font-size: 14px;">
@@ -2179,9 +2183,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${contractViewUrl}" style="background: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; margin-right: 10px;">View Signed Contract</a>
-                  <a href="${contractDownloadUrl}" style="background: #6B7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Download PDF</a>
-                  ${cloudStorageUrl ? `<br><br><a href="${cloudStorageUrl}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">📱 Permanent Download Link</a>` : ''}
+                  <div style="margin-bottom: 15px;">
+                    <a href="${contractViewUrl}" style="background: #1e40af; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin: 5px; font-size: 16px; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">📄 View Contract Online</a>
+                  </div>
+                  <div style="margin-bottom: 15px;">
+                    <a href="${contractDownloadUrl}" style="background: #dc2626; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin: 5px; font-size: 16px; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">📥 Download PDF</a>
+                  </div>
+                  ${cloudStorageUrl ? `<div style="margin-bottom: 15px;"><a href="${cloudStorageUrl}" style="background: #059669; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; margin: 5px; font-size: 16px; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">💾 Backup Download Link</a></div>` : ''}
                 </div>
                 
                 <p style="background: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
