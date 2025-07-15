@@ -296,13 +296,13 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-bold">Settings</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
             {isMobile && (
               <Button
                 variant="outline"
@@ -316,8 +316,9 @@ export default function Settings() {
           </div>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-4xl mx-auto">
             
             {/* Business Information */}
             <Card>
@@ -601,8 +602,9 @@ export default function Settings() {
                 {saveSettingsMutation.isPending ? "Saving..." : "Save Settings"}
               </Button>
             </div>
-          </form>
-        </Form>
+            </form>
+          </Form>
+        </div>
       </div>
       
       {isMobile && <MobileNav />}
