@@ -1,9 +1,9 @@
 import {
   users,
-  enquiries,
+  bookings,
   contracts,
   invoices,
-  bookings,
+  actualBookings,
   complianceDocuments,
   userSettings,
   type User,

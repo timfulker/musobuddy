@@ -297,9 +297,9 @@ export const contractsRelations = relations(contracts, ({ one, many }) => ({
     fields: [contracts.userId],
     references: [users.id],
   }),
-  enquiry: one(enquiries, {
+  booking: one(bookings, {
     fields: [contracts.enquiryId],
-    references: [enquiries.id],
+    references: [bookings.id],
   }),
   invoices: many(invoices),
   bookings: many(bookings),
@@ -318,11 +318,11 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
 
 export const actualBookingsRelations = relations(actualBookings, ({ one }) => ({
   user: one(users, {
-    fields: [bookings.userId],
+    fields: [actualBookings.userId],
     references: [users.id],
   }),
   contract: one(contracts, {
-    fields: [bookings.contractId],
+    fields: [actualBookings.contractId],
     references: [contracts.id],
   }),
 }));
@@ -342,12 +342,6 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 }));
 
 // Insert schemas
-export const insertBookingSchema = createInsertSchema(bookings).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 export const insertContractSchema = createInsertSchema(contracts).omit({
   id: true,
   createdAt: true,
