@@ -202,7 +202,11 @@ export const userSettings = pgTable("user_settings", {
   defaultBufferTime: integer("default_buffer_time").default(90), // minutes
   maxTravelDistance: integer("max_travel_distance").default(100), // miles
   homePostcode: varchar("home_postcode"), // For distance calculations
-  gigTypes: text("gig_types"), // JSON array of gig types: ["Sax", "DJ", "Band", "Piano", etc.]
+  // AI-powered instrument and gig type system
+  selectedInstruments: text("selected_instruments"), // JSON array of selected instruments from CSV
+  aiGeneratedGigTypes: text("ai_generated_gig_types"), // JSON array of AI-generated gig types
+  customGigTypes: text("custom_gig_types"), // JSON array of user-added custom gig types  
+  gigTypes: text("gig_types"), // JSON array of final gig types (AI + custom combined)
   eventTypes: text("event_types"), // Custom event types for enquiry forms
   instrumentsPlayed: text("instruments_played"), // What instruments/services the user plays
   customInstruments: text("custom_instruments"), // User-added custom instruments JSON array

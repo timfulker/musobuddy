@@ -1,0 +1,52 @@
+Title: Instrument-Based Gig Type Generator – MusoBuddy Integration
+
+Objective:
+To streamline and personalise the MusoBuddy user experience by using selected instruments to generate relevant gig types via AI. These gig types will then be used to autofill various fields in the enquiries and contracts sections of the app.
+
+Functionality Overview:
+
+1. **Instrument Selection (User Settings)**
+   - Users are presented with a list of common instruments (e.g., saxophone, DJ controller, guitar, vocals, keyboard, etc.).
+   - Users can tick all the instruments they actively perform with.
+   - This is optional but encouraged. It can be part of onboarding or accessed later via profile settings.
+
+2. **AI-Generated Gig Types**
+   - Once instrument selections are saved, the app sends this list to an AI API (e.g., OpenAI GPT-4).
+   - Prompt Example:
+     “Based on the following instruments: [list], generate 3 to 5 common gig types that a freelance musician might offer for weddings, parties, or corporate functions. Include a short description of each.”
+   - The AI returns a list of gig types, each with:
+     - A title (e.g., "Solo Sax for Ceremonies")
+     - A short description
+   - These are stored as the user’s gig templates.
+
+3. **User Confirmation & Editing**
+   - The user can review the AI-generated list.
+   - They can:
+     - Edit titles or descriptions
+     - Delete or rename gig types
+     - Add their own manually
+   - Optional metadata fields can be added per gig type (e.g., pricing, setup time, set length).
+
+4. **Usage of Gig Types**
+   - Gig types are used to pre-fill relevant information in:
+     - Enquiries: to streamline communication
+     - Contracts: to automate clause generation (e.g., gear, services offered, performance time)
+   - Example: If a user selects “Sax & DJ Combo,” the enquiry form auto-fills expected services and pricing ranges.
+
+Benefits:
+- Reduces manual input from users
+- Creates personalised, reusable gig templates
+- Encourages users to think about and organise their service offerings
+- Makes AI feel useful, not gimmicky
+
+Future Enhancements (optional):
+- Use genre preference and location to further tailor gig types
+- Let users mark “preferred” or “featured” gig types
+- AI refinement based on popular gigs in user’s region
+
+Implementation Notes:
+- Focus on a clean, simple UI for instrument selection and gig type review.
+- Ensure all AI output is editable by the user before being used in contracts or communication.
+- Gig types should be easily managed in a centralised part of the dashboard.
+
+End of Document.

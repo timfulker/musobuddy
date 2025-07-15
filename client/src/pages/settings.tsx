@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,10 +12,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, FileText, User, Music, Settings as SettingsIcon } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, FileText, User, Music, Settings as SettingsIcon, X, Plus, Search, Loader2 } from "lucide-react";
+
+// Available instruments from the CSV
+const AVAILABLE_INSTRUMENTS = [
+  "Violin", "Cello", "Double Bass", "Electric Guitar", "Acoustic Guitar", "Bass Guitar",
+  "Flute", "Clarinet", "Alto Saxophone", "Tenor Saxophone", "Baritone Saxophone",
+  "Trumpet", "Trombone", "French Horn", "Tuba", "Piano", "Electric Keyboard", 
+  "Synthesizer", "Drum Kit", "Cajón", "Congas", "Bongos", "Djembe", "Tambourine",
+  "Triangle", "Lead Vocals", "Backing Vocals", "DJ Controller", "Laptop", "Sampler"
+];
 
 // Schema for form validation
 const settingsFormSchema = z.object({
@@ -35,7 +45,7 @@ const settingsFormSchema = z.object({
   accountName: z.string().optional(),
   sortCode: z.string().optional(),
   accountNumber: z.string().optional(),
-  instruments: z.array(z.string()).optional(),
+  selectedInstruments: z.array(z.string()).optional(),
   gigTypes: z.array(z.string()).optional(),
 });
 
@@ -48,6 +58,12 @@ export default function Settings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Test basic form setup
+  // State for instrument selection
+  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
+  const [gigTypes, setGigTypes] = useState<string[]>([]);
+  const [instrumentSearch, setInstrumentSearch] = useState("");
+  const [isGeneratingGigTypes, setIsGeneratingGigTypes] = useState(false);
+
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
@@ -67,17 +83,138 @@ export default function Settings() {
       accountName: "",
       sortCode: "",
       accountNumber: "",
-      instruments: [],
+      selectedInstruments: [],
       gigTypes: [],
+    },
+  });
+
+  // Load existing settings data
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ['/api/settings'],
+    select: (data) => {
+      console.log('Settings data loaded:', data);
+      return data;
+    },
+  });
+
+  // Update local state when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      console.log('Updating form with settings:', settings);
+      form.reset(settings);
+      setSelectedInstruments(settings.selectedInstruments || []);
+      setGigTypes(settings.gigTypes || []);
+    }
+  }, [settings, form]);
+
+  // Function to generate AI-powered gig types
+  const generateGigTypes = async (instruments: string[]) => {
+    if (!instruments.length) return [];
+    
+    setIsGeneratingGigTypes(true);
+    try {
+      const response = await fetch('/api/gig-suggestions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ instruments }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate gig types');
+      }
+      
+      const suggestions = await response.json();
+      return suggestions || [];
+    } catch (error) {
+      console.error('Error generating gig types:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate gig types. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    } finally {
+      setIsGeneratingGigTypes(false);
+    }
+  };
+
+  // Handle instrument selection changes
+  const handleInstrumentToggle = async (instrument: string) => {
+    const newSelectedInstruments = selectedInstruments.includes(instrument)
+      ? selectedInstruments.filter(i => i !== instrument)
+      : [...selectedInstruments, instrument];
+    
+    setSelectedInstruments(newSelectedInstruments);
+    form.setValue('selectedInstruments', newSelectedInstruments);
+    
+    // Generate new gig types based on selected instruments
+    if (newSelectedInstruments.length > 0) {
+      const newGigTypes = await generateGigTypes(newSelectedInstruments);
+      setGigTypes(newGigTypes);
+      form.setValue('gigTypes', newGigTypes);
+    } else {
+      setGigTypes([]);
+      form.setValue('gigTypes', []);
+    }
+  };
+
+  // Handle gig type removal
+  const handleRemoveGigType = (gigType: string) => {
+    const newGigTypes = gigTypes.filter(gt => gt !== gigType);
+    setGigTypes(newGigTypes);
+    form.setValue('gigTypes', newGigTypes);
+  };
+
+  // Filter instruments based on search
+  const filteredInstruments = AVAILABLE_INSTRUMENTS.filter(instrument =>
+    instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
+  );
+
+  // Save settings mutation
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Settings saved successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    },
+    onError: (error) => {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
   const onSubmit = (data: SettingsFormData) => {
     console.log("Form submitted:", data);
-    toast({
-      title: "Settings saved",
-      description: "Your business settings have been updated successfully.",
-    });
+    // Include the current selected instruments and gig types
+    const formData = {
+      ...data,
+      selectedInstruments,
+      gigTypes,
+    };
+    saveSettingsMutation.mutate(formData);
   };
 
   return (
@@ -382,75 +519,115 @@ export default function Settings() {
                     Musical Services
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="instruments"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Instruments You Play</FormLabel>
-                        <FormControl>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {["Piano", "Guitar", "Saxophone", "Drums", "Vocals", "Violin", "Trumpet", "Bass"].map((instrument) => (
-                              <div key={instrument} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={instrument}
-                                  checked={field.value?.includes(instrument)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      field.onChange([...(field.value || []), instrument]);
-                                    } else {
-                                      field.onChange(field.value?.filter((v: string) => v !== instrument));
-                                    }
-                                  }}
-                                />
-                                <Label htmlFor={instrument} className="text-sm">{instrument}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <CardContent className="space-y-6">
+                  {/* Instruments Selection */}
+                  <div className="space-y-3">
+                    <Label>Instruments You Play</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search instruments..."
+                        value={instrumentSearch}
+                        onChange={(e) => setInstrumentSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    {/* Available Instruments - Filterable Chips */}
+                    <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+                      {filteredInstruments.map((instrument) => (
+                        <Button
+                          key={instrument}
+                          type="button"
+                          variant={selectedInstruments.includes(instrument) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleInstrumentToggle(instrument)}
+                          className="text-sm"
+                        >
+                          {selectedInstruments.includes(instrument) ? (
+                            <>
+                              <X className="h-3 w-3 mr-1" />
+                              {instrument}
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-3 w-3 mr-1" />
+                              {instrument}
+                            </>
+                          )}
+                        </Button>
+                      ))}
+                    </div>
 
-                  <FormField
-                    control={form.control}
-                    name="gigTypes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gig Types</FormLabel>
-                        <FormControl>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {["Wedding", "Corporate", "Birthday Party", "Jazz Club", "Private Event", "Restaurant"].map((gigType) => (
-                              <div key={gigType} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={gigType}
-                                  checked={field.value?.includes(gigType)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      field.onChange([...(field.value || []), gigType]);
-                                    } else {
-                                      field.onChange(field.value?.filter((v: string) => v !== gigType));
-                                    }
-                                  }}
-                                />
-                                <Label htmlFor={gigType} className="text-sm">{gigType}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                    {/* Selected Instruments - Removable Tags */}
+                    {selectedInstruments.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Selected Instruments</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedInstruments.map((instrument) => (
+                            <Badge key={instrument} variant="secondary" className="text-sm">
+                              {instrument}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleInstrumentToggle(instrument)}
+                                className="h-auto p-0 ml-2 hover:bg-transparent"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  />
+                  </div>
+
+                  {/* AI-Generated Gig Types */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Label>Suggested Gig Types</Label>
+                      {isGeneratingGigTypes && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Generating...
+                        </div>
+                      )}
+                    </div>
+                    
+                    {gigTypes.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {gigTypes.map((gigType) => (
+                          <Badge key={gigType} variant="default" className="text-sm">
+                            {gigType}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveGigType(gigType)}
+                              className="h-auto p-0 ml-2 hover:bg-transparent"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg">
+                        {selectedInstruments.length > 0 
+                          ? "Generating gig types based on your instruments..."
+                          : "Select instruments above to see suggested gig types"
+                        }
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
               <div className="flex justify-end">
-                <Button type="submit" size="lg" className="bg-green-600 hover:bg-green-700">
+                <Button type="submit" size="lg" className="bg-green-600 hover:bg-green-700" disabled={saveSettingsMutation.isPending}>
                   <Save className="h-4 w-4 mr-2" />
-                  Save Settings
+                  {saveSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
                 </Button>
               </div>
             </form>
