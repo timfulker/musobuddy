@@ -27,6 +27,13 @@ const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).exten
 export default function Settings() {
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Debug logging for authentication context
+  React.useEffect(() => {
+    console.log("Settings page loaded");
+    console.log("Current URL:", window.location.href);
+    console.log("Document cookies:", document.cookie);
+  }, []);
   const [bankDetails, setBankDetails] = useState({
     bankName: "",
     accountName: "",
@@ -54,6 +61,13 @@ export default function Settings() {
 
   const { data: settings = {}, isLoading, error } = useQuery({
     queryKey: ["/api/settings"],
+    retry: 1,
+    onError: (error) => {
+      console.error("Settings query error:", error);
+    },
+    onSuccess: (data) => {
+      console.log("Settings query success:", data);
+    }
   });
 
   const form = useForm<z.infer<typeof settingsFormSchema>>({
@@ -497,6 +511,31 @@ export default function Settings() {
   }
 
   if (error) {
+    // Check if it's an authentication error
+    const isAuthError = error.message?.includes('authentication failed') || 
+                       error.message?.includes('401') || 
+                       error.message?.includes('User authentication failed');
+    
+    if (isAuthError) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-amber-600 mb-2">Authentication Required</h2>
+              <p className="text-gray-600 mb-4">Please log in to access your settings.</p>
+              <Button 
+                onClick={() => window.location.href = '/api/auth/login'} 
+                className="mt-4"
+                variant="default"
+              >
+                Log In
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">

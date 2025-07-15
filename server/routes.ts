@@ -2055,16 +2055,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // Generate contract download links (app-dependent - fallback if cloud storage fails)
+        // Generate contract view URL - prioritize cloud storage URL over app-dependent URL
         const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
         const contractDownloadUrl = `https://${currentDomain}/api/contracts/${signedContract.id}/download`;
-        const contractViewUrl = `https://${currentDomain}/view-contract/${signedContract.id}`;
+        const contractViewUrl = cloudStorageUrl || `https://${currentDomain}/view-contract/${signedContract.id}`;
         
         console.log('🔥 CONTRACT SIGNING: Domain configuration:', {
           REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
           currentDomain,
           contractDownloadUrl,
-          contractViewUrl
+          contractViewUrl,
+          cloudStorageUrl,
+          usingCloudStorage: !!cloudStorageUrl
         });
         
         // Smart email handling - use authenticated domain for sending, Gmail for replies
