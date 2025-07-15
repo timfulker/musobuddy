@@ -410,10 +410,10 @@ export default function Settings() {
 
   // ✅ Auto-populate gig types when instruments change
   React.useEffect(() => {
-    if (hasInitialized) {
+    if (selectedInstruments.length > 0) {
       updateGigTypesFromInstruments();
     }
-  }, [selectedInstruments, hasInitialized]);
+  }, [selectedInstruments]);
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
