@@ -30,21 +30,14 @@ const AVAILABLE_INSTRUMENTS = [
 // Schema for form validation
 const settingsFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
-  addressLine1: z.string().min(1, "Address line 1 is required"),
-  addressLine2: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  postcode: z.string().min(1, "Postcode is required"),
+  businessAddress: z.string().min(1, "Business address is required"),
   phone: z.string().min(1, "Phone number is required"),
   website: z.string().optional(),
   taxNumber: z.string().optional(),
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.string().min(1, "Next invoice number is required"),
-  contractTerms: z.string().optional(),
-  paymentTerms: z.string().optional(),
-  bankName: z.string().optional(),
-  accountName: z.string().optional(),
-  sortCode: z.string().optional(),
-  accountNumber: z.string().optional(),
+  defaultTerms: z.string().optional(),
+  bankDetails: z.string().optional(),
   selectedInstruments: z.array(z.string()).optional(),
   gigTypes: z.array(z.string()).optional(),
 });
@@ -68,21 +61,14 @@ export default function Settings() {
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       businessName: "",
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      postcode: "",
+      businessAddress: "",
       phone: "",
       website: "",
       taxNumber: "",
       emailFromName: "",
       nextInvoiceNumber: "00001",
-      contractTerms: "",
-      paymentTerms: "",
-      bankName: "",
-      accountName: "",
-      sortCode: "",
-      accountNumber: "",
+      defaultTerms: "",
+      bankDetails: "",
       selectedInstruments: [],
       gigTypes: [],
     },
@@ -281,12 +267,12 @@ export default function Settings() {
 
                   <FormField
                     control={form.control}
-                    name="addressLine1"
+                    name="businessAddress"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address Line 1</FormLabel>
+                        <FormLabel>Business Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your street address" {...field} />
+                          <Textarea placeholder="Enter your full business address" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -295,61 +281,17 @@ export default function Settings() {
 
                   <FormField
                     control={form.control}
-                    name="addressLine2"
+                    name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address Line 2 (Optional)</FormLabel>
+                        <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="Apartment, suite, etc." {...field} />
+                          <Input placeholder="Enter your phone number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your city" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="postcode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Postcode</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your postcode" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your phone number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -408,77 +350,17 @@ export default function Settings() {
 
                   <FormField
                     control={form.control}
-                    name="paymentTerms"
+                    name="bankDetails"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Payment Terms</FormLabel>
+                        <FormLabel>Bank Details</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="e.g., Payment due within 30 days of invoice date" {...field} />
+                          <Textarea placeholder="Enter your bank details (bank name, account name, sort code, account number)" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="bankName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bank Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your bank name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="accountName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Account Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter account holder name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="sortCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sort Code</FormLabel>
-                          <FormControl>
-                            <Input placeholder="12-34-56" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="accountNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Account Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="12345678" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </CardContent>
               </Card>
 
@@ -493,7 +375,7 @@ export default function Settings() {
                 <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="contractTerms"
+                    name="defaultTerms"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Default Contract Terms</FormLabel>

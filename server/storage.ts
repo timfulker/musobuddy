@@ -682,11 +682,59 @@ export class DatabaseStorage implements IStorage {
 
   // User settings operations
   async getUserSettings(userId: string): Promise<UserSettings | undefined> {
-    const [settings] = await db
-      .select()
-      .from(userSettings)
-      .where(eq(userSettings.userId, userId));
-    return settings;
+    try {
+      const [settings] = await db
+        .select()
+        .from(userSettings)
+        .where(eq(userSettings.userId, userId));
+      
+      // Handle missing columns gracefully
+      if (settings) {
+        return {
+          ...settings,
+          selectedInstruments: settings.selectedInstruments || null,
+          aiGeneratedGigTypes: settings.aiGeneratedGigTypes || null,
+          customGigTypes: settings.customGigTypes || null,
+          gigTypes: settings.gigTypes || null,
+          eventTypes: settings.eventTypes || null,
+          instrumentsPlayed: settings.instrumentsPlayed || null,
+          customInstruments: settings.customInstruments || null,
+        };
+      }
+      return settings;
+    } catch (error) {
+      console.error('Error fetching user settings:', error);
+      // Return default settings structure if columns don't exist
+      return {
+        userId,
+        businessName: null,
+        businessEmail: null,
+        businessAddress: null,
+        phone: null,
+        website: null,
+        taxNumber: null,
+        bankDetails: null,
+        defaultTerms: null,
+        emailFromName: null,
+        nextInvoiceNumber: 1,
+        defaultSetupTime: 60,
+        defaultBreakdownTime: 30,
+        weddingBufferTime: 120,
+        corporateBufferTime: 60,
+        defaultBufferTime: 90,
+        maxTravelDistance: 100,
+        homePostcode: null,
+        selectedInstruments: null,
+        aiGeneratedGigTypes: null,
+        customGigTypes: null,
+        gigTypes: null,
+        eventTypes: null,
+        instrumentsPlayed: null,
+        customInstruments: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as UserSettings;
+    }
   }
 
   async upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
