@@ -732,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update enquiry status to indicate response sent
         await storage.updateEnquiry(enquiryId, { 
           status: 'qualified',
-          notes: enquiry.notes ? `${enquiry.notes}\n\n--- Response sent on ${new Date().toLocaleDateString()} ---\nSubject: ${subject}\nMessage: ${body}` : `Response sent on ${new Date().toLocaleDateString()}\nSubject: ${subject}\nMessage: ${body}`
+          notes: enquiry.notes ? `${enquiry.notes}\n\n--- Response sent on ${new Date().toLocaleDateString('en-GB')} ---\nSubject: ${subject}\nMessage: ${body}` : `Response sent on ${new Date().toLocaleDateString('en-GB')}\nSubject: ${subject}\nMessage: ${body}`
         }, userId);
         
         res.json({ success: true, message: 'Response sent successfully' });

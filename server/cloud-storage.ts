@@ -610,7 +610,7 @@ function generateContractSigningPageHtml(
                 
                 <div class="detail-item">
                     <div class="detail-label">Event Date</div>
-                    <div class="detail-value">${new Date(contract.eventDate).toLocaleDateString()}</div>
+                    <div class="detail-value">${new Date(contract.eventDate).toLocaleDateString('en-GB')}</div>
                 </div>
                 
                 <div class="detail-item">
