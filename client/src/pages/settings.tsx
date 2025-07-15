@@ -20,15 +20,21 @@ import { Building, Save, MapPin, Globe, Hash, CreditCard, FileText, User, Music,
 // Schema for form validation
 const settingsFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
-  address: z.string().min(1, "Address is required"),
+  addressLine1: z.string().min(1, "Address line 1 is required"),
+  addressLine2: z.string().optional(),
+  city: z.string().min(1, "City is required"),
+  postcode: z.string().min(1, "Postcode is required"),
   phone: z.string().min(1, "Phone number is required"),
   website: z.string().optional(),
   taxNumber: z.string().optional(),
-  bankDetails: z.string().optional(),
-  paymentTerms: z.string().optional(),
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.string().min(1, "Next invoice number is required"),
   contractTerms: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  bankName: z.string().optional(),
+  accountName: z.string().optional(),
+  sortCode: z.string().optional(),
+  accountNumber: z.string().optional(),
   instruments: z.array(z.string()).optional(),
   gigTypes: z.array(z.string()).optional(),
 });
@@ -46,15 +52,21 @@ export default function Settings() {
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       businessName: "",
-      address: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      postcode: "",
       phone: "",
       website: "",
       taxNumber: "",
-      bankDetails: "",
-      paymentTerms: "",
       emailFromName: "",
       nextInvoiceNumber: "00001",
       contractTerms: "",
+      paymentTerms: "",
+      bankName: "",
+      accountName: "",
+      sortCode: "",
+      accountNumber: "",
       instruments: [],
       gigTypes: [],
     },
@@ -91,106 +103,343 @@ export default function Settings() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               
-              {/* Test with single simple field first */}
+              {/* Business Information Section */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Building className="h-5 w-5" />
-                    Business Information - Test
+                    Business Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="businessName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your business name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="emailFromName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email From Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your name for email sending" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="addressLine1"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address Line 1</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your street address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="addressLine2"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address Line 2 (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Apartment, suite, etc." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your city" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="postcode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Postcode</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your postcode" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your phone number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="website"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Website (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="https://your-website.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="taxNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tax Number (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your tax/VAT number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payment & Banking Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Payment & Banking
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="businessName"
+                    name="nextInvoiceNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Business Name</FormLabel>
+                        <FormLabel>Next Invoice Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your business name" {...field} />
+                          <Input placeholder="00001" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
-                    name="address"
+                    name="paymentTerms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address</FormLabel>
+                        <FormLabel>Payment Terms</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Enter your business address" {...field} />
+                          <Textarea placeholder="e.g., Payment due within 30 days of invoice date" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="bankName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bank Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your bank name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="accountName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Account Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter account holder name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="sortCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sort Code</FormLabel>
+                          <FormControl>
+                            <Input placeholder="12-34-56" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="accountNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Account Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="12345678" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Contract & Legal Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Contract & Legal
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="contractTerms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone</FormLabel>
+                        <FormLabel>Default Contract Terms</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your phone number" {...field} />
+                          <Textarea 
+                            placeholder="Enter your standard contract terms and conditions..."
+                            className="min-h-[100px]"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+                </CardContent>
+              </Card>
+
+              {/* Musical Services Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Music className="h-5 w-5" />
+                    Musical Services
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="instruments"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Instruments You Play</FormLabel>
+                        <FormControl>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {["Piano", "Guitar", "Saxophone", "Drums", "Vocals", "Violin", "Trumpet", "Bass"].map((instrument) => (
+                              <div key={instrument} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={instrument}
+                                  checked={field.value?.includes(instrument)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      field.onChange([...(field.value || []), instrument]);
+                                    } else {
+                                      field.onChange(field.value?.filter((v: string) => v !== instrument));
+                                    }
+                                  }}
+                                />
+                                <Label htmlFor={instrument} className="text-sm">{instrument}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="gigTypes"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Gig Types</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select gig types" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="wedding">Wedding</SelectItem>
-                            <SelectItem value="corporate">Corporate</SelectItem>
-                            <SelectItem value="party">Party</SelectItem>
-                            <SelectItem value="jazz">Jazz</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="instruments"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Instruments</FormLabel>
-                        <div className="space-y-2">
-                          {["Piano", "Guitar", "Saxophone", "Violin", "Drums"].map((instrument) => (
-                            <div key={instrument} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={instrument}
-                                checked={field.value?.includes(instrument)}
-                                onCheckedChange={(checked) => {
-                                  const currentValue = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...currentValue, instrument]);
-                                  } else {
-                                    field.onChange(currentValue.filter((item) => item !== instrument));
-                                  }
-                                }}
-                              />
-                              <Label htmlFor={instrument}>{instrument}</Label>
-                            </div>
-                          ))}
-                        </div>
+                        <FormControl>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {["Wedding", "Corporate", "Birthday Party", "Jazz Club", "Private Event", "Restaurant"].map((gigType) => (
+                              <div key={gigType} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={gigType}
+                                  checked={field.value?.includes(gigType)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      field.onChange([...(field.value || []), gigType]);
+                                    } else {
+                                      field.onChange(field.value?.filter((v: string) => v !== gigType));
+                                    }
+                                  }}
+                                />
+                                <Label htmlFor={gigType} className="text-sm">{gigType}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
