@@ -36,7 +36,7 @@ const contractFormSchema = z.object({
   // Optional fields (can be filled by musician or marked as client-fillable)
   clientAddress: z.string().optional(),
   clientPhone: z.string().optional(),
-  clientEmail: z.string().email("Valid email required").optional().or(z.literal("")),
+  clientEmail: z.string().email("Valid email required").min(1, "Client email is required for contract delivery"),
   venueAddress: z.string().optional(),
   
   // Essential rider/payment information
@@ -693,6 +693,19 @@ export default function Contracts() {
                               </FormItem>
                             )}
                           />
+                          <FormField
+                            control={form.control}
+                            name="clientEmail"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Client Email *</FormLabel>
+                                <FormControl>
+                                  <Input type="email" placeholder="client@example.com" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
                       </div>
 
@@ -704,19 +717,6 @@ export default function Contracts() {
                         </h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="clientEmail"
-                            render={({ field }) => (
-                              <FormItem className="space-y-2">
-                                <FormLabel className="text-blue-600 font-medium">Client Email</FormLabel>
-                                <FormControl>
-                                  <Input type="email" placeholder="client@example.com" {...field} value={field.value || ""} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
                           <FormField
                             control={form.control}
                             name="clientPhone"

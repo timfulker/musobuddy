@@ -2065,6 +2065,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const clientEmailResult = await sendEmail(clientEmailData);
         console.log('🔥 CONTRACT SIGNING: Client email result:', clientEmailResult);
         
+        // Enhanced logging for debugging confirmation email issues
+        if (!clientEmailResult) {
+          console.error('❌ CLIENT CONFIRMATION EMAIL FAILED TO SEND');
+          console.error('Email data that failed:', JSON.stringify(clientEmailData, null, 2));
+        } else {
+          console.log('✅ CLIENT CONFIRMATION EMAIL SENT SUCCESSFULLY');
+        }
+        
         // Email to performer (business owner) with download link
         if (userSettings?.businessEmail) {
           const performerEmailData: any = {
@@ -2124,9 +2132,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           const performerEmailResult = await sendEmail(performerEmailData);
           console.log('🔥 CONTRACT SIGNING: Performer email result:', performerEmailResult);
+          
+          // Enhanced logging for debugging performer confirmation email issues
+          if (!performerEmailResult) {
+            console.error('❌ PERFORMER CONFIRMATION EMAIL FAILED TO SEND');
+            console.error('Email data that failed:', JSON.stringify(performerEmailData, null, 2));
+          } else {
+            console.log('✅ PERFORMER CONFIRMATION EMAIL SENT SUCCESSFULLY');
+          }
         }
       } catch (emailError) {
-        console.error("Error sending confirmation emails:", emailError);
+        console.error("❌ CRITICAL ERROR: Failed to send confirmation emails:", emailError);
+        console.error("Email error details:", {
+          message: emailError.message,
+          stack: emailError.stack,
+          name: emailError.name,
+          status: emailError.status,
+          type: emailError.type
+        });
         // Don't fail the signing process if email fails
       }
       
