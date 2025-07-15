@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Inbox, Calendar, CalendarDays, PoundSterling, User, BookOpen } from "lucide-react";
+import { Home, Inbox, Calendar, PoundSterling, User, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useResponsive } from "@/hooks/useResponsive";
 
@@ -33,13 +33,7 @@ export default function MobileNav() {
           <Inbox className="w-5 h-5" />
           <span className={cn("text-xs", isActive("/enquiries") && "font-medium")}>Enquiries</span>
         </Link>
-        <Link href="/schedule-bookings" className={cn(
-          "flex flex-col items-center space-y-1 py-2 px-1",
-          isActive("/schedule-bookings") ? "text-purple-600" : "text-gray-500 dark:text-gray-400"
-        )}>
-          <CalendarDays className="w-5 h-5" />
-          <span className={cn("text-xs", isActive("/schedule-bookings") && "font-medium")}>Schedule</span>
-        </Link>
+
         <Link href="/calendar" className={cn(
           "flex flex-col items-center space-y-1 py-2 px-1",
           isActive("/calendar") ? "text-purple-600" : "text-gray-500 dark:text-gray-400"

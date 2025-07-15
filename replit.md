@@ -934,6 +934,13 @@ This applies to any changes in:
   * **Mobile Friendly**: Time picker works seamlessly on mobile devices with touch-optimized interface
   * **Cross-Browser Support**: Uses native browser time picker for consistent user experience across platforms
   * **Status**: Time entry system enhanced with professional clock interface for improved usability
+- July 15, 2025. Application structure simplification - removed Schedule & Bookings page:
+  * **Removed schedule-bookings page**: Eliminated the dedicated Schedule & Bookings page from the application
+  * **Updated navigation**: Removed Schedule & Bookings links from both sidebar and mobile navigation
+  * **Simplified routing**: Removed /schedule-bookings route from App.tsx routing configuration
+  * **Cleaned imports**: Removed unused CalendarDays icons and schedule-bookings imports
+  * **Streamlined UX**: Reduced navigation complexity while maintaining core booking functionality through enquiries
+  * **Status**: Application now has cleaner navigation structure without redundant scheduling page
 
 ## Phase 1 Complete - July 14, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
