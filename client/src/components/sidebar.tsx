@@ -54,7 +54,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div 
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col",
+          "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col sidebar-consistent",
           // Always show on desktop (768px+), slide on mobile
           "transform",
           isDesktop ? "translate-x-0 z-30" : (isOpen ? "translate-x-0 z-50" : "-translate-x-full z-50")

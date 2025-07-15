@@ -2,6 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base font settings to prevent scaling issues */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent layout shifts on window resize */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure consistent viewport behavior */
+@media screen and (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Consistent sizing utilities */
+.sidebar-consistent {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+.layout-consistent {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Prevent layout shifts during window resize */
+.content-container {
+  transition: none !important;
+  will-change: auto !important;
+}
+
+/* Responsive layout utilities */
+@media (min-width: 768px) {
+  .main-content {
+    margin-left: 16rem; /* 64 * 0.25rem = 16rem */
+  }
+}
+
+@media (max-width: 767px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
 :root {
   /* Superhuman-inspired light theme */
   --background: hsl(0, 0%, 100%);
