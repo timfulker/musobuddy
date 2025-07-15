@@ -54,41 +54,50 @@ export const enquiries = pgTable("enquiries", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Contracts table
+// Contracts table - Musicians' Union minimum fields + essential rider information
 export const contracts = pgTable("contracts", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   enquiryId: integer("enquiry_id"), // Made optional for standalone contracts
   contractNumber: varchar("contract_number").notNull().unique(),
+  
+  // Client details (must be filled by musician OR client)
   clientName: varchar("client_name").notNull(),
-  clientEmail: varchar("client_email"),
+  clientAddress: text("client_address"),
   clientPhone: varchar("client_phone"),
+  clientEmail: varchar("client_email"),
+  
+  // Event details (must be filled by musician)
+  venue: varchar("venue").notNull(),
+  venueAddress: text("venue_address"),
   eventDate: timestamp("event_date").notNull(),
   eventTime: varchar("event_time").notNull(),
-  eventEndTime: varchar("event_end_time"), // End time for performance
-  performanceDuration: integer("performance_duration"), // Duration in minutes
-  venue: varchar("venue").notNull(),
-  venueAddress: text("venue_address"), // Full venue address
-  eventType: varchar("event_type"), // Wedding, Corporate, Birthday, etc.
-  gigType: varchar("gig_type"), // Saxophone, DJ, Band, etc.
-  setupTime: varchar("setup_time"), // Time needed for setup
-  soundCheckTime: varchar("sound_check_time"), // Time for sound check
-  equipmentProvided: text("equipment_provided"), // What equipment performer will bring
-  clientRequirements: text("client_requirements"), // Special client requests
-  dressCode: varchar("dress_code"), // Dress code requirements
+  eventEndTime: varchar("event_end_time").notNull(), // Finish time required by Musicians' Union
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
-  deposit: decimal("deposit", { precision: 10, scale: 2 }),
-  terms: text("terms"),
+  
+  // Essential rider/payment information
+  paymentInstructions: text("payment_instructions"), // How payment should be made
+  equipmentRequirements: text("equipment_requirements"), // Equipment needed from venue
+  specialRequirements: text("special_requirements"), // Any special rider requirements
+  
+  // Client-fillable field tracking
+  clientFillableFields: text("client_fillable_fields"), // JSON array of field names that client must fill
+  
+  // Contract management
   status: varchar("status").notNull().default("draft"), // draft, sent, signed, completed
   signedAt: timestamp("signed_at"),
+  
   // Automatic reminder system
   reminderEnabled: boolean("reminder_enabled").default(false),
   reminderDays: integer("reminder_days").default(3), // Days between reminders
   lastReminderSent: timestamp("last_reminder_sent"),
   reminderCount: integer("reminder_count").default(0),
+  
+  // Cloud storage for signing pages
   cloudStorageUrl: text("cloud_storage_url"),
   cloudStorageKey: text("cloud_storage_key"),
   signingUrlCreatedAt: timestamp("signing_url_created_at"), // Track when URL was generated
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -345,22 +354,16 @@ export const insertContractSchema = createInsertSchema(contracts).omit({
   lastReminderSent: true,
   reminderCount: true,
 }).partial({
-  // Make professional fields optional
+  // Make certain fields optional for creation
   enquiryId: true,
-  clientEmail: true,
+  clientAddress: true,
   clientPhone: true,
-  eventEndTime: true,
-  performanceDuration: true,
+  clientEmail: true,
   venueAddress: true,
-  eventType: true,
-  gigType: true,
-  setupTime: true,
-  soundCheckTime: true,
-  equipmentProvided: true,
-  clientRequirements: true,
-  dressCode: true,
-  deposit: true,
-  terms: true,
+  paymentInstructions: true,
+  equipmentRequirements: true,
+  specialRequirements: true,
+  clientFillableFields: true,
   reminderEnabled: true,
   reminderDays: true,
 });

@@ -24,27 +24,28 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 
 const contractFormSchema = z.object({
-  // Required fields only
+  // Required fields (Musicians' Union minimum)
   contractNumber: z.string().min(1, "Contract number is required"),
   clientName: z.string().min(1, "Client name is required"),
-  clientEmail: z.string().email("Valid email required").optional().or(z.literal("")),
-  clientPhone: z.string().optional(),
-  eventDate: z.string().min(1, "Event date is required"),
-  eventTime: z.string().min(1, "Event time is required"),
   venue: z.string().min(1, "Venue is required"),
+  eventDate: z.string().min(1, "Event date is required"),
+  eventTime: z.string().min(1, "Start time is required"),
+  eventEndTime: z.string().min(1, "Finish time is required"),
   fee: z.string().min(1, "Performance fee is required"),
   
-  // Optional professional fields
+  // Optional fields (can be filled by musician or marked as client-fillable)
+  clientAddress: z.string().optional(),
+  clientPhone: z.string().optional(),
+  clientEmail: z.string().email("Valid email required").optional().or(z.literal("")),
   venueAddress: z.string().optional(),
-  eventType: z.string().optional(),
-  gigType: z.string().optional(),
-  setupTime: z.string().optional(),
-  soundCheckTime: z.string().optional(),
-  equipmentProvided: z.string().optional(),
-  clientRequirements: z.string().optional(),
-  dressCode: z.string().optional(),
-  deposit: z.string().optional(),
-  terms: z.string().optional(),
+  
+  // Essential rider/payment information
+  paymentInstructions: z.string().optional(),
+  equipmentRequirements: z.string().optional(),
+  specialRequirements: z.string().optional(),
+  
+  // Client-fillable field tracking
+  clientFillableFields: z.array(z.string()).optional(),
   
   // System fields
   enquiryId: z.number().optional(),
@@ -91,23 +92,19 @@ export default function Contracts() {
       clientName: "",
       clientEmail: "",
       clientPhone: "",
+      clientAddress: "",
       eventDate: "",
       eventTime: "",
+      eventEndTime: "",
       venue: "",
       venueAddress: "",
-      eventType: "",
-      gigType: "",
-      setupTime: "",
-      soundCheckTime: "",
-      equipmentProvided: "",
-      clientRequirements: "",
-      dressCode: "",
       fee: "",
-      deposit: "",
-      terms: "",
+      paymentInstructions: "",
+      equipmentRequirements: "",
+      specialRequirements: "",
       status: "draft",
       reminderEnabled: false,
-      reminderDays: 7,
+      reminderDays: 3,
     },
   });
 
@@ -305,14 +302,18 @@ export default function Contracts() {
     form.setValue('clientName', contract.clientName);
     form.setValue('clientEmail', contract.clientEmail || '');
     form.setValue('clientPhone', contract.clientPhone || '');
+    form.setValue('clientAddress', contract.clientAddress || '');
     form.setValue('eventDate', contract.eventDate ? new Date(contract.eventDate).toISOString().split('T')[0] : '');
     form.setValue('eventTime', contract.eventTime || '');
+    form.setValue('eventEndTime', contract.eventEndTime || '');
     form.setValue('venue', contract.venue || '');
+    form.setValue('venueAddress', contract.venueAddress || '');
     form.setValue('fee', contract.fee);
-    form.setValue('deposit', contract.deposit || '');
-    form.setValue('terms', contract.terms || '');
+    form.setValue('paymentInstructions', contract.paymentInstructions || '');
+    form.setValue('equipmentRequirements', contract.equipmentRequirements || '');
+    form.setValue('specialRequirements', contract.specialRequirements || '');
     form.setValue('reminderEnabled', contract.reminderEnabled || false);
-    form.setValue('reminderDays', contract.reminderDays || 7);
+    form.setValue('reminderDays', contract.reminderDays || 3);
     setIsDialogOpen(true);
   };
 
@@ -823,13 +824,13 @@ export default function Contracts() {
 
                       <FormField
                         control={form.control}
-                        name="clientRequirements"
+                        name="paymentInstructions"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel>Client Requirements</FormLabel>
+                            <FormLabel>Payment Instructions</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Special requests, song requests, specific requirements, etc." 
+                                placeholder="How payment should be made (bank transfer, cash on day, etc.)" 
                                 {...field} 
                                 value={field.value || ""} 
                                 rows={2}
@@ -843,17 +844,37 @@ export default function Contracts() {
 
                       <FormField
                         control={form.control}
-                        name="terms"
+                        name="equipmentRequirements"
                         render={({ field }) => (
                           <FormItem className="space-y-2">
-                            <FormLabel>Terms & Conditions</FormLabel>
+                            <FormLabel>Equipment Requirements</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Payment terms, cancellation policy, etc..." 
+                                placeholder="Equipment needed from venue (power, microphones, etc.)" 
                                 {...field} 
                                 value={field.value || ""} 
-                                rows={4}
-                                className="min-h-[100px]"
+                                rows={2}
+                                className="min-h-[60px]"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="specialRequirements"
+                        render={({ field }) => (
+                          <FormItem className="space-y-2">
+                            <FormLabel>Special Requirements</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Any special requests or rider requirements" 
+                                {...field} 
+                                value={field.value || ""} 
+                                rows={2}
+                                className="min-h-[60px]"
                               />
                             </FormControl>
                             <FormMessage />

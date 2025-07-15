@@ -13,12 +13,16 @@ interface Contract {
   clientName: string;
   clientEmail: string;
   clientPhone?: string;
+  clientAddress?: string;
   eventDate: string;
   eventTime: string;
+  eventEndTime: string;
   venue: string;
+  venueAddress?: string;
   fee: string;
-  deposit: string;
-  terms?: string;
+  paymentInstructions?: string;
+  equipmentRequirements?: string;
+  specialRequirements?: string;
   status: string;
   signedAt?: string;
 }
@@ -203,13 +207,13 @@ export default function ViewContract() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <p><strong>Date:</strong> {new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
-                  <p><strong>Time:</strong> {contract.eventTime}</p>
+                  <p><strong>Start Time:</strong> {contract.eventTime}</p>
+                  <p><strong>End Time:</strong> {contract.eventEndTime}</p>
                   <p><strong>Venue:</strong> {contract.venue}</p>
+                  {contract.venueAddress && <p><strong>Venue Address:</strong> {contract.venueAddress}</p>}
                 </div>
                 <div className="space-y-2">
                   <p><strong>Performance Fee:</strong> £{contract.fee}</p>
-                  <p><strong>Deposit:</strong> £{contract.deposit}</p>
-                  <p><strong>Balance Due:</strong> £{(parseFloat(contract.fee) - parseFloat(contract.deposit)).toFixed(2)}</p>
                 </div>
               </div>
             </div>
@@ -224,9 +228,45 @@ export default function ViewContract() {
                   <p><strong>Name:</strong> {contract.clientName}</p>
                   <p><strong>Email:</strong> {contract.clientEmail}</p>
                   {contract.clientPhone && <p><strong>Phone:</strong> {contract.clientPhone}</p>}
+                  {contract.clientAddress && <p><strong>Address:</strong> {contract.clientAddress}</p>}
                 </div>
               </div>
             </div>
+
+            <Separator />
+
+            {/* Payment Instructions */}
+            {contract.paymentInstructions && (
+              <div>
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Payment Instructions
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="whitespace-pre-wrap">{contract.paymentInstructions}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Equipment Requirements */}
+            {contract.equipmentRequirements && (
+              <div>
+                <h3 className="font-semibold mb-4">Equipment Requirements</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="whitespace-pre-wrap">{contract.equipmentRequirements}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Special Requirements */}
+            {contract.specialRequirements && (
+              <div>
+                <h3 className="font-semibold mb-4">Special Requirements</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="whitespace-pre-wrap">{contract.specialRequirements}</p>
+                </div>
+              </div>
+            )}
 
             <Separator />
 
