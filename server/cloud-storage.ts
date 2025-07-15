@@ -657,6 +657,19 @@ function generateContractSigningPageHtml(
                     <input type="text" id="clientName" class="form-input" value="${contract.clientName}" required>
                 </div>
                 
+                <!-- Client-fillable fields (highlighted in blue) -->
+                <div class="form-group">
+                    <label class="form-label" for="clientPhone" style="color: #2563eb;">Phone Number (Optional)</label>
+                    <input type="tel" id="clientPhone" class="form-input" value="${contract.clientPhone || ''}" placeholder="e.g., 07123 456789" style="border-color: #2563eb; background-color: #eff6ff;">
+                    <p style="font-size: 0.9rem; color: #2563eb; margin-top: 5px;">This field can be filled by either the musician or client</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="clientAddress" style="color: #2563eb;">Address (Optional)</label>
+                    <textarea id="clientAddress" class="form-input" rows="3" placeholder="e.g., 123 Main Street, London, SW1A 1AA" style="border-color: #2563eb; background-color: #eff6ff; resize: vertical;">${contract.clientAddress || ''}</textarea>
+                    <p style="font-size: 0.9rem; color: #2563eb; margin-top: 5px;">This field can be filled by either the musician or client</p>
+                </div>
+                
                 <div class="form-group">
                     <label class="form-label">Digital Signature *</label>
                     
@@ -908,7 +921,9 @@ function generateContractSigningPageHtml(
                     body: JSON.stringify({
                         clientName: document.getElementById('clientName').value,
                         signature: signatureData,
-                        contractId: '${contract.id}'
+                        contractId: '${contract.id}',
+                        clientPhone: document.getElementById('clientPhone').value || null,
+                        clientAddress: document.getElementById('clientAddress').value || null
                     })
                 });
                 
