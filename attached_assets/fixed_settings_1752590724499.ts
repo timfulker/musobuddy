@@ -83,7 +83,7 @@ export default function Settings() {
   const [selectedInstruments, setSelectedInstruments] = useState<InstrumentObj[]>([]);
   const [newInstrument, setNewInstrument] = useState("");
   const [isCategorizingInstrument, setIsCategorizingInstrument] = useState(false);
-
+  
   const [gigTypes, setGigTypes] = useState<Array<{
     title: string;
     description: string;
@@ -137,10 +137,10 @@ export default function Settings() {
 
   // Handle instrument selection from predefined list
   const handleInstrumentToggle = (instrument: string) => {
-    const instrumentDataItem = instrumentData.find(item => item.instrument === instrument);
+    const instrumentData = instrumentData.find(item => item.instrument === instrument);
     const instrumentObj: InstrumentObj = {
       instrument,
-      category: instrumentDataItem?.category || 'custom',
+      category: instrumentData?.category || 'custom',
       gigTypes: [],
       isCustom: false
     };
@@ -240,7 +240,7 @@ export default function Settings() {
         customInstruments: settings.customInstruments || [],
         instrumentCategories: settings.instrumentCategories || [],
       });
-
+      
       // Set local state for instrument management
       if (settings.customInstruments) {
         setSelectedInstruments(settings.customInstruments);
@@ -279,16 +279,16 @@ export default function Settings() {
   // Add instrument with AI categorization
   const addInstrument = async () => {
     if (!newInstrument.trim()) return;
-
+    
     setIsCategorizingInstrument(true);
-
+    
     try {
       // Check if we already have this instrument in our custom mappings
       const existingCustomInstruments = form.getValues('customInstruments') || [];
       const existingMapping = existingCustomInstruments.find(
         item => item.instrument.toLowerCase() === newInstrument.toLowerCase()
       );
-
+      
       if (existingMapping) {
         // Use existing mapping
         const instrumentObj: InstrumentObj = {
@@ -301,7 +301,7 @@ export default function Settings() {
         setSelectedInstruments(updatedInstruments);
         form.setValue('instruments', updatedInstruments.map(i => i.instrument));
         setNewInstrument("");
-
+        
         toast({
           title: "Instrument added",
           description: `${newInstrument} added using cached categorization.`,
@@ -312,7 +312,7 @@ export default function Settings() {
           method: 'POST',
           body: JSON.stringify({ instrument: newInstrument }),
         });
-
+        
         // Save the mapping to prevent future API calls
         const updatedCustomInstruments = [
           ...existingCustomInstruments,
@@ -323,9 +323,9 @@ export default function Settings() {
             isCustom: response.isCustom || false,
           }
         ];
-
+        
         form.setValue('customInstruments', updatedCustomInstruments);
-
+        
         // Add to selected instruments
         const instrumentObj: InstrumentObj = {
           instrument: newInstrument,
@@ -336,9 +336,9 @@ export default function Settings() {
         const updatedInstruments = [...selectedInstruments, instrumentObj];
         setSelectedInstruments(updatedInstruments);
         form.setValue('instruments', updatedInstruments.map(i => i.instrument));
-
+        
         setNewInstrument("");
-
+        
         toast({
           title: "Instrument categorized",
           description: `${newInstrument} categorized as ${response.category} with ${response.gigTypes.length} suggested gig types.`,
@@ -358,18 +358,18 @@ export default function Settings() {
   // Generate gig types based on selected instruments
   const generateGigTypes = async () => {
     if (selectedInstruments.length === 0) return;
-
+    
     setIsGeneratingGigTypes(true);
-
+    
     try {
       const response = await apiRequest('/api/instruments/gig-types', {
         method: 'POST',
         body: JSON.stringify({ instruments: selectedInstruments }),
       });
-
+      
       setGigTypes(response.gigTypes);
       form.setValue('gigTypes', response.gigTypes.map((gt: any) => gt.title));
-
+      
       toast({
         title: "Gig types generated",
         description: `Generated ${response.gigTypes.length} gig types based on your instruments.`,
@@ -421,7 +421,7 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
+      
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
         <div className="p-6 lg:p-8">
           <div className="flex items-center justify-between mb-6">
@@ -440,7 +440,7 @@ export default function Settings() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
+              
               {/* Business Information Section */}
               <Card>
                 <CardHeader>
@@ -717,7 +717,7 @@ export default function Settings() {
                           Regenerate
                         </Button>
                       </div>
-
+                      
                       <div className="space-y-3">
                         {gigTypes.map((gigType, index) => (
                           <Card key={index} className="p-3">
@@ -923,120 +923,10 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              {/* Musical Services Section (Legacy) */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Music className="h-5 w-5" />
-                    Musical Services (Legacy)
-                  </CardTitle>
-                  <CardDescription>
-                    These are the original instrument and gig type selections. Use the AI-powered section above for better categorization.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="instruments"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Instruments You Play</FormLabel>
-                        <FormControl>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {["Piano", "Guitar", "Saxophone", "Drums", "Vocals", "Violin", "Trumpet", "Bass"].map((instrument) => (
-                              <div key={instrument} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`legacy-${instrument}`}
-                                  checked={field.value?.includes(instrument)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      field.onChange([...(field.value || []), instrument]);
-                                    } else {
-                                      field.onChange(field.value?.filter((v: string) => v !== instrument));
-                                    }
-                                  }}
-                                />
-                                <Label htmlFor={`legacy-${instrument}`} className="text-sm">{instrument}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="gigTypes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Target className="h-4 w-4" />
-                          Gig Types (Legacy)
-                        </FormLabel>
-                        <FormControl>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {["Wedding", "Corporate Event", "Birthday Party", "Bar/Restaurant", "Festival", "Private Party", "Concert", "Recording Session"].map((gigType) => (
-                              <div key={gigType} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`legacy-gig-${gigType}`}
-                                  checked={field.value?.includes(gigType)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      field.onChange([...(field.value || []), gigType]);
-                                    } else {
-                                      field.onChange(field.value?.filter((v: string) => v !== gigType));
-                                    }
-                                  }}
-                                />
-                                <Label htmlFor={`legacy-gig-${gigType}`} className="text-sm">{gigType}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Generate Gig Types Button */}
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleGenerateGigTypes}
-                      disabled={selectedInstruments.length === 0 || isGeneratingGigTypes}
-                    >
-                      {isGeneratingGigTypes ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Generate Gig Types
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
               <div className="flex justify-end">
-                <Button type="submit" size="lg" className="bg-green-600 hover:bg-green-700" disabled={saveSettingsMutation.isPending}>
-                  {saveSettingsMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Settings
-                    </>
-                  )}
+                <Button type="submit" size="lg" className="bg-green-600 hover:bg-green-700">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Settings
                 </Button>
               </div>
             </form>
