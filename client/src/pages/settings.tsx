@@ -358,10 +358,10 @@ export default function Settings() {
 
   // Update gig types based on instrument selection (no auto-save)
   const updateGigTypesFromInstruments = async () => {
-    // ✅ KEY CHANGE: Clear gig types when no instruments are selected
+    // ✅ Clear gig types when no instruments are selected
     if (selectedInstruments.length === 0) {
       setGigTypes([]);
-      form.setValue('gigTypes', JSON.stringify([]));
+      form.setValue('gigTypes', ''); // ✅ Use empty string, not JSON
       return;
     }
 
@@ -377,7 +377,7 @@ export default function Settings() {
       }
     });
 
-    // ✅ ENHANCED: Use API for unknown instruments with caching
+    // Use API for unknown instruments with caching
     if (unknownInstruments.length > 0) {
       try {
         console.log('🎵 Fetching gig suggestions for unknown instruments:', unknownInstruments);
@@ -404,10 +404,10 @@ export default function Settings() {
       }
     }
 
-    // ✅ Update gig types with all suggestions (replace existing gig types)
+    // ✅ Update gig types with all suggestions
     const newGigTypes = [...new Set(allSuggestions)];
     setGigTypes(newGigTypes);
-    form.setValue('gigTypes', JSON.stringify(newGigTypes));
+    form.setValue('gigTypes', newGigTypes.join('\n')); // ✅ Use newline-separated string
     
     console.log('🎯 Updated gig types (not saved yet):', newGigTypes);
   };
