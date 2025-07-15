@@ -156,7 +156,37 @@ export default function Contracts() {
             form.setValue('clientPhone', enquiry.clientPhone || '');
             form.setValue('venue', enquiry.venue || '');
             form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
-            form.setValue('eventTime', enquiry.eventTime || '');
+            
+            // Convert enquiry time to 24-hour format if needed
+            const convertToTimeFormat = (timeStr: string) => {
+              if (!timeStr) return '';
+              
+              // If already in HH:MM format, return as is
+              if (/^\d{2}:\d{2}$/.test(timeStr)) {
+                return timeStr;
+              }
+              
+              // Convert from formats like "7:00 PM" or "19:00" to HH:MM
+              const time = timeStr.toLowerCase().replace(/\s+/g, '');
+              
+              if (time.includes('pm') || time.includes('am')) {
+                const [timePart, meridian] = time.split(/(am|pm)/);
+                const [hours, minutes = '00'] = timePart.split(':');
+                let hour24 = parseInt(hours);
+                
+                if (meridian === 'pm' && hour24 !== 12) {
+                  hour24 += 12;
+                } else if (meridian === 'am' && hour24 === 12) {
+                  hour24 = 0;
+                }
+                
+                return `${hour24.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+              }
+              
+              return timeStr;
+            };
+            
+            form.setValue('eventTime', convertToTimeFormat(enquiry.eventTime || ''));
             form.setValue('fee', enquiry.estimatedValue || '');
             
             // Auto-generate contract number with event date and client name
@@ -687,7 +717,7 @@ export default function Contracts() {
                               <FormItem className="space-y-2">
                                 <FormLabel className="text-red-600 font-medium">Start Time *</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="7:00 PM" {...field} value={field.value || ""} />
+                                  <Input type="time" {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -700,7 +730,7 @@ export default function Contracts() {
                               <FormItem className="space-y-2">
                                 <FormLabel className="text-red-600 font-medium">End Time *</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="11:00 PM" {...field} value={field.value || ""} />
+                                  <Input type="time" {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
