@@ -124,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Gig suggestions endpoint with AI fallback for unknown instruments
-  app.post('/api/suggest-gigs', isAuthenticated, async (req, res) => {
+  app.post('/api/gig-suggestions', isAuthenticated, async (req, res) => {
     try {
       const { instruments } = req.body;
       
