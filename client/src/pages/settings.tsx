@@ -29,21 +29,6 @@ export default function Settings() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   
-  // Debug logging for authentication context
-  React.useEffect(() => {
-    console.log("Settings page loaded");
-    console.log("Current URL:", window.location.href);
-    console.log("Document cookies:", document.cookie);
-    console.log("hasInitialized state:", hasInitialized);
-    console.log("All state variables defined:", {
-      sidebarOpen,
-      hasInitialized,
-      eventTypes,
-      gigTypes,
-      selectedInstruments,
-      customInstruments
-    });
-  }, []);
   const [bankDetails, setBankDetails] = useState({
     bankName: "",
     accountName: "",
@@ -61,6 +46,22 @@ export default function Settings() {
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [customInstruments, setCustomInstruments] = useState<string[]>([]);
   const [newInstrument, setNewInstrument] = useState("");
+  
+  // Debug logging for authentication context
+  React.useEffect(() => {
+    console.log("Settings page loaded");
+    console.log("Current URL:", window.location.href);
+    console.log("Document cookies:", document.cookie);
+    console.log("hasInitialized state:", hasInitialized);
+    console.log("All state variables defined:", {
+      sidebarOpen,
+      hasInitialized,
+      eventTypes,
+      gigTypes,
+      selectedInstruments,
+      customInstruments
+    });
+  }, []);
   
   // Define instrument categories
   const instrumentCategories = {
