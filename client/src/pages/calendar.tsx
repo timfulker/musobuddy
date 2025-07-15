@@ -146,24 +146,25 @@ export default function Calendar() {
       
       <div className="main-content">
         {/* Header */}
-        <header className="border-b border-gray-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-900">
+        <header className="border-b border-gray-200 dark:border-slate-700 p-6 bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 md:hidden"
+                className="p-2 rounded-xl hover:bg-white dark:hover:bg-slate-800 shadow-sm md:hidden transition-all"
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white ml-12 md:ml-0">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent ml-12 md:ml-0">
                 Calendar
               </h1>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <Button
                 variant="outline"
                 onClick={goToPreviousMonth}
                 size="sm"
+                className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -171,7 +172,7 @@ export default function Calendar() {
                 variant="outline"
                 onClick={goToToday}
                 size="sm"
-                className="px-4"
+                className="px-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:shadow-lg transition-all"
               >
                 Today
               </Button>
@@ -179,6 +180,7 @@ export default function Calendar() {
                 variant="outline"
                 onClick={goToNextMonth}
                 size="sm"
+                className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -188,22 +190,22 @@ export default function Calendar() {
 
         {/* Calendar */}
         <div className="p-6">
-          <Card className="shadow-lg">
-            <CardContent className="p-6">
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+            <CardContent className="p-8">
               {/* Month Header */}
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <div className="text-center mb-8">
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </h2>
               </div>
 
               {/* Calendar Grid */}
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg">
                 {/* Day headers */}
                 {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
                   <div
                     key={day}
-                    className="h-12 flex items-center justify-center text-sm font-medium text-gray-500 dark:text-gray-400"
+                    className="h-14 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-xl"
                   >
                     {day}
                   </div>
@@ -214,18 +216,18 @@ export default function Calendar() {
                   <div
                     key={index}
                     className={`
-                      h-24 border border-gray-200 dark:border-slate-700 p-2 cursor-pointer
-                      transition-colors hover:bg-gray-50 dark:hover:bg-slate-800
+                      h-24 p-3 cursor-pointer rounded-xl transition-all duration-200
+                      hover:scale-105 hover:shadow-md
                       ${day.isCurrentMonth 
-                        ? 'bg-white dark:bg-slate-900' 
-                        : 'bg-gray-50 dark:bg-slate-800 opacity-50'
+                        ? 'bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-700' 
+                        : 'bg-gray-50 dark:bg-slate-700 opacity-40 border border-gray-50 dark:border-slate-600'
                       }
                       ${day.isToday 
-                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700' 
+                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg scale-105' 
                         : ''
                       }
                       ${day.hasEvents 
-                        ? 'ring-2 ring-purple-200 dark:ring-purple-800' 
+                        ? 'ring-2 ring-purple-300 dark:ring-purple-600 shadow-purple-100 dark:shadow-purple-900/20' 
                         : ''
                       }
                     `}
@@ -234,12 +236,12 @@ export default function Calendar() {
                     <div className="flex flex-col h-full">
                       {/* Date number */}
                       <div className={`
-                        text-right text-sm font-medium mb-1
+                        text-right text-sm font-bold mb-1
                         ${day.isToday 
-                          ? 'text-blue-600 dark:text-blue-400 font-bold' 
+                          ? 'text-white' 
                           : day.isCurrentMonth 
                             ? 'text-gray-900 dark:text-white' 
-                            : 'text-gray-400 dark:text-gray-600'
+                            : 'text-gray-400 dark:text-gray-500'
                         }
                       `}>
                         {day.day}
@@ -252,10 +254,10 @@ export default function Calendar() {
                             <div
                               key={eventIndex}
                               className={`
-                                px-2 py-1 rounded text-xs font-medium truncate
+                                px-2 py-1 rounded-lg text-xs font-medium truncate shadow-sm
                                 ${event.type === 'booking' 
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                                  : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
+                                  : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
                                 }
                               `}
                             >
@@ -263,7 +265,7 @@ export default function Calendar() {
                             </div>
                           ))}
                           {day.events.length > 2 && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium">
                               +{day.events.length - 2} more
                             </div>
                           )}
