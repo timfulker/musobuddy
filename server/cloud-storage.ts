@@ -712,33 +712,19 @@ function generateContractSigningPageHtml(
                 </div>
                 
                 <div class="form-group">
+                    <label class="form-label" for="venueAddress" style="color: #2563eb;">Venue Address ${!contract.venueAddress ? '(Required)' : '(Optional)'} *</label>
+                    <textarea id="venueAddress" class="form-input" rows="3" placeholder="e.g., The Grand Hotel, 456 Event Street, London, EC1A 1BB" style="border-color: #2563eb; background-color: #eff6ff; resize: vertical;" ${!contract.venueAddress ? 'required' : ''}>${contract.venueAddress || ''}</textarea>
+                    <p style="font-size: 0.9rem; color: #2563eb; margin-top: 5px;">${!contract.venueAddress ? 'This field must be completed before signing' : 'This field can be filled by either the musician or client'}</p>
+                </div>
+                
+                <div class="form-group">
                     <label class="form-label">Digital Signature *</label>
                     
-                    <!-- Signature Type Selection -->
-                    <div class="signature-type-selection" style="margin-bottom: 15px;">
-                        <label style="margin-right: 20px;">
-                            <input type="radio" name="signatureType" value="draw" checked style="margin-right: 5px;">
-                            Draw Signature
-                        </label>
-                        <label>
-                            <input type="radio" name="signatureType" value="type" style="margin-right: 5px;">
-                            Type Signature
-                        </label>
-                    </div>
-                    
-                    <!-- Draw Signature Section -->
-                    <div id="drawSignatureSection">
-                        <canvas id="signatureCanvas" class="signature-canvas" width="350" height="150"></canvas>
-                        <div class="signature-buttons">
-                            <button type="button" class="btn btn-secondary" id="clearSignature">Clear</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Type Signature Section -->
-                    <div id="typeSignatureSection" style="display: none;">
-                        <input type="text" id="typedSignature" class="form-input" placeholder="Type your full name here" style="font-family: 'Brush Script MT', cursive, serif; font-size: 1.5rem; text-align: center; padding: 20px;">
+                    <!-- Type Signature Section (Default and Only Option) -->
+                    <div id="typeSignatureSection">
+                        <input type="text" id="typedSignature" class="form-input" value="${contract.clientName}" placeholder="Type your full name here" style="font-family: 'Brush Script MT', cursive, serif; font-size: 1.5rem; text-align: center; padding: 20px;">
                         <p style="font-size: 0.9rem; color: #64748b; margin-top: 10px; text-align: center;">
-                            Your typed signature will be formatted in a stylized font
+                            Your signature will be formatted in a stylized font for the contract
                         </p>
                     </div>
                 </div>
@@ -785,140 +771,37 @@ function generateContractSigningPageHtml(
     <script>
         // Contract status is now embedded directly in HTML - no API call needed
 
-        // Signature canvas functionality
-        const canvas = document.getElementById('signatureCanvas');
-        const ctx = canvas.getContext('2d');
-        const clearBtn = document.getElementById('clearSignature');
+        // Simplified signature functionality - typed signature only
         const submitBtn = document.getElementById('submitBtn');
         const form = document.getElementById('signingForm');
-        
-        let isDrawing = false;
-        let hasSignature = false;
-        
-        // Set up canvas
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        
-        // Drawing functions
-        function startDrawing(e) {
-            isDrawing = true;
-            draw(e);
-        }
-        
-        function draw(e) {
-            if (!isDrawing) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            
-            hasSignature = true;
-            updateSubmitButton();
-        }
-        
-        function stopDrawing() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            ctx.beginPath();
-        }
-        
-        // Touch events for mobile
-        function getTouchPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: e.touches[0].clientX - rect.left,
-                y: e.touches[0].clientY - rect.top
-            };
-        }
-        
-        function handleTouchStart(e) {
-            e.preventDefault();
-            const touch = getTouchPos(e);
-            isDrawing = true;
-            ctx.beginPath();
-            ctx.moveTo(touch.x, touch.y);
-        }
-        
-        function handleTouchMove(e) {
-            e.preventDefault();
-            if (!isDrawing) return;
-            
-            const touch = getTouchPos(e);
-            ctx.lineTo(touch.x, touch.y);
-            ctx.stroke();
-            
-            hasSignature = true;
-            updateSubmitButton();
-        }
-        
-        function handleTouchEnd(e) {
-            e.preventDefault();
-            isDrawing = false;
-            ctx.beginPath();
-        }
-        
-        // Event listeners
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
-        
-        canvas.addEventListener('touchstart', handleTouchStart);
-        canvas.addEventListener('touchmove', handleTouchMove);
-        canvas.addEventListener('touchend', handleTouchEnd);
-        
-        clearBtn.addEventListener('click', () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hasSignature = false;
-            updateSubmitButton();
-        });
-        
-        // Signature type selection
-        const signatureTypeRadios = document.querySelectorAll('input[name="signatureType"]');
-        const drawSection = document.getElementById('drawSignatureSection');
-        const typeSection = document.getElementById('typeSignatureSection');
         const typedSignatureInput = document.getElementById('typedSignature');
-        
-        signatureTypeRadios.forEach(radio => {
-            radio.addEventListener('change', () => {
-                if (radio.value === 'draw') {
-                    drawSection.style.display = 'block';
-                    typeSection.style.display = 'none';
-                    typedSignatureInput.value = '';
-                } else {
-                    drawSection.style.display = 'none';
-                    typeSection.style.display = 'block';
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    hasSignature = false;
-                }
-                updateSubmitButton();
-            });
-        });
         
         function updateSubmitButton() {
             const nameField = document.getElementById('clientName');
-            const selectedType = document.querySelector('input[name="signatureType"]:checked').value;
-            const typedSignature = document.getElementById('typedSignature').value.trim();
+            const typedSignature = typedSignatureInput.value.trim();
+            const clientPhone = document.getElementById('clientPhone').value.trim();
+            const clientAddress = document.getElementById('clientAddress').value.trim();
+            const venueAddress = document.getElementById('venueAddress').value.trim();
             
-            let canSubmit = nameField.value.trim() !== '';
+            // Check if all required fields are filled
+            let canSubmit = nameField.value.trim() !== '' && typedSignature !== '';
             
-            if (selectedType === 'draw') {
-                canSubmit = canSubmit && hasSignature;
-            } else {
-                canSubmit = canSubmit && typedSignature !== '';
-            }
+            // Check client-fillable fields if they're required
+            if (!${JSON.stringify(!!contract.clientPhone)} && !clientPhone) canSubmit = false;
+            if (!${JSON.stringify(!!contract.clientAddress)} && !clientAddress) canSubmit = false;
+            if (!${JSON.stringify(!!contract.venueAddress)} && !venueAddress) canSubmit = false;
             
             submitBtn.disabled = !canSubmit;
         }
         
         document.getElementById('clientName').addEventListener('input', updateSubmitButton);
         document.getElementById('typedSignature').addEventListener('input', updateSubmitButton);
+        document.getElementById('clientPhone').addEventListener('input', updateSubmitButton);
+        document.getElementById('clientAddress').addEventListener('input', updateSubmitButton);
+        document.getElementById('venueAddress').addEventListener('input', updateSubmitButton);
+        
+        // Initialize submit button state
+        updateSubmitButton();
         
         // Contract status is now embedded directly in HTML - no page load check needed
 
@@ -926,40 +809,28 @@ function generateContractSigningPageHtml(
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const selectedType = document.querySelector('input[name="signatureType"]:checked').value;
-            const typedSignature = document.getElementById('typedSignature').value.trim();
+            const typedSignature = typedSignatureInput.value.trim();
             
-            // Validate signature based on type
-            if (selectedType === 'draw' && !hasSignature) {
-                alert('Please provide your signature before submitting.');
-                return;
-            }
-            
-            if (selectedType === 'type' && !typedSignature) {
+            // Validate signature
+            if (!typedSignature) {
                 alert('Please type your signature before submitting.');
                 return;
             }
             
-            // Create signature data
-            let signatureData;
-            if (selectedType === 'draw') {
-                signatureData = canvas.toDataURL();
-            } else {
-                // Create a typed signature canvas
-                const typeCanvas = document.createElement('canvas');
-                typeCanvas.width = 350;
-                typeCanvas.height = 150;
-                const typeCtx = typeCanvas.getContext('2d');
-                
-                // Style the typed signature
-                typeCtx.fillStyle = '#1e293b';
-                typeCtx.font = '2rem "Brush Script MT", cursive, serif';
-                typeCtx.textAlign = 'center';
-                typeCtx.textBaseline = 'middle';
-                typeCtx.fillText(typedSignature, typeCanvas.width / 2, typeCanvas.height / 2);
-                
-                signatureData = typeCanvas.toDataURL();
-            }
+            // Create typed signature canvas
+            const typeCanvas = document.createElement('canvas');
+            typeCanvas.width = 350;
+            typeCanvas.height = 150;
+            const typeCtx = typeCanvas.getContext('2d');
+            
+            // Style the typed signature
+            typeCtx.fillStyle = '#1e293b';
+            typeCtx.font = '2rem "Brush Script MT", cursive, serif';
+            typeCtx.textAlign = 'center';
+            typeCtx.textBaseline = 'middle';
+            typeCtx.fillText(typedSignature, typeCanvas.width / 2, typeCanvas.height / 2);
+            
+            const signatureData = typeCanvas.toDataURL();
             
             // Show loading
             document.getElementById('loading').style.display = 'block';
@@ -976,7 +847,8 @@ function generateContractSigningPageHtml(
                         signature: signatureData,
                         contractId: '${contract.id}',
                         clientPhone: document.getElementById('clientPhone').value || null,
-                        clientAddress: document.getElementById('clientAddress').value || null
+                        clientAddress: document.getElementById('clientAddress').value || null,
+                        venueAddress: document.getElementById('venueAddress').value || null
                     })
                 });
                 
