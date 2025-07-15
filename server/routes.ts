@@ -2095,7 +2095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <p><strong>Time:</strong> ${contract.eventTime}</p>
                 <p><strong>Venue:</strong> ${contract.venue}</p>
                 <p><strong>Fee:</strong> £${contract.fee}</p>
-                <p><strong>Signed by:</strong> ${signatureName.trim()}</p>
+                <p><strong>Signed by:</strong> ${finalSignatureName.trim()}</p>
                 <p><strong>Signed on:</strong> ${new Date().toLocaleString('en-GB')}</p>
               </div>
               
@@ -2116,7 +2116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </p>
             </div>
           `,
-          text: `Contract ${contract.contractNumber} successfully signed by ${signatureName.trim()}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
+          text: `Contract ${contract.contractNumber} successfully signed by ${finalSignatureName.trim()}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
         };
         
         // Add reply-to if user has Gmail or other external email
@@ -2164,7 +2164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3; margin: 20px 0;">
                   <p style="margin: 0;"><strong>Signature Details:</strong></p>
-                  <p style="margin: 5px 0;">Signed by: ${signatureName.trim()}</p>
+                  <p style="margin: 5px 0;">Signed by: ${finalSignatureName.trim()}</p>
                   <p style="margin: 5px 0;">Time: ${new Date().toLocaleString('en-GB')}</p>
                   <p style="margin: 5px 0;">IP: ${clientIP}</p>
                 </div>
@@ -2184,7 +2184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </p>
               </div>
             `,
-            text: `Contract ${contract.contractNumber} signed by ${signatureName.trim()} on ${new Date().toLocaleString('en-GB')}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
+            text: `Contract ${contract.contractNumber} signed by ${finalSignatureName.trim()} on ${new Date().toLocaleString('en-GB')}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
           };
           
           // Add reply-to for performer email too
