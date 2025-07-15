@@ -1,0 +1,90 @@
+CHATGPT - BACKEND REFACTORING TASK
+CONTEXT: You are refactoring a music business app to rename "enquiries" to "bookings" throughout the codebase. The database table name stays "enquiries" but all code should reference "bookings".
+
+CRITICAL RULES:
+
+Database table name stays "enquiries" - do NOT change this
+All code references change to "bookings" - variables, functions, types, API routes
+Import changes: enquiries → bookings, InsertEnquiry → InsertBooking
+Type changes: Enquiry → Booking, InsertEnquiry → InsertBooking
+FILE 1: server/storage.ts
+CHANGES NEEDED:
+
+Line 3: Change enquiries, to bookings,
+Line 11: Change type Enquiry, to type Booking,
+Line 12: Change type InsertEnquiry, to type InsertBooking,
+Find all function names and change:
+getEnquiries() → getBookings()
+getEnquiry() → getBooking()
+createEnquiry() → createBooking()
+updateEnquiry() → updateBooking()
+deleteEnquiry() → deleteBooking()
+Find all database references and change:
+db.select().from(enquiries) → db.select().from(bookings)
+db.insert(enquiries) → db.insert(bookings)
+db.update(enquiries) → db.update(bookings)
+db.delete(enquiries) → db.delete(bookings)
+Change all parameter types:
+enquiry: InsertEnquiry → booking: InsertBooking
+enquiry: Enquiry → booking: Booking
+Change all variable names:
+enquiry → booking
+enquiries → bookings
+FILE 2: server/routes.ts
+CHANGES NEEDED:
+
+Line 8: Already changed insertEnquirySchema to insertBookingSchema
+Find all API routes and change:
+app.get('/api/enquiries' → app.get('/api/bookings'
+app.post('/api/enquiries' → app.post('/api/bookings'
+app.patch('/api/enquiries/:id' → app.patch('/api/bookings/:id'
+app.delete('/api/enquiries/:id' → app.delete('/api/bookings/:id'
+Find all storage function calls and change:
+storage.getEnquiries() → storage.getBookings()
+storage.createEnquiry() → storage.createBooking()
+storage.updateEnquiry() → storage.updateBooking()
+storage.deleteEnquiry() → storage.deleteBooking()
+Change all validation schemas:
+insertEnquirySchema → insertBookingSchema
+Change all variable names in route handlers:
+enquiry → booking
+enquiries → bookings
+FILE 3: server/index.ts
+CHANGES NEEDED:
+
+Find webhook email processing section
+Change storage.createEnquiry() calls to storage.createBooking()
+Change variable names in webhook processing:
+enquiry → booking
+newEnquiry → newBooking
+Update console.log messages:
+"enquiry" → "booking"
+"Enquiry" → "Booking"
+FILE 4: server/conflict-detection.ts
+CHANGES NEEDED:
+
+Change function names:
+checkEnquiryConflicts() → checkBookingConflicts()
+Change storage function calls:
+storage.getEnquiries() → storage.getBookings()
+Change all parameter types and variable names:
+enquiry → booking
+enquiries → bookings
+enquiryId → bookingId
+FRONTEND COMPONENTS (5 files)
+FOR EACH COMPONENT FILE:
+
+Change imports:
+type Enquiry → type Booking
+type InsertEnquiry → type InsertBooking
+Change API endpoints:
+'/api/enquiries' → '/api/bookings'
+'/api/enquiries/${id}' → '/api/bookings/${id}'
+Change query keys:
+queryKey: ['/api/enquiries'] → queryKey: ['/api/bookings']
+Change all variable names:
+enquiry → booking
+enquiries → bookings
+Change all function parameters:
+enquiry: Enquiry → booking: Booking
+RETURN: Please provide the complete updated content for each file. Make sure every instance is changed - no mixed terminology.
