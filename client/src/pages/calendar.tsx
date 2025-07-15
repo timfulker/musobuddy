@@ -1490,6 +1490,7 @@ export default function Calendar() {
                     <FormControl>
                       <Input
                         type="time"
+                        step="300"
                         {...field}
                       />
                     </FormControl>

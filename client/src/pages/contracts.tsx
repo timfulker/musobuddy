@@ -756,7 +756,7 @@ export default function Contracts() {
                               <FormItem className="space-y-2">
                                 <FormLabel className="text-red-600 font-medium">Start Time *</FormLabel>
                                 <FormControl>
-                                  <Input type="time" {...field} value={field.value || ""} />
+                                  <Input type="time" step="300" {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -769,7 +769,7 @@ export default function Contracts() {
                               <FormItem className="space-y-2">
                                 <FormLabel className="text-red-600 font-medium">End Time *</FormLabel>
                                 <FormControl>
-                                  <Input type="time" {...field} value={field.value || ""} />
+                                  <Input type="time" step="300" {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

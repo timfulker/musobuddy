@@ -708,7 +708,7 @@ export default function Enquiries() {
                         <FormItem>
                           <FormLabel>Event Time</FormLabel>
                           <FormControl>
-                            <Input type="time" {...field} value={field.value || ""} />
+                            <Input type="time" step="300" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

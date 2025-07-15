@@ -290,6 +290,7 @@ const Bookings = () => {
               <label className="block text-sm font-medium text-foreground mb-1">Event Time</label>
               <input
                 type="time"
+                step="300"
                 value={formData.eventTime}
                 onChange={(e) => setFormData({...formData, eventTime: e.target.value})}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"

@@ -1205,7 +1205,7 @@ export default function ScheduleBookings() {
                   <FormItem>
                     <FormLabel>Time (Optional)</FormLabel>
                     <FormControl>
-                      <Input type="time" {...field} />
+                      <Input type="time" step="300" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1282,7 +1282,7 @@ export default function ScheduleBookings() {
                     <FormItem>
                       <FormLabel>Event Time</FormLabel>
                       <FormControl>
-                        <Input type="time" {...field} />
+                        <Input type="time" step="300" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
