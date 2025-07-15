@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, FileText, User, Music, Settings as SettingsIcon, X, Plus, Search, Loader2 } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, FileText, User, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu } from "lucide-react";
 
 // Available instruments from the CSV
 const AVAILABLE_INSTRUMENTS = [
@@ -50,7 +50,6 @@ export default function Settings() {
   const { isMobile } = useResponsive();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Test basic form setup
   // State for instrument selection
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [gigTypes, setGigTypes] = useState<string[]>([]);
@@ -218,7 +217,7 @@ export default function Settings() {
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="lg:hidden"
               >
-                <SettingsIcon className="h-4 w-4" />
+                <Menu className="h-4 w-4" />
               </Button>
             )}
           </div>
@@ -426,98 +425,88 @@ export default function Settings() {
                           onClick={() => handleInstrumentToggle(instrument)}
                           className="text-sm"
                         >
-                          {selectedInstruments.includes(instrument) ? (
-                            <>
-                              <X className="h-3 w-3 mr-1" />
-                              {instrument}
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="h-3 w-3 mr-1" />
-                              {instrument}
-                            </>
+                          {instrument}
+                          {selectedInstruments.includes(instrument) && (
+                            <X className="ml-1 h-3 w-3" />
                           )}
                         </Button>
                       ))}
                     </div>
-
-                    {/* Selected Instruments - Removable Tags */}
-                    {selectedInstruments.length > 0 && (
-                      <div className="space-y-2">
-                        <Label>Selected Instruments</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedInstruments.map((instrument) => (
-                            <Badge key={instrument} variant="secondary" className="text-sm">
-                              {instrument}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleInstrumentToggle(instrument)}
-                                className="h-auto p-0 ml-2 hover:bg-transparent"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* AI-Generated Gig Types */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label>Suggested Gig Types</Label>
-                      {isGeneratingGigTypes && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Generating...
+                  {selectedInstruments.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>AI-Generated Gig Types</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateGigTypes(selectedInstruments)}
+                          disabled={isGeneratingGigTypes}
+                        >
+                          {isGeneratingGigTypes ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="mr-2 h-4 w-4" />
+                              Generate Gig Types
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      
+                      {gigTypes.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {gigTypes.map((gigType, index) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                              onClick={() => handleRemoveGigType(gigType)}
+                            >
+                              {gigType}
+                              <X className="ml-1 h-3 w-3" />
+                            </Badge>
+                          ))}
                         </div>
                       )}
                     </div>
-                    
-                    {gigTypes.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {gigTypes.map((gigType) => (
-                          <Badge key={gigType} variant="default" className="text-sm">
-                            {gigType}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveGigType(gigType)}
-                              className="h-auto p-0 ml-2 hover:bg-transparent"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg">
-                        {selectedInstruments.length > 0 
-                          ? "Generating gig types based on your instruments..."
-                          : "Select instruments above to see suggested gig types"
-                        }
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
+              {/* Save Button */}
               <div className="flex justify-end">
-                <Button type="submit" size="lg" className="bg-green-600 hover:bg-green-700" disabled={saveSettingsMutation.isPending}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {saveSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={saveSettingsMutation.isPending}
+                  className="min-w-[120px]"
+                >
+                  {saveSettingsMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Settings
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
           </Form>
         </div>
       </div>
-
-      {isMobile && <MobileNav />}
+      
+      <MobileNav />
     </div>
   );
 }
