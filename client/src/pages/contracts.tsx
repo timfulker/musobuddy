@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square, MapPin, Edit, RefreshCw } from "lucide-react";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square, MapPin, Edit, RefreshCw, Info } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
@@ -584,307 +584,286 @@ export default function Contracts() {
                         createContractMutation.mutate(data);
                       }
                     })} className="space-y-6 pt-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="contractNumber"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Contract Number</FormLabel>
-                              <FormControl>
-                                <Input placeholder="CT-2024-001" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="clientName"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Client Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="John Smith" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      
+                      {/* Required Fields Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                          Required Fields (Must be completed by musician)
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="contractNumber"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Contract Number *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="CON-2025-001" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="clientName"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Client Name *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="John Smith" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="venue"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Venue *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="The Grand Hotel, London" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="eventDate"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Event Date *</FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="eventTime"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Start Time *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="7:00 PM" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="eventEndTime"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">End Time *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="11:00 PM" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="fee"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-red-600 font-medium">Performance Fee (£) *</FormLabel>
+                                <FormControl>
+                                  <Input type="number" placeholder="500" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="eventTime"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Event Time</FormLabel>
-                              <FormControl>
-                                <Input placeholder="7:00 PM" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="eventDate"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Event Date</FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      {/* Optional Fields Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          Optional Fields (Can be filled by musician or client)
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="clientEmail"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-blue-600 font-medium">Client Email</FormLabel>
+                                <FormControl>
+                                  <Input type="email" placeholder="client@example.com" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="clientPhone"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-blue-600 font-medium">Client Phone</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="07123 456789" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="clientAddress"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-blue-600 font-medium">Client Address</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="123 Main Street, London, SW1A 1AA" 
+                                    {...field} 
+                                    value={field.value || ""} 
+                                    rows={2}
+                                    className="min-h-[60px]"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="venueAddress"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-blue-600 font-medium">Venue Address</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="456 Event Street, London, EC1A 1BB" 
+                                    {...field} 
+                                    value={field.value || ""} 
+                                    rows={2}
+                                    className="min-h-[60px]"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Rider Fields Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          Rider Information (Optional - for professional requirements)
+                        </h3>
+                        
                         <FormField
                           control={form.control}
-                          name="venue"
+                          name="paymentInstructions"
                           render={({ field }) => (
                             <FormItem className="space-y-2">
-                              <FormLabel>Venue</FormLabel>
+                              <FormLabel className="text-green-600 font-medium">Payment Instructions</FormLabel>
                               <FormControl>
-                                <Input placeholder="The Grand Hotel, London" {...field} value={field.value || ""} />
+                                <Textarea 
+                                  placeholder="How payment should be made (bank transfer, cash on day, etc.)" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                  rows={2}
+                                  className="min-h-[60px]"
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
+
                         <FormField
                           control={form.control}
-                          name="clientEmail"
+                          name="equipmentRequirements"
                           render={({ field }) => (
                             <FormItem className="space-y-2">
-                              <FormLabel>Client Email</FormLabel>
+                              <FormLabel className="text-green-600 font-medium">Equipment Requirements</FormLabel>
                               <FormControl>
-                                <Input type="email" placeholder="client@example.com" {...field} value={field.value || ""} />
+                                <Textarea 
+                                  placeholder="Equipment needed from venue (power, microphones, etc.)" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                  rows={2}
+                                  className="min-h-[60px]"
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
+
+                        <FormField
+                          control={form.control}
+                          name="specialRequirements"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-green-600 font-medium">Special Requirements</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Any special requests or rider requirements" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                  rows={2}
+                                  className="min-h-[60px]"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-start space-x-3">
+                            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <h4 className="font-medium text-blue-900 mb-1">Personal Contract Conditions</h4>
+                              <p className="text-sm text-blue-700 mb-2">
+                                You can set default contract terms, payment instructions, and professional conditions in Settings → Default Contract Terms.
+                              </p>
+                              <p className="text-xs text-blue-600">
+                                These will be automatically included in all contracts alongside the fields above.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="eventType"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Event Type</FormLabel>
-                              <FormControl>
-                                <Select value={field.value || ""} onValueChange={field.onChange}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select event type" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="wedding">Wedding</SelectItem>
-                                    <SelectItem value="corporate">Corporate Event</SelectItem>
-                                    <SelectItem value="birthday">Birthday Party</SelectItem>
-                                    <SelectItem value="anniversary">Anniversary</SelectItem>
-                                    <SelectItem value="private">Private Party</SelectItem>
-                                    <SelectItem value="charity">Charity Event</SelectItem>
-                                    <SelectItem value="festival">Festival</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="gigType"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Performance Type</FormLabel>
-                              <FormControl>
-                                <Select value={field.value || ""} onValueChange={field.onChange}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select performance type" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="saxophone">Saxophone</SelectItem>
-                                    <SelectItem value="jazz">Jazz Performance</SelectItem>
-                                    <SelectItem value="acoustic">Acoustic Set</SelectItem>
-                                    <SelectItem value="band">Band Performance</SelectItem>
-                                    <SelectItem value="dj">DJ Set</SelectItem>
-                                    <SelectItem value="piano">Piano Performance</SelectItem>
-                                    <SelectItem value="vocal">Vocal Performance</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="setupTime"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Setup Time</FormLabel>
-                              <FormControl>
-                                <Input placeholder="30 minutes before performance" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="soundCheckTime"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Sound Check Time</FormLabel>
-                              <FormControl>
-                                <Input placeholder="15 minutes before performance" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="clientPhone"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Client Phone</FormLabel>
-                              <FormControl>
-                                <Input placeholder="07123 456789" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="fee"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Performance Fee (£)</FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="1500" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="deposit"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel>Deposit Amount (£)</FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="500" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="equipmentProvided"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel>Equipment Provided</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="List equipment you will provide (e.g., microphone, amplifier, speakers, etc.)" 
-                                {...field} 
-                                value={field.value || ""} 
-                                rows={2}
-                                className="min-h-[60px]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="paymentInstructions"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel>Payment Instructions</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="How payment should be made (bank transfer, cash on day, etc.)" 
-                                {...field} 
-                                value={field.value || ""} 
-                                rows={2}
-                                className="min-h-[60px]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="equipmentRequirements"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel>Equipment Requirements</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Equipment needed from venue (power, microphones, etc.)" 
-                                {...field} 
-                                value={field.value || ""} 
-                                rows={2}
-                                className="min-h-[60px]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="specialRequirements"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel>Special Requirements</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Any special requests or rider requirements" 
-                                {...field} 
-                                value={field.value || ""} 
-                                rows={2}
-                                className="min-h-[60px]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Reminder System */}
-                      <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                        <h4 className="font-medium text-gray-900">Automatic Reminders</h4>
+                      {/* Reminder Settings */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                          Reminder Settings (Optional)
+                        </h3>
+                        
                         <FormField
                           control={form.control}
                           name="reminderEnabled"
@@ -895,7 +874,7 @@ export default function Contracts() {
                                   type="checkbox"
                                   checked={field.value || false}
                                   onChange={(e) => field.onChange(e.target.checked)}
-                                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
                                 />
                               </FormControl>
                               <FormLabel className="text-sm font-medium text-gray-700">
@@ -911,7 +890,7 @@ export default function Contracts() {
                             name="reminderDays"
                             render={({ field }) => (
                               <FormItem className="space-y-2">
-                                <FormLabel>Send reminder every</FormLabel>
+                                <FormLabel className="text-purple-600 font-medium">Send reminder every</FormLabel>
                                 <div className="flex items-center space-x-2">
                                   <FormControl>
                                     <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(parseInt(value))}>
