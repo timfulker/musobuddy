@@ -9,7 +9,6 @@ import {
 } from './calendar-import';
 import multer from 'multer';
 import OpenAI from 'openai';
-import { categorizeInstrument, generateGigTypesForInstruments } from './openai';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice route now registered in server/index.ts to avoid Vite interference
@@ -2875,39 +2874,6 @@ Powered by MusoBuddy – less admin, more music
   });
 
 
-
-  // Instrument categorization API routes
-  app.post('/api/instruments/categorize', isAuthenticated, async (req, res) => {
-    try {
-      const { instrument } = req.body;
-      
-      if (!instrument || typeof instrument !== 'string') {
-        return res.status(400).json({ error: 'Instrument name is required' });
-      }
-
-      const mapping = await categorizeInstrument(instrument);
-      res.json(mapping);
-    } catch (error) {
-      console.error('Error categorizing instrument:', error);
-      res.status(500).json({ error: 'Failed to categorize instrument' });
-    }
-  });
-
-  app.post('/api/instruments/gig-types', isAuthenticated, async (req, res) => {
-    try {
-      const { instruments } = req.body;
-      
-      if (!instruments || !Array.isArray(instruments)) {
-        return res.status(400).json({ error: 'Instruments array is required' });
-      }
-
-      const gigTypes = await generateGigTypesForInstruments(instruments);
-      res.json({ gigTypes });
-    } catch (error) {
-      console.error('Error generating gig types:', error);
-      res.status(500).json({ error: 'Failed to generate gig types' });
-    }
-  });
 
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {

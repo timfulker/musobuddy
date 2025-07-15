@@ -115,7 +115,7 @@ export interface IStorage {
   
   // Instrument mapping operations
   getInstrumentMapping(instrument: string): Promise<InstrumentMapping | undefined>;
-  saveInstrumentMapping(mapping: InsertInstrumentMapping): Promise<InstrumentMapping>;
+  createInstrumentMapping(mapping: InsertInstrumentMapping): Promise<InstrumentMapping>;
   getAllInstrumentMappings(): Promise<InstrumentMapping[]>;
 }
 
@@ -858,29 +858,6 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return newMapping;
-  }
-
-  async saveInstrumentMapping(mapping: InsertInstrumentMapping): Promise<InstrumentMapping> {
-    // Use upsert to handle duplicates - if instrument already exists, update it
-    const [savedMapping] = await db
-      .insert(instrumentMappings)
-      .values({
-        ...mapping,
-        instrument: mapping.instrument.toLowerCase(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: instrumentMappings.instrument,
-        set: {
-          category: mapping.category,
-          gigTypes: mapping.gigTypes,
-          isCustom: mapping.isCustom,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return savedMapping;
   }
 
   async getAllInstrumentMappings(): Promise<InstrumentMapping[]> {
