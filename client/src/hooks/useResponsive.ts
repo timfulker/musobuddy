@@ -24,5 +24,5 @@ export function useResponsive() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  return { isDesktop, isMobile: !isDesktop };
+  return { isDesktop };
 }
