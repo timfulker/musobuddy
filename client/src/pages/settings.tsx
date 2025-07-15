@@ -27,6 +27,7 @@ const settingsFormSchema = insertUserSettingsSchema.omit({ userId: true }).exten
 export default function Settings() {
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   // Debug logging for authentication context
   React.useEffect(() => {
@@ -187,6 +188,9 @@ export default function Settings() {
       }
       
       setBankDetails(parsedBankDetails);
+      
+      // Mark as initialized so auto-population can run
+      setHasInitialized(true);
     }
   }, [settings, form]);
 
@@ -410,10 +414,10 @@ export default function Settings() {
 
   // ✅ Auto-populate gig types when instruments change
   React.useEffect(() => {
-    if (selectedInstruments.length > 0) {
+    if (hasInitialized && selectedInstruments.length > 0) {
       updateGigTypesFromInstruments();
     }
-  }, [selectedInstruments]);
+  }, [selectedInstruments, hasInitialized]);
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
