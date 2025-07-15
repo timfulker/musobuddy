@@ -25,7 +25,10 @@ import { useResponsive } from "@/hooks/useResponsive";
 
 const contractFormSchema = z.object({
   // Required fields (Musicians' Union minimum)
-  contractNumber: z.string().min(1, "Contract number is required"),
+  contractNumber: z.string().min(1, "Contract number is required").refine(
+    (val) => val.includes('(') && val.includes(')') && val.includes('-'),
+    "Contract number should be in format (dd/mm/yyyy - Client Name)"
+  ),
   clientName: z.string().min(1, "Client name is required"),
   venue: z.string().min(1, "Venue is required"),
   eventDate: z.string().min(1, "Event date is required"),
@@ -108,6 +111,20 @@ export default function Contracts() {
     },
   });
 
+  // Watch for changes in event date and client name to auto-update contract number
+  const watchEventDate = form.watch('eventDate');
+  const watchClientName = form.watch('clientName');
+  
+  React.useEffect(() => {
+    // Auto-update contract number when event date or client name changes
+    if (watchEventDate && watchClientName && !editingContract) {
+      const eventDate = new Date(watchEventDate);
+      const formattedDate = eventDate.toLocaleDateString('en-GB');
+      const contractNumber = `(${formattedDate} - ${watchClientName})`;
+      form.setValue('contractNumber', contractNumber);
+    }
+  }, [watchEventDate, watchClientName, editingContract, form]);
+
   // Check URL params to auto-open form dialog and auto-fill with enquiry data
   React.useEffect(() => {
     try {
@@ -115,8 +132,11 @@ export default function Contracts() {
       if (urlParams.get('action') === 'new' && !isLoading && contracts.length >= 0) {
         setIsDialogOpen(true);
 
-        // Auto-generate contract number
-        const contractNumber = `CON-${new Date().getFullYear()}-${String(contracts.length + 1).padStart(3, '0')}`;
+        // Auto-generate contract number in format (dd/mm/yyyy - Client Name)
+        // Use today's date as default, but will be updated when event date is selected
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-GB');
+        const contractNumber = `(${formattedDate} - )`;
         form.setValue('contractNumber', contractNumber);
 
         // Set default terms from settings if available
@@ -138,6 +158,14 @@ export default function Contracts() {
             form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
             form.setValue('eventTime', enquiry.eventTime || '');
             form.setValue('fee', enquiry.estimatedValue || '');
+            
+            // Auto-generate contract number with event date and client name
+            if (enquiry.eventDate && enquiry.clientName) {
+              const eventDate = new Date(enquiry.eventDate);
+              const formattedDate = eventDate.toLocaleDateString('en-GB');
+              const contractNumber = `(${formattedDate} - ${enquiry.clientName})`;
+              form.setValue('contractNumber', contractNumber);
+            }
           }
         }
       }
@@ -600,8 +628,9 @@ export default function Contracts() {
                               <FormItem className="space-y-2">
                                 <FormLabel className="text-red-600 font-medium">Contract Number *</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="CON-2025-001" {...field} value={field.value || ""} />
+                                  <Input placeholder="(dd/mm/yyyy - Client Name)" {...field} value={field.value || ""} />
                                 </FormControl>
+                                <p className="text-sm text-gray-600">Format: (dd/mm/yyyy - Client Name). Auto-generated but editable for contract re-issuance.</p>
                                 <FormMessage />
                               </FormItem>
                             )}

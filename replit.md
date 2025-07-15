@@ -899,6 +899,16 @@ This applies to any changes in:
   * **Removed Dependencies**: Eliminated checkContractStatus() JavaScript function and cross-origin API calls
   * **Business Impact**: Signed contracts now immediately show completion message without requiring app availability
   * **Status**: Cloud signing pages now work correctly for both signed and unsigned contracts with proper offline capability
+- July 15, 2025. Contract number format changed to date-based system for better organization:
+  * **New Format**: Contract numbers now use "(dd/mm/yyyy - Client Name)" format instead of sequential numbering
+  * **Example**: "(23/12/2025 - John Smith)" instead of "CON-2025-001"
+  * **Auto-Generation**: Contract numbers automatically generated from event date and client name when form is filled
+  * **Dynamic Updates**: Contract number updates automatically when event date or client name changes in form
+  * **Editable for Re-issuance**: Contract numbers remain editable to allow manual modification for contract re-issuance scenarios
+  * **Validation**: Form validation ensures contract numbers maintain proper format structure
+  * **User Experience**: Clear placeholder text and help text explain the format and editing capability
+  * **Business Benefit**: Date-based numbering provides immediate chronological context and easier contract identification
+  * **Status**: Contract numbering system updated across frontend form with backward compatibility maintained
 
 ## Phase 1 Complete - July 14, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
