@@ -303,16 +303,14 @@ export default function Settings() {
         <div className="flex-1 flex flex-col content-container main-content">
           <div className="flex items-center justify-between p-4 border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shrink-0">
             <div className="flex items-center space-x-3">
-              {isMobile && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="md:hidden"
-                >
-                  <Menu className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="md:hidden"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
             </div>
           </div>
