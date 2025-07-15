@@ -126,7 +126,7 @@ export const invoices = pgTable("invoices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Bookings/Gigs table
+// Bookings/Gigs table - Enhanced for calendar imports
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
@@ -163,6 +163,35 @@ export const bookings = pgTable("bookings", {
   repertoire: text("repertoire"), // Song list or repertoire notes
   customFields: jsonb("custom_fields"), // For user-defined fields
   
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// New bookings table - identical to enquiries for safe migration
+export const bookingsNew = pgTable("bookings_new", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  title: varchar("title").notNull(),
+  clientName: varchar("client_name").notNull(),
+  clientEmail: varchar("client_email"),
+  clientPhone: varchar("client_phone"),
+  eventDate: timestamp("event_date"),
+  eventTime: varchar("event_time"),
+  eventEndTime: varchar("event_end_time"), // End time for performance
+  performanceDuration: integer("performance_duration"), // Duration in minutes
+  venue: varchar("venue"),
+  eventType: varchar("event_type"),
+  gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
+  estimatedValue: varchar("estimated_value"),
+  status: varchar("status").notNull().default("new"), // new, booking_in_progress, contract_sent, confirmed, rejected
+  notes: text("notes"),
+  originalEmailContent: text("original_email_content"), // Store original email content
+  applyNowLink: varchar("apply_now_link"), // Store "Apply Now" link from Encore emails
+  responseNeeded: boolean("response_needed").default(true), // Visual indicator for enquiries requiring response
+  lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
+  hasConflicts: boolean("has_conflicts").default(false), // Flag for potential conflicts
+  conflictCount: integer("conflict_count").default(0), // Number of potential conflicts
+  conflictDetails: text("conflict_details"), // JSON string with conflict details
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -4,6 +4,7 @@ import {
   contracts,
   invoices,
   bookings,
+  bookingsNew,
   complianceDocuments,
   userSettings,
   type User,
@@ -48,6 +49,13 @@ export interface IStorage {
   createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry>;
   updateEnquiry(id: number, enquiry: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | undefined>;
   deleteEnquiry(id: number, userId: string): Promise<boolean>;
+  
+  // New bookings operations - parallel to enquiries for migration
+  getBookingsNew(userId: string): Promise<Enquiry[]>;
+  getBookingNew(id: number, userId: string): Promise<Enquiry | undefined>;
+  createBookingNew(booking: InsertEnquiry): Promise<Enquiry>;
+  updateBookingNew(id: number, booking: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | undefined>;
+  deleteBookingNew(id: number, userId: string): Promise<boolean>;
   
   // Contract operations
   getContracts(userId: string): Promise<Contract[]>;
@@ -194,6 +202,58 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(enquiries)
       .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
+    return result.rowCount > 0;
+  }
+
+  // New bookings operations - parallel to enquiries for migration
+  async getBookingsNew(userId: string): Promise<Enquiry[]> {
+    return await db
+      .select()
+      .from(bookingsNew)
+      .where(eq(bookingsNew.userId, userId))
+      .orderBy(desc(bookingsNew.createdAt));
+  }
+
+  async getBookingNew(id: number, userId: string): Promise<Enquiry | undefined> {
+    const [booking] = await db
+      .select()
+      .from(bookingsNew)
+      .where(and(eq(bookingsNew.id, id), eq(bookingsNew.userId, userId)));
+    return booking;
+  }
+
+  async createBookingNew(booking: InsertEnquiry): Promise<Enquiry> {
+    console.log('🔍 Storage createBookingNew called');
+    console.log('🔍 Booking title:', booking.title);
+    console.log('🔍 Client name:', booking.clientName);
+    
+    // Ensure eventDate is properly handled
+    const processedBooking = {
+      ...booking,
+      eventDate: booking.eventDate instanceof Date ? booking.eventDate : 
+                booking.eventDate ? new Date(booking.eventDate) : null
+    };
+    
+    const [newBooking] = await db
+      .insert(bookingsNew)
+      .values(processedBooking)
+      .returning();
+    return newBooking;
+  }
+
+  async updateBookingNew(id: number, booking: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | undefined> {
+    const [updatedBooking] = await db
+      .update(bookingsNew)
+      .set({ ...booking, updatedAt: new Date() })
+      .where(and(eq(bookingsNew.id, id), eq(bookingsNew.userId, userId)))
+      .returning();
+    return updatedBooking;
+  }
+
+  async deleteBookingNew(id: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(bookingsNew)
+      .where(and(eq(bookingsNew.id, id), eq(bookingsNew.userId, userId)));
     return result.rowCount > 0;
   }
 

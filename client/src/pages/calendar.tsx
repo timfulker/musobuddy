@@ -22,7 +22,7 @@ export default function Calendar() {
   const [location, navigate] = useLocation();
   const { isMobile } = useResponsive();
 
-  // Fetch data for calendar events
+  // Fetch data for calendar events - dual read from both tables
   const { data: bookings = [] } = useQuery({
     queryKey: ["/api/bookings"],
     retry: 2,
@@ -30,6 +30,12 @@ export default function Calendar() {
 
   const { data: enquiries = [] } = useQuery({
     queryKey: ["/api/enquiries"],
+    retry: 2,
+  });
+
+  // Fetch new bookings table data (migrated from enquiries)
+  const { data: bookingsNew = [] } = useQuery({
+    queryKey: ["/api/bookings-new"],
     retry: 2,
   });
 
@@ -56,7 +62,7 @@ export default function Calendar() {
     const dateStr = date.toISOString().split('T')[0];
     const events: CalendarEvent[] = [];
 
-    // Add bookings
+    // Add bookings from original bookings table
     bookings.forEach((booking: any) => {
       if (booking.eventDate && booking.eventDate.startsWith(dateStr)) {
         events.push({
@@ -69,7 +75,20 @@ export default function Calendar() {
       }
     });
 
-    // Add enquiries (confirmed ones)
+    // Add confirmed enquiries from bookings_new table (migrated data)
+    bookingsNew.forEach((booking: any) => {
+      if (booking.eventDate && booking.eventDate.startsWith(dateStr) && booking.status === 'confirmed') {
+        events.push({
+          id: booking.id,
+          title: booking.title || booking.clientName || 'Booking',
+          date: dateStr,
+          type: 'booking',
+          status: booking.status
+        });
+      }
+    });
+
+    // Add enquiries (confirmed ones) from original enquiries table
     enquiries.forEach((enquiry: any) => {
       if (enquiry.eventDate && enquiry.eventDate.startsWith(dateStr) && enquiry.status === 'confirmed') {
         events.push({

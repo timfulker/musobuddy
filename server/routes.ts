@@ -2336,6 +2336,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New bookings endpoint - for migrated data from enquiries
+  app.get('/api/bookings-new', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bookings = await storage.getBookingsNew(userId);
+      res.json(bookings);
+    } catch (error) {
+      console.error("Error fetching new bookings:", error);
+      res.status(500).json({ message: "Failed to fetch new bookings" });
+    }
+  });
+
   app.get('/api/bookings/upcoming', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
