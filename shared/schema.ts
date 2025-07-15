@@ -25,8 +25,8 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Enquiries table
-export const enquiries = pgTable("enquiries", {
+// Bookings table (renamed from enquiries)
+export const bookings = pgTable("enquiries", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   title: varchar("title").notNull(),
@@ -126,8 +126,8 @@ export const invoices = pgTable("invoices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Bookings/Gigs table
-export const bookings = pgTable("bookings", {
+// Actual bookings/gigs table (separate from enquiries)
+export const actualBookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   contractId: integer("contract_id"), // Made optional - can be null for calendar imports
@@ -273,7 +273,7 @@ export const bookingConflicts = pgTable("booking_conflicts", {
 
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
-  enquiries: many(enquiries),
+  bookings: many(bookings),
   contracts: many(contracts),
   invoices: many(invoices),
   bookings: many(bookings),
@@ -284,9 +284,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
 }));
 
-export const enquiriesRelations = relations(enquiries, ({ one, many }) => ({
+export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   user: one(users, {
-    fields: [enquiries.userId],
+    fields: [bookings.userId],
     references: [users.id],
   }),
   contracts: many(contracts),
@@ -316,7 +316,7 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
   }),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one }) => ({
+export const actualBookingsRelations = relations(actualBookings, ({ one }) => ({
   user: one(users, {
     fields: [bookings.userId],
     references: [users.id],
@@ -342,7 +342,7 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 }));
 
 // Insert schemas
-export const insertEnquirySchema = createInsertSchema(enquiries).omit({
+export const insertBookingSchema = createInsertSchema(bookings).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
