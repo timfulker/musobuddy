@@ -476,6 +476,14 @@ function generateContractHTML(
             <th>Client Email</th>
             <td>${contract.clientEmail}</td>
           </tr>
+          ${contract.clientAddress ? `<tr>
+            <th>Client Address</th>
+            <td>${contract.clientAddress}</td>
+          </tr>` : ''}
+          ${contract.clientPhone ? `<tr>
+            <th>Client Phone</th>
+            <td>${contract.clientPhone}</td>
+          </tr>` : ''}
           <tr>
             <th>Event Date</th>
             <td>${new Date(contract.eventDate).toLocaleDateString('en-GB', { 
@@ -502,9 +510,6 @@ function generateContractHTML(
 
       <div class="terms">
         <h3>Terms and Conditions</h3>
-        <div style="white-space: pre-wrap; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
-${contract.terms}
-        </div>
         
         <div style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-radius: 5px; font-size: 14px;">
           <h4 style="margin-top: 0; color: #2563eb;">Payment Terms & Conditions</h4>
