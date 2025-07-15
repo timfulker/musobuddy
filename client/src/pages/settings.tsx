@@ -18,12 +18,36 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Building, Save, MapPin, Globe, Hash, CreditCard, FileText, User, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu } from "lucide-react";
 
-// Available instruments from the CSV
-const AVAILABLE_INSTRUMENTS = [
+// Default instruments displayed initially
+const DEFAULT_INSTRUMENTS = [
   "Violin", "Cello", "Double Bass", "Harp", "Electric Guitar", "Acoustic Guitar", "Bass Guitar",
   "Flute", "Clarinet", "Saxophone", "Trumpet", "Trombone", "French Horn", "Tuba", 
   "Piano", "Electric Keyboard", "Synthesizer", "Percussion", "Lead Vocals", "Backing Vocals", 
-  "DJ", "Laptop", "Sampler"
+  "DJ"
+];
+
+// Comprehensive instrument database from CSV
+const ALL_INSTRUMENTS = [
+  "Violin", "Viola", "Cello", "Double Bass", "Harp", "Classical Guitar", "Acoustic Guitar", 
+  "Electric Guitar", "Bass Guitar", "Banjo", "Mandolin", "Ukulele", "Zither", "Sitar", 
+  "Shamisen", "Erhu", "Koto", "Sarod", "Oud", "Balalaika", "Flute", "Piccolo", "Recorder", 
+  "Oboe", "English Horn", "Clarinet", "Bass Clarinet", "Bassoon", "Contrabassoon", 
+  "Alto Saxophone", "Tenor Saxophone", "Baritone Saxophone", "Soprano Saxophone", 
+  "Pan Flute", "Shakuhachi", "Dizi", "Ney", "Bansuri", "Didgeridoo", "Trumpet", "Cornet", 
+  "Flugelhorn", "Trombone", "Bass Trombone", "French Horn", "Tuba", "Sousaphone", 
+  "Euphonium", "Alto Horn", "Baritone Horn", "Bugle", "Piano", "Grand Piano", 
+  "Upright Piano", "Electric Piano", "Organ", "Pipe Organ", "Harmonium", "Harpsichord", 
+  "Clavichord", "Celesta", "Synthesizer", "Digital Keyboard", "Keytar", "Timpani", 
+  "Xylophone", "Glockenspiel", "Marimba", "Vibraphone", "Tubular Bells", "Steel Drums", 
+  "Crotales", "Snare Drum", "Bass Drum", "Cymbals", "Tambourine", "Triangle", "Castanets", 
+  "Woodblock", "Guiro", "Claves", "Cowbell", "Djembe", "Bongo Drums", "Conga Drums", 
+  "Tabla", "Cajón", "Agogo Bells", "Shekere", "Frame Drum", "Tabor", "Talking Drum", 
+  "Drum Machine", "Turntables", "Loop Station", "Modular Synth", "Theremin", "Lead Vocals", 
+  "Backing Vocals", "Beatboxing", "Overtone Singing", "Chanting", "Rebab", "Hardanger Fiddle", 
+  "Nyckelharpa", "Kamancheh", "Qanun", "Guzheng", "Yangqin", "Veena", "Pipa", "Domra", 
+  "Bagpipes", "Uilleann Pipes", "Sheng", "Hulusi", "Zurna", "Suona", "Accordion", 
+  "Concertina", "Melodica", "Jew's Harp", "Glass Harmonica", "Waterphone", "Hang Drum", 
+  "Kalimba", "Music Box", "Singing Bowl", "Rainstick", "DJ"
 ];
 
 // Schema for form validation
@@ -146,7 +170,21 @@ export default function Settings() {
             "Synthesizer": ["Wedding Reception", "Corporate Event", "Function Band", "Dance Event", "Club Night", "Electronic Music", "Pop Concert", "Tribute Show", "Private Party", "Bar Gig", "Music Festival", "Studio Session"],
             "DJ": ["Wedding Reception", "Corporate Event", "Private Party", "Club Night", "Dance Event", "Birthday Party", "Bar Gig", "Music Festival", "Function Event", "Cocktail Hour", "Background Music", "Youth Event"],
             "Laptop": ["DJ Set", "Electronic Music", "Club Night", "Dance Event", "Corporate Event", "Private Party", "Music Festival", "Bar Gig", "Background Music", "Cocktail Hour", "Function Event", "Youth Event"],
-            "Sampler": ["Electronic Music", "Club Night", "Dance Event", "Corporate Event", "Private Party", "Music Festival", "Bar Gig", "Hip Hop Event", "Function Event", "Studio Session", "Live Performance", "DJ Set"],
+            // Additional instruments from comprehensive CSV
+            "Viola": ["Wedding Ceremony", "Classical Concert", "Chamber Music", "String Quartet", "Corporate Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Funeral Service", "Church Service", "Cocktail Hour"],
+            "Classical Guitar": ["Wedding Ceremony", "Classical Concert", "Chamber Music", "Corporate Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Cocktail Hour", "Garden Party", "Background Music", "Acoustic Set"],
+            "Banjo": ["Folk Festival", "Country Music", "Bluegrass Event", "Wedding Reception", "Private Party", "Restaurant Performance", "Acoustic Set", "Street Performance", "Cultural Event", "Barn Dance", "Outdoor Event", "Community Festival"],
+            "Mandolin": ["Folk Festival", "Bluegrass Event", "Wedding Ceremony", "Private Party", "Restaurant Performance", "Acoustic Set", "Chamber Music", "Cultural Event", "Garden Party", "Wine Tasting", "Art Gallery", "Background Music"],
+            "Ukulele": ["Wedding Reception", "Private Party", "Beach Event", "Restaurant Performance", "Coffee Shop", "Acoustic Set", "Children's Event", "Garden Party", "Cultural Event", "Street Performance", "Folk Festival", "Background Music"],
+            "Bagpipes": ["Wedding Ceremony", "Cultural Event", "Military Event", "Funeral Service", "Highland Games", "Festival", "St. Patrick's Day", "Burns Night", "Parade", "Memorial Service", "Traditional Event", "Outdoor Ceremony"],
+            "Accordion": ["Folk Festival", "Cultural Event", "Oktoberfest", "Wedding Reception", "Private Party", "Restaurant Performance", "Dance Event", "Polka Night", "European Event", "Street Performance", "Community Festival", "Traditional Music"],
+            "Harmonica": ["Blues Club", "Folk Festival", "Acoustic Set", "Street Performance", "Restaurant Performance", "Private Party", "Country Music", "Campfire Event", "Busking", "Bar Gig", "Jam Session", "Cultural Event"],
+            "Tabla": ["World Music", "Cultural Event", "Indian Wedding", "Meditation Event", "Spiritual Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Festival", "Academic Event", "Cultural Center"],
+            "Sitar": ["World Music", "Cultural Event", "Indian Wedding", "Meditation Event", "Spiritual Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Festival", "Academic Event", "Cultural Center"],
+            "Didgeridoo": ["World Music", "Cultural Event", "Meditation Event", "Spiritual Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Festival", "Academic Event", "Cultural Center", "Outdoor Event"],
+            "Kalimba": ["World Music", "Meditation Event", "Spiritual Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Background Music", "Acoustic Set", "Cultural Event", "Therapy Session", "Relaxation Event"],
+            "Hang Drum": ["World Music", "Meditation Event", "Spiritual Event", "Private Party", "Restaurant Performance", "Art Gallery", "Wine Tasting", "Background Music", "Acoustic Set", "Cultural Event", "Therapy Session", "Relaxation Event"],
+            "Singing Bowl": ["Meditation Event", "Spiritual Event", "Yoga Class", "Therapy Session", "Relaxation Event", "Private Party", "Art Gallery", "Wine Tasting", "Background Music", "Cultural Event", "Healing Session", "Wellness Event"],
           };
           
           const allSuggestions = instruments.flatMap(instrument => 
@@ -201,9 +239,11 @@ export default function Settings() {
   };
 
   // Filter instruments based on search
-  const filteredInstruments = AVAILABLE_INSTRUMENTS.filter(instrument =>
-    instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
-  );
+  const filteredInstruments = instrumentSearch 
+    ? ALL_INSTRUMENTS.filter(instrument =>
+        instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
+      )
+    : DEFAULT_INSTRUMENTS;
 
   // Save settings mutation
   const saveSettingsMutation = useMutation({
