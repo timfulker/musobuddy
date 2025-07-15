@@ -1,33 +1,96 @@
-CLAUDE BACKEND REFACTORING TASK - CONTEXT
+## CRITICAL BACKEND REFACTORING INSTRUCTIONS
 
-You are refactoring a music business app to rename "enquiries" to "bookings" throughout the codebase for consistency with the UI. The frontend has already been updated - now you need to update the backend files.
+### PROJECT CONTEXT
+MusoBuddy music business management application requires complete terminology consistency. All "enquiry" references must be renamed to "booking" throughout the codebase while maintaining the database table name as "enquiries".
 
-CRITICAL CONSTRAINTS:
-1. Database table name stays "enquiries" - DO NOT CHANGE IT
-2. Only change code references, variable names, function names, and comments
-3. Focus on these 3 files only: server/storage.ts, server/routes.ts, server/index.ts
+### COST-CRITICAL REQUIREMENT
+User has specifically requested using external AI (Claude strongly preferred) for all file editing due to cost concerns. Do NOT edit files directly in the project.
 
-REFACTORING SCOPE:
-- Change all variable names from "enquiry/enquiries" to "booking/bookings"
-- Change all function names from "enquiry/enquiries" to "booking/bookings"
-- Change all comments from "enquiry/enquiries" to "booking/bookings"
-- Change all route paths from "/enquiries" to "/bookings"
-- Change all API endpoint references from "enquiries" to "bookings"
-- Update all error messages and logs to use "booking" terminology
-- Keep database table name as "enquiries" (this is the ONLY exception)
+### REFACTORING SCOPE
+Three backend files require systematic refactoring:
 
-EXAMPLE TRANSFORMATIONS:
-- Function: getEnquiries() → getBookings()
-- Variable: enquiryData → bookingData
-- Route: /api/enquiries → /api/bookings
-- Comment: "Create new enquiry" → "Create new booking"
-- Error: "Enquiry not found" → "Booking not found"
+1. ✅ **server/storage.ts** - COMPLETED (already refactored)
+2. ✅ **server/routes.ts** - COMPLETED (already refactored) 
+3. **server/index.ts** - REQUIRES REFACTORING
 
-IMPORTANT NOTES:
-- This is a terminology consistency update only
-- No functional changes to the code logic
-- Database schema remains unchanged
-- All database queries still reference the "enquiries" table
-- Only change the external-facing API and internal code references
+### SERVER/INDEX.TS REFACTORING DETAILS
 
-Please process each file systematically, changing all instances of "enquiry/enquiries" to "booking/bookings" while preserving all database table references as "enquiries".
+**File Analysis Complete - All "enquiry" references catalogued:**
+
+**Line 56:** `// Enhanced enquiry creation with AI parsing`
+**Line 57:** `async function createEnquiryFromEmail(emailData: any): Promise<Enquiry | null> {`
+**Line 77:** `const enquiryData = {`
+**Line 89:** `const enquiry = await storage.createEnquiry(enquiryData);`
+**Line 90:** `console.log('✅ Enquiry created from email:', enquiry);`
+**Line 91:** `return enquiry;`
+**Line 107:** `console.log('❌ Failed to create enquiry from email:', error);`
+**Line 174:** `const enquiry = await createEnquiryFromEmail(emailData);`
+**Line 175:** `if (enquiry) {`
+**Line 176:** `console.log('✅ Enquiry created successfully:', enquiry.id);`
+**Line 178:** `console.log('❌ Failed to create enquiry');`
+**Line 189:** `const enquiry = await createEnquiryFromEmail(emailData);`
+**Line 190:** `if (enquiry) {`
+**Line 191:** `console.log('✅ Enquiry created successfully:', enquiry.id);`
+**Line 193:** `console.log('❌ Failed to create enquiry');`
+**Line 230:** `const enquiry = await createEnquiryFromEmail(emailData);`
+**Line 231:** `if (enquiry) {`
+**Line 232:** `console.log('✅ Enquiry created successfully:', enquiry.id);`
+**Line 234:** `console.log('❌ Failed to create enquiry');`
+**Line 253:** `const enquiry = await createEnquiryFromEmail(emailData);`
+**Line 254:** `if (enquiry) {`
+**Line 255:** `console.log('✅ Enquiry created successfully:', enquiry.id);`
+**Line 257:** `console.log('❌ Failed to create enquiry');`
+
+### REFACTORING INSTRUCTIONS
+
+**Replace ALL instances of:**
+- `enquiry` → `booking`
+- `Enquiry` → `Booking`
+- `enquiries` → `bookings`
+- `createEnquiry` → `createBooking`
+
+**CRITICAL REQUIREMENTS:**
+1. Preserve all import statements exactly as they are
+2. Maintain exact same logic and error handling
+3. Keep all console.log messages and debugging intact
+4. Ensure the `createEnquiryFromEmail` function becomes `createBookingFromEmail`
+5. Update the function's return type from `Promise<Enquiry | null>` to `Promise<Booking | null>`
+6. Update all variable names: `enquiry` → `booking`, `enquiryData` → `bookingData`
+7. Update storage method calls: `storage.createEnquiry` → `storage.createBooking`
+8. Update all console.log messages to use "booking" terminology
+
+**EXAMPLE TRANSFORMATION:**
+```typescript
+// BEFORE:
+async function createEnquiryFromEmail(emailData: any): Promise<Enquiry | null> {
+  const enquiryData = {
+    // ... data structure
+  };
+  const enquiry = await storage.createEnquiry(enquiryData);
+  console.log('✅ Enquiry created from email:', enquiry);
+  return enquiry;
+}
+
+// AFTER:
+async function createBookingFromEmail(emailData: any): Promise<Booking | null> {
+  const bookingData = {
+    // ... data structure
+  };
+  const booking = await storage.createBooking(bookingData);
+  console.log('✅ Booking created from email:', booking);
+  return booking;
+}
+```
+
+### VALIDATION REQUIREMENTS
+After refactoring, ensure:
+1. All function calls use new terminology
+2. All variable names use new terminology  
+3. All console.log messages use new terminology
+4. TypeScript types are updated (Enquiry → Booking)
+5. Storage method calls are updated (createEnquiry → createBooking)
+6. File compiles without errors
+7. All functionality remains identical
+
+### FINAL DELIVERABLE
+Return the complete refactored server/index.ts file with all "enquiry" references converted to "booking" terminology while maintaining exact same functionality.
