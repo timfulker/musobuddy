@@ -1,0 +1,33 @@
+CLAUDE BACKEND REFACTORING TASK - CONTEXT
+
+You are refactoring a music business app to rename "enquiries" to "bookings" throughout the codebase for consistency with the UI. The frontend has already been updated - now you need to update the backend files.
+
+CRITICAL CONSTRAINTS:
+1. Database table name stays "enquiries" - DO NOT CHANGE IT
+2. Only change code references, variable names, function names, and comments
+3. Focus on these 3 files only: server/storage.ts, server/routes.ts, server/index.ts
+
+REFACTORING SCOPE:
+- Change all variable names from "enquiry/enquiries" to "booking/bookings"
+- Change all function names from "enquiry/enquiries" to "booking/bookings"
+- Change all comments from "enquiry/enquiries" to "booking/bookings"
+- Change all route paths from "/enquiries" to "/bookings"
+- Change all API endpoint references from "enquiries" to "bookings"
+- Update all error messages and logs to use "booking" terminology
+- Keep database table name as "enquiries" (this is the ONLY exception)
+
+EXAMPLE TRANSFORMATIONS:
+- Function: getEnquiries() → getBookings()
+- Variable: enquiryData → bookingData
+- Route: /api/enquiries → /api/bookings
+- Comment: "Create new enquiry" → "Create new booking"
+- Error: "Enquiry not found" → "Booking not found"
+
+IMPORTANT NOTES:
+- This is a terminology consistency update only
+- No functional changes to the code logic
+- Database schema remains unchanged
+- All database queries still reference the "enquiries" table
+- Only change the external-facing API and internal code references
+
+Please process each file systematically, changing all instances of "enquiry/enquiries" to "booking/bookings" while preserving all database table references as "enquiries".
