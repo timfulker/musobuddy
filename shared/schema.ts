@@ -276,7 +276,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   bookings: many(bookings),
   contracts: many(contracts),
   invoices: many(invoices),
-  bookings: many(bookings),
+  actualBookings: many(actualBookings),
   complianceDocuments: many(complianceDocuments),
   settings: one(userSettings, {
     fields: [users.id],
