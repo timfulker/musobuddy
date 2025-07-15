@@ -864,6 +864,17 @@ This applies to any changes in:
   * **Enhanced Contract Fields**: Added professional fields - venueAddress, eventType, gigType, setupTime, soundCheckTime, equipmentProvided, clientRequirements, dressCode
   * **Comprehensive Legal Footer**: Added binding agreement clauses, severability, and contract validity statements
   * **Status**: Contract system now legally bulletproof with industry-standard professional protections
+- July 15, 2025. Simplified contract schema with essential rider fields implementation completed:
+  * **Musicians' Union Compliance**: Maintained Musicians' Union minimum fields while removing unnecessary complexity
+  * **Essential Rider Fields**: Added payment instructions, equipment requirements, and special requirements fields
+  * **Simplified Structure**: Streamlined contract creation with focus on core legal requirements plus essential rider information
+  * **Database Migration**: Updated contracts table with new rider fields and removed obsolete columns
+  * **Enhanced Form Interface**: Updated contract creation form to include new payment and rider fields
+  * **Contract View Updates**: Modified contract display to show payment instructions and rider requirements
+  * **Payment Instructions**: Field for specifying payment methods (bank transfer, cash on day, etc.)
+  * **Equipment Requirements**: Field for venue equipment needs (power, microphones, etc.)
+  * **Special Requirements**: Field for additional rider requirements and special requests
+  * **Status**: Contract system simplified yet comprehensive with essential rider information for professional musicians
 
 ## Phase 1 Complete - July 14, 2025 ✅
 **Status: PRODUCTION READY - DEPLOYMENT CONFIGURATION COMPLETE**
