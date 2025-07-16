@@ -1,4 +1,11 @@
-import React, { useState } from 'react';
+// FIXED: ConflictResolutionDialog.tsx
+// Key changes:
+// 1. Better data validation and fallback logic
+// 2. Improved conflict detection in the dialog itself
+// 3. Enhanced debugging and error handling
+// 4. Fixed the booking count calculation
+
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -51,25 +58,53 @@ export default function ConflictResolutionDialog({
   const [newEndTime, setNewEndTime] = useState<string>('');
   const [rejectReason, setRejectReason] = useState<string>('');
   
+  // FIXED: Better conflict data processing
+  const processedConflicts = React.useMemo(() => {
+    // Ensure conflicts is always an array
+    const conflictsArray = Array.isArray(conflicts) ? conflicts : [];
+    
+    // Filter out any invalid entries and the current enquiry
+    const validConflicts = conflictsArray.filter(conflict => 
+      conflict && 
+      conflict.id && 
+      conflict.id !== enquiry.id &&
+      conflict.eventDate // Must have a date to be a valid conflict
+    );
+    
+    console.log('Processed conflicts:', {
+      originalConflicts: conflicts,
+      conflictsArray,
+      validConflicts,
+      enquiryId: enquiry.id
+    });
+    
+    return validConflicts;
+  }, [conflicts, enquiry.id]);
+  
+  // FIXED: All conflicting bookings including the enquiry
+  const allConflictingBookings = React.useMemo(() => {
+    const all = [enquiry, ...processedConflicts].filter(Boolean);
+    console.log('All conflicting bookings:', {
+      enquiry: enquiry?.id,
+      processedConflicts: processedConflicts.length,
+      total: all.length,
+      bookings: all.map(b => ({ id: b.id, title: b.title, date: b.eventDate }))
+    });
+    return all;
+  }, [enquiry, processedConflicts]);
+  
+  // FIXED: Correct booking count calculation
+  const totalConflictingBookings = allConflictingBookings.length;
+  
   // State for time editing - map of booking ID to time values
   const [bookingTimes, setBookingTimes] = useState<Record<string, { start: string; end: string }>>(() => {
     const initialTimes: Record<string, { start: string; end: string }> = {};
     
-    // Initialize with all conflicting bookings
-    if (enquiry) {
-      initialTimes[enquiry.id] = { 
-        start: enquiry.eventTime || '', 
-        end: enquiry.eventEndTime || '' 
-      };
-    }
-    
-    // Add processed conflicts
-    const conflictsArray = Array.isArray(conflicts) ? conflicts : [];
-    conflictsArray.forEach(conflict => {
-      if (conflict && conflict.id) {
-        initialTimes[conflict.id] = { 
-          start: conflict.eventTime || '', 
-          end: conflict.eventEndTime || '' 
+    allConflictingBookings.forEach(booking => {
+      if (booking && booking.id) {
+        initialTimes[booking.id] = { 
+          start: booking.eventTime || '', 
+          end: booking.eventEndTime || '' 
         };
       }
     });
@@ -77,6 +112,7 @@ export default function ConflictResolutionDialog({
     console.log('Initial booking times:', initialTimes);
     return initialTimes;
   });
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -228,62 +264,19 @@ export default function ConflictResolutionDialog({
     return booking.status !== 'completed' && booking.status !== 'rejected';
   };
 
-  // FIXED: Better conflict data processing
-  const processedConflicts = React.useMemo(() => {
-    // Ensure conflicts is always an array
-    const conflictsArray = Array.isArray(conflicts) ? conflicts : [];
-    
-    // Filter out any invalid entries and the current enquiry
-    const validConflicts = conflictsArray.filter(conflict => 
-      conflict && 
-      conflict.id && 
-      conflict.id !== enquiry.id &&
-      conflict.eventDate // Must have a date to be a valid conflict
-    );
-    
-    console.log('Processed conflicts:', {
-      originalConflicts: conflicts,
-      conflictsArray,
-      validConflicts,
-      enquiryId: enquiry.id
-    });
-    
-    return validConflicts;
-  }, [conflicts, enquiry.id]);
-  
-  // FIXED: All conflicting bookings including the enquiry
-  const allConflictingBookings = React.useMemo(() => {
-    const all = [enquiry, ...processedConflicts].filter(Boolean);
-    console.log('All conflicting bookings:', {
-      enquiry: enquiry?.id,
-      processedConflicts: processedConflicts.length,
-      total: all.length,
-      bookings: all.map(b => ({ id: b.id, title: b.title, date: b.eventDate }))
-    });
-    return all;
-  }, [enquiry, processedConflicts]);
-  
-  // FIXED: Correct booking count calculation
-  const totalConflictingBookings = allConflictingBookings.length;
-  
-  // Force display of both bookings when conflicts exist
-  console.log('Dialog Data Check:', {
+  // FIXED: Enhanced debugging
+  console.log('ConflictResolutionDialog Render Debug:', {
     enquiry: enquiry?.id,
-    conflicts: conflicts?.length || 0,
-    conflictData: conflicts,
-    allBookings: allConflictingBookings.map(b => ({ id: b.id, title: b.title })),
-    totalBookings: totalConflictingBookings,
-    receivedConflicts: conflicts,
-    allConflictingBookingsCount: allConflictingBookings.length
-  });
-  
-  // Debug logging
-  console.log('ConflictResolutionDialog Debug:', {
-    enquiry: enquiry?.id,
-    conflicts: conflicts?.length,
-    conflictIds: conflicts?.map(c => c.id),
+    originalConflicts: conflicts,
+    processedConflicts: processedConflicts.length,
     allConflictingBookings: allConflictingBookings.length,
-    totalConflictingBookings
+    totalConflictingBookings,
+    bookingDetails: allConflictingBookings.map(b => ({ 
+      id: b?.id, 
+      title: b?.title, 
+      date: b?.eventDate,
+      time: b?.eventTime 
+    }))
   });
 
   return (
@@ -297,7 +290,7 @@ export default function ConflictResolutionDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Conflict Summary */}
+          {/* FIXED: Conflict Summary with correct count */}
           <Card className="border-red-200 bg-red-50">
             <CardHeader>
               <CardTitle className="text-lg text-red-800">
@@ -338,7 +331,7 @@ export default function ConflictResolutionDialog({
             </Select>
           </div>
 
-          {/* Unified Time Editing Interface */}
+          {/* FIXED: Unified Time Editing Interface */}
           {selectedAction === 'edit_times' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -461,6 +454,9 @@ export default function ConflictResolutionDialog({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Conflicting Bookings</h3>
+                <Badge variant="outline">
+                  {totalConflictingBookings} booking{totalConflictingBookings !== 1 ? 's' : ''}
+                </Badge>
               </div>
               
               {allConflictingBookings.map((booking, index) => {
@@ -477,10 +473,15 @@ export default function ConflictResolutionDialog({
                             <Badge className={getStatusColor(booking?.status || 'new')}>
                               {getStatusLabel(booking?.status || 'new')}
                             </Badge>
+                            {isCurrentEnquiry && (
+                              <Badge className="bg-blue-100 text-blue-800">
+                                New Enquiry
+                              </Badge>
+                            )}
                           </div>
-                        
+                          
                           <h4 className="font-medium">{booking?.title || 'Untitled Booking'}</h4>
-                        
+                          
                           <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                             <div className="flex items-center">
                               <User className="w-4 h-4 mr-2" />
@@ -503,7 +504,7 @@ export default function ConflictResolutionDialog({
                               </div>
                             )}
                           </div>
-                        
+                          
                           {booking?.estimatedValue && (
                             <div className="text-green-600 font-medium">
                               £{booking.estimatedValue}
@@ -523,7 +524,7 @@ export default function ConflictResolutionDialog({
                               Reject
                             </Button>
                           )}
-                        
+                          
                           {selectedAction === 'reject_existing' && booking.id !== enquiry.id && canReject(booking) && (
                             <Button
                               variant="destructive"
@@ -534,7 +535,7 @@ export default function ConflictResolutionDialog({
                               Reject
                             </Button>
                           )}
-                        
+                          
                           {selectedAction === 'mark_in_progress' && booking.id === enquiry.id && (
                             <Button
                               variant="outline"
@@ -554,8 +555,6 @@ export default function ConflictResolutionDialog({
               })}
             </div>
           )}
-
-
 
           {/* Reject Reason */}
           {selectedAction === 'reject_enquiry' && (
