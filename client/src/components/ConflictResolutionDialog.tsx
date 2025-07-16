@@ -216,8 +216,8 @@ export default function ConflictResolutionDialog({
   };
 
   const allConflictingBookings = [enquiry, ...(conflicts || [])].filter(Boolean);
-  // Calculate total conflicts - conflicts array already includes all conflicting bookings
-  const totalConflictingBookings = Math.max(2, allConflictingBookings.length);
+  // Calculate total conflicts - use actual length of all conflicting bookings
+  const totalConflictingBookings = allConflictingBookings.length;
   
   // Force display of both bookings when conflicts exist
   console.log('Dialog Data Check:', {
@@ -225,7 +225,9 @@ export default function ConflictResolutionDialog({
     conflicts: conflicts?.length || 0,
     conflictData: conflicts,
     allBookings: allConflictingBookings.map(b => ({ id: b.id, title: b.title })),
-    totalBookings: totalConflictingBookings
+    totalBookings: totalConflictingBookings,
+    receivedConflicts: conflicts,
+    allConflictingBookingsCount: allConflictingBookings.length
   });
   
   // Debug logging
