@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Clock, User, Calendar, MapPin } from 'lucide-react';
+import { bookings } from '@shared/schema';
 
 export interface Booking {
   id: number;
