@@ -130,6 +130,24 @@ export default function Enquiries() {
     });
   };
 
+  // Phase 3: Read from main bookings table (renamed from bookings_new)
+  const { data: enquiries = [], isLoading, error } = useQuery<Enquiry[]>({
+    queryKey: ["/api/bookings"],
+  });
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ["/api/templates"],
+  });
+
+  const { data: settings = {} } = useQuery({
+    queryKey: ["/api/settings"],
+  });
+
+  // Fetch confirmed bookings data for conflict detection
+  const { data: bookings = [] } = useQuery({
+    queryKey: ["/api/bookings/upcoming"],
+  });
+
   // Quick status update for individual bookings
   const handleQuickStatusUpdate = (bookingId: number, status: string) => {
     updateEnquiryStatusMutation.mutate({ id: bookingId, status });
@@ -152,24 +170,6 @@ export default function Enquiries() {
       }
     }
   }, [enquiries]);
-
-  // Phase 3: Read from main bookings table (renamed from bookings_new)
-  const { data: enquiries = [], isLoading, error } = useQuery<Enquiry[]>({
-    queryKey: ["/api/bookings"],
-  });
-
-  const { data: templates = [] } = useQuery({
-    queryKey: ["/api/templates"],
-  });
-
-  const { data: settings = {} } = useQuery({
-    queryKey: ["/api/settings"],
-  });
-
-  // Fetch confirmed bookings data for conflict detection
-  const { data: bookings = [] } = useQuery({
-    queryKey: ["/api/bookings/upcoming"],
-  });
 
   // Form setup and mutations - moved before any conditional returns
   const form = useForm<z.infer<typeof enquiryFormSchema>>({

@@ -158,8 +158,8 @@ export default function Calendar() {
   const handleDateClick = (date: Date) => {
     const events = getEventsForDate(date);
     if (events.length > 0) {
-      // Navigate to enquiries page (which handles bookings)
-      navigate("/enquiries");
+      // Navigate to bookings page
+      navigate("/bookings");
     }
   };
 
