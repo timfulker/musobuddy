@@ -186,26 +186,6 @@ export default function KanbanBoard() {
             </div>
           </div>
 
-          {/* Contract Sent Column */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Contract Sent</h4>
-              <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                {groupedEnquiries.contract_sent.length}
-              </Badge>
-            </div>
-            <div className="space-y-3 min-h-[300px]">
-              {groupedEnquiries.contract_sent.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, "border-l-purple-500", "bg-gradient-to-r from-purple-50 to-white dark:from-purple-950 dark:to-gray-900")
-              )}
-              {groupedEnquiries.contract_sent.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <p className="text-sm">No pending contracts</p>
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Confirmed Column */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -221,6 +201,26 @@ export default function KanbanBoard() {
               {groupedEnquiries.confirmed.length === 0 && (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <p className="text-sm">No confirmed bookings</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Contract Received Column */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Contract Received</h4>
+              <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                {groupedEnquiries.contract_sent.length}
+              </Badge>
+            </div>
+            <div className="space-y-3 min-h-[300px]">
+              {groupedEnquiries.contract_sent.map((enquiry: Enquiry) => 
+                renderEnquiryCard(enquiry, "border-l-purple-500", "bg-gradient-to-r from-purple-50 to-white dark:from-purple-950 dark:to-gray-900")
+              )}
+              {groupedEnquiries.contract_sent.length === 0 && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">No contracts received</p>
                 </div>
               )}
             </div>
