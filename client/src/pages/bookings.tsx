@@ -39,6 +39,7 @@ import {
   getConflictActions, 
   formatConflictTooltip 
 } from "@/utils/conflict-ui";
+import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
@@ -65,6 +66,9 @@ export default function Enquiries() {
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(["contract_sent"]);
+  const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
+  const [selectedConflictEnquiry, setSelectedConflictEnquiry] = useState<any>(null);
+  const [selectedConflicts, setSelectedConflicts] = useState<any[]>([]);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -214,6 +218,13 @@ export default function Enquiries() {
     if (confirm(`Are you sure you want to delete ${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'}? This action cannot be undone.`)) {
       bulkDeleteMutation.mutate(Array.from(selectedBookings));
     }
+  };
+
+  const handleConflictClick = (enquiry: any) => {
+    const conflicts = detectConflicts(enquiry);
+    setSelectedConflictEnquiry(enquiry);
+    setSelectedConflicts(conflicts);
+    setConflictResolutionDialogOpen(true);
   };
 
   // Phase 3: Read from main bookings table (renamed from bookings_new)
@@ -1467,15 +1478,21 @@ export default function Enquiries() {
                         
                         {/* Warning Conflict Alert Banner */}
                         {severity.level === 'warning' && (
-                          <div className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20">
-                            ⚠️ POTENTIAL SCHEDULING CONFLICT
+                          <div 
+                            className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20 cursor-pointer hover:bg-amber-600 transition-colors"
+                            onClick={() => handleConflictClick(enquiry)}
+                          >
+                            ⚠️ POTENTIAL SCHEDULING CONFLICT - Click to resolve
                           </div>
                         )}
                         
                         {/* Critical Conflict Alert Banner */}
                         {severity.level === 'critical' && (
-                          <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 z-20">
-                            🚫 DOUBLE BOOKING RISK
+                          <div 
+                            className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 z-20 cursor-pointer hover:bg-red-600 transition-colors"
+                            onClick={() => handleConflictClick(enquiry)}
+                          >
+                            🚫 DOUBLE BOOKING RISK - Click to resolve
                           </div>
                         )}
                         {/* Selection Checkbox */}
@@ -1811,6 +1828,14 @@ export default function Enquiries() {
           }}
         />
       )}
+
+      {/* Conflict Resolution Dialog */}
+      <ConflictResolutionDialog
+        isOpen={conflictResolutionDialogOpen}
+        onClose={() => setConflictResolutionDialogOpen(false)}
+        enquiry={selectedConflictEnquiry}
+        conflicts={selectedConflicts}
+      />
     </div>
   );
 }

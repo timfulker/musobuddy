@@ -8,6 +8,7 @@ import QuickActions from "@/components/quick-actions";
 import ComplianceAlerts from "@/components/compliance-alerts";
 import RecentSignedContracts from "@/components/RecentSignedContracts";
 import ConflictsWidget from "@/components/conflicts-widget";
+import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 import MobileNav from "@/components/mobile-nav";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";

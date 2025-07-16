@@ -6,8 +6,14 @@ import { Link } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
 import { analyzeConflictSeverity, parseConflictAnalysis, getConflictCardStyling } from "@/utils/conflict-ui";
+import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
+import { useState } from "react";
 
 export default function ActionableEnquiries() {
+  const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
+  const [selectedConflictEnquiry, setSelectedConflictEnquiry] = useState<any>(null);
+  const [selectedConflicts, setSelectedConflicts] = useState<any[]>([]);
+
   const { data: enquiries = [], isLoading } = useQuery({
     queryKey: ["/api/bookings"],
   });
@@ -22,6 +28,29 @@ export default function ActionableEnquiries() {
     return conflicts.find((conflict: any) => 
       conflict.enquiryId === enquiryId && !conflict.resolved
     );
+  };
+
+  const detectConflicts = (enquiry: any) => {
+    const enquiryDate = new Date(enquiry.eventDate);
+    const conflictingEnquiries: any[] = [];
+    
+    enquiries.forEach((otherEnquiry: any) => {
+      if (otherEnquiry.id !== enquiry.id) {
+        const otherDate = new Date(otherEnquiry.eventDate);
+        if (enquiryDate.toDateString() === otherDate.toDateString()) {
+          conflictingEnquiries.push(otherEnquiry);
+        }
+      }
+    });
+    
+    return conflictingEnquiries;
+  };
+
+  const handleConflictClick = (enquiry: any) => {
+    const conflicts = detectConflicts(enquiry);
+    setSelectedConflictEnquiry(enquiry);
+    setSelectedConflicts(conflicts);
+    setConflictResolutionDialogOpen(true);
   };
 
   const formatDateBox = (dateString: string) => {
@@ -122,15 +151,30 @@ export default function ActionableEnquiries() {
               <div className="flex flex-wrap gap-1">
                 {/* Show conflict badge only if there are actual conflicts */}
                 {severity.level === 'critical' && (
-                  <Badge variant="destructive" className="text-xs">
+                  <Badge 
+                    variant="destructive" 
+                    className="text-xs cursor-pointer hover:bg-red-600 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleConflictClick(enquiry);
+                    }}
+                  >
                     <AlertTriangle className="w-3 h-3 mr-1" />
-                    Conflict
+                    Conflict - Click to resolve
                   </Badge>
                 )}
                 {severity.level === 'warning' && (
-                  <Badge className="bg-orange-100 text-orange-800 text-xs">
+                  <Badge 
+                    className="bg-orange-100 text-orange-800 text-xs cursor-pointer hover:bg-orange-200 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleConflictClick(enquiry);
+                    }}
+                  >
                     <AlertCircle className="w-3 h-3 mr-1" />
-                    Same day
+                    Same day - Click to resolve
                   </Badge>
                 )}
                 {/* Show response needed badge only for non-conflict enquiries */}
@@ -177,74 +221,84 @@ export default function ActionableEnquiries() {
   }
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-6">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold">Action Required</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Link href="/bookings">
-              <Button variant="outline" size="sm" className="h-9">
-                <Eye className="w-4 h-4 mr-2" />
-                View All
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Action Required Column */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
-                Needs Response
-              </h4>
-              <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                {actionableEnquiries.length}
-              </Badge>
-            </div>
-            <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
-              {actionableEnquiries.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, true)
-              )}
-              {actionableEnquiries.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-sm">No enquiries need action</p>
-                  <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
-                </div>
-              )}
+    <>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-6">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl font-semibold">Action Required</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Link href="/bookings">
+                <Button variant="outline" size="sm" className="h-9">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View All
+                </Button>
+              </Link>
             </div>
           </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Action Required Column */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                  <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+                  Needs Response
+                </h4>
+                <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                  {actionableEnquiries.length}
+                </Badge>
+              </div>
+              <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
+                {actionableEnquiries.map((enquiry: Enquiry) => 
+                  renderEnquiryCard(enquiry, true)
+                )}
+                {actionableEnquiries.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-sm">No enquiries need action</p>
+                    <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
+                  </div>
+                )}
+              </div>
+            </div>
 
-          {/* This Week Column */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                <Clock className="w-5 h-5 mr-2 text-blue-500" />
-                This Week's Activity
-              </h4>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                {thisWeekEnquiries.length}
-              </Badge>
-            </div>
-            <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
-              {thisWeekEnquiries.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, false)
-              )}
-              {thisWeekEnquiries.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-sm">No enquiries this week</p>
-                  <p className="text-xs text-gray-400 mt-1">Check back for new activity</p>
-                </div>
-              )}
+            {/* This Week Column */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-blue-500" />
+                  This Week's Activity
+                </h4>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  {thisWeekEnquiries.length}
+                </Badge>
+              </div>
+              <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
+                {thisWeekEnquiries.map((enquiry: Enquiry) => 
+                  renderEnquiryCard(enquiry, false)
+                )}
+                {thisWeekEnquiries.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-sm">No enquiries this week</p>
+                    <p className="text-xs text-gray-400 mt-1">Check back for new activity</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      
+      {/* Conflict Resolution Dialog */}
+      <ConflictResolutionDialog
+        isOpen={conflictResolutionDialogOpen}
+        onClose={() => setConflictResolutionDialogOpen(false)}
+        enquiry={selectedConflictEnquiry}
+        conflicts={selectedConflicts}
+      />
+    </>
   );
 }
