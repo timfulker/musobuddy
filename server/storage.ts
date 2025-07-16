@@ -35,7 +35,7 @@ import {
 
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, ne } from "drizzle-orm";
+import { eq, desc, and, gte, lte, ne, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - mandatory for Replit Auth
@@ -701,14 +701,17 @@ export class DatabaseStorage implements IStorage {
 
     const monthlyRevenue = monthlyInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
 
-    // Active bookings (upcoming confirmed bookings)
+    // Active bookings (upcoming confirmed bookings - includes both confirmed and contract_sent)
     const activeBookingsCount = await db
       .select()
       .from(bookings)
       .where(
         and(
           eq(bookings.userId, userId),
-          eq(bookings.status, "confirmed"),
+          or(
+            eq(bookings.status, "confirmed"),
+            eq(bookings.status, "contract_sent")
+          ),
           gte(bookings.eventDate, now)
         )
       );
