@@ -216,8 +216,8 @@ export default function ConflictResolutionDialog({
   };
 
   const allConflictingBookings = [enquiry, ...(conflicts || [])].filter(Boolean);
-  // Calculate total conflicts including the enquiry itself
-  const totalConflictingBookings = (conflicts?.length || 0) + 1;
+  // Calculate total conflicts - conflicts array already includes all conflicting bookings
+  const totalConflictingBookings = Math.max(2, allConflictingBookings.length);
   
   // Force display of both bookings when conflicts exist
   console.log('Dialog Data Check:', {
