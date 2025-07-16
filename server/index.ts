@@ -133,6 +133,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
   console.log(`📧 [${requestId}] Email webhook received`);
+  console.log(`📧 [${requestId}] Request body keys:`, Object.keys(req.body));
+  console.log(`📧 [${requestId}] Raw body:`, JSON.stringify(req.body, null, 2));
   
   try {
     // Extract email data with comprehensive field checking
@@ -143,6 +145,13 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     console.log(`📧 [${requestId}] From: "${fromField}"`);
     console.log(`📧 [${requestId}] Subject: "${subjectField}"`);
     console.log(`📧 [${requestId}] Body length: ${bodyField.length}`);
+    console.log(`📧 [${requestId}] Body content: "${bodyField}"`);
+    
+    // Check if we have email data
+    if (!fromField && !subjectField && !bodyField) {
+      console.log(`❌ [${requestId}] No email data found in request`);
+      return res.status(400).json({ error: 'No email data found' });
+    }
     
     // Extract client email
     let clientEmail = '';
