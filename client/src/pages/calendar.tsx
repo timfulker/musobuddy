@@ -218,10 +218,11 @@ export default function Calendar() {
     const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     
-    // Start from Monday of the first week
+    // Start from Monday of the first week (Monday = 1, Sunday = 0)
+    // We need to get to the Monday of the week containing the 1st
     const firstDayOfWeek = firstDay.getDay();
     const daysToSubtract = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-    startDate.setDate(startDate.getDate() - daysToSubtract);
+    startDate.setDate(firstDay.getDate() - daysToSubtract);
 
     const days = [];
     const currentDateCopy = new Date(startDate);
@@ -235,7 +236,7 @@ export default function Calendar() {
       const hasEvents = events.length > 0;
 
       days.push({
-        date,
+        date: new Date(date), // Create a fresh date object to avoid reference issues
         day: date.getDate(),
         isCurrentMonth,
         isToday,
@@ -308,7 +309,10 @@ export default function Calendar() {
   // Generate week view
   const renderWeekView = () => {
     const weekStart = new Date(currentDate);
-    weekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+    // Calculate Monday of current week (getDay() returns 0 for Sunday, 1 for Monday, etc.)
+    const dayOfWeek = currentDate.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    weekStart.setDate(currentDate.getDate() - daysToSubtract);
     
     const weekDays = Array.from({ length: 7 }, (_, i) => {
       const date = new Date(weekStart);
