@@ -10,6 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Sidebar from '@/components/sidebar';
+import DashboardHeader from '@/components/dashboard-header';
+import MobileNav from '@/components/mobile-nav';
+import { useAuth } from '@/hooks/useAuth';
+import { useResponsive } from '@/hooks/useResponsive';
 import BookingStatusDialog from '@/components/BookingStatusDialog';
 import BookingDetailsModal from '@/components/BookingDetailsModal';
 import SendComplianceDialog from '@/components/SendComplianceDialog';
@@ -56,8 +61,11 @@ export default function Bookings() {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showComplianceDialog, setShowComplianceDialog] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const { toast } = useToast();
+  const { isDesktop } = useResponsive();
+  const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: bookings = [], isLoading } = useQuery({
