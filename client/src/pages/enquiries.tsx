@@ -43,7 +43,7 @@ const enquiryFormSchema = insertEnquirySchema.extend({
 
 export default function Enquiries() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+
   const [sortBy, setSortBy] = useState("eventDate"); // eventDate, status, client, value
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [respondDialogOpen, setRespondDialogOpen] = useState(false);
@@ -57,6 +57,7 @@ export default function Enquiries() {
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(['new', 'booking_in_progress', 'confirmed', 'contract_sent', 'completed', 'rejected']);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -151,6 +152,17 @@ export default function Enquiries() {
   // Quick status update for individual bookings
   const handleQuickStatusUpdate = (bookingId: number, status: string) => {
     updateEnquiryStatusMutation.mutate({ id: bookingId, status });
+  };
+
+  // Toggle status filter
+  const toggleStatusFilter = (status: string) => {
+    setActiveStatusFilters(prev => {
+      if (prev.includes(status)) {
+        return prev.filter(s => s !== status);
+      } else {
+        return [...prev, status];
+      }
+    });
   };
 
   // Auto-completion for past date bookings - DISABLED to prevent infinite loop
@@ -483,17 +495,10 @@ export default function Enquiries() {
       enquiry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       enquiry.clientName.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Handle status filtering with completed bookings hidden by default
-    if (statusFilter === "completed") {
-      return matchesSearch && enquiry.status === "completed";
-    } else if (statusFilter === "all") {
-      // "All" shows all non-completed bookings by default
-      return matchesSearch && enquiry.status !== "completed";
-    } else {
-      // For specific statuses, show only that status
-      const matchesStatus = enquiry.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    }
+    // Use activeStatusFilters instead of statusFilter
+    const matchesStatus = activeStatusFilters.includes(enquiry.status);
+    
+    return matchesSearch && matchesStatus;
   });
 
   // Sort the filtered enquiries
@@ -895,7 +900,7 @@ export default function Enquiries() {
         {/* Filters */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
@@ -905,20 +910,81 @@ export default function Enquiries() {
                   className="pl-10"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="new">Enquiry</SelectItem>
-                  <SelectItem value="booking_in_progress">In Progress</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="contract_sent">Contract Received</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Status Filter Buttons */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => toggleStatusFilter('new')}
+                  variant={activeStatusFilters.includes('new') ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${
+                    activeStatusFilters.includes('new') 
+                      ? 'bg-blue-500 text-white border-blue-500' 
+                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                  }`}
+                >
+                  Enquiry
+                </Button>
+                <Button
+                  onClick={() => toggleStatusFilter('booking_in_progress')}
+                  variant={activeStatusFilters.includes('booking_in_progress') ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${
+                    activeStatusFilters.includes('booking_in_progress') 
+                      ? 'bg-amber-500 text-white border-amber-500' 
+                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                  }`}
+                >
+                  In Progress
+                </Button>
+                <Button
+                  onClick={() => toggleStatusFilter('confirmed')}
+                  variant={activeStatusFilters.includes('confirmed') ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${
+                    activeStatusFilters.includes('confirmed') 
+                      ? 'bg-green-500 text-white border-green-500' 
+                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                  }`}
+                >
+                  Confirmed
+                </Button>
+                <Button
+                  onClick={() => toggleStatusFilter('contract_sent')}
+                  variant={activeStatusFilters.includes('contract_sent') ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${
+                    activeStatusFilters.includes('contract_sent') 
+                      ? 'bg-purple-500 text-white border-purple-500' 
+                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                  }`}
+                >
+                  Contract Received
+                </Button>
+                <Button
+                  onClick={() => toggleStatusFilter('completed')}
+                  variant={activeStatusFilters.includes('completed') ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${
+                    activeStatusFilters.includes('completed') 
+                      ? 'bg-gray-700 text-white border-gray-700' 
+                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                  }`}
+                >
+                  Completed
+                </Button>
+                <Button
+                  onClick={() => toggleStatusFilter('rejected')}
+                  variant={activeStatusFilters.includes('rejected') ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${
+                    activeStatusFilters.includes('rejected') 
+                      ? 'bg-red-500 text-white border-red-500' 
+                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                  }`}
+                >
+                  Rejected
+                </Button>
+              </div>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Sort by" />
@@ -1240,116 +1306,7 @@ export default function Enquiries() {
                           </Tooltip>
                           
                           <div className="flex gap-1">
-                            {/* Quick Status Update Buttons */}
-                            <div className="flex gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'new')}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`w-8 h-8 p-0 text-xs ${
-                                      enquiry.status === 'new' 
-                                        ? 'bg-blue-500 text-white border-blue-500' 
-                                        : 'bg-gray-200 text-gray-600 border-gray-300'
-                                    }`}
-                                  >
-                                    E
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Set as Enquiry</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'booking_in_progress')}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`w-8 h-8 p-0 text-xs ${
-                                      enquiry.status === 'booking_in_progress' 
-                                        ? 'bg-amber-500 text-white border-amber-500' 
-                                        : 'bg-gray-200 text-gray-600 border-gray-300'
-                                    }`}
-                                  >
-                                    P
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Set as In Progress</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'confirmed')}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`w-8 h-8 p-0 text-xs ${
-                                      enquiry.status === 'confirmed' 
-                                        ? 'bg-green-500 text-white border-green-500' 
-                                        : 'bg-gray-200 text-gray-600 border-gray-300'
-                                    }`}
-                                  >
-                                    C
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Set as Confirmed</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'contract_sent')}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`w-8 h-8 p-0 text-xs ${
-                                      enquiry.status === 'contract_sent' 
-                                        ? 'bg-purple-500 text-white border-purple-500' 
-                                        : 'bg-gray-200 text-gray-600 border-gray-300'
-                                    }`}
-                                  >
-                                    R
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Set as Contract Received</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'completed')}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`w-8 h-8 p-0 text-xs ${
-                                      enquiry.status === 'completed' 
-                                        ? 'bg-gray-700 text-white border-gray-700' 
-                                        : 'bg-gray-200 text-gray-600 border-gray-300'
-                                    }`}
-                                  >
-                                    ✓
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Set as Completed</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'rejected')}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`w-8 h-8 p-0 text-xs ${
-                                      enquiry.status === 'rejected' 
-                                        ? 'bg-red-500 text-white border-red-500' 
-                                        : 'bg-gray-200 text-gray-600 border-gray-300'
-                                    }`}
-                                  >
-                                    ✗
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Set as Rejected</TooltipContent>
-                              </Tooltip>
-                            </div>
+
                             
                             <Tooltip>
                               <TooltipTrigger asChild>
