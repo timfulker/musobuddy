@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, DollarSign, CalendarPlus } from "lucide-react";
+import { Plus, FileText, DollarSign, CalendarPlus, Zap } from "lucide-react";
 import { Link } from "wouter";
 
 export default function QuickActions() {
@@ -17,6 +17,15 @@ export default function QuickActions() {
           >
             <Plus className="w-4 h-4 mr-3" />
             New Enquiry
+          </Button>
+        </Link>
+        <Link href="/quick-add">
+          <Button 
+            variant="outline" 
+            className="w-full justify-start bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+          >
+            <Zap className="w-4 h-4 mr-3" />
+            Quick Add
           </Button>
         </Link>
         <Link href="/contracts?action=new">
