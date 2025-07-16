@@ -409,7 +409,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                                     </SelectItem>
                                   ))}
                                   {userGigTypes.length === 0 && (
-                                    <SelectItem value="" disabled>
+                                    <SelectItem value="none" disabled>
                                       No gig types available - configure in Settings
                                     </SelectItem>
                                   )}
