@@ -123,12 +123,17 @@ export function parseConflictAnalysis(enquiry: any): ConflictAnalysis {
                     conflictDetails.includes('Same client');
   const confirmedBooking = conflictDetails.includes('confirmed booking') || 
                           conflictDetails.includes('Confirmed booking');
+  const unconfirmedEnquiry = conflictDetails.includes('unconfirmed enquiry') || 
+                            conflictDetails.includes('Unconfirmed enquiry') ||
+                            conflictDetails.includes('enquiry') ||
+                            conflictDetails.includes('Enquiry');
 
   return {
     hasTimeOverlap,
     sameVenue,
     sameClient,
     confirmedBooking,
+    unconfirmedEnquiry,
     conflictCount,
     conflictDetails
   };

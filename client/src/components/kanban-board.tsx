@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
+import { analyzeConflictSeverity, parseConflictAnalysis, getConflictCardStyling } from "@/utils/conflict-ui";
 
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading } = useQuery({
@@ -75,14 +76,17 @@ export default function ActionableEnquiries() {
   const renderEnquiryCard = (enquiry: Enquiry, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate!);
     const conflict = getEnquiryConflict(enquiry.id);
-    const urgent = needsResponse(enquiry) || conflict;
+    
+    // Use the same conflict analysis logic as bookings page
+    const conflictAnalysis = parseConflictAnalysis(enquiry);
+    const severity = analyzeConflictSeverity(enquiry.status, conflictAnalysis);
+    
+    // Get the same card styling as bookings page
+    const cardStyling = getConflictCardStyling(severity);
     
     return (
       <Link key={enquiry.id} href="/bookings">
-        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 ${
-          urgent ? 'border-l-red-500 bg-gradient-to-r from-red-50 to-white dark:from-red-950 dark:to-gray-900' : 
-          'border-l-blue-500 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900'
-        }`}>
+        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer ${cardStyling}`}>
           <CardContent className="p-4">
             <div className="space-y-3">
               {/* Header with price and date */}
@@ -116,14 +120,22 @@ export default function ActionableEnquiries() {
               
               {/* Status indicators */}
               <div className="flex flex-wrap gap-1">
-                {conflict && (
+                {/* Show conflict badge only if there are actual conflicts */}
+                {severity.level === 'critical' && (
                   <Badge variant="destructive" className="text-xs">
                     <AlertTriangle className="w-3 h-3 mr-1" />
                     Conflict
                   </Badge>
                 )}
-                {needsResponse(enquiry) && (
-                  <Badge variant="secondary" className="bg-red-100 text-red-700 text-xs">
+                {severity.level === 'warning' && (
+                  <Badge className="bg-orange-100 text-orange-800 text-xs">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Same day
+                  </Badge>
+                )}
+                {/* Show response needed badge only for non-conflict enquiries */}
+                {needsResponse(enquiry) && severity.level === 'none' && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
                     <AlertCircle className="w-3 h-3 mr-1" />
                     Response needed
                   </Badge>
