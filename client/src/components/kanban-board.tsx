@@ -30,32 +30,50 @@ export default function ActionableEnquiries() {
     );
   };
 
-  const detectConflicts = (enquiry: any) => {
-    const enquiryDate = new Date(enquiry.eventDate);
-    const conflictingEnquiries: any[] = [];
-    
-    enquiries.forEach((otherEnquiry: any) => {
-      if (otherEnquiry.id !== enquiry.id) {
-        const otherDate = new Date(otherEnquiry.eventDate);
-        if (enquiryDate.toDateString() === otherDate.toDateString()) {
-          conflictingEnquiries.push(otherEnquiry);
-        }
-      }
-    });
-    
-    return conflictingEnquiries;
-  };
-
   const handleConflictClick = (enquiry: any) => {
     if (!enquiry || !enquiry.id) {
       console.error('Invalid enquiry data for conflict resolution:', enquiry);
       return;
     }
     
-    const conflicts = detectConflicts(enquiry);
-    setSelectedConflictEnquiry(enquiry);
-    setSelectedConflicts(conflicts || []);
-    setConflictResolutionDialogOpen(true);
+    // Use the proper conflict detection from the API
+    const enquiryConflict = getEnquiryConflict(enquiry.id);
+    if (enquiryConflict && enquiryConflict.conflictingBookings) {
+      // Parse the conflicting bookings from the API response
+      const conflictingBookings = enquiryConflict.conflictingBookings || [];
+      console.log('Conflict data from API:', {
+        enquiryId: enquiry.id,
+        conflictingBookings: conflictingBookings.length,
+        bookings: conflictingBookings
+      });
+      
+      setSelectedConflictEnquiry(enquiry);
+      setSelectedConflicts(conflictingBookings);
+      setConflictResolutionDialogOpen(true);
+    } else {
+      // Fallback: Find conflicts by matching date across all enquiries
+      const enquiryDate = new Date(enquiry.eventDate);
+      const conflictingEnquiries: any[] = [];
+      
+      enquiries.forEach((otherEnquiry: any) => {
+        if (otherEnquiry.id !== enquiry.id) {
+          const otherDate = new Date(otherEnquiry.eventDate);
+          if (enquiryDate.toDateString() === otherDate.toDateString()) {
+            conflictingEnquiries.push(otherEnquiry);
+          }
+        }
+      });
+      
+      console.log('Fallback conflict detection:', {
+        enquiryId: enquiry.id,
+        conflictingEnquiries: conflictingEnquiries.length,
+        bookings: conflictingEnquiries
+      });
+      
+      setSelectedConflictEnquiry(enquiry);
+      setSelectedConflicts(conflictingEnquiries);
+      setConflictResolutionDialogOpen(true);
+    }
   };
 
   const formatDateBox = (dateString: string) => {

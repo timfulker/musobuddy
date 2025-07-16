@@ -217,6 +217,15 @@ export default function ConflictResolutionDialog({
 
   const allConflictingBookings = [enquiry, ...(conflicts || [])].filter(Boolean);
   const totalConflictingBookings = allConflictingBookings.length;
+  
+  // Debug logging
+  console.log('ConflictResolutionDialog Debug:', {
+    enquiry: enquiry?.id,
+    conflicts: conflicts?.length,
+    conflictIds: conflicts?.map(c => c.id),
+    allConflictingBookings: allConflictingBookings.length,
+    totalConflictingBookings
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
