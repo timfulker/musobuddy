@@ -285,14 +285,6 @@ export default function ConflictResolutionDialog({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Edit Booking Times</h3>
-                <div className="text-sm text-gray-600">
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                    New
-                  </span>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    Original
-                  </span>
-                </div>
               </div>
               
               {allConflictingBookings.map((booking, index) => {
