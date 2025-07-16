@@ -36,6 +36,20 @@ export default function ActionableEnquiries() {
     return enquiry.status === "new" || enquiry.status === "booking_in_progress";
   };
 
+  // Detect if an enquiry was likely created from calendar import
+  const isCalendarImport = (enquiry: Enquiry) => {
+    // Calendar imports typically have:
+    // - No client email or phone
+    // - No original email content
+    // - No apply now link
+    // - Often just basic title and date
+    return !enquiry.clientEmail && 
+           !enquiry.clientPhone && 
+           !enquiry.originalEmailContent && 
+           !enquiry.applyNowLink &&
+           (!enquiry.estimatedValue || enquiry.estimatedValue === "");
+  };
+
   const isThisWeek = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -57,20 +71,6 @@ export default function ActionableEnquiries() {
     isThisWeek(enquiry.createdAt) && 
     !isCalendarImport(enquiry)
   );
-
-  // Detect if an enquiry was likely created from calendar import
-  const isCalendarImport = (enquiry: Enquiry) => {
-    // Calendar imports typically have:
-    // - No client email or phone
-    // - No original email content
-    // - No apply now link
-    // - Often just basic title and date
-    return !enquiry.clientEmail && 
-           !enquiry.clientPhone && 
-           !enquiry.originalEmailContent && 
-           !enquiry.applyNowLink &&
-           (!enquiry.estimatedValue || enquiry.estimatedValue === "");
-  };
 
   const renderEnquiryCard = (enquiry: Enquiry, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate!);
