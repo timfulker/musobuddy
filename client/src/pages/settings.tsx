@@ -213,8 +213,13 @@ export default function Settings() {
   useEffect(() => {
     if (initialData) {
       // Compare current state with initial data
-      const instrumentsChanged = JSON.stringify(selectedInstruments.sort()) !== JSON.stringify((initialData.selectedInstruments || []).sort());
-      const gigTypesChanged = JSON.stringify(gigTypes.sort()) !== JSON.stringify((initialData.gigTypes || []).sort());
+      const currentInstruments = Array.isArray(selectedInstruments) ? selectedInstruments : [];
+      const initialInstruments = Array.isArray(initialData.selectedInstruments) ? initialData.selectedInstruments : [];
+      const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
+      const initialGigTypes = Array.isArray(initialData.gigTypes) ? initialData.gigTypes : [];
+      
+      const instrumentsChanged = JSON.stringify(currentInstruments.sort()) !== JSON.stringify(initialInstruments.sort());
+      const gigTypesChanged = JSON.stringify(currentGigTypes.sort()) !== JSON.stringify(initialGigTypes.sort());
       
       if (instrumentsChanged || gigTypesChanged) {
         console.log('🔄 Detected changes - instruments:', instrumentsChanged, 'gigTypes:', gigTypesChanged);
