@@ -401,9 +401,13 @@ export default function Enquiries() {
   const sortedEnquiries = [...filteredEnquiries].sort((a, b) => {
     switch (sortBy) {
       case "newest":
-        return new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime();
+        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bCreated - aCreated; // Newest first (descending)
       case "oldest":
-        return new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime();
+        const aCreatedOld = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreatedOld = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return aCreatedOld - bCreatedOld; // Oldest first (ascending)
       case "eventDate":
         if (!a.eventDate && !b.eventDate) return 0;
         if (!a.eventDate) return 1;
