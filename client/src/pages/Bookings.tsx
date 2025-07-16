@@ -3,10 +3,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Calendar, MapPin, Clock, User, Phone, DollarSign, Trash2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import BookingStatusDialog from '@/components/BookingStatusDialog';
 import BookingDetailsModal from '@/components/BookingDetailsModal';
 import SendComplianceDialog from '@/components/SendComplianceDialog';
-import { getConflictColor, getConflictIcon } from '@/utils/conflict-ui';
+import { getConflictColor, getConflictIcon, analyzeConflictSeverity, getConflictBadge, formatConflictTooltip } from '@/utils/conflict-ui';
 
 // API functions
 const fetchBookings = async () => {
@@ -360,74 +367,158 @@ export default function Bookings() {
       </div>
 
       {/* Bookings List */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredBookings.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No bookings found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || selectedStatus !== 'all' 
-                ? 'Try adjusting your search or filter criteria'
-                : 'Get started by creating your first enquiry'
-              }
-            </p>
+          <div className="col-span-full">
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No bookings found</p>
+                <p className="text-gray-400">
+                  {searchTerm || selectedStatus !== 'all' 
+                    ? 'Try adjusting your search or filter criteria'
+                    : 'Get started by creating your first enquiry'
+                  }
+                </p>
+              </CardContent>
+            </Card>
           </div>
         ) : (
-          filteredBookings.map((booking: any) => (
-            <div key={booking.id} className={`bg-white rounded-lg shadow-sm border-l-4 p-6 ${getConflictColor(booking.hasConflicts, booking.conflictCount)}`}>
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedBookings.includes(booking.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedBookings([...selectedBookings, booking.id]);
-                      } else {
-                        setSelectedBookings(selectedBookings.filter(id => id !== booking.id));
-                      }
-                    }}
-                    className="mt-1 rounded border-gray-300"
-                  />
+          filteredBookings.map((booking: any) => {
+            const dateBox = booking.eventDate 
+              ? {
+                  day: format(new Date(booking.eventDate), 'dd'),
+                  monthYear: format(new Date(booking.eventDate), 'MMM yyyy')
+                }
+              : { day: '?', monthYear: 'TBC' };
+            
+            // Enhanced conflict detection
+            const conflicts = booking.conflicts || [];
+            const confirmedBookingConflicts = conflicts.filter((c: any) => c.type === 'booking');
+            const unconfirmedEnquiryConflicts = conflicts.filter((c: any) => c.type === 'enquiry');
+            
+            const conflictAnalysis = {
+              hasTimeOverlap: false,
+              sameVenue: false,
+              sameClient: false,
+              confirmedBooking: confirmedBookingConflicts.length > 0,
+              unconfirmedEnquiry: unconfirmedEnquiryConflicts.length > 0,
+              conflictCount: conflicts.length,
+              conflictDetails: conflicts.length > 0 ? 
+                `${confirmedBookingConflicts.length} confirmed booking(s), ${unconfirmedEnquiryConflicts.length} unconfirmed enquiry(ies)` 
+                : 'No conflicts'
+            };
+            
+            const severity = analyzeConflictSeverity(booking, conflictAnalysis);
+            const hasConflicts = conflicts.length > 0;
+            
+            // Check if booking date is in the past
+            const isPastDate = booking.eventDate && new Date(booking.eventDate) < new Date();
+            
+            // Status-based styling
+            const getStatusOverlay = (status: string) => {
+              switch (status) {
+                case "new": return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
+                case "booking_in_progress": return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200";
+                case "confirmed": return "bg-gradient-to-br from-green-50 to-green-100 border-green-200";
+                case "contract_sent": return "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200";
+                case "completed": return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
+                case "rejected": return "bg-gradient-to-br from-red-50 to-red-100 border-red-200";
+                default: return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
+              }
+            };
+            
+            const getStatusColor = (status: string) => {
+              switch (status) {
+                case "new": return "text-blue-800 bg-blue-100";
+                case "booking_in_progress": return "text-amber-800 bg-amber-100";
+                case "confirmed": return "text-green-800 bg-green-100";
+                case "contract_sent": return "text-purple-800 bg-purple-100";
+                case "completed": return "text-gray-800 bg-gray-100";
+                case "rejected": return "text-red-800 bg-red-100";
+                default: return "text-gray-800 bg-gray-100";
+              }
+            };
+            
+            // Conflict overlay styling
+            const getConflictOverlay = () => {
+              if (severity.level === 'critical') {
+                return 'border-red-500 bg-red-50 ring-2 ring-red-200';
+              } else if (severity.level === 'warning') {
+                return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
+              }
+              return '';
+            };
+
+            return (
+              <div key={booking.id} className="bg-white rounded-lg shadow-sm border relative">
+                {/* Double Booking Risk Header */}
+                {hasConflicts && (
+                  <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-t-lg">
+                    DOUBLE BOOKING RISK
+                  </div>
+                )}
+                
+                <div className="p-4">
+                  {/* Selection Checkbox */}
+                  <div className="absolute top-2 left-2">
+                    <Checkbox
+                      checked={selectedBookings.includes(booking.id)}
+                      onCheckedChange={() => {
+                        if (selectedBookings.includes(booking.id)) {
+                          setSelectedBookings(selectedBookings.filter(id => id !== booking.id));
+                        } else {
+                          setSelectedBookings([...selectedBookings, booking.id]);
+                        }
+                      }}
+                      className="mt-1"
+                    />
+                  </div>
                   
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-medium text-gray-900">{booking.clientName}</h3>
-                      {booking.hasConflicts && (
-                        <div className="flex items-center gap-1 text-red-600">
-                          <AlertTriangle className="h-4 w-4" />
-                          <span className="text-xs font-medium">
-                            {booking.conflictCount}
-                          </span>
-                        </div>
-                      )}
+                  {/* Delete Button */}
+                  <div className="absolute top-2 right-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteMutation.mutate(booking.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="pl-8 pr-8">
+                    {/* Header with Price and Status */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-lg font-bold text-green-600">
+                        {booking.estimatedValue ? `£${booking.estimatedValue}` : "Price TBC"}
+                      </div>
+                      <Badge className={`text-xs px-2 py-1 ${getStatusColor(booking.status)}`}>
+                        {booking.status?.toUpperCase().replace('_', ' ') || 'UNKNOWN'}
+                      </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                          {booking.eventDate 
-                            ? format(new Date(booking.eventDate), 'dd MMM yyyy')
-                            : 'No date'
-                          }
-                        </span>
+                    {/* Date Box */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="bg-purple-600 text-white rounded-lg p-2 text-center min-w-[50px]">
+                        <div className="text-lg font-bold leading-none">{dateBox.day}</div>
+                        <div className="text-xs leading-none mt-1">{dateBox.monthYear}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>{booking.eventTime || 'No time'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{booking.venue || 'No venue'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4" />
-                        <span>{booking.estimatedValue || 'Price TBC'}</span>
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">{booking.clientName}</div>
+                        <div className="text-sm text-gray-500">{booking.venue || 'Venue TBC'}</div>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 text-xs">
+                    
+                    {/* Conflict Indicator */}
+                    {hasConflicts && (
+                      <div className="flex items-center gap-1 mb-3">
+                        <span className="text-red-500 text-sm">⚠️ {conflictAnalysis.conflictCount}</span>
+                      </div>
+                    )}
+                    
+                    {/* Status Buttons */}
+                    <div className="flex items-center gap-1 mb-3">
                       <StatusButton 
                         status="new" 
                         currentStatus={booking.status} 
@@ -471,38 +562,45 @@ export default function Bookings() {
                         ✗
                       </StatusButton>
                     </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between text-xs">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedBooking(booking);
+                          setShowDetailsDialog(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 p-0 h-auto"
+                      >
+                        View
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedBooking(booking);
+                          setShowStatusDialog(true);
+                        }}
+                        className="text-gray-600 hover:text-gray-800 p-0 h-auto"
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => deleteMutation.mutate(booking.id)}
+                        className="text-red-600 hover:text-red-800 p-0 h-auto"
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedBooking(booking);
-                      setShowDetailsDialog(true);
-                    }}
-                    className="text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedBooking(booking);
-                      setShowStatusDialog(true);
-                    }}
-                    className="text-gray-600 hover:text-gray-800 text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => deleteMutation.mutate(booking.id)}
-                    className="text-red-600 hover:text-red-800 text-sm"
-                  >
-                    Delete
-                  </button>
-                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
