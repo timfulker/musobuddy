@@ -168,6 +168,47 @@ export default function Enquiries() {
     });
   };
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (bookingIds: number[]) => {
+      const responses = await Promise.all(
+        bookingIds.map(async (id) => {
+          const response = await apiRequest(`/api/bookings/${id}`, {
+            method: 'DELETE'
+          });
+          return response;
+        })
+      );
+      return responses;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
+      
+      toast({
+        title: "Success",
+        description: `${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'} deleted successfully.`
+      });
+      setSelectedBookings(new Set());
+    },
+    onError: (error) => {
+      console.error('Bulk delete error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete bookings. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleBulkDelete = () => {
+    if (selectedBookings.size === 0) return;
+    
+    if (confirm(`Are you sure you want to delete ${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'}? This action cannot be undone.`)) {
+      bulkDeleteMutation.mutate(Array.from(selectedBookings));
+    }
+  };
+
   // Phase 3: Read from main bookings table (renamed from bookings_new)
   const { data: enquiries = [], isLoading, error } = useQuery<Enquiry[]>({
     queryKey: ["/api/bookings"],
@@ -1238,6 +1279,24 @@ export default function Enquiries() {
                       <>
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Update
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleBulkDelete}
+                    disabled={bulkDeleteMutation.isPending}
+                    variant="destructive"
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {bulkDeleteMutation.isPending ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
                       </>
                     )}
                   </Button>
