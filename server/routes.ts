@@ -2804,7 +2804,13 @@ Powered by MusoBuddy – less admin, more music
         }
       }
       
+      // Convert arrays to JSON strings for storage
+      if (Array.isArray(settingsData.selectedInstruments)) {
+        settingsData.selectedInstruments = JSON.stringify(settingsData.selectedInstruments);
+      }
+      
       console.log("🔥 Settings data to save:", settingsData);
+      console.log("🔥 selectedInstruments in settings data:", settingsData.selectedInstruments);
       console.log("🔥 customInstruments in settings data:", settingsData.customInstruments);
       
       const settings = await storage.upsertUserSettings(settingsData);

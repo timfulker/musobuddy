@@ -96,6 +96,38 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   
   const data = await response.json();
   
+  // Parse JSON fields properly
+  let parsedSelectedInstruments = [];
+  if (data.selectedInstruments) {
+    if (typeof data.selectedInstruments === 'string') {
+      try {
+        parsedSelectedInstruments = JSON.parse(data.selectedInstruments);
+      } catch (e) {
+        console.error('Error parsing selectedInstruments:', e);
+        parsedSelectedInstruments = [];
+      }
+    } else if (Array.isArray(data.selectedInstruments)) {
+      parsedSelectedInstruments = data.selectedInstruments;
+    }
+  }
+  
+  let parsedGigTypes = [];
+  if (data.gigTypes) {
+    if (typeof data.gigTypes === 'string') {
+      try {
+        parsedGigTypes = JSON.parse(data.gigTypes);
+      } catch (e) {
+        console.error('Error parsing gigTypes:', e);
+        parsedGigTypes = [];
+      }
+    } else if (Array.isArray(data.gigTypes)) {
+      parsedGigTypes = data.gigTypes;
+    }
+  }
+  
+  console.log('Parsed selectedInstruments:', parsedSelectedInstruments);
+  console.log('Parsed gigTypes:', parsedGigTypes);
+  
   // Transform the data to match the expected form structure
   return {
     businessName: data.businessName || "",
@@ -107,8 +139,8 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     nextInvoiceNumber: data.nextInvoiceNumber || 1,
     defaultTerms: data.defaultTerms || "",
     bankDetails: data.bankDetails || "",
-    selectedInstruments: data.selectedInstruments || [],
-    gigTypes: data.gigTypes || [],
+    selectedInstruments: parsedSelectedInstruments,
+    gigTypes: parsedGigTypes,
   };
 };
 
@@ -173,12 +205,16 @@ export default function Settings() {
   useEffect(() => {
     if (settings) {
       console.log('Updating form with settings:', settings);
+      console.log('Selected instruments from settings:', settings.selectedInstruments);
       form.reset(settings);
       setSelectedInstruments(settings.selectedInstruments || []);
       
       // Use global gig types if available, otherwise use settings gig types
       const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (settings.gigTypes || []);
       setGigTypes(gigTypesToUse);
+      
+      // Reset hasChanges flag since we're loading fresh data
+      setHasChanges(false);
     }
   }, [settings, globalGigTypes, form]);
 
@@ -257,6 +293,22 @@ export default function Settings() {
       )
     : CORE_INSTRUMENTS;
 
+  // Track if form has been modified
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Watch for form changes
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      setHasChanges(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  // Watch for instrument/gig type changes
+  useEffect(() => {
+    setHasChanges(true);
+  }, [selectedInstruments, gigTypes]);
+
   // Save settings function
   const saveSettings = useMutation({
     mutationFn: async (data: SettingsFormData) => {
@@ -293,6 +345,7 @@ export default function Settings() {
     },
     onSuccess: (data) => {
       console.log('Settings saved successfully:', data);
+      setHasChanges(false);
       toast({
         title: "Success",
         description: "Settings saved successfully!",
@@ -704,8 +757,12 @@ export default function Settings() {
               <div className="flex justify-end">
                 <Button
                   type="submit"
-                  disabled={saveSettings.isPending}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:shadow-lg px-8 py-2"
+                  disabled={saveSettings.isPending || !hasChanges}
+                  className={`px-8 py-2 border-0 transition-all duration-300 ${
+                    hasChanges && !saveSettings.isPending
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:scale-105'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   {saveSettings.isPending ? (
                     <>
@@ -715,7 +772,7 @@ export default function Settings() {
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Save Settings
+                      {hasChanges ? 'Save Settings' : 'No Changes'}
                     </>
                   )}
                 </Button>
