@@ -1035,18 +1035,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async saveGlobalGigTypes(userId: string, gigTypes: string[]): Promise<void> {
+    // Validate that gigTypes is an array
+    if (!Array.isArray(gigTypes)) {
+      console.error("🔥 saveGlobalGigTypes: gigTypes is not an array:", typeof gigTypes, gigTypes);
+      throw new Error("gigTypes must be an array");
+    }
+    
+    // Ensure all elements are strings
+    const validGigTypes = gigTypes.filter(item => typeof item === 'string');
+    
+    console.log("🔥 saveGlobalGigTypes: Saving gig types for user:", userId);
+    console.log("🔥 saveGlobalGigTypes: Valid gig types:", validGigTypes);
+    
     await db
       .insert(globalGigTypes)
       .values({
         userId,
-        gigTypes: JSON.stringify(gigTypes),
+        gigTypes: JSON.stringify(validGigTypes),
         createdAt: new Date(),
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
         target: globalGigTypes.userId,
         set: {
-          gigTypes: JSON.stringify(gigTypes),
+          gigTypes: JSON.stringify(validGigTypes),
           updatedAt: new Date(),
         },
       });

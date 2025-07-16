@@ -2781,9 +2781,27 @@ Powered by MusoBuddy – less admin, more music
       const settingsData = { ...req.body, userId };
       
       // Save global gig types if provided
-      if (req.body.gigTypes && Array.isArray(req.body.gigTypes)) {
-        await storage.saveGlobalGigTypes(userId, req.body.gigTypes);
-        console.log("🔥 Global gig types saved:", req.body.gigTypes);
+      if (req.body.gigTypes) {
+        console.log("🔥 Processing gigTypes:", typeof req.body.gigTypes, req.body.gigTypes);
+        
+        let gigTypesToSave = [];
+        if (Array.isArray(req.body.gigTypes)) {
+          gigTypesToSave = req.body.gigTypes;
+        } else if (typeof req.body.gigTypes === 'string') {
+          try {
+            gigTypesToSave = JSON.parse(req.body.gigTypes);
+          } catch (e) {
+            console.error("🔥 Failed to parse gigTypes as JSON:", e);
+            gigTypesToSave = [];
+          }
+        }
+        
+        if (Array.isArray(gigTypesToSave)) {
+          await storage.saveGlobalGigTypes(userId, gigTypesToSave);
+          console.log("🔥 Global gig types saved:", gigTypesToSave);
+        } else {
+          console.error("🔥 gigTypes is not an array after processing:", typeof gigTypesToSave, gigTypesToSave);
+        }
       }
       
       console.log("🔥 Settings data to save:", settingsData);
