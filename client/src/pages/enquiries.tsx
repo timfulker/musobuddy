@@ -153,23 +153,23 @@ export default function Enquiries() {
     updateEnquiryStatusMutation.mutate({ id: bookingId, status });
   };
 
-  // Auto-completion for past date bookings
-  React.useEffect(() => {
-    if (enquiries.length > 0) {
-      const now = new Date();
-      const bookingsToComplete = enquiries.filter(enquiry => {
-        const eventDate = new Date(enquiry.eventDate);
-        return eventDate < now && enquiry.status !== 'completed' && enquiry.status !== 'rejected';
-      });
+  // Auto-completion for past date bookings - DISABLED to prevent infinite loop
+  // React.useEffect(() => {
+  //   if (enquiries.length > 0) {
+  //     const now = new Date();
+  //     const bookingsToComplete = enquiries.filter(enquiry => {
+  //       const eventDate = new Date(enquiry.eventDate);
+  //       return eventDate < now && enquiry.status !== 'completed' && enquiry.status !== 'rejected';
+  //     });
 
-      if (bookingsToComplete.length > 0) {
-        // Auto-complete past bookings
-        bookingsToComplete.forEach(booking => {
-          updateEnquiryStatusMutation.mutate({ id: booking.id, status: 'completed' });
-        });
-      }
-    }
-  }, [enquiries]);
+  //     if (bookingsToComplete.length > 0) {
+  //       // Auto-complete past bookings
+  //       bookingsToComplete.forEach(booking => {
+  //         updateEnquiryStatusMutation.mutate({ id: booking.id, status: 'completed' });
+  //       });
+  //     }
+  //   }
+  // }, [enquiries]);
 
   // Form setup and mutations - moved before any conditional returns
   const form = useForm<z.infer<typeof enquiryFormSchema>>({
