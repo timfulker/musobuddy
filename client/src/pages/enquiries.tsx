@@ -1331,14 +1331,20 @@ export default function Enquiries() {
             sortedEnquiries.map((enquiry: Enquiry) => {
               const dateBox = formatDateBox(enquiry.eventDate!);
               const conflicts = detectConflicts(enquiry);
-              // Use real-time conflict detection instead of stale database fields
+              // Enhanced conflict detection with booking status awareness
+              const confirmedBookingConflicts = conflicts.filter(c => c.type === 'booking');
+              const unconfirmedEnquiryConflicts = conflicts.filter(c => c.type === 'enquiry');
+              
               const conflictAnalysis = {
                 hasTimeOverlap: false, // Not implemented without Google Maps
                 sameVenue: false, // Not implemented without Google Maps
                 sameClient: false, // Could be implemented but not priority
-                confirmedBooking: conflicts.some(c => c.type === 'booking'), // Check if conflicts include confirmed bookings
+                confirmedBooking: confirmedBookingConflicts.length > 0, // Critical: confirmed booking conflict
+                unconfirmedEnquiry: unconfirmedEnquiryConflicts.length > 0, // Warning: unconfirmed enquiry conflict
                 conflictCount: conflicts.length,
-                conflictDetails: conflicts.length > 0 ? `${conflicts.length} booking(s) on same date` : 'No conflicts'
+                conflictDetails: conflicts.length > 0 ? 
+                  `${confirmedBookingConflicts.length} confirmed booking(s), ${unconfirmedEnquiryConflicts.length} unconfirmed enquiry(ies)` 
+                  : 'No conflicts'
               };
               const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
               const hasConflicts = conflicts.length > 0;
@@ -1371,13 +1377,41 @@ export default function Enquiries() {
                 }
               };
               
+              // Conflict overlay styling
+              const getConflictOverlay = () => {
+                if (severity.level === 'critical') {
+                  return 'border-red-500 bg-red-50 ring-2 ring-red-200';
+                } else if (severity.level === 'warning') {
+                  return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
+                }
+                return '';
+              };
+
               return (
                 <TooltipProvider key={enquiry.id}>
-                  <Card className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${hasConflicts ? 'ring-2 ring-red-200' : ''} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
+                  <Card className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
                     <CardContent className="p-4">
                       <div className="relative">
+                        {/* Critical Conflict Red Stripe */}
+                        {severity.level === 'critical' && (
+                          <div className="absolute inset-0 bg-red-500 opacity-20 z-10 pointer-events-none"></div>
+                        )}
+                        
+                        {/* Warning Conflict Alert Banner */}
+                        {severity.level === 'warning' && (
+                          <div className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20">
+                            ⚠️ POTENTIAL SCHEDULING CONFLICT
+                          </div>
+                        )}
+                        
+                        {/* Critical Conflict Alert Banner */}
+                        {severity.level === 'critical' && (
+                          <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 z-20">
+                            🚫 DOUBLE BOOKING RISK
+                          </div>
+                        )}
                         {/* Selection Checkbox */}
-                        <div className="absolute top-0 left-0">
+                        <div className={`absolute ${(severity.level === 'critical' || severity.level === 'warning') ? 'top-8' : 'top-0'} left-0`}>
                           <Checkbox
                             checked={selectedBookings.has(enquiry.id)}
                             onCheckedChange={() => handleBookingSelect(enquiry.id)}
@@ -1386,7 +1420,7 @@ export default function Enquiries() {
                         </div>
                         
                         {/* Delete Button */}
-                        <div className="absolute top-0 right-0">
+                        <div className={`absolute ${(severity.level === 'critical' || severity.level === 'warning') ? 'top-8' : 'top-0'} right-0`}>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
@@ -1402,7 +1436,7 @@ export default function Enquiries() {
                           </Tooltip>
                         </div>
                         
-                        <div className="pl-8 pr-8">
+                        <div className={`pl-8 pr-8 ${(severity.level === 'critical' || severity.level === 'warning') ? 'pt-8' : ''}`}>
                           {/* Header with Price and Status */}
                           <div className="flex items-center justify-between mb-3">
                             <div className="text-lg font-bold text-green-600">

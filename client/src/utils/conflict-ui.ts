@@ -16,6 +16,7 @@ export interface ConflictAnalysis {
   sameVenue: boolean;
   sameClient: boolean;
   confirmedBooking: boolean;
+  unconfirmedEnquiry: boolean;
   conflictCount: number;
   conflictDetails: string;
 }
@@ -39,29 +40,28 @@ export function analyzeConflictSeverity(
     };
   }
   
-  // If there are multiple bookings on same date, default to warning
-  // This ensures conflicts are flagged even without geographic data
-  if (analysis.conflictCount > 1) {
+  // Warning conflicts - Same date as unconfirmed enquiry (potential scheduling conflict)
+  if (analysis.unconfirmedEnquiry) {
     return {
       level: 'warning',
       color: 'amber',
       bgColor: 'bg-amber-50',
       borderColor: 'border-amber-300',
       textColor: 'text-amber-800',
-      icon: '📅',
-      message: 'Multiple bookings on same date - verify timing and feasibility',
+      icon: '⚠️',
+      message: 'Same date as unconfirmed enquiry - potential scheduling conflict',
       canProceed: true
     };
   }
 
-  // Critical conflicts - Use crimson to avoid calendar's red (cancelled)
+  // Critical conflicts - Same date as confirmed booking (double booking risk)
   if (analysis.confirmedBooking) {
     return {
       level: 'critical',
-      color: 'crimson',
-      bgColor: 'bg-rose-50',
-      borderColor: 'border-rose-300',
-      textColor: 'text-rose-800',
+      color: 'red',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-300',
+      textColor: 'text-red-800',
       icon: '🚫',
       message: 'CONFIRMED BOOKING CONFLICT - Double booking risk',
       canProceed: false
