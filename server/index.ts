@@ -76,7 +76,7 @@ CRITICAL INSTRUCTIONS FOR ENCORE EMAILS:
 
 GENERAL INSTRUCTIONS:
 - Find the ACTUAL EVENT DATE - look for "Sunday 24 Aug 2025", "Aug 24", "24 Aug 2025" etc. NOT email send dates like "13 Jul 2025 at 15:42"
-- RELATIVE DATE PARSING: For relative dates like "next Saturday", "next Friday", calculate from today's date (${new Date().toISOString().split('T')[0]}) within the current year (${currentYear}) unless explicitly stated otherwise.
+- RELATIVE DATE PARSING: For relative dates like "next Saturday", "next Friday", calculate from today's date (${new Date().toISOString().split('T')[0]}) within the current year (${currentYear}) unless explicitly stated otherwise. For "next February" or "next [month]", if the month has already passed this year, use the next year (e.g., "next February" in July 2025 means February 2026).
 - Find the ACTUAL VENUE - look for location names like "Bognor Regis", "Brighton", city names, NOT email addresses or timestamps
 - Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
 - ENCORE DETECTION: Look for "Apply Now" buttons or links - these are typically from Encore booking platform
