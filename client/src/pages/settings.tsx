@@ -17,7 +17,12 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Building, Save, MapPin, Globe, Hash, CreditCard, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu } from "lucide-react";
 
-// Comprehensive instrument database from CSV
+// Core instruments displayed by default
+const CORE_INSTRUMENTS = [
+  "Piano", "Bass Guitar", "Guitar", "Drums", "Saxophone", "Violin", "Flute", "Vocals", "DJ"
+];
+
+// Comprehensive instrument database from CSV (available through search)
 const ALL_INSTRUMENTS = [
   "Violin", "Viola", "Cello", "Double Bass", "Harp", "Classical Guitar", "Acoustic Guitar", 
   "Electric Guitar", "Bass Guitar", "Banjo", "Mandolin", "Ukulele", "Zither", "Sitar", 
@@ -38,7 +43,7 @@ const ALL_INSTRUMENTS = [
   "Nyckelharpa", "Kamancheh", "Qanun", "Guzheng", "Yangqin", "Veena", "Pipa", "Domra", 
   "Bagpipes", "Uilleann Pipes", "Sheng", "Hulusi", "Zurna", "Suona", "Accordion", 
   "Concertina", "Melodica", "Jew's Harp", "Glass Harmonica", "Waterphone", "Hang Drum", 
-  "Kalimba", "Music Box", "Singing Bowl", "Rainstick", "DJ"
+  "Kalimba", "Music Box", "Singing Bowl", "Rainstick", "DJ", "Vocals"
 ];
 
 // Schema for form validation
@@ -220,10 +225,12 @@ export default function Settings() {
     setGigTypes(gigTypes.filter(g => g !== gigType));
   };
 
-  // Filter instruments based on search
-  const filteredInstruments = ALL_INSTRUMENTS.filter(instrument =>
-    instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
-  );
+  // Filter instruments based on search - show core instruments by default, all instruments when searching
+  const filteredInstruments = instrumentSearch.trim() 
+    ? ALL_INSTRUMENTS.filter(instrument =>
+        instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
+      )
+    : CORE_INSTRUMENTS;
 
   // Save settings function
   const saveSettings = useMutation({
@@ -419,7 +426,7 @@ export default function Settings() {
                       <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         type="text"
-                        placeholder="Search 120+ instruments..."
+                        placeholder="Search 120+ instruments (showing core instruments by default)..."
                         className="pl-10"
                         value={instrumentSearch}
                         onChange={(e) => setInstrumentSearch(e.target.value)}

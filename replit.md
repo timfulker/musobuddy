@@ -127,6 +127,19 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 ## Changelog
 
 ```
+- July 16, 2025. Enhanced instrument selection UX with core instruments and improved visual feedback:
+  * **Core Instruments Display**: Limited visible instruments to 9 core types (Piano, Bass Guitar, Guitar, Drums, Saxophone, Violin, Flute, Vocals, DJ)
+  * **Full Database Search**: Complete 120+ instrument database accessible through search functionality
+  * **Clickable Deselection**: Selected instruments now display as clickable purple badges with X icons for removal
+  * **Visual Feedback**: Purple badges transition to red on hover indicating removal capability
+  * **Clear Instructions**: Added "click to remove" guidance text for intuitive user interaction
+  * **Clean Starting State**: Removed default pre-selected instruments for fresh user experience
+  * **AI Integration Active**: OpenAI GPT-3.5 Turbo powered gig type suggestions working with instrument selection
+  * **Automatic Generation**: AI gig types generate automatically when instruments are selected or deselected
+  * **Manual Generation**: "Generate New" button available for additional AI suggestions
+  * **Cached Performance**: Instrument-to-gig mappings cached for fast response times
+  * **Hybrid Approach**: Combines default mappings with AI-generated suggestions for comprehensive coverage
+
 Changelog:
 - July 02, 2025. Initial setup
 - July 02, 2025. Invoice creation functionality completed:
