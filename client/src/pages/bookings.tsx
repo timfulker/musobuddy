@@ -1040,8 +1040,8 @@ export default function Enquiries() {
                     size="sm"
                     className={`${
                       activeStatusFilters.includes('new') 
-                        ? 'bg-blue-500 text-white border-blue-500' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                        ? 'bg-[#7F8C8D] text-white border-[#7F8C8D] hover:bg-[#6C7B7D]' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#7F8C8D] hover:text-white'
                     }`}
                   >
                     Enquiry
@@ -1052,8 +1052,8 @@ export default function Enquiries() {
                     size="sm"
                     className={`${
                       activeStatusFilters.includes('booking_in_progress') 
-                        ? 'bg-amber-500 text-white border-amber-500' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                        ? 'bg-[#F39C12] text-white border-[#F39C12] hover:bg-[#E67E22]' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#F39C12] hover:text-white'
                     }`}
                   >
                     In Progress
@@ -1064,8 +1064,8 @@ export default function Enquiries() {
                     size="sm"
                     className={`${
                       activeStatusFilters.includes('confirmed') 
-                        ? 'bg-green-500 text-white border-green-500' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                        ? 'bg-[#2980B9] text-white border-[#2980B9] hover:bg-[#1F618D]' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#2980B9] hover:text-white'
                     }`}
                   >
                     Confirmed
@@ -1076,8 +1076,8 @@ export default function Enquiries() {
                     size="sm"
                     className={`${
                       activeStatusFilters.includes('contract_sent') 
-                        ? 'bg-purple-500 text-white border-purple-500' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                        ? 'bg-[#9B59B6] text-white border-[#9B59B6] hover:bg-[#7D3C98]' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#9B59B6] hover:text-white'
                     }`}
                   >
                     Contract Sent
@@ -1091,8 +1091,8 @@ export default function Enquiries() {
                     size="sm"
                     className={`${
                       activeStatusFilters.includes('contract_received') 
-                        ? 'bg-indigo-500 text-white border-indigo-500' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                        ? 'bg-[#27AE60] text-white border-[#27AE60] hover:bg-[#1E8449]' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#27AE60] hover:text-white'
                     }`}
                   >
                     Contract Received
@@ -1103,8 +1103,8 @@ export default function Enquiries() {
                     size="sm"
                     className={`${
                       activeStatusFilters.includes('completed') 
-                        ? 'bg-gray-700 text-white border-gray-700' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                        ? 'bg-[#34495E] text-white border-[#34495E] hover:bg-[#2C3E50]' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#34495E] hover:text-white'
                     }`}
                   >
                     Completed
@@ -1115,8 +1115,8 @@ export default function Enquiries() {
                     size="sm"
                     className={`${
                       activeStatusFilters.includes('rejected') 
-                        ? 'bg-red-500 text-white border-red-500' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                        ? 'bg-[#C0392B] text-white border-[#C0392B] hover:bg-[#A93226]' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#C0392B] hover:text-white'
                     }`}
                   >
                     Rejected
@@ -1433,27 +1433,29 @@ export default function Enquiries() {
               // Check if enquiry date is in the past
               const isPastDate = enquiry.eventDate && new Date(enquiry.eventDate) < new Date();
               
-              // Status-based styling
+              // Status-based styling with new color scheme
               const getStatusOverlay = (status: string) => {
                 switch (status) {
-                  case "new": return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
-                  case "booking_in_progress": return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200";
-                  case "confirmed": return "bg-gradient-to-br from-green-50 to-green-100 border-green-200";
-                  case "contract_sent": return "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200";
-                  case "completed": return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
-                  case "rejected": return "bg-gradient-to-br from-red-50 to-red-100 border-red-200";
+                  case "new": return "bg-gradient-to-br from-[#7F8C8D]/10 to-[#7F8C8D]/20 border-[#7F8C8D]/30"; // Soft Grey Blue
+                  case "booking_in_progress": return "bg-gradient-to-br from-[#F39C12]/10 to-[#F39C12]/20 border-[#F39C12]/30"; // Amber
+                  case "confirmed": return "bg-gradient-to-br from-[#2980B9]/10 to-[#2980B9]/20 border-[#2980B9]/30"; // Royal Blue
+                  case "contract_sent": return "bg-gradient-to-br from-[#9B59B6]/10 to-[#9B59B6]/20 border-[#9B59B6]/30"; // Violet
+                  case "contract_received": return "bg-gradient-to-br from-[#27AE60]/10 to-[#27AE60]/20 border-[#27AE60]/30"; // Emerald Green
+                  case "completed": return "bg-gradient-to-br from-[#34495E]/10 to-[#34495E]/20 border-[#34495E]/30"; // Slate Navy
+                  case "rejected": return "bg-gradient-to-br from-[#C0392B]/10 to-[#C0392B]/20 border-[#C0392B]/30"; // Deep Red
                   default: return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
                 }
               };
               
               const getStatusColor = (status: string) => {
                 switch (status) {
-                  case "new": return "text-blue-800 bg-blue-100";
-                  case "booking_in_progress": return "text-amber-800 bg-amber-100";
-                  case "confirmed": return "text-green-800 bg-green-100";
-                  case "contract_sent": return "text-purple-800 bg-purple-100";
-                  case "completed": return "text-gray-800 bg-gray-100";
-                  case "rejected": return "text-red-800 bg-red-100";
+                  case "new": return "text-white bg-[#7F8C8D]"; // Soft Grey Blue
+                  case "booking_in_progress": return "text-white bg-[#F39C12]"; // Amber
+                  case "confirmed": return "text-white bg-[#2980B9]"; // Royal Blue
+                  case "contract_sent": return "text-white bg-[#9B59B6]"; // Violet
+                  case "contract_received": return "text-white bg-[#27AE60]"; // Emerald Green
+                  case "completed": return "text-white bg-[#34495E]"; // Slate Navy
+                  case "rejected": return "text-white bg-[#C0392B]"; // Deep Red
                   default: return "text-gray-800 bg-gray-100";
                 }
               };
