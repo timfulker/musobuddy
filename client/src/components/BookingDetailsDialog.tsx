@@ -236,7 +236,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
         {/* Sticky Header */}
-        <div className="sticky top-0 bg-white z-10 border-b pb-4">
+        <div className="sticky top-0 bg-white z-10 border-b pb-4 pr-12">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
@@ -245,7 +245,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
           </DialogHeader>
           
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="flex justify-end gap-2 mt-4 pr-4">
             <Button
               onClick={handleSave}
               disabled={!hasChanges || updateBookingMutation.isPending}
