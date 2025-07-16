@@ -1204,24 +1204,6 @@ export default function Enquiries() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          onClick={() => setBulkUpdateStatus('completed')}
-                          variant="outline"
-                          size="sm"
-                          className={`w-7 h-7 p-0 text-xs ${
-                            bulkUpdateStatus === 'completed' 
-                              ? 'bg-gray-700 text-white border-gray-700' 
-                              : 'bg-gray-200 text-gray-600 border-gray-300'
-                          }`}
-                        >
-                          ✓
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Set as Completed</TooltipContent>
-                    </Tooltip>
-                    
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
                           onClick={() => setBulkUpdateStatus('rejected')}
                           variant="outline"
                           size="sm"
