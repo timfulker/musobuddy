@@ -164,16 +164,19 @@ export default function Settings() {
 
   // Function to generate AI-powered gig types
   const generateGigTypes = async (instruments: string[]) => {
-    if (!instruments.length) return [];
+    if (!instruments.length) {
+      setGigTypes([]);
+      setAiSuggestions([]);
+      return [];
+    }
     
     setIsGeneratingGigTypes(true);
     try {
       const suggestions = await generateGigSuggestions(instruments);
       setAiSuggestions(suggestions);
       
-      // Add AI suggestions to existing gig types (avoiding duplicates)
-      const newGigTypes = [...new Set([...gigTypes, ...suggestions])];
-      setGigTypes(newGigTypes);
+      // Replace gig types with fresh suggestions based on current instruments
+      setGigTypes(suggestions);
       
       return suggestions;
     } catch (error) {
@@ -526,17 +529,15 @@ export default function Settings() {
                       {/* AI Suggestions */}
                       {aiSuggestions.length > 0 && (
                         <div className="mb-4">
-                          <h4 className="text-sm font-medium mb-2">Latest AI Suggestions:</h4>
+                          <h4 className="text-sm font-medium mb-2">Latest AI Suggestions (click to add):</h4>
                           <div className="flex flex-wrap gap-2">
-                            {aiSuggestions.map((suggestion, index) => (
+                            {aiSuggestions.filter(suggestion => !gigTypes.includes(suggestion)).map((suggestion, index) => (
                               <Badge
                                 key={index}
                                 variant="outline"
-                                className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 text-purple-800 cursor-pointer hover:bg-purple-100"
+                                className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 text-purple-800 cursor-pointer hover:bg-purple-100 transition-colors"
                                 onClick={() => {
-                                  if (!gigTypes.includes(suggestion)) {
-                                    setGigTypes([...gigTypes, suggestion]);
-                                  }
+                                  setGigTypes([...gigTypes, suggestion]);
                                 }}
                               >
                                 + {suggestion}
@@ -549,13 +550,13 @@ export default function Settings() {
                       {/* Current Gig Types */}
                       {gigTypes.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-medium mb-2">Your Gig Types:</h4>
+                          <h4 className="text-sm font-medium mb-2">Your Gig Types (click to remove):</h4>
                           <div className="flex flex-wrap gap-2">
                             {gigTypes.map((gigType) => (
                               <Badge
                                 key={gigType}
                                 variant="secondary"
-                                className="bg-blue-100 text-blue-800 cursor-pointer hover:bg-red-100 hover:text-red-800"
+                                className="bg-blue-100 text-blue-800 cursor-pointer hover:bg-red-100 hover:text-red-800 transition-colors"
                                 onClick={() => removeGigType(gigType)}
                               >
                                 {gigType} <X className="w-3 h-3 ml-1" />

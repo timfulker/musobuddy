@@ -139,6 +139,11 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Manual Generation**: "Generate New" button available for additional AI suggestions
   * **Cached Performance**: Instrument-to-gig mappings cached for fast response times
   * **Hybrid Approach**: Combines default mappings with AI-generated suggestions for comprehensive coverage
+  * **Fixed Cache Issues**: Gig types now properly reset when instruments are changed
+  * **Improved AI Suggestions**: Purple "Latest AI Suggestions" badges now properly add to gig types when clicked
+  * **Clear Visual Feedback**: Blue "Your Gig Types" badges can be clicked to remove with X icons
+  * **Better UX**: Added "(click to add)" and "(click to remove)" guidance text for clarity
+  * **Filtered Suggestions**: AI suggestions hide once added to avoid duplicate display
 
 Changelog:
 - July 02, 2025. Initial setup
