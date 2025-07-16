@@ -278,14 +278,21 @@ export default function Settings() {
         body: JSON.stringify(settingsData),
       });
       
+      console.log('Save response status:', response.status);
+      console.log('Save response ok:', response.ok);
+      
       if (!response.ok) {
-        throw new Error('Failed to save settings');
+        const errorText = await response.text();
+        console.error('Save error response:', errorText);
+        throw new Error(`Failed to save settings: ${response.status} ${errorText}`);
       }
       
       const result = await response.json();
+      console.log('Save result:', result);
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Settings saved successfully:', data);
       toast({
         title: "Success",
         description: "Settings saved successfully!",
