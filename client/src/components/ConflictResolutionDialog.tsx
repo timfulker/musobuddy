@@ -202,6 +202,7 @@ export default function ConflictResolutionDialog({
   };
 
   const allConflictingBookings = [enquiry, ...(conflicts || [])].filter(Boolean);
+  const totalConflictingBookings = allConflictingBookings.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -218,7 +219,7 @@ export default function ConflictResolutionDialog({
           <Card className="border-red-200 bg-red-50">
             <CardHeader>
               <CardTitle className="text-lg text-red-800">
-                {allConflictingBookings.length} bookings on {formatDate(enquiry?.eventDate)}
+                {totalConflictingBookings} booking{totalConflictingBookings !== 1 ? 's' : ''} on {formatDate(enquiry?.eventDate)}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -248,23 +249,52 @@ export default function ConflictResolutionDialog({
 
           {/* Conflicting Bookings List */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Conflicting Bookings</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Conflicting Bookings</h3>
+              <div className="text-sm text-gray-600">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                  New Enquiry
+                </span>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  Existing Booking
+                </span>
+              </div>
+            </div>
             
-            {allConflictingBookings.map((booking, index) => (
-              <Card key={booking?.id || index} className={`${booking?.id === enquiry?.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(booking?.status || 'new')}>
-                          {getStatusLabel(booking?.status || 'new')}
-                        </Badge>
-                        {booking?.id === enquiry?.id && (
-                          <Badge variant="outline" className="text-blue-600 border-blue-600">
-                            Current Enquiry
+            {allConflictingBookings.map((booking, index) => {
+              const isCurrentEnquiry = booking?.id === enquiry?.id;
+              const isBeingEdited = editingBooking?.id === booking?.id;
+              
+              return (
+                <Card key={booking?.id || index} className={`${
+                  isCurrentEnquiry ? 'border-blue-500 bg-blue-50' : 
+                  isBeingEdited ? 'border-green-500 bg-green-50 ring-2 ring-green-200' : 
+                  'border-gray-200'
+                }`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge className={getStatusColor(booking?.status || 'new')}>
+                            {getStatusLabel(booking?.status || 'new')}
                           </Badge>
-                        )}
-                      </div>
+                          {isCurrentEnquiry && (
+                            <Badge variant="outline" className="text-blue-600 border-blue-600">
+                              New Enquiry
+                            </Badge>
+                          )}
+                          {!isCurrentEnquiry && (
+                            <Badge variant="outline" className="text-gray-600 border-gray-600">
+                              Existing Booking
+                            </Badge>
+                          )}
+                          {isBeingEdited && (
+                            <Badge className="bg-green-100 text-green-800 border-green-300">
+                              <Edit3 className="w-3 h-3 mr-1" />
+                              Being Edited
+                            </Badge>
+                          )}
+                        </div>
                       
                       <h4 className="font-medium">{booking?.title || 'Untitled Booking'}</h4>
                       
@@ -302,8 +332,9 @@ export default function ConflictResolutionDialog({
                     <div className="flex space-x-2">
                       {selectedAction === 'edit_times' && canEditTime(booking) && (
                         <Button
-                          variant="outline"
+                          variant={isBeingEdited ? "default" : "outline"}
                           size="sm"
+                          className={isBeingEdited ? "bg-green-600 hover:bg-green-700 text-white" : ""}
                           onClick={() => {
                             setEditingBooking(booking);
                             setNewTime(booking.eventTime || '');
@@ -311,7 +342,7 @@ export default function ConflictResolutionDialog({
                           }}
                         >
                           <Edit3 className="w-4 h-4 mr-1" />
-                          Edit Time
+                          {isBeingEdited ? "Editing..." : "Edit Time"}
                         </Button>
                       )}
                       
@@ -352,7 +383,8 @@ export default function ConflictResolutionDialog({
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
 
           {/* Time Editing Dialog */}

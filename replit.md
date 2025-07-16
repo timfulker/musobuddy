@@ -127,13 +127,15 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 ## Changelog
 
 ```
-- July 16, 2025. ConflictResolutionDialog system debugging and error handling improvements:
-  * **Issue Identified**: Application error occurring when ConflictResolutionDialog tries to access undefined booking properties
-  * **Root Cause**: Dialog component not properly handling null/undefined enquiry or conflicts data
-  * **Error Handling Added**: Implemented null checks and early returns to prevent undefined property access
-  * **Format Functions Enhanced**: Added try-catch blocks in formatDate() and formatTime() functions to handle invalid data gracefully
-  * **Defensive Programming**: Added optional chaining and fallback values for booking properties
-  * **Status**: Debugging conflict resolution dialog to ensure robust error handling
+- July 16, 2025. ConflictResolutionDialog React Hooks violation fixed and UI improvements:
+  * **Critical Fix**: Resolved "Rendered more hooks than during the previous render" error by moving early returns before hook declarations
+  * **Enhanced Dialog Display**: Fixed conflict count to show correct number of bookings (e.g., "2 bookings" instead of "1 booking")
+  * **Improved Visual Indicators**: Added clear distinction between "New Enquiry" and "Existing Booking" with color-coded badges
+  * **Better Edit State**: Added green highlight and "Being Edited" badge when a booking is selected for time editing
+  * **Conditional Rendering**: Added proper conditional checks to only render dialog when data is available
+  * **All Conflicts Shown**: Now displays both the new enquiry and existing conflicting bookings in the same dialog
+  * **Clearer UI**: Added legend showing New Enquiry (blue) vs Existing Booking (gray) for better user understanding
+  * **Status**: Conflict resolution dialog now working without crashes and showing all conflicting bookings with clear editing indicators
 
 - July 16, 2025. Email forwarding system with AI parsing fully operational and production-ready:
   * **Complete API Key Resolution**: Successfully created new dedicated OPENAI_EMAIL_PARSING_KEY for email processing
