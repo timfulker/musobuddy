@@ -1363,15 +1363,22 @@ export default function Enquiries() {
                             <div className="text-lg font-bold text-green-600">
                               {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
                             </div>
-                            <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium`}>
-                              {enquiry.status === 'new' ? 'ENQUIRY' : 
-                               enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
-                               enquiry.status === 'confirmed' ? 'CONFIRMED' :
-                               enquiry.status === 'contract_sent' ? 'CONTRACT RECEIVED' :
-                               enquiry.status === 'completed' ? 'COMPLETED' :
-                               enquiry.status === 'rejected' ? 'REJECTED' :
-                               enquiry.status.replace('_', ' ').toUpperCase()}
-                            </Badge>
+                            <div className="flex flex-col items-end">
+                              <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium`}>
+                                {enquiry.status === 'new' ? 'ENQUIRY' : 
+                                 enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
+                                 enquiry.status === 'confirmed' ? 'CONFIRMED' :
+                                 enquiry.status === 'contract_sent' ? 'CONTRACT RECEIVED' :
+                                 enquiry.status === 'completed' ? 'COMPLETED' :
+                                 enquiry.status === 'rejected' ? 'REJECTED' :
+                                 enquiry.status.replace('_', ' ').toUpperCase()}
+                              </Badge>
+                              {enquiry.previousStatus && enquiry.status === 'completed' && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Was: {enquiry.previousStatus.replace('_', ' ').toUpperCase()}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         
                         {/* Date and Event Info */}
