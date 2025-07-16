@@ -62,7 +62,7 @@ export default function StatsCards() {
               </p>
               <p className="text-xs md:text-sm text-blue-600 mt-1 flex items-center">
                 <Calendar className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                Confirmed & contracts sent
+                Confirmed & awaiting signature
               </p>
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center">

@@ -701,7 +701,7 @@ export class DatabaseStorage implements IStorage {
 
     const monthlyRevenue = monthlyInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
 
-    // Active bookings (upcoming confirmed bookings - includes both confirmed and contract_sent)
+    // Active bookings (upcoming confirmed bookings - includes confirmed, contract_sent, and contract_received)
     const activeBookingsCount = await db
       .select()
       .from(bookings)
@@ -710,7 +710,8 @@ export class DatabaseStorage implements IStorage {
           eq(bookings.userId, userId),
           or(
             eq(bookings.status, "confirmed"),
-            eq(bookings.status, "contract_sent")
+            eq(bookings.status, "contract_sent"),
+            eq(bookings.status, "contract_received")
           ),
           gte(bookings.eventDate, now)
         )
