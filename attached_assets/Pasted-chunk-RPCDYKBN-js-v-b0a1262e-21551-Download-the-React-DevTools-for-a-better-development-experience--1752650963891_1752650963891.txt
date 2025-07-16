@@ -1,0 +1,57 @@
+chunk-RPCDYKBN.js?v=b0a1262e:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+client:536 WebSocket connection to 'wss://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/?token=PuaE4dSwf-_q' failed: 
+setupWebSocket @ client:536
+client:560 [vite] server connection lost. Polling for restart...
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:179 🔄 Updating form with settings: Object
+settings.tsx:180 🔄 selectedInstruments from settings: Array(0)
+settings.tsx:181 🔄 gigTypes from settings: ["[\"Wedding DJ\",\"Corporate Event DJ\",\"Party DJ\",\"Club DJ\",\"Mobile DJ\",\"Sax + DJ\",\"Event DJ\",\"Wedding Ceremony Music\",\"Jazz Club Performance\",\"Corporate Event Entertainment\",\"Function Band\",\"Wedding Reception\",\"Private Party\"]"]
+settings.tsx:197 🔄 Resetting hasChanges to false
+settings.tsx:158 Settings data loaded: Object
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:225 🔄 Detected changes - instruments: true gigTypes: false
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:225 🔄 Detected changes - instruments: true gigTypes: true
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:225 🔄 Detected changes - instruments: true gigTypes: true
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:225 🔄 Detected changes - instruments: true gigTypes: true
+settings.tsx:158 Settings data loaded: Object
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+t.js:1  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+t.js:1  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755
+t.js:1  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755
+settings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+settings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+settings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+settings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+settings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+t.js:1  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+t.js:1  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755
+  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755
