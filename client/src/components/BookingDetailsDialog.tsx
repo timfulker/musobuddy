@@ -59,10 +59,11 @@ interface BookingDetailsDialogProps {
 }
 
 export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDetailsDialogProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const [customFields, setCustomFields] = useState<Array<{id: string, name: string, value: string}>>([]);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldValue, setNewFieldValue] = useState("");
+  const [hasChanges, setHasChanges] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -103,7 +104,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   // Initialize form when booking changes
   useEffect(() => {
     if (booking) {
-      form.reset({
+      const bookingData = {
         clientEmail: booking.clientEmail || "",
         clientPhone: booking.clientPhone || "",
         clientAddress: booking.clientAddress || "",
@@ -123,12 +124,26 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
         dressCode: booking.dressCode || "",
         repertoire: booking.repertoire || "",
         notes: booking.notes || "",
-      });
+      };
+      
+      form.reset(bookingData);
+      setInitialData(bookingData);
+      setHasChanges(false);
       
       // Initialize custom fields
       setCustomFields(booking.customFields ? JSON.parse(booking.customFields) : []);
     }
   }, [booking, form]);
+
+  // Watch for form changes
+  useEffect(() => {
+    if (initialData) {
+      const subscription = form.watch(() => {
+        setHasChanges(true);
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [form, initialData]);
 
   const updateBookingMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -154,7 +169,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
         title: "Success",
         description: "Booking details updated successfully",
       });
-      setIsEditing(false);
+      setHasChanges(false);
+      onOpenChange(false);
     },
     onError: (error) => {
       console.error('Error updating booking:', error);
@@ -166,18 +182,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     },
   });
 
-  // Save function
-  const handleSave = async () => {
-    if (!booking) return;
-    
-    const formData = form.getValues();
-    const updateData = {
-      ...formData,
-      customFields: JSON.stringify(customFields),
-    };
-    
-    updateBookingMutation.mutate(updateData);
-  };
+
 
   const addCustomField = () => {
     if (newFieldName.trim() && newFieldValue.trim()) {
@@ -189,59 +194,47 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       setCustomFields([...customFields, newField]);
       setNewFieldName("");
       setNewFieldValue("");
+      setHasChanges(true);
     }
   };
 
   const removeCustomField = (id: string) => {
     setCustomFields(customFields.filter(field => field.id !== id));
-  };
-
-  const handleClose = () => {
-    setIsEditing(false);
-    onOpenChange(false);
+    setHasChanges(true);
   };
 
   const handleCancel = () => {
-    // Reset form to original values
-    if (booking) {
-      form.reset({
-        clientEmail: booking.clientEmail || "",
-        clientPhone: booking.clientPhone || "",
-        clientAddress: booking.clientAddress || "",
-        eventType: booking.eventType || "",
-        gigType: booking.gigType || "",
-        equipmentNeeded: booking.equipmentNeeded || "",
-        specialRequests: booking.specialRequests || "",
-        setupTime: booking.setupTime || "",
-        soundCheckTime: booking.soundCheckTime || "",
-        packupTime: booking.packupTime || "",
-        travelTime: booking.travelTime || "",
-        parkingInfo: booking.parkingInfo || "",
-        contactPerson: booking.contactPerson || "",
-        contactPhone: booking.contactPhone || "",
-        venueAddress: booking.venueAddress || "",
-        venueContactInfo: booking.venueContactInfo || "",
-        dressCode: booking.dressCode || "",
-        repertoire: booking.repertoire || "",
-        notes: booking.notes || "",
+    form.reset(initialData);
+    setHasChanges(false);
+    onOpenChange(false);
+  };
+
+  const onSubmit = async (data: z.infer<typeof bookingDetailsSchema>) => {
+    try {
+      await updateBookingMutation.mutateAsync({
+        ...data,
+        customFields: JSON.stringify(customFields),
       });
-      setCustomFields(booking.customFields ? JSON.parse(booking.customFields) : []);
+    } catch (error) {
+      console.error('Error updating booking:', error);
     }
-    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    if (!booking || !hasChanges) return;
+    const formData = form.getValues();
+    const updateData = {
+      ...formData,
+      customFields: JSON.stringify(customFields),
+    };
+    updateBookingMutation.mutate(updateData);
   };
 
   if (!booking) return null;
 
-  const handleDialogOpenChange = (open: boolean) => {
-    // Only allow closing if not in editing mode
-    if (!isEditing) {
-      onOpenChange(open);
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto [&>button]:hidden">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -250,23 +243,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
             </div>
             <div className="flex gap-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={handleSave}
+                disabled={!hasChanges || updateBookingMutation.isPending}
+                className={`${hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'}`}
               >
-                <Edit3 className="h-4 w-4 mr-2" />
-                {isEditing ? 'Switch to View Mode' : 'Switch to Edit Mode'}
+                {updateBookingMutation.isPending ? 'Saving...' : 'Save'}
               </Button>
-              {!isEditing && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onOpenChange(false)}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Close
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -340,7 +328,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled={!isEditing} type="email" />
+                          <Input {...field} type="email" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -355,7 +343,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Phone</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} />
+                            <Input {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -370,7 +358,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <FormItem>
                         <FormLabel>Address</FormLabel>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={2} />
+                          <Textarea {...field} rows={2} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -396,7 +384,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Event Type</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="Wedding, Corporate, etc." />
+                            <Input {...field}  placeholder="Wedding, Corporate, etc." />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -409,7 +397,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Gig Type</FormLabel>
                           <FormControl>
-                            {isEditing ? (
+                            {true ? (
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select gig type" />
@@ -445,7 +433,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Dress Code</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="Black tie, casual, etc." />
+                            <Input {...field}  placeholder="Black tie, casual, etc." />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -460,7 +448,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <FormItem>
                         <FormLabel>Repertoire/Song Requests</FormLabel>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={3} placeholder="Special songs, style requests, etc." />
+                          <Textarea {...field}  rows={3} placeholder="Special songs, style requests, etc." />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -485,7 +473,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <FormItem>
                         <FormLabel>Venue Address</FormLabel>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={2} />
+                          <Textarea {...field}  rows={2} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -499,7 +487,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <FormItem>
                         <FormLabel>Venue Contact Information</FormLabel>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={2} />
+                          <Textarea {...field}  rows={2} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -514,7 +502,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Day-of Contact Person</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} />
+                            <Input {...field}  />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -527,7 +515,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Contact Phone</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} />
+                            <Input {...field}  />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -542,7 +530,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <FormItem>
                         <FormLabel>Parking Information</FormLabel>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={2} />
+                          <Textarea {...field}  rows={2} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -568,7 +556,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Setup Time</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="e.g., 30 minutes before" />
+                            <Input {...field}  placeholder="e.g., 30 minutes before" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -581,7 +569,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Sound Check Time</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="e.g., 15 minutes before start" />
+                            <Input {...field}  placeholder="e.g., 15 minutes before start" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -597,7 +585,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Pack-up Time</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="e.g., 15 minutes after finish" />
+                            <Input {...field}  placeholder="e.g., 15 minutes after finish" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -610,7 +598,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Travel Time</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="e.g., 1 hour each way" />
+                            <Input {...field}  placeholder="e.g., 1 hour each way" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -633,7 +621,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <FormItem>
                         <FormLabel>Equipment Needed</FormLabel>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={2} placeholder="PA system, microphones, stands, etc." />
+                          <Textarea {...field}  rows={2} placeholder="PA system, microphones, stands, etc." />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -647,7 +635,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <FormItem>
                         <FormLabel>Special Requests</FormLabel>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={3} placeholder="Special songs, timing requests, etc." />
+                          <Textarea {...field}  rows={3} placeholder="Special songs, timing requests, etc." />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -668,42 +656,38 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <Label className="text-sm font-medium">{field.name}</Label>
                         <p className="text-sm text-gray-600">{field.value}</p>
                       </div>
-                      {isEditing && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeCustomField(field.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeCustomField(field.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   ))}
                   
-                  {isEditing && (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Field name"
-                        value={newFieldName}
-                        onChange={(e) => setNewFieldName(e.target.value)}
-                      />
-                      <Input
-                        placeholder="Field value"
-                        value={newFieldValue}
-                        onChange={(e) => setNewFieldValue(e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addCustomField}
-                        disabled={!newFieldName.trim() || !newFieldValue.trim()}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Field name"
+                      value={newFieldName}
+                      onChange={(e) => setNewFieldName(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Field value"
+                      value={newFieldValue}
+                      onChange={(e) => setNewFieldValue(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addCustomField}
+                      disabled={!newFieldName.trim() || !newFieldValue.trim()}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -719,7 +703,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Textarea {...field} disabled={!isEditing} rows={4} placeholder="Additional notes..." />
+                          <Textarea {...field}  rows={4} placeholder="Additional notes..." />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -728,27 +712,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                 </CardContent>
               </Card>
               
-              {/* Save/Cancel Buttons */}
-              {isEditing && (
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCancel}
-                    disabled={updateBookingMutation.isPending}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={updateBookingMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {updateBookingMutation.isPending ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </div>
-              )}
+
             </form>
           </Form>
         </div>
