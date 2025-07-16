@@ -1039,19 +1039,116 @@ export default function Enquiries() {
                   </Button>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Select value={bulkUpdateStatus} onValueChange={setBulkUpdateStatus}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Update status to..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">Enquiry</SelectItem>
-                      <SelectItem value="booking_in_progress">In Progress</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="contract_sent">Contract Received</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <span className="text-sm text-blue-700">Update to:</span>
+                  <div className="flex gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setBulkUpdateStatus('new')}
+                          variant="outline"
+                          size="sm"
+                          className={`w-8 h-8 p-0 text-xs ${
+                            bulkUpdateStatus === 'new' 
+                              ? 'bg-blue-500 text-white border-blue-500' 
+                              : 'bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          E
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Set as Enquiry</TooltipContent>
+                    </Tooltip>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setBulkUpdateStatus('booking_in_progress')}
+                          variant="outline"
+                          size="sm"
+                          className={`w-8 h-8 p-0 text-xs ${
+                            bulkUpdateStatus === 'booking_in_progress' 
+                              ? 'bg-amber-500 text-white border-amber-500' 
+                              : 'bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          P
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Set as In Progress</TooltipContent>
+                    </Tooltip>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setBulkUpdateStatus('confirmed')}
+                          variant="outline"
+                          size="sm"
+                          className={`w-8 h-8 p-0 text-xs ${
+                            bulkUpdateStatus === 'confirmed' 
+                              ? 'bg-green-500 text-white border-green-500' 
+                              : 'bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          C
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Set as Confirmed</TooltipContent>
+                    </Tooltip>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setBulkUpdateStatus('contract_sent')}
+                          variant="outline"
+                          size="sm"
+                          className={`w-8 h-8 p-0 text-xs ${
+                            bulkUpdateStatus === 'contract_sent' 
+                              ? 'bg-purple-500 text-white border-purple-500' 
+                              : 'bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          R
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Set as Contract Received</TooltipContent>
+                    </Tooltip>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setBulkUpdateStatus('completed')}
+                          variant="outline"
+                          size="sm"
+                          className={`w-8 h-8 p-0 text-xs ${
+                            bulkUpdateStatus === 'completed' 
+                              ? 'bg-gray-700 text-white border-gray-700' 
+                              : 'bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          ✓
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Set as Completed</TooltipContent>
+                    </Tooltip>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setBulkUpdateStatus('rejected')}
+                          variant="outline"
+                          size="sm"
+                          className={`w-8 h-8 p-0 text-xs ${
+                            bulkUpdateStatus === 'rejected' 
+                              ? 'bg-red-500 text-white border-red-500' 
+                              : 'bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          ✗
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Set as Rejected</TooltipContent>
+                    </Tooltip>
+                  </div>
                   <Button
                     onClick={handleBulkStatusUpdate}
                     disabled={!bulkUpdateStatus || bulkUpdateMutation.isPending}
@@ -1065,7 +1162,7 @@ export default function Enquiries() {
                     ) : (
                       <>
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Update Status
+                        Update
                       </>
                     )}
                   </Button>
