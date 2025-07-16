@@ -39,12 +39,9 @@ export function analyzeConflictSeverity(
     };
   }
   
-  // Critical conflicts - Same date as confirmed booking OR another enquiry (RED FLAG)
-  if (analysis.confirmedBooking || analysis.unconfirmedEnquiry) {
-    const message = analysis.confirmedBooking 
-      ? 'CONFIRMED BOOKING CONFLICT - Double booking risk'
-      : 'ENQUIRY CONFLICT - Multiple enquiries on same date';
-    
+  // ANY conflicts = RED FLAG (critical)
+  // This is the simplified 3-state system: Red for conflicts, Orange for warnings, None for normal
+  if (analysis.conflictCount > 0) {
     return {
       level: 'critical',
       color: 'red',
@@ -52,22 +49,8 @@ export function analyzeConflictSeverity(
       borderColor: 'border-red-300',
       textColor: 'text-red-800',
       icon: '🚫',
-      message: message,
+      message: 'CONFLICT - Multiple bookings on same date',
       canProceed: false
-    };
-  }
-
-  // Same day but different times - can coexist (ORANGE FLAG)
-  if (analysis.conflictCount > 0) {
-    return {
-      level: 'warning',
-      color: 'orange',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-300',
-      textColor: 'text-orange-800',
-      icon: '⚠️',
-      message: 'Same day booking - check times to avoid overlap',
-      canProceed: true
     };
   }
 
@@ -91,7 +74,7 @@ export function getConflictCardStyling(severity: ConflictSeverity): string {
     case 'warning':
       return `border-l-4 border-l-orange-500 ${severity.bgColor}`;
     default:
-      return 'border-l-4 border-l-gray-200 bg-white';
+      return 'border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900';
   }
 }
 

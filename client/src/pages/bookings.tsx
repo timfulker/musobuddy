@@ -1407,17 +1407,8 @@ export default function Enquiries() {
               const confirmedBookingConflicts = conflicts.filter(c => c.type === 'booking');
               const unconfirmedEnquiryConflicts = conflicts.filter(c => c.type === 'enquiry');
               
-              const conflictAnalysis = {
-                hasTimeOverlap: false, // Not implemented without Google Maps
-                sameVenue: false, // Not implemented without Google Maps
-                sameClient: false, // Could be implemented but not priority
-                confirmedBooking: confirmedBookingConflicts.length > 0, // Critical: confirmed booking conflict
-                unconfirmedEnquiry: unconfirmedEnquiryConflicts.length > 0, // Warning: unconfirmed enquiry conflict
-                conflictCount: conflicts.length,
-                conflictDetails: conflicts.length > 0 ? 
-                  `${confirmedBookingConflicts.length} confirmed booking(s), ${unconfirmedEnquiryConflicts.length} unconfirmed enquiry(ies)` 
-                  : 'No conflicts'
-              };
+              // Use the same conflict analysis logic as dashboard
+              const conflictAnalysis = parseConflictAnalysis(enquiry);
               const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
               const hasConflicts = conflicts.length > 0;
               
@@ -1451,19 +1442,22 @@ export default function Enquiries() {
                 }
               };
               
-              // Conflict overlay styling
+              // Use the same conflict card styling as dashboard
+              const cardStyling = getConflictCardStyling(severity);
+              
+              // Conflict overlay styling for visual emphasis
               const getConflictOverlay = () => {
                 if (severity.level === 'critical') {
-                  return 'border-red-500 bg-red-50 ring-2 ring-red-200';
+                  return 'ring-2 ring-red-200';
                 } else if (severity.level === 'warning') {
-                  return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
+                  return 'ring-2 ring-amber-200';
                 }
                 return '';
               };
 
               return (
                 <TooltipProvider key={enquiry.id}>
-                  <Card className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
+                  <Card className={`hover:shadow-lg transition-all duration-200 ${cardStyling} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
                     <CardContent className="p-4">
                       <div className="relative">
                         {/* Critical Conflict Red Stripe */}
