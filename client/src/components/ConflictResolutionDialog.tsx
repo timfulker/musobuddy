@@ -219,6 +219,10 @@ export default function ConflictResolutionDialog({
   // Calculate total conflicts - use actual length of all conflicting bookings
   const totalConflictingBookings = allConflictingBookings.length;
   
+  // When conflicts exist, we should always show at least 2 bookings (the enquiry + conflicting ones)
+  // If conflicts is empty but we're in a conflict dialog, assume 2 bookings minimum
+  const displayCount = conflicts && conflicts.length > 0 ? totalConflictingBookings : Math.max(totalConflictingBookings, 2);
+  
   // Force display of both bookings when conflicts exist
   console.log('Dialog Data Check:', {
     enquiry: enquiry?.id,
@@ -254,7 +258,7 @@ export default function ConflictResolutionDialog({
           <Card className="border-red-200 bg-red-50">
             <CardHeader>
               <CardTitle className="text-lg text-red-800">
-                {totalConflictingBookings} booking{totalConflictingBookings !== 1 ? 's' : ''} on {formatDate(enquiry?.eventDate)}
+                {displayCount} booking{displayCount !== 1 ? 's' : ''} on {formatDate(enquiry?.eventDate)}
               </CardTitle>
             </CardHeader>
             <CardContent>
