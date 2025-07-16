@@ -1010,6 +1010,18 @@ export default function Enquiries() {
                       : 'bg-gray-200 text-gray-600 border-gray-300'
                   }`}
                 >
+                  Contract Sent
+                </Button>
+                <Button
+                  onClick={() => toggleStatusFilter('contract_received')}
+                  variant={activeStatusFilters.includes('contract_received') ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${
+                    activeStatusFilters.includes('contract_received') 
+                      ? 'bg-indigo-500 text-white border-indigo-500' 
+                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                  }`}
+                >
                   Contract Received
                 </Button>
                 <Button
@@ -1099,7 +1111,7 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('new')}
                           variant="outline"
                           size="sm"
-                          className={`w-8 h-8 p-0 text-xs ${
+                          className={`w-7 h-7 p-0 text-xs ${
                             bulkUpdateStatus === 'new' 
                               ? 'bg-blue-500 text-white border-blue-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
@@ -1117,7 +1129,7 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('booking_in_progress')}
                           variant="outline"
                           size="sm"
-                          className={`w-8 h-8 p-0 text-xs ${
+                          className={`w-7 h-7 p-0 text-xs ${
                             bulkUpdateStatus === 'booking_in_progress' 
                               ? 'bg-amber-500 text-white border-amber-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
@@ -1135,7 +1147,7 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('confirmed')}
                           variant="outline"
                           size="sm"
-                          className={`w-8 h-8 p-0 text-xs ${
+                          className={`w-7 h-7 p-0 text-xs ${
                             bulkUpdateStatus === 'confirmed' 
                               ? 'bg-green-500 text-white border-green-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
@@ -1153,9 +1165,27 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('contract_sent')}
                           variant="outline"
                           size="sm"
-                          className={`w-8 h-8 p-0 text-xs ${
+                          className={`w-7 h-7 p-0 text-xs ${
                             bulkUpdateStatus === 'contract_sent' 
                               ? 'bg-purple-500 text-white border-purple-500' 
+                              : 'bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          S
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Set as Contract Sent</TooltipContent>
+                    </Tooltip>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setBulkUpdateStatus('contract_received')}
+                          variant="outline"
+                          size="sm"
+                          className={`w-7 h-7 p-0 text-xs ${
+                            bulkUpdateStatus === 'contract_received' 
+                              ? 'bg-indigo-500 text-white border-indigo-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
                           }`}
                         >
@@ -1171,7 +1201,7 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('completed')}
                           variant="outline"
                           size="sm"
-                          className={`w-8 h-8 p-0 text-xs ${
+                          className={`w-7 h-7 p-0 text-xs ${
                             bulkUpdateStatus === 'completed' 
                               ? 'bg-gray-700 text-white border-gray-700' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
@@ -1189,7 +1219,7 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('rejected')}
                           variant="outline"
                           size="sm"
-                          className={`w-8 h-8 p-0 text-xs ${
+                          className={`w-7 h-7 p-0 text-xs ${
                             bulkUpdateStatus === 'rejected' 
                               ? 'bg-red-500 text-white border-red-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
@@ -1451,6 +1481,137 @@ export default function Enquiries() {
                           )}
                         </div>
                         
+                        {/* Status Buttons */}
+                        <div className="flex justify-between items-center mb-3">
+                          <div className="flex gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'new')}
+                                  variant="outline"
+                                  size="sm"
+                                  className={`w-6 h-6 p-0 text-xs ${
+                                    enquiry.status === 'new' 
+                                      ? 'bg-blue-500 text-white border-blue-500' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                  }`}
+                                >
+                                  E
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Set as Enquiry</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'booking_in_progress')}
+                                  variant="outline"
+                                  size="sm"
+                                  className={`w-6 h-6 p-0 text-xs ${
+                                    enquiry.status === 'booking_in_progress' 
+                                      ? 'bg-amber-500 text-white border-amber-500' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                  }`}
+                                >
+                                  P
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Set as In Progress</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'confirmed')}
+                                  variant="outline"
+                                  size="sm"
+                                  className={`w-6 h-6 p-0 text-xs ${
+                                    enquiry.status === 'confirmed' 
+                                      ? 'bg-green-500 text-white border-green-500' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                  }`}
+                                >
+                                  C
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Set as Confirmed</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'contract_sent')}
+                                  variant="outline"
+                                  size="sm"
+                                  className={`w-6 h-6 p-0 text-xs ${
+                                    enquiry.status === 'contract_sent' 
+                                      ? 'bg-purple-500 text-white border-purple-500' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                  }`}
+                                >
+                                  S
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Set as Contract Sent</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'contract_received')}
+                                  variant="outline"
+                                  size="sm"
+                                  className={`w-6 h-6 p-0 text-xs ${
+                                    enquiry.status === 'contract_received' 
+                                      ? 'bg-indigo-500 text-white border-indigo-500' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                  }`}
+                                >
+                                  R
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Set as Contract Received</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'completed')}
+                                  variant="outline"
+                                  size="sm"
+                                  className={`w-6 h-6 p-0 text-xs ${
+                                    enquiry.status === 'completed' 
+                                      ? 'bg-gray-700 text-white border-gray-700' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                  }`}
+                                >
+                                  ✓
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Set as Completed</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'rejected')}
+                                  variant="outline"
+                                  size="sm"
+                                  className={`w-6 h-6 p-0 text-xs ${
+                                    enquiry.status === 'rejected' 
+                                      ? 'bg-red-500 text-white border-red-500' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                  }`}
+                                >
+                                  ✗
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Set as Rejected</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
+
                         {/* Action Buttons */}
                         <div className="flex justify-between items-center">
                           <Tooltip>
@@ -1472,8 +1633,6 @@ export default function Enquiries() {
                           </Tooltip>
                           
                           <div className="flex gap-1">
-
-                            
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
