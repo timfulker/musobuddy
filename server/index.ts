@@ -65,14 +65,23 @@ CURRENT CONTEXT:
 - Current month: ${currentDate.getMonth() + 1}
 - Current day: ${currentDate.getDate()}
 
-CRITICAL INSTRUCTIONS:
-1. Find the ACTUAL EVENT DATE - look for "Sunday 24 Aug 2025", "Aug 24", "24 Aug 2025" etc. NOT email send dates like "13 Jul 2025 at 15:42"
-2. RELATIVE DATE PARSING: For relative dates like "next Saturday", "next Friday", calculate from today's date (${new Date().toISOString().split('T')[0]}) within the current year (${currentYear}) unless explicitly stated otherwise.
-2. Find the ACTUAL VENUE - look for location names like "Bognor Regis", "Brighton", city names, NOT email addresses or timestamps
-3. Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
-4. ENCORE DETECTION: Look for "Apply Now" buttons or links - these are typically from Encore booking platform
-5. ENCORE URL FORMAT: For Encore emails, extract the job ID from the subject line (e.g., [QuH57], [LM16k], [yij5S]) and create URL: https://encoremusicians.com/jobs/{jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow. Example: Subject contains [QuH57] → URL: https://encoremusicians.com/jobs/QuH57?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow. NEVER use /job/apply format as it leads to 404 errors.
-6. REDIRECT URLS: If you find a complete redirect URL starting with https://rbtin183.r.eu-west-1.awstrack.me/, use that instead of constructing a URL.
+CRITICAL INSTRUCTIONS FOR ENCORE EMAILS:
+1. ENCORE DATE PARSING: Look for date patterns like "Friday 05 Sep 2025" or "Friday\n05\nSep 2025" - convert to YYYY-MM-DD format
+2. ENCORE VENUE EXTRACTION: Look for location patterns like "Gwennap, Redruth, Cornwall (TR16)" - extract the full location
+3. ENCORE BUDGET: Look for "£260 - £450" or "£260-£450" format in the email
+4. ENCORE TIME: Look for time patterns like "3:00pm - 5:00pm" or "Wedding 3:00pm - 5:00pm"
+5. ENCORE GIG TYPE: Look for instrument requirements like "Saxophonist needed" or "Saxophonist"
+6. ENCORE EVENT TYPE: Look for event types like "wedding drinks reception" or "Wedding"
+7. ENCORE APPLY NOW: Extract job ID from subject [E2YY8] and create URL: https://encoremusicians.com/jobs/E2YY8?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow
+
+GENERAL INSTRUCTIONS:
+- Find the ACTUAL EVENT DATE - look for "Sunday 24 Aug 2025", "Aug 24", "24 Aug 2025" etc. NOT email send dates like "13 Jul 2025 at 15:42"
+- RELATIVE DATE PARSING: For relative dates like "next Saturday", "next Friday", calculate from today's date (${new Date().toISOString().split('T')[0]}) within the current year (${currentYear}) unless explicitly stated otherwise.
+- Find the ACTUAL VENUE - look for location names like "Bognor Regis", "Brighton", city names, NOT email addresses or timestamps
+- Find BUDGET/PRICE information - look for "£260-£450", "£300", price ranges in the email content
+- ENCORE DETECTION: Look for "Apply Now" buttons or links - these are typically from Encore booking platform
+- ENCORE URL FORMAT: For Encore emails, extract the job ID from the subject line (e.g., [E2YY8], [QuH57], [LM16k]) and create URL: https://encoremusicians.com/jobs/{jobId}?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow. Example: Subject contains [E2YY8] → URL: https://encoremusicians.com/jobs/E2YY8?utm_source=transactional&utm_medium=email&utm_campaign=newJobAlert&utm_content=ApplyNow
+- REDIRECT URLS: If you find a complete redirect URL starting with https://rbtin183.r.eu-west-1.awstrack.me/, use that instead of constructing a URL.
 
 Extract:
 - eventDate: The actual event/performance date in YYYY-MM-DD format (e.g., "Sunday 24 Aug 2025" = "2025-08-24", "14th July 2026" = "2026-07-14")
@@ -101,6 +110,7 @@ Return valid JSON only:`;
     });
 
     const aiResult = JSON.parse(response.choices[0].message.content || '{}');
+    console.log('🤖 AI parsing result:', aiResult);
     return {
       eventDate: aiResult.eventDate || null,
       eventTime: aiResult.eventTime || null,
@@ -112,7 +122,8 @@ Return valid JSON only:`;
       applyNowLink: aiResult.applyNowLink || null
     };
   } catch (error) {
-    console.log('AI parsing failed, using regex fallback');
+    console.log('🤖 AI parsing failed with error:', error);
+    console.log('🤖 Using regex fallback');
     return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
   }
 }
