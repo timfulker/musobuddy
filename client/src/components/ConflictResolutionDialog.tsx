@@ -50,8 +50,19 @@ export default function ConflictResolutionDialog({
     conflictsReceived: conflicts,
     conflictsLength: conflicts?.length,
     conflictIds: conflicts?.map(c => c?.id),
-    isOpen
+    isOpen,
+    rawConflicts: JSON.stringify(conflicts, null, 2)
   });
+
+  // Additional debugging
+  if (conflicts && conflicts.length > 0) {
+    console.log('🔥 CONFLICTS EXIST:', conflicts.length, 'conflicts found');
+    conflicts.forEach((conflict, index) => {
+      console.log(`🔥 Conflict ${index}:`, conflict);
+    });
+  } else {
+    console.log('🔥 NO CONFLICTS FOUND - conflicts array is:', conflicts);
+  }
 
   const [selectedAction, setSelectedAction] = useState<string>('');
   const [editingBooking, setEditingBooking] = useState<any>(null);
