@@ -1526,7 +1526,7 @@ export default function Enquiries() {
                               {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
                             </div>
                             <div className="flex flex-col items-end">
-                              <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium`}>
+                              <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium flex items-center justify-center min-h-[24px] px-3`}>
                                 {enquiry.status === 'new' ? 'ENQUIRY' : 
                                  enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
                                  enquiry.status === 'confirmed' ? 'CONFIRMED' :
