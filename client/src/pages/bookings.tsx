@@ -225,7 +225,10 @@ export default function Enquiries() {
   const handleConflictClick = async (primaryBooking: any) => {
     try {
       // Fetch all bookings to find conflicts
-      const allBookings = await apiRequest('/api/bookings');
+      const response = await apiRequest('/api/bookings');
+      
+      // Handle both array and object responses
+      const allBookings = Array.isArray(response) ? response : response.data || [];
       
       // Find bookings that conflict with the selected booking
       const conflictingBookings = allBookings.filter((booking: any) => {
