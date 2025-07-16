@@ -4,488 +4,290 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
-import type { Enquiry } from "@shared/schema";
-import { analyzeConflictSeverity, parseConflictAnalysis, getConflictCardStyling } from "@/utils/conflict-ui";
-import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+
+// Type definitions for the enquiry/booking data
+interface Booking {
+  id: string;
+  title: string;
+  clientName: string;
+  eventDate: string;
+  eventTime?: string;
+  eventEndTime?: string;
+  venue?: string;
+  status: string;
+  conflictSeverity?: 'none' | 'warning' | 'critical';
+  conflictAnalysis?: string;
+  sourceType?: string;
+}
+
+interface Conflict {
+  id: string;
+  title: string;
+  eventDate: string;
+  clientName: string;
+  status: string;
+}
 
 export default function ActionableEnquiries() {
   const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
-  const [selectedConflictEnquiry, setSelectedConflictEnquiry] = useState<any>(null);
-  const [selectedConflicts, setSelectedConflicts] = useState<any[]>([]);
+  const [selectedConflictEnquiry, setSelectedConflictEnquiry] = useState<Booking | null>(null);
+  const [selectedConflicts, setSelectedConflicts] = useState<Conflict[]>([]);
 
-  const { data: enquiries = [], isLoading } = useQuery({
+  const { data: enquiries = [], isLoading } = useQuery<Booking[]>({
     queryKey: ["/api/bookings"],
   });
 
-  // Fetch the same upcoming bookings data that the main bookings page uses
-  const { data: upcomingBookings = [] } = useQuery({
+  const { data: upcomingBookings = [] } = useQuery<Booking[]>({
     queryKey: ["/api/bookings/upcoming"],
   });
 
-  const { data: conflicts = [] } = useQuery({
+  const { data: conflicts = [] } = useQuery<Conflict[]>({
     queryKey: ["/api/conflicts"],
     staleTime: 30000,
-    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
-  // Debug: Log all the data we're working with
-  useEffect(() => {
-    console.log('🔍 KANBAN BOARD DATA DEBUG:', {
-      enquiriesCount: enquiries.length,
-      upcomingBookingsCount: upcomingBookings.length,
-      conflictsCount: conflicts.length,
-      enquiriesSample: enquiries.slice(0, 3).map(e => ({
-        id: e.id,
-        title: e.title,
-        clientName: e.clientName,
-        eventDate: e.eventDate,
-        status: e.status
-      })),
-      upcomingBookingsSample: upcomingBookings.slice(0, 3).map(b => ({
-        id: b.id,
-        title: b.title,
-        clientName: b.clientName,
-        eventDate: b.eventDate,
-        status: b.status
-      }))
-    });
-  }, [enquiries, upcomingBookings, conflicts]);
-
-  // Use the same date comparison logic as the main bookings page
-  const isSameDay = (date1: Date, date2: Date) => {
-    const result = date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
-
-    console.log('🔍 Date comparison:', {
-      date1: date1.toDateString(),
-      date2: date2.toDateString(),
-      date1Components: { year: date1.getFullYear(), month: date1.getMonth(), date: date1.getDate() },
-      date2Components: { year: date2.getFullYear(), month: date2.getMonth(), date: date2.getDate() },
-      result
-    });
-
-    return result;
+  // Check if enquiry needs response (new or in-progress status)
+  const needsResponse = (enquiry: Booking) => {
+    return enquiry.status === 'new' || enquiry.status === 'booking_in_progress';
   };
 
-  // Enhanced conflict detection with detailed logging
-  const detectConflicts = (enquiry: any) => {
-    if (!enquiry.eventDate) {
-      console.log('🔍 No event date for enquiry:', enquiry.id);
-      return [];
-    }
+  // Check if enquiry is from calendar import
+  const isCalendarImport = (enquiry: Booking) => {
+    return enquiry.sourceType === 'calendar_import' || 
+           (!enquiry.clientName && !enquiry.venue);
+  };
 
-    const conflicts = [];
+  // Filter enquiries that need action
+  const actionableEnquiries = enquiries.filter((enquiry: Booking) => {
+    const hasConflicts = enquiry.conflictSeverity && enquiry.conflictSeverity !== 'none';
+    const needsAction = needsResponse(enquiry) || hasConflicts;
+    const notCalendarImport = !isCalendarImport(enquiry);
+    
+    return needsAction && notCalendarImport;
+  });
+
+  // Filter this week's enquiries (excluding calendar imports)
+  const thisWeekEnquiries = enquiries.filter((enquiry: Booking) => {
     const enquiryDate = new Date(enquiry.eventDate);
+    const today = new Date();
+    const oneWeekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    return enquiryDate >= today && 
+           enquiryDate <= oneWeekFromNow && 
+           !isCalendarImport(enquiry);
+  });
 
-    console.log('🔍 ENHANCED Kanban conflict detection for enquiry:', {
-      enquiryId: enquiry.id,
-      enquiryDate: enquiryDate.toDateString(),
-      enquiryTitle: enquiry.title,
-      enquiryStatus: enquiry.status,
-      totalEnquiries: enquiries.length,
-      totalUpcomingBookings: upcomingBookings.length
-    });
-
-    // Check against upcoming bookings
-    console.log('🔍 Checking against upcoming bookings...');
-    upcomingBookings.forEach((booking: any, index: number) => {
-      console.log(`🔍 Checking upcoming booking ${index}:`, {
-        bookingId: booking.id,
-        bookingDate: booking.eventDate,
-        bookingTitle: booking.title,
-        bookingStatus: booking.status,
-        sameAsEnquiry: booking.id === enquiry.id
-      });
-
-      if (booking.eventDate && booking.id !== enquiry.id) {
-        const bookingDate = new Date(booking.eventDate);
-        console.log('🔍 Comparing dates for upcoming booking:', {
-          bookingId: booking.id,
-          enquiryDate: enquiryDate.toDateString(),
-          bookingDate: bookingDate.toDateString()
-        });
-
-        if (isSameDay(enquiryDate, bookingDate)) {
-          console.log('🔍 ✅ FOUND CONFLICT with upcoming booking:', {
-            bookingId: booking.id,
-            bookingTitle: booking.title
-          });
-          conflicts.push({
-            type: 'booking',
-            id: booking.id,
-            title: booking.title || 'Booking',
-            eventDate: booking.eventDate,
-            venue: booking.venue,
-            clientName: booking.clientName,
-            eventTime: booking.eventTime,
-            eventEndTime: booking.eventEndTime,
-            status: booking.status
-          });
-        }
-      }
-    });
-
-    // Check against other enquiries with confirmed status
-    console.log('🔍 Checking against other enquiries...');
-    enquiries.forEach((otherEnquiry: any, index: number) => {
-      console.log(`🔍 Checking enquiry ${index}:`, {
-        enquiryId: otherEnquiry.id,
-        enquiryDate: otherEnquiry.eventDate,
-        enquiryTitle: otherEnquiry.title,
-        enquiryStatus: otherEnquiry.status,
-        sameAsTarget: otherEnquiry.id === enquiry.id,
-        isConfirmedStatus: ['confirmed', 'contract_sent', 'contract_received'].includes(otherEnquiry.status)
-      });
-
-      if (otherEnquiry.id !== enquiry.id && 
-          otherEnquiry.eventDate && 
-          (otherEnquiry.status === 'confirmed' || otherEnquiry.status === 'contract_sent' || otherEnquiry.status === 'contract_received')) {
-        const otherDate = new Date(otherEnquiry.eventDate);
-        console.log('🔍 Comparing dates for other enquiry:', {
-          otherEnquiryId: otherEnquiry.id,
-          enquiryDate: enquiryDate.toDateString(),
-          otherDate: otherDate.toDateString()
-        });
-
-        if (isSameDay(enquiryDate, otherDate)) {
-          console.log('🔍 ✅ FOUND CONFLICT with confirmed enquiry:', {
-            enquiryId: otherEnquiry.id,
-            enquiryTitle: otherEnquiry.title
-          });
-          conflicts.push({
-            type: 'enquiry',
-            id: otherEnquiry.id,
-            title: otherEnquiry.title || `${otherEnquiry.clientName} - ${otherEnquiry.eventType}`,
-            eventDate: otherEnquiry.eventDate,
-            venue: otherEnquiry.venue,
-            clientName: otherEnquiry.clientName,
-            eventTime: otherEnquiry.eventTime,
-            eventEndTime: otherEnquiry.eventEndTime,
-            status: otherEnquiry.status
-          });
-        }
-      }
-    });
-
-    console.log('🔍 FINAL Kanban conflict detection result:', {
-      enquiryId: enquiry.id,
-      conflictsFound: conflicts.length,
-      conflictDetails: conflicts.map(c => ({ id: c.id, title: c.title, type: c.type, clientName: c.clientName }))
-    });
-
-    return conflicts;
-  };
-
-  const getEnquiryConflict = (enquiryId: number) => {
-    return conflicts.find((conflict: any) => 
-      conflict.enquiryId === enquiryId && !conflict.resolved
-    );
-  };
-
-  const handleConflictClick = (enquiry: any) => {
-    if (!enquiry || !enquiry.id) {
-      console.error('Invalid enquiry data for conflict resolution:', enquiry);
-      return;
-    }
-
-    // Use the improved conflict detection logic
-    const conflictingItems = detectConflicts(enquiry);
-
-    console.log('🔥 KANBAN CONFLICT CLICK - Enhanced detection:', {
-      enquiryId: enquiry.id,
-      enquiryDate: enquiry.eventDate,
-      enquiryTitle: enquiry.title,
-      enquiryClient: enquiry.clientName,
-      conflictsFound: conflictingItems.length,
-      conflictDetails: conflictingItems.map(c => ({ 
-        id: c.id, 
-        title: c.title, 
-        clientName: c.clientName,
-        eventDate: c.eventDate,
-        status: c.status,
-        type: c.type
-      }))
-    });
-
+  // Handle conflict resolution dialog
+  const handleConflictClick = (enquiry: Booking) => {
     setSelectedConflictEnquiry(enquiry);
-    setSelectedConflicts(conflictingItems);
+    // Find related conflicts for this enquiry
+    const relatedConflicts = conflicts.filter(conflict => 
+      conflict.eventDate === enquiry.eventDate
+    );
+    setSelectedConflicts(relatedConflicts);
     setConflictResolutionDialogOpen(true);
   };
 
-  const formatDateBox = (dateString: string) => {
-    if (!dateString) return { dayName: "", dayNum: "", monthYear: "" };
-    const date = new Date(dateString);
-    const dayName = date.toLocaleDateString("en-GB", { weekday: "short" }).toUpperCase();
-    const dayNum = date.getDate().toString();
-    const monthYear = date.toLocaleDateString("en-GB", { month: "short", year: "2-digit" });
-    return { dayName, dayNum, monthYear };
-  };
-
-  const needsResponse = (enquiry: Enquiry) => {
-    return enquiry.status === "new" || enquiry.status === "booking_in_progress";
-  };
-
-  // Detect if an enquiry was likely created from calendar import
-  const isCalendarImport = (enquiry: Enquiry) => {
-    return !enquiry.clientEmail && 
-           !enquiry.clientPhone && 
-           !enquiry.originalEmailContent && 
-           !enquiry.applyNowLink &&
-           (!enquiry.estimatedValue || enquiry.estimatedValue === "");
-  };
-
-  const isThisWeek = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    return date >= startOfWeek && date <= endOfWeek;
-  };
-
-  // Enhanced conflict detection for each enquiry
-  const getEnquiryConflicts = (enquiry: any) => {
-    return detectConflicts(enquiry);
-  };
-
-  // Filter enquiries that need action (including those with conflicts)
-  const actionableEnquiries = enquiries.filter((enquiry: Enquiry) => {
-    const hasResponseNeeded = needsResponse(enquiry);
-    const hasConflicts = getEnquiryConflicts(enquiry).length > 0;
-    const hasStoredConflict = getEnquiryConflict(enquiry.id);
-
-    return hasResponseNeeded || hasConflicts || hasStoredConflict;
-  });
-
-  // Filter enquiries from this week, excluding calendar imports
-  const thisWeekEnquiries = enquiries.filter((enquiry: Enquiry) => 
-    enquiry.createdAt && 
-    isThisWeek(enquiry.createdAt) && 
-    !isCalendarImport(enquiry)
-  );
-
-  const renderEnquiryCard = (enquiry: Enquiry, showUrgent = false) => {
-    const dateBox = formatDateBox(enquiry.eventDate!);
-    const storedConflict = getEnquiryConflict(enquiry.id);
-    const detectedConflicts = getEnquiryConflicts(enquiry);
-
-    // Determine severity based on detected conflicts
-    let severity = { level: 'none' as const };
-    let hasConflicts = false;
-
-    if (detectedConflicts.length > 0) {
-      hasConflicts = true;
-      // Check if any conflicts are with confirmed bookings (critical)
-      const hasConfirmedConflicts = detectedConflicts.some(c => 
-        c.type === 'booking' || c.status === 'confirmed' || c.status === 'contract_sent' || c.status === 'contract_received'
-      );
-
-      severity = {
-        level: hasConfirmedConflicts ? 'critical' : 'warning'
-      };
-    }
-
-    // Get the same card styling as bookings page
-    const cardStyling = hasConflicts ? (
-      severity.level === 'critical' ? 'border-l-4 border-l-red-500 bg-red-50 shadow-md' :
-      'border-l-4 border-l-orange-500 bg-orange-50'
-    ) : 'border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900';
+  // Render enquiry card
+  const renderEnquiryCard = (enquiry: Booking, showUrgent = false) => {
+    const hasConflicts = enquiry.conflictSeverity && enquiry.conflictSeverity !== 'none';
+    const isUrgent = showUrgent && (needsResponse(enquiry) || hasConflicts);
+    
+    // Format date
+    const eventDate = new Date(enquiry.eventDate);
+    const dayName = eventDate.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayNum = eventDate.getDate().toString();
+    const monthYear = eventDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
     return (
-      <Link key={enquiry.id} href="/bookings">
-        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer ${cardStyling}`}>
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              {/* Header with price and date */}
-              <div className="flex justify-between items-start">
-                <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                  {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+      <Card 
+        key={enquiry.id}
+        className={`mb-3 transition-all duration-200 hover:shadow-md ${
+          isUrgent ? 'border-red-500 bg-red-50' : 'border-gray-200'
+        }`}
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              {/* Date box */}
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg">
+                  <div className="text-xs font-medium text-gray-600">{dayName}</div>
+                  <div className="text-sm font-bold text-gray-900">{dayNum}</div>
+                  <div className="text-xs text-gray-500">{monthYear}</div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{dateBox.dayName}</div>
-                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{dateBox.dayNum}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{dateBox.monthYear}</div>
-                </div>
-              </div>
-
-              {/* Event title */}
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{enquiry.title}</h3>
-
-              {/* Client and venue */}
-              <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center">
-                  <User className="w-4 h-4 mr-2" />
-                  <span>{enquiry.clientName}</span>
-                </div>
-                {enquiry.venue && (
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span className="truncate">{enquiry.venue}</span>
+                
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 mb-1">{enquiry.title}</h3>
+                  
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                    <User className="w-4 h-4" />
+                    <span>{enquiry.clientName || 'Unknown Client'}</span>
                   </div>
-                )}
+                  
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span>{enquiry.venue || 'Venue TBD'}</span>
+                  </div>
+                </div>
               </div>
-
-              {/* Status indicators */}
-              <div className="flex flex-wrap gap-1">
-                {/* Show conflict badge if there are conflicts */}
-                {severity.level === 'critical' && (
-                  <Badge 
-                    variant="destructive" 
-                    className="text-xs cursor-pointer hover:bg-red-600 transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleConflictClick(enquiry);
-                    }}
-                  >
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    {detectedConflicts.length} Conflict{detectedConflicts.length !== 1 ? 's' : ''} - Click to resolve
-                  </Badge>
-                )}
-                {severity.level === 'warning' && (
-                  <Badge 
-                    className="bg-orange-100 text-orange-800 text-xs cursor-pointer hover:bg-orange-200 transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleConflictClick(enquiry);
-                    }}
-                  >
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    {detectedConflicts.length} Same day - Click to resolve
-                  </Badge>
-                )}
-                {/* Show response needed badge only for non-conflict enquiries */}
-                {needsResponse(enquiry) && !hasConflicts && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    Response needed
-                  </Badge>
-                )}
-                {enquiry.applyNowLink && (
-                  <Badge className="bg-green-100 text-green-800 text-xs">
-                    🎯 ENCORE
-                  </Badge>
-                )}
-                <Badge variant="outline" className="text-xs">
-                  {enquiry.status.replace('_', ' ').toUpperCase()}
+              
+              {/* Conflict indicators */}
+              {hasConflicts && (
+                <div className="mt-2">
+                  {enquiry.conflictSeverity === 'critical' && (
+                    <Badge 
+                      variant="destructive" 
+                      className="cursor-pointer hover:bg-red-600"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleConflictClick(enquiry);
+                      }}
+                    >
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      {conflicts.length} Conflict{conflicts.length > 1 ? 's' : ''} - Click to resolve
+                    </Badge>
+                  )}
+                  
+                  {enquiry.conflictSeverity === 'warning' && (
+                    <Badge 
+                      variant="outline" 
+                      className="cursor-pointer hover:bg-yellow-50"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleConflictClick(enquiry);
+                      }}
+                    >
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {conflicts.length} Same day - Click to resolve
+                    </Badge>
+                  )}
+                </div>
+              )}
+              
+              {/* Response needed indicator */}
+              {needsResponse(enquiry) && !hasConflicts && (
+                <Badge variant="outline" className="mt-2">
+                  <AlertCircle className="w-3 h-3 mr-1" />
+                  Response needed
                 </Badge>
-              </div>
+              )}
+              
+              {/* Encore indicator */}
+              {enquiry.sourceType === 'ENCORE' && (
+                <Badge variant="secondary" className="mt-2">
+                  ENCORE
+                </Badge>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      </Link>
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
   if (isLoading) {
     return (
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Action Required</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading enquiries...</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      <Card className="shadow-sm">
-        <CardHeader className="pb-6">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold">Action Required</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Link href="/bookings">
-                <Button variant="outline" size="sm" className="h-9">
-                  <Eye className="w-4 h-4 mr-2" />
-                  View All
-                </Button>
-              </Link>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Action Required Column */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-gray-900">
+              <AlertCircle className="w-5 h-5 inline mr-2" />
+              Action Required
+            </h4>
+            <Badge variant="secondary" className="bg-red-100 text-red-700">
+              {actionableEnquiries.length} enquir{actionableEnquiries.length === 1 ? 'y' : 'ies'}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link to="/bookings">
+              <Button variant="outline" size="sm" className="text-sm">
+                <Eye className="w-4 h-4 mr-1" />
+                View All
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {actionableEnquiries.length > 0 ? (
+            actionableEnquiries.map((enquiry: Booking) => 
+              renderEnquiryCard(enquiry, true)
+            )
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-sm font-medium">No enquiries need action</p>
+              <p className="text-xs text-gray-400">You're all caught up!</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* This Week's Activity Column */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-gray-900">
+              <Clock className="w-5 h-5 inline mr-2" />
+              This Week's Activity
+            </h4>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+              {thisWeekEnquiries.length} enquir{thisWeekEnquiries.length === 1 ? 'y' : 'ies'}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {thisWeekEnquiries.length > 0 ? (
+            thisWeekEnquiries.map((enquiry: Booking) => 
+              renderEnquiryCard(enquiry, false)
+            )
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-sm font-medium">No enquiries this week</p>
+              <p className="text-xs text-gray-400">Check back later for activity</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Conflict Resolution Dialog Placeholder */}
+      {conflictResolutionDialogOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <h2 className="text-lg font-semibold mb-4">Conflict Resolution</h2>
+            <p className="text-gray-600 mb-4">
+              ConflictResolutionDialog component will be implemented here.
+            </p>
+            <div className="flex justify-end">
+              <Button 
+                onClick={() => setConflictResolutionDialogOpen(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
             </div>
           </div>
-        </CardHeader>
-
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Action Required Column */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                  <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
-                  Needs Action
-                </h4>
-                <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                  {actionableEnquiries.length}
-                </Badge>
-              </div>
-              <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
-                {actionableEnquiries.map((enquiry: Enquiry) => 
-                  renderEnquiryCard(enquiry, true)
-                )}
-                {actionableEnquiries.length === 0 && (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-sm">No enquiries need action</p>
-                    <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* This Week Column */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                  <Clock className="w-5 h-5 mr-2 text-blue-500" />
-                  This Week's Activity
-                </h4>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  {thisWeekEnquiries.length}
-                </Badge>
-              </div>
-              <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
-                {thisWeekEnquiries.map((enquiry: Enquiry) => 
-                  renderEnquiryCard(enquiry, false)
-                )}
-                {thisWeekEnquiries.length === 0 && (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-sm">No enquiries this week</p>
-                    <p className="text-xs text-gray-400 mt-1">Check back for new activity</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Conflict Resolution Dialog */}
-      {conflictResolutionDialogOpen && selectedConflictEnquiry && (
-        <ConflictResolutionDialog
-          isOpen={conflictResolutionDialogOpen}
-          onClose={() => {
-            setConflictResolutionDialogOpen(false);
-            setSelectedConflictEnquiry(null);
-            setSelectedConflicts([]);
-          }}
-          enquiry={selectedConflictEnquiry}
-          conflicts={selectedConflicts}
-        />
+        </div>
       )}
-    </>
+    </div>
   );
 }
