@@ -1,0 +1,45 @@
+Looking at these two files, I can identify the issue. The problem appears to be with how TypeScript is resolving the export/import of the `ConflictResolutionDialogProps` interface.
+
+Here are the specific issues and solutions:
+
+## Issue Analysis
+
+1. **Interface Export**: The interface `ConflictResolutionDialogProps` is properly exported in `ConflictResolutionDialog.tsx`
+2. **Import Syntax**: The import in `kanban-board.tsx` looks correct
+3. **Type Conflicts**: Both files define their own `Booking` interfaces, which could cause confusion
+
+## Solutions
+
+### Option 1: Move Shared Types to a Separate File
+
+Create a shared types file to avoid duplication and ensure consistency:### Option 2: Fix the Current Structure
+
+If you prefer to keep the current structure, here's the corrected `ConflictResolutionDialog.tsx`:And here's the updated `kanban-board.tsx`:## Key Changes Made
+
+### In `ConflictResolutionDialog.tsx`:
+1. **Moved the `Booking` interface to the top** and added `export` keyword
+2. **Ensured proper export of `ConflictResolutionDialogProps`** interface
+3. **Made both interfaces available for import** from the same module
+
+### In `kanban-board.tsx`:
+1. **Updated the import statement** to include both `ConflictResolutionDialogProps` and `Booking` from the ConflictResolutionDialog component
+2. **Removed duplicate interface definitions** to avoid conflicts
+3. **Used `interface Enquiry extends Booking`** to maintain the relationship between the types
+
+## Why This Fixes the Errors
+
+1. **Module Resolution**: By exporting the `Booking` interface alongside `ConflictResolutionDialogProps`, TypeScript can properly resolve all the type dependencies.
+
+2. **Type Consistency**: Using the same `Booking` interface in both files eliminates type mismatches.
+
+3. **Proper Export/Import Pattern**: The corrected export/import pattern follows TypeScript best practices for sharing interfaces between modules.
+
+## Alternative Approach (Recommended)
+
+For better maintainability, consider creating the shared types file I showed in the first artifact. This approach:
+- Centralizes type definitions
+- Prevents circular dependencies
+- Makes it easier to maintain consistency across the application
+- Follows the DRY (Don't Repeat Yourself) principle
+
+The immediate fix above should resolve your TypeScript compilation errors right away!

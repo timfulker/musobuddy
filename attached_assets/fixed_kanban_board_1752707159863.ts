@@ -6,33 +6,13 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, AlertCircle, User, Calendar, Clock, Eye } from 'lucide-react';
 import { Link } from 'wouter';
 import { getDateBox, analyzeConflictSeverity, formatConflictMessage } from '@/utils/conflict-ui';
-import ConflictResolutionDialog from '@/components/ConflictResolutionDialog';
+import ConflictResolutionDialog, { 
+  ConflictResolutionDialogProps, 
+  Booking 
+} from '@/components/ConflictResolutionDialog';
 
-interface Enquiry {
-  id: number;
-  title: string;
-  clientName: string;
-  eventDate: Date | null;
-  eventTime: string | null;
-  eventEndTime: string | null;
-  venue: string | null;
-  status: string;
-  conflictDetected: boolean;
-  detectedConflicts: any[];
-}
-
-interface Booking {
-  id: number;
-  title: string;
-  clientName: string;
-  eventDate: Date | null;
-  eventTime: string | null;
-  eventEndTime: string | null;
-  venue: string | null;
-  status: string;
-  conflictDetected: boolean;
-  detectedConflicts: any[];
-}
+// Use the exported Booking interface and create an Enquiry interface that extends it
+interface Enquiry extends Booking {}
 
 export default function ActionableEnquiries() {
   const [isConflictDialogOpen, setIsConflictDialogOpen] = useState(false);
