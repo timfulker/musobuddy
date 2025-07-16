@@ -45,7 +45,7 @@ export default function DashboardHeader() {
           <Link href="/bookings?action=new">
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">New Booking</span>
+              <span className="hidden sm:inline">New Enquiry</span>
               <span className="sm:hidden">New</span>
             </Button>
           </Link>
