@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Menu } from "lucide-react";
+import { ChevronLeft, ChevronRight, Menu, Upload, Download } from "lucide-react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
+import CalendarImport from "@/components/calendar-import";
 
 interface CalendarEvent {
   id: number;
@@ -44,6 +45,68 @@ export default function Calendar() {
 
   const goToToday = () => {
     setCurrentDate(new Date());
+  };
+
+  // Export calendar to .ics file
+  const exportCalendar = () => {
+    const calendarData = createICSFromBookings(bookings);
+    const blob = new Blob([calendarData], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'musobuddy-calendar.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Create ICS format from bookings
+  const createICSFromBookings = (bookings: any[]) => {
+    const header = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//MusoBuddy//Calendar Export//EN',
+      'CALSCALE:GREGORIAN'
+    ].join('\r\n');
+
+    const events = bookings.map(booking => {
+      const startDate = new Date(booking.eventDate);
+      const endDate = new Date(booking.eventDate);
+      
+      // Add time if available
+      if (booking.startTime) {
+        const [hours, minutes] = booking.startTime.split(':');
+        startDate.setHours(parseInt(hours), parseInt(minutes));
+      }
+      if (booking.endTime) {
+        const [hours, minutes] = booking.endTime.split(':');
+        endDate.setHours(parseInt(hours), parseInt(minutes));
+      } else {
+        // Default to 2 hours if no end time
+        endDate.setTime(startDate.getTime() + (2 * 60 * 60 * 1000));
+      }
+
+      const formatDate = (date: Date) => {
+        return date.toISOString().replace(/[:-]/g, '').replace(/\.\d{3}/, '');
+      };
+
+      return [
+        'BEGIN:VEVENT',
+        `UID:${booking.id}@musobuddy.com`,
+        `DTSTART:${formatDate(startDate)}`,
+        `DTEND:${formatDate(endDate)}`,
+        `SUMMARY:${booking.title || 'Music Booking'}`,
+        `DESCRIPTION:${booking.notes || ''}`,
+        `LOCATION:${booking.venue || ''}`,
+        `STATUS:${booking.status?.toUpperCase() || 'CONFIRMED'}`,
+        'END:VEVENT'
+      ].join('\r\n');
+    }).join('\r\n');
+
+    const footer = 'END:VCALENDAR';
+
+    return [header, events, footer].join('\r\n');
   };
 
   // Get calendar events for a specific date
@@ -177,30 +240,50 @@ export default function Calendar() {
               </h1>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Calendar Import */}
+              <CalendarImport onImportComplete={() => {
+                // Refresh calendar data after import
+                window.location.reload();
+              }} />
+              
+              {/* Calendar Export */}
               <Button
                 variant="outline"
-                onClick={goToPreviousMonth}
+                onClick={exportCalendar}
                 size="sm"
                 className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <Download className="w-4 h-4 mr-2" />
+                Export Calendar
               </Button>
-              <Button
-                variant="outline"
-                onClick={goToToday}
-                size="sm"
-                className="px-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:shadow-lg transition-all"
-              >
-                Today
-              </Button>
-              <Button
-                variant="outline"
-                onClick={goToNextMonth}
-                size="sm"
-                className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
+              
+              {/* Month Navigation */}
+              <div className="flex items-center space-x-2 ml-4">
+                <Button
+                  variant="outline"
+                  onClick={goToPreviousMonth}
+                  size="sm"
+                  className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={goToToday}
+                  size="sm"
+                  className="px-4 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:shadow-lg transition-all"
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={goToNextMonth}
+                  size="sm"
+                  className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </header>

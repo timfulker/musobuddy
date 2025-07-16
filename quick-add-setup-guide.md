@@ -1,75 +1,54 @@
-# Quick Add Home Screen Setup Guide
+# Google Calendar Export Guide for MusoBuddy
 
-## What is Quick Add?
-The Quick Add feature at `/quick-add` is designed for capturing enquiries on the go - perfect for when clients call you, text you, or approach you in person.
+## How to Export Your Google Calendar
 
-## Adding to iPhone Home Screen
+### Step 1: Access Google Calendar
+1. Go to [calendar.google.com](https://calendar.google.com)
+2. Sign in to your Google account
 
-1. **Open Safari** and go to: `https://musobuddy.replit.app/quick-add`
-2. **Tap the Share button** (square with arrow pointing up)
-3. **Scroll down** and tap "Add to Home Screen"
-4. **Rename** to something like "MusoBuddy Quick Add" or "New Enquiry"
-5. **Tap "Add"** - now you have instant access from your home screen!
+### Step 2: Access Calendar Settings
+1. Click the gear icon (⚙️) in the top right
+2. Select "Settings" from the dropdown menu
 
-## Adding to Android Home Screen
+### Step 3: Navigate to Import & Export
+1. In the left sidebar, click on "Import & export"
+2. You'll see the "Export" section
 
-1. **Open Chrome** and go to: `https://musobuddy.replit.app/quick-add`
-2. **Tap the three dots menu** (⋮) in the top right
-3. **Select "Add to Home screen"**
-4. **Rename** to "MusoBuddy Quick Add" or "New Enquiry"
-5. **Tap "Add"** - icon appears on your home screen!
+### Step 4: Export Your Calendar
+1. Click "Export" button
+2. Google will download a ZIP file containing all your calendars
+3. Extract the ZIP file to find individual .ics files for each calendar
 
-## How to Use Quick Add
+### Step 5: Select the Right .ics File
+1. Look for the .ics file that contains your music bookings
+2. It's usually named after your main calendar (e.g., "youremail@gmail.com.ics")
 
-### Perfect for These Scenarios:
-- **Phone calls**: Client calls about a wedding, capture details instantly
-- **Text messages**: Someone texts about a gig, add it immediately
-- **In-person meetings**: At a wedding, someone asks about availability
-- **WhatsApp enquiries**: Forward message details to your system
-- **Voice notes**: Listen and type key details
+### Step 6: Import to MusoBuddy
+1. Go to your MusoBuddy Calendar page
+2. Click the "Import Calendar" button in the top right
+3. Select your .ics file
+4. Click "Import Calendar File"
+5. Your bookings will be imported and displayed on the calendar
 
-### Key Features:
-- **No login required** - opens instantly
-- **Source tracking** - remember where the lead came from
-- **Contact method** - how they reached you
-- **Event details** - date, venue, estimated value
-- **Notes section** - capture their exact requirements
+## Tips for Best Results
 
-### Form Fields:
-- Client Name (required)
-- Client Email
-- Client Phone
-- Event Date (required)
-- Venue
-- Estimated Value
-- Notes
-- Source (WhatsApp, SMS, Phone, Email, etc.)
-- Contact Method (required)
+- **Clean Export**: Only export the calendar that contains your music bookings
+- **Date Range**: Google exports all events, so you'll get historical and future bookings
+- **Duplicate Prevention**: MusoBuddy automatically skips duplicate events
+- **Event Processing**: The system converts calendar events to MusoBuddy bookings automatically
 
-## Mobile Workflow Example
+## What Gets Imported
 
-**Scenario**: Client calls about a wedding
-1. **Tap Quick Add icon** on home screen
-2. **Fill in basics**: Name, phone, wedding date
-3. **Add venue** if they mentioned it
-4. **Select source**: "Phone Call"
-5. **Add notes**: "Outdoor ceremony, 150 guests, jazz trio"
-6. **Submit** - enquiry appears in your dashboard instantly!
+- **Event Title**: Becomes the booking title
+- **Date & Time**: Preserved exactly as in Google Calendar
+- **Location**: Imported as venue information
+- **Description**: Added as booking notes
+- **All-day Events**: Handled correctly
 
-## Benefits
+## Troubleshooting
 
-- **Never lose leads** - capture everything immediately
-- **Track lead sources** - see what marketing works
-- **Work anywhere** - no need to be at your computer
-- **Professional** - shows you're organized and responsive
-- **Time-saving** - enquiries go straight to your system
+- **File Not Accepting**: Make sure the file has .ics extension
+- **Empty Results**: Check if you selected the right calendar file
+- **Partial Import**: Some events might be skipped if they lack essential information
 
-## Tips for Success
-
-1. **Keep it bookmarked** - make it easily accessible
-2. **Use voice-to-text** - speak notes instead of typing
-3. **Capture quickly** - don't overthink, just get the basics
-4. **Follow up fast** - use the dashboard to send contracts
-5. **Train yourself** - make it a habit after every enquiry
-
-The Quick Add form is your secret weapon for never missing a potential booking!
+Your calendar will be fully restored with all your music bookings!
