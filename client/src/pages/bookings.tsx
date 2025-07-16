@@ -1040,8 +1040,8 @@ export default function Enquiries() {
                     size="sm"
                     className={`${
                       activeStatusFilters.includes('new') 
-                        ? 'bg-[#7F8C8D] text-white border-[#7F8C8D] hover:bg-[#6C7B7D]' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#7F8C8D] hover:text-white'
+                        ? 'bg-[#5DADE2] text-white border-[#5DADE2] hover:bg-[#3498DB]' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#5DADE2] hover:text-white'
                     }`}
                   >
                     Enquiry
@@ -1436,7 +1436,7 @@ export default function Enquiries() {
               // Status-based styling with new color scheme
               const getStatusOverlay = (status: string) => {
                 switch (status) {
-                  case "new": return "bg-gradient-to-br from-[#7F8C8D]/10 to-[#7F8C8D]/20 border-[#7F8C8D]/30"; // Soft Grey Blue
+                  case "new": return "bg-gradient-to-br from-[#5DADE2]/10 to-[#5DADE2]/20 border-[#5DADE2]/30"; // More Blue, Less Grey
                   case "booking_in_progress": return "bg-gradient-to-br from-[#F39C12]/10 to-[#F39C12]/20 border-[#F39C12]/30"; // Amber
                   case "confirmed": return "bg-gradient-to-br from-[#2980B9]/10 to-[#2980B9]/20 border-[#2980B9]/30"; // Royal Blue
                   case "contract_sent": return "bg-gradient-to-br from-[#9B59B6]/10 to-[#9B59B6]/20 border-[#9B59B6]/30"; // Violet
@@ -1449,7 +1449,7 @@ export default function Enquiries() {
               
               const getStatusColor = (status: string) => {
                 switch (status) {
-                  case "new": return "text-white bg-[#7F8C8D]"; // Soft Grey Blue
+                  case "new": return "text-white bg-[#5DADE2]"; // More Blue, Less Grey
                   case "booking_in_progress": return "text-white bg-[#F39C12]"; // Amber
                   case "confirmed": return "text-white bg-[#2980B9]"; // Royal Blue
                   case "contract_sent": return "text-white bg-[#9B59B6]"; // Violet
