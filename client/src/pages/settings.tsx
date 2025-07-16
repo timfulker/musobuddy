@@ -131,6 +131,7 @@ export default function Settings() {
   
   // Track if form has been modified
   const [hasChanges, setHasChanges] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsFormSchema),
@@ -185,6 +186,13 @@ export default function Settings() {
       const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (settings.gigTypes || []);
       setGigTypes(gigTypesToUse);
       
+      // Store initial data for comparison
+      setInitialData({
+        ...settings,
+        selectedInstruments: settings.selectedInstruments || [],
+        gigTypes: gigTypesToUse
+      });
+      
       // Reset hasChanges flag since we're loading fresh data
       console.log('🔄 Resetting hasChanges to false');
       setHasChanges(false);
@@ -194,18 +202,26 @@ export default function Settings() {
   // Watch for form changes
   useEffect(() => {
     const subscription = form.watch(() => {
-      setHasChanges(true);
+      if (initialData) {
+        setHasChanges(true);
+      }
     });
     return () => subscription.unsubscribe();
-  }, [form]);
+  }, [form, initialData]);
 
-  // Watch for instrument/gig type changes (but not on initial load)
+  // Watch for instrument/gig type changes
   useEffect(() => {
-    // Only set hasChanges to true if settings have been loaded (not on initial load)
-    if (settings) {
-      setHasChanges(true);
+    if (initialData) {
+      // Compare current state with initial data
+      const instrumentsChanged = JSON.stringify(selectedInstruments.sort()) !== JSON.stringify((initialData.selectedInstruments || []).sort());
+      const gigTypesChanged = JSON.stringify(gigTypes.sort()) !== JSON.stringify((initialData.gigTypes || []).sort());
+      
+      if (instrumentsChanged || gigTypesChanged) {
+        console.log('🔄 Detected changes - instruments:', instrumentsChanged, 'gigTypes:', gigTypesChanged);
+        setHasChanges(true);
+      }
     }
-  }, [selectedInstruments, gigTypes, settings]);
+  }, [selectedInstruments, gigTypes, initialData]);
 
   // Function to generate AI-powered gig types
   const generateGigTypes = async (instruments: string[]) => {
