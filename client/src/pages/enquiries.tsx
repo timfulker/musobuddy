@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEnquirySchema, type Enquiry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature, Info, FileText } from "lucide-react";
+import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature, Info, FileText, RefreshCw, CheckSquare, Square } from "lucide-react";
 import { z } from "zod";
 import { insertClientSchema, type InsertClient } from "@shared/schema";
 import { Link } from "wouter";
@@ -53,6 +55,8 @@ export default function Enquiries() {
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
   const [complianceDialogOpen, setComplianceDialogOpen] = useState(false);
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
+  const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
+  const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -65,6 +69,89 @@ export default function Enquiries() {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
+
+  // Bulk operations functions
+  const handleBookingSelect = (bookingId: number) => {
+    setSelectedBookings(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(bookingId)) {
+        newSet.delete(bookingId);
+      } else {
+        newSet.add(bookingId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedBookings(new Set(sortedEnquiries.map(enquiry => enquiry.id)));
+    } else {
+      setSelectedBookings(new Set());
+    }
+  };
+
+  const bulkUpdateMutation = useMutation({
+    mutationFn: async ({ bookingIds, status }: { bookingIds: number[], status: string }) => {
+      const responses = await Promise.all(
+        bookingIds.map(id => 
+          apiRequest(`/api/bookings/${id}`, {
+            method: 'PATCH',
+            body: { status }
+          })
+        )
+      );
+      return responses;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      toast({
+        title: "Success",
+        description: `${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'} updated successfully.`
+      });
+      setSelectedBookings(new Set());
+      setBulkUpdateStatus("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update bookings. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleBulkStatusUpdate = () => {
+    if (selectedBookings.size === 0 || !bulkUpdateStatus) return;
+    
+    bulkUpdateMutation.mutate({
+      bookingIds: Array.from(selectedBookings),
+      status: bulkUpdateStatus
+    });
+  };
+
+  // Quick status update for individual bookings
+  const handleQuickStatusUpdate = (bookingId: number, status: string) => {
+    updateEnquiryStatusMutation.mutate({ id: bookingId, status });
+  };
+
+  // Auto-completion for past date bookings
+  React.useEffect(() => {
+    if (enquiries.length > 0) {
+      const now = new Date();
+      const bookingsToComplete = enquiries.filter(enquiry => {
+        const eventDate = new Date(enquiry.eventDate);
+        return eventDate < now && enquiry.status !== 'completed' && enquiry.status !== 'rejected';
+      });
+
+      if (bookingsToComplete.length > 0) {
+        // Auto-complete past bookings
+        bookingsToComplete.forEach(booking => {
+          updateEnquiryStatusMutation.mutate({ id: booking.id, status: 'completed' });
+        });
+      }
+    }
+  }, [enquiries]);
 
   // Phase 3: Read from main bookings table (renamed from bookings_new)
   const { data: enquiries = [], isLoading, error } = useQuery<Enquiry[]>({
@@ -223,6 +310,8 @@ export default function Enquiries() {
     },
   });
 
+
+
   const onSubmit = (data: z.infer<typeof enquiryFormSchema>) => {
     // Auto-generate title from Event Type and Client Name
     const eventTypeDisplay = eventTypes.find(type => 
@@ -236,6 +325,8 @@ export default function Enquiries() {
       title: autoGeneratedTitle
     });
   };
+
+
 
   // Client-side conflict detection using already loaded data
   const detectConflicts = (enquiry: Enquiry) => {
@@ -392,9 +483,17 @@ export default function Enquiries() {
       enquiry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       enquiry.clientName.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = statusFilter === "all" || enquiry.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+    // Handle status filtering with completed bookings hidden by default
+    if (statusFilter === "completed") {
+      return matchesSearch && enquiry.status === "completed";
+    } else if (statusFilter === "all") {
+      // "All" shows all non-completed bookings by default
+      return matchesSearch && enquiry.status !== "completed";
+    } else {
+      // For specific statuses, show only that status
+      const matchesStatus = enquiry.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    }
   });
 
   // Sort the filtered enquiries
@@ -855,6 +954,77 @@ export default function Enquiries() {
           </CardContent>
         </Card>
 
+        {/* Bulk Operations Bar */}
+        {selectedBookings.size > 0 && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm font-medium text-blue-900">
+                    {selectedBookings.size} booking{selectedBookings.size === 1 ? '' : 's'} selected
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedBookings(new Set())}
+                    className="text-blue-700 border-blue-300"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Select value={bulkUpdateStatus} onValueChange={setBulkUpdateStatus}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Update status to..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">Enquiry</SelectItem>
+                      <SelectItem value="booking_in_progress">In Progress</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="contract_sent">Contract Received</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleBulkStatusUpdate}
+                    disabled={!bulkUpdateStatus || bulkUpdateMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {bulkUpdateMutation.isPending ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Update Status
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Select All Option */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="select-all"
+                checked={selectedBookings.size === sortedEnquiries.length && sortedEnquiries.length > 0}
+                onCheckedChange={handleSelectAll}
+              />
+              <label htmlFor="select-all" className="text-sm text-gray-700 cursor-pointer">
+                Select all {sortedEnquiries.length} bookings
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Conflict Indicators Visual Key */}
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="p-4">
@@ -946,36 +1116,52 @@ export default function Enquiries() {
               };
               
               return (
-                <Card key={enquiry.id} className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${hasConflicts ? 'ring-2 ring-red-200' : ''}`}>
-                  <CardContent className="p-4">
-                    <div className="relative">
-                      <div className="absolute top-0 right-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteEnquiry(enquiry)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      
-                      <div className="pr-8">
-                        {/* Header with Price and Status */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="text-lg font-bold text-green-600">
-                            {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
-                          </div>
-                          <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium`}>
-                            {enquiry.status === 'new' ? 'ENQUIRY' : 
-                             enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
-                             enquiry.status === 'confirmed' ? 'CONFIRMED' :
-                             enquiry.status === 'contract_sent' ? 'CONTRACT RECEIVED' :
-                             enquiry.status === 'completed' ? 'COMPLETED' :
-                             enquiry.status === 'rejected' ? 'REJECTED' :
-                             enquiry.status.replace('_', ' ').toUpperCase()}
-                          </Badge>
+                <TooltipProvider key={enquiry.id}>
+                  <Card className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${hasConflicts ? 'ring-2 ring-red-200' : ''} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
+                    <CardContent className="p-4">
+                      <div className="relative">
+                        {/* Selection Checkbox */}
+                        <div className="absolute top-0 left-0">
+                          <Checkbox
+                            checked={selectedBookings.has(enquiry.id)}
+                            onCheckedChange={() => handleBookingSelect(enquiry.id)}
+                            className="mt-1"
+                          />
                         </div>
+                        
+                        {/* Delete Button */}
+                        <div className="absolute top-0 right-0">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteEnquiry(enquiry)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete booking</TooltipContent>
+                          </Tooltip>
+                        </div>
+                        
+                        <div className="pl-8 pr-8">
+                          {/* Header with Price and Status */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="text-lg font-bold text-green-600">
+                              {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                            </div>
+                            <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium`}>
+                              {enquiry.status === 'new' ? 'ENQUIRY' : 
+                               enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
+                               enquiry.status === 'confirmed' ? 'CONFIRMED' :
+                               enquiry.status === 'contract_sent' ? 'CONTRACT RECEIVED' :
+                               enquiry.status === 'completed' ? 'COMPLETED' :
+                               enquiry.status === 'rejected' ? 'REJECTED' :
+                               enquiry.status.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                          </div>
                         
                         {/* Date and Event Info */}
                         <div className="flex items-center gap-3 mb-3">
@@ -1035,47 +1221,176 @@ export default function Enquiries() {
                         
                         {/* Action Buttons */}
                         <div className="flex justify-between items-center">
-                          <Button
-                            onClick={() => {
-                              setSelectedEnquiry(enquiry);
-                              setRespondDialogOpen(true);
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            <Reply className="w-3 h-3 mr-1" />
-                            Respond
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={() => {
+                                  setSelectedEnquiry(enquiry);
+                                  setRespondDialogOpen(true);
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs"
+                              >
+                                <Reply className="w-3 h-3 mr-1" />
+                                Respond
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Send email response to client</TooltipContent>
+                          </Tooltip>
+                          
                           <div className="flex gap-1">
-                            <Button
-                              onClick={() => {
-                                setSelectedBookingForDetails(enquiry);
-                                setBookingDetailsDialogOpen(true);
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="text-xs"
-                            >
-                              <Info className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setSelectedBookingForUpdate(enquiry);
-                                setBookingStatusDialogOpen(true);
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="text-xs"
-                            >
-                              <Edit className="w-3 h-3" />
-                            </Button>
+                            {/* Quick Status Update Buttons */}
+                            <div className="flex gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'new')}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`w-8 h-8 p-0 text-xs ${
+                                      enquiry.status === 'new' 
+                                        ? 'bg-blue-500 text-white border-blue-500' 
+                                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                                    }`}
+                                  >
+                                    E
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Set as Enquiry</TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'booking_in_progress')}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`w-8 h-8 p-0 text-xs ${
+                                      enquiry.status === 'booking_in_progress' 
+                                        ? 'bg-amber-500 text-white border-amber-500' 
+                                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                                    }`}
+                                  >
+                                    P
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Set as In Progress</TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'confirmed')}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`w-8 h-8 p-0 text-xs ${
+                                      enquiry.status === 'confirmed' 
+                                        ? 'bg-green-500 text-white border-green-500' 
+                                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                                    }`}
+                                  >
+                                    C
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Set as Confirmed</TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'contract_sent')}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`w-8 h-8 p-0 text-xs ${
+                                      enquiry.status === 'contract_sent' 
+                                        ? 'bg-purple-500 text-white border-purple-500' 
+                                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                                    }`}
+                                  >
+                                    R
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Set as Contract Received</TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'completed')}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`w-8 h-8 p-0 text-xs ${
+                                      enquiry.status === 'completed' 
+                                        ? 'bg-gray-700 text-white border-gray-700' 
+                                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                                    }`}
+                                  >
+                                    ✓
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Set as Completed</TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handleQuickStatusUpdate(enquiry.id, 'rejected')}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`w-8 h-8 p-0 text-xs ${
+                                      enquiry.status === 'rejected' 
+                                        ? 'bg-red-500 text-white border-red-500' 
+                                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                                    }`}
+                                  >
+                                    ✗
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Set as Rejected</TooltipContent>
+                              </Tooltip>
+                            </div>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => {
+                                    setSelectedBookingForDetails(enquiry);
+                                    setBookingDetailsDialogOpen(true);
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs w-8 h-8 p-0"
+                                >
+                                  <Info className="w-3 h-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>View booking details</TooltipContent>
+                            </Tooltip>
+                            
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  onClick={() => {
+                                    setSelectedBookingForUpdate(enquiry);
+                                    setBookingStatusDialogOpen(true);
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs w-8 h-8 p-0"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit booking details</TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
+                        </div>
                       </div>
-                    </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                </TooltipProvider>
               );
             })
           )}
