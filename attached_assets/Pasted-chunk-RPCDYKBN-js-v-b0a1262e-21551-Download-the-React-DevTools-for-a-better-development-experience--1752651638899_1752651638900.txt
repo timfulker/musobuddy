@@ -1,0 +1,47 @@
+chunk-RPCDYKBN.js?v=b0a1262e:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:179 🔄 Updating form with settings: Object
+settings.tsx:180 🔄 selectedInstruments from settings: Array(0)
+settings.tsx:181 🔄 gigTypes from settings: ["[\"Wedding DJ\",\"Corporate Event DJ\",\"Party DJ\",\"Club DJ\",\"Mobile DJ\",\"Sax + DJ\",\"Event DJ\",\"Wedding Ceremony Music\",\"Jazz Club Performance\",\"Corporate Event Entertainment\",\"Function Band\",\"Wedding Reception\",\"Private Party\"]"]
+settings.tsx:197 🔄 Resetting hasChanges to false
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:158 Settings data loaded: Object
+settings.tsx:179 🔄 Updating form with settings: Object
+settings.tsx:180 🔄 selectedInstruments from settings: Array(0)
+settings.tsx:181 🔄 gigTypes from settings: ["[\"Wedding DJ\",\"Corporate Event DJ\",\"Party DJ\",\"Club DJ\",\"Mobile DJ\",\"Sax + DJ\",\"Event DJ\",\"Wedding Ceremony Music\",\"Jazz Club Performance\",\"Corporate Event Entertainment\",\"Function Band\",\"Wedding Reception\",\"Private Party\"]"]
+settings.tsx:197 🔄 Resetting hasChanges to false
+settings.tsx:158 Settings data loaded: Object
+client:536 WebSocket connection to 'wss://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/?token=fLm-XSApfZts' failed: 
+setupWebSocket @ client:536
+client:560 [vite] server connection lost. Polling for restart...
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+settings.tsx:225 🔄 Detected changes - instruments: true gigTypes: false
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+settings.tsx:225 🔄 Detected changes - instruments: true gigTypes: true
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}bankDetails: "Bank Name: Nat West\nAccount Name: Mr T Fulker\nSort Code: 54-21-30\nAccount Number: 09851259"businessAddress: "59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA"businessName: "Tim Fulker"defaultTerms: "Invoice to be paid within 7 days\nPayment can be made in Cash, or by Bank Transfer"emailFromName: "Tim Fulker"gigTypes: "[\"[\\\"Wedding DJ\\\",\\\"Corporate Event DJ\\\",\\\"Party DJ\\\",\\\"Club DJ\\\",\\\"Mobile DJ\\\",\\\"Sax + DJ\\\",\\\"Event DJ\\\",\\\"Wedding Ceremony Music\\\",\\\"Jazz Club Performance\\\",\\\"Corporate Event Entertainment\\\",\\\"Function Band\\\",\\\"Wedding Reception\\\",\\\"Private Party\\\"]\"]"nextInvoiceNumber: 278phone: "07765190034"selectedInstruments: []taxNumber: "None"website: "www.saxdj.co.uk"[[Prototype]]: Object
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+settings.tsx:225 🔄 Detected changes - instruments: true gigTypes: true
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+settings.tsx:225 🔄 Detected changes - instruments: true gigTypes: true
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+t.js:1  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755
+settings.tsx:771 🚀 BUTTON CLICKED!
+settings.tsx:772 🚀 hasChanges: true
+settings.tsx:773 🚀 disabled: false
+settings.tsx:774 🚀 form.formState.errors: {}
+settings.tsx:158 Settings data loaded: {businessName: 'Tim Fulker', businessAddress: '59, Gloucester Rd\nBournemouth\nDorset\nBH7 6JA', phone: '07765190034', website: 'www.saxdj.co.uk', taxNumber: 'None', …}
+t.js:1  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755
+  GET https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/ net::ERR_CONNECTION_TIMED_OUT
+apply @ t.js:1
+ping @ client:736
+waitForSuccessfulPing @ client:755

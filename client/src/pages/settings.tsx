@@ -772,11 +772,7 @@ export default function Settings() {
                     console.log('🚀 hasChanges:', hasChanges);
                     console.log('🚀 disabled:', saveSettings.isPending || !hasChanges);
                     console.log('🚀 form.formState.errors:', form.formState.errors);
-                    if (!hasChanges) {
-                      console.log('🚀 Button disabled due to no changes');
-                      e.preventDefault();
-                      return;
-                    }
+                    // Don't prevent default - let the form submit naturally
                   }}
                   className={`px-8 py-2 border-0 transition-all duration-300 ${
                     hasChanges && !saveSettings.isPending
