@@ -24,6 +24,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // Clear cached instrument mapping (for testing/debugging) - placed early to avoid Vite conflicts
+  app.post('/api/clear-instrument-cache', async (req, res) => {
+    try {
+      const { instrument } = req.body;
+      const cleared = await storage.clearInstrumentMapping(instrument);
+      res.json({ 
+        success: true, 
+        cleared,
+        message: `Cleared cached mapping for ${instrument}` 
+      });
+    } catch (error) {
+      console.error('Error clearing instrument mapping:', error);
+      res.status(500).json({ error: 'Failed to clear mapping' });
+    }
+  });
+
   // Test endpoint for Mailgun email sending (no auth for testing)
   app.post('/api/test-email', async (req: any, res) => {
     try {
@@ -158,10 +174,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const instrument of instruments) {
         const normalizedInstrument = instrument.toLowerCase();
         
-        // First check if we have cached AI mappings in the database
+        // Always prioritize expanded default mappings for known instruments
+        const gigTypes = defaultGigMappings[normalizedInstrument];
+        if (gigTypes) {
+          console.log('🎵 Using expanded default mapping for', normalizedInstrument);
+          allSuggestions.push(...gigTypes);
+          continue; // Skip to next instrument
+        }
+        
+        // For unknown instruments, check cached AI mappings first
         const cachedMapping = await storage.getInstrumentMapping(normalizedInstrument);
         if (cachedMapping) {
-          console.log('🎵 Using cached mapping for', normalizedInstrument);
+          console.log('🎵 Using cached AI mapping for', normalizedInstrument);
           try {
             const cachedTypes = JSON.parse(cachedMapping.gigTypes);
             if (Array.isArray(cachedTypes)) {
@@ -173,24 +197,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // Check default mappings
-        const gigTypes = defaultGigMappings[normalizedInstrument];
-        if (gigTypes) {
-          allSuggestions.push(...gigTypes);
-          
-          // Cache the default mapping for future use
-          try {
-            await storage.createInstrumentMapping({
-              instrument: normalizedInstrument,
-              gigTypes: JSON.stringify(gigTypes)
-            });
-            console.log('🎵 Cached default mapping for', normalizedInstrument);
-          } catch (error) {
-            console.error('Error caching default mapping:', error);
-          }
-        } else {
-          unknownInstruments.push(instrument);
-        }
+        // If no default or cached mapping exists, add to unknown instruments for AI generation
+        unknownInstruments.push(instrument);
       }
 
       // Use OpenAI for unknown instruments if available
@@ -319,6 +327,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clients: 'Address book and client management'
       }
     });
+  });
+
+  // Clear cached instrument mapping (for testing/debugging)
+  app.delete('/api/instrument-mapping/:instrument', async (req, res) => {
+    try {
+      const instrument = req.params.instrument;
+      const cleared = await storage.clearInstrumentMapping(instrument);
+      res.json({ 
+        success: true, 
+        cleared,
+        message: `Cleared cached mapping for ${instrument}` 
+      });
+    } catch (error) {
+      console.error('Error clearing instrument mapping:', error);
+      res.status(500).json({ error: 'Failed to clear mapping' });
+    }
   });
 
   // Public demo info endpoint (no auth required)

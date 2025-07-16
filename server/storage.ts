@@ -994,6 +994,26 @@ export class DatabaseStorage implements IStorage {
       .from(instrumentMappings)
       .orderBy(instrumentMappings.instrument);
   }
+
+  async updateInstrumentMapping(instrument: string, mapping: InsertInstrumentMapping): Promise<InstrumentMapping> {
+    const [updatedMapping] = await db
+      .update(instrumentMappings)
+      .set({
+        ...mapping,
+        instrument: mapping.instrument.toLowerCase(),
+        updatedAt: new Date(),
+      })
+      .where(eq(instrumentMappings.instrument, instrument.toLowerCase()))
+      .returning();
+    return updatedMapping;
+  }
+
+  async clearInstrumentMapping(instrument: string): Promise<boolean> {
+    const result = await db
+      .delete(instrumentMappings)
+      .where(eq(instrumentMappings.instrument, instrument.toLowerCase()));
+    return result.rowCount! > 0;
+  }
 }
 
 export const storage = new DatabaseStorage();
