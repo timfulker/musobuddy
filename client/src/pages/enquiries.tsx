@@ -42,7 +42,7 @@ const enquiryFormSchema = insertEnquirySchema.extend({
 export default function Enquiries() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("newest"); // newest, oldest, eventDate, status
+  const [sortBy, setSortBy] = useState("eventDate"); // eventDate, status, client, value
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [respondDialogOpen, setRespondDialogOpen] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
@@ -399,37 +399,24 @@ export default function Enquiries() {
 
   // Sort the filtered enquiries
   const sortedEnquiries = [...filteredEnquiries].sort((a, b) => {
-    // Debug: Log the data structure
-    if (sortBy === "newest" && filteredEnquiries.length > 0) {
-      console.log("Sorting debug:", {
-        sortBy,
-        sampleA: { id: a.id, createdAt: a.createdAt, updatedAt: a.updatedAt },
-        sampleB: { id: b.id, createdAt: b.createdAt, updatedAt: b.updatedAt }
-      });
-    }
-    
     switch (sortBy) {
-      case "newest":
-        // Try both createdAt and updatedAt, fallback to id for consistent ordering
-        const aTime = a.createdAt || a.updatedAt || a.id;
-        const bTime = b.createdAt || b.updatedAt || b.id;
-        const aDate = typeof aTime === 'string' || typeof aTime === 'number' ? new Date(aTime).getTime() : aTime;
-        const bDate = typeof bTime === 'string' || typeof bTime === 'number' ? new Date(bTime).getTime() : bTime;
-        return bDate - aDate; // Newest first (descending)
-      case "oldest":
-        const aTimeOld = a.createdAt || a.updatedAt || a.id;
-        const bTimeOld = b.createdAt || b.updatedAt || b.id;
-        const aDateOld = typeof aTimeOld === 'string' || typeof aTimeOld === 'number' ? new Date(aTimeOld).getTime() : aTimeOld;
-        const bDateOld = typeof bTimeOld === 'string' || typeof bTimeOld === 'number' ? new Date(bTimeOld).getTime() : bTimeOld;
-        return aDateOld - bDateOld; // Oldest first (ascending)
       case "eventDate":
+        // Sort by event date, with upcoming events first
         if (!a.eventDate && !b.eventDate) return 0;
-        if (!a.eventDate) return 1;
-        if (!b.eventDate) return -1;
+        if (!a.eventDate) return 1; // No date goes to bottom
+        if (!b.eventDate) return -1; // No date goes to bottom
         return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
       case "status":
         const statusOrder = { "new": 0, "booking_in_progress": 1, "contract_sent": 2, "confirmed": 3, "rejected": 4 };
         return (statusOrder[a.status as keyof typeof statusOrder] || 99) - (statusOrder[b.status as keyof typeof statusOrder] || 99);
+      case "client":
+        // Sort alphabetically by client name
+        return a.clientName.localeCompare(b.clientName);
+      case "value":
+        // Sort by estimated value (highest first)
+        const aValue = parseFloat(a.estimatedValue?.replace(/[£$,]/g, '') || '0');
+        const bValue = parseFloat(b.estimatedValue?.replace(/[£$,]/g, '') || '0');
+        return bValue - aValue; // Highest value first
       default:
         return 0;
     }
@@ -838,18 +825,6 @@ export default function Enquiries() {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">
-                    <div className="flex items-center space-x-2">
-                      <ArrowDown className="w-4 h-4" />
-                      <span>Newest First</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="oldest">
-                    <div className="flex items-center space-x-2">
-                      <ArrowUp className="w-4 h-4" />
-                      <span>Oldest First</span>
-                    </div>
-                  </SelectItem>
                   <SelectItem value="eventDate">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
@@ -860,6 +835,18 @@ export default function Enquiries() {
                     <div className="flex items-center space-x-2">
                       <ArrowUpDown className="w-4 h-4" />
                       <span>Status</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="client">
+                    <div className="flex items-center space-x-2">
+                      <User className="w-4 h-4" />
+                      <span>Client Name</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="value">
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="w-4 h-4" />
+                      <span>Value (High to Low)</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
