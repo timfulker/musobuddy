@@ -1,0 +1,330 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { CalendarDays, Clock, MapPin, User, Phone, Mail } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { format } from "date-fns";
+
+interface ConflictResolutionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  primaryBooking: any;
+  conflictingBookings: any[];
+  onResolved: () => void;
+}
+
+export function ConflictResolutionDialog({
+  open,
+  onOpenChange,
+  primaryBooking,
+  conflictingBookings,
+  onResolved
+}: ConflictResolutionDialogProps) {
+  const [editingBooking, setEditingBooking] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+  const { toast } = useToast();
+
+  const handleEdit = (booking: any) => {
+    setEditingBooking(booking);
+    setFormData({
+      title: booking.title || '',
+      clientName: booking.client_name || '',
+      clientEmail: booking.client_email || '',
+      clientPhone: booking.client_phone || '',
+      eventDate: booking.event_date ? format(new Date(booking.event_date), 'yyyy-MM-dd') : '',
+      eventTime: booking.event_time || '',
+      eventEndTime: booking.event_end_time || '',
+      venue: booking.venue || '',
+      eventType: booking.event_type || '',
+      status: booking.status || 'new',
+      notes: booking.notes || ''
+    });
+  };
+
+  const handleSave = async () => {
+    if (!editingBooking) return;
+
+    try {
+      await apiRequest(`/api/bookings/${editingBooking.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(formData)
+      });
+
+      toast({
+        title: "Booking Updated",
+        description: `${editingBooking.title} has been updated successfully.`
+      });
+
+      setEditingBooking(null);
+      onResolved();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update booking. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingBooking(null);
+    setFormData({});
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'new': return 'bg-blue-100 text-blue-800';
+      case 'booking_in_progress': return 'bg-orange-100 text-orange-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'contract_sent': return 'bg-purple-100 text-purple-800';
+      case 'contract_received': return 'bg-emerald-100 text-emerald-800';
+      case 'completed': return 'bg-gray-100 text-gray-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const BookingCard = ({ booking, isConflicting = false }: { booking: any, isConflicting?: boolean }) => (
+    <div className={`p-4 border rounded-lg ${isConflicting ? 'border-red-200 bg-red-50' : 'border-blue-200 bg-blue-50'}`}>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-medium text-gray-900">{booking.title}</h3>
+        <div className="flex items-center space-x-2">
+          <Badge className={getStatusColor(booking.status)}>
+            {booking.status?.replace('_', ' ').toUpperCase()}
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleEdit(booking)}
+            className="text-xs"
+          >
+            Edit
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div className="flex items-center space-x-2">
+          <User className="w-4 h-4 text-gray-500" />
+          <span>{booking.client_name || 'No client name'}</span>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Mail className="w-4 h-4 text-gray-500" />
+          <span>{booking.client_email || 'No email'}</span>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Phone className="w-4 h-4 text-gray-500" />
+          <span>{booking.client_phone || 'No phone'}</span>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <CalendarDays className="w-4 h-4 text-gray-500" />
+          <span>{booking.event_date ? format(new Date(booking.event_date), 'PPP') : 'No date'}</span>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Clock className="w-4 h-4 text-gray-500" />
+          <span>{booking.event_time || 'No time'} - {booking.event_end_time || 'No end time'}</span>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <MapPin className="w-4 h-4 text-gray-500" />
+          <span>{booking.venue || 'No venue'}</span>
+        </div>
+      </div>
+
+      {booking.notes && (
+        <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
+          <strong>Notes:</strong> {booking.notes}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <span>Booking Conflict Resolution</span>
+          </DialogTitle>
+        </DialogHeader>
+
+        {!editingBooking ? (
+          <div className="space-y-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="font-medium text-red-800 mb-2">Conflict Detected</h4>
+              <p className="text-red-700 text-sm">
+                The following bookings have conflicting dates and times. Review and edit them to resolve the conflict.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Primary Booking</h4>
+                <BookingCard booking={primaryBooking} />
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Conflicting Bookings</h4>
+                <div className="space-y-3">
+                  {conflictingBookings.map((booking) => (
+                    <BookingCard key={booking.id} booking={booking} isConflicting={true} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-medium text-blue-800 mb-2">Editing: {editingBooking.title}</h4>
+              <p className="text-blue-700 text-sm">
+                Make changes to resolve the conflict. Update the date, time, or status as needed.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="booking_in_progress">In Progress</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="contract_sent">Contract Sent</SelectItem>
+                    <SelectItem value="contract_received">Contract Received</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="clientName">Client Name</Label>
+                <Input
+                  id="clientName"
+                  value={formData.clientName}
+                  onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="clientEmail">Client Email</Label>
+                <Input
+                  id="clientEmail"
+                  type="email"
+                  value={formData.clientEmail}
+                  onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="clientPhone">Client Phone</Label>
+                <Input
+                  id="clientPhone"
+                  value={formData.clientPhone}
+                  onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eventDate">Event Date</Label>
+                <Input
+                  id="eventDate"
+                  type="date"
+                  value={formData.eventDate}
+                  onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eventTime">Start Time</Label>
+                <Input
+                  id="eventTime"
+                  type="time"
+                  value={formData.eventTime}
+                  onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eventEndTime">End Time</Label>
+                <Input
+                  id="eventEndTime"
+                  type="time"
+                  value={formData.eventEndTime}
+                  onChange={(e) => setFormData({ ...formData, eventEndTime: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="venue">Venue</Label>
+                <Input
+                  id="venue"
+                  value={formData.venue}
+                  onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eventType">Event Type</Label>
+                <Input
+                  id="eventType"
+                  value={formData.eventType}
+                  onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

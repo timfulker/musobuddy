@@ -31,6 +31,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
+import { ConflictResolutionDialog } from "@/components/ConflictResolutionDialog";
 import { 
   analyzeConflictSeverity, 
   getConflictCardStyling, 
@@ -65,6 +66,11 @@ export default function Enquiries() {
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(["contract_sent"]);
+  const [conflictResolutionOpen, setConflictResolutionOpen] = useState(false);
+  const [conflictResolutionData, setConflictResolutionData] = useState<{
+    primaryBooking: any;
+    conflictingBookings: any[];
+  } | null>(null);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -213,6 +219,37 @@ export default function Enquiries() {
     
     if (confirm(`Are you sure you want to delete ${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'}? This action cannot be undone.`)) {
       bulkDeleteMutation.mutate(Array.from(selectedBookings));
+    }
+  };
+
+  const handleConflictClick = async (primaryBooking: any) => {
+    try {
+      // Fetch all bookings to find conflicts
+      const allBookings = await apiRequest('/api/bookings');
+      
+      // Find bookings that conflict with the selected booking
+      const conflictingBookings = allBookings.filter((booking: any) => {
+        if (booking.id === primaryBooking.id) return false;
+        
+        // Check if they're on the same date
+        const primaryDate = new Date(primaryBooking.event_date).toDateString();
+        const bookingDate = new Date(booking.event_date).toDateString();
+        
+        return primaryDate === bookingDate;
+      });
+      
+      setConflictResolutionData({
+        primaryBooking,
+        conflictingBookings
+      });
+      setConflictResolutionOpen(true);
+    } catch (error) {
+      console.error('Error fetching conflict data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load conflict data. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1473,15 +1510,21 @@ export default function Enquiries() {
                         
                         {/* Warning Conflict Alert Banner */}
                         {severity.level === 'warning' && (
-                          <div className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20">
-                            ⚠️ POTENTIAL SCHEDULING CONFLICT
+                          <div 
+                            className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20 cursor-pointer hover:bg-amber-600 transition-colors"
+                            onClick={() => handleConflictClick(enquiry)}
+                          >
+                            ⚠️ POTENTIAL SCHEDULING CONFLICT - Click to resolve
                           </div>
                         )}
                         
                         {/* Critical Conflict Alert Banner */}
                         {severity.level === 'critical' && (
-                          <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 z-20">
-                            🚫 DOUBLE BOOKING RISK
+                          <div 
+                            className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 z-20 cursor-pointer hover:bg-red-600 transition-colors"
+                            onClick={() => handleConflictClick(enquiry)}
+                          >
+                            🚫 DOUBLE BOOKING RISK - Click to resolve
                           </div>
                         )}
                         {/* Selection Checkbox */}
@@ -1814,6 +1857,21 @@ export default function Enquiries() {
           onClose={() => {
             setComplianceDialogOpen(false);
             setSelectedBookingForCompliance(null);
+          }}
+        />
+      )}
+      
+      {/* Conflict Resolution Dialog */}
+      {conflictResolutionData && (
+        <ConflictResolutionDialog
+          open={conflictResolutionOpen}
+          onOpenChange={setConflictResolutionOpen}
+          primaryBooking={conflictResolutionData.primaryBooking}
+          conflictingBookings={conflictResolutionData.conflictingBookings}
+          onResolved={() => {
+            setConflictResolutionOpen(false);
+            setConflictResolutionData(null);
+            queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
           }}
         />
       )}
