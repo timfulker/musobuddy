@@ -11,7 +11,8 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Initialize separate OpenAI clients for different functions
-const emailParsingAI = process.env.OPENAI_EMAIL_PARSING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
+// TEMPORARY: Use working instrument mapping key for email parsing until email parsing key is fixed
+const emailParsingAI = process.env.OPENAI_INSTRUMENT_MAPPING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_INSTRUMENT_MAPPING_KEY }) : null;
 const instrumentMappingAI = process.env.OPENAI_INSTRUMENT_MAPPING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_INSTRUMENT_MAPPING_KEY }) : null;
 const conflictResolutionAI = process.env.OPENAI_CONFLICT_RESOLUTION_KEY ? new OpenAI({ apiKey: process.env.OPENAI_CONFLICT_RESOLUTION_KEY }) : null;
 const supportChatAI = process.env.OPENAI_SUPPORT_CHAT_KEY ? new OpenAI({ apiKey: process.env.OPENAI_SUPPORT_CHAT_KEY }) : null;
