@@ -41,8 +41,8 @@ export default function NotificationsDropdown() {
         (invoice.status === 'sent' && new Date(invoice.dueDate) < new Date())
       );
 
-      // Fetch recent enquiries
-      const enquiriesResponse = await fetch('/api/enquiries', {
+      // Phase 2: Fetch recent enquiries from new bookings table
+      const enquiriesResponse = await fetch('/api/bookings-new', {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
       });

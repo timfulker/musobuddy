@@ -66,8 +66,9 @@ export default function Enquiries() {
     }
   }, []);
 
+  // Phase 2: Read from new bookings table instead of enquiries
   const { data: enquiries = [], isLoading, error } = useQuery<Enquiry[]>({
-    queryKey: ["/api/enquiries"],
+    queryKey: ["/api/bookings-new"],
   });
 
   const { data: templates = [] } = useQuery({
@@ -228,7 +229,8 @@ export default function Enquiries() {
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
       };
       
-      const response = await fetch("/api/enquiries", {
+      // Phase 2: Create in new bookings table
+      const response = await fetch("/api/bookings-new", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(enquiryData),
@@ -241,7 +243,8 @@ export default function Enquiries() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/enquiries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings-new"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/enquiries"] }); // Keep for backwards compatibility
       setIsDialogOpen(false);
       form.reset();
       toast({
@@ -260,13 +263,15 @@ export default function Enquiries() {
 
   const deleteEnquiryMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest(`/api/enquiries/${id}`, {
+      // Phase 2: Delete from new bookings table
+      const response = await apiRequest(`/api/bookings-new/${id}`, {
         method: 'DELETE'
       });
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings-new'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] }); // Keep for backwards compatibility
       toast({
         title: "Success",
         description: "Enquiry deleted successfully!",
@@ -310,14 +315,16 @@ export default function Enquiries() {
 
   const updateEnquiryStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await apiRequest(`/api/enquiries/${id}`, {
+      // Phase 2: Update in new bookings table
+      const response = await apiRequest(`/api/bookings-new/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings-new'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] }); // Keep for backwards compatibility
       queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       toast({

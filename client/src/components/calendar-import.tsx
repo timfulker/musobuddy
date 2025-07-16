@@ -36,7 +36,8 @@ export default function CalendarImport({ onImportComplete }: CalendarImportProps
       setImportResult(result);
       setImportStep('complete');
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings-new'] }); // Phase 2: Use new bookings table
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] }); // Keep for backwards compatibility
       onImportComplete?.();
     },
     onError: () => {

@@ -10,8 +10,9 @@ export default function CalendarWidget() {
     queryKey: ["/api/bookings/upcoming"],
   });
 
+  // Phase 2: Read from new bookings table instead of enquiries
   const { data: enquiries = [], isLoading: enquiriesLoading } = useQuery({
-    queryKey: ["/api/enquiries"],
+    queryKey: ["/api/bookings-new"],
   });
 
   const isLoading = bookingsLoading || enquiriesLoading;

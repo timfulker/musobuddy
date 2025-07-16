@@ -2348,6 +2348,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new booking (enquiry)
+  app.post('/api/bookings-new', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const data = { ...req.body, userId };
+      
+      // Convert eventDate string to Date if present
+      if (data.eventDate && typeof data.eventDate === 'string') {
+        data.eventDate = new Date(data.eventDate);
+      }
+      
+      const bookingData = insertEnquirySchema.parse(data);
+      const booking = await storage.createBookingNew(bookingData);
+      res.status(201).json(booking);
+    } catch (error) {
+      console.error("Error creating new booking:", error);
+      res.status(500).json({ message: "Failed to create new booking" });
+    }
+  });
+
+  // Update new booking (enquiry)
+  app.patch('/api/bookings-new/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bookingId = parseInt(req.params.id);
+      const updateData = { ...req.body };
+      
+      // Convert eventDate string to Date if present
+      if (updateData.eventDate && typeof updateData.eventDate === 'string') {
+        updateData.eventDate = new Date(updateData.eventDate);
+      }
+      
+      const updatedBooking = await storage.updateBookingNew(bookingId, updateData, userId);
+      if (!updatedBooking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error("Error updating new booking:", error);
+      res.status(500).json({ message: "Failed to update new booking" });
+    }
+  });
+
+  // Delete new booking (enquiry)
+  app.delete('/api/bookings-new/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bookingId = parseInt(req.params.id);
+      
+      const success = await storage.deleteBookingNew(bookingId, userId);
+      if (!success) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+      res.json({ message: "Booking deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting new booking:", error);
+      res.status(500).json({ message: "Failed to delete new booking" });
+    }
+  });
+
   app.get('/api/bookings/upcoming', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

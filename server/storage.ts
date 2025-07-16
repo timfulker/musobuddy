@@ -214,6 +214,25 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(bookingsNew.createdAt));
   }
 
+  async createBookingNew(data: InsertEnquiry): Promise<Enquiry> {
+    const [booking] = await db.insert(bookingsNew).values(data).returning();
+    return booking;
+  }
+
+  async updateBookingNew(id: number, data: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | null> {
+    const [booking] = await db.update(bookingsNew)
+      .set(data)
+      .where(and(eq(bookingsNew.id, id), eq(bookingsNew.userId, userId)))
+      .returning();
+    return booking || null;
+  }
+
+  async deleteBookingNew(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(bookingsNew)
+      .where(and(eq(bookingsNew.id, id), eq(bookingsNew.userId, userId)));
+    return result.rowCount > 0;
+  }
+
   async getBookingNew(id: number, userId: string): Promise<Enquiry | undefined> {
     const [booking] = await db
       .select()
