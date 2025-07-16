@@ -196,14 +196,17 @@ export default function Calendar() {
     }
   };
 
-  // Get status color for events
+  // Get status color for events - matches bookings page color scheme
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-purple-100 text-purple-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'signed': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-amber-100 text-amber-800';
+      case 'new': return 'bg-[#5DADE2] text-white';
+      case 'booking_in_progress': return 'bg-[#F39C12] text-white';
+      case 'confirmed': return 'bg-[#2980B9] text-white';
+      case 'contract_sent': return 'bg-[#9B59B6] text-white';
+      case 'contract_received': return 'bg-[#27AE60] text-white';
+      case 'completed': return 'bg-[#34495E] text-white';
+      case 'rejected': return 'bg-[#C0392B] text-white';
+      default: return 'bg-[#5DADE2] text-white';
     }
   };
 
@@ -284,10 +287,8 @@ export default function Calendar() {
                 key={index}
                 className={`
                   p-4 rounded-lg border-l-4 shadow-sm
-                  ${event.type === 'booking' 
-                    ? 'bg-emerald-50 border-l-emerald-500 text-emerald-900' 
-                    : 'bg-purple-50 border-l-purple-500 text-purple-900'
-                  }
+                  ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900')} 
+                  bg-opacity-10 border-l-current
                 `}
               >
                 <h3 className="font-semibold">{event.title}</h3>
@@ -343,10 +344,8 @@ export default function Calendar() {
                     key={eventIndex}
                     className={`
                       text-xs p-1 rounded
-                      ${event.type === 'booking' 
-                        ? 'bg-emerald-100 text-emerald-800' 
-                        : 'bg-purple-100 text-purple-800'
-                      }
+                      ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900')} 
+                      bg-opacity-20
                     `}
                   >
                     {event.title}
@@ -595,9 +594,9 @@ export default function Calendar() {
                               <div
                                 className={`
                                   flex-1 flex items-center justify-center text-center p-2
-                                  ${day.events[0].type === 'booking' 
-                                    ? 'text-emerald-800 dark:text-emerald-300' 
-                                    : 'text-purple-800 dark:text-purple-300'
+                                  ${getStatusColor(day.events[0].status || 'new').includes('text-white') 
+                                    ? 'text-gray-900 dark:text-gray-100' 
+                                    : 'text-gray-800 dark:text-gray-200'
                                   }
                                 `}
                               >
@@ -614,10 +613,8 @@ export default function Calendar() {
                                     className={`
                                       flex-1 px-2 py-1 rounded-lg text-xs font-medium shadow-sm
                                       flex items-center justify-center text-center
-                                      ${event.type === 'booking' 
-                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
-                                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
-                                      }
+                                      ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900 dark:text-gray-100')} 
+                                      bg-opacity-20 border border-current border-opacity-30
                                     `}
                                   >
                                     <span className="leading-tight whitespace-pre-wrap break-words">

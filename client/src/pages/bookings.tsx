@@ -51,6 +51,7 @@ export default function Enquiries() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [sortBy, setSortBy] = useState("eventDate"); // eventDate, status, client, value
+  const [sortReverse, setSortReverse] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [respondDialogOpen, setRespondDialogOpen] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
@@ -602,27 +603,36 @@ export default function Enquiries() {
 
   // Sort the filtered enquiries
   const sortedEnquiries = [...filteredEnquiries].sort((a, b) => {
+    let result = 0;
+    
     switch (sortBy) {
       case "eventDate":
         // Sort by event date, with upcoming events first
-        if (!a.eventDate && !b.eventDate) return 0;
-        if (!a.eventDate) return 1; // No date goes to bottom
-        if (!b.eventDate) return -1; // No date goes to bottom
-        return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+        if (!a.eventDate && !b.eventDate) result = 0;
+        else if (!a.eventDate) result = 1; // No date goes to bottom
+        else if (!b.eventDate) result = -1; // No date goes to bottom
+        else result = new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+        break;
       case "status":
         const statusOrder = { "new": 0, "booking_in_progress": 1, "contract_sent": 2, "confirmed": 3, "rejected": 4 };
-        return (statusOrder[a.status as keyof typeof statusOrder] || 99) - (statusOrder[b.status as keyof typeof statusOrder] || 99);
+        result = (statusOrder[a.status as keyof typeof statusOrder] || 99) - (statusOrder[b.status as keyof typeof statusOrder] || 99);
+        break;
       case "client":
         // Sort alphabetically by client name
-        return a.clientName.localeCompare(b.clientName);
+        result = a.clientName.localeCompare(b.clientName);
+        break;
       case "value":
         // Sort by estimated value (highest first)
         const aValue = parseFloat(a.estimatedValue?.replace(/[£$,]/g, '') || '0');
         const bValue = parseFloat(b.estimatedValue?.replace(/[£$,]/g, '') || '0');
-        return bValue - aValue; // Highest value first
+        result = bValue - aValue; // Highest value first
+        break;
       default:
-        return 0;
+        result = 0;
     }
+    
+    // Apply reverse sort if enabled
+    return sortReverse ? -result : result;
   });
 
   // Helper function to determine if response is needed
@@ -1123,37 +1133,51 @@ export default function Enquiries() {
                   </Button>
                 </div>
               </div>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="eventDate">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>Event Date</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="status">
-                    <div className="flex items-center space-x-2">
-                      <ArrowUpDown className="w-4 h-4" />
-                      <span>Status</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="client">
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4" />
-                      <span>Client Name</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="value">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4" />
-                      <span>Value (High to Low)</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center space-x-2">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="eventDate">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>Event Date</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="status">
+                      <div className="flex items-center space-x-2">
+                        <ArrowUpDown className="w-4 h-4" />
+                        <span>Status</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="client">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4" />
+                        <span>Client Name</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="value">
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="w-4 h-4" />
+                        <span>Value (High to Low)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={() => setSortReverse(!sortReverse)}
+                  variant="outline"
+                  size="sm"
+                  className={`${
+                    sortReverse 
+                      ? 'bg-purple-100 text-purple-700 border-purple-300' 
+                      : 'text-gray-600 border-gray-300'
+                  }`}
+                >
+                  {sortReverse ? <ArrowDown className="w-4 h-4" /> : <ArrowUp className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

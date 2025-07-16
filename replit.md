@@ -136,6 +136,8 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Badge Text Centering**: Fixed vertical and horizontal text alignment in status badges using justify-center and text-center
   * **Conflict Detection Fixed**: Resolved double booking warnings with proper booking.id !== enquiry.id condition
   * **Default Filter Updated**: Changed default filter when opening bookings page to "contract received" for better workflow focus
+  * **Reverse Sort Added**: Added reverse sort toggle button with arrow icons next to sort dropdown for ascending/descending order
+  * **Calendar Color Consistency**: Updated calendar page to use same 7-status color scheme as bookings page for visual consistency
   * **Status**: Complete visual redesign with consistent color scheme across all booking status indicators
 
 - July 16, 2025. Data cleanup system implementation completed with complete ghost data elimination:
