@@ -2942,7 +2942,7 @@ Hotel Lobby Entertainment`;
         .filter(line => line.length > 0 && !line.startsWith('-'))
         .slice(0, 12) || [];
 
-      res.json({ gigTypes });
+      res.json({ suggestions: gigTypes });
     } catch (error) {
       console.error('Error generating gig suggestions:', error);
       res.status(500).json({ error: 'Failed to generate gig suggestions' });
