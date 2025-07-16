@@ -39,7 +39,6 @@ import {
   getConflictActions, 
   formatConflictTooltip 
 } from "@/utils/conflict-ui";
-import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
@@ -66,9 +65,6 @@ export default function Enquiries() {
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(["contract_sent"]);
-  const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
-  const [selectedConflictEnquiry, setSelectedConflictEnquiry] = useState<any>(null);
-  const [selectedConflicts, setSelectedConflicts] = useState<any[]>([]);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -218,13 +214,6 @@ export default function Enquiries() {
     if (confirm(`Are you sure you want to delete ${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'}? This action cannot be undone.`)) {
       bulkDeleteMutation.mutate(Array.from(selectedBookings));
     }
-  };
-
-  const handleConflictClick = (enquiry: any) => {
-    const conflicts = detectConflicts(enquiry);
-    setSelectedConflictEnquiry(enquiry);
-    setSelectedConflicts(conflicts);
-    setConflictResolutionDialogOpen(true);
   };
 
   // Phase 3: Read from main bookings table (renamed from bookings_new)
@@ -1418,8 +1407,17 @@ export default function Enquiries() {
               const confirmedBookingConflicts = conflicts.filter(c => c.type === 'booking');
               const unconfirmedEnquiryConflicts = conflicts.filter(c => c.type === 'enquiry');
               
-              // Use the same conflict analysis logic as dashboard
-              const conflictAnalysis = parseConflictAnalysis(enquiry);
+              const conflictAnalysis = {
+                hasTimeOverlap: false, // Not implemented without Google Maps
+                sameVenue: false, // Not implemented without Google Maps
+                sameClient: false, // Could be implemented but not priority
+                confirmedBooking: confirmedBookingConflicts.length > 0, // Critical: confirmed booking conflict
+                unconfirmedEnquiry: unconfirmedEnquiryConflicts.length > 0, // Warning: unconfirmed enquiry conflict
+                conflictCount: conflicts.length,
+                conflictDetails: conflicts.length > 0 ? 
+                  `${confirmedBookingConflicts.length} confirmed booking(s), ${unconfirmedEnquiryConflicts.length} unconfirmed enquiry(ies)` 
+                  : 'No conflicts'
+              };
               const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
               const hasConflicts = conflicts.length > 0;
               
@@ -1453,22 +1451,19 @@ export default function Enquiries() {
                 }
               };
               
-              // Use the same conflict card styling as dashboard
-              const cardStyling = getConflictCardStyling(severity);
-              
-              // Conflict overlay styling for visual emphasis
+              // Conflict overlay styling
               const getConflictOverlay = () => {
                 if (severity.level === 'critical') {
-                  return 'ring-2 ring-red-200';
+                  return 'border-red-500 bg-red-50 ring-2 ring-red-200';
                 } else if (severity.level === 'warning') {
-                  return 'ring-2 ring-amber-200';
+                  return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
                 }
                 return '';
               };
 
               return (
                 <TooltipProvider key={enquiry.id}>
-                  <Card className={`hover:shadow-lg transition-all duration-200 ${cardStyling} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
+                  <Card className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
                     <CardContent className="p-4">
                       <div className="relative">
                         {/* Critical Conflict Red Stripe */}
@@ -1478,21 +1473,15 @@ export default function Enquiries() {
                         
                         {/* Warning Conflict Alert Banner */}
                         {severity.level === 'warning' && (
-                          <div 
-                            className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20 cursor-pointer hover:bg-amber-600 transition-colors"
-                            onClick={() => handleConflictClick(enquiry)}
-                          >
-                            ⚠️ POTENTIAL SCHEDULING CONFLICT - Click to resolve
+                          <div className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20">
+                            ⚠️ POTENTIAL SCHEDULING CONFLICT
                           </div>
                         )}
                         
                         {/* Critical Conflict Alert Banner */}
                         {severity.level === 'critical' && (
-                          <div 
-                            className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 z-20 cursor-pointer hover:bg-red-600 transition-colors"
-                            onClick={() => handleConflictClick(enquiry)}
-                          >
-                            🚫 DOUBLE BOOKING RISK - Click to resolve
+                          <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 z-20">
+                            🚫 DOUBLE BOOKING RISK
                           </div>
                         )}
                         {/* Selection Checkbox */}
@@ -1826,20 +1815,6 @@ export default function Enquiries() {
             setComplianceDialogOpen(false);
             setSelectedBookingForCompliance(null);
           }}
-        />
-      )}
-
-      {/* Conflict Resolution Dialog */}
-      {conflictResolutionDialogOpen && selectedConflictEnquiry && (
-        <ConflictResolutionDialog
-          isOpen={conflictResolutionDialogOpen}
-          onClose={() => {
-            setConflictResolutionDialogOpen(false);
-            setSelectedConflictEnquiry(null);
-            setSelectedConflicts([]);
-          }}
-          enquiry={selectedConflictEnquiry}
-          conflicts={selectedConflicts}
         />
       )}
     </div>

@@ -247,25 +247,13 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
           updatedAt: new Date()
         };
         
-        const { conflicts, analysis } = await conflictService.checkEnquiryConflicts(tempEnquiry, '43963086');
+        const { conflicts } = await conflictService.checkEnquiryConflicts(tempEnquiry, '43963086');
         
         if (conflicts.length > 0) {
           hasConflicts = true;
           conflictCount = conflicts.length;
-          
-          // Generate conflict details for the NEW enquiry showing what it conflicts with (older items)
-          const conflictDetails = conflicts.map(c => {
-            const type = c.type === 'booking' ? 'confirmed booking' : 'unconfirmed enquiry';
-            return `${type} #${c.id} (${c.clientName}) on ${c.eventDate.toDateString()}`;
-          }).join(', ');
-          
           console.log(`⚠️ [${requestId}] CONFLICT DETECTED: ${conflicts.length} conflicts found`);
-          console.log(`⚠️ [${requestId}] New enquiry conflicts with:`, conflicts.map(c => `${c.type} #${c.id} - ${c.title}`));
-          console.log(`⚠️ [${requestId}] Conflict details: ${conflictDetails}`);
-          
-          // Store conflict details in the NEW enquiry only
-          tempEnquiry.conflictDetails = conflictDetails;
-          console.log(`📝 [${requestId}] Stored conflict details in tempEnquiry: ${tempEnquiry.conflictDetails}`);
+          console.log(`⚠️ [${requestId}] Conflicts with:`, conflicts.map(c => `${c.type} #${c.id} - ${c.title}`));
         }
       } catch (error) {
         console.error(`❌ [${requestId}] Error checking conflicts:`, error);
@@ -294,12 +282,10 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       responseNeeded: true,
       lastContactedAt: null,
       hasConflicts,
-      conflictCount,
-      conflictDetails: tempEnquiry.conflictDetails || null
+      conflictCount
     };
     
     console.log(`📧 [${requestId}] Creating enquiry for: ${clientName} (${clientEmail})`);
-    console.log(`📝 [${requestId}] Final enquiry.conflictDetails before DB save: ${enquiry.conflictDetails}`);
     console.log(`📧 [${requestId}] Enquiry data:`, JSON.stringify(enquiry, null, 2));
     
     const newEnquiry = await storage.createEnquiry(enquiry);

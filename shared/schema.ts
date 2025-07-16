@@ -123,9 +123,6 @@ export const bookings = pgTable("bookings", {
   responseNeeded: boolean("response_needed").default(true), // Visual indicator for enquiries requiring response
   lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
   hasConflicts: boolean("has_conflicts").default(false), // Flag for potential conflicts
-  conflictDetected: boolean("conflict_detected").default(false), // Alternative field name for UI compatibility
-  conflictCount: integer("conflict_count").default(0), // Number of detected conflicts
-  detectedConflicts: jsonb("detected_conflicts").default([]), // Array of conflict details
   conflictCount: integer("conflict_count").default(0), // Number of potential conflicts
   conflictDetails: text("conflict_details"), // JSON string with conflict details
   createdAt: timestamp("created_at").defaultNow(),

@@ -127,18 +127,6 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 ## Changelog
 
 ```
-- July 16, 2025. ConflictResolutionDialog redesigned with unified time editing interface:
-  * **Critical Fix**: Resolved "Rendered more hooks than during the previous render" error by moving early returns before hook declarations
-  * **Enhanced Dialog Display**: Fixed conflict count to show correct number of bookings (e.g., "2 bookings" instead of "1 booking")
-  * **Unified Time Editing**: When "Edit booking times to avoid overlap" is selected, both bookings are shown with individual time controls
-  * **Intuitive Interface**: Each booking has its own Start Time, End Time inputs, and Update Time button in a single view
-  * **Color-Coded Consistency**: New Enquiry (blue background) and Existing Booking (gray background) maintained throughout editing
-  * **Independent Updates**: Users can edit and update the time of any booking independently without switching views
-  * **Real-time State Management**: Proper useState implementation with booking ID mapping for reliable time value tracking
-  * **Streamlined UX**: Removed complex multi-step editing process in favor of direct, side-by-side time editing
-  * **All Conflicts Shown**: Dialog displays both the new enquiry and existing conflicting bookings simultaneously
-  * **Status**: Conflict resolution dialog now provides intuitive simultaneous editing of all conflicting bookings
-
 - July 16, 2025. Email forwarding system with AI parsing fully operational and production-ready:
   * **Complete API Key Resolution**: Successfully created new dedicated OPENAI_EMAIL_PARSING_KEY for email processing
   * **Full AI Parsing Confirmed**: AI correctly extracts event dates, venues, event types, phone numbers, budgets, and gig types
