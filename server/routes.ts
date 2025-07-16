@@ -132,23 +132,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Instruments array is required' });
       }
 
-      // Default mappings for known instruments
+      // Expanded default mappings for known instruments
       const defaultGigMappings = {
-        'saxophone': ['Wedding Ceremony Music', 'Jazz Club Performance', 'Corporate Event Entertainment', 'Function Band', 'Sax + DJ', 'Wedding Reception', 'Private Party'],
-        'guitar': ['Acoustic Wedding Ceremony', 'Spanish Guitar', 'Classical Guitar', 'Folk Music', 'Singer-Songwriter', 'Acoustic Duo', 'Background Music'],
-        'piano': ['Piano Bar', 'Wedding Ceremony', 'Classical Recital', 'Jazz Piano', 'Cocktail Piano', 'Restaurant Background', 'Solo Piano'],
-        'vocals': ['Wedding Singer', 'Jazz Vocalist', 'Corporate Entertainment', 'Function Band Vocals', 'Solo Vocalist', 'Tribute Acts', 'Karaoke Host'],
-        'dj': ['Wedding DJ', 'Corporate Event DJ', 'Party DJ', 'Club DJ', 'Mobile DJ', 'Sax + DJ', 'Event DJ'],
-        'violin': ['Wedding Ceremony', 'String Quartet', 'Classical Performance', 'Folk Violin', 'Electric Violin', 'Background Music', 'Solo Violin'],
-        'trumpet': ['Jazz Band', 'Big Band', 'Wedding Fanfare', 'Classical Trumpet', 'Brass Ensemble', 'Mariachi Band', 'Military Ceremony'],
-        'drums': ['Function Band', 'Jazz Ensemble', 'Rock Band', 'Wedding Band', 'Corporate Event Band', 'Percussion Solo', 'Session Musician'],
-        'bass': ['Function Band', 'Jazz Ensemble', 'Wedding Band', 'Corporate Event Band', 'Session Musician', 'Acoustic Bass', 'Electric Bass'],
-        'keyboard': ['Function Band', 'Wedding Ceremony', 'Jazz Piano', 'Corporate Entertainment', 'Solo Keyboard', 'Accompanist', 'Session Musician'],
-        'cello': ['Wedding Ceremony', 'String Quartet', 'Classical Performance', 'Solo Cello', 'Chamber Music', 'Background Music', 'Church Music'],
-        'flute': ['Wedding Ceremony', 'Classical Performance', 'Jazz Flute', 'Folk Music', 'Solo Flute', 'Wind Ensemble', 'Background Music'],
-        'harp': ['Wedding Ceremony', 'Classical Harp', 'Celtic Harp', 'Background Music', 'Solo Harp', 'Church Music', 'Private Events'],
-        'trombone': ['Jazz Band', 'Big Band', 'Brass Ensemble', 'Wedding Fanfare', 'Classical Trombone', 'Mariachi Band', 'Military Ceremony'],
-        'clarinet': ['Jazz Ensemble', 'Classical Performance', 'Wedding Ceremony', 'Folk Music', 'Solo Clarinet', 'Wind Ensemble', 'Background Music']
+        'saxophone': ['Wedding Ceremony Music', 'Jazz Club Performance', 'Corporate Event Entertainment', 'Function Band', 'Sax + DJ', 'Wedding Reception', 'Private Party', 'Cocktail Hour', 'Hotel Lounge', 'Wine Tasting', 'Art Gallery Opening', 'Smooth Jazz Venue', 'Background Music', 'Rooftop Event', 'Dinner Music', 'Street Performance', 'Festival Performance', 'Busking', 'Christmas Event', 'New Year Party'],
+        'guitar': ['Acoustic Wedding Ceremony', 'Spanish Guitar', 'Classical Guitar', 'Folk Music', 'Singer-Songwriter', 'Acoustic Duo', 'Background Music', 'Coffee Shop', 'Restaurant Performance', 'Campfire Session', 'Open Mic Night', 'Unplugged Performance', 'Street Performance', 'Farmers Market', 'Wine Bar', 'Outdoor Wedding', 'Intimate Venue', 'Beach Wedding', 'Garden Party', 'Fingerstyle Performance'],
+        'piano': ['Piano Bar', 'Wedding Ceremony', 'Classical Recital', 'Jazz Piano', 'Cocktail Piano', 'Restaurant Background', 'Solo Piano', 'Hotel Lobby', 'Cocktail Hour', 'Background Music', 'Corporate Reception', 'Wine Tasting', 'Art Gallery Opening', 'Brunch Music', 'Lounge Performance', 'Champagne Reception', 'Dinner Music', 'Holiday Performance', 'Charity Event', 'Nursing Home Visit'],
+        'vocals': ['Wedding Singer', 'Jazz Vocalist', 'Corporate Entertainment', 'Function Band Vocals', 'Solo Vocalist', 'Tribute Acts', 'Karaoke Host', 'Acoustic Session', 'Open Mic Night', 'Tribute Performance', 'Cover Band', 'Background Vocals', 'Session Work', 'Choir Performance', 'Musical Theater', 'Cabaret Performance', 'Lounge Singer', 'Holiday Caroling', 'Church Service', 'Funeral Service'],
+        'dj': ['Wedding DJ', 'Corporate Event DJ', 'Party DJ', 'Club DJ', 'Mobile DJ', 'Sax + DJ', 'Event DJ', 'Birthday Party', 'Anniversary Party', 'School Dance', 'Graduation Party', 'Holiday Party', 'Cocktail Reception', 'Rooftop Event', 'Beach Party', 'Pool Party', 'Outdoor Festival', 'Silent Disco', 'Karaoke Night', 'Bingo Night'],
+        'violin': ['Wedding Ceremony', 'String Quartet', 'Classical Performance', 'Folk Violin', 'Electric Violin', 'Background Music', 'Solo Violin', 'Chamber Music', 'Art Gallery Opening', 'Wine Tasting', 'Cocktail Hour', 'Outdoor Wedding', 'Garden Party', 'Recital', 'Funeral Service', 'Holiday Performance', 'Christmas Event', 'New Year Performance', 'Celtic Music', 'Bluegrass Performance'],
+        'trumpet': ['Jazz Band', 'Big Band', 'Wedding Fanfare', 'Classical Trumpet', 'Brass Ensemble', 'Mariachi Band', 'Military Ceremony', 'Dixieland Jazz', 'Swing Band', 'Corporate Event', 'Outdoor Festival', 'Street Performance', 'Busking', 'Church Service', 'Funeral Service', 'Holiday Performance', 'Christmas Concert', 'New Year Celebration', 'Salsa Band', 'Latin Music'],
+        'drums': ['Function Band', 'Jazz Ensemble', 'Rock Band', 'Wedding Band', 'Corporate Event Band', 'Percussion Solo', 'Session Musician', 'Acoustic Session', 'Drum Circle', 'Educational Performance', 'Corporate Team Building', 'Festival Performance', 'Studio Recording', 'Backing Band', 'Tribute Band', 'Cover Band', 'Jam Session', 'Blues Club', 'Rock Venue', 'Latin Percussion'],
+        'bass': ['Function Band', 'Jazz Ensemble', 'Wedding Band', 'Corporate Event Band', 'Session Musician', 'Acoustic Bass', 'Electric Bass', 'Studio Recording', 'Jam Session', 'Blues Club', 'Rock Venue', 'Festival Performance', 'Tribute Band', 'Cover Band', 'Backing Band', 'Walking Bass', 'Upright Bass', 'Slap Bass', 'Fretless Bass', 'Jazz Trio'],
+        'keyboard': ['Function Band', 'Wedding Ceremony', 'Jazz Piano', 'Corporate Entertainment', 'Solo Keyboard', 'Accompanist', 'Session Musician', 'Synthesizer Performance', 'Electronic Music', 'Backing Tracks', 'Studio Recording', 'Worship Team', 'Church Service', 'Musical Theater', 'Cabaret Performance', 'Lounge Performance', 'Background Music', 'Cocktail Hour', 'Dance Music', 'Ambient Music'],
+        'cello': ['Wedding Ceremony', 'String Quartet', 'Classical Performance', 'Solo Cello', 'Chamber Music', 'Background Music', 'Church Music', 'Funeral Service', 'Art Gallery Opening', 'Wine Tasting', 'Cocktail Hour', 'Outdoor Wedding', 'Garden Party', 'Recital', 'Holiday Performance', 'Christmas Concert', 'New Year Performance', 'Celtic Music', 'Folk Music', 'Contemporary Classical'],
+        'flute': ['Wedding Ceremony', 'Classical Performance', 'Jazz Flute', 'Folk Music', 'Solo Flute', 'Wind Ensemble', 'Background Music', 'Art Gallery Opening', 'Wine Tasting', 'Cocktail Hour', 'Outdoor Wedding', 'Garden Party', 'Recital', 'Chamber Music', 'Piccolo Performance', 'Native American Flute', 'Meditation Music', 'Healing Music', 'New Age Performance', 'World Music'],
+        'harp': ['Wedding Ceremony', 'Classical Harp', 'Celtic Harp', 'Background Music', 'Solo Harp', 'Church Music', 'Private Events', 'Art Gallery Opening', 'Wine Tasting', 'Cocktail Hour', 'Outdoor Wedding', 'Garden Party', 'Recital', 'Funeral Service', 'Holiday Performance', 'Christmas Concert', 'Medieval Music', 'Folk Music', 'Therapeutic Music', 'Healing Music'],
+        'trombone': ['Jazz Band', 'Big Band', 'Brass Ensemble', 'Wedding Fanfare', 'Classical Trombone', 'Mariachi Band', 'Military Ceremony', 'Dixieland Jazz', 'Swing Band', 'Corporate Event', 'Outdoor Festival', 'Street Performance', 'Busking', 'Church Service', 'Funeral Service', 'Holiday Performance', 'Christmas Concert', 'New Year Celebration', 'Salsa Band', 'Latin Music'],
+        'clarinet': ['Jazz Ensemble', 'Classical Performance', 'Wedding Ceremony', 'Folk Music', 'Solo Clarinet', 'Wind Ensemble', 'Background Music', 'Klezmer Music', 'Dixieland Jazz', 'Swing Band', 'Corporate Event', 'Outdoor Festival', 'Street Performance', 'Busking', 'Church Service', 'Holiday Performance', 'Christmas Concert', 'New Year Performance', 'Chamber Music', 'Woodwind Quintet']
       };
 
       // Collect suggestions from default mappings and database cache
@@ -208,15 +208,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             messages: [
               {
                 role: "system",
-                content: "You are a music industry expert. Generate SHORT gig type names (2-3 words maximum). Examples: 'Wedding Ceremony', 'Corporate Event', 'Private Party', 'Funeral Service'. Return only a JSON object with a 'gig_types' array."
+                content: "You are a music industry expert. Generate diverse, creative gig type names (2-4 words maximum). Think broadly across all venues and event types: weddings, corporate events, private parties, clubs, restaurants, hotels, festivals, street performances, background music, entertainment, ceremonies, celebrations, etc. Return only a JSON object with a 'gig_types' array."
               },
               {
                 role: "user",
-                content: `Generate 5-7 gig types for a musician who plays: ${unknownInstruments.join(', ')}. Return ONLY short names (2-3 words), no descriptions.`
+                content: `Generate 12-15 diverse gig types for a musician who plays: ${unknownInstruments.join(', ')}. Include traditional gigs, modern venues, creative opportunities, and unique performance contexts. Return ONLY short names (2-4 words), no descriptions.`
               }
             ],
             response_format: { type: "json_object" },
-            max_tokens: 150
+            max_tokens: 300
           });
 
           console.log('🤖 OpenAI response:', response.choices[0].message.content);
