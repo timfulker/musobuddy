@@ -227,10 +227,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBooking(id: number, data: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | null> {
+    console.log(`🔍 STORAGE: Updating booking ${id} with data:`, data);
     const [booking] = await db.update(bookings)
-      .set(data)
+      .set({ ...data, updatedAt: new Date() })
       .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
       .returning();
+    console.log(`🔍 STORAGE: Updated booking result:`, booking);
     return booking || null;
   }
 

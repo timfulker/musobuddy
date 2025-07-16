@@ -117,18 +117,31 @@ export default function Enquiries() {
 
   const bulkUpdateMutation = useMutation({
     mutationFn: async ({ bookingIds, status }: { bookingIds: number[], status: string }) => {
+      console.log('🔍 Starting bulk update:', { bookingIds, status });
       const responses = await Promise.all(
-        bookingIds.map(id => 
-          apiRequest(`/api/bookings/${id}`, {
+        bookingIds.map(async (id) => {
+          console.log(`🔍 Updating booking ${id} to status: ${status}`);
+          const response = await apiRequest(`/api/bookings/${id}`, {
             method: 'PATCH',
             body: { status }
-          })
-        )
+          });
+          console.log(`🔍 Response for booking ${id}:`, response);
+          return response;
+        })
       );
+      console.log('🔍 All bulk update responses:', responses);
       return responses;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('🔍 Bulk update success, invalidating queries...');
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
+      
+      // Force refetch after a short delay to ensure invalidation works
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['/api/bookings'] });
+      }, 100);
+      
       toast({
         title: "Success",
         description: `${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'} updated successfully.`
@@ -137,6 +150,7 @@ export default function Enquiries() {
       setBulkUpdateStatus("");
     },
     onError: (error) => {
+      console.error('🔍 Bulk update error:', error);
       toast({
         title: "Error",
         description: "Failed to update bookings. Please try again.",
