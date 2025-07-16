@@ -580,6 +580,11 @@ export default function Enquiries() {
 
   // Helper function to determine if response is needed
   const needsResponse = (enquiry: Enquiry): boolean => {
+    // Never show response needed for final statuses
+    if (enquiry.status === 'contract_received' || enquiry.status === 'completed' || enquiry.status === 'rejected') {
+      return false;
+    }
+    
     // Check if explicitly marked as needing response
     if (enquiry.responseNeeded) return true;
     
