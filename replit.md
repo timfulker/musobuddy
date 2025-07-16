@@ -140,6 +140,16 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Instrument Loading Fixed**: Saved instrument selections now properly load and display when returning to settings page
   * **Status**: Settings page fully operational with real database persistence and proper data loading
 
+- July 16, 2025. Bookings page enhanced with bulk operations and status button interface:
+  * **Bulk Selection System**: Added checkboxes to each booking card with "Select All" functionality
+  * **Mass Status Updates**: Bulk operations bar allows updating multiple bookings simultaneously
+  * **6-Button Status Interface**: Replaced dropdown with intuitive toggle buttons (E, P, C, R, ✓, ✗) showing active/inactive states
+  * **Status Color Coding**: Active buttons show colored state (blue, amber, green, purple, grey, red), inactive buttons show grey
+  * **Auto-completion Processing**: System processes historical past-date bookings to mark as completed
+  * **Filtered View Management**: Completed bookings hidden by default, shown only when "completed" filter selected
+  * **Fixed Navigation Issues**: Updated all routes from /enquiries to /bookings, fixed calendar page navigation
+  * **Resolved Initialization Errors**: Fixed variable declaration order preventing page loading
+
 - July 16, 2025. Enhanced instrument selection UX with core instruments and improved visual feedback:
   * **Core Instruments Display**: Limited visible instruments to 9 core types (Piano, Bass Guitar, Guitar, Drums, Saxophone, Violin, Flute, Vocals, DJ)
   * **Full Database Search**: Complete 120+ instrument database accessible through search functionality
