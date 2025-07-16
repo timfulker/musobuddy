@@ -23,7 +23,8 @@ import {
   Trash2,
   Check,
   X,
-  ChevronRight
+  ChevronRight,
+  Info
 } from 'lucide-react';
 
 interface ConflictResolutionDialogProps {
@@ -47,9 +48,13 @@ export default function ConflictResolutionDialog({
 
   console.log('🔥 ConflictResolutionDialog received:', {
     enquiry: enquiry?.id,
+    enquiryTitle: enquiry?.title,
+    enquiryClient: enquiry?.clientName,
+    enquiryDate: enquiry?.eventDate,
     conflictsReceived: conflicts,
     conflictsLength: conflicts?.length,
     conflictIds: conflicts?.map(c => c?.id),
+    conflictTitles: conflicts?.map(c => c?.title),
     isOpen,
     rawConflicts: JSON.stringify(conflicts, null, 2)
   });
@@ -58,7 +63,14 @@ export default function ConflictResolutionDialog({
   if (conflicts && conflicts.length > 0) {
     console.log('🔥 CONFLICTS EXIST:', conflicts.length, 'conflicts found');
     conflicts.forEach((conflict, index) => {
-      console.log(`🔥 Conflict ${index}:`, conflict);
+      console.log(`🔥 Conflict ${index}:`, {
+        id: conflict?.id,
+        title: conflict?.title,
+        clientName: conflict?.clientName,
+        eventDate: conflict?.eventDate,
+        type: conflict?.type,
+        status: conflict?.status
+      });
     });
   } else {
     console.log('🔥 NO CONFLICTS FOUND - conflicts array is:', conflicts);
@@ -69,19 +81,19 @@ export default function ConflictResolutionDialog({
   const [newTime, setNewTime] = useState<string>('');
   const [newEndTime, setNewEndTime] = useState<string>('');
   const [rejectReason, setRejectReason] = useState<string>('');
-  
+
   // State for time editing - map of booking ID to time values
   const [bookingTimes, setBookingTimes] = useState<Record<string, { start: string; end: string }>>(() => {
     const initialTimes: Record<string, { start: string; end: string }> = {};
-    
-    // Initialize with all conflicting bookings
+
+    // Initialize with the main enquiry
     if (enquiry) {
       initialTimes[enquiry.id] = { 
         start: enquiry.eventTime || '', 
         end: enquiry.eventEndTime || '' 
       };
     }
-    
+
     // Add processed conflicts
     if (Array.isArray(conflicts)) {
       conflicts.forEach(conflict => {
@@ -93,7 +105,8 @@ export default function ConflictResolutionDialog({
         }
       });
     }
-    
+
+    console.log('🔥 Initialized booking times:', initialTimes);
     return initialTimes;
   });
 
@@ -103,17 +116,17 @@ export default function ConflictResolutionDialog({
   // Create all conflicting bookings array (new enquiry + existing conflicts)
   const allConflictingBookings = React.useMemo(() => {
     const allBookings = [enquiry];
-    
-    // Add conflicts if they exist
+
+    // Add conflicts if they exist and are valid
     if (Array.isArray(conflicts)) {
       conflicts.forEach(conflict => {
-        if (conflict && conflict.id) {
+        if (conflict && conflict.id && conflict.id !== enquiry.id) {
           allBookings.push(conflict);
         }
       });
     }
-    
-    console.log('🔥 All conflicting bookings:', {
+
+    console.log('🔥 All conflicting bookings computed:', {
       totalBookings: allBookings.length,
       bookingIds: allBookings.map(b => b.id),
       bookingDetails: allBookings.map(b => ({
@@ -121,10 +134,11 @@ export default function ConflictResolutionDialog({
         title: b.title,
         clientName: b.clientName,
         eventDate: b.eventDate,
-        eventTime: b.eventTime
+        eventTime: b.eventTime,
+        type: b.type || 'enquiry'
       }))
     });
-    
+
     return allBookings;
   }, [enquiry, conflicts]);
 
@@ -137,6 +151,7 @@ export default function ConflictResolutionDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
       queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
       toast({
         title: "Success",
@@ -161,6 +176,7 @@ export default function ConflictResolutionDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
       queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
       toast({
         title: "Success",
@@ -228,7 +244,7 @@ export default function ConflictResolutionDialog({
       status: 'rejected',
       notes: rejectReason
     });
-    
+
     onClose();
   };
 
@@ -248,23 +264,31 @@ export default function ConflictResolutionDialog({
 
   const renderBookingCard = (booking: any, isNewEnquiry: boolean) => {
     const timeData = bookingTimes[booking.id] || { start: '', end: '' };
-    
+    const bookingType = booking.type || (isNewEnquiry ? 'new_enquiry' : 'existing_booking');
+
     return (
       <Card key={booking.id} className={`${isNewEnquiry ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <Badge variant={isNewEnquiry ? "default" : "secondary"}>
-                {isNewEnquiry ? 'New Enquiry' : 'Existing Booking'}
+                {isNewEnquiry ? 'New Enquiry' : (bookingType === 'booking' ? 'Existing Booking' : 'Conflicting Enquiry')}
               </Badge>
-              {booking.title || `${booking.clientName} - ${booking.eventType}`}
+              {booking.title || `${booking.clientName} - ${booking.eventType || 'Event'}`}
             </CardTitle>
             <Badge variant="outline" className="text-xs">
               {booking.status || 'pending'}
             </Badge>
           </div>
+          {/* Add conflict type info */}
+          {booking.type && (
+            <div className="text-xs text-gray-600 flex items-center gap-1">
+              <Info className="w-3 h-3" />
+              <span>Type: {booking.type}</span>
+            </div>
+          )}
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
@@ -282,6 +306,13 @@ export default function ConflictResolutionDialog({
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-gray-500" />
               <span>{booking.venue || 'Not specified'}</span>
+            </div>
+            <div className="flex items-center gap-2 col-span-2">
+              <Clock className="w-4 h-4 text-gray-500" />
+              <span>
+                {booking.eventTime ? `${booking.eventTime}` : 'Time not set'}
+                {booking.eventEndTime ? ` - ${booking.eventEndTime}` : ''}
+              </span>
             </div>
           </div>
 
@@ -342,7 +373,7 @@ export default function ConflictResolutionDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <AlertTriangle className="w-5 h-5 text-red-500" />
@@ -351,14 +382,20 @@ export default function ConflictResolutionDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Conflict Summary */}
+          {/* Enhanced Conflict Summary */}
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <h3 className="font-semibold text-red-800 mb-2">
               {allConflictingBookings.length} booking{allConflictingBookings.length !== 1 ? 's' : ''} on {formatDate(enquiry.eventDate)}
             </h3>
-            <p className="text-red-700 text-sm">
-              This booking has been flagged for review. Choose an action below.
+            <p className="text-red-700 text-sm mb-2">
+              This booking conflicts with {conflicts.length} other booking{conflicts.length !== 1 ? 's' : ''}. Choose an action below to resolve.
             </p>
+
+            {/* Debug information - remove in production */}
+            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+              <p><strong>Debug:</strong> Found {allConflictingBookings.length} total bookings ({conflicts.length} conflicts + 1 main enquiry)</p>
+              <p><strong>Conflicts:</strong> {conflicts.map(c => `${c.clientName} (${c.type})`).join(', ')}</p>
+            </div>
           </div>
 
           {/* Action Selection */}
@@ -381,7 +418,7 @@ export default function ConflictResolutionDialog({
             <div className="space-y-4">
               <h4 className="font-medium text-lg">Edit Booking Times</h4>
               <p className="text-sm text-gray-600 mb-4">
-                {allConflictingBookings.length} booking{allConflictingBookings.length !== 1 ? 's' : ''} to manage
+                Adjust the times for each booking to resolve the conflict. {allConflictingBookings.length} booking{allConflictingBookings.length !== 1 ? 's' : ''} to manage:
               </p>
               <div className="grid gap-4">
                 {allConflictingBookings.map((booking, index) => 
@@ -395,7 +432,7 @@ export default function ConflictResolutionDialog({
             <div className="space-y-4">
               <h4 className="font-medium text-lg">Delete Booking</h4>
               <p className="text-sm text-gray-600 mb-4">
-                Select which booking to delete:
+                Select which booking to delete ({allConflictingBookings.length} total):
               </p>
               <div className="grid gap-4">
                 {allConflictingBookings.map((booking, index) => 
@@ -425,6 +462,38 @@ export default function ConflictResolutionDialog({
               >
                 {updateBookingMutation.isPending ? 'Rejecting...' : 'Reject Enquiry'}
               </Button>
+            </div>
+          )}
+
+          {/* Show current conflict details if no action selected */}
+          {!selectedAction && (
+            <div className="space-y-4">
+              <h4 className="font-medium text-lg">Conflict Details</h4>
+              <div className="grid gap-4">
+                {allConflictingBookings.map((booking, index) => 
+                  <Card key={booking.id} className={`${index === 0 ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'}`}>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <Badge variant={index === 0 ? "default" : "destructive"} className="mb-2">
+                            {index === 0 ? 'New Enquiry' : 'Conflicting Booking'}
+                          </Badge>
+                          <h5 className="font-medium">{booking.title || `${booking.clientName} - Event`}</h5>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {booking.status || 'pending'}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div>Client: {booking.clientName}</div>
+                        <div>Venue: {booking.venue || 'Not specified'}</div>
+                        <div>Time: {booking.eventTime || 'Not set'} {booking.eventEndTime ? `- ${booking.eventEndTime}` : ''}</div>
+                        <div>Type: {booking.type || 'enquiry'}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           )}
         </div>
