@@ -1652,7 +1652,7 @@ export default function Enquiries() {
                                   <Edit className="w-3 h-3" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Edit booking details</TooltipContent>
+                              <TooltipContent>Update booking status</TooltipContent>
                             </Tooltip>
                           </div>
                         </div>
