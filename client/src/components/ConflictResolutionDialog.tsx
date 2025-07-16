@@ -391,14 +391,6 @@ export default function ConflictResolutionDialog({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Conflicting Bookings</h3>
-                <div className="text-sm text-gray-600">
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                    New Enquiry
-                  </span>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    Existing Booking
-                  </span>
-                </div>
               </div>
               
               {allConflictingBookings.map((booking, index) => {
@@ -415,16 +407,6 @@ export default function ConflictResolutionDialog({
                             <Badge className={getStatusColor(booking?.status || 'new')}>
                               {getStatusLabel(booking?.status || 'new')}
                             </Badge>
-                            {isCurrentEnquiry && (
-                              <Badge variant="outline" className="text-blue-600 border-blue-600">
-                                New Enquiry
-                              </Badge>
-                            )}
-                            {!isCurrentEnquiry && (
-                              <Badge variant="outline" className="text-gray-600 border-gray-600">
-                                Existing Booking
-                              </Badge>
-                            )}
                           </div>
                         
                           <h4 className="font-medium">{booking?.title || 'Untitled Booking'}</h4>
