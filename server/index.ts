@@ -21,15 +21,15 @@ console.log('🤖 Instrument Mapping AI initialized:', !!instrumentMappingAI);
 console.log('🤖 Conflict Resolution AI initialized:', !!conflictResolutionAI);
 console.log('🤖 Support Chat AI initialized:', !!supportChatAI);
 
-// Initialize data cleanup service
-(async () => {
-  try {
-    const { dataCleanupService } = await import('./data-cleanup-service');
-    await dataCleanupService.initialize();
-  } catch (error) {
-    console.error('Failed to initialize data cleanup service:', error);
-  }
-})();
+// Initialize data cleanup service (disabled until system is stable)
+// (async () => {
+//   try {
+//     const { dataCleanupService } = await import('./data-cleanup-service');
+//     await dataCleanupService.initialize();
+//   } catch (error) {
+//     console.error('Failed to initialize data cleanup service:', error);
+//   }
+// })();
 
 // AI-Enhanced Email Parsing Function
 async function parseEmailWithAI(emailBody: string, subject: string): Promise<{
