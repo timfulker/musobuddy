@@ -338,7 +338,7 @@ export default function Settings() {
       return result;
     },
     onSuccess: (data) => {
-      console.log('Settings saved successfully:', data);
+      console.log('✅ Settings saved successfully:', data);
       setHasChanges(false);
       toast({
         title: "Success",
@@ -348,7 +348,7 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ['global-gig-types'] });
     },
     onError: (error) => {
-      console.error('Error saving settings:', error);
+      console.error('❌ Error saving settings:', error);
       toast({
         title: "Error",
         description: "Failed to save settings. Please try again.",
@@ -358,10 +358,17 @@ export default function Settings() {
   });
 
   const onSubmit = (data: SettingsFormData) => {
-    console.log('Form submitted with data:', data);
-    console.log('hasChanges:', hasChanges);
-    console.log('selectedInstruments:', selectedInstruments);
-    console.log('gigTypes:', gigTypes);
+    console.log('🚀 Form submitted with data:', data);
+    console.log('🚀 hasChanges:', hasChanges);
+    console.log('🚀 selectedInstruments:', selectedInstruments);
+    console.log('🚀 gigTypes:', gigTypes);
+    console.log('🚀 saveSettings.isPending:', saveSettings.isPending);
+    
+    if (!hasChanges) {
+      console.log('🚀 No changes detected, skipping save');
+      return;
+    }
+    
     saveSettings.mutate(data);
   };
 
