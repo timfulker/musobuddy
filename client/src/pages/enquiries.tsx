@@ -79,9 +79,9 @@ export default function Enquiries() {
     queryKey: ["/api/settings"],
   });
 
-  // Fetch bookings data for conflict detection
+  // Fetch confirmed bookings data for conflict detection
   const { data: bookings = [] } = useQuery({
-    queryKey: ["/api/bookings"],
+    queryKey: ["/api/bookings/upcoming"],
   });
 
   // Form setup and mutations - moved before any conditional returns
@@ -807,10 +807,11 @@ export default function Enquiries() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="booking_in_progress">Booking in Progress</SelectItem>
-                  <SelectItem value="contract_sent">Contract Sent</SelectItem>
+                  <SelectItem value="new">Enquiry</SelectItem>
+                  <SelectItem value="booking_in_progress">In Progress</SelectItem>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="contract_sent">Contract Received</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
@@ -885,22 +886,24 @@ export default function Enquiries() {
         </Card>
 
         {/* Enquiries List */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedEnquiries.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No enquiries found</p>
-                <p className="text-gray-400">Create your first enquiry to get started</p>
-                <Button 
-                  className="mt-4 bg-purple-600 hover:bg-purple-700"
-                  onClick={() => setIsDialogOpen(true)}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Enquiry
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="col-span-full">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg">No enquiries found</p>
+                  <p className="text-gray-400">Create your first enquiry to get started</p>
+                  <Button 
+                    className="mt-4 bg-purple-600 hover:bg-purple-700"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Enquiry
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             sortedEnquiries.map((enquiry: Enquiry) => {
               const dateBox = formatDateBox(enquiry.eventDate!);
@@ -912,254 +915,144 @@ export default function Enquiries() {
               // Check if enquiry date is in the past
               const isPastDate = enquiry.eventDate && new Date(enquiry.eventDate) < new Date();
               
+              // Status-based styling
+              const getStatusOverlay = (status: string) => {
+                switch (status) {
+                  case "new": return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
+                  case "booking_in_progress": return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200";
+                  case "confirmed": return "bg-gradient-to-br from-green-50 to-green-100 border-green-200";
+                  case "contract_sent": return "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200";
+                  case "completed": return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
+                  case "rejected": return "bg-gradient-to-br from-red-50 to-red-100 border-red-200";
+                  default: return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
+                }
+              };
+              
+              const getStatusColor = (status: string) => {
+                switch (status) {
+                  case "new": return "text-blue-800 bg-blue-100";
+                  case "booking_in_progress": return "text-amber-800 bg-amber-100";
+                  case "confirmed": return "text-green-800 bg-green-100";
+                  case "contract_sent": return "text-purple-800 bg-purple-100";
+                  case "completed": return "text-gray-800 bg-gray-100";
+                  case "rejected": return "text-red-800 bg-red-100";
+                  default: return "text-gray-800 bg-gray-100";
+                }
+              };
+              
               return (
-                <Card key={enquiry.id} className={`hover:shadow-md transition-shadow ${getConflictCardStyling(severity)} ${isPastDate ? 'opacity-60 bg-gradient-to-r from-gray-50 to-gray-100' : ''}`}>
-                  <CardContent className="p-6">
+                <Card key={enquiry.id} className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${hasConflicts ? 'ring-2 ring-red-200' : ''}`}>
+                  <CardContent className="p-4">
                     <div className="relative">
                       <div className="absolute top-0 right-0">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteEnquiry(enquiry)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                       
-                      <div className="pr-12 flex gap-6">
-                        {/* Date Box - Encore Style with Graduated Conflict Indicator */}
-                        <div className={`relative flex-shrink-0 w-20 h-20 border-2 ${
-                          isPastDate ? 'border-gray-300 bg-gray-200' :
-                          severity.level === 'critical' ? 'border-rose-300 bg-rose-100' :
-                          severity.level === 'warning' ? 'border-amber-300 bg-amber-100' :
-                          severity.level === 'info' && severity.color === 'teal' ? 'border-teal-300 bg-teal-100' :
-                          severity.level === 'info' ? 'border-slate-300 bg-slate-100' :
-                          'border-gray-200 bg-white'
-                        } rounded-lg flex flex-col items-center justify-center`}>
-                          <div className={`text-xs font-medium ${isPastDate ? 'text-gray-500' : 'text-red-500'}`}>{dateBox.dayName}</div>
-                          <div className={`text-2xl font-bold ${isPastDate ? 'text-gray-600' : 'text-gray-900'}`}>{dateBox.dayNum}</div>
-                          <div className={`text-xs ${isPastDate ? 'text-gray-500' : 'text-gray-500'}`}>{dateBox.monthYear}</div>
-                          {hasConflicts && (
-                            <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${
-                              severity.level === 'critical' ? 'bg-rose-500' :
-                              severity.level === 'warning' ? 'bg-amber-500' :
-                              severity.level === 'info' && severity.color === 'teal' ? 'bg-teal-500' :
-                              severity.level === 'info' ? 'bg-slate-500' :
-                              'bg-gray-500'
-                            }`}>
-                              <span className="text-white text-xs font-bold">!</span>
+                      <div className="pr-8">
+                        {/* Header with Price and Status */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-lg font-bold text-green-600">
+                            {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                          </div>
+                          <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium`}>
+                            {enquiry.status === 'new' ? 'ENQUIRY' : 
+                             enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
+                             enquiry.status === 'confirmed' ? 'CONFIRMED' :
+                             enquiry.status === 'contract_sent' ? 'CONTRACT RECEIVED' :
+                             enquiry.status === 'completed' ? 'COMPLETED' :
+                             enquiry.status === 'rejected' ? 'REJECTED' :
+                             enquiry.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        </div>
+                        
+                        {/* Date and Event Info */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`flex-shrink-0 w-16 h-12 border rounded-lg flex flex-col items-center justify-center ${
+                            isPastDate ? 'border-gray-300 bg-gray-100' :
+                            severity.level === 'critical' ? 'border-rose-300 bg-rose-50' :
+                            severity.level === 'warning' ? 'border-amber-300 bg-amber-50' :
+                            'border-gray-200 bg-white'
+                          }`}>
+                            <div className={`text-xs font-medium ${isPastDate ? 'text-gray-500' : 'text-gray-700'}`}>
+                              {dateBox.dayName.slice(0, 3)}
                             </div>
+                            <div className={`text-sm font-bold ${isPastDate ? 'text-gray-600' : 'text-gray-900'}`}>
+                              {dateBox.dayNum}
+                            </div>
+                            <div className={`text-xs font-medium ${isPastDate ? 'text-gray-500' : 'text-gray-700'}`}>
+                              {dateBox.monthYear}
+                            </div>
+                            {hasConflicts && (
+                              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
+                                severity.level === 'critical' ? 'bg-rose-500' :
+                                severity.level === 'warning' ? 'bg-amber-500' :
+                                'bg-gray-500'
+                              }`}></div>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-gray-900 truncate">{enquiry.title}</h3>
+                            <p className="text-xs text-gray-600 truncate">{enquiry.clientName}</p>
+                            {enquiry.venue && (
+                              <p className="text-xs text-gray-500 truncate">{enquiry.venue}</p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Conflict and Response Indicators */}
+                        <div className="flex items-center gap-2 mb-3">
+                          {hasConflicts && (
+                            <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getConflictBadge(severity, conflicts.length)}`} title={formatConflictTooltip(severity, conflictAnalysis)}>
+                              <span>{severity.icon}</span>
+                              <span>{conflicts.length}</span>
+                            </div>
+                          )}
+                          {needsResponse(enquiry) && (
+                            <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+                              <AlertCircle className="w-3 h-3" />
+                              <span>Response needed</span>
+                            </div>
+                          )}
+                          {enquiry.applyNowLink && (
+                            <Badge className="bg-green-100 text-green-800 text-xs">
+                              🎯 ENCORE
+                            </Badge>
                           )}
                         </div>
                         
-                        {/* Main Content */}
-                        <div className="flex-1">
-                          {/* Price and Status Row */}
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-2xl font-bold text-green-600">
-                              {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {hasConflicts && (
-                                <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getConflictBadge(severity, conflicts.length)}`} title={formatConflictTooltip(severity, conflictAnalysis)}>
-                                  <span>{severity.icon} {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''}</span>
-                                </div>
-                              )}
-                              {needsResponse(enquiry) && (
-                                <div className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
-                                  <AlertCircle className="w-3 h-3" />
-                                  <span>Response needed</span>
-                                </div>
-                              )}
-                              {enquiry.applyNowLink && (
-                                <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                                  🎯 ENCORE
-                                </Badge>
-                              )}
-                              <Badge className={getStatusColor(enquiry.status)}>
-                                {enquiry.status.replace('_', ' ').toUpperCase()}
-                              </Badge>
-                            </div>
-                          </div>
-                          
-                          {/* Event Title */}
-                          <h3 className="text-xl font-semibold text-gray-900 mb-4">{enquiry.title}</h3>
-                          
-                          {/* Event Details with Icons */}
-                          <div className="space-y-2 mb-4">
-                            <div className="flex items-center text-gray-600">
-                              <User className="w-4 h-4 mr-2" />
-                              <span className="font-medium">{enquiry.clientName}</span>
-                              {enquiry.clientEmail && <span className="text-sm ml-2">• {enquiry.clientEmail}</span>}
-                            </div>
-                            
-                            {enquiry.eventTime && (
-                              <div className="flex items-center text-gray-600">
-                                <Clock className="w-4 h-4 mr-2" />
-                                <span>{enquiry.eventTime}</span>
-                              </div>
-                            )}
-                            
-                            {enquiry.venue && (
-                              <div className="flex items-center text-gray-600">
-                                <Calendar className="w-4 h-4 mr-2" />
-                                <span>{enquiry.venue}</span>
-                              </div>
-                            )}
-                            
-                            {enquiry.gigType && (
-                              <div className="flex items-center text-gray-600">
-                                <DollarSign className="w-4 h-4 mr-2" />
-                                <span>{enquiry.gigType}</span>
-                              </div>
-                            )}
-                            
-                            {/* Received Date */}
-                            <div className="flex items-center text-gray-500 text-sm mt-2 pt-2 border-t border-gray-100">
-                              <Clock className="w-3 h-3 mr-2" />
-                              <span>Received: {formatReceivedDate(enquiry.createdAt!)}</span>
-                            </div>
-                          </div>
-                          
-                          {/* Notes Section */}
-                          {enquiry.notes && (
-                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                              {(() => {
-                                const notes = enquiry.notes || '';
-                                
-                                // Handle both old and new format
-                                let mainNotes = notes;
-                                let metadata = '';
-                                
-                                // Check for old format with "--- Contact Details ---"
-                                if (notes.includes('--- Contact Details ---')) {
-                                  const sourceMatch = notes.match(/Source: ([^\n]+)/);
-                                  const contactMatch = notes.match(/Contact Method: ([^\n]+)/);
-                                  mainNotes = notes.replace(/\n*--- Contact Details ---[\s\S]*$/, '').trim();
-                                  
-                                  if (contactMatch) {
-                                    metadata = `Contact Method - ${contactMatch[1]}`;
-                                  }
-                                }
-                                // Check for new "Contact Method - Phone" format
-                                else if (notes.includes('Contact Method -')) {
-                                  const contactMatch = notes.match(/Contact Method - ([^\n]+)/);
-                                  mainNotes = notes.replace(/\n\nContact Method -.*$/, '').trim();
-                                  
-                                  if (contactMatch) {
-                                    metadata = `Contact Method - ${contactMatch[1]}`;
-                                  }
-                                }
-                                // Check for simple "Source:" format without header
-                                else if (notes.includes('Source:')) {
-                                  const sourceMatch = notes.match(/Source: ([^\n•]+)/);
-                                  const contactMatch = notes.match(/Contact: ([^\n]+)/);
-                                  mainNotes = notes.replace(/\n\nSource:.*$/, '').trim();
-                                  
-                                  if (contactMatch) {
-                                    metadata = `Contact Method - ${contactMatch[1]}`;
-                                  }
-                                }
-                                // Check for new simple format (just "Email • Phone")
-                                else {
-                                  const parts = notes.split('\n\n');
-                                  if (parts.length > 1) {
-                                    const lastPart = parts[parts.length - 1];
-                                    if (lastPart.includes('•')) {
-                                      mainNotes = parts.slice(0, -1).join('\n\n').trim();
-                                      metadata = lastPart;
-                                    }
-                                  } else if (notes.includes('•') && !notes.includes('\n')) {
-                                    // If it's just metadata without main notes
-                                    mainNotes = '';
-                                    metadata = notes;
-                                  }
-                                }
-                                
-                                return (
-                                  <div className="space-y-2">
-                                    {mainNotes && (
-                                      <p className="text-sm text-gray-700">{mainNotes}</p>
-                                    )}
-                                    {metadata && (
-                                      <div className="text-xs text-gray-500 border-t pt-2">
-                                        <span>{metadata}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          )}
-                          
-                          {/* Enhanced Conflict Analysis Section */}
-                          {hasConflicts && (
-                            <div className={`mt-4 p-4 ${severity.bgColor} border ${severity.borderColor} rounded-lg`}>
-                              <div className="flex items-center space-x-2 mb-3">
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                                  severity.level === 'critical' ? 'bg-red-500' :
-                                  severity.level === 'warning' ? 'bg-orange-500' :
-                                  severity.level === 'info' ? 'bg-blue-500' :
-                                  'bg-amber-500'
-                                }`}>
-                                  <span className="text-white text-xs font-bold">{severity.icon}</span>
-                                </div>
-                                <h4 className={`text-sm font-semibold ${severity.textColor}`}>
-                                  {severity.message}
-                                </h4>
-                              </div>
-                              <div className="space-y-2">
-                                {conflicts.map((conflict, index) => (
-                                  <div key={index} className={`flex items-center justify-between p-2 rounded border ${
-                                    conflict.type === 'booking' ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
-                                  }`}>
-                                    <div className="flex items-center space-x-3">
-                                      <div className={`w-3 h-3 rounded-full ${conflict.type === 'booking' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
-                                      <div>
-                                        <p className={`text-sm font-medium ${conflict.type === 'booking' ? 'text-red-900' : 'text-gray-900'}`}>
-                                          {conflict.title}
-                                        </p>
-                                        <p className={`text-xs ${conflict.type === 'booking' ? 'text-red-600' : 'text-gray-500'}`}>
-                                          {conflict.type === 'booking' ? '🚫 CONFIRMED BOOKING' : 'Enquiry'}
-                                          {conflict.venue && ` • ${conflict.venue}`}
-                                          {conflict.eventTime && ` • ${conflict.eventTime}`}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className={`text-xs ${conflict.type === 'booking' ? 'text-red-600' : 'text-gray-500'}`}>
-                                      {new Date(conflict.eventDate).toLocaleDateString()}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              
-                              {/* Smart Recommendation */}
-                              <div className={`mt-3 p-2 rounded text-xs ${
-                                severity.level === 'critical' ? 'bg-red-100 text-red-800' :
-                                severity.level === 'warning' ? 'bg-orange-100 text-orange-800' :
-                                severity.level === 'info' ? 'bg-blue-100 text-blue-800' :
-                                'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                💡 {severity.message}
-                              </div>
-
-
-                            </div>
-                          )}
-                          
-                          {/* Action Buttons */}
-                          <div className="mt-4 flex justify-end gap-2">
+                        {/* Action Buttons */}
+                        <div className="flex justify-between items-center">
+                          <Button
+                            onClick={() => {
+                              setSelectedEnquiry(enquiry);
+                              setRespondDialogOpen(true);
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                          >
+                            <Reply className="w-3 h-3 mr-1" />
+                            Respond
+                          </Button>
+                          <div className="flex gap-1">
                             <Button
                               onClick={() => {
                                 setSelectedBookingForDetails(enquiry);
                                 setBookingDetailsDialogOpen(true);
                               }}
                               variant="outline"
-                              className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                              size="sm"
+                              className="text-xs"
                             >
-                              <Info className="w-4 h-4 mr-2" />
-                              Details
+                              <Info className="w-3 h-3" />
                             </Button>
                             <Button
                               onClick={() => {
@@ -1167,33 +1060,10 @@ export default function Enquiries() {
                                 setBookingStatusDialogOpen(true);
                               }}
                               variant="outline"
-                              className="border-green-300 text-green-600 hover:bg-green-50"
+                              size="sm"
+                              className="text-xs"
                             >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Update Status
-                            </Button>
-                            {enquiry.status === 'confirmed' && (
-                              <Button
-                                onClick={() => {
-                                  setSelectedBookingForCompliance(enquiry);
-                                  setComplianceDialogOpen(true);
-                                }}
-                                variant="outline"
-                                className="border-orange-300 text-orange-600 hover:bg-orange-50"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                Send Compliance
-                              </Button>
-                            )}
-                            <Button
-                              onClick={() => {
-                                setSelectedEnquiry(enquiry);
-                                setRespondDialogOpen(true);
-                              }}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                              <Reply className="w-4 h-4 mr-2" />
-                              Respond
+                              <Edit className="w-3 h-3" />
                             </Button>
                           </div>
                         </div>
