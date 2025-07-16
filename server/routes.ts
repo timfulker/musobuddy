@@ -3060,6 +3060,83 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Data cleanup service routes
+  app.get('/api/cleanup/undo-items', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { dataCleanupService } = await import('./data-cleanup-service');
+      
+      const undoItems = dataCleanupService.getUndoItems(userId);
+      res.json({ undoItems });
+    } catch (error) {
+      console.error('Error fetching undo items:', error);
+      res.status(500).json({ error: 'Failed to fetch undo items' });
+    }
+  });
+
+  app.post('/api/cleanup/undo/:table/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { table, id } = req.params;
+      const { dataCleanupService } = await import('./data-cleanup-service');
+      
+      const success = await dataCleanupService.undoDelete(userId, parseInt(id), table);
+      
+      if (success) {
+        res.json({ message: 'Item restored successfully' });
+      } else {
+        res.status(400).json({ error: 'Failed to restore item' });
+      }
+    } catch (error) {
+      console.error('Error undoing delete:', error);
+      res.status(500).json({ error: 'Failed to undo delete' });
+    }
+  });
+
+  app.post('/api/cleanup/soft-delete/:table/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { table, id } = req.params;
+      const { description } = req.body;
+      const { dataCleanupService } = await import('./data-cleanup-service');
+      
+      const success = await dataCleanupService.softDelete(table, parseInt(id), userId, description);
+      
+      if (success) {
+        res.json({ message: 'Item deleted successfully (can be undone)' });
+      } else {
+        res.status(400).json({ error: 'Failed to delete item' });
+      }
+    } catch (error) {
+      console.error('Error in soft delete:', error);
+      res.status(500).json({ error: 'Failed to delete item' });
+    }
+  });
+
+  app.post('/api/cleanup/maintenance', isAuthenticated, async (req: any, res) => {
+    try {
+      const { dataCleanupService } = await import('./data-cleanup-service');
+      await dataCleanupService.runMaintenanceCleanup();
+      res.json({ message: 'Maintenance cleanup completed' });
+    } catch (error) {
+      console.error('Error in maintenance cleanup:', error);
+      res.status(500).json({ error: 'Failed to run maintenance cleanup' });
+    }
+  });
+
+  app.post('/api/cleanup/flush-user-data', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { dataCleanupService } = await import('./data-cleanup-service');
+      
+      await dataCleanupService.flushUserData(userId);
+      res.json({ message: 'User data flushed successfully' });
+    } catch (error) {
+      console.error('Error flushing user data:', error);
+      res.status(500).json({ error: 'Failed to flush user data' });
+    }
+  });
+
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {
     console.log(`=== UNMATCHED ROUTE: ${req.method} ${req.originalUrl} ===`);
