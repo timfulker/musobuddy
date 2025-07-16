@@ -95,6 +95,36 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   
   const data = await response.json();
   
+  // Parse stringified JSON fields
+  let parsedInstruments = [];
+  let parsedGigTypes = [];
+  
+  try {
+    if (data.selectedInstruments && typeof data.selectedInstruments === 'string') {
+      parsedInstruments = JSON.parse(data.selectedInstruments);
+    } else if (Array.isArray(data.selectedInstruments)) {
+      parsedInstruments = data.selectedInstruments;
+    }
+  } catch (e) {
+    console.warn('Failed to parse selectedInstruments:', e);
+  }
+  
+  try {
+    if (data.gigTypes && typeof data.gigTypes === 'string') {
+      // Handle both array format and PostgreSQL set format
+      if (data.gigTypes.startsWith('[')) {
+        parsedGigTypes = JSON.parse(data.gigTypes);
+      } else if (data.gigTypes.startsWith('{')) {
+        // PostgreSQL set format: {"item1","item2","item3"}
+        parsedGigTypes = data.gigTypes.slice(1, -1).split(',').map(item => item.replace(/"/g, ''));
+      }
+    } else if (Array.isArray(data.gigTypes)) {
+      parsedGigTypes = data.gigTypes;
+    }
+  } catch (e) {
+    console.warn('Failed to parse gigTypes:', e);
+  }
+  
   // Transform the data to match the expected form structure
   return {
     businessName: data.businessName || "",
@@ -106,6 +136,8 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     nextInvoiceNumber: data.nextInvoiceNumber || 1,
     defaultTerms: data.defaultTerms || "",
     bankDetails: data.bankDetails || "",
+    selectedInstruments: parsedInstruments,
+    gigTypes: parsedGigTypes,
   };
 };
 
