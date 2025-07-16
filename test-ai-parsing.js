@@ -15,8 +15,27 @@ if (!apiKey) {
 const openai = new OpenAI({ apiKey });
 
 async function testAIParsing() {
-  const subject = "wedding enquiry";
-  const body = "Hi Tim, are you available to play a wedding on August 19 in Cornwall?";
+  const subject = "Fwd: wedding enquiry";
+  const body = `Kind Regards
+
+Tim
+
+Tim Fulker
+timfulker@gmail.com
+---------- Forwarded message ----------
+From: Tim Fulker <timfulker@gmail.com>
+Date: 16 Jul 2025 at 18:32 +0100
+To: leads@mg.musobuddy.com
+Subject: wedding enquiry
+
+> Hi Tim, are you available for a wedding on November 24 in Swindon?
+>
+> Kind Regards
+>
+> Tim
+>
+> Tim Fulker
+> timfulker@gmail.com`;
   
   console.log('🧪 Testing AI parsing...');
   console.log('📧 Subject:', subject);
