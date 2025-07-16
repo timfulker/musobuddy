@@ -774,9 +774,7 @@ export default function Settings() {
                     </>
                   )}
                 </Button>
-                <div className="ml-2 text-xs text-gray-500 self-center">
-                  Debug: hasChanges = {hasChanges ? 'true' : 'false'}
-                </div>
+
               </div>
             </form>
           </Form>
