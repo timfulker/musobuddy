@@ -128,8 +128,8 @@ export default function KanbanBoard() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base md:text-lg">Enquiry Pipeline</CardTitle>
           <div className="flex items-center space-x-1 md:space-x-2">
-            <Link href="/enquiries">
-              <Button variant="ghost" size="sm" className="h-8 w-8 md:h-10 md:w-10" title="View all enquiries">
+            <Link href="/bookings">
+              <Button variant="ghost" size="sm" className="h-8 w-8 md:h-10 md:w-10" title="View all bookings">
                 <Eye className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
             </Link>
@@ -151,7 +151,7 @@ export default function KanbanBoard() {
                   {groupedEnquiries.new.map((enquiry: Enquiry) => {
                     const dateBox = formatDateBox(enquiry.eventDate!);
                     return (
-                      <Link key={enquiry.id} href="/enquiries">
+                      <Link key={enquiry.id} href="/bookings">
                         <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
                           <CardContent className="p-4">
                             <div className="flex gap-4">
@@ -249,7 +249,7 @@ export default function KanbanBoard() {
                   const conflict = getEnquiryConflict(enquiry.id);
                   
                   return (
-                    <Link key={enquiry.id} href="/enquiries">
+                    <Link key={enquiry.id} href="/bookings">
                       <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
                         <CardContent className="p-4">
                           <div className="flex gap-4">
@@ -329,7 +329,7 @@ export default function KanbanBoard() {
                   const conflict = getEnquiryConflict(enquiry.id);
                   
                   return (
-                    <Link key={enquiry.id} href="/enquiries">
+                    <Link key={enquiry.id} href="/bookings">
                       <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
                         <CardContent className="p-4">
                           <div className="flex gap-4">
@@ -414,7 +414,7 @@ export default function KanbanBoard() {
                   const conflict = getEnquiryConflict(enquiry.id);
                   
                   return (
-                    <Link key={enquiry.id} href="/enquiries">
+                    <Link key={enquiry.id} href="/bookings">
                       <Card className="hover:shadow-md transition-shadow bg-white cursor-pointer">
                         <CardContent className="p-4">
                           <div className="flex gap-4">

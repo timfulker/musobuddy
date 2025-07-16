@@ -27,7 +27,7 @@ export default function DashboardHeader() {
           <div className="hidden md:block relative">
             <Input 
               type="text" 
-              placeholder="Search enquiries..." 
+              placeholder="Search bookings..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-64 pl-10"
@@ -42,10 +42,10 @@ export default function DashboardHeader() {
           <NotificationsDropdown />
           
           {/* Quick Actions */}
-          <Link href="/enquiries?action=new">
+          <Link href="/bookings?action=new">
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">New Enquiry</span>
+              <span className="hidden sm:inline">New Booking</span>
               <span className="sm:hidden">New</span>
             </Button>
           </Link>

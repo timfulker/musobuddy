@@ -53,7 +53,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Dashboard} />
-          <Route path="/enquiries" component={Enquiries} />
+          <Route path="/bookings" component={Enquiries} />
           <Route path="/address-book" component={AddressBook} />
           <Route path="/contracts" component={Contracts} />
           <Route path="/invoices" component={Invoices} />
