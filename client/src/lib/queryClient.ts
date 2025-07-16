@@ -22,11 +22,16 @@ export async function apiRequest(
   }
 ): Promise<Response> {
   const method = options?.method || 'GET';
-  const body = options?.body;
+  let body = options?.body;
   const headers = options?.headers || {};
   
-  if (body && typeof body === 'string') {
-    headers['Content-Type'] = 'application/json';
+  if (body) {
+    if (typeof body === 'object') {
+      body = JSON.stringify(body);
+      headers['Content-Type'] = 'application/json';
+    } else if (typeof body === 'string') {
+      headers['Content-Type'] = 'application/json';
+    }
   }
 
   const res = await fetch(url, {
