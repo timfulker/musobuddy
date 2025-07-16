@@ -2779,6 +2779,13 @@ Powered by MusoBuddy – less admin, more music
       console.log("🔥 customInstruments in request:", req.body.customInstruments);
       
       const settingsData = { ...req.body, userId };
+      
+      // Save global gig types if provided
+      if (req.body.gigTypes && Array.isArray(req.body.gigTypes)) {
+        await storage.saveGlobalGigTypes(userId, req.body.gigTypes);
+        console.log("🔥 Global gig types saved:", req.body.gigTypes);
+      }
+      
       console.log("🔥 Settings data to save:", settingsData);
       console.log("🔥 customInstruments in settings data:", settingsData.customInstruments);
       
@@ -2791,6 +2798,35 @@ Powered by MusoBuddy – less admin, more music
       console.error("Error details:", error.message);
       console.error("Error stack:", error.stack);
       res.status(500).json({ message: "Failed to save settings" });
+    }
+  });
+
+  // Global gig types routes
+  app.get('/api/global-gig-types', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const gigTypes = await storage.getGlobalGigTypes(userId);
+      res.json(gigTypes);
+    } catch (error) {
+      console.error("Error fetching global gig types:", error);
+      res.status(500).json({ message: "Failed to fetch gig types" });
+    }
+  });
+
+  app.post('/api/global-gig-types', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { gigTypes } = req.body;
+      
+      if (!Array.isArray(gigTypes)) {
+        return res.status(400).json({ message: "gigTypes must be an array" });
+      }
+      
+      await storage.saveGlobalGigTypes(userId, gigTypes);
+      res.json({ message: "Gig types saved successfully" });
+    } catch (error) {
+      console.error("Error saving global gig types:", error);
+      res.status(500).json({ message: "Failed to save gig types" });
     }
   });
 

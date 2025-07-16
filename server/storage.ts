@@ -32,6 +32,7 @@ import {
   instrumentMappings,
   type InstrumentMapping,
   type InsertInstrumentMapping,
+  globalGigTypes,
 
 } from "@shared/schema";
 import { db } from "./db";
@@ -124,6 +125,11 @@ export interface IStorage {
   getInstrumentMapping(instrument: string): Promise<InstrumentMapping | undefined>;
   createInstrumentMapping(mapping: InsertInstrumentMapping): Promise<InstrumentMapping>;
   getAllInstrumentMappings(): Promise<InstrumentMapping[]>;
+  clearInstrumentMapping(instrument: string): Promise<boolean>;
+  
+  // Global gig types operations
+  getGlobalGigTypes(userId: string): Promise<string[]>;
+  saveGlobalGigTypes(userId: string, gigTypes: string[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1013,6 +1019,42 @@ export class DatabaseStorage implements IStorage {
       .delete(instrumentMappings)
       .where(eq(instrumentMappings.instrument, instrument.toLowerCase()));
     return result.rowCount! > 0;
+  }
+
+  // Global gig types operations
+  async getGlobalGigTypes(userId: string): Promise<string[]> {
+    const [result] = await db
+      .select()
+      .from(globalGigTypes)
+      .where(eq(globalGigTypes.userId, userId));
+    
+    if (result) {
+      return JSON.parse(result.gigTypes);
+    }
+    return [];
+  }
+
+  async saveGlobalGigTypes(userId: string, gigTypes: string[]): Promise<void> {
+    await db
+      .insert(globalGigTypes)
+      .values({
+        userId,
+        gigTypes: JSON.stringify(gigTypes),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: globalGigTypes.userId,
+        set: {
+          gigTypes: JSON.stringify(gigTypes),
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  // Placeholder implementation for getBookingsNew (should be removed in actual implementation)
+  async getBookingsNew(userId: string): Promise<Enquiry[]> {
+    return this.getEnquiries(userId);
   }
 }
 

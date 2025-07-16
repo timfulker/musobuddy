@@ -240,6 +240,15 @@ export const instrumentMappings = pgTable("instrument_mappings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Global gig types table - stores user's selected gig types for dropdown population
+export const globalGigTypes = pgTable("global_gig_types", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  gigTypes: text("gig_types").notNull(), // JSON array of gig types
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Booking conflicts table
 export const bookingConflicts = pgTable("booking_conflicts", {
   id: serial("id").primaryKey(),

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -64,6 +65,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   const [newFieldValue, setNewFieldValue] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch global gig types for dropdown options
+  const { data: globalGigTypes = [] } = useQuery({
+    queryKey: ['/api/global-gig-types'],
+    enabled: open // Only fetch when dialog is open
+  });
 
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
@@ -399,7 +406,27 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <FormItem>
                           <FormLabel>Gig Type</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={!isEditing} placeholder="Saxophone, DJ, etc." />
+                            {isEditing ? (
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select gig type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {globalGigTypes.map((gigType: string) => (
+                                    <SelectItem key={gigType} value={gigType}>
+                                      {gigType}
+                                    </SelectItem>
+                                  ))}
+                                  {globalGigTypes.length === 0 && (
+                                    <SelectItem value="" disabled>
+                                      No gig types available - configure in Settings
+                                    </SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input {...field} disabled={true} placeholder="Saxophone, DJ, etc." />
+                            )}
                           </FormControl>
                           <FormMessage />
                         </FormItem>
