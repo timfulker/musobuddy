@@ -1368,40 +1368,7 @@ export default function Enquiries() {
           </CardContent>
         </Card>
 
-        {/* Conflict Indicators Visual Key */}
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
-              <h3 className="font-medium text-blue-900">Conflict Indicators</h3>
-              <div className="flex flex-wrap items-center gap-4 text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-rose-500 rounded-full"></div>
-                  <span className="text-rose-800">🚫 CONFIRMED BOOKING</span>
-                  <span className="text-gray-500 hidden sm:inline">- Double booking risk</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                  <span className="text-amber-800">⚠️ Warning</span>
-                  <span className="text-gray-500 hidden sm:inline">- Time/venue conflict</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
-                  <span className="text-teal-800">👤 Same Client</span>
-                  <span className="text-gray-500 hidden sm:inline">- Multiple events</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-slate-500 rounded-full"></div>
-                  <span className="text-slate-800">📅 Same Day</span>
-                  <span className="text-gray-500 hidden sm:inline">- Check timing</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-green-800">✅ No Conflicts</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Enquiries List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

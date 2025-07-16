@@ -25,36 +25,21 @@ export function analyzeConflictSeverity(
   enquiry: any,
   analysis: ConflictAnalysis
 ): ConflictSeverity {
-  // IMPORTANT: Only show green checkmark if truly no conflicts exist
-  // If there are multiple bookings on same date, always show warning icon
+  // No conflicts - no indicator needed (default state)
   if (analysis.conflictCount === 0) {
     return {
       level: 'none',
-      color: 'green',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      textColor: 'text-green-800',
-      icon: '✅',
-      message: 'No conflicts detected',
+      color: 'transparent',
+      bgColor: '',
+      borderColor: '',
+      textColor: '',
+      icon: '',
+      message: '',
       canProceed: true
     };
   }
   
-  // Warning conflicts - Same date as unconfirmed enquiry (potential scheduling conflict)
-  if (analysis.unconfirmedEnquiry) {
-    return {
-      level: 'warning',
-      color: 'amber',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-300',
-      textColor: 'text-amber-800',
-      icon: '⚠️',
-      message: 'Same date as unconfirmed enquiry - potential scheduling conflict',
-      canProceed: true
-    };
-  }
-
-  // Critical conflicts - Same date as confirmed booking (double booking risk)
+  // Critical conflicts - Same date as confirmed booking (RED FLAG)
   if (analysis.confirmedBooking) {
     return {
       level: 'critical',
@@ -68,57 +53,29 @@ export function analyzeConflictSeverity(
     };
   }
 
-  // Warning conflicts - Use amber to avoid calendar's blue (in progress)
-  if (analysis.hasTimeOverlap && !analysis.sameClient) {
+  // Same day but different times - can coexist (ORANGE FLAG)
+  if (analysis.conflictCount > 0) {
     return {
       level: 'warning',
-      color: 'amber',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-300',
-      textColor: 'text-amber-800',
+      color: 'orange',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-300',
+      textColor: 'text-orange-800',
       icon: '⚠️',
-      message: 'Time overlap with other enquiries - review carefully',
+      message: 'Same day booking - check times to avoid overlap',
       canProceed: true
     };
   }
 
-  // Same venue conflicts between enquiries
-  if (analysis.sameVenue && !analysis.sameClient) {
-    return {
-      level: 'warning',
-      color: 'amber',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-300',
-      textColor: 'text-amber-800',
-      icon: '📍',
-      message: 'Same venue with other enquiries - check logistics',
-      canProceed: true
-    };
-  }
-
-  // Same client conflicts - Use teal to avoid calendar's blue
-  if (analysis.sameClient) {
-    return {
-      level: 'info',
-      color: 'teal',
-      bgColor: 'bg-teal-50',
-      borderColor: 'border-teal-300',
-      textColor: 'text-teal-800',
-      icon: '👤',
-      message: 'Same client - multiple events possible',
-      canProceed: true
-    };
-  }
-
-  // Soft conflicts - Use slate for neutral same-day conflicts
+  // Fallback - should not reach here
   return {
-    level: 'info',
-    color: 'slate',
-    bgColor: 'bg-slate-50',
-    borderColor: 'border-slate-300',
-    textColor: 'text-slate-800',
-    icon: '📅',
-    message: 'Same day as other enquiries - check timing',
+    level: 'none',
+    color: 'transparent',
+    bgColor: '',
+    borderColor: '',
+    textColor: '',
+    icon: '',
+    message: '',
     canProceed: true
   };
 }
@@ -129,10 +86,8 @@ export function getConflictCardStyling(severity: ConflictSeverity): string {
       return `border-l-4 border-l-red-500 ${severity.bgColor} shadow-md`;
     case 'warning':
       return `border-l-4 border-l-orange-500 ${severity.bgColor}`;
-    case 'info':
-      return `border-l-4 border-l-blue-500 ${severity.bgColor}`;
     default:
-      return 'border-l-4 border-l-green-500 bg-white';
+      return 'border-l-4 border-l-gray-200 bg-white';
   }
 }
 
@@ -143,13 +98,11 @@ export function getConflictBadge(severity: ConflictSeverity, conflictCount: numb
   
   switch (severity.level) {
     case 'critical':
-      return `${baseClasses} bg-rose-100 text-rose-800 border border-rose-200`;
+      return `${baseClasses} bg-red-100 text-red-800 border border-red-200`;
     case 'warning':
-      return `${baseClasses} bg-amber-100 text-amber-800 border border-amber-200`;
-    case 'info':
-      return `${baseClasses} ${severity.color === 'teal' ? 'bg-teal-100 text-teal-800 border border-teal-200' : 'bg-slate-100 text-slate-800 border border-slate-200'}`;
+      return `${baseClasses} bg-orange-100 text-orange-800 border border-orange-200`;
     default:
-      return `${baseClasses} bg-slate-100 text-slate-800 border border-slate-200`;
+      return '';
   }
 }
 
