@@ -44,7 +44,8 @@ export default function ActionableEnquiries() {
       console.log('Conflict data from API:', {
         enquiryId: enquiry.id,
         conflictingBookings: conflictingBookings.length,
-        bookings: conflictingBookings
+        bookings: conflictingBookings,
+        enquiryConflict: enquiryConflict
       });
       
       setSelectedConflictEnquiry(enquiry);

@@ -299,9 +299,6 @@ export default function ConflictResolutionDialog({
                         <div className="flex items-start justify-between">
                           <div className="flex-1 space-y-2">
                             <div className="flex items-center space-x-2">
-                              <Badge className={getStatusColor(booking?.status || 'new')}>
-                                {getStatusLabel(booking?.status || 'new')}
-                              </Badge>
                               {isCurrentEnquiry ? (
                                 <Badge variant="outline" className="text-blue-600 border-blue-600">
                                   New
