@@ -66,11 +66,14 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch global gig types for dropdown options
-  const { data: globalGigTypes = [] } = useQuery({
-    queryKey: ['/api/global-gig-types'],
+  // Fetch user's personalized gig types from settings
+  const { data: userSettings } = useQuery({
+    queryKey: ['settings'],
     enabled: open // Only fetch when dialog is open
   });
+
+  // Extract gig types from user settings
+  const userGigTypes = userSettings?.gigTypes || [];
 
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
@@ -412,12 +415,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                                   <SelectValue placeholder="Select gig type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {globalGigTypes.map((gigType: string) => (
+                                  {userGigTypes.map((gigType: string) => (
                                     <SelectItem key={gigType} value={gigType}>
                                       {gigType}
                                     </SelectItem>
                                   ))}
-                                  {globalGigTypes.length === 0 && (
+                                  {userGigTypes.length === 0 && (
                                     <SelectItem value="" disabled>
                                       No gig types available - configure in Settings
                                     </SelectItem>
