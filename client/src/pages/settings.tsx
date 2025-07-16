@@ -236,8 +236,9 @@ export default function Settings() {
 
   // Add custom gig type
   const addCustomGig = () => {
-    if (customGig && !gigTypes.includes(customGig)) {
-      setGigTypes([...gigTypes, customGig]);
+    const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
+    if (customGig && !currentGigTypes.includes(customGig)) {
+      setGigTypes([...currentGigTypes, customGig]);
       setCustomGig("");
       setShowGigInput(false);
     }
@@ -245,7 +246,8 @@ export default function Settings() {
 
   // Remove gig type
   const removeGigType = (gigType: string) => {
-    setGigTypes(gigTypes.filter(g => g !== gigType));
+    const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
+    setGigTypes(currentGigTypes.filter(g => g !== gigType));
   };
 
   // Filter instruments based on search - show core instruments by default, all instruments when searching
@@ -261,8 +263,8 @@ export default function Settings() {
       // Include selected instruments and gig types in the saved data
       const settingsData = {
         ...data,
-        selectedInstruments,
-        gigTypes,
+        selectedInstruments: Array.isArray(selectedInstruments) ? selectedInstruments : [],
+        gigTypes: Array.isArray(gigTypes) ? gigTypes : [],
       };
       
       console.log('Saving settings:', settingsData);
@@ -562,13 +564,14 @@ export default function Settings() {
                         <div className="mb-4">
                           <h4 className="text-sm font-medium mb-2">Latest AI Suggestions (click to add):</h4>
                           <div className="flex flex-wrap gap-2">
-                            {aiSuggestions.filter(suggestion => !gigTypes.includes(suggestion)).map((suggestion, index) => (
+                            {aiSuggestions.filter(suggestion => !Array.isArray(gigTypes) || !gigTypes.includes(suggestion)).map((suggestion, index) => (
                               <Badge
                                 key={index}
                                 variant="outline"
                                 className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 text-purple-800 cursor-pointer hover:bg-purple-100 transition-colors"
                                 onClick={() => {
-                                  setGigTypes([...gigTypes, suggestion]);
+                                  const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
+                                  setGigTypes([...currentGigTypes, suggestion]);
                                 }}
                               >
                                 + {suggestion}
@@ -579,7 +582,7 @@ export default function Settings() {
                       )}
                       
                       {/* Current Gig Types */}
-                      {gigTypes.length > 0 && (
+                      {Array.isArray(gigTypes) && gigTypes.length > 0 && (
                         <div>
                           <h4 className="text-sm font-medium mb-2">Your Gig Types (click to remove):</h4>
                           <div className="flex flex-wrap gap-2">
