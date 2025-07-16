@@ -39,8 +39,12 @@ export function analyzeConflictSeverity(
     };
   }
   
-  // Critical conflicts - Same date as confirmed booking (RED FLAG)
-  if (analysis.confirmedBooking) {
+  // Critical conflicts - Same date as confirmed booking OR another enquiry (RED FLAG)
+  if (analysis.confirmedBooking || analysis.unconfirmedEnquiry) {
+    const message = analysis.confirmedBooking 
+      ? 'CONFIRMED BOOKING CONFLICT - Double booking risk'
+      : 'ENQUIRY CONFLICT - Multiple enquiries on same date';
+    
     return {
       level: 'critical',
       color: 'red',
@@ -48,7 +52,7 @@ export function analyzeConflictSeverity(
       borderColor: 'border-red-300',
       textColor: 'text-red-800',
       icon: '🚫',
-      message: 'CONFIRMED BOOKING CONFLICT - Double booking risk',
+      message: message,
       canProceed: false
     };
   }
