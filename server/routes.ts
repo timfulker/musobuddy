@@ -2388,8 +2388,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bookingId = parseInt(req.params.id);
       const updateData = { ...req.body };
       
-      console.log(`🔍 BACKEND: Updating booking ${bookingId} with data:`, updateData);
-      
       // Convert eventDate string to Date if present
       if (updateData.eventDate && typeof updateData.eventDate === 'string') {
         updateData.eventDate = new Date(updateData.eventDate);
@@ -2397,11 +2395,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedBooking = await storage.updateBooking(bookingId, updateData, userId);
       if (!updatedBooking) {
-        console.log(`🔍 BACKEND: Booking ${bookingId} not found`);
         return res.status(404).json({ message: "Booking not found" });
       }
       
-      console.log(`🔍 BACKEND: Successfully updated booking ${bookingId}, new status:`, updatedBooking.status);
       res.json(updatedBooking);
     } catch (error) {
       console.error("Error updating booking:", error);
