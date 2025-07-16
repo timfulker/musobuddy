@@ -424,7 +424,16 @@ export default function Settings() {
               console.log('🚀 Event:', e);
               console.log('🚀 Form valid:', form.formState.isValid);
               console.log('🚀 Form errors:', form.formState.errors);
-              return form.handleSubmit(onSubmit)(e);
+              
+              // Prevent default submission and handle manually
+              e.preventDefault();
+              
+              // Get form values directly
+              const formValues = form.getValues();
+              console.log('🚀 Form values:', formValues);
+              
+              // Call onSubmit with form values
+              onSubmit(formValues);
             }} className="space-y-6">
               {/* Add a debug div to see if form is working */}
               <div className="hidden">
