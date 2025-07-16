@@ -50,6 +50,20 @@ export default function ConflictResolutionDialog({
   const [newTime, setNewTime] = useState<string>('');
   const [newEndTime, setNewEndTime] = useState<string>('');
   const [rejectReason, setRejectReason] = useState<string>('');
+  
+  // State for time editing - map of booking ID to time values
+  const [bookingTimes, setBookingTimes] = useState<Record<string, { start: string; end: string }>>(() => {
+    const initialTimes: Record<string, { start: string; end: string }> = {};
+    if (enquiry) {
+      initialTimes[enquiry.id] = { start: enquiry.eventTime || '', end: enquiry.eventEndTime || '' };
+    }
+    if (conflicts) {
+      conflicts.forEach(conflict => {
+        initialTimes[conflict.id] = { start: conflict.eventTime || '', end: conflict.eventEndTime || '' };
+      });
+    }
+    return initialTimes;
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -247,202 +261,252 @@ export default function ConflictResolutionDialog({
             </Select>
           </div>
 
-          {/* Conflicting Bookings List */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Conflicting Bookings</h3>
-              <div className="text-sm text-gray-600">
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                  New Enquiry
-                </span>
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                  Existing Booking
-                </span>
+          {/* Unified Time Editing Interface */}
+          {selectedAction === 'edit_times' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Edit Booking Times</h3>
+                <div className="text-sm text-gray-600">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                    New Enquiry
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    Existing Booking
+                  </span>
+                </div>
               </div>
-            </div>
-            
-            {allConflictingBookings.map((booking, index) => {
-              const isCurrentEnquiry = booking?.id === enquiry?.id;
-              const isBeingEdited = editingBooking?.id === booking?.id;
               
-              return (
-                <Card key={booking?.id || index} className={`${
-                  isCurrentEnquiry ? 'border-blue-500 bg-blue-50' : 
-                  isBeingEdited ? 'border-green-500 bg-green-50 ring-2 ring-green-200' : 
-                  'border-gray-200'
-                }`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Badge className={getStatusColor(booking?.status || 'new')}>
-                            {getStatusLabel(booking?.status || 'new')}
-                          </Badge>
-                          {isCurrentEnquiry && (
-                            <Badge variant="outline" className="text-blue-600 border-blue-600">
-                              New Enquiry
-                            </Badge>
-                          )}
-                          {!isCurrentEnquiry && (
-                            <Badge variant="outline" className="text-gray-600 border-gray-600">
-                              Existing Booking
-                            </Badge>
-                          )}
-                          {isBeingEdited && (
-                            <Badge className="bg-green-100 text-green-800 border-green-300">
-                              <Edit3 className="w-3 h-3 mr-1" />
-                              Being Edited
-                            </Badge>
-                          )}
-                        </div>
-                      
-                      <h4 className="font-medium">{booking?.title || 'Untitled Booking'}</h4>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <User className="w-4 h-4 mr-2" />
-                          {booking?.clientName || 'Unknown Client'}
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="w-4 h-4 mr-2" />
-                          {formatTime(booking?.eventTime)} - {formatTime(booking?.eventEndTime)}
-                        </div>
-                        {booking?.venue && (
-                          <div className="flex items-center">
-                            <MapPin className="w-4 h-4 mr-2" />
-                            {booking.venue}
-                          </div>
-                        )}
-                        {booking?.clientEmail && (
-                          <div className="flex items-center">
-                            <Mail className="w-4 h-4 mr-2" />
-                            {booking.clientEmail}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {booking?.estimatedValue && (
-                        <div className="text-green-600 font-medium">
-                          £{booking.estimatedValue}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex space-x-2">
-                      {selectedAction === 'edit_times' && canEditTime(booking) && (
-                        <Button
-                          variant={isBeingEdited ? "default" : "outline"}
-                          size="sm"
-                          className={isBeingEdited ? "bg-green-600 hover:bg-green-700 text-white" : ""}
-                          onClick={() => {
-                            setEditingBooking(booking);
-                            setNewTime(booking.eventTime || '');
-                            setNewEndTime(booking.eventEndTime || '');
-                          }}
-                        >
-                          <Edit3 className="w-4 h-4 mr-1" />
-                          {isBeingEdited ? "Editing..." : "Edit Time"}
-                        </Button>
-                      )}
-                      
-                      {selectedAction === 'reject_enquiry' && booking.id === enquiry.id && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => rejectEnquiryMutation.mutate({ id: booking.id, reason: rejectReason })}
-                        >
-                          <X className="w-4 h-4 mr-1" />
-                          Reject
-                        </Button>
-                      )}
-                      
-                      {selectedAction === 'reject_existing' && booking.id !== enquiry.id && canReject(booking) && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => rejectEnquiryMutation.mutate({ id: booking.id, reason: 'Scheduling conflict' })}
-                        >
-                          <X className="w-4 h-4 mr-1" />
-                          Reject
-                        </Button>
-                      )}
-                      
-                      {selectedAction === 'mark_in_progress' && booking.id === enquiry.id && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-amber-500 text-amber-600 hover:bg-amber-50"
-                          onClick={() => markInProgressMutation.mutate({ id: booking.id })}
-                        >
-                          <Clock className="w-4 h-4 mr-1" />
-                          Mark In Progress
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              );
-            })}
-          </div>
-
-          {/* Time Editing Dialog */}
-          {editingBooking && (
-            <Card className="border-blue-200 bg-blue-50">
-              <CardHeader>
-                <CardTitle className="text-blue-800">
-                  Edit Time - {editingBooking.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="start-time">Start Time</Label>
-                    <Input
-                      id="start-time"
-                      type="time"
-                      value={newTime}
-                      onChange={(e) => setNewTime(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="end-time">End Time</Label>
-                    <Input
-                      id="end-time"
-                      type="time"
-                      value={newEndTime}
-                      onChange={(e) => setNewEndTime(e.target.value)}
-                    />
-                  </div>
-                </div>
+              {allConflictingBookings.map((booking, index) => {
+                const isCurrentEnquiry = booking?.id === enquiry?.id;
+                const currentTimes = bookingTimes[booking?.id] || { start: '', end: '' };
                 
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => updateTimeMutation.mutate({ 
-                      id: editingBooking.id, 
-                      eventTime: newTime, 
-                      eventEndTime: newEndTime 
-                    })}
-                    disabled={updateTimeMutation.isPending}
-                  >
-                    <Check className="w-4 h-4 mr-1" />
-                    Update Time
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditingBooking(null);
-                      setNewTime('');
-                      setNewEndTime('');
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                return (
+                  <Card key={booking?.id || index} className={`${
+                    isCurrentEnquiry ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-50'
+                  }`}>
+                    <CardContent className="p-4">
+                      <div className="space-y-4">
+                        {/* Booking Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Badge className={getStatusColor(booking?.status || 'new')}>
+                                {getStatusLabel(booking?.status || 'new')}
+                              </Badge>
+                              {isCurrentEnquiry && (
+                                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                                  New Enquiry
+                                </Badge>
+                              )}
+                              {!isCurrentEnquiry && (
+                                <Badge variant="outline" className="text-gray-600 border-gray-600">
+                                  Existing Booking
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <h4 className="font-medium">{booking?.title || 'Untitled Booking'}</h4>
+                            
+                            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                              <div className="flex items-center">
+                                <User className="w-4 h-4 mr-2" />
+                                {booking?.clientName || 'Unknown Client'}
+                              </div>
+                              {booking?.venue && (
+                                <div className="flex items-center">
+                                  <MapPin className="w-4 h-4 mr-2" />
+                                  {booking.venue}
+                                </div>
+                              )}
+                              {booking?.clientEmail && (
+                                <div className="flex items-center">
+                                  <Mail className="w-4 h-4 mr-2" />
+                                  {booking.clientEmail}
+                                </div>
+                              )}
+                              {booking?.estimatedValue && (
+                                <div className="text-green-600 font-medium">
+                                  £{booking.estimatedValue}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Time Editing Controls */}
+                        <div className="grid grid-cols-3 gap-4 items-end">
+                          <div>
+                            <Label htmlFor={`start-time-${booking.id}`}>Start Time</Label>
+                            <Input
+                              id={`start-time-${booking.id}`}
+                              type="time"
+                              value={currentTimes.start}
+                              onChange={(e) => {
+                                setBookingTimes(prev => ({
+                                  ...prev,
+                                  [booking.id]: { ...prev[booking.id], start: e.target.value }
+                                }));
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`end-time-${booking.id}`}>End Time</Label>
+                            <Input
+                              id={`end-time-${booking.id}`}
+                              type="time"
+                              value={currentTimes.end}
+                              onChange={(e) => {
+                                setBookingTimes(prev => ({
+                                  ...prev,
+                                  [booking.id]: { ...prev[booking.id], end: e.target.value }
+                                }));
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Button
+                              onClick={() => {
+                                updateTimeMutation.mutate({
+                                  id: booking.id,
+                                  eventTime: currentTimes.start,
+                                  eventEndTime: currentTimes.end
+                                });
+                              }}
+                              disabled={updateTimeMutation.isPending}
+                              className="w-full"
+                            >
+                              {updateTimeMutation.isPending ? 'Updating...' : 'Update Time'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
+
+          {/* Other Actions Interface */}
+          {selectedAction !== 'edit_times' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Conflicting Bookings</h3>
+                <div className="text-sm text-gray-600">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                    New Enquiry
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    Existing Booking
+                  </span>
+                </div>
+              </div>
+              
+              {allConflictingBookings.map((booking, index) => {
+                const isCurrentEnquiry = booking?.id === enquiry?.id;
+                
+                return (
+                  <Card key={booking?.id || index} className={`${
+                    isCurrentEnquiry ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                  }`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Badge className={getStatusColor(booking?.status || 'new')}>
+                              {getStatusLabel(booking?.status || 'new')}
+                            </Badge>
+                            {isCurrentEnquiry && (
+                              <Badge variant="outline" className="text-blue-600 border-blue-600">
+                                New Enquiry
+                              </Badge>
+                            )}
+                            {!isCurrentEnquiry && (
+                              <Badge variant="outline" className="text-gray-600 border-gray-600">
+                                Existing Booking
+                              </Badge>
+                            )}
+                          </div>
+                        
+                          <h4 className="font-medium">{booking?.title || 'Untitled Booking'}</h4>
+                        
+                          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <User className="w-4 h-4 mr-2" />
+                              {booking?.clientName || 'Unknown Client'}
+                            </div>
+                            <div className="flex items-center">
+                              <Clock className="w-4 h-4 mr-2" />
+                              {formatTime(booking?.eventTime)} - {formatTime(booking?.eventEndTime)}
+                            </div>
+                            {booking?.venue && (
+                              <div className="flex items-center">
+                                <MapPin className="w-4 h-4 mr-2" />
+                                {booking.venue}
+                              </div>
+                            )}
+                            {booking?.clientEmail && (
+                              <div className="flex items-center">
+                                <Mail className="w-4 h-4 mr-2" />
+                                {booking.clientEmail}
+                              </div>
+                            )}
+                          </div>
+                        
+                          {booking?.estimatedValue && (
+                            <div className="text-green-600 font-medium">
+                              £{booking.estimatedValue}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex space-x-2">
+                          {selectedAction === 'reject_enquiry' && booking.id === enquiry.id && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => rejectEnquiryMutation.mutate({ id: booking.id, reason: rejectReason })}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          )}
+                        
+                          {selectedAction === 'reject_existing' && booking.id !== enquiry.id && canReject(booking) && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => rejectEnquiryMutation.mutate({ id: booking.id, reason: 'Scheduling conflict' })}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          )}
+                        
+                          {selectedAction === 'mark_in_progress' && booking.id === enquiry.id && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                              onClick={() => markInProgressMutation.mutate({ id: booking.id })}
+                            >
+                              <Clock className="w-4 h-4 mr-1" />
+                              Mark In Progress
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+
 
           {/* Reject Reason */}
           {selectedAction === 'reject_enquiry' && (
