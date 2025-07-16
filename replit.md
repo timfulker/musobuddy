@@ -215,7 +215,11 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Technical Fix**: Updated contractViewUrl generation to prioritize app-based view over cloud storage URLs for signed contracts
   * **Preserved Functionality**: Cloud storage signing pages still used for active contract signing, view pages for signed contract previews
   * **Download Button Issue**: Download button code present in view-contract.tsx but not displaying - requires redeployment
-  * **Status**: Contract confirmation emails now properly show preview page, download button will appear after redeployment
+  * **Viewport Scaling Fix**: Resolved significant size differences between development and production environments
+  * **Balanced Sizing**: Adjusted font-size from 16px to 15px for balanced experience between dev (larger) and prod (smaller)
+  * **Responsive Scaling**: Enhanced mobile/tablet/desktop breakpoints for consistent experience across devices
+  * **User Scalable**: Changed viewport to allow user scaling (0.9-1.2x) for accessibility
+  * **Status**: Contract confirmation emails now properly show preview page, viewport scaling balanced for consistent UX
 
 - July 16, 2025. Enhanced instrument selection UX with core instruments and improved visual feedback:
   * **Core Instruments Display**: Limited visible instruments to 9 core types (Piano, Bass Guitar, Guitar, Drums, Saxophone, Violin, Flute, Vocals, DJ)

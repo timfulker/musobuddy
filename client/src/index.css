@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Critical viewport scaling fixes for consistent dev/production rendering */
+/* Balanced viewport scaling for consistent dev/production rendering */
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -14,13 +14,13 @@
   padding: 0;
 }
 
-/* Force consistent viewport behavior across all devices */
+/* Balanced viewport behavior - size between dev and production */
 html {
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  font-size: 16px;
+  font-size: 15px; /* Balanced between dev (larger) and prod (smaller) */
   width: 100%;
   height: 100%;
   overflow-x: hidden;
@@ -44,27 +44,32 @@ body {
   position: relative;
 }
 
-/* Fix viewport scaling differences between dev and production */
+/* Balanced responsive scaling for consistent experience */
 @media screen and (max-width: 480px) {
   html {
-    font-size: 14px;
+    font-size: 14px; /* Smaller screens get smaller text */
   }
 }
 
-/* Ensure consistent viewport behavior */
-@media screen and (max-width: 768px) {
+@media screen and (min-width: 481px) and (max-width: 768px) {
   html {
-    font-size: 14px;
+    font-size: 15px; /* Tablets get balanced size */
+  }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1199px) {
+  html {
+    font-size: 15px; /* Desktop gets balanced size */
   }
 }
 
 @media screen and (min-width: 1200px) {
   html {
-    font-size: 16px;
+    font-size: 15.5px; /* Large screens get slightly larger */
   }
 }
 
-/* Consistent sizing utilities */
+/* Consistent sizing utilities for balanced experience */
 .sidebar-consistent {
   font-size: 0.875rem !important;
   line-height: 1.25rem !important;
@@ -73,6 +78,23 @@ body {
 .layout-consistent {
   min-height: 100vh;
   position: relative;
+}
+
+/* Balanced component scaling */
+.dashboard-card {
+  transform: scale(1.02); /* Slightly larger than production but smaller than dev */
+}
+
+/* Consistent button and input sizing */
+button, input, select, textarea {
+  transform: scale(1.01); /* Subtle scaling for better balance */
+}
+
+/* Ensure text remains readable at balanced size */
+.text-balanced {
+  font-size: 1rem;
+  line-height: 1.5;
+}
 }
 
 /* Prevent layout shifts during window resize */
