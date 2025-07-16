@@ -336,6 +336,221 @@ export default function Enquiries() {
             "Anniversary", "Concert", "Festival", "Charity Event", "Christmas Party", "Other"];
   }, [settings.eventTypes]);
 
+  const createEnquiryMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof enquiryFormSchema>) => {
+      const enquiryData = {
+        ...data,
+        eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
+      };
+      
+      // Phase 3: Create in main bookings table
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(enquiryData),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/enquiries"] }); // Keep for backwards compatibility
+      setIsDialogOpen(false);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "Enquiry created successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create enquiry. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteEnquiryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      // Phase 3: Delete from main bookings table
+      const response = await apiRequest(`/api/bookings/${id}`, {
+        method: 'DELETE'
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] }); // Keep for backwards compatibility
+      toast({
+        title: "Success",
+        description: "Enquiry deleted successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete enquiry. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addToAddressBookMutation = useMutation({
+    mutationFn: async (enquiry: Enquiry) => {
+      const clientData: InsertClient = {
+        name: enquiry.clientName,
+        email: enquiry.clientEmail || "",
+        phone: enquiry.clientPhone || "",
+        address: "", // We don't have address from enquiry
+        notes: `Added from enquiry: ${enquiry.title}${enquiry.venue ? ` at ${enquiry.venue}` : ''}`
+      };
+      return apiRequest("POST", "/api/clients", clientData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      toast({
+        title: "Success", 
+        description: "Client added to address book successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add client to address book",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateEnquiryStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      // Phase 3: Update in main bookings table
+      const response = await apiRequest(`/api/bookings/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] }); // Keep for backwards compatibility
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      toast({
+        title: "Success",
+        description: "Enquiry status updated successfully!",
+      });
+      setRespondDialogOpen(false);
+      setSelectedEnquiry(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update enquiry status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteEnquiry = (enquiry: Enquiry) => {
+    if (window.confirm(`Are you sure you want to delete the enquiry "${enquiry.title}"? This action cannot be undone.`)) {
+      deleteEnquiryMutation.mutate(enquiry.id);
+    }
+  };
+
+  const handleQuickResponse = async (templateId: number) => {
+    if (!selectedEnquiry?.clientEmail && !selectedEnquiry?.clientPhone) {
+      toast({
+        title: "Error",
+        description: "This enquiry has no email address or phone number to respond to.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const template = templates.find(t => t.id === templateId);
+    
+    if (template) {
+      // For now, send email. SMS functionality will be added later
+      if (selectedEnquiry?.clientEmail) {
+        try {
+          await fetch('/api/enquiries/send-response', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              enquiryId: selectedEnquiry.id,
+              to: selectedEnquiry.clientEmail,
+              subject: template.subject,
+              body: template.emailBody
+            })
+          });
+          
+          toast({
+            title: "Success",
+            description: "Email response sent successfully!",
+          });
+          
+          setRespondDialogOpen(false);
+          setSelectedEnquiry(null);
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to send response. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Future SMS functionality
+        toast({
+          title: "SMS Coming Soon",
+          description: "SMS responses will be available soon for enquiries with phone numbers.",
+        });
+      }
+    } else {
+      toast({
+        title: "Error",
+        description: "Template not found. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const form = useForm<z.infer<typeof enquiryFormSchema>>({
+    resolver: zodResolver(enquiryFormSchema),
+    defaultValues: {
+      clientName: "",
+      clientEmail: "",
+      clientPhone: "",
+      eventDate: "",
+      eventTime: "",
+      venue: "",
+      eventType: "",
+      gigType: "",
+      estimatedValue: "",
+      notes: "",
+      status: "new",
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof enquiryFormSchema>) => {
+    // Auto-generate title from Event Type and Client Name
+    const eventTypeDisplay = eventTypes.find(type => 
+      type.toLowerCase().replace(/ /g, '_') === data.eventType
+    ) || data.eventType;
+    
+    const autoGeneratedTitle = `${eventTypeDisplay} - ${data.clientName}`;
+    
+    createEnquiryMutation.mutate({
+      ...data,
+      title: autoGeneratedTitle
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "new": return "bg-gray-100 text-gray-800";
