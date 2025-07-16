@@ -58,13 +58,13 @@ export default function Dashboard() {
         <div className="flex-1 ml-64 min-h-screen">
           <DashboardHeader />
           
-          <main className="p-4 space-y-4 max-w-7xl mx-auto">
+          <main className="p-6 space-y-8 max-w-7xl mx-auto">
             <StatsCards />
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
               <div className="xl:col-span-2">
                 <KanbanBoard />
               </div>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <CalendarWidget />
                 <QuickActions />
                 <ConflictsWidget />

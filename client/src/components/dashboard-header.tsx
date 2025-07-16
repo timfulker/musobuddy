@@ -12,12 +12,12 @@ export default function DashboardHeader() {
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
-    <header className="bg-background border-b border-border px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <header className="bg-background border-b border-border px-4 md:px-6 py-6">
+      <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="flex items-center space-x-6">
           {/* Add left margin on mobile to make room for hamburger menu */}
-          <h2 className="text-xl md:text-2xl font-bold text-foreground ml-12 md:ml-0">Dashboard</h2>
-          <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground ml-12 md:ml-0">Dashboard</h1>
+          <div className="hidden lg:flex items-center space-x-2 text-sm text-muted-foreground">
             <span>Welcome back, <span className="font-medium text-foreground">{user?.firstName || "User"}</span></span>
           </div>
         </div>
