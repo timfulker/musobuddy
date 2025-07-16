@@ -369,7 +369,15 @@ export default function Settings() {
       return;
     }
     
-    saveSettings.mutate(data);
+    // Add the selected instruments and gig types to the form data
+    const formDataWithInstruments = {
+      ...data,
+      selectedInstruments: selectedInstruments,
+      gigTypes: gigTypes,
+    };
+    
+    console.log('🚀 Final form data being sent:', formDataWithInstruments);
+    saveSettings.mutate(formDataWithInstruments);
   };
 
   if (settingsLoading) {
@@ -411,7 +419,13 @@ export default function Settings() {
         {/* Settings Content */}
         <div className="p-6 space-y-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={(e) => {
+              console.log('🚀 FORM ONSUBMIT TRIGGERED!');
+              console.log('🚀 Event:', e);
+              console.log('🚀 Form valid:', form.formState.isValid);
+              console.log('🚀 Form errors:', form.formState.errors);
+              return form.handleSubmit(onSubmit)(e);
+            }} className="space-y-6">
               {/* Add a debug div to see if form is working */}
               <div className="hidden">
                 Form status: {JSON.stringify({ hasChanges, isPending: saveSettings.isPending })}
