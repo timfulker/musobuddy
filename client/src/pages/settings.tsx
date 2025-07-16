@@ -86,26 +86,30 @@ const generateGigSuggestions = async (instruments: string[]): Promise<string[]> 
   }
 };
 
-// Mock API function for fetching settings
+// API function for fetching settings
 const fetchSettings = async (): Promise<SettingsFormData> => {
-  // Simulate API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        businessName: "Sample Music Business",
-        businessAddress: "123 Music Street, City, State 12345",
-        phone: "+1 (555) 123-4567",
-        website: "https://example.com",
-        taxNumber: "TAX123456",
-        emailFromName: "John Doe",
-        nextInvoiceNumber: "00001",
-        defaultTerms: "Payment due within 30 days",
-        bankDetails: "Bank Name: Sample Bank\nAccount: 12345678\nSort Code: 12-34-56",
-        selectedInstruments: [], // Start with empty array so user can select fresh
-        gigTypes: [],
-      });
-    }, 1000);
-  });
+  const response = await fetch('/api/settings');
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch settings');
+  }
+  
+  const data = await response.json();
+  
+  // Transform the data to match the expected form structure
+  return {
+    businessName: data.businessName || "",
+    businessAddress: data.businessAddress || "",
+    phone: data.phone || "",
+    website: data.website || "",
+    taxNumber: data.taxNumber || "",
+    emailFromName: data.emailFromName || "",
+    nextInvoiceNumber: data.nextInvoiceNumber || "00001",
+    defaultTerms: data.defaultTerms || "",
+    bankDetails: data.bankDetails || "",
+    selectedInstruments: data.selectedInstruments || [],
+    gigTypes: data.gigTypes || [],
+  };
 };
 
 export default function Settings() {
@@ -152,15 +156,31 @@ export default function Settings() {
     },
   });
 
+  // Load global gig types separately
+  const { data: globalGigTypes } = useQuery({
+    queryKey: ['global-gig-types'],
+    queryFn: async () => {
+      const response = await fetch('/api/global-gig-types');
+      if (!response.ok) {
+        return [];
+      }
+      const data = await response.json();
+      return data.gigTypes || [];
+    },
+  });
+
   // Update local state when settings are loaded
   useEffect(() => {
     if (settings) {
       console.log('Updating form with settings:', settings);
       form.reset(settings);
       setSelectedInstruments(settings.selectedInstruments || []);
-      setGigTypes(settings.gigTypes || []);
+      
+      // Use global gig types if available, otherwise use settings gig types
+      const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (settings.gigTypes || []);
+      setGigTypes(gigTypesToUse);
     }
-  }, [settings, form]);
+  }, [settings, globalGigTypes, form]);
 
   // Function to generate AI-powered gig types
   const generateGigTypes = async (instruments: string[]) => {
@@ -245,13 +265,23 @@ export default function Settings() {
         gigTypes,
       };
       
-      // Here you would make an API call to save the settings
       console.log('Saving settings:', settingsData);
       
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Make actual API call to save settings
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settingsData),
+      });
       
-      return settingsData;
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+      
+      const result = await response.json();
+      return result;
     },
     onSuccess: () => {
       toast({
@@ -259,6 +289,7 @@ export default function Settings() {
         description: "Settings saved successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['global-gig-types'] });
     },
     onError: (error) => {
       console.error('Error saving settings:', error);
