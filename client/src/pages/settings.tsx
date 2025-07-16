@@ -412,6 +412,10 @@ export default function Settings() {
         <div className="p-6 space-y-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Add a debug div to see if form is working */}
+              <div className="hidden">
+                Form status: {JSON.stringify({ hasChanges, isPending: saveSettings.isPending })}
+              </div>
               
               {/* Business Information */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
@@ -763,6 +767,17 @@ export default function Settings() {
                 <Button
                   type="submit"
                   disabled={saveSettings.isPending || !hasChanges}
+                  onClick={(e) => {
+                    console.log('🚀 BUTTON CLICKED!');
+                    console.log('🚀 hasChanges:', hasChanges);
+                    console.log('🚀 disabled:', saveSettings.isPending || !hasChanges);
+                    console.log('🚀 form.formState.errors:', form.formState.errors);
+                    if (!hasChanges) {
+                      console.log('🚀 Button disabled due to no changes');
+                      e.preventDefault();
+                      return;
+                    }
+                  }}
                   className={`px-8 py-2 border-0 transition-all duration-300 ${
                     hasChanges && !saveSettings.isPending
                       ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:scale-105'
