@@ -23,8 +23,7 @@ import {
   Trash2,
   Check,
   X,
-  ChevronRight,
-  Info
+  ChevronRight
 } from 'lucide-react';
 
 interface ConflictResolutionDialogProps {
@@ -48,13 +47,9 @@ export default function ConflictResolutionDialog({
 
   console.log('🔥 ConflictResolutionDialog received:', {
     enquiry: enquiry?.id,
-    enquiryTitle: enquiry?.title,
-    enquiryClient: enquiry?.clientName,
-    enquiryDate: enquiry?.eventDate,
     conflictsReceived: conflicts,
     conflictsLength: conflicts?.length,
     conflictIds: conflicts?.map(c => c?.id),
-    conflictTitles: conflicts?.map(c => c?.title),
     isOpen,
     rawConflicts: JSON.stringify(conflicts, null, 2)
   });
@@ -63,14 +58,7 @@ export default function ConflictResolutionDialog({
   if (conflicts && conflicts.length > 0) {
     console.log('🔥 CONFLICTS EXIST:', conflicts.length, 'conflicts found');
     conflicts.forEach((conflict, index) => {
-      console.log(`🔥 Conflict ${index}:`, {
-        id: conflict?.id,
-        title: conflict?.title,
-        clientName: conflict?.clientName,
-        eventDate: conflict?.eventDate,
-        type: conflict?.type,
-        status: conflict?.status
-      });
+      console.log(`🔥 Conflict ${index}:`, conflict);
     });
   } else {
     console.log('🔥 NO CONFLICTS FOUND - conflicts array is:', conflicts);
@@ -81,19 +69,19 @@ export default function ConflictResolutionDialog({
   const [newTime, setNewTime] = useState<string>('');
   const [newEndTime, setNewEndTime] = useState<string>('');
   const [rejectReason, setRejectReason] = useState<string>('');
-
+  
   // State for time editing - map of booking ID to time values
   const [bookingTimes, setBookingTimes] = useState<Record<string, { start: string; end: string }>>(() => {
     const initialTimes: Record<string, { start: string; end: string }> = {};
-
-    // Initialize with the main enquiry
+    
+    // Initialize with all conflicting bookings
     if (enquiry) {
       initialTimes[enquiry.id] = { 
         start: enquiry.eventTime || '', 
         end: enquiry.eventEndTime || '' 
       };
     }
-
+    
     // Add processed conflicts
     if (Array.isArray(conflicts)) {
       conflicts.forEach(conflict => {
@@ -105,8 +93,7 @@ export default function ConflictResolutionDialog({
         }
       });
     }
-
-    console.log('🔥 Initialized booking times:', initialTimes);
+    
     return initialTimes;
   });
 
@@ -116,17 +103,17 @@ export default function ConflictResolutionDialog({
   // Create all conflicting bookings array (new enquiry + existing conflicts)
   const allConflictingBookings = React.useMemo(() => {
     const allBookings = [enquiry];
-
-    // Add conflicts if they exist and are valid
+    
+    // Add conflicts if they exist
     if (Array.isArray(conflicts)) {
       conflicts.forEach(conflict => {
-        if (conflict && conflict.id && conflict.id !== enquiry.id) {
+        if (conflict && conflict.id) {
           allBookings.push(conflict);
         }
       });
     }
-
-    console.log('🔥 All conflicting bookings computed:', {
+    
+    console.log('🔥 All conflicting bookings:', {
       totalBookings: allBookings.length,
       bookingIds: allBookings.map(b => b.id),
       bookingDetails: allBookings.map(b => ({
@@ -134,11 +121,10 @@ export default function ConflictResolutionDialog({
         title: b.title,
         clientName: b.clientName,
         eventDate: b.eventDate,
-        eventTime: b.eventTime,
-        type: b.type || 'enquiry'
+        eventTime: b.eventTime
       }))
     });
-
+    
     return allBookings;
   }, [enquiry, conflicts]);
 
@@ -151,7 +137,6 @@ export default function ConflictResolutionDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
       queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
       toast({
         title: "Success",
@@ -176,13 +161,11 @@ export default function ConflictResolutionDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
       queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
       toast({
         title: "Success",
         description: "Booking deleted successfully",
       });
-      onClose();
     },
     onError: (error) => {
       console.error('Error deleting booking:', error);
@@ -194,61 +177,41 @@ export default function ConflictResolutionDialog({
     }
   });
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
+  const handleUpdateTime = (bookingId: string) => {
+    const times = bookingTimes[bookingId];
+    if (!times) return;
 
-  const formatTime = (timeString: string) => {
-    if (!timeString) return '';
-    return timeString;
-  };
-
-  const handleUpdateTime = async (bookingId: string) => {
-    const timeData = bookingTimes[bookingId];
-    if (!timeData) return;
-
-    console.log('Updating time for booking:', bookingId, timeData);
-
-    await updateBookingMutation.mutateAsync({
+    updateBookingMutation.mutate({
       id: bookingId,
-      eventTime: timeData.start,
-      eventEndTime: timeData.end
+      eventTime: times.start,
+      eventEndTime: times.end
     });
   };
 
-  const handleDeleteBooking = async (bookingId: string) => {
-    if (window.confirm('Are you sure you want to delete this booking?')) {
-      await deleteBookingMutation.mutateAsync(bookingId);
-    }
+  const handleDeleteBooking = (bookingId: string) => {
+    deleteBookingMutation.mutate(bookingId);
   };
 
-  const handleRejectNewEnquiry = async () => {
-    if (!rejectReason.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide a reason for rejection",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    await updateBookingMutation.mutateAsync({
+  const handleRejectEnquiry = () => {
+    updateBookingMutation.mutate({
       id: enquiry.id,
       status: 'rejected',
       notes: rejectReason
     });
-
-    onClose();
   };
 
-  const updateBookingTime = (bookingId: string, field: 'start' | 'end', value: string) => {
+  const handleAction = () => {
+    if (selectedAction === 'edit_times') {
+      // Action already handled by individual update buttons
+      return;
+    }
+    
+    if (selectedAction === 'reject') {
+      handleRejectEnquiry();
+    }
+  };
+
+  const handleTimeChange = (bookingId: string, field: 'start' | 'end', value: string) => {
     setBookingTimes(prev => ({
       ...prev,
       [bookingId]: {
@@ -258,112 +221,112 @@ export default function ConflictResolutionDialog({
     }));
   };
 
-  const canEditTime = (booking: any) => {
-    return booking.status !== 'completed' && booking.status !== 'rejected';
-  };
-
   const renderBookingCard = (booking: any, isNewEnquiry: boolean) => {
-    const timeData = bookingTimes[booking.id] || { start: '', end: '' };
-    const bookingType = booking.type || (isNewEnquiry ? 'new_enquiry' : 'existing_booking');
+    const times = bookingTimes[booking.id] || { start: '', end: '' };
 
     return (
-      <Card key={booking.id} className={`${isNewEnquiry ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
+      <Card key={booking.id} className={`mb-4 ${isNewEnquiry ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Badge variant={isNewEnquiry ? "default" : "secondary"}>
-                {isNewEnquiry ? 'New Enquiry' : (bookingType === 'booking' ? 'Existing Booking' : 'Conflicting Enquiry')}
-              </Badge>
-              {booking.title || `${booking.clientName} - ${booking.eventType || 'Event'}`}
-            </CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {booking.status || 'pending'}
-            </Badge>
-          </div>
-          {/* Add conflict type info */}
-          {booking.type && (
-            <div className="text-xs text-gray-600 flex items-center gap-1">
-              <Info className="w-3 h-3" />
-              <span>Type: {booking.type}</span>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                {isNewEnquiry ? (
+                  <Badge className="bg-blue-600 text-white">New Enquiry</Badge>
+                ) : (
+                  <Badge variant="outline" className="border-gray-400">Existing Booking</Badge>
+                )}
+                {booking.title || booking.clientName}
+              </CardTitle>
+              <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>{booking.eventDate}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  <span>{booking.eventTime} - {booking.eventEndTime}</span>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </CardHeader>
-
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-gray-500" />
-              <span>{booking.clientName || 'Unknown'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-gray-500" />
-              <span>{booking.clientPhone || 'Not provided'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-gray-500" />
-              <span>{booking.clientEmail || 'Not provided'}</span>
+              <span>{booking.clientName}</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-gray-500" />
-              <span>{booking.venue || 'Not specified'}</span>
+              <span>{booking.venue || 'No venue specified'}</span>
             </div>
-            <div className="flex items-center gap-2 col-span-2">
-              <Clock className="w-4 h-4 text-gray-500" />
-              <span>
-                {booking.eventTime ? `${booking.eventTime}` : 'Time not set'}
-                {booking.eventEndTime ? ` - ${booking.eventEndTime}` : ''}
-              </span>
-            </div>
+            {booking.clientEmail && (
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-gray-500" />
+                <span>{booking.clientEmail}</span>
+              </div>
+            )}
+            {booking.clientPhone && (
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-gray-500" />
+                <span>{booking.clientPhone}</span>
+              </div>
+            )}
           </div>
 
-          {selectedAction === 'edit_times' && canEditTime(booking) && (
-            <div className="mt-4 space-y-3 border-t pt-4">
+          {/* Time editing controls - only show when edit_times is selected */}
+          {selectedAction === 'edit_times' && (
+            <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Edit3 className="w-4 h-4" />
+                Edit Time for {isNewEnquiry ? 'New Enquiry' : 'Existing Booking'}
+              </h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor={`start-${booking.id}`} className="text-sm font-medium">
-                    Start Time
-                  </Label>
+                  <Label htmlFor={`start-${booking.id}`}>Start Time</Label>
                   <Input
                     id={`start-${booking.id}`}
                     type="time"
-                    value={timeData.start}
-                    onChange={(e) => updateBookingTime(booking.id, 'start', e.target.value)}
+                    value={times.start}
+                    onChange={(e) => handleTimeChange(booking.id, 'start', e.target.value)}
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor={`end-${booking.id}`} className="text-sm font-medium">
-                    End Time
-                  </Label>
+                  <Label htmlFor={`end-${booking.id}`}>End Time</Label>
                   <Input
                     id={`end-${booking.id}`}
                     type="time"
-                    value={timeData.end}
-                    onChange={(e) => updateBookingTime(booking.id, 'end', e.target.value)}
+                    value={times.end}
+                    onChange={(e) => handleTimeChange(booking.id, 'end', e.target.value)}
                     className="mt-1"
                   />
                 </div>
               </div>
               <Button 
                 onClick={() => handleUpdateTime(booking.id)}
+                className="mt-3 w-full"
                 disabled={updateBookingMutation.isPending}
-                className="w-full"
               >
                 {updateBookingMutation.isPending ? 'Updating...' : 'Update Time'}
               </Button>
             </div>
           )}
 
-          {selectedAction === 'delete_booking' && (
-            <div className="mt-4 border-t pt-4">
-              <Button 
-                variant="destructive"
-                onClick={() => handleDeleteBooking(booking.id)}
-                disabled={deleteBookingMutation.isPending}
-                className="w-full"
-              >
-                {deleteBookingMutation.isPending ? 'Deleting...' : 'Delete Booking'}
-              </Button>
+          {/* Delete option */}
+          {selectedAction === 'delete' && (
+            <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-200">
+              <div className="flex items-center justify-between">
+                <span className="text-red-700">Delete this booking?</span>
+                <Button 
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteBooking(booking.id)}
+                  disabled={deleteBookingMutation.isPending}
+                >
+                  {deleteBookingMutation.isPending ? 'Deleting...' : 'Delete'}
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -373,135 +336,80 @@ export default function ConflictResolutionDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
-            Resolve Scheduling Conflict
+            <AlertTriangle className="w-6 h-6 text-red-500" />
+            Resolve Booking Conflict
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Enhanced Conflict Summary */}
+          {/* Conflict Overview */}
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h3 className="font-semibold text-red-800 mb-2">
-              {allConflictingBookings.length} booking{allConflictingBookings.length !== 1 ? 's' : ''} on {formatDate(enquiry.eventDate)}
-            </h3>
-            <p className="text-red-700 text-sm mb-2">
-              This booking conflicts with {conflicts.length} other booking{conflicts.length !== 1 ? 's' : ''}. Choose an action below to resolve.
+            <h3 className="font-semibold text-red-800 mb-2">Conflict Detected</h3>
+            <p className="text-red-700">
+              {allConflictingBookings.length} bookings are scheduled for the same time slot.
             </p>
+          </div>
 
-            {/* Debug information - remove in production */}
-            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-              <p><strong>Debug:</strong> Found {allConflictingBookings.length} total bookings ({conflicts.length} conflicts + 1 main enquiry)</p>
-              <p><strong>Conflicts:</strong> {conflicts.map(c => `${c.clientName} (${c.type})`).join(', ')}</p>
-            </div>
+          {/* All Conflicting Bookings */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">All Conflicting Bookings</h3>
+            {allConflictingBookings.map((booking, index) => 
+              renderBookingCard(booking, index === 0)
+            )}
           </div>
 
           {/* Action Selection */}
           <div className="space-y-4">
-            <h4 className="font-medium">Choose Resolution Action:</h4>
+            <h3 className="text-lg font-semibold">Choose Resolution Action</h3>
             <Select value={selectedAction} onValueChange={setSelectedAction}>
               <SelectTrigger>
                 <SelectValue placeholder="Select an action to resolve the conflict" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="edit_times">Edit booking times to avoid overlap</SelectItem>
-                <SelectItem value="delete_booking">Delete a conflicting booking</SelectItem>
-                <SelectItem value="reject_enquiry">Reject the new enquiry</SelectItem>
+                <SelectItem value="reject">Reject the new enquiry</SelectItem>
+                <SelectItem value="delete">Delete a booking</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Show booking details based on selected action */}
-          {selectedAction === 'edit_times' && (
-            <div className="space-y-4">
-              <h4 className="font-medium text-lg">Edit Booking Times</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                Adjust the times for each booking to resolve the conflict. {allConflictingBookings.length} booking{allConflictingBookings.length !== 1 ? 's' : ''} to manage:
-              </p>
-              <div className="grid gap-4">
-                {allConflictingBookings.map((booking, index) => 
-                  renderBookingCard(booking, index === 0)
-                )}
-              </div>
-            </div>
-          )}
-
-          {selectedAction === 'delete_booking' && (
-            <div className="space-y-4">
-              <h4 className="font-medium text-lg">Delete Booking</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                Select which booking to delete ({allConflictingBookings.length} total):
-              </p>
-              <div className="grid gap-4">
-                {allConflictingBookings.map((booking, index) => 
-                  renderBookingCard(booking, index === 0)
-                )}
-              </div>
-            </div>
-          )}
-
-          {selectedAction === 'reject_enquiry' && (
-            <div className="space-y-4">
-              <h4 className="font-medium text-lg">Reject New Enquiry</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                Provide a reason for rejecting this enquiry:
-              </p>
+          {/* Reject Reason */}
+          {selectedAction === 'reject' && (
+            <div className="space-y-2">
+              <Label htmlFor="reject-reason">Reason for rejection</Label>
               <Textarea
-                placeholder="Enter reason for rejection..."
+                id="reject-reason"
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Enter reason for rejecting this enquiry..."
                 className="min-h-[100px]"
               />
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            {selectedAction === 'reject' && (
               <Button 
-                onClick={handleRejectNewEnquiry}
-                disabled={updateBookingMutation.isPending || !rejectReason.trim()}
+                onClick={handleAction}
+                disabled={updateBookingMutation.isPending}
                 variant="destructive"
-                className="w-full"
               >
                 {updateBookingMutation.isPending ? 'Rejecting...' : 'Reject Enquiry'}
               </Button>
-            </div>
-          )}
-
-          {/* Show current conflict details if no action selected */}
-          {!selectedAction && (
-            <div className="space-y-4">
-              <h4 className="font-medium text-lg">Conflict Details</h4>
-              <div className="grid gap-4">
-                {allConflictingBookings.map((booking, index) => 
-                  <Card key={booking.id} className={`${index === 0 ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'}`}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <Badge variant={index === 0 ? "default" : "destructive"} className="mb-2">
-                            {index === 0 ? 'New Enquiry' : 'Conflicting Booking'}
-                          </Badge>
-                          <h5 className="font-medium">{booking.title || `${booking.clientName} - Event`}</h5>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {booking.status || 'pending'}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                        <div>Client: {booking.clientName}</div>
-                        <div>Venue: {booking.venue || 'Not specified'}</div>
-                        <div>Time: {booking.eventTime || 'Not set'} {booking.eventEndTime ? `- ${booking.eventEndTime}` : ''}</div>
-                        <div>Type: {booking.type || 'enquiry'}</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end pt-6 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
+            )}
+            {selectedAction === 'edit_times' && (
+              <Button onClick={onClose} className="bg-green-600 hover:bg-green-700">
+                Done Editing
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
