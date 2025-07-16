@@ -57,7 +57,7 @@ export default function Enquiries() {
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
-  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(['new', 'booking_in_progress', 'confirmed', 'contract_sent', 'completed', 'rejected']);
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -1229,16 +1229,26 @@ export default function Enquiries() {
             <div className="col-span-full">
               <Card>
                 <CardContent className="p-12 text-center">
-                  <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 text-lg">No enquiries found</p>
-                  <p className="text-gray-400">Create your first enquiry to get started</p>
-                  <Button 
-                    className="mt-4 bg-purple-600 hover:bg-purple-700"
-                    onClick={() => setIsDialogOpen(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Enquiry
-                  </Button>
+                  {activeStatusFilters.length === 0 ? (
+                    <>
+                      <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 text-lg">Select status filters to view bookings</p>
+                      <p className="text-gray-400">Click the status buttons above to show bookings</p>
+                    </>
+                  ) : (
+                    <>
+                      <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 text-lg">No bookings match your filters</p>
+                      <p className="text-gray-400">Try adjusting your status filters or search terms</p>
+                      <Button 
+                        className="mt-4 bg-purple-600 hover:bg-purple-700"
+                        onClick={() => setIsDialogOpen(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Enquiry
+                      </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
