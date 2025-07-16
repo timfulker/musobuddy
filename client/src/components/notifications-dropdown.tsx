@@ -42,7 +42,7 @@ export default function NotificationsDropdown() {
       );
 
       // Phase 2: Fetch recent enquiries from new bookings table
-      const enquiriesResponse = await fetch('/api/bookings-new', {
+      const enquiriesResponse = await fetch('/api/bookings', {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
       });

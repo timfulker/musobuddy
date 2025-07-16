@@ -35,7 +35,7 @@ export default function Calendar() {
 
   // Fetch new bookings table data (migrated from enquiries)
   const { data: bookingsNew = [] } = useQuery({
-    queryKey: ["/api/bookings-new"],
+    queryKey: ["/api/bookings"],
     retry: 2,
   });
 

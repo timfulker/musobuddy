@@ -126,49 +126,8 @@ export const invoices = pgTable("invoices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Bookings/Gigs table - Enhanced for calendar imports
+// Bookings/Enquiries table - Phase 3: Renamed from bookings_new, contains enquiry data
 export const bookings = pgTable("bookings", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
-  contractId: integer("contract_id"), // Made optional - can be null for calendar imports
-  title: varchar("title").notNull(),
-  clientName: varchar("client_name").notNull(),
-  eventDate: timestamp("event_date").notNull(),
-  eventTime: varchar("event_time").notNull(),
-  eventEndTime: varchar("event_end_time"), // End time for performance
-  performanceDuration: integer("performance_duration"), // Duration in minutes
-  venue: varchar("venue").notNull(),
-  fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
-  status: varchar("status").notNull().default("confirmed"), // confirmed, signed, completed, cancelled
-  notes: text("notes"),
-  
-  // Enhanced booking details
-  clientEmail: varchar("client_email"),
-  clientPhone: varchar("client_phone"),
-  clientAddress: text("client_address"),
-  eventType: varchar("event_type"), // Wedding, Corporate, Private Party, etc.
-  gigType: varchar("gig_type"), // Saxophone, DJ, Band, etc.
-  equipmentNeeded: text("equipment_needed"), // PA system, microphones, etc.
-  specialRequests: text("special_requests"), // Song requests, dress code, etc.
-  setupTime: varchar("setup_time"), // Time needed for setup
-  soundCheckTime: varchar("sound_check_time"), // Time for sound check
-  packupTime: varchar("pack_up_time"), // Time needed for pack up
-  travelTime: varchar("travel_time"), // Travel time to venue
-  parkingInfo: text("parking_info"), // Parking details
-  contactPerson: varchar("contact_person"), // Day-of contact person
-  contactPhone: varchar("contact_phone"), // Day-of contact phone
-  venueAddress: text("venue_address"), // Full venue address
-  venueContactInfo: text("venue_contact_info"), // Venue contact details
-  dressCode: varchar("dress_code"), // Dress code requirements
-  repertoire: text("repertoire"), // Song list or repertoire notes
-  customFields: jsonb("custom_fields"), // For user-defined fields
-  
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// New bookings table - identical to enquiries for safe migration
-export const bookingsNew = pgTable("bookings_new", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   title: varchar("title").notNull(),
@@ -349,10 +308,6 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   user: one(users, {
     fields: [bookings.userId],
     references: [users.id],
-  }),
-  contract: one(contracts, {
-    fields: [bookings.contractId],
-    references: [contracts.id],
   }),
 }));
 

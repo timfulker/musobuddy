@@ -2324,7 +2324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Email processing: Single Mailgun webhook handler in server/index.ts
 
-  // Booking routes
+  // Phase 3: Main bookings endpoint - updated to use main bookings table
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -2336,20 +2336,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // New bookings endpoint - for migrated data from enquiries
-  app.get('/api/bookings-new', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const bookings = await storage.getBookingsNew(userId);
-      res.json(bookings);
-    } catch (error) {
-      console.error("Error fetching new bookings:", error);
-      res.status(500).json({ message: "Failed to fetch new bookings" });
-    }
-  });
-
   // Create new booking (enquiry)
-  app.post('/api/bookings-new', isAuthenticated, async (req: any, res) => {
+  app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const data = { ...req.body, userId };
@@ -2360,16 +2348,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const bookingData = insertEnquirySchema.parse(data);
-      const booking = await storage.createBookingNew(bookingData);
+      const booking = await storage.createBooking(bookingData);
       res.status(201).json(booking);
     } catch (error) {
-      console.error("Error creating new booking:", error);
-      res.status(500).json({ message: "Failed to create new booking" });
+      console.error("Error creating booking:", error);
+      res.status(500).json({ message: "Failed to create booking" });
     }
   });
 
-  // Update new booking (enquiry)
-  app.patch('/api/bookings-new/:id', isAuthenticated, async (req: any, res) => {
+  // Update booking (enquiry)
+  app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const bookingId = parseInt(req.params.id);
@@ -2380,31 +2368,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.eventDate = new Date(updateData.eventDate);
       }
       
-      const updatedBooking = await storage.updateBookingNew(bookingId, updateData, userId);
+      const updatedBooking = await storage.updateBooking(bookingId, updateData, userId);
       if (!updatedBooking) {
         return res.status(404).json({ message: "Booking not found" });
       }
       res.json(updatedBooking);
     } catch (error) {
-      console.error("Error updating new booking:", error);
-      res.status(500).json({ message: "Failed to update new booking" });
+      console.error("Error updating booking:", error);
+      res.status(500).json({ message: "Failed to update booking" });
     }
   });
 
-  // Delete new booking (enquiry)
-  app.delete('/api/bookings-new/:id', isAuthenticated, async (req: any, res) => {
+  // Delete booking (enquiry)
+  app.delete('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const bookingId = parseInt(req.params.id);
       
-      const success = await storage.deleteBookingNew(bookingId, userId);
+      const success = await storage.deleteBooking(bookingId, userId);
       if (!success) {
         return res.status(404).json({ message: "Booking not found" });
       }
       res.json({ message: "Booking deleted successfully" });
     } catch (error) {
-      console.error("Error deleting new booking:", error);
-      res.status(500).json({ message: "Failed to delete new booking" });
+      console.error("Error deleting booking:", error);
+      res.status(500).json({ message: "Failed to delete booking" });
     }
   });
 
@@ -2419,63 +2407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const data = { ...req.body, userId };
-      
-      // Convert eventDate string to Date if present
-      if (data.eventDate && typeof data.eventDate === 'string') {
-        data.eventDate = new Date(data.eventDate);
-      }
-      
-      const bookingData = insertBookingSchema.parse(data);
-      const booking = await storage.createBooking(bookingData);
-      res.status(201).json(booking);
-    } catch (error) {
-      console.error("Error creating booking:", error);
-      res.status(500).json({ message: "Failed to create booking" });
-    }
-  });
 
-  // Update booking (supports both status updates and detailed information updates)
-  app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const bookingId = parseInt(req.params.id);
-      const updateData = { ...req.body };
-      
-      // If it's a status-only update, validate the status
-      if (updateData.status && Object.keys(updateData).length === 1) {
-        const allowedStatuses = ['confirmed', 'signed', 'completed', 'cancelled'];
-        if (!allowedStatuses.includes(updateData.status)) {
-          return res.status(400).json({ error: 'Invalid status. Must be one of: confirmed, signed, completed, cancelled' });
-        }
-      }
-      
-      // Parse custom fields if present
-      if (updateData.customFields && typeof updateData.customFields === 'string') {
-        try {
-          updateData.customFields = JSON.parse(updateData.customFields);
-        } catch (error) {
-          console.error("Error parsing custom fields:", error);
-          return res.status(400).json({ error: 'Invalid custom fields format' });
-        }
-      }
-      
-      // Update the booking with all provided data
-      const updatedBooking = await storage.updateBooking(bookingId, updateData, userId);
-      
-      if (!updatedBooking) {
-        return res.status(404).json({ error: 'Booking not found' });
-      }
-      
-      res.json(updatedBooking);
-    } catch (error) {
-      console.error("Error updating booking:", error);
-      res.status(500).json({ message: "Failed to update booking" });
-    }
-  });
 
   // Setup multer for file uploads
   const upload = multer({ 

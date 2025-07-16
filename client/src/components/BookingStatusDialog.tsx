@@ -62,7 +62,7 @@ export default function BookingStatusDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings-new"] }); // Phase 2: Use new bookings table
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] }); // Phase 3: Use main bookings table
       queryClient.invalidateQueries({ queryKey: ["/api/enquiries"] }); // Keep for backwards compatibility
       onOpenChange(false);
       setSelectedStatus("");

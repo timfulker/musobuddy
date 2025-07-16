@@ -7,9 +7,9 @@ import { Link } from "wouter";
 import type { Enquiry } from "@shared/schema";
 
 export default function KanbanBoard() {
-  // Phase 2: Read from new bookings table instead of enquiries
+  // Phase 3: Read from main bookings table (renamed from bookings_new)
   const { data: enquiries = [], isLoading } = useQuery({
-    queryKey: ["/api/bookings-new"],
+    queryKey: ["/api/bookings"],
   });
 
   const { data: conflicts = [] } = useQuery({

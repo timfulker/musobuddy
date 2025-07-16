@@ -4,7 +4,6 @@ import {
   contracts,
   invoices,
   bookings,
-  bookingsNew,
   complianceDocuments,
   userSettings,
   type User,
@@ -205,31 +204,31 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // New bookings operations - parallel to enquiries for migration
-  async getBookingsNew(userId: string): Promise<Enquiry[]> {
+  // Phase 3: Bookings operations - now using main bookings table (renamed from bookings_new)
+  async getBookings(userId: string): Promise<Enquiry[]> {
     return await db
       .select()
-      .from(bookingsNew)
-      .where(eq(bookingsNew.userId, userId))
-      .orderBy(desc(bookingsNew.createdAt));
+      .from(bookings)
+      .where(eq(bookings.userId, userId))
+      .orderBy(desc(bookings.createdAt));
   }
 
-  async createBookingNew(data: InsertEnquiry): Promise<Enquiry> {
-    const [booking] = await db.insert(bookingsNew).values(data).returning();
+  async createBooking(data: InsertEnquiry): Promise<Enquiry> {
+    const [booking] = await db.insert(bookings).values(data).returning();
     return booking;
   }
 
-  async updateBookingNew(id: number, data: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | null> {
-    const [booking] = await db.update(bookingsNew)
+  async updateBooking(id: number, data: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | null> {
+    const [booking] = await db.update(bookings)
       .set(data)
-      .where(and(eq(bookingsNew.id, id), eq(bookingsNew.userId, userId)))
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
       .returning();
     return booking || null;
   }
 
-  async deleteBookingNew(id: number, userId: string): Promise<boolean> {
-    const result = await db.delete(bookingsNew)
-      .where(and(eq(bookingsNew.id, id), eq(bookingsNew.userId, userId)));
+  async deleteBooking(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
     return result.rowCount > 0;
   }
 
