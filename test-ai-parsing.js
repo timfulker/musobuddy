@@ -4,7 +4,7 @@
 
 import { OpenAI } from 'openai';
 
-const apiKey = process.env.OPENAI_INSTRUMENT_MAPPING_KEY;
+const apiKey = process.env.OPENAI_EMAIL_PARSING_KEY;
 console.log('API Key available:', !!apiKey);
 
 if (!apiKey) {
