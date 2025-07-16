@@ -7,7 +7,7 @@ import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-r
 import type { Enquiry } from "@shared/schema";
 import { analyzeConflictSeverity, parseConflictAnalysis, getConflictCardStyling } from "@/utils/conflict-ui";
 import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function ActionableEnquiries() {
   const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
@@ -29,87 +29,34 @@ export default function ActionableEnquiries() {
     cacheTime: 5 * 60 * 1000,
   });
 
-  // Debug: Log all the data we're working with
-  useEffect(() => {
-    console.log('🔍 KANBAN BOARD DATA DEBUG:', {
-      enquiriesCount: enquiries.length,
-      upcomingBookingsCount: upcomingBookings.length,
-      conflictsCount: conflicts.length,
-      enquiriesSample: enquiries.slice(0, 3).map(e => ({
-        id: e.id,
-        title: e.title,
-        clientName: e.clientName,
-        eventDate: e.eventDate,
-        status: e.status
-      })),
-      upcomingBookingsSample: upcomingBookings.slice(0, 3).map(b => ({
-        id: b.id,
-        title: b.title,
-        clientName: b.clientName,
-        eventDate: b.eventDate,
-        status: b.status
-      }))
-    });
-  }, [enquiries, upcomingBookings, conflicts]);
-
   // Use the same date comparison logic as the main bookings page
   const isSameDay = (date1: Date, date2: Date) => {
-    const result = date1.getFullYear() === date2.getFullYear() &&
+    return date1.getFullYear() === date2.getFullYear() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getDate() === date2.getDate();
-
-    console.log('🔍 Date comparison:', {
-      date1: date1.toDateString(),
-      date2: date2.toDateString(),
-      date1Components: { year: date1.getFullYear(), month: date1.getMonth(), date: date1.getDate() },
-      date2Components: { year: date2.getFullYear(), month: date2.getMonth(), date: date2.getDate() },
-      result
-    });
-
-    return result;
   };
 
-  // Enhanced conflict detection with detailed logging
+  // Use the same conflict detection logic as the main bookings page
   const detectConflicts = (enquiry: any) => {
-    if (!enquiry.eventDate) {
-      console.log('🔍 No event date for enquiry:', enquiry.id);
-      return [];
-    }
+    if (!enquiry.eventDate) return [];
 
     const conflicts = [];
     const enquiryDate = new Date(enquiry.eventDate);
 
-    console.log('🔍 ENHANCED Kanban conflict detection for enquiry:', {
+    console.log('🔍 Kanban conflict detection for enquiry:', {
       enquiryId: enquiry.id,
       enquiryDate: enquiryDate.toDateString(),
-      enquiryTitle: enquiry.title,
-      enquiryStatus: enquiry.status,
-      totalEnquiries: enquiries.length,
-      totalUpcomingBookings: upcomingBookings.length
+      enquiryTitle: enquiry.title
     });
 
-    // Check against upcoming bookings
-    console.log('🔍 Checking against upcoming bookings...');
-    upcomingBookings.forEach((booking: any, index: number) => {
-      console.log(`🔍 Checking upcoming booking ${index}:`, {
-        bookingId: booking.id,
-        bookingDate: booking.eventDate,
-        bookingTitle: booking.title,
-        bookingStatus: booking.status,
-        sameAsEnquiry: booking.id === enquiry.id
-      });
-
+    // Check against upcoming bookings (using same data source as main page)
+    upcomingBookings.forEach((booking: any) => {
       if (booking.eventDate && booking.id !== enquiry.id) {
         const bookingDate = new Date(booking.eventDate);
-        console.log('🔍 Comparing dates for upcoming booking:', {
-          bookingId: booking.id,
-          enquiryDate: enquiryDate.toDateString(),
-          bookingDate: bookingDate.toDateString()
-        });
-
         if (isSameDay(enquiryDate, bookingDate)) {
-          console.log('🔍 ✅ FOUND CONFLICT with upcoming booking:', {
+          console.log('🔍 Found conflict with upcoming booking:', {
             bookingId: booking.id,
+            bookingDate: bookingDate.toDateString(),
             bookingTitle: booking.title
           });
           conflicts.push({
@@ -128,30 +75,15 @@ export default function ActionableEnquiries() {
     });
 
     // Check against other enquiries with confirmed status
-    console.log('🔍 Checking against other enquiries...');
-    enquiries.forEach((otherEnquiry: any, index: number) => {
-      console.log(`🔍 Checking enquiry ${index}:`, {
-        enquiryId: otherEnquiry.id,
-        enquiryDate: otherEnquiry.eventDate,
-        enquiryTitle: otherEnquiry.title,
-        enquiryStatus: otherEnquiry.status,
-        sameAsTarget: otherEnquiry.id === enquiry.id,
-        isConfirmedStatus: ['confirmed', 'contract_sent', 'contract_received'].includes(otherEnquiry.status)
-      });
-
+    enquiries.forEach((otherEnquiry: any) => {
       if (otherEnquiry.id !== enquiry.id && 
           otherEnquiry.eventDate && 
           (otherEnquiry.status === 'confirmed' || otherEnquiry.status === 'contract_sent' || otherEnquiry.status === 'contract_received')) {
         const otherDate = new Date(otherEnquiry.eventDate);
-        console.log('🔍 Comparing dates for other enquiry:', {
-          otherEnquiryId: otherEnquiry.id,
-          enquiryDate: enquiryDate.toDateString(),
-          otherDate: otherDate.toDateString()
-        });
-
         if (isSameDay(enquiryDate, otherDate)) {
-          console.log('🔍 ✅ FOUND CONFLICT with confirmed enquiry:', {
+          console.log('🔍 Found conflict with confirmed enquiry:', {
             enquiryId: otherEnquiry.id,
+            enquiryDate: otherDate.toDateString(),
             enquiryTitle: otherEnquiry.title
           });
           conflicts.push({
@@ -169,10 +101,10 @@ export default function ActionableEnquiries() {
       }
     });
 
-    console.log('🔍 FINAL Kanban conflict detection result:', {
+    console.log('🔍 Kanban conflict detection result:', {
       enquiryId: enquiry.id,
       conflictsFound: conflicts.length,
-      conflictDetails: conflicts.map(c => ({ id: c.id, title: c.title, type: c.type, clientName: c.clientName }))
+      conflictDetails: conflicts.map(c => ({ id: c.id, title: c.title, type: c.type }))
     });
 
     return conflicts;
@@ -193,11 +125,9 @@ export default function ActionableEnquiries() {
     // Use the improved conflict detection logic
     const conflictingItems = detectConflicts(enquiry);
 
-    console.log('🔥 KANBAN CONFLICT CLICK - Enhanced detection:', {
+    console.log('🔥 Kanban conflict click - enhanced detection:', {
       enquiryId: enquiry.id,
       enquiryDate: enquiry.eventDate,
-      enquiryTitle: enquiry.title,
-      enquiryClient: enquiry.clientName,
       conflictsFound: conflictingItems.length,
       conflictDetails: conflictingItems.map(c => ({ 
         id: c.id, 
