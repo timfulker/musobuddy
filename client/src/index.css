@@ -14,13 +14,13 @@
   padding: 0;
 }
 
-/* Increased viewport sizing for better deployed version readability */
+/* Significantly increased viewport sizing for better deployed version readability */
 html {
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  font-size: 16px; /* Increased from 15px for better deployed version readability */
+  font-size: 18px; /* Significantly increased from 16px for much better deployed version readability */
   width: 100%;
   height: 100%;
   overflow-x: hidden;
@@ -44,35 +44,35 @@ body {
   position: relative;
 }
 
-/* Increased responsive scaling for better deployed version readability */
+/* Significantly increased responsive scaling for much better deployed version readability */
 @media screen and (max-width: 480px) {
   html {
-    font-size: 15px; /* Increased from 14px for better mobile readability */
+    font-size: 16px; /* Significantly increased from 15px for much better mobile readability */
   }
 }
 
 @media screen and (min-width: 481px) and (max-width: 768px) {
   html {
-    font-size: 16px; /* Increased from 15px for better tablet readability */
+    font-size: 18px; /* Significantly increased from 16px for much better tablet readability */
   }
 }
 
 @media screen and (min-width: 769px) and (max-width: 1199px) {
   html {
-    font-size: 16.5px; /* Increased from 15px for better desktop readability */
+    font-size: 19px; /* Significantly increased from 16.5px for much better desktop readability */
   }
 }
 
 @media screen and (min-width: 1200px) {
   html {
-    font-size: 17px; /* Increased from 15.5px for better large screen readability */
+    font-size: 20px; /* Significantly increased to 20px as requested for much better large screen readability */
   }
 }
 
-/* Enhanced sizing utilities for better deployed version readability */
+/* Significantly enhanced sizing utilities for much better deployed version readability */
 .sidebar-consistent {
-  font-size: 0.95rem !important; /* Increased from 0.875rem for better sidebar readability */
-  line-height: 1.35rem !important; /* Increased line height for better spacing */
+  font-size: 1.0rem !important; /* Significantly increased from 0.95rem for much better sidebar readability */
+  line-height: 1.4rem !important; /* Increased line height for better spacing */
 }
 
 .layout-consistent {
@@ -80,20 +80,20 @@ body {
   position: relative;
 }
 
-/* Enhanced component scaling for better deployed version visibility */
+/* Significantly enhanced component scaling for much better deployed version visibility */
 .dashboard-card {
-  transform: scale(1.05); /* Increased from 1.02 for better card visibility */
+  transform: scale(1.08); /* Significantly increased from 1.05 for much better card visibility */
 }
 
-/* Enhanced button and input sizing for better deployed version usability */
+/* Significantly enhanced button and input sizing for much better deployed version usability */
 button, input, select, textarea {
-  transform: scale(1.03); /* Increased from 1.01 for better element visibility */
+  transform: scale(1.06); /* Significantly increased from 1.03 for much better element visibility */
 }
 
-/* Ensure text remains readable with enhanced sizing */
+/* Ensure text remains readable with significantly enhanced sizing */
 .text-balanced {
-  font-size: 1.1rem; /* Increased from 1rem for better readability */
-  line-height: 1.6; /* Increased line height for better spacing */
+  font-size: 1.25rem; /* Significantly increased from 1.1rem for much better readability */
+  line-height: 1.7; /* Increased line height for better spacing */
 }
 
 /* Prevent layout shifts during window resize */
