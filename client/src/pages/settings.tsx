@@ -96,8 +96,8 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
         nextInvoiceNumber: "00001",
         defaultTerms: "Payment due within 30 days",
         bankDetails: "Bank Name: Sample Bank\nAccount: 12345678\nSort Code: 12-34-56",
-        selectedInstruments: ["Piano", "Guitar"],
-        gigTypes: ["Wedding", "Corporate Event"],
+        selectedInstruments: [], // Start with empty array so user can select fresh
+        gigTypes: [],
       });
     }, 1000);
   });
@@ -473,11 +473,16 @@ export default function Settings() {
                   {/* Selected Instruments */}
                   {selectedInstruments.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Selected Instruments:</h4>
+                      <h4 className="text-sm font-medium mb-2">Selected Instruments (click to remove):</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedInstruments.map((instrument) => (
-                          <Badge key={instrument} variant="secondary" className="bg-purple-100 text-purple-800">
-                            {instrument}
+                          <Badge 
+                            key={instrument} 
+                            variant="secondary" 
+                            className="bg-purple-100 text-purple-800 cursor-pointer hover:bg-red-100 hover:text-red-800 transition-colors"
+                            onClick={() => handleInstrumentToggle(instrument)}
+                          >
+                            {instrument} <X className="w-3 h-3 ml-1" />
                           </Badge>
                         ))}
                       </div>
