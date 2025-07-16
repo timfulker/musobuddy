@@ -165,23 +165,38 @@ export default function Enquiries() {
     });
   };
 
-  // Auto-completion for past date bookings - DISABLED to prevent infinite loop
-  // React.useEffect(() => {
-  //   if (enquiries.length > 0) {
-  //     const now = new Date();
-  //     const bookingsToComplete = enquiries.filter(enquiry => {
-  //       const eventDate = new Date(enquiry.eventDate);
-  //       return eventDate < now && enquiry.status !== 'completed' && enquiry.status !== 'rejected';
-  //     });
+  // Auto-completion for past date bookings
+  React.useEffect(() => {
+    if (enquiries.length > 0 && !bulkUpdateMutation.isPending) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Set to start of today to include all of yesterday
+      
+      const bookingsToComplete = enquiries.filter(enquiry => {
+        if (!enquiry.eventDate) return false;
+        const eventDate = new Date(enquiry.eventDate);
+        eventDate.setHours(0, 0, 0, 0); // Set to start of event date
+        
+        // Only auto-complete if event date is in the past and status is not already completed or rejected
+        return eventDate < now && 
+               enquiry.status !== 'completed' && 
+               enquiry.status !== 'rejected';
+      });
 
-  //     if (bookingsToComplete.length > 0) {
-  //       // Auto-complete past bookings
-  //       bookingsToComplete.forEach(booking => {
-  //         updateEnquiryStatusMutation.mutate({ id: booking.id, status: 'completed' });
-  //       });
-  //     }
-  //   }
-  // }, [enquiries]);
+      if (bookingsToComplete.length > 0) {
+        console.log(`Auto-completing ${bookingsToComplete.length} past bookings:`, bookingsToComplete.map(b => ({
+          id: b.id,
+          client: b.clientName,
+          eventDate: b.eventDate,
+          currentStatus: b.status
+        })));
+        
+        // Auto-complete past bookings one by one to avoid bulk update issues
+        bookingsToComplete.forEach(booking => {
+          updateEnquiryStatusMutation.mutate({ id: booking.id, status: 'completed' });
+        });
+      }
+    }
+  }, [enquiries?.length, bulkUpdateMutation.isPending]); // Only run when enquiries count changes and not already updating
 
   // Form setup and mutations - moved before any conditional returns
   const form = useForm<z.infer<typeof enquiryFormSchema>>({
