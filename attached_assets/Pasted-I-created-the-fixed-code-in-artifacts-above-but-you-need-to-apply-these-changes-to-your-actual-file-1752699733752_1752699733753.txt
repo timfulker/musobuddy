@@ -1,0 +1,146 @@
+I created the fixed code in artifacts above, but you need to apply these changes to your actual files. Here's exactly what to do:
+
+## 1. Replace ConflictResolutionDialog.tsx
+**File:** `client/src/components/ConflictResolutionDialog.tsx`
+
+Replace the entire file content with the code from artifact **"Fixed ConflictResolutionDialog.tsx"** above.
+
+## 2. Update bookings.tsx  
+**File:** `client/src/pages/bookings.tsx`
+
+Find and replace these two functions:
+
+### Find the `detectConflicts` function (around line 470):
+```typescript
+// Client-side conflict detection using already loaded data
+const detectConflicts = (enquiry: Enquiry) => {
+  if (!enquiry.eventDate) return [];
+  
+  const conflicts = [];
+  const enquiryDate = new Date(enquiry.eventDate);
+  
+  // Check against OTHER confirmed bookings (exclude current booking)
+  bookings.forEach((booking: any) => {
+    if (booking.eventDate && booking.id !== enquiry.id) {
+      const bookingDate = new Date(booking.eventDate);
+      if (isSameDay(enquiryDate, bookingDate)) {
+        conflicts.push({
+          type: 'booking',
+          id: booking.id,
+          title: booking.title || 'Booking',
+          eventDate: booking.eventDate,
+          venue: booking.venue
+        });
+      }
+    }
+  });
+  
+  // Check against other confirmed enquiries
+  enquiries.forEach((otherEnquiry: Enquiry) => {
+    if (otherEnquiry.id !== enquiry.id && 
+        otherEnquiry.eventDate && 
+        otherEnquiry.status === 'confirmed') {
+      const otherDate = new Date(otherEnquiry.eventDate);
+      if (isSameDay(enquiryDate, otherDate)) {
+        conflicts.push({
+          type: 'enquiry',
+          id: otherEnquiry.id,
+          title: otherEnquiry.title || `${otherEnquiry.clientName} - ${otherEnquiry.eventType}`,
+          eventDate: otherEnquiry.eventDate,
+          venue: otherEnquiry.venue
+        });
+      }
+    }
+  });
+  
+  return conflicts;
+};
+```
+
+**Replace with:**
+```typescript
+const detectConflicts = (enquiry: Enquiry) => {
+  if (!enquiry.eventDate) return [];
+  
+  const conflicts = [];
+  const enquiryDate = new Date(enquiry.eventDate);
+  
+  // Check against ALL other enquiries (not just confirmed ones)
+  enquiries.forEach((otherEnquiry: Enquiry) => {
+    if (otherEnquiry.id !== enquiry.id && otherEnquiry.eventDate) {
+      const otherDate = new Date(otherEnquiry.eventDate);
+      if (isSameDay(enquiryDate, otherDate)) {
+        // Return the full enquiry object, not a simplified version
+        conflicts.push(otherEnquiry);
+      }
+    }
+  });
+  
+  // Also check against confirmed bookings from the bookings array
+  bookings.forEach((booking: any) => {
+    if (booking.eventDate && booking.id !== enquiry.id) {
+      const bookingDate = new Date(booking.eventDate);
+      if (isSameDay(enquiryDate, bookingDate)) {
+        // Return the full booking object
+        conflicts.push(booking);
+      }
+    }
+  });
+  
+  return conflicts;
+};
+```
+
+### Find the `handleConflictClick` function (around line 520):
+```typescript
+const handleConflictClick = (enquiry: any) => {
+  const conflicts = detectConflicts(enquiry);
+  setSelectedConflictEnquiry(enquiry);
+  setSelectedConflicts(conflicts);
+  setConflictResolutionDialogOpen(true);
+};
+```
+
+**Replace with:**
+```typescript
+const handleConflictClick = (enquiry: any) => {
+  if (!enquiry || !enquiry.id) {
+    console.error('Invalid enquiry data for conflict resolution:', enquiry);
+    return;
+  }
+  
+  const conflicts = detectConflicts(enquiry);
+  
+  console.log('Conflict detection from bookings page:', {
+    enquiryId: enquiry.id,
+    enquiryDate: enquiry.eventDate,
+    conflictsFound: conflicts.length,
+    conflictDetails: conflicts.map(c => ({ 
+      id: c.id, 
+      title: c.title, 
+      clientName: c.clientName,
+      eventDate: c.eventDate,
+      status: c.status 
+    }))
+  });
+  
+  setSelectedConflictEnquiry(enquiry);
+  setSelectedConflicts(conflicts);
+  setConflictResolutionDialogOpen(true);
+};
+```
+
+## 3. Update kanban-board.tsx
+**File:** `client/src/components/kanban-board.tsx`
+
+Find the `handleConflictClick` function (around line 55) and replace with the code from artifact **"Specific Update for kanban-board.tsx"**.
+
+## Quick Test
+After making these changes:
+1. Create two bookings with the same date
+2. Click the red "Conflict - Click to resolve" badge
+3. You should see "2 bookings on [date]" in the dialog
+4. Select "Edit booking times to avoid overlap"
+5. Both bookings should appear with blue/gray backgrounds
+
+The console will show debug logs to confirm conflict detection is working properly.

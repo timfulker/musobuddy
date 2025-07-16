@@ -40,8 +40,9 @@ export default function ActionableEnquiries() {
     const enquiryDate = new Date(enquiry.eventDate);
     const conflictingEnquiries: any[] = [];
     
+    // Check all enquiries for date conflicts
     enquiries.forEach((otherEnquiry: any) => {
-      if (otherEnquiry.id !== enquiry.id) {
+      if (otherEnquiry.id !== enquiry.id && otherEnquiry.eventDate) {
         const otherDate = new Date(otherEnquiry.eventDate);
         if (enquiryDate.toDateString() === otherDate.toDateString()) {
           conflictingEnquiries.push(otherEnquiry);
@@ -49,19 +50,23 @@ export default function ActionableEnquiries() {
       }
     });
     
-    console.log('🔥 Kanban conflict detection:', {
+    console.log('Conflict detection from kanban board:', {
       enquiryId: enquiry.id,
       enquiryDate: enquiryDate.toDateString(),
       totalEnquiries: enquiries.length,
-      conflictingEnquiries: conflictingEnquiries.length,
-      conflictingBookings: conflictingEnquiries,
-      willPassToDialog: conflictingEnquiries
-    });
-    
-    console.log('🔥 About to open dialog with:', {
-      selectedConflictEnquiry: enquiry,
-      selectedConflicts: conflictingEnquiries,
-      dialogWillOpen: true
+      conflictsFound: conflictingEnquiries.length,
+      conflictDetails: conflictingEnquiries.map(c => ({ 
+        id: c.id, 
+        title: c.title, 
+        clientName: c.clientName,
+        eventDate: c.eventDate,
+        status: c.status 
+      })),
+      allConflictingBookings: [enquiry, ...conflictingEnquiries].map(c => ({ 
+        id: c.id, 
+        title: c.title, 
+        clientName: c.clientName 
+      }))
     });
     
     setSelectedConflictEnquiry(enquiry);
