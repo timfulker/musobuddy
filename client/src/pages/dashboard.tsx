@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import DashboardHeader from "@/components/dashboard-header";
 import StatsCards from "@/components/stats-cards";
-import KanbanBoard from "@/components/kanban-board";
+import ActionableEnquiries from "@/components/kanban-board";
 import CalendarWidget from "@/components/calendar-widget";
 import QuickActions from "@/components/quick-actions";
 import ComplianceAlerts from "@/components/compliance-alerts";
@@ -62,7 +62,7 @@ export default function Dashboard() {
             <StatsCards />
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
               <div className="xl:col-span-2">
-                <KanbanBoard />
+                <ActionableEnquiries />
               </div>
               <div className="space-y-6">
                 <CalendarWidget />

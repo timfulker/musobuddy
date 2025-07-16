@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Eye, User, Calendar, AlertTriangle, AlertCircle } from "lucide-react";
+import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
 
-export default function KanbanBoard() {
+export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading } = useQuery({
     queryKey: ["/api/bookings"],
   });
@@ -16,13 +16,6 @@ export default function KanbanBoard() {
     staleTime: 30000,
     cacheTime: 5 * 60 * 1000,
   });
-
-  const groupedEnquiries = {
-    new: enquiries.filter((e: Enquiry) => e.status === "new"),
-    booking_in_progress: enquiries.filter((e: Enquiry) => e.status === "booking_in_progress"),
-    contract_sent: enquiries.filter((e: Enquiry) => e.status === "contract_sent"),
-    confirmed: enquiries.filter((e: Enquiry) => e.status === "confirmed"),
-  };
 
   const getEnquiryConflict = (enquiryId: number) => {
     return conflicts.find((conflict: any) => 
@@ -43,13 +36,37 @@ export default function KanbanBoard() {
     return enquiry.status === "new" || enquiry.status === "booking_in_progress";
   };
 
-  const renderEnquiryCard = (enquiry: Enquiry, borderColor: string, bgGradient: string) => {
+  const isThisWeek = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    return date >= startOfWeek && date <= endOfWeek;
+  };
+
+  // Filter enquiries that need action
+  const actionableEnquiries = enquiries.filter((enquiry: Enquiry) => 
+    needsResponse(enquiry) || getEnquiryConflict(enquiry.id)
+  );
+
+  // Filter enquiries from this week
+  const thisWeekEnquiries = enquiries.filter((enquiry: Enquiry) => 
+    enquiry.createdAt && isThisWeek(enquiry.createdAt)
+  );
+
+  const renderEnquiryCard = (enquiry: Enquiry, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate!);
     const conflict = getEnquiryConflict(enquiry.id);
+    const urgent = needsResponse(enquiry) || conflict;
     
     return (
       <Link key={enquiry.id} href="/bookings">
-        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 ${borderColor} ${bgGradient}`}>
+        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 ${
+          urgent ? 'border-l-red-500 bg-gradient-to-r from-red-50 to-white dark:from-red-950 dark:to-gray-900' : 
+          'border-l-blue-500 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900'
+        }`}>
           <CardContent className="p-4">
             <div className="space-y-3">
               {/* Header with price and date */}
@@ -100,6 +117,9 @@ export default function KanbanBoard() {
                     🎯 ENCORE
                   </Badge>
                 )}
+                <Badge variant="outline" className="text-xs">
+                  {enquiry.status.replace('_', ' ').toUpperCase()}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -112,7 +132,7 @@ export default function KanbanBoard() {
     return (
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>Enquiry Pipeline</CardTitle>
+          <CardTitle>Action Required</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -132,7 +152,7 @@ export default function KanbanBoard() {
     <Card className="shadow-sm">
       <CardHeader className="pb-6">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold">Enquiry Pipeline</CardTitle>
+          <CardTitle className="text-xl font-semibold">Action Required</CardTitle>
           <div className="flex items-center space-x-2">
             <Link href="/bookings">
               <Button variant="outline" size="sm" className="h-9">
@@ -145,82 +165,52 @@ export default function KanbanBoard() {
       </CardHeader>
       
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {/* New Enquiries Column */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Action Required Column */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100">New Enquiries</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+                Needs Response
+              </h4>
+              <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {actionableEnquiries.length}
+              </Badge>
+            </div>
+            <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
+              {actionableEnquiries.map((enquiry: Enquiry) => 
+                renderEnquiryCard(enquiry, true)
+              )}
+              {actionableEnquiries.length === 0 && (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-sm">No enquiries need action</p>
+                  <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* This Week Column */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                <Clock className="w-5 h-5 mr-2 text-blue-500" />
+                This Week's Activity
+              </h4>
               <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                {groupedEnquiries.new.length}
+                {thisWeekEnquiries.length}
               </Badge>
             </div>
-            <div className="space-y-3 min-h-[300px]">
-              {groupedEnquiries.new.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, "border-l-blue-500", "bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900")
+            <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
+              {thisWeekEnquiries.map((enquiry: Enquiry) => 
+                renderEnquiryCard(enquiry, false)
               )}
-              {groupedEnquiries.new.length === 0 && (
+              {thisWeekEnquiries.length === 0 && (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <p className="text-sm">No new enquiries</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* In Progress Column */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100">In Progress</h4>
-              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                {groupedEnquiries.booking_in_progress.length}
-              </Badge>
-            </div>
-            <div className="space-y-3 min-h-[300px]">
-              {groupedEnquiries.booking_in_progress.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, "border-l-amber-500", "bg-gradient-to-r from-amber-50 to-white dark:from-amber-950 dark:to-gray-900")
-              )}
-              {groupedEnquiries.booking_in_progress.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <p className="text-sm">No enquiries in progress</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Confirmed Column */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Confirmed</h4>
-              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                {groupedEnquiries.confirmed.length}
-              </Badge>
-            </div>
-            <div className="space-y-3 min-h-[300px]">
-              {groupedEnquiries.confirmed.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, "border-l-green-500", "bg-gradient-to-r from-green-50 to-white dark:from-green-950 dark:to-gray-900")
-              )}
-              {groupedEnquiries.confirmed.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <p className="text-sm">No confirmed bookings</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Contract Received Column */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Contract Received</h4>
-              <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                {groupedEnquiries.contract_sent.length}
-              </Badge>
-            </div>
-            <div className="space-y-3 min-h-[300px]">
-              {groupedEnquiries.contract_sent.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, "border-l-purple-500", "bg-gradient-to-r from-purple-50 to-white dark:from-purple-950 dark:to-gray-900")
-              )}
-              {groupedEnquiries.contract_sent.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <p className="text-sm">No contracts received</p>
+                  <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-sm">No enquiries this week</p>
+                  <p className="text-xs text-gray-400 mt-1">Check back for new activity</p>
                 </div>
               )}
             </div>
