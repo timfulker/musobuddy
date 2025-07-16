@@ -1830,12 +1830,18 @@ export default function Enquiries() {
       )}
 
       {/* Conflict Resolution Dialog */}
-      <ConflictResolutionDialog
-        isOpen={conflictResolutionDialogOpen}
-        onClose={() => setConflictResolutionDialogOpen(false)}
-        enquiry={selectedConflictEnquiry}
-        conflicts={selectedConflicts}
-      />
+      {conflictResolutionDialogOpen && selectedConflictEnquiry && (
+        <ConflictResolutionDialog
+          isOpen={conflictResolutionDialogOpen}
+          onClose={() => {
+            setConflictResolutionDialogOpen(false);
+            setSelectedConflictEnquiry(null);
+            setSelectedConflicts([]);
+          }}
+          enquiry={selectedConflictEnquiry}
+          conflicts={selectedConflicts}
+        />
+      )}
     </div>
   );
 }

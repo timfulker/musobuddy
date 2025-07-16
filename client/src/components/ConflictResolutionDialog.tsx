@@ -39,6 +39,12 @@ export default function ConflictResolutionDialog({
   enquiry, 
   conflicts 
 }: ConflictResolutionDialogProps) {
+  // Early return BEFORE any hooks are called
+  if (!enquiry || !enquiry.id || !conflicts) {
+    console.error('ConflictResolutionDialog: Invalid data received', { enquiry, conflicts });
+    return null;
+  }
+
   const [selectedAction, setSelectedAction] = useState<string>('');
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [newTime, setNewTime] = useState<string>('');
@@ -46,12 +52,6 @@ export default function ConflictResolutionDialog({
   const [rejectReason, setRejectReason] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Early return if enquiry or conflicts are not available
-  if (!enquiry || !enquiry.id || !conflicts) {
-    console.error('ConflictResolutionDialog: Invalid data received', { enquiry, conflicts });
-    return null;
-  }
 
   // Update booking time mutation
   const updateTimeMutation = useMutation({
