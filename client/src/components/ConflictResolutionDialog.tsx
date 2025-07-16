@@ -40,7 +40,7 @@ export default function ConflictResolutionDialog({
   conflicts 
 }: ConflictResolutionDialogProps) {
   // Early return BEFORE any hooks are called
-  if (!enquiry || !enquiry.id || !conflicts) {
+  if (!enquiry || !enquiry.id) {
     console.error('ConflictResolutionDialog: Invalid data received', { enquiry, conflicts });
     return null;
   }
@@ -217,6 +217,15 @@ export default function ConflictResolutionDialog({
 
   const allConflictingBookings = [enquiry, ...(conflicts || [])].filter(Boolean);
   const totalConflictingBookings = allConflictingBookings.length;
+  
+  // Force display of both bookings when conflicts exist
+  console.log('Dialog Data Check:', {
+    enquiry: enquiry?.id,
+    conflicts: conflicts?.length || 0,
+    conflictData: conflicts,
+    allBookings: allConflictingBookings.map(b => ({ id: b.id, title: b.title })),
+    totalBookings: totalConflictingBookings
+  });
   
   // Debug logging
   console.log('ConflictResolutionDialog Debug:', {
