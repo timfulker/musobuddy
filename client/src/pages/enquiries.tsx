@@ -974,19 +974,19 @@ export default function Enquiries() {
                         
                         {/* Date and Event Info */}
                         <div className="flex items-center gap-3 mb-3">
-                          <div className={`flex-shrink-0 w-16 h-12 border rounded-lg flex flex-col items-center justify-center ${
+                          <div className={`relative flex-shrink-0 w-20 h-16 border rounded-lg flex flex-col items-center justify-center p-1 ${
                             isPastDate ? 'border-gray-300 bg-gray-100' :
                             severity.level === 'critical' ? 'border-rose-300 bg-rose-50' :
                             severity.level === 'warning' ? 'border-amber-300 bg-amber-50' :
                             'border-gray-200 bg-white'
                           }`}>
-                            <div className={`text-xs font-medium ${isPastDate ? 'text-gray-500' : 'text-gray-700'}`}>
+                            <div className={`text-xs font-medium leading-none ${isPastDate ? 'text-gray-500' : 'text-gray-700'}`}>
                               {dateBox.dayName.slice(0, 3)}
                             </div>
-                            <div className={`text-sm font-bold ${isPastDate ? 'text-gray-600' : 'text-gray-900'}`}>
+                            <div className={`text-lg font-bold leading-none my-1 ${isPastDate ? 'text-gray-600' : 'text-gray-900'}`}>
                               {dateBox.dayNum}
                             </div>
-                            <div className={`text-xs font-medium ${isPastDate ? 'text-gray-500' : 'text-gray-700'}`}>
+                            <div className={`text-xs font-medium leading-none ${isPastDate ? 'text-gray-500' : 'text-gray-700'}`}>
                               {dateBox.monthYear}
                             </div>
                             {hasConflicts && (
