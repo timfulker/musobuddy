@@ -159,6 +159,13 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Auto-completion Integration**: Previous status preserved when bookings are auto-completed to show workflow history
   * **Status**: Bulk update functionality fully operational with proper data transmission and UI updates
 
+- July 16, 2025. Active Bookings metric fixed to match actual workflow and data:
+  * **Fixed Active Bookings Logic**: Updated to count both "confirmed" and "contract_sent" status bookings (not "contract_received")
+  * **Corrected Status Terminology**: Aligned with actual database statuses: new → booking_in_progress → confirmed → contract_sent
+  * **Accurate Dashboard Stats**: Active Bookings now shows realistic count of future confirmed work instead of zero
+  * **Updated Description**: Changed to "Confirmed & contracts sent" to match actual workflow terminology
+  * **Status**: Dashboard now accurately reflects upcoming confirmed gigs where contracts have been sent to clients
+
 - July 16, 2025. Dashboard redesign with focused actionable enquiries and calendar import filtering:
   * **Redesigned Enquiry Pipeline**: Changed from 4-column kanban to focused 2-column "Action Required" layout
   * **Calendar Import Filtering**: Added intelligent filter to exclude calendar imports from "This Week's Activity" 
