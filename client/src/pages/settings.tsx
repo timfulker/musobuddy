@@ -175,7 +175,9 @@ export default function Settings() {
   // Update local state when settings are loaded
   useEffect(() => {
     if (settings) {
-      console.log('Updating form with settings:', settings);
+      console.log('🔄 Updating form with settings:', settings);
+      console.log('🔄 selectedInstruments from settings:', settings.selectedInstruments);
+      console.log('🔄 gigTypes from settings:', settings.gigTypes);
       form.reset(settings);
       setSelectedInstruments(settings.selectedInstruments || []);
       
@@ -184,6 +186,7 @@ export default function Settings() {
       setGigTypes(gigTypesToUse);
       
       // Reset hasChanges flag since we're loading fresh data
+      console.log('🔄 Resetting hasChanges to false');
       setHasChanges(false);
     }
   }, [settings, globalGigTypes, form]);
@@ -196,10 +199,13 @@ export default function Settings() {
     return () => subscription.unsubscribe();
   }, [form]);
 
-  // Watch for instrument/gig type changes
+  // Watch for instrument/gig type changes (but not on initial load)
   useEffect(() => {
-    setHasChanges(true);
-  }, [selectedInstruments, gigTypes]);
+    // Only set hasChanges to true if settings have been loaded (not on initial load)
+    if (settings) {
+      setHasChanges(true);
+    }
+  }, [selectedInstruments, gigTypes, settings]);
 
   // Function to generate AI-powered gig types
   const generateGigTypes = async (instruments: string[]) => {
@@ -331,6 +337,10 @@ export default function Settings() {
   });
 
   const onSubmit = (data: SettingsFormData) => {
+    console.log('Form submitted with data:', data);
+    console.log('hasChanges:', hasChanges);
+    console.log('selectedInstruments:', selectedInstruments);
+    console.log('gigTypes:', gigTypes);
     saveSettings.mutate(data);
   };
 
@@ -728,7 +738,7 @@ export default function Settings() {
                   className={`px-8 py-2 border-0 transition-all duration-300 ${
                     hasChanges && !saveSettings.isPending
                       ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:scale-105'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                   }`}
                 >
                   {saveSettings.isPending ? (
@@ -743,6 +753,9 @@ export default function Settings() {
                     </>
                   )}
                 </Button>
+                <div className="ml-2 text-xs text-gray-500 self-center">
+                  Debug: hasChanges = {hasChanges ? 'true' : 'false'}
+                </div>
               </div>
             </form>
           </Form>
