@@ -1182,7 +1182,7 @@ export default function Enquiries() {
                 onCheckedChange={handleSelectAll}
               />
               <label htmlFor="select-all" className="text-sm text-gray-700 cursor-pointer">
-                Select all {sortedEnquiries.length} bookings
+                Select all {sortedEnquiries.length} filtered bookings
               </label>
             </div>
           </CardContent>
