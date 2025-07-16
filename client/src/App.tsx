@@ -10,7 +10,6 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Enquiries from "@/pages/enquiries";
-import Bookings from "@/pages/Bookings";
 import Contracts from "@/pages/contracts";
 import Invoices from "@/pages/invoices";
 import Calendar from "@/pages/calendar";
@@ -54,8 +53,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Dashboard} />
-          <Route path="/bookings" component={Bookings} />
-          <Route path="/enquiries" component={Enquiries} />
+          <Route path="/bookings" component={Enquiries} />
           <Route path="/address-book" component={AddressBook} />
           <Route path="/contracts" component={Contracts} />
           <Route path="/invoices" component={Invoices} />
