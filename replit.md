@@ -207,6 +207,15 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Backend Integration**: Auto-completion API endpoint properly processes past events and updates status
   * **Status**: Completion status is now fully automated based on event dates, cannot be manually overridden
 
+- July 16, 2025. Contract confirmation email view links fixed to show preview page instead of forcing PDF download:
+  * **Issue Resolved**: Contract confirmation emails were linking to download route instead of view page
+  * **Root Cause**: contractViewUrl was using cloud storage signing page URL instead of app-based view page
+  * **Solution**: Modified contract signing confirmation to always use app-based view-contract page for signed contracts
+  * **User Experience**: Confirmation emails now properly link to preview page showing contract details with download option
+  * **Technical Fix**: Updated contractViewUrl generation to prioritize app-based view over cloud storage URLs for signed contracts
+  * **Preserved Functionality**: Cloud storage signing pages still used for active contract signing, view pages for signed contract previews
+  * **Status**: Contract confirmation emails now properly show preview page with download option as intended
+
 - July 16, 2025. Enhanced instrument selection UX with core instruments and improved visual feedback:
   * **Core Instruments Display**: Limited visible instruments to 9 core types (Piano, Bass Guitar, Guitar, Drums, Saxophone, Violin, Flute, Vocals, DJ)
   * **Full Database Search**: Complete 120+ instrument database accessible through search functionality

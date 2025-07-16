@@ -2080,10 +2080,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // Generate contract view URL - prioritize cloud storage URL over app-dependent URL
+        // Generate contract view URL - always use app-based view page for signed contracts
         const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
         const contractDownloadUrl = `https://${currentDomain}/api/contracts/${signedContract.id}/download`;
-        const contractViewUrl = cloudStorageUrl || `https://${currentDomain}/view-contract/${signedContract.id}`;
+        const contractViewUrl = `https://${currentDomain}/view-contract/${signedContract.id}`;
         
         console.log('🔥 CONTRACT SIGNING: Domain configuration:', {
           REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
