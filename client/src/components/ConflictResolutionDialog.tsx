@@ -47,6 +47,11 @@ export default function ConflictResolutionDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Early return if enquiry or conflicts are not available
+  if (!enquiry || !conflicts) {
+    return null;
+  }
+
   // Update booking time mutation
   const updateTimeMutation = useMutation({
     mutationFn: async ({ id, eventTime, eventEndTime }: any) => {
@@ -162,20 +167,29 @@ export default function ConflictResolutionDialog({
 
   const formatTime = (timeString: string) => {
     if (!timeString) return 'All day';
-    return new Date(`1970-01-01T${timeString}`).toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+    try {
+      return new Date(`1970-01-01T${timeString}`).toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      return timeString; // Return original if formatting fails
+    }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!dateString) return 'Invalid Date';
+    try {
+      return new Date(dateString).toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   const canReject = (booking: any) => {
@@ -186,7 +200,7 @@ export default function ConflictResolutionDialog({
     return booking.status !== 'completed' && booking.status !== 'rejected';
   };
 
-  const allConflictingBookings = [enquiry, ...conflicts];
+  const allConflictingBookings = [enquiry, ...(conflicts || [])].filter(Boolean);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -203,7 +217,7 @@ export default function ConflictResolutionDialog({
           <Card className="border-red-200 bg-red-50">
             <CardHeader>
               <CardTitle className="text-lg text-red-800">
-                {allConflictingBookings.length} bookings on {formatDate(enquiry.eventDate)}
+                {allConflictingBookings.length} bookings on {formatDate(enquiry?.eventDate)}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -223,7 +237,7 @@ export default function ConflictResolutionDialog({
               <SelectContent>
                 <SelectItem value="edit_times">Edit booking times to avoid overlap</SelectItem>
                 <SelectItem value="reject_enquiry">Reject the new enquiry</SelectItem>
-                {conflicts.some(c => canReject(c)) && (
+                {conflicts && conflicts.length > 0 && conflicts.some(c => canReject(c)) && (
                   <SelectItem value="reject_existing">Reject an existing booking</SelectItem>
                 )}
                 <SelectItem value="mark_in_progress">Mark enquiry as "in progress" (proceed with caution)</SelectItem>
@@ -236,39 +250,39 @@ export default function ConflictResolutionDialog({
             <h3 className="text-lg font-semibold">Conflicting Bookings</h3>
             
             {allConflictingBookings.map((booking, index) => (
-              <Card key={booking.id} className={`${booking.id === enquiry.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+              <Card key={booking?.id || index} className={`${booking?.id === enquiry?.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(booking.status)}>
-                          {getStatusLabel(booking.status)}
+                        <Badge className={getStatusColor(booking?.status || 'new')}>
+                          {getStatusLabel(booking?.status || 'new')}
                         </Badge>
-                        {booking.id === enquiry.id && (
+                        {booking?.id === enquiry?.id && (
                           <Badge variant="outline" className="text-blue-600 border-blue-600">
                             Current Enquiry
                           </Badge>
                         )}
                       </div>
                       
-                      <h4 className="font-medium">{booking.title}</h4>
+                      <h4 className="font-medium">{booking?.title || 'Untitled Booking'}</h4>
                       
                       <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                         <div className="flex items-center">
                           <User className="w-4 h-4 mr-2" />
-                          {booking.clientName}
+                          {booking?.clientName || 'Unknown Client'}
                         </div>
                         <div className="flex items-center">
                           <Clock className="w-4 h-4 mr-2" />
-                          {formatTime(booking.eventTime)} - {formatTime(booking.eventEndTime)}
+                          {formatTime(booking?.eventTime)} - {formatTime(booking?.eventEndTime)}
                         </div>
-                        {booking.venue && (
+                        {booking?.venue && (
                           <div className="flex items-center">
                             <MapPin className="w-4 h-4 mr-2" />
                             {booking.venue}
                           </div>
                         )}
-                        {booking.clientEmail && (
+                        {booking?.clientEmail && (
                           <div className="flex items-center">
                             <Mail className="w-4 h-4 mr-2" />
                             {booking.clientEmail}
@@ -276,7 +290,7 @@ export default function ConflictResolutionDialog({
                         )}
                       </div>
                       
-                      {booking.estimatedValue && (
+                      {booking?.estimatedValue && (
                         <div className="text-green-600 font-medium">
                           £{booking.estimatedValue}
                         </div>
