@@ -277,10 +277,10 @@ export default function ConflictResolutionDialog({
                 <h3 className="text-lg font-semibold">Edit Booking Times</h3>
                 <div className="text-sm text-gray-600">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                    New Enquiry
+                    New
                   </span>
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    Existing Booking
+                    Original
                   </span>
                 </div>
               </div>
@@ -302,14 +302,13 @@ export default function ConflictResolutionDialog({
                               <Badge className={getStatusColor(booking?.status || 'new')}>
                                 {getStatusLabel(booking?.status || 'new')}
                               </Badge>
-                              {isCurrentEnquiry && (
+                              {isCurrentEnquiry ? (
                                 <Badge variant="outline" className="text-blue-600 border-blue-600">
-                                  New Enquiry
+                                  New
                                 </Badge>
-                              )}
-                              {!isCurrentEnquiry && (
+                              ) : (
                                 <Badge variant="outline" className="text-gray-600 border-gray-600">
-                                  Existing Booking
+                                  Original
                                 </Badge>
                               )}
                             </div>
