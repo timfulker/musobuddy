@@ -159,6 +159,18 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Auto-completion Integration**: Previous status preserved when bookings are auto-completed to show workflow history
   * **Status**: Bulk update functionality fully operational with proper data transmission and UI updates
 
+- July 16, 2025. Dashboard redesign with focused actionable enquiries and calendar import filtering:
+  * **Redesigned Enquiry Pipeline**: Changed from 4-column kanban to focused 2-column "Action Required" layout
+  * **Calendar Import Filtering**: Added intelligent filter to exclude calendar imports from "This Week's Activity" 
+  * **Calendar Import Detection**: Identifies imports by lack of client contact info, email content, or pricing data
+  * **Actionable Focus**: Left column shows only enquiries needing immediate response (new/in-progress status + conflicts)
+  * **Recent Activity**: Right column shows genuine enquiries from current week, excluding bulk calendar imports
+  * **Visual Priority System**: Urgent enquiries get red borders and backgrounds for immediate attention
+  * **Fixed Database Error**: Resolved "enquiries is not defined" error by updating dashboard stats to use bookings table
+  * **Improved Empty States**: Clear messaging when no action needed or no weekly activity
+  * **Terminology Update**: Changed "Contract Sent" to "Contract Received" and moved to rightmost column
+  * **Status**: Dashboard now shows realistic activity levels and focuses on actionable items requiring musician response
+
 - July 16, 2025. Enhanced instrument selection UX with core instruments and improved visual feedback:
   * **Core Instruments Display**: Limited visible instruments to 9 core types (Piano, Bass Guitar, Guitar, Drums, Saxophone, Violin, Flute, Vocals, DJ)
   * **Full Database Search**: Complete 120+ instrument database accessible through search functionality

@@ -740,16 +740,16 @@ export class DatabaseStorage implements IStorage {
     // Conversion rate (confirmed bookings / total enquiries)
     const totalEnquiries = await db
       .select()
-      .from(enquiries)
-      .where(eq(enquiries.userId, userId));
+      .from(bookings)
+      .where(eq(bookings.userId, userId));
 
     const confirmedBookingsCount = await db
       .select()
-      .from(enquiries)
+      .from(bookings)
       .where(
         and(
-          eq(enquiries.userId, userId),
-          eq(enquiries.status, "confirmed")
+          eq(bookings.userId, userId),
+          eq(bookings.status, "confirmed")
         )
       );
 
