@@ -399,15 +399,29 @@ export default function Enquiries() {
 
   // Sort the filtered enquiries
   const sortedEnquiries = [...filteredEnquiries].sort((a, b) => {
+    // Debug: Log the data structure
+    if (sortBy === "newest" && filteredEnquiries.length > 0) {
+      console.log("Sorting debug:", {
+        sortBy,
+        sampleA: { id: a.id, createdAt: a.createdAt, updatedAt: a.updatedAt },
+        sampleB: { id: b.id, createdAt: b.createdAt, updatedAt: b.updatedAt }
+      });
+    }
+    
     switch (sortBy) {
       case "newest":
-        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bCreated - aCreated; // Newest first (descending)
+        // Try both createdAt and updatedAt, fallback to id for consistent ordering
+        const aTime = a.createdAt || a.updatedAt || a.id;
+        const bTime = b.createdAt || b.updatedAt || b.id;
+        const aDate = typeof aTime === 'string' || typeof aTime === 'number' ? new Date(aTime).getTime() : aTime;
+        const bDate = typeof bTime === 'string' || typeof bTime === 'number' ? new Date(bTime).getTime() : bTime;
+        return bDate - aDate; // Newest first (descending)
       case "oldest":
-        const aCreatedOld = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bCreatedOld = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return aCreatedOld - bCreatedOld; // Oldest first (ascending)
+        const aTimeOld = a.createdAt || a.updatedAt || a.id;
+        const bTimeOld = b.createdAt || b.updatedAt || b.id;
+        const aDateOld = typeof aTimeOld === 'string' || typeof aTimeOld === 'number' ? new Date(aTimeOld).getTime() : aTimeOld;
+        const bDateOld = typeof bTimeOld === 'string' || typeof bTimeOld === 'number' ? new Date(bTimeOld).getTime() : bTimeOld;
+        return aDateOld - bDateOld; // Oldest first (ascending)
       case "eventDate":
         if (!a.eventDate && !b.eventDate) return 0;
         if (!a.eventDate) return 1;
