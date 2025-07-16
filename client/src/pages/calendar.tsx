@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Menu, Upload, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, Menu, Upload, Download, Calendar as CalendarIcon, Clock, List, Grid } from "lucide-react";
 import { useLocation } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -17,9 +17,12 @@ interface CalendarEvent {
   status?: string;
 }
 
+type CalendarView = 'day' | 'week' | 'month' | 'year';
+
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [view, setView] = useState<CalendarView>('month');
   const [location, navigate] = useLocation();
   const { isMobile } = useResponsive();
 
@@ -35,12 +38,42 @@ export default function Calendar() {
   });
 
   // Navigation functions
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const goToPrevious = () => {
+    const newDate = new Date(currentDate);
+    switch (view) {
+      case 'day':
+        newDate.setDate(newDate.getDate() - 1);
+        break;
+      case 'week':
+        newDate.setDate(newDate.getDate() - 7);
+        break;
+      case 'month':
+        newDate.setMonth(newDate.getMonth() - 1);
+        break;
+      case 'year':
+        newDate.setFullYear(newDate.getFullYear() - 1);
+        break;
+    }
+    setCurrentDate(newDate);
   };
 
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const goToNext = () => {
+    const newDate = new Date(currentDate);
+    switch (view) {
+      case 'day':
+        newDate.setDate(newDate.getDate() + 1);
+        break;
+      case 'week':
+        newDate.setDate(newDate.getDate() + 7);
+        break;
+      case 'month':
+        newDate.setMonth(newDate.getMonth() + 1);
+        break;
+      case 'year':
+        newDate.setFullYear(newDate.getFullYear() + 1);
+        break;
+    }
+    setCurrentDate(newDate);
   };
 
   const goToToday = () => {
@@ -219,6 +252,160 @@ export default function Calendar() {
     "July", "August", "September", "October", "November", "December"
   ];
 
+  // Get formatted date string based on view
+  const getFormattedDate = () => {
+    switch (view) {
+      case 'day':
+        return `${currentDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
+      case 'week':
+        const weekStart = new Date(currentDate);
+        weekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        return `${weekStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - ${weekEnd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      case 'month':
+        return `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+      case 'year':
+        return `${currentDate.getFullYear()}`;
+    }
+  };
+
+  // Generate day view
+  const renderDayView = () => {
+    const events = getEventsForDate(currentDate);
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    
+    return (
+      <div className="space-y-4">
+        {events.length > 0 ? (
+          <div className="grid gap-4">
+            {events.map((event, index) => (
+              <div
+                key={index}
+                className={`
+                  p-4 rounded-lg border-l-4 shadow-sm
+                  ${event.type === 'booking' 
+                    ? 'bg-emerald-50 border-l-emerald-500 text-emerald-900' 
+                    : 'bg-purple-50 border-l-purple-500 text-purple-900'
+                  }
+                `}
+              >
+                <h3 className="font-semibold">{event.title}</h3>
+                <p className="text-sm opacity-75">{event.status}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            No events scheduled for this day
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Generate week view
+  const renderWeekView = () => {
+    const weekStart = new Date(currentDate);
+    weekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+    
+    const weekDays = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      return date;
+    });
+
+    return (
+      <div className="grid grid-cols-7 gap-2">
+        {weekDays.map((day, index) => {
+          const events = getEventsForDate(day);
+          const isToday = day.toDateString() === new Date().toDateString();
+          
+          return (
+            <div
+              key={index}
+              className={`
+                p-4 rounded-lg border min-h-32
+                ${isToday 
+                  ? 'bg-blue-50 border-blue-200' 
+                  : 'bg-white border-gray-200'
+                }
+              `}
+            >
+              <div className={`text-center mb-2 ${isToday ? 'font-bold text-blue-600' : 'text-gray-700'}`}>
+                {day.toLocaleDateString('en-GB', { weekday: 'short' })}
+                <br />
+                {day.getDate()}
+              </div>
+              <div className="space-y-1">
+                {events.map((event, eventIndex) => (
+                  <div
+                    key={eventIndex}
+                    className={`
+                      text-xs p-1 rounded
+                      ${event.type === 'booking' 
+                        ? 'bg-emerald-100 text-emerald-800' 
+                        : 'bg-purple-100 text-purple-800'
+                      }
+                    `}
+                  >
+                    {event.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Generate year view
+  const renderYearView = () => {
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const monthDate = new Date(currentDate.getFullYear(), i, 1);
+      return monthDate;
+    });
+
+    return (
+      <div className="grid grid-cols-3 gap-6">
+        {months.map((month, index) => {
+          const monthEvents = bookings.filter((booking: any) => {
+            if (booking.eventDate) {
+              const bookingDate = new Date(booking.eventDate);
+              return bookingDate.getMonth() === month.getMonth() && 
+                     bookingDate.getFullYear() === month.getFullYear();
+            }
+            return false;
+          });
+
+          return (
+            <div
+              key={index}
+              className="p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => {
+                setCurrentDate(month);
+                setView('month');
+              }}
+            >
+              <h3 className="font-semibold text-center mb-2">
+                {monthNames[month.getMonth()]}
+              </h3>
+              <div className="text-center text-sm text-gray-600">
+                {monthEvents.length} events
+              </div>
+              {monthEvents.length > 0 && (
+                <div className="mt-2 flex justify-center">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background layout-consistent">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -257,11 +444,53 @@ export default function Calendar() {
                 Export Calendar
               </Button>
               
-              {/* Month Navigation */}
+              {/* View Selector */}
+              <div className="flex items-center space-x-2 ml-4">
+                <div className="flex items-center space-x-1 bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
+                  <Button
+                    variant={view === 'day' ? 'default' : 'ghost'}
+                    onClick={() => setView('day')}
+                    size="sm"
+                    className="rounded-md"
+                  >
+                    <Clock className="w-4 h-4 mr-1" />
+                    Day
+                  </Button>
+                  <Button
+                    variant={view === 'week' ? 'default' : 'ghost'}
+                    onClick={() => setView('week')}
+                    size="sm"
+                    className="rounded-md"
+                  >
+                    <List className="w-4 h-4 mr-1" />
+                    Week
+                  </Button>
+                  <Button
+                    variant={view === 'month' ? 'default' : 'ghost'}
+                    onClick={() => setView('month')}
+                    size="sm"
+                    className="rounded-md"
+                  >
+                    <CalendarIcon className="w-4 h-4 mr-1" />
+                    Month
+                  </Button>
+                  <Button
+                    variant={view === 'year' ? 'default' : 'ghost'}
+                    onClick={() => setView('year')}
+                    size="sm"
+                    className="rounded-md"
+                  >
+                    <Grid className="w-4 h-4 mr-1" />
+                    Year
+                  </Button>
+                </div>
+              </div>
+
+              {/* Navigation */}
               <div className="flex items-center space-x-2 ml-4">
                 <Button
                   variant="outline"
-                  onClick={goToPreviousMonth}
+                  onClick={goToPrevious}
                   size="sm"
                   className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
                 >
@@ -277,7 +506,7 @@ export default function Calendar() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={goToNextMonth}
+                  onClick={goToNext}
                   size="sm"
                   className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
                 >
@@ -292,117 +521,124 @@ export default function Calendar() {
         <div className="p-6">
           <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
             <CardContent className="p-8">
-              {/* Month Header */}
+              {/* Date Header */}
               <div className="text-center mb-8">
                 <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                  {getFormattedDate()}
                 </h2>
               </div>
 
-              {/* Calendar Grid */}
-              <div className="grid grid-cols-7 gap-3 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg">
-                {/* Day headers */}
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-                  <div
-                    key={day}
-                    className="h-14 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-xl"
-                  >
-                    {day}
-                  </div>
-                ))}
+              {/* Calendar Content */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg">
+                {view === 'day' && renderDayView()}
+                {view === 'week' && renderWeekView()}
+                {view === 'month' && (
+                  <div className="grid grid-cols-7 gap-3">
+                    {/* Day headers */}
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                      <div
+                        key={day}
+                        className="h-14 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-xl"
+                      >
+                        {day}
+                      </div>
+                    ))}
 
-                {/* Calendar days */}
-                {days.map((day, index) => (
-                  <div
-                    key={index}
-                    className={`
-                      h-24 cursor-pointer rounded-xl transition-all duration-200 relative
-                      hover:scale-105 hover:shadow-md
-                      ${day.hasEvents && day.events.length === 1
-                        ? day.events[0].type === 'booking'
-                          ? 'bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700 shadow-sm'
-                          : 'bg-purple-100 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-700 shadow-sm'
-                        : day.isCurrentMonth 
-                          ? 'bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-700' 
-                          : 'bg-gray-50 dark:bg-slate-700 opacity-40 border border-gray-50 dark:border-slate-600'
-                      }
-                      ${day.isToday 
-                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg scale-105' 
-                        : ''
-                      }
-                      ${day.hasEvents && day.events.length > 1
-                        ? 'ring-2 ring-purple-300 dark:ring-purple-600 shadow-purple-100 dark:shadow-purple-900/20' 
-                        : ''
-                      }
-                    `}
-                    onClick={() => handleDateClick(day.date)}
-                  >
-                    {/* Date number - positioned absolutely in top right */}
-                    <div className={`
-                      absolute top-2 right-2 text-sm font-bold z-10
-                      ${day.isToday 
-                        ? 'text-white' 
-                        : day.hasEvents && day.events.length === 1
-                          ? day.events[0].type === 'booking'
-                            ? 'text-emerald-800 dark:text-emerald-300'
-                            : 'text-purple-800 dark:text-purple-300'
-                          : day.isCurrentMonth 
-                            ? 'text-gray-900 dark:text-white' 
-                            : 'text-gray-400 dark:text-gray-500'
-                      }
-                    `}>
-                      {day.day}
-                    </div>
-
-                    {/* Events display */}
-                    {day.hasEvents && (
-                      <div className="h-full flex flex-col p-2">
-                        {day.events.length === 1 ? (
-                          // Single event - fill entire cell
-                          <div
-                            className={`
-                              flex-1 flex items-center justify-center text-center p-2
-                              ${day.events[0].type === 'booking' 
-                                ? 'text-emerald-800 dark:text-emerald-300' 
+                    {/* Calendar days */}
+                    {days.map((day, index) => (
+                      <div
+                        key={index}
+                        className={`
+                          h-24 cursor-pointer rounded-xl transition-all duration-200 relative
+                          hover:scale-105 hover:shadow-md
+                          ${day.hasEvents && day.events.length === 1
+                            ? day.events[0].type === 'booking'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700 shadow-sm'
+                              : 'bg-purple-100 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-700 shadow-sm'
+                            : day.isCurrentMonth 
+                              ? 'bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-700' 
+                              : 'bg-gray-50 dark:bg-slate-700 opacity-40 border border-gray-50 dark:border-slate-600'
+                          }
+                          ${day.isToday 
+                            ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg scale-105' 
+                            : ''
+                          }
+                          ${day.hasEvents && day.events.length > 1
+                            ? 'ring-2 ring-purple-300 dark:ring-purple-600 shadow-purple-100 dark:shadow-purple-900/20' 
+                            : ''
+                          }
+                        `}
+                        onClick={() => handleDateClick(day.date)}
+                      >
+                        {/* Date number - positioned absolutely in top right */}
+                        <div className={`
+                          absolute top-2 right-2 text-sm font-bold z-10
+                          ${day.isToday 
+                            ? 'text-white' 
+                            : day.hasEvents && day.events.length === 1
+                              ? day.events[0].type === 'booking'
+                                ? 'text-emerald-800 dark:text-emerald-300'
                                 : 'text-purple-800 dark:text-purple-300'
-                              }
-                            `}
-                          >
-                            <span className="text-xs font-medium leading-tight whitespace-pre-wrap break-words">
-                              {day.events[0].title}
-                            </span>
-                          </div>
-                        ) : (
-                          // Multiple events - split space
-                          <div className="flex-1 flex flex-col space-y-1">
-                            {day.events.slice(0, 2).map((event, eventIndex) => (
+                              : day.isCurrentMonth 
+                                ? 'text-gray-900 dark:text-white' 
+                                : 'text-gray-400 dark:text-gray-500'
+                          }
+                        `}>
+                          {day.day}
+                        </div>
+
+                        {/* Events display */}
+                        {day.hasEvents && (
+                          <div className="h-full flex flex-col p-2">
+                            {day.events.length === 1 ? (
+                              // Single event - fill entire cell
                               <div
-                                key={eventIndex}
                                 className={`
-                                  flex-1 px-2 py-1 rounded-lg text-xs font-medium shadow-sm
-                                  flex items-center justify-center text-center
-                                  ${event.type === 'booking' 
-                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
-                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
+                                  flex-1 flex items-center justify-center text-center p-2
+                                  ${day.events[0].type === 'booking' 
+                                    ? 'text-emerald-800 dark:text-emerald-300' 
+                                    : 'text-purple-800 dark:text-purple-300'
                                   }
                                 `}
                               >
-                                <span className="leading-tight whitespace-pre-wrap break-words">
-                                  {event.title}
+                                <span className="text-xs font-medium leading-tight whitespace-pre-wrap break-words">
+                                  {day.events[0].title}
                                 </span>
                               </div>
-                            ))}
-                            {day.events.length > 2 && (
-                              <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium text-center">
-                                +{day.events.length - 2} more
+                            ) : (
+                              // Multiple events - split space
+                              <div className="flex-1 flex flex-col space-y-1">
+                                {day.events.slice(0, 2).map((event, eventIndex) => (
+                                  <div
+                                    key={eventIndex}
+                                    className={`
+                                      flex-1 px-2 py-1 rounded-lg text-xs font-medium shadow-sm
+                                      flex items-center justify-center text-center
+                                      ${event.type === 'booking' 
+                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700' 
+                                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-700'
+                                      }
+                                    `}
+                                  >
+                                    <span className="leading-tight whitespace-pre-wrap break-words">
+                                      {event.title}
+                                    </span>
+                                  </div>
+                                ))}
+                                {day.events.length > 2 && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium text-center">
+                                    +{day.events.length - 2} more
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
                         )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                )}
+                {view === 'year' && renderYearView()}
               </div>
             </CardContent>
           </Card>

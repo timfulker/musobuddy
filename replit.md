@@ -127,6 +127,17 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 ## Changelog
 
 ```
+- July 16, 2025. Enhanced calendar system with comprehensive view options:
+  * **Multiple Calendar Views**: Added day view, weekly view, monthly view (existing), and yearly view
+  * **Smart View Selector**: Elegant toggle buttons with icons for each view type (Clock, List, Calendar, Grid)
+  * **Dynamic Navigation**: Previous/Next buttons adapt to current view (day, week, month, year navigation)
+  * **Contextual Date Display**: Header shows appropriate date format for each view (day names, week ranges, month/year)
+  * **Day View**: Clean event list with color-coded booking types and status information
+  * **Week View**: 7-column grid showing weekly schedule with events displayed in each day cell
+  * **Year View**: 12-month overview with event counts and clickable navigation to specific months
+  * **Consistent Design**: All views maintain purple/blue gradient theme with proper dark mode support
+  * **Status**: Calendar now provides comprehensive scheduling views for different planning needs
+
 - July 16, 2025. Dashboard streamlined for Phase 1 focus:
   * **Replaced Conversion Rate with Enquiries Requiring Response**: Swapped conversion rate metric for more actionable "Enquiries Requiring Response" card
   * **Actionable Metrics**: New card shows count of enquiries with "new" or "booking_in_progress" status needing immediate attention
