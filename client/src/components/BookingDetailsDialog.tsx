@@ -236,28 +236,28 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              Booking Details - {booking.clientName}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSave}
-                disabled={!hasChanges || updateBookingMutation.isPending}
-                className={`${hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'}`}
-              >
-                {updateBookingMutation.isPending ? 'Saving...' : 'Save'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-              >
-                Cancel
-              </Button>
-            </div>
+          <DialogTitle className="flex items-center gap-2">
+            <Info className="h-5 w-5" />
+            Booking Details - {booking.clientName}
           </DialogTitle>
         </DialogHeader>
+        
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-2 pb-4 border-b">
+          <Button
+            onClick={handleSave}
+            disabled={!hasChanges || updateBookingMutation.isPending}
+            className={`${hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'}`}
+          >
+            {updateBookingMutation.isPending ? 'Saving...' : 'Save'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+          >
+            Cancel
+          </Button>
+        </div>
 
         <div className="space-y-6">
           <Form {...form}>
