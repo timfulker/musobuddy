@@ -288,8 +288,8 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     console.log(`📧 [${requestId}] Creating enquiry for: ${clientName} (${clientEmail})`);
     console.log(`📧 [${requestId}] Enquiry data:`, JSON.stringify(enquiry, null, 2));
     
-    const newEnquiry = await storage.createEnquiry(enquiry);
-    console.log(`✅ [${requestId}] Created enquiry #${newEnquiry.id}${hasConflicts ? ` (${conflictCount} conflicts detected)` : ''}`);
+    const newEnquiry = await storage.createBooking(enquiry);
+    console.log(`✅ [${requestId}] Created booking #${newEnquiry.id}${hasConflicts ? ` (${conflictCount} conflicts detected)` : ''}`);
     
     
     res.status(200).json({
