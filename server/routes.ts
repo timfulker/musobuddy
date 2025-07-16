@@ -263,7 +263,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Remove duplicates and sort
       const uniqueSuggestions = [...new Set(allSuggestions)].sort();
 
-      res.json(uniqueSuggestions);
+      console.log('🎵 Final suggestions:', uniqueSuggestions);
+      res.json({ suggestions: uniqueSuggestions });
 
     } catch (error) {
       console.error('Error generating gig suggestions:', error);
