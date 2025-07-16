@@ -3137,6 +3137,103 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Safe maintenance endpoints for checking and cleaning duplicates
+  app.get('/api/maintenance/check-duplicates', async (req, res) => {
+    try {
+      const userId = '43963086'; // Your user ID
+      const bookings = await storage.getBookings(userId);
+      
+      // Group by date and venue to find duplicates
+      const groups = {};
+      bookings.forEach(booking => {
+        const key = `${booking.eventDate}_${booking.venue}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(booking);
+      });
+      
+      const duplicates = [];
+      const deadData = [];
+      
+      // Find duplicates
+      Object.entries(groups).forEach(([key, bookings]) => {
+        if (bookings.length > 1) {
+          // Keep first one, mark others as duplicates
+          duplicates.push(...bookings.slice(1));
+        }
+      });
+      
+      // Find dead data
+      bookings.forEach(booking => {
+        if (!booking.venue || booking.venue.trim() === '' || !booking.eventDate) {
+          deadData.push(booking);
+        }
+      });
+      
+      res.json({
+        totalBookings: bookings.length,
+        duplicates: duplicates.map(b => ({ id: b.id, client: b.clientName, venue: b.venue, date: b.eventDate })),
+        deadData: deadData.map(b => ({ id: b.id, client: b.clientName, venue: b.venue, date: b.eventDate })),
+        duplicateCount: duplicates.length,
+        deadDataCount: deadData.length
+      });
+    } catch (error) {
+      console.error('Error checking duplicates:', error);
+      res.status(500).json({ message: 'Failed to check duplicates' });
+    }
+  });
+
+  app.post('/api/maintenance/clean-duplicates', async (req, res) => {
+    try {
+      const userId = '43963086'; // Your user ID
+      const bookings = await storage.getBookings(userId);
+      
+      // Group by date and venue to find duplicates
+      const groups = {};
+      bookings.forEach(booking => {
+        const key = `${booking.eventDate}_${booking.venue}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(booking);
+      });
+      
+      let deletedCount = 0;
+      const deletedItems = [];
+      
+      // Remove duplicates (keep first, remove rest)
+      for (const [key, bookings] of Object.entries(groups)) {
+        if (bookings.length > 1) {
+          const duplicates = bookings.slice(1);
+          for (const duplicate of duplicates) {
+            const success = await storage.deleteBooking(duplicate.id, userId);
+            if (success) {
+              deletedCount++;
+              deletedItems.push({ id: duplicate.id, client: duplicate.clientName, venue: duplicate.venue });
+            }
+          }
+        }
+      }
+      
+      // Remove dead data
+      for (const booking of bookings) {
+        if (!booking.venue || booking.venue.trim() === '' || !booking.eventDate) {
+          const success = await storage.deleteBooking(booking.id, userId);
+          if (success) {
+            deletedCount++;
+            deletedItems.push({ id: booking.id, client: booking.clientName, venue: booking.venue, reason: 'dead data' });
+          }
+        }
+      }
+      
+      res.json({
+        message: 'Duplicate cleanup completed',
+        deletedCount,
+        deletedItems
+      });
+    } catch (error) {
+      console.error('Error cleaning duplicates:', error);
+      res.status(500).json({ message: 'Failed to clean duplicates' });
+    }
+  });
+
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {
     console.log(`=== UNMATCHED ROUTE: ${req.method} ${req.originalUrl} ===`);
