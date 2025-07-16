@@ -2711,6 +2711,29 @@ Powered by MusoBuddy – less admin, more music
     }
   });
 
+  // Debug data counts for investigating data loss
+  app.get('/api/debug-data-counts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const bookings = await storage.getBookings(userId);
+      const enquiries = await storage.getEnquiries(userId);
+      const contracts = await storage.getContracts(userId);
+      const invoices = await storage.getInvoices(userId);
+      
+      res.json({
+        bookings: bookings.length,
+        enquiries: enquiries.length,
+        contracts: contracts.length,
+        invoices: invoices.length,
+        message: 'Data counts retrieved successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error getting data counts:', error);
+      res.status(500).json({ message: 'Failed to get data counts' });
+    }
+  });
+
   // User settings routes
   app.get('/api/settings', isAuthenticated, async (req: any, res) => {
     try {

@@ -22,19 +22,8 @@ export default function Calendar() {
   const [location, navigate] = useLocation();
   const { isMobile } = useResponsive();
 
-  // Fetch data for calendar events - dual read from both tables
+  // Fetch data for calendar events - Phase 3: Only use main bookings table
   const { data: bookings = [] } = useQuery({
-    queryKey: ["/api/bookings"],
-    retry: 2,
-  });
-
-  const { data: enquiries = [] } = useQuery({
-    queryKey: ["/api/enquiries"],
-    retry: 2,
-  });
-
-  // Fetch new bookings table data (migrated from enquiries)
-  const { data: bookingsNew = [] } = useQuery({
     queryKey: ["/api/bookings"],
     retry: 2,
   });
@@ -62,42 +51,40 @@ export default function Calendar() {
     const dateStr = date.toISOString().split('T')[0];
     const events: CalendarEvent[] = [];
 
-    // Add bookings from original bookings table
+    // Add all bookings (not just confirmed ones)
     bookings.forEach((booking: any) => {
-      if (booking.eventDate && booking.eventDate.startsWith(dateStr)) {
-        events.push({
-          id: booking.id,
-          title: booking.title || booking.clientName || 'Booking',
-          date: dateStr,
-          type: 'booking',
-          status: booking.status
-        });
+      if (booking.eventDate) {
+        // Handle both string and Date formats
+        const bookingDate = new Date(booking.eventDate);
+        const bookingDateStr = bookingDate.toISOString().split('T')[0];
+        
+        if (bookingDateStr === dateStr) {
+          events.push({
+            id: booking.id,
+            title: booking.title || booking.clientName || 'Booking',
+            date: dateStr,
+            type: 'booking',
+            status: booking.status
+          });
+        }
       }
     });
 
-    // Add confirmed enquiries from bookings_new table (migrated data)
-    bookingsNew.forEach((booking: any) => {
-      if (booking.eventDate && booking.eventDate.startsWith(dateStr) && booking.status === 'confirmed') {
-        events.push({
-          id: booking.id,
-          title: booking.title || booking.clientName || 'Booking',
-          date: dateStr,
-          type: 'booking',
-          status: booking.status
-        });
-      }
-    });
-
-    // Add enquiries (confirmed ones) from original enquiries table
-    enquiries.forEach((enquiry: any) => {
-      if (enquiry.eventDate && enquiry.eventDate.startsWith(dateStr) && enquiry.status === 'confirmed') {
-        events.push({
-          id: enquiry.id,
-          title: enquiry.clientName || 'Enquiry',
-          date: dateStr,
-          type: 'enquiry',
-          status: enquiry.status
-        });
+    // Add contracts as potential bookings
+    contracts.forEach((contract: any) => {
+      if (contract.eventDate) {
+        const contractDate = new Date(contract.eventDate);
+        const contractDateStr = contractDate.toISOString().split('T')[0];
+        
+        if (contractDateStr === dateStr) {
+          events.push({
+            id: contract.id,
+            title: contract.clientName || 'Contract',
+            date: dateStr,
+            type: 'contract',
+            status: contract.status
+          });
+        }
       }
     });
 
@@ -110,6 +97,17 @@ export default function Calendar() {
     if (events.length > 0) {
       // Navigate to enquiries page (which handles bookings)
       navigate("/enquiries");
+    }
+  };
+
+  // Get status color for events
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-purple-100 text-purple-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'signed': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-amber-100 text-amber-800';
     }
   };
 
