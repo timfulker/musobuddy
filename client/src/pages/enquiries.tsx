@@ -1331,7 +1331,15 @@ export default function Enquiries() {
             sortedEnquiries.map((enquiry: Enquiry) => {
               const dateBox = formatDateBox(enquiry.eventDate!);
               const conflicts = detectConflicts(enquiry);
-              const conflictAnalysis = parseConflictAnalysis(enquiry);
+              // Use real-time conflict detection instead of stale database fields
+              const conflictAnalysis = {
+                hasTimeOverlap: false, // Not implemented without Google Maps
+                sameVenue: false, // Not implemented without Google Maps
+                sameClient: false, // Could be implemented but not priority
+                confirmedBooking: conflicts.some(c => c.type === 'booking'), // Check if conflicts include confirmed bookings
+                conflictCount: conflicts.length,
+                conflictDetails: conflicts.length > 0 ? `${conflicts.length} booking(s) on same date` : 'No conflicts'
+              };
               const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
               const hasConflicts = conflicts.length > 0;
               

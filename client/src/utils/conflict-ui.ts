@@ -24,7 +24,8 @@ export function analyzeConflictSeverity(
   enquiry: any,
   analysis: ConflictAnalysis
 ): ConflictSeverity {
-  // No conflicts - align with calendar's positive green
+  // IMPORTANT: Only show green checkmark if truly no conflicts exist
+  // If there are multiple bookings on same date, always show warning icon
   if (analysis.conflictCount === 0) {
     return {
       level: 'none',
@@ -34,6 +35,21 @@ export function analyzeConflictSeverity(
       textColor: 'text-green-800',
       icon: '✅',
       message: 'No conflicts detected',
+      canProceed: true
+    };
+  }
+  
+  // If there are multiple bookings on same date, default to warning
+  // This ensures conflicts are flagged even without geographic data
+  if (analysis.conflictCount > 1) {
+    return {
+      level: 'warning',
+      color: 'amber',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-300',
+      textColor: 'text-amber-800',
+      icon: '📅',
+      message: 'Multiple bookings on same date - verify timing and feasibility',
       canProceed: true
     };
   }
