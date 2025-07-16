@@ -953,7 +953,7 @@ export default function Enquiries() {
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="Search enquiries..."
@@ -962,92 +962,98 @@ export default function Enquiries() {
                   className="pl-10"
                 />
               </div>
-              {/* Status Filter Buttons */}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={() => toggleStatusFilter('new')}
-                  variant={activeStatusFilters.includes('new') ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${
-                    activeStatusFilters.includes('new') 
-                      ? 'bg-blue-500 text-white border-blue-500' 
-                      : 'bg-gray-200 text-gray-600 border-gray-300'
-                  }`}
-                >
-                  Enquiry
-                </Button>
-                <Button
-                  onClick={() => toggleStatusFilter('booking_in_progress')}
-                  variant={activeStatusFilters.includes('booking_in_progress') ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${
-                    activeStatusFilters.includes('booking_in_progress') 
-                      ? 'bg-amber-500 text-white border-amber-500' 
-                      : 'bg-gray-200 text-gray-600 border-gray-300'
-                  }`}
-                >
-                  In Progress
-                </Button>
-                <Button
-                  onClick={() => toggleStatusFilter('confirmed')}
-                  variant={activeStatusFilters.includes('confirmed') ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${
-                    activeStatusFilters.includes('confirmed') 
-                      ? 'bg-green-500 text-white border-green-500' 
-                      : 'bg-gray-200 text-gray-600 border-gray-300'
-                  }`}
-                >
-                  Confirmed
-                </Button>
-                <Button
-                  onClick={() => toggleStatusFilter('contract_sent')}
-                  variant={activeStatusFilters.includes('contract_sent') ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${
-                    activeStatusFilters.includes('contract_sent') 
-                      ? 'bg-purple-500 text-white border-purple-500' 
-                      : 'bg-gray-200 text-gray-600 border-gray-300'
-                  }`}
-                >
-                  Contract Sent
-                </Button>
-                <Button
-                  onClick={() => toggleStatusFilter('contract_received')}
-                  variant={activeStatusFilters.includes('contract_received') ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${
-                    activeStatusFilters.includes('contract_received') 
-                      ? 'bg-indigo-500 text-white border-indigo-500' 
-                      : 'bg-gray-200 text-gray-600 border-gray-300'
-                  }`}
-                >
-                  Contract Received
-                </Button>
-                <Button
-                  onClick={() => toggleStatusFilter('completed')}
-                  variant={activeStatusFilters.includes('completed') ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${
-                    activeStatusFilters.includes('completed') 
-                      ? 'bg-gray-700 text-white border-gray-700' 
-                      : 'bg-gray-200 text-gray-600 border-gray-300'
-                  }`}
-                >
-                  Completed
-                </Button>
-                <Button
-                  onClick={() => toggleStatusFilter('rejected')}
-                  variant={activeStatusFilters.includes('rejected') ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${
-                    activeStatusFilters.includes('rejected') 
-                      ? 'bg-red-500 text-white border-red-500' 
-                      : 'bg-gray-200 text-gray-600 border-gray-300'
-                  }`}
-                >
-                  Rejected
-                </Button>
+              {/* Status Filter Buttons - Two Rows */}
+              <div className="flex flex-col gap-2">
+                {/* Top Row - 4 buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => toggleStatusFilter('new')}
+                    variant={activeStatusFilters.includes('new') ? 'default' : 'outline'}
+                    size="sm"
+                    className={`${
+                      activeStatusFilters.includes('new') 
+                        ? 'bg-blue-500 text-white border-blue-500' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                    }`}
+                  >
+                    Enquiry
+                  </Button>
+                  <Button
+                    onClick={() => toggleStatusFilter('booking_in_progress')}
+                    variant={activeStatusFilters.includes('booking_in_progress') ? 'default' : 'outline'}
+                    size="sm"
+                    className={`${
+                      activeStatusFilters.includes('booking_in_progress') 
+                        ? 'bg-amber-500 text-white border-amber-500' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                    }`}
+                  >
+                    In Progress
+                  </Button>
+                  <Button
+                    onClick={() => toggleStatusFilter('confirmed')}
+                    variant={activeStatusFilters.includes('confirmed') ? 'default' : 'outline'}
+                    size="sm"
+                    className={`${
+                      activeStatusFilters.includes('confirmed') 
+                        ? 'bg-green-500 text-white border-green-500' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                    }`}
+                  >
+                    Confirmed
+                  </Button>
+                  <Button
+                    onClick={() => toggleStatusFilter('contract_sent')}
+                    variant={activeStatusFilters.includes('contract_sent') ? 'default' : 'outline'}
+                    size="sm"
+                    className={`${
+                      activeStatusFilters.includes('contract_sent') 
+                        ? 'bg-purple-500 text-white border-purple-500' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                    }`}
+                  >
+                    Contract Sent
+                  </Button>
+                </div>
+                {/* Bottom Row - 3 buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => toggleStatusFilter('contract_received')}
+                    variant={activeStatusFilters.includes('contract_received') ? 'default' : 'outline'}
+                    size="sm"
+                    className={`${
+                      activeStatusFilters.includes('contract_received') 
+                        ? 'bg-indigo-500 text-white border-indigo-500' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                    }`}
+                  >
+                    Contract Received
+                  </Button>
+                  <Button
+                    onClick={() => toggleStatusFilter('completed')}
+                    variant={activeStatusFilters.includes('completed') ? 'default' : 'outline'}
+                    size="sm"
+                    className={`${
+                      activeStatusFilters.includes('completed') 
+                        ? 'bg-gray-700 text-white border-gray-700' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                    }`}
+                  >
+                    Completed
+                  </Button>
+                  <Button
+                    onClick={() => toggleStatusFilter('rejected')}
+                    variant={activeStatusFilters.includes('rejected') ? 'default' : 'outline'}
+                    size="sm"
+                    className={`${
+                      activeStatusFilters.includes('rejected') 
+                        ? 'bg-red-500 text-white border-red-500' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300'
+                    }`}
+                  >
+                    Rejected
+                  </Button>
+                </div>
               </div>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-48">
