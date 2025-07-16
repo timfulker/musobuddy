@@ -680,7 +680,7 @@ export class DatabaseStorage implements IStorage {
     activeBookings: number;
     pendingInvoices: number;
     overdueInvoices: number;
-    conversionRate: number;
+    enquiriesRequiringResponse: number;
   }> {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -741,32 +741,26 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    // Conversion rate (confirmed bookings / total enquiries)
-    const totalEnquiries = await db
-      .select()
-      .from(bookings)
-      .where(eq(bookings.userId, userId));
-
-    const confirmedBookingsCount = await db
+    // Enquiries requiring response (new and booking_in_progress status)
+    const enquiriesRequiringResponseCount = await db
       .select()
       .from(bookings)
       .where(
         and(
           eq(bookings.userId, userId),
-          eq(bookings.status, "confirmed")
+          or(
+            eq(bookings.status, "new"),
+            eq(bookings.status, "booking_in_progress")
+          )
         )
       );
-
-    const conversionRate = totalEnquiries.length > 0 
-      ? (confirmedBookingsCount.length / totalEnquiries.length) * 100 
-      : 0;
 
     return {
       monthlyRevenue,
       activeBookings: activeBookingsCount.length,
       pendingInvoices,
       overdueInvoices: overdueInvoicesCount.length,
-      conversionRate: Math.round(conversionRate),
+      enquiriesRequiringResponse: enquiriesRequiringResponseCount.length,
     };
   }
 

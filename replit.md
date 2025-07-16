@@ -128,12 +128,13 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 
 ```
 - July 16, 2025. Dashboard streamlined for Phase 1 focus:
-  * **Removed Conversion Rate Card**: Eliminated conversion rate metric from dashboard stats for Phase 1 simplicity
-  * **Layout Updated**: Changed from 4-card to 3-card grid layout (monthly revenue, active bookings, pending invoices)
-  * **Phase 1 Focus**: Keeping only essential business metrics, saving advanced analytics for Phase 2/3
+  * **Replaced Conversion Rate with Enquiries Requiring Response**: Swapped conversion rate metric for more actionable "Enquiries Requiring Response" card
+  * **Actionable Metrics**: New card shows count of enquiries with "new" or "booking_in_progress" status needing immediate attention
+  * **Layout Maintained**: Kept 3-card grid layout (monthly revenue, active bookings, pending invoices, enquiries requiring response)
+  * **Phase 1 Focus**: Prioritized actionable metrics over analytical ones, saving advanced analytics for Phase 2/3
   * **Bulk Delete Added**: Added red delete button to bookings page bulk operations with confirmation dialog
   * **Calendar Import Protection**: Confirmed filtering system prevents imported bookings from showing as recent activity
-  * **Status**: Dashboard now shows core Phase 1 metrics without advanced conversion tracking
+  * **Status**: Dashboard now shows core Phase 1 metrics with emphasis on actionable enquiries
 
 - July 16, 2025. Settings page functionality completely fixed and operational:
   * **Fixed Settings API Integration**: Replaced mock functions with real database API calls for both loading and saving
