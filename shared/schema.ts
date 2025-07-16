@@ -25,34 +25,7 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Enquiries table
-export const enquiries = pgTable("enquiries", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
-  title: varchar("title").notNull(),
-  clientName: varchar("client_name").notNull(),
-  clientEmail: varchar("client_email"),
-  clientPhone: varchar("client_phone"),
-  eventDate: timestamp("event_date"),
-  eventTime: varchar("event_time"),
-  eventEndTime: varchar("event_end_time"), // End time for performance
-  performanceDuration: integer("performance_duration"), // Duration in minutes
-  venue: varchar("venue"),
-  eventType: varchar("event_type"),
-  gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
-  estimatedValue: varchar("estimated_value"),
-  status: varchar("status").notNull().default("new"), // new, booking_in_progress, contract_sent, confirmed, rejected
-  notes: text("notes"),
-  originalEmailContent: text("original_email_content"), // Store original email content
-  applyNowLink: varchar("apply_now_link"), // Store "Apply Now" link from Encore emails
-  responseNeeded: boolean("response_needed").default(true), // Visual indicator for enquiries requiring response
-  lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
-  hasConflicts: boolean("has_conflicts").default(false), // Flag for potential conflicts
-  conflictCount: integer("conflict_count").default(0), // Number of potential conflicts
-  conflictDetails: text("conflict_details"), // JSON string with conflict details
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+
 
 // Contracts table - Musicians' Union minimum fields + essential rider information
 export const contracts = pgTable("contracts", {
@@ -142,7 +115,8 @@ export const bookings = pgTable("bookings", {
   eventType: varchar("event_type"),
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
   estimatedValue: varchar("estimated_value"),
-  status: varchar("status").notNull().default("new"), // new, booking_in_progress, contract_sent, confirmed, rejected
+  status: varchar("status").notNull().default("new"), // new, booking_in_progress, contract_sent, confirmed, rejected, completed
+  previousStatus: varchar("previous_status"), // Track status before auto-completion to completed
   notes: text("notes"),
   originalEmailContent: text("original_email_content"), // Store original email content
   applyNowLink: varchar("apply_now_link"), // Store "Apply Now" link from Encore emails
@@ -270,7 +244,6 @@ export const bookingConflicts = pgTable("booking_conflicts", {
 
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
-  enquiries: many(enquiries),
   contracts: many(contracts),
   invoices: many(invoices),
   bookings: many(bookings),
@@ -281,22 +254,16 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
 }));
 
-export const enquiriesRelations = relations(enquiries, ({ one, many }) => ({
-  user: one(users, {
-    fields: [enquiries.userId],
-    references: [users.id],
-  }),
-  contracts: many(contracts),
-}));
+// Removed enquiriesRelations - now using bookingsRelations instead
 
 export const contractsRelations = relations(contracts, ({ one, many }) => ({
   user: one(users, {
     fields: [contracts.userId],
     references: [users.id],
   }),
-  enquiry: one(enquiries, {
+  booking: one(bookings, {
     fields: [contracts.enquiryId],
-    references: [enquiries.id],
+    references: [bookings.id],
   }),
   invoices: many(invoices),
   bookings: many(bookings),
@@ -335,7 +302,8 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 }));
 
 // Insert schemas
-export const insertEnquirySchema = createInsertSchema(enquiries).omit({
+// Note: insertEnquirySchema now uses bookings table schema
+export const insertEnquirySchema = createInsertSchema(bookings).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -422,8 +390,8 @@ export const insertInstrumentMappingSchema = createInsertSchema(instrumentMappin
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
-export type InsertEnquiry = z.infer<typeof insertEnquirySchema>;
-export type Enquiry = typeof enquiries.$inferSelect;
+export type InsertEnquiry = z.infer<typeof insertBookingSchema>;
+export type Enquiry = typeof bookings.$inferSelect;
 export type InsertContract = z.infer<typeof insertContractSchema>;
 export type Contract = typeof contracts.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;

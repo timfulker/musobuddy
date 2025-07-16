@@ -2432,6 +2432,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auto-complete past bookings endpoint
+  app.post('/api/bookings/auto-complete', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const updatedCount = await storage.autoCompletePastBookings(userId);
+      res.json({ 
+        message: `Auto-completed ${updatedCount} past bookings`,
+        updatedCount 
+      });
+    } catch (error) {
+      console.error("Error auto-completing past bookings:", error);
+      res.status(500).json({ message: "Failed to auto-complete past bookings" });
+    }
+  });
+
 
 
   // Setup multer for file uploads

@@ -311,6 +311,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                         <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
                           {booking.status}
                         </Badge>
+                        {booking.previousStatus && booking.status === 'completed' && (
+                          <div className="mt-2 text-sm text-gray-600">
+                            <span className="font-medium">Previous:</span> {booking.previousStatus}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

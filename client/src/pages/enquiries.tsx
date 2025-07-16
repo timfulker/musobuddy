@@ -61,6 +61,24 @@ export default function Enquiries() {
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
+  // Auto-complete past bookings on page load
+  const autoCompleteMutation = useMutation({
+    mutationFn: () => apiRequest("/api/bookings/auto-complete", "POST"),
+    onSuccess: (data) => {
+      if (data.updatedCount > 0) {
+        toast({
+          title: "Auto-completion complete",
+          description: `Marked ${data.updatedCount} past bookings as completed`,
+        });
+        // Refresh the bookings list
+        queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      }
+    },
+    onError: (error) => {
+      console.error("Auto-completion failed:", error);
+    }
+  });
+
   // Check URL params to auto-open form dialog
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -69,6 +87,11 @@ export default function Enquiries() {
       // Clean up URL
       window.history.replaceState({}, '', window.location.pathname);
     }
+  }, []);
+
+  // Auto-complete past bookings on page load
+  React.useEffect(() => {
+    autoCompleteMutation.mutate();
   }, []);
 
   // Bulk operations functions

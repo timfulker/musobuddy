@@ -1,6 +1,5 @@
 import {
   users,
-  enquiries,
   contracts,
   invoices,
   bookings,
@@ -130,6 +129,9 @@ export interface IStorage {
   // Global gig types operations
   getGlobalGigTypes(userId: string): Promise<string[]>;
   saveGlobalGigTypes(userId: string, gigTypes: string[]): Promise<void>;
+  
+  // Auto-completion for past bookings
+  autoCompletePastBookings(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -158,16 +160,16 @@ export class DatabaseStorage implements IStorage {
   async getEnquiries(userId: string): Promise<Enquiry[]> {
     return await db
       .select()
-      .from(enquiries)
-      .where(eq(enquiries.userId, userId))
-      .orderBy(desc(enquiries.createdAt));
+      .from(bookings)
+      .where(eq(bookings.userId, userId))
+      .orderBy(desc(bookings.createdAt));
   }
 
   async getEnquiry(id: number, userId: string): Promise<Enquiry | undefined> {
     const [enquiry] = await db
       .select()
-      .from(enquiries)
-      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
+      .from(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
     return enquiry;
   }
 
@@ -188,7 +190,7 @@ export class DatabaseStorage implements IStorage {
     console.log('🔍 Processed enquiry - eventDate:', processedEnquiry.eventDate);
     
     const [newEnquiry] = await db
-      .insert(enquiries)
+      .insert(bookings)
       .values(processedEnquiry)
       .returning();
     return newEnquiry;
@@ -196,17 +198,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateEnquiry(id: number, enquiry: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | undefined> {
     const [updatedEnquiry] = await db
-      .update(enquiries)
+      .update(bookings)
       .set({ ...enquiry, updatedAt: new Date() })
-      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)))
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
       .returning();
     return updatedEnquiry;
   }
 
   async deleteEnquiry(id: number, userId: string): Promise<boolean> {
     const result = await db
-      .delete(enquiries)
-      .where(and(eq(enquiries.id, id), eq(enquiries.userId, userId)));
+      .delete(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
     return result.rowCount > 0;
   }
 
@@ -1067,6 +1069,41 @@ export class DatabaseStorage implements IStorage {
   // Placeholder implementation for getBookingsNew (should be removed in actual implementation)
   async getBookingsNew(userId: string): Promise<Enquiry[]> {
     return this.getEnquiries(userId);
+  }
+
+  // Auto-completion for past bookings
+  async autoCompletePastBookings(userId: string): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+    
+    const pastBookings = await db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.userId, userId),
+          lte(bookings.eventDate, today),
+          ne(bookings.status, 'completed'),
+          ne(bookings.status, 'rejected')
+        )
+      );
+
+    let updatedCount = 0;
+    
+    for (const booking of pastBookings) {
+      await db
+        .update(bookings)
+        .set({
+          previousStatus: booking.status,
+          status: 'completed',
+          updatedAt: new Date(),
+        })
+        .where(eq(bookings.id, booking.id));
+      
+      updatedCount++;
+    }
+    
+    return updatedCount;
   }
 }
 
