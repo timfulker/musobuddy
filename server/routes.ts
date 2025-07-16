@@ -2968,7 +2968,17 @@ Powered by MusoBuddy – less admin, more music
     try {
       const userId = req.user.claims.sub;
       
+      console.log('📥 Calendar import request received');
+      console.log('User ID:', userId);
+      console.log('File received:', req.file ? 'Yes' : 'No');
+      console.log('File details:', req.file ? {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : 'No file');
+      
       if (!req.file) {
+        console.log('❌ No file received in request');
         return res.status(400).json({ message: "Please upload an .ics file" });
       }
 

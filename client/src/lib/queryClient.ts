@@ -26,7 +26,10 @@ export async function apiRequest(
   const headers = options?.headers || {};
   
   if (body) {
-    if (typeof body === 'object') {
+    if (body instanceof FormData) {
+      // Don't set Content-Type for FormData - let browser set it with boundary
+      // FormData should be sent as-is
+    } else if (typeof body === 'object') {
       body = JSON.stringify(body);
       headers['Content-Type'] = 'application/json';
     } else if (typeof body === 'string') {
