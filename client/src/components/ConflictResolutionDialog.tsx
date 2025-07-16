@@ -300,17 +300,7 @@ export default function ConflictResolutionDialog({
                         {/* Booking Header */}
                         <div className="flex items-start justify-between">
                           <div className="flex-1 space-y-2">
-                            <div className="flex items-center space-x-2">
-                              {isCurrentEnquiry ? (
-                                <Badge variant="outline" className="text-blue-600 border-blue-600">
-                                  New
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-gray-600 border-gray-600">
-                                  Original
-                                </Badge>
-                              )}
-                            </div>
+
                             
                             <h4 className="font-medium">{booking?.title || 'Untitled Booking'}</h4>
                             
