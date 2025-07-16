@@ -49,13 +49,19 @@ export default function ActionableEnquiries() {
       }
     });
     
-    console.log('Conflict detection:', {
+    console.log('🔥 Kanban conflict detection:', {
       enquiryId: enquiry.id,
       enquiryDate: enquiryDate.toDateString(),
       totalEnquiries: enquiries.length,
       conflictingEnquiries: conflictingEnquiries.length,
       conflictingBookings: conflictingEnquiries,
       willPassToDialog: conflictingEnquiries
+    });
+    
+    console.log('🔥 About to open dialog with:', {
+      selectedConflictEnquiry: enquiry,
+      selectedConflicts: conflictingEnquiries,
+      dialogWillOpen: true
     });
     
     setSelectedConflictEnquiry(enquiry);

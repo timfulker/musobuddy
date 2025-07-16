@@ -39,6 +39,15 @@ export default function ConflictResolutionDialog({
   enquiry, 
   conflicts 
 }: ConflictResolutionDialogProps) {
+  // CRITICAL DEBUG: Log exactly what we receive
+  console.log('🔥 ConflictResolutionDialog received:', {
+    enquiry: enquiry?.id,
+    conflictsReceived: conflicts,
+    conflictsLength: conflicts?.length,
+    conflictIds: conflicts?.map(c => c?.id),
+    isOpen
+  });
+
   // Early return BEFORE any hooks are called
   if (!enquiry || !enquiry.id) {
     console.error('ConflictResolutionDialog: Invalid data received', { enquiry, conflicts });
@@ -228,27 +237,20 @@ export default function ConflictResolutionDialog({
     return booking.status !== 'completed' && booking.status !== 'rejected';
   };
 
-  // FIXED: Better conflict data processing
+  // FIXED: Simplified conflict processing - just use what we receive
   const processedConflicts = React.useMemo(() => {
     // Ensure conflicts is always an array
     const conflictsArray = Array.isArray(conflicts) ? conflicts : [];
     
-    // Filter out any invalid entries and the current enquiry
-    const validConflicts = conflictsArray.filter(conflict => 
-      conflict && 
-      conflict.id && 
-      conflict.id !== enquiry.id &&
-      conflict.eventDate // Must have a date to be a valid conflict
-    );
-    
-    console.log('Processed conflicts:', {
+    console.log('🔥 Processing conflicts:', {
       originalConflicts: conflicts,
       conflictsArray,
-      validConflicts,
-      enquiryId: enquiry.id
+      enquiryId: enquiry.id,
+      finalConflicts: conflictsArray
     });
     
-    return validConflicts;
+    // Return all conflicts as-is - kanban board already filtered them correctly
+    return conflictsArray;
   }, [conflicts, enquiry.id]);
   
   // FIXED: All conflicting bookings including the enquiry
