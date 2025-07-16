@@ -46,7 +46,7 @@ const ALL_INSTRUMENTS = [
   "Kalimba", "Music Box", "Singing Bowl", "Rainstick", "DJ", "Vocals"
 ];
 
-// Schema for form validation
+// Schema for form validation - only includes actual form fields
 const settingsFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
   businessAddress: z.string().min(1, "Business address is required"),
@@ -57,8 +57,7 @@ const settingsFormSchema = z.object({
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
   bankDetails: z.string().optional().or(z.literal("")),
-  selectedInstruments: z.array(z.string()).optional(),
-  gigTypes: z.array(z.string()).optional(),
+  // Remove selectedInstruments and gigTypes from schema since they're managed separately
 });
 
 type SettingsFormData = z.infer<typeof settingsFormSchema>;
@@ -107,8 +106,6 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     nextInvoiceNumber: data.nextInvoiceNumber || 1,
     defaultTerms: data.defaultTerms || "",
     bankDetails: data.bankDetails || "",
-    selectedInstruments: data.selectedInstruments || [],
-    gigTypes: data.gigTypes || [],
   };
 };
 
@@ -145,8 +142,6 @@ export default function Settings() {
       nextInvoiceNumber: 1,
       defaultTerms: "",
       bankDetails: "",
-      selectedInstruments: [],
-      gigTypes: [],
     },
   });
 
@@ -419,22 +414,7 @@ export default function Settings() {
         {/* Settings Content */}
         <div className="p-6 space-y-6">
           <Form {...form}>
-            <form onSubmit={(e) => {
-              console.log('🚀 FORM ONSUBMIT TRIGGERED!');
-              console.log('🚀 Event:', e);
-              console.log('🚀 Form valid:', form.formState.isValid);
-              console.log('🚀 Form errors:', form.formState.errors);
-              
-              // Prevent default submission and handle manually
-              e.preventDefault();
-              
-              // Get form values directly
-              const formValues = form.getValues();
-              console.log('🚀 Form values:', formValues);
-              
-              // Call onSubmit with form values
-              onSubmit(formValues);
-            }} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Add a debug div to see if form is working */}
               <div className="hidden">
                 Form status: {JSON.stringify({ hasChanges, isPending: saveSettings.isPending })}
