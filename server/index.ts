@@ -3,8 +3,6 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
 import OpenAI from "openai";
-import { ScheduledCleanup } from "./scheduled-cleanup";
-import { runAutomaticCleanup } from "./cache-cleaner";
 
 const app = express();
 
@@ -320,17 +318,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Initialize scheduled cleanup system
-console.log('🕐 Starting scheduled cleanup system...');
-ScheduledCleanup.start();
-
 const PORT = Number(process.env.PORT) || 5000;
 server.listen(PORT, "0.0.0.0", () => {
   log(`Server running on port ${PORT}`);
-  console.log('✅ MusoBuddy Server Ready:');
-  console.log('   🔄 Undo System: Active (30-day restoration window)');
-  console.log('   🕐 Scheduled Cleanup: Every day at 4 AM');
-  console.log('   🧹 Ghost Data Prevention: Enabled');
-  console.log('   📧 Email Forwarding: Operational');
-  console.log('   🚀 Production Ready!');
 });

@@ -206,38 +206,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEnquiry(id: number, userId: string): Promise<boolean> {
-    console.log(`🗑️ SAFE DELETE: Enquiry ${id} for user ${userId}`);
-    
-    // Step 1: Get the item data before deletion
-    const enquiry = await this.getEnquiry(id, userId);
-    if (!enquiry) {
-      console.log(`❌ SAFE DELETE: Enquiry ${id} not found`);
-      return false;
-    }
-    
-    // Step 2: Use the undo system for safe deletion
-    const { UndoSystem } = await import('./undo-system');
-    const success = await UndoSystem.safeDelete(userId, 'enquiry', id, enquiry);
-    
-    if (success) {
-      // Step 3: Clear any related conflict data
-      await db
-        .delete(bookingConflicts)
-        .where(or(
-          eq(bookingConflicts.enquiryId, id),
-          eq(bookingConflicts.conflictingId, id)
-        ));
-      
-      // Step 4: Force cache refresh by updating timestamps on related bookings
-      await db
-        .update(bookings)
-        .set({ updatedAt: new Date() })
-        .where(eq(bookings.userId, userId));
-      
-      console.log(`✅ SAFE DELETE: Enquiry ${id} moved to deleted_items (can be restored within 30 days)`);
-    }
-    
-    return success;
+    const result = await db
+      .delete(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
+    return result.rowCount > 0;
   }
 
   // Phase 3: Bookings operations - now using main bookings table (renamed from bookings_new)
@@ -263,38 +235,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteBooking(id: number, userId: string): Promise<boolean> {
-    console.log(`🗑️ SAFE DELETE: Booking ${id} for user ${userId}`);
-    
-    // Step 1: Get the item data before deletion
-    const booking = await this.getBooking(id, userId);
-    if (!booking) {
-      console.log(`❌ SAFE DELETE: Booking ${id} not found`);
-      return false;
-    }
-    
-    // Step 2: Use the undo system for safe deletion
-    const { UndoSystem } = await import('./undo-system');
-    const success = await UndoSystem.safeDelete(userId, 'booking', id, booking);
-    
-    if (success) {
-      // Step 3: Clear any related conflict data
-      await db
-        .delete(bookingConflicts)
-        .where(or(
-          eq(bookingConflicts.enquiryId, id),
-          eq(bookingConflicts.conflictingId, id)
-        ));
-      
-      // Step 4: Force cache refresh by updating timestamps on related bookings
-      await db
-        .update(bookings)
-        .set({ updatedAt: new Date() })
-        .where(eq(bookings.userId, userId));
-      
-      console.log(`✅ SAFE DELETE: Booking ${id} moved to deleted_items (can be restored within 30 days)`);
-    }
-    
-    return success;
+    const result = await db.delete(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)));
+    return result.rowCount > 0;
   }
 
   async getBookingNew(id: number, userId: string): Promise<Enquiry | undefined> {
@@ -399,37 +342,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteContract(id: number, userId: string): Promise<boolean> {
-    console.log(`🗑️ SAFE DELETE: Contract ${id} for user ${userId}`);
-    
-    // Step 1: Get the item data before deletion
-    const contract = await this.getContract(id, userId);
-    if (!contract) {
-      console.log(`❌ SAFE DELETE: Contract ${id} not found`);
-      return false;
-    }
-    
-    // Step 2: Use the undo system for safe deletion
-    const { UndoSystem } = await import('./undo-system');
-    const success = await UndoSystem.safeDelete(userId, 'contract', id, contract);
-    
-    if (success) {
-      // Step 3: Clean up cloud storage if it exists (but keep backup for restoration)
-      if (contract?.cloudStorageKey) {
-        console.log(`📁 Cloud storage file preserved for restoration: ${contract.cloudStorageKey}`);
-        // Note: We don't delete cloud storage files immediately to allow restoration
-        // They'll be cleaned up after 30 days by the scheduled cleanup
-      }
-      
-      // Step 4: Force cache refresh by updating timestamps
-      await db
-        .update(contracts)
-        .set({ updatedAt: new Date() })
-        .where(eq(contracts.userId, userId));
-      
-      console.log(`✅ SAFE DELETE: Contract ${id} moved to deleted_items (can be restored within 30 days)`);
-    }
-    
-    return success;
+    const result = await db.delete(contracts)
+      .where(and(eq(contracts.id, id), eq(contracts.userId, userId)));
+    return result.rowCount > 0;
   }
 
   async getContractById(id: number): Promise<Contract | undefined> {
@@ -651,37 +566,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteInvoice(id: number, userId: string): Promise<boolean> {
-    console.log(`🗑️ SAFE DELETE: Invoice ${id} for user ${userId}`);
-    
-    // Step 1: Get the item data before deletion
-    const invoice = await this.getInvoice(id, userId);
-    if (!invoice) {
-      console.log(`❌ SAFE DELETE: Invoice ${id} not found`);
-      return false;
-    }
-    
-    // Step 2: Use the undo system for safe deletion
-    const { UndoSystem } = await import('./undo-system');
-    const success = await UndoSystem.safeDelete(userId, 'invoice', id, invoice);
-    
-    if (success) {
-      // Step 3: Clean up cloud storage if it exists (but keep backup for restoration)
-      if (invoice?.cloudStorageKey) {
-        console.log(`📁 Cloud storage file preserved for restoration: ${invoice.cloudStorageKey}`);
-        // Note: We don't delete cloud storage files immediately to allow restoration
-        // They'll be cleaned up after 30 days by the scheduled cleanup
-      }
-      
-      // Step 4: Force cache refresh by updating timestamps
-      await db
-        .update(invoices)
-        .set({ updatedAt: new Date() })
-        .where(eq(invoices.userId, userId));
-      
-      console.log(`✅ SAFE DELETE: Invoice ${id} moved to deleted_items (can be restored within 30 days)`);
-    }
-    
-    return success;
+    console.log("🔥 Storage: Deleting invoice", id, "for user", userId);
+    const result = await db.delete(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
+    console.log("🔥 Storage: Delete result - rowCount:", result.rowCount);
+    return result.rowCount > 0;
   }
 
   async updateInvoiceCloudStorage(id: number, cloudStorageUrl: string, cloudStorageKey: string, userId: string): Promise<Invoice | undefined> {

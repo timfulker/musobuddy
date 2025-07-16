@@ -29,8 +29,8 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
-import BookingDetailsModal from "@/components/BookingDetailsModal";
-import SendComplianceDialog from "@/components/SendComplianceDialog";
+import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
+import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import { 
   analyzeConflictSeverity, 
   getConflictCardStyling, 
@@ -57,7 +57,7 @@ export default function Enquiries() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
-  const [bookingDetailsModalOpen, setBookingDetailsModalOpen] = useState(false);
+  const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
   const [complianceDialogOpen, setComplianceDialogOpen] = useState(false);
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
@@ -1754,7 +1754,7 @@ export default function Enquiries() {
                                 <Button
                                   onClick={() => {
                                     setSelectedBookingForDetails(enquiry);
-                                    setBookingDetailsModalOpen(true);
+                                    setBookingDetailsDialogOpen(true);
                                   }}
                                   variant="outline"
                                   size="sm"
@@ -1807,9 +1807,9 @@ export default function Enquiries() {
       />
       
       {/* Booking Details Dialog */}
-      <BookingDetailsModal
-        isOpen={bookingDetailsModalOpen}
-        onClose={() => setBookingDetailsModalOpen(false)}
+      <BookingDetailsDialog
+        open={bookingDetailsDialogOpen}
+        onOpenChange={setBookingDetailsDialogOpen}
         booking={selectedBookingForDetails}
       />
       

@@ -1,35 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Calendar, MapPin, Clock, User, Phone, DollarSign, Trash2, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import Sidebar from '@/components/sidebar';
-import DashboardHeader from '@/components/dashboard-header';
-import MobileNav from '@/components/mobile-nav';
-import { useAuth } from '@/hooks/useAuth';
-import { useResponsive } from '@/hooks/useResponsive';
-import BookingStatusDialog from '@/components/BookingStatusDialog';
-import BookingDetailsModal from '@/components/BookingDetailsModal';
-import SendComplianceDialog from '@/components/SendComplianceDialog';
-import { getConflictColor, getConflictIcon, analyzeConflictSeverity, getConflictBadge, formatConflictTooltip } from '@/utils/conflict-ui';
+import { Calendar, Plus, Search, Filter, MapPin, Clock, User, DollarSign } from 'lucide-react';
 
-// API functions
 const fetchBookings = async () => {
   const response = await fetch('/api/bookings');
   if (!response.ok) throw new Error('Failed to fetch bookings');
   return response.json();
 };
 
+const createBooking = async (booking: any) => {
+  const response = await fetch('/api/bookings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(booking),
+  });
+  if (!response.ok) throw new Error('Failed to create booking');
+  return response.json();
+};
+
 const updateBooking = async ({ id, ...updates }: any) => {
   const response = await fetch(`/api/bookings/${id}`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
   });
@@ -37,156 +28,131 @@ const updateBooking = async ({ id, ...updates }: any) => {
   return response.json();
 };
 
-const deleteBooking = async (id: number) => {
-  const response = await fetch(`/api/bookings/${id}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) throw new Error('Failed to delete booking');
-  return response.json();
-};
-
-const autoCompleteBookings = async () => {
-  const response = await fetch('/api/bookings/auto-complete', {
-    method: 'POST',
-  });
-  if (!response.ok) throw new Error('Failed to auto-complete bookings');
-  return response.json();
-};
-
-export default function Bookings() {
+const Bookings = () => {
+  const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
-  const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [showComplianceDialog, setShowComplianceDialog] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  const { toast } = useToast();
-  const { isDesktop } = useResponsive();
-  const { isAuthenticated, isLoading } = useAuth();
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [formData, setFormData] = useState({
+    contractId: '',
+    eventDate: '',
+    eventTime: '',
+    venue: '',
+    venueAddress: '',
+    clientName: '',
+    clientContact: '',
+    fee: '',
+    notes: '',
+    equipmentList: [''],
+    travelTime: '',
+    setupNotes: ''
+  });
+
   const queryClient = useQueryClient();
 
-  const { data: bookings = [], isLoading } = useQuery({
+  const { data: bookings = [], isLoading, error } = useQuery({
     queryKey: ['bookings'],
     queryFn: fetchBookings,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createBooking,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      setShowAddForm(false);
+      setFormData({
+        contractId: '',
+        eventDate: '',
+        eventTime: '',
+        venue: '',
+        venueAddress: '',
+        clientName: '',
+        clientContact: '',
+        fee: '',
+        notes: '',
+        equipmentList: [''],
+        travelTime: '',
+        setupNotes: ''
+      });
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: updateBooking,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      toast({ title: 'Booking updated successfully' });
-    },
-    onError: (error) => {
-      toast({ title: 'Error updating booking', description: error.message, variant: 'destructive' });
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteBooking,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      toast({ title: 'Booking deleted successfully' });
-    },
-    onError: (error) => {
-      toast({ title: 'Error deleting booking', description: error.message, variant: 'destructive' });
-    },
-  });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate({
+      ...formData,
+      equipmentList: formData.equipmentList.filter(item => item.trim() !== '')
+    });
+  };
 
-  const autoCompleteMutation = useMutation({
-    mutationFn: autoCompleteBookings,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      if (data.updated > 0) {
-        toast({ title: `Auto-completed ${data.updated} past bookings` });
-      }
-    },
-  });
+  const handleStatusChange = (id: string, status: string) => {
+    const updates: any = { id, status };
+    if (status === 'completed') {
+      updates.completedAt = new Date().toISOString();
+    }
+    updateMutation.mutate(updates);
+  };
 
-  // Auto-complete past bookings on page load
-  useEffect(() => {
-    autoCompleteMutation.mutate();
-  }, []);
+  const addEquipmentItem = () => {
+    setFormData({
+      ...formData,
+      equipmentList: [...formData.equipmentList, '']
+    });
+  };
 
-  // Filter bookings based on search and status
+  const updateEquipmentItem = (index: number, value: string) => {
+    const newList = [...formData.equipmentList];
+    newList[index] = value;
+    setFormData({ ...formData, equipmentList: newList });
+  };
+
+  const removeEquipmentItem = (index: number) => {
+    const newList = formData.equipmentList.filter((_, i) => i !== index);
+    setFormData({ ...formData, equipmentList: newList });
+  };
+
   const filteredBookings = bookings.filter((booking: any) => {
-    const matchesSearch = booking.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.venue?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.eventType?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = selectedStatus === 'all' || booking.status === selectedStatus;
-    
-    // Hide completed bookings unless specifically selected
-    const showCompleted = selectedStatus === 'completed' || selectedStatus === 'all';
-    if (booking.status === 'completed' && !showCompleted) return false;
-    
+    const matchesSearch = booking.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         booking.venue.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const handleStatusChange = (bookingId: number, newStatus: string) => {
-    updateMutation.mutate({ id: bookingId, status: newStatus });
-  };
+  const statusOptions = [
+    { value: 'confirmed', label: 'Confirmed', color: 'status-confirmed' },
+    { value: 'completed', label: 'Completed', color: 'status-completed' },
+    { value: 'cancelled', label: 'Cancelled', color: 'status-cancelled' },
+  ];
 
-  const handleBulkStatusUpdate = (newStatus: string) => {
-    selectedBookings.forEach(bookingId => {
-      updateMutation.mutate({ id: bookingId, status: newStatus });
-    });
-    setSelectedBookings([]);
-  };
+  // Sort bookings by event date
+  const sortedBookings = filteredBookings.sort((a: any, b: any) => 
+    new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+  );
 
-  const handleSelectAll = () => {
-    if (selectedBookings.length === filteredBookings.length) {
-      setSelectedBookings([]);
-    } else {
-      setSelectedBookings(filteredBookings.map((booking: any) => booking.id));
-    }
-  };
-
-  const handleBulkDelete = () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedBookings.length} bookings? This action cannot be undone.`)) {
-      selectedBookings.forEach(bookingId => {
-        deleteMutation.mutate(bookingId);
-      });
-      setSelectedBookings([]);
-    }
-  };
-
-  const StatusButton = ({ status, currentStatus, onClick, children }: any) => {
-    const isActive = currentStatus === status;
-    const baseClasses = "px-3 py-1 text-xs font-medium rounded-full transition-colors cursor-pointer";
-    
-    const statusStyles = {
-      'new': isActive ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-blue-100',
-      'booking_in_progress': isActive ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-amber-100',
-      'confirmed': isActive ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-green-100',
-      'contract_sent': isActive ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-purple-100',
-      'rejected': isActive ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-red-100',
-      'cancelled': isActive ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
-    };
-
-    return (
-      <button
-        onClick={onClick}
-        className={`${baseClasses} ${statusStyles[status as keyof typeof statusStyles]}`}
-      >
-        {children}
-      </button>
-    );
-  };
+  // Separate upcoming and past bookings
+  const now = new Date();
+  const upcomingBookings = sortedBookings.filter((booking: any) => 
+    new Date(booking.eventDate) >= now && booking.status === 'confirmed'
+  );
+  const pastBookings = sortedBookings.filter((booking: any) => 
+    new Date(booking.eventDate) < now || booking.status === 'completed'
+  );
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Bookings</h1>
-        </div>
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-              <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-foreground">Bookings</h1>
+        <div className="animate-pulse space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-card rounded-lg p-6 shadow-sm">
+              <div className="h-4 bg-muted rounded w-1/4 mb-2"></div>
+              <div className="h-6 bg-muted rounded w-1/2"></div>
             </div>
           ))}
         </div>
@@ -195,415 +161,376 @@ export default function Bookings() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
-          <p className="text-gray-600 mt-1">Manage your booking lifecycle from enquiry to confirmed gig</p>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <Calendar className="h-8 w-8 text-primary" />
+            Bookings
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Manage your confirmed gigs and performances
+          </p>
         </div>
-        <button 
-          onClick={() => window.location.href = '/enquiries'}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-md flex items-center gap-2 hover:bg-primary/90 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          New Enquiry
+          Add Booking
         </button>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-card rounded-lg p-6 shadow-sm border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Upcoming Gigs</p>
+              <p className="text-2xl font-bold text-green-600">{upcomingBookings.length}</p>
+            </div>
+            <div className="p-3 rounded-full bg-green-50 dark:bg-green-900/20">
+              <Calendar className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-card rounded-lg p-6 shadow-sm border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Completed Gigs</p>
+              <p className="text-2xl font-bold text-blue-600">{pastBookings.filter((b: any) => b.status === 'completed').length}</p>
+            </div>
+            <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-900/20">
+              <Calendar className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-card rounded-lg p-6 shadow-sm border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+              <p className="text-2xl font-bold text-purple-600">
+                £{pastBookings
+                  .filter((b: any) => b.status === 'completed')
+                  .reduce((sum: number, b: any) => sum + parseFloat(b.fee || 0), 0)
+                  .toFixed(2)}
+              </p>
+            </div>
+            <div className="p-3 rounded-full bg-purple-50 dark:bg-purple-900/20">
+              <DollarSign className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 bg-card p-4 rounded-lg shadow-sm">
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search enquiries..."
+              placeholder="Search bookings..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
-        
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Status:</span>
-          <div className="flex gap-1">
-            <StatusButton 
-              status="all" 
-              currentStatus={selectedStatus} 
-              onClick={() => setSelectedStatus('all')}
-            >
-              All
-            </StatusButton>
-            <StatusButton 
-              status="new" 
-              currentStatus={selectedStatus} 
-              onClick={() => setSelectedStatus('new')}
-            >
-              Enquiry
-            </StatusButton>
-            <StatusButton 
-              status="booking_in_progress" 
-              currentStatus={selectedStatus} 
-              onClick={() => setSelectedStatus('booking_in_progress')}
-            >
-              In Progress
-            </StatusButton>
-            <StatusButton 
-              status="confirmed" 
-              currentStatus={selectedStatus} 
-              onClick={() => setSelectedStatus('confirmed')}
-            >
-              Confirmed
-            </StatusButton>
-            <StatusButton 
-              status="contract_sent" 
-              currentStatus={selectedStatus} 
-              onClick={() => setSelectedStatus('contract_sent')}
-            >
-              Contract Sent
-            </StatusButton>
-            <StatusButton 
-              status="completed" 
-              currentStatus={selectedStatus} 
-              onClick={() => setSelectedStatus('completed')}
-            >
-              Completed
-            </StatusButton>
-            <StatusButton 
-              status="rejected" 
-              currentStatus={selectedStatus} 
-              onClick={() => setSelectedStatus('rejected')}
-            >
-              Rejected
-            </StatusButton>
-          </div>
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="all">All Status</option>
+            {statusOptions.map(status => (
+              <option key={status.value} value={status.value}>{status.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Bulk Operations */}
-      {selectedBookings.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-blue-800">
-              {selectedBookings.length} booking{selectedBookings.length !== 1 ? 's' : ''} selected
-            </span>
-            <div className="flex gap-2">
+      {/* Add Booking Form */}
+      {showAddForm && (
+        <div className="bg-card rounded-lg p-6 shadow-sm border">
+          <h2 className="text-xl font-semibold text-foreground mb-4">Add New Booking</h2>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Client Name *</label>
+              <input
+                type="text"
+                required
+                value={formData.clientName}
+                onChange={(e) => setFormData({...formData, clientName: e.target.value})}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Client Contact</label>
+              <input
+                type="text"
+                value={formData.clientContact}
+                onChange={(e) => setFormData({...formData, clientContact: e.target.value})}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Event Date *</label>
+              <input
+                type="date"
+                required
+                value={formData.eventDate}
+                onChange={(e) => setFormData({...formData, eventDate: e.target.value})}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Event Time</label>
+              <input
+                type="time"
+                step="300"
+                value={formData.eventTime}
+                onChange={(e) => setFormData({...formData, eventTime: e.target.value})}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Venue *</label>
+              <input
+                type="text"
+                required
+                value={formData.venue}
+                onChange={(e) => setFormData({...formData, venue: e.target.value})}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Venue Address</label>
+              <input
+                type="text"
+                value={formData.venueAddress}
+                onChange={(e) => setFormData({...formData, venueAddress: e.target.value})}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Fee (£) *</label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={formData.fee}
+                onChange={(e) => setFormData({...formData, fee: e.target.value})}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Travel Time</label>
+              <input
+                type="text"
+                value={formData.travelTime}
+                onChange={(e) => setFormData({...formData, travelTime: e.target.value})}
+                placeholder="e.g., 45 minutes"
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">Equipment List</label>
+              {formData.equipmentList.map((item, index) => (
+                <div key={index} className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={item}
+                    onChange={(e) => updateEquipmentItem(index, e.target.value)}
+                    placeholder="Equipment item"
+                    className="flex-1 px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  {formData.equipmentList.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeEquipmentItem(index)}
+                      className="px-3 py-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
               <button
-                onClick={() => handleBulkStatusUpdate('new')}
-                className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                type="button"
+                onClick={addEquipmentItem}
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
-                E
-              </button>
-              <button
-                onClick={() => handleBulkStatusUpdate('booking_in_progress')}
-                className="px-3 py-1 bg-amber-500 text-white text-xs rounded hover:bg-amber-600"
-              >
-                P
-              </button>
-              <button
-                onClick={() => handleBulkStatusUpdate('confirmed')}
-                className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
-              >
-                C
-              </button>
-              <button
-                onClick={() => handleBulkStatusUpdate('contract_sent')}
-                className="px-3 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600"
-              >
-                S
-              </button>
-              <button
-                onClick={() => handleBulkStatusUpdate('rejected')}
-                className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
-              >
-                R
+                + Add Equipment Item
               </button>
             </div>
-          </div>
-          <button
-            onClick={handleBulkDelete}
-            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 flex items-center gap-1"
-          >
-            <Trash2 className="h-3 w-3" />
-            Delete
-          </button>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">Setup Notes</label>
+              <textarea
+                value={formData.setupNotes}
+                onChange={(e) => setFormData({...formData, setupNotes: e.target.value})}
+                rows={2}
+                placeholder="Setup requirements, load-in details, etc."
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">Notes</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                rows={3}
+                placeholder="Additional notes about this booking"
+                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="md:col-span-2 flex gap-2">
+              <button
+                type="submit"
+                disabled={createMutation.isPending}
+                className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {createMutation.isPending ? 'Adding...' : 'Add Booking'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="bg-muted text-muted-foreground px-4 py-2 rounded-md hover:bg-muted/80 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
-      {/* Conflict Indicators */}
-      <div className="bg-white p-4 rounded-lg shadow-sm">
-        <div className="flex items-center gap-4 text-sm">
-          <span className="font-medium">Conflict Indicators:</span>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <span className="text-red-600">CONFIRMED BOOKING</span>
-            <span className="text-gray-400">- Double booking risk</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-            <span className="text-amber-600">Warning</span>
-            <span className="text-gray-400">- Timeslot conflict</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="text-green-600">Same Client</span>
-            <span className="text-gray-400">- Multiple events</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-            <span className="text-gray-600">Same Day</span>
-            <span className="text-gray-400">- Check timing</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <span className="text-blue-600">No Conflicts</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Select All */}
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <input
-          type="checkbox"
-          checked={selectedBookings.length === filteredBookings.length && filteredBookings.length > 0}
-          onChange={handleSelectAll}
-          className="rounded border-gray-300"
-        />
-        <span>Select all {filteredBookings.length} filtered bookings</span>
-      </div>
-
-      {/* Bookings List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredBookings.length === 0 ? (
-          <div className="col-span-full">
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No bookings found</p>
-                <p className="text-gray-400">
-                  {searchTerm || selectedStatus !== 'all' 
-                    ? 'Try adjusting your search or filter criteria'
-                    : 'Get started by creating your first enquiry'
-                  }
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          filteredBookings.map((booking: any) => {
-            const dateBox = booking.eventDate 
-              ? {
-                  day: format(new Date(booking.eventDate), 'dd'),
-                  monthYear: format(new Date(booking.eventDate), 'MMM yyyy')
-                }
-              : { day: '?', monthYear: 'TBC' };
-            
-            // Enhanced conflict detection
-            const conflicts = booking.conflicts || [];
-            const confirmedBookingConflicts = conflicts.filter((c: any) => c.type === 'booking');
-            const unconfirmedEnquiryConflicts = conflicts.filter((c: any) => c.type === 'enquiry');
-            
-            const conflictAnalysis = {
-              hasTimeOverlap: false,
-              sameVenue: false,
-              sameClient: false,
-              confirmedBooking: confirmedBookingConflicts.length > 0,
-              unconfirmedEnquiry: unconfirmedEnquiryConflicts.length > 0,
-              conflictCount: conflicts.length,
-              conflictDetails: conflicts.length > 0 ? 
-                `${confirmedBookingConflicts.length} confirmed booking(s), ${unconfirmedEnquiryConflicts.length} unconfirmed enquiry(ies)` 
-                : 'No conflicts'
-            };
-            
-            const severity = analyzeConflictSeverity(booking, conflictAnalysis);
-            const hasConflicts = conflicts.length > 0;
-            
-            // Check if booking date is in the past
-            const isPastDate = booking.eventDate && new Date(booking.eventDate) < new Date();
-            
-            // Status-based styling
-            const getStatusOverlay = (status: string) => {
-              switch (status) {
-                case "new": return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
-                case "booking_in_progress": return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200";
-                case "confirmed": return "bg-gradient-to-br from-green-50 to-green-100 border-green-200";
-                case "contract_sent": return "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200";
-                case "completed": return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
-                case "rejected": return "bg-gradient-to-br from-red-50 to-red-100 border-red-200";
-                default: return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
-              }
-            };
-            
-            const getStatusColor = (status: string) => {
-              switch (status) {
-                case "new": return "text-blue-800 bg-blue-100";
-                case "booking_in_progress": return "text-amber-800 bg-amber-100";
-                case "confirmed": return "text-green-800 bg-green-100";
-                case "contract_sent": return "text-purple-800 bg-purple-100";
-                case "completed": return "text-gray-800 bg-gray-100";
-                case "rejected": return "text-red-800 bg-red-100";
-                default: return "text-gray-800 bg-gray-100";
-              }
-            };
-            
-            // Conflict overlay styling
-            const getConflictOverlay = () => {
-              if (severity.level === 'critical') {
-                return 'border-red-500 bg-red-50 ring-2 ring-red-200';
-              } else if (severity.level === 'warning') {
-                return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
-              }
-              return '';
-            };
-
-            return (
-              <div key={booking.id} className="bg-white rounded-lg shadow-sm border relative">
-                {/* Double Booking Risk Header */}
-                {hasConflicts && (
-                  <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-t-lg">
-                    DOUBLE BOOKING RISK
+      {/* Upcoming Bookings */}
+      {upcomingBookings.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground">Upcoming Gigs</h2>
+          {upcomingBookings.map((booking: any) => (
+            <div key={booking.id} className="bg-card rounded-lg p-6 shadow-sm border border-green-200 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-foreground">{booking.clientName}</h3>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium status-${booking.status}`}>
+                      {booking.status}
+                    </span>
                   </div>
-                )}
-                
-                <div className="p-4">
-                  {/* Selection Checkbox */}
-                  <div className="absolute top-2 left-2">
-                    <Checkbox
-                      checked={selectedBookings.includes(booking.id)}
-                      onCheckedChange={() => {
-                        if (selectedBookings.includes(booking.id)) {
-                          setSelectedBookings(selectedBookings.filter(id => id !== booking.id));
-                        } else {
-                          setSelectedBookings([...selectedBookings, booking.id]);
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  {/* Delete Button */}
-                  <div className="absolute top-2 right-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteMutation.mutate(booking.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 h-6 w-6 p-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="pl-8 pr-8">
-                    {/* Header with Price and Status */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-lg font-bold text-green-600">
-                        {booking.estimatedValue ? `£${booking.estimatedValue}` : "Price TBC"}
-                      </div>
-                      <Badge className={`text-xs px-2 py-1 ${getStatusColor(booking.status)}`}>
-                        {booking.status?.toUpperCase().replace('_', ' ') || 'UNKNOWN'}
-                      </Badge>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>{new Date(booking.eventDate).toLocaleDateString()}</span>
+                      {booking.eventTime && <span>at {booking.eventTime}</span>}
                     </div>
-                    
-                    {/* Date Box */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="bg-purple-600 text-white rounded-lg p-2 text-center min-w-[50px]">
-                        <div className="text-lg font-bold leading-none">{dateBox.day}</div>
-                        <div className="text-xs leading-none mt-1">{dateBox.monthYear}</div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{booking.clientName}</div>
-                        <div className="text-sm text-gray-500">{booking.venue || 'Venue TBC'}</div>
-                      </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>{booking.venue}</span>
                     </div>
-                    
-                    {/* Conflict Indicator */}
-                    {hasConflicts && (
-                      <div className="flex items-center gap-1 mb-3">
-                        <span className="text-red-500 text-sm">⚠️ {conflictAnalysis.conflictCount}</span>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <DollarSign className="h-4 w-4" />
+                      <span>£{booking.fee}</span>
+                    </div>
+                    {booking.travelTime && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>{booking.travelTime} travel</span>
                       </div>
                     )}
-                    
-                    {/* Status Buttons */}
-                    <div className="flex items-center gap-1 mb-3">
-                      <StatusButton 
-                        status="new" 
-                        currentStatus={booking.status} 
-                        onClick={() => handleStatusChange(booking.id, 'new')}
-                      >
-                        E
-                      </StatusButton>
-                      <StatusButton 
-                        status="booking_in_progress" 
-                        currentStatus={booking.status} 
-                        onClick={() => handleStatusChange(booking.id, 'booking_in_progress')}
-                      >
-                        P
-                      </StatusButton>
-                      <StatusButton 
-                        status="confirmed" 
-                        currentStatus={booking.status} 
-                        onClick={() => handleStatusChange(booking.id, 'confirmed')}
-                      >
-                        C
-                      </StatusButton>
-                      <StatusButton 
-                        status="contract_sent" 
-                        currentStatus={booking.status} 
-                        onClick={() => handleStatusChange(booking.id, 'contract_sent')}
-                      >
-                        S
-                      </StatusButton>
-                      <StatusButton 
-                        status="rejected" 
-                        currentStatus={booking.status} 
-                        onClick={() => handleStatusChange(booking.id, 'rejected')}
-                      >
-                        R
-                      </StatusButton>
-                      <StatusButton 
-                        status="cancelled" 
-                        currentStatus={booking.status} 
-                        onClick={() => handleStatusChange(booking.id, 'cancelled')}
-                      >
-                        ✗
-                      </StatusButton>
+                  </div>
+                  {booking.notes && (
+                    <p className="text-muted-foreground mt-3 text-sm">{booking.notes}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 ml-4">
+                  <select
+                    value={booking.status}
+                    onChange={(e) => handleStatusChange(booking.id, e.target.value)}
+                    className="text-sm px-2 py-1 border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {statusOptions.map(status => (
+                      <option key={status.value} value={status.value}>{status.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* All Bookings */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-foreground">All Bookings</h2>
+        {sortedBookings.length === 0 ? (
+          <div className="text-center py-12 bg-card rounded-lg">
+            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No bookings found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm || statusFilter !== 'all' 
+                ? 'Try adjusting your search or filter criteria'
+                : 'Add your first booking to get started'
+              }
+            </p>
+          </div>
+        ) : (
+          sortedBookings.map((booking: any) => {
+            const isUpcoming = new Date(booking.eventDate) >= now && booking.status === 'confirmed';
+            return (
+              <div key={booking.id} className={`bg-card rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow ${
+                isUpcoming ? 'border-green-200' : ''
+              }`}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-foreground">{booking.clientName}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium status-${booking.status}`}>
+                        {booking.status}
+                      </span>
+                      {isUpcoming && (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          Upcoming
+                        </span>
+                      )}
                     </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="flex items-center justify-between text-xs">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedBooking(booking);
-                          setShowDetailsDialog(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-800 p-0 h-auto"
-                      >
-                        View
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedBooking(booking);
-                          setShowStatusDialog(true);
-                        }}
-                        className="text-gray-600 hover:text-gray-800 p-0 h-auto"
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => deleteMutation.mutate(booking.id)}
-                        className="text-red-600 hover:text-red-800 p-0 h-auto"
-                      >
-                        Delete
-                      </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>{new Date(booking.eventDate).toLocaleDateString()}</span>
+                        {booking.eventTime && <span>at {booking.eventTime}</span>}
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>{booking.venue}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <DollarSign className="h-4 w-4" />
+                        <span>£{booking.fee}</span>
+                      </div>
+                      {booking.travelTime && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span>{booking.travelTime} travel</span>
+                        </div>
+                      )}
                     </div>
+                    {booking.notes && (
+                      <p className="text-muted-foreground mt-3 text-sm">{booking.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <select
+                      value={booking.status}
+                      onChange={(e) => handleStatusChange(booking.id, e.target.value)}
+                      className="text-sm px-2 py-1 border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      {statusOptions.map(status => (
+                        <option key={status.value} value={status.value}>{status.label}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
@@ -611,26 +538,8 @@ export default function Bookings() {
           })
         )}
       </div>
-
-      {/* Dialogs */}
-      <BookingStatusDialog
-        booking={selectedBooking}
-        isOpen={showStatusDialog}
-        onClose={() => setShowStatusDialog(false)}
-        onUpdateStatus={handleStatusChange}
-      />
-      
-      <BookingDetailsModal
-        booking={selectedBooking}
-        isOpen={showDetailsDialog}
-        onClose={() => setShowDetailsDialog(false)}
-      />
-      
-      <SendComplianceDialog
-        booking={selectedBooking}
-        isOpen={showComplianceDialog}
-        onClose={() => setShowComplianceDialog(false)}
-      />
     </div>
   );
-}
+};
+
+export default Bookings;

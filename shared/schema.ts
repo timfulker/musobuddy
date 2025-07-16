@@ -411,22 +411,3 @@ export type BookingConflict = typeof bookingConflicts.$inferSelect;
 export type InsertInstrumentMapping = z.infer<typeof insertInstrumentMappingSchema>;
 export type InstrumentMapping = typeof instrumentMappings.$inferSelect;
 
-// Deleted items table for undo functionality
-export const deletedItems = pgTable("deleted_items", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
-  itemType: varchar("item_type").notNull(), // 'booking', 'contract', 'invoice', 'enquiry'
-  itemId: integer("item_id").notNull(),
-  itemData: jsonb("item_data").notNull(), // Full JSON backup of deleted item
-  deletedAt: timestamp("deleted_at").defaultNow(),
-  canRestore: boolean("can_restore").default(true), // False after 30 days
-});
-
-export const insertDeletedItemSchema = createInsertSchema(deletedItems).omit({
-  id: true,
-  deletedAt: true,
-});
-
-export type InsertDeletedItem = z.infer<typeof insertDeletedItemSchema>;
-export type DeletedItem = typeof deletedItems.$inferSelect;
-
