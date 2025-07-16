@@ -446,9 +446,9 @@ export default function Enquiries() {
     const conflicts = [];
     const enquiryDate = new Date(enquiry.eventDate);
     
-    // Check against confirmed bookings
+    // Check against OTHER confirmed bookings (exclude current booking)
     bookings.forEach((booking: any) => {
-      if (booking.eventDate) {
+      if (booking.eventDate && booking.id !== enquiry.id) {
         const bookingDate = new Date(booking.eventDate);
         if (isSameDay(enquiryDate, bookingDate)) {
           conflicts.push({
