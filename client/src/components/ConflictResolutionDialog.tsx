@@ -48,7 +48,8 @@ export default function ConflictResolutionDialog({
   const queryClient = useQueryClient();
 
   // Early return if enquiry or conflicts are not available
-  if (!enquiry || !conflicts) {
+  if (!enquiry || !enquiry.id || !conflicts) {
+    console.error('ConflictResolutionDialog: Invalid data received', { enquiry, conflicts });
     return null;
   }
 

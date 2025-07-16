@@ -47,9 +47,14 @@ export default function ActionableEnquiries() {
   };
 
   const handleConflictClick = (enquiry: any) => {
+    if (!enquiry || !enquiry.id) {
+      console.error('Invalid enquiry data for conflict resolution:', enquiry);
+      return;
+    }
+    
     const conflicts = detectConflicts(enquiry);
     setSelectedConflictEnquiry(enquiry);
-    setSelectedConflicts(conflicts);
+    setSelectedConflicts(conflicts || []);
     setConflictResolutionDialogOpen(true);
   };
 
@@ -293,12 +298,18 @@ export default function ActionableEnquiries() {
       </Card>
       
       {/* Conflict Resolution Dialog */}
-      <ConflictResolutionDialog
-        isOpen={conflictResolutionDialogOpen}
-        onClose={() => setConflictResolutionDialogOpen(false)}
-        enquiry={selectedConflictEnquiry}
-        conflicts={selectedConflicts}
-      />
+      {conflictResolutionDialogOpen && selectedConflictEnquiry && (
+        <ConflictResolutionDialog
+          isOpen={conflictResolutionDialogOpen}
+          onClose={() => {
+            setConflictResolutionDialogOpen(false);
+            setSelectedConflictEnquiry(null);
+            setSelectedConflicts([]);
+          }}
+          enquiry={selectedConflictEnquiry}
+          conflicts={selectedConflicts}
+        />
+      )}
     </>
   );
 }
