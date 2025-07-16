@@ -63,7 +63,7 @@ export default function Enquiries() {
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
-  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(["contract_sent"]);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
