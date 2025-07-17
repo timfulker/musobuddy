@@ -11,16 +11,21 @@ export function useAuth() {
         credentials: "include",
       });
       
+      console.log('🔥 Auth check response:', response.status);
+      
       if (response.status === 401) {
-        // User is not authenticated, return null instead of throwing error
+        console.log('🔥 User not authenticated');
         return null;
       }
       
       if (!response.ok) {
+        console.error('🔥 Auth error:', response.status, response.statusText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return response.json();
+      const userData = await response.json();
+      console.log('🔥 User authenticated:', userData);
+      return userData;
     },
   });
 
