@@ -87,7 +87,7 @@ export default function SupportChat() {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-purple-600 hover:bg-purple-700 shadow-lg z-50"
+        className="fixed bottom-20 right-6 h-14 w-14 rounded-full bg-purple-600 hover:bg-purple-700 shadow-lg z-50"
         size="icon"
       >
         <MessageCircle className="h-6 w-6 text-white" />
@@ -96,7 +96,7 @@ export default function SupportChat() {
   }
 
   return (
-    <Card className={`fixed bottom-6 right-6 w-80 h-96 z-50 shadow-2xl ${isMinimized ? 'h-12' : 'h-96'}`}>
+    <Card className={`fixed bottom-20 right-6 w-80 h-96 z-50 shadow-2xl ${isMinimized ? 'h-12' : 'h-96'}`}>
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-semibold">MusoBuddy Support</CardTitle>
         <div className="flex items-center gap-2">
