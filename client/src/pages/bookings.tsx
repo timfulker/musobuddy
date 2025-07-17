@@ -1144,6 +1144,20 @@ export default function Enquiries() {
                     </Button>
                   </Link>
                   
+                  {/* Create Invoice Button */}
+                  <Link href={`/invoices?create=true&enquiryId=${selectedEnquiry?.id}`}>
+                    <Button 
+                      variant="outline"
+                      className="p-6 h-auto flex flex-col items-center space-y-2 border-green-200 hover:border-green-300 hover:bg-green-50 w-full"
+                    >
+                      <FileText className="w-5 h-5 text-green-600" />
+                      <span className="font-medium">Create Invoice</span>
+                      <span className="text-xs text-gray-500 text-center">
+                        Generate invoice with enquiry details
+                      </span>
+                    </Button>
+                  </Link>
+                  
                   {/* Mark as Confirmed Button */}
                   <Button 
                     onClick={() => selectedEnquiry && updateEnquiryStatusMutation.mutate({ 
