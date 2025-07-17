@@ -12,52 +12,53 @@ export default function Landing() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
       <header className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-between">
+        <nav className="flex items-center justify-between" role="navigation" aria-label="Main navigation">
           <div className="flex items-center space-x-3">
-            <img src={logoImage} alt="MusoBuddy" className="w-12 h-12 rounded-xl" />
+            <img src={logoImage} alt="MusoBuddy Logo - Professional Music Business Management" className="w-12 h-12 rounded-xl" />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">MusoBuddy</h1>
-              <p className="text-sm text-gray-600">Admin made easy</p>
+              <p className="text-sm text-gray-600">Professional Music Business Management</p>
             </div>
           </div>
-          <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700">
-            Get Started
+          <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700" aria-label="Get started with MusoBuddy">
+            Get Started Free
           </Button>
-        </div>
+        </nav>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-6 py-16 text-center">
-        <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full mb-6">
-          <Star className="w-4 h-4" />
-          <span className="font-semibold">Production Ready - Live Now</span>
-        </div>
-        <h2 className="text-5xl font-bold text-gray-900 mb-6">
-          Streamline Your Music Business
-        </h2>
-        <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          MusoBuddy is the complete booking management platform for freelance musicians. 
-          Manage enquiries, generate contracts, track invoices, and handle compliance - 
-          all in one professional system that saves you 70% of your admin time.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700 px-8">
-            Start Using MusoBuddy
-          </Button>
-          <Button variant="outline" size="lg" className="px-8">
-            View Features
-          </Button>
-        </div>
-      </section>
+      <main>
+        <section className="container mx-auto px-6 py-16 text-center" aria-labelledby="hero-heading">
+          <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full mb-6">
+            <Star className="w-4 h-4" />
+            <span className="font-semibold">Production Ready - Live Now</span>
+          </div>
+          <h2 id="hero-heading" className="text-5xl font-bold text-gray-900 mb-6">
+            Complete Music Business Management Platform for Freelance Musicians
+          </h2>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            MusoBuddy is the complete booking management platform for freelance musicians. 
+            Manage enquiries, generate contracts, track invoices, and handle compliance - 
+            all in one professional system that saves you 70% of your admin time.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700 px-8" aria-label="Start using MusoBuddy for free">
+              Start Using MusoBuddy Free
+            </Button>
+            <Button variant="outline" size="lg" className="px-8" aria-label="View all features">
+              View All Features
+            </Button>
+          </div>
+        </section>
 
-      {/* Features Grid */}
-      <section className="container mx-auto px-6 py-16">
-        <h3 className="text-3xl font-bold text-center text-gray-900 mb-4">
-          Complete Booking Management System
-        </h3>
-        <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-          All core features are live and ready to use. Start managing your music business professionally today.
-        </p>
+        {/* Features Grid */}
+        <section className="container mx-auto px-6 py-16" aria-labelledby="features-heading">
+          <h3 id="features-heading" className="text-3xl font-bold text-center text-gray-900 mb-4">
+            Complete Music Business Management Features
+          </h3>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            All core features are live and ready to use. Start managing your music business professionally today with our comprehensive booking management system.
+          </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
@@ -266,17 +267,54 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="bg-white py-16" aria-labelledby="faq-heading">
+        <div className="container mx-auto px-6">
+          <h3 id="faq-heading" className="text-3xl font-bold text-center text-gray-900 mb-12">
+            Frequently Asked Questions
+          </h3>
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">Is MusoBuddy free to use?</h4>
+                <p className="text-gray-600 mb-4">Yes, MusoBuddy is currently free to use with all core features available. We're focused on helping musicians streamline their business operations.</p>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">What types of musicians can use MusoBuddy?</h4>
+                <p className="text-gray-600 mb-4">MusoBuddy is designed for all freelance musicians - wedding performers, session musicians, music teachers, bands, and solo artists who handle their own bookings.</p>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">Do I need technical skills to use MusoBuddy?</h4>
+                <p className="text-gray-600 mb-4">No technical skills required. MusoBuddy is designed to be intuitive and user-friendly, with a simple interface that any musician can use immediately.</p>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">Can I integrate with my existing calendar?</h4>
+                <p className="text-gray-600 mb-4">Yes, MusoBuddy supports calendar import from Google Calendar, Apple Calendar, and Outlook with automatic conflict detection for double bookings.</p>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">How secure is my data?</h4>
+                <p className="text-gray-600 mb-4">MusoBuddy uses enterprise-grade security with encrypted data storage, secure authentication, and is fully GDPR compliant to protect your business information.</p>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">Can clients sign contracts digitally?</h4>
+                <p className="text-gray-600 mb-4">Yes, MusoBuddy includes digital signature capabilities, allowing clients to sign contracts online with legally binding electronic signatures.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
-      <section className="py-16">
+      <section className="bg-gradient-to-r from-purple-600 to-blue-600 py-16" aria-labelledby="cta-heading">
         <div className="container mx-auto px-6 text-center">
-          <h3 className="text-3xl font-bold text-gray-900 mb-6">
+          <h3 id="cta-heading" className="text-3xl font-bold text-white mb-6">
             Ready to Transform Your Music Business?
           </h3>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl text-purple-100 mb-8">
             MusoBuddy is complete and ready to use. Start managing your bookings, contracts, 
             and invoices professionally today.
           </p>
-          <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700 px-8">
+          <Button onClick={handleLogin} size="lg" className="bg-white text-purple-600 hover:bg-gray-100 px-8" aria-label="Get started with MusoBuddy now">
             Get Started Now
           </Button>
         </div>
@@ -286,7 +324,7 @@ export default function Landing() {
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-center space-x-3 mb-8">
-            <img src={logoImage} alt="MusoBuddy" className="w-10 h-10 rounded-lg" />
+            <img src={logoImage} alt="MusoBuddy Logo" className="w-10 h-10 rounded-lg" />
             <span className="text-xl font-bold">MusoBuddy</span>
           </div>
           <p className="text-center text-gray-400">
@@ -294,6 +332,7 @@ export default function Landing() {
           </p>
         </div>
       </footer>
+      </main>
     </div>
   );
 }
