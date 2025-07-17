@@ -6,9 +6,17 @@ import { Link } from "wouter";
 import type { Booking } from "@shared/schema";
 
 export default function CalendarWidget() {
-  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
-    queryKey: ["/api/bookings/upcoming"],
+  const { data: allBookings = [], isLoading: bookingsLoading } = useQuery({
+    queryKey: ["/api/bookings"],
   });
+
+  // Filter for upcoming bookings on the frontend to match calendar page data
+  const bookings = allBookings.filter((booking: Booking) => {
+    const eventDate = new Date(booking.eventDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return eventDate >= today;
+  }).slice(0, 10); // Limit to 10 upcoming bookings
 
   const isLoading = bookingsLoading;
 

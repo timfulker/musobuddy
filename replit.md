@@ -127,6 +127,17 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 ## Changelog
 
 ```
+- July 17, 2025. Calendar timezone fix and data consistency resolution completed:
+  * **CRITICAL BUG RESOLVED**: Fixed calendar component timezone conversion causing +1 day display offset
+  * **Root Cause**: Calendar was using toISOString() UTC conversion instead of local date handling
+  * **Technical Solution**: Replaced UTC timezone conversion with local date string parsing in calendar component
+  * **Database Cleanup**: Performed complete data flush of all 1008+ bookings for clean slate with corrected timezone handling
+  * **Data Consistency Fix**: Unified dashboard calendar widget and main calendar page to use same data source (/api/bookings)
+  * **Previous Issue**: Dashboard used /api/bookings/upcoming while calendar used /api/bookings causing data mismatch
+  * **Resolution**: Both components now use /api/bookings with frontend filtering for upcoming events
+  * **Calendar Import Ready**: System prepared for fresh Google Calendar import with accurate local date display
+  * **Status**: Calendar timezone handling corrected, data sources unified, ready for production calendar import
+
 - July 16, 2025. Email forwarding system with AI parsing fully operational and production-ready:
   * **Complete API Key Resolution**: Successfully created new dedicated OPENAI_EMAIL_PARSING_KEY for email processing
   * **Full AI Parsing Confirmed**: AI correctly extracts event dates, venues, event types, phone numbers, budgets, and gig types
