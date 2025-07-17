@@ -39,8 +39,8 @@ export function analyzeConflictSeverity(
     };
   }
   
-  // Critical conflicts - Same date as confirmed booking (RED FLAG)
-  if (analysis.confirmedBooking) {
+  // Critical conflicts - Time overlap detected (RED FLAG)
+  if (analysis.hasTimeOverlap) {
     return {
       level: 'critical',
       color: 'red',
@@ -48,7 +48,7 @@ export function analyzeConflictSeverity(
       borderColor: 'border-red-300',
       textColor: 'text-red-800',
       icon: '🚫',
-      message: 'CONFIRMED BOOKING CONFLICT - Double booking risk',
+      message: 'TIME OVERLAP CONFLICT - Double booking risk',
       canProceed: false
     };
   }
@@ -62,7 +62,7 @@ export function analyzeConflictSeverity(
       borderColor: 'border-orange-300',
       textColor: 'text-orange-800',
       icon: '⚠️',
-      message: 'Same day booking - check times to avoid overlap',
+      message: 'Same day booking - non-overlapping times',
       canProceed: true
     };
   }

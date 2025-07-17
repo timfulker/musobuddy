@@ -493,12 +493,14 @@ export default function Enquiries() {
       if (booking.eventDate && booking.id !== enquiry.id) {
         const bookingDate = new Date(booking.eventDate);
         if (isSameDay(enquiryDate, bookingDate)) {
+          const hasTimeOverlap = checkTimeOverlap(enquiry, booking);
           conflicts.push({
             type: 'booking',
             id: booking.id,
             title: booking.title || 'Booking',
             eventDate: booking.eventDate,
-            venue: booking.venue
+            venue: booking.venue,
+            hasTimeOverlap
           });
         }
       }
@@ -511,12 +513,14 @@ export default function Enquiries() {
           otherEnquiry.status === 'confirmed') {
         const otherDate = new Date(otherEnquiry.eventDate);
         if (isSameDay(enquiryDate, otherDate)) {
+          const hasTimeOverlap = checkTimeOverlap(enquiry, otherEnquiry);
           conflicts.push({
             type: 'enquiry',
             id: otherEnquiry.id,
             title: otherEnquiry.title || `${otherEnquiry.clientName} - ${otherEnquiry.eventType}`,
             eventDate: otherEnquiry.eventDate,
-            venue: otherEnquiry.venue
+            venue: otherEnquiry.venue,
+            hasTimeOverlap
           });
         }
       }
@@ -530,6 +534,32 @@ export default function Enquiries() {
     return date1.getFullYear() === date2.getFullYear() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getDate() === date2.getDate();
+  };
+
+  // Helper function to check if two bookings have overlapping times
+  const checkTimeOverlap = (booking1: any, booking2: any) => {
+    // If either booking is missing time information, assume they might overlap
+    if (!booking1.eventTime || !booking2.eventTime) return true;
+    
+    // Parse times - format: "HH:MM"
+    const parseTime = (timeStr: string, date: Date) => {
+      if (!timeStr) return null;
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const dateTime = new Date(date);
+      dateTime.setHours(hours, minutes, 0, 0);
+      return dateTime;
+    };
+    
+    const booking1Start = parseTime(booking1.eventTime, new Date(booking1.eventDate));
+    const booking1End = parseTime(booking1.eventEndTime || "23:59", new Date(booking1.eventDate));
+    const booking2Start = parseTime(booking2.eventTime, new Date(booking2.eventDate));
+    const booking2End = parseTime(booking2.eventEndTime || "23:59", new Date(booking2.eventDate));
+    
+    // If we can't parse times, assume overlap
+    if (!booking1Start || !booking1End || !booking2Start || !booking2End) return true;
+    
+    // Check for overlap: booking1 starts before booking2 ends AND booking2 starts before booking1 ends
+    return booking1Start < booking2End && booking2Start < booking1End;
   };
 
 
@@ -1450,8 +1480,11 @@ export default function Enquiries() {
               const confirmedBookingConflicts = conflicts.filter(c => c.type === 'booking');
               const unconfirmedEnquiryConflicts = conflicts.filter(c => c.type === 'enquiry');
               
+              // Check if any conflicts have time overlaps
+              const hasTimeOverlap = conflicts.some(conflict => conflict.hasTimeOverlap);
+              
               const conflictAnalysis = {
-                hasTimeOverlap: false, // Not implemented without Google Maps
+                hasTimeOverlap, // Now implemented with time overlap detection
                 sameVenue: false, // Not implemented without Google Maps
                 sameClient: false, // Could be implemented but not priority
                 confirmedBooking: confirmedBookingConflicts.length > 0, // Critical: confirmed booking conflict
