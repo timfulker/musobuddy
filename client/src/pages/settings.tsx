@@ -140,10 +140,16 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     console.warn('Failed to parse gigTypes:', e);
   }
   
-  // Transform the data to match the expected form structure
+  // Transform the data to match the expected form structure - include ALL fields
   return {
     businessName: data.businessName || "",
+    businessEmail: data.businessEmail || "",  // Added missing field
     businessAddress: data.businessAddress || "",
+    addressLine1: data.addressLine1 || "",    // Added missing field
+    addressLine2: data.addressLine2 || "",    // Added missing field
+    city: data.city || "",                    // Added missing field
+    county: data.county || "",                // Added missing field
+    postcode: data.postcode || "",            // Added missing field
     phone: data.phone || "",
     website: data.website || "",
     taxNumber: data.taxNumber || "",
@@ -276,7 +282,7 @@ export default function Settings() {
     if (settings && !saveSettings.isPending) {
       console.log('🔄 FORM RESET: Resetting form with settings:', settings);
       
-      // Create the form data object with actual values
+      // Create the form data object with actual values - include ALL fields from database
       const formData = {
         businessName: settings.businessName || "",
         businessEmail: settings.businessEmail || "",
