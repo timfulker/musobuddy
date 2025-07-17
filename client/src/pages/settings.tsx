@@ -252,8 +252,10 @@ export default function Settings() {
         description: "Settings saved successfully!",
       });
       
-      // Update the form with the saved data immediately
-      form.reset(data);
+      // Don't reset the form immediately - let it keep the user's changes
+      // The form will be updated when the settings query refreshes
+      
+      // Update local state with saved data
       setSelectedInstruments(Array.isArray(data.selectedInstruments) ? data.selectedInstruments : []);
       setGigTypes(Array.isArray(data.gigTypes) ? data.gigTypes : []);
       
@@ -264,8 +266,8 @@ export default function Settings() {
         gigTypes: data.gigTypes || []
       });
       
-      // Don't invalidate queries immediately to prevent reload loop
-      // queryClient.invalidateQueries({ queryKey: ['settings'] });
+      // Invalidate and refetch settings to get fresh data
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
     onError: (error) => {
       console.error('❌ Error saving settings:', error);
@@ -277,9 +279,9 @@ export default function Settings() {
     },
   });
 
-  // Initialize form when settings are loaded
+  // Initialize form when settings are loaded - but don't reset if user has unsaved changes
   useEffect(() => {
-    if (settings && !saveSettings.isPending) {
+    if (settings && !saveSettings.isPending && !hasChanges) {
       console.log('🔄 FORM RESET: Resetting form with settings:', settings);
       
       // Create the form data object with actual values - include ALL fields from database
@@ -325,7 +327,7 @@ export default function Settings() {
       
       setHasChanges(false);
     }
-  }, [settings, globalGigTypes, form, saveSettings.isPending]);
+  }, [settings, globalGigTypes, form, saveSettings.isPending, hasChanges]);
 
   // Simple form watcher for detecting changes
   useEffect(() => {
