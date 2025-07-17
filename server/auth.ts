@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import connectPg from "connect-pg-simple";
+import MemoryStore from "memorystore";
 
 declare global {
   namespace Express {
@@ -14,17 +15,16 @@ declare global {
 }
 
 export function setupAuth(app: Express) {
-  const PostgresSessionStore = connectPg(session);
+  // Use memory store for now to avoid PostgreSQL connection issues
+  const memoryStore = MemoryStore(session);
   
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
     rolling: true, // Reset session expiry on each request
-    store: new PostgresSessionStore({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-      tableName: 'sessions'
+    store: new memoryStore({
+      checkPeriod: 86400000 // Prune expired entries every 24h
     }),
     cookie: {
       httpOnly: true,
