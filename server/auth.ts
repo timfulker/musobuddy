@@ -87,13 +87,34 @@ export function setupAuth(app: Express) {
     });
   });
 
-  // Logout endpoint
-  app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
+  // Logout endpoints (both GET and POST for flexibility)
+  const logoutHandler = (req: any, res: any, next: any) => {
+    req.logout((err: any) => {
       if (err) return next(err);
-      res.status(200).json({ message: "Logout successful" });
+      
+      // Destroy the session completely
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error('Session destruction error:', err);
+          return next(err);
+        }
+        
+        // Clear the session cookie
+        res.clearCookie('connect.sid');
+        
+        // For GET requests, redirect to login page
+        if (req.method === 'GET') {
+          res.redirect('/login');
+        } else {
+          // For POST requests, send JSON response
+          res.status(200).json({ message: "Logout successful" });
+        }
+      });
     });
-  });
+  };
+
+  app.get("/api/logout", logoutHandler);
+  app.post("/api/logout", logoutHandler);
 
   // Get current user endpoint
   app.get("/api/auth/user", (req, res) => {
