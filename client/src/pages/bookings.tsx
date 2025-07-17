@@ -224,13 +224,8 @@ export default function Enquiries() {
 
   const handleConflictClick = async (primaryBooking: any) => {
     try {
-      console.log('🔥 CONFLICT CLICK - Primary booking:', primaryBooking);
-      
       // Use already loaded enquiries data instead of making API call
       const allBookings = enquiries || [];
-      
-      console.log('🔥 CONFLICT CLICK - All bookings count:', allBookings.length);
-      console.log('🔥 CONFLICT CLICK - All bookings:', allBookings);
       
       // Find bookings that conflict with the selected booking
       const conflictingBookings = allBookings.filter((booking: any) => {
@@ -243,19 +238,8 @@ export default function Enquiries() {
         const primaryDate = new Date(primaryBooking.eventDate).toDateString();
         const bookingDate = new Date(booking.eventDate).toDateString();
         
-        console.log('🔥 CONFLICT CLICK - Comparing dates:', {
-          primaryTitle: primaryBooking.title,
-          primaryDate,
-          bookingTitle: booking.title,
-          bookingDate,
-          matches: primaryDate === bookingDate
-        });
-        
         return primaryDate === bookingDate;
       });
-      
-      console.log('🔥 CONFLICT CLICK - Found conflicting bookings:', conflictingBookings);
-      console.log('🔥 CONFLICT CLICK - Setting conflict resolution data...');
       
       setConflictResolutionData({
         primaryBooking,
@@ -263,10 +247,8 @@ export default function Enquiries() {
       });
       setConflictResolutionOpen(true);
       
-      console.log('🔥 CONFLICT CLICK - Dialog should be opening now');
-      
     } catch (error) {
-      console.error('🔥 CONFLICT CLICK - Error fetching conflict data:', error);
+      console.error('Error loading conflict data:', error);
       toast({
         title: "Error",
         description: "Failed to load conflict data. Please try again.",
