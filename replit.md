@@ -150,6 +150,12 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Comprehensive Editing**: Users can now edit all booking information from the double-click edit dialog
   * **Status**: BookingDetailsDialog now provides complete booking editing capabilities while directing status changes to appropriate controls
 
+- July 17, 2025. Dashboard upcoming gigs timeframe and dialog close behavior improvements:
+  * **30-Day Upcoming Window**: Changed upcoming gigs to show only events within the next 30 days instead of all future events
+  * **Close Without Saving**: X button on BookingDetailsDialog now properly closes without saving changes (calls handleCancel)
+  * **Improved Dashboard Focus**: Dashboard now shows more relevant, near-term upcoming gigs instead of events months away
+  * **Status**: Dashboard shows contextually relevant upcoming gigs with proper dialog close behavior
+
 - July 17, 2025. Calendar conflict resolution visual system fully completed and operational:
   * **Orange Ring System**: Multiple events on same day display with orange rings around date for clear visual distinction
   * **Vibrant Event Display**: Multiple events show with 90% opacity instead of faded 20% opacity for better visibility

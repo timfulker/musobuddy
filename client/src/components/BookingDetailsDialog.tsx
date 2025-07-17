@@ -248,7 +248,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   if (!booking) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleCancel}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
         {/* Sticky Header */}
         <div className="sticky top-0 bg-white z-10 border-b pb-4 pr-12">

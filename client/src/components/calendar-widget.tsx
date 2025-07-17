@@ -10,12 +10,15 @@ export default function CalendarWidget() {
     queryKey: ["/api/bookings"],
   });
 
-  // Filter for upcoming bookings on the frontend to match calendar page data
+  // Filter for upcoming bookings within the next 30 days
   const bookings = allBookings.filter((booking: Booking) => {
     const eventDate = new Date(booking.eventDate);
     const today = new Date();
+    const thirtyDaysFromNow = new Date();
     today.setHours(0, 0, 0, 0);
-    return eventDate >= today;
+    thirtyDaysFromNow.setHours(0, 0, 0, 0);
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
+    return eventDate >= today && eventDate <= thirtyDaysFromNow;
   }).slice(0, 10); // Limit to 10 upcoming bookings
 
   const isLoading = bookingsLoading;
