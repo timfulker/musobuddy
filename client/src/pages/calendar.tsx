@@ -819,7 +819,7 @@ export default function Calendar() {
                                         }
                                       `}
                                     >
-                                      <span className="leading-tight break-words">
+                                      <span className="leading-tight break-words text-black dark:text-white">
                                         {event.title.length > 15 ? event.title.substring(0, 15) + '...' : event.title}
                                       </span>
                                     </div>
@@ -839,7 +839,7 @@ export default function Calendar() {
                                       }
                                     `}
                                   >
-                                    <span className="leading-tight break-words">
+                                    <span className="leading-tight break-words text-black dark:text-white">
                                       {day.events[0].title.length > 12 ? day.events[0].title.substring(0, 12) + '...' : day.events[0].title}
                                     </span>
                                   </div>
