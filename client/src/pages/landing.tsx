@@ -30,7 +30,7 @@ export default function Landing() {
       <section className="container mx-auto px-6 py-16 text-center">
         <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full mb-6">
           <Star className="w-4 h-4" />
-          <span className="font-semibold">Phase 1 Complete - Production Ready</span>
+          <span className="font-semibold">Production Ready - Live Now</span>
         </div>
         <h2 className="text-5xl font-bold text-gray-900 mb-6">
           Streamline Your Music Business
@@ -53,7 +53,7 @@ export default function Landing() {
       {/* Features Grid */}
       <section className="container mx-auto px-6 py-16">
         <h3 className="text-3xl font-bold text-center text-gray-900 mb-4">
-          Phase 1: Complete Booking Management System
+          Complete Booking Management System
         </h3>
         <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
           All core features are live and ready to use. Start managing your music business professionally today.
@@ -133,14 +133,14 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Roadmap Section */}
+      {/* Future Enhancements Section */}
       <section className="bg-gray-50 py-16">
         <div className="container mx-auto px-6">
           <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
             Future Enhancements Coming Soon
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Phase 2 */}
+            {/* Advanced Automation */}
             <Card className="border-2 border-blue-200 hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -148,8 +148,8 @@ export default function Landing() {
                     <Zap className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold text-gray-900">Phase 2: Advanced Automation</h4>
-                    <p className="text-sm text-blue-600 font-medium">Coming Q2 2025</p>
+                    <h4 className="text-xl font-semibold text-gray-900">Advanced Automation</h4>
+                    <p className="text-sm text-blue-600 font-medium">Coming Soon</p>
                   </div>
                 </div>
                 <ul className="space-y-2 text-gray-600">
@@ -173,7 +173,7 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            {/* Phase 3 */}
+            {/* Marketplace & Growth */}
             <Card className="border-2 border-purple-200 hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -181,8 +181,8 @@ export default function Landing() {
                     <Users className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold text-gray-900">Phase 3: Marketplace & Growth</h4>
-                    <p className="text-sm text-purple-600 font-medium">Coming Q3 2025</p>
+                    <h4 className="text-xl font-semibold text-gray-900">Marketplace & Growth</h4>
+                    <p className="text-sm text-purple-600 font-medium">Coming Soon</p>
                   </div>
                 </div>
                 <ul className="space-y-2 text-gray-600">
@@ -265,7 +265,7 @@ export default function Landing() {
             Ready to Transform Your Music Business?
           </h3>
           <p className="text-xl text-gray-600 mb-8">
-            Phase 1 is complete and ready to use. Start managing your bookings, contracts, 
+            MusoBuddy is complete and ready to use. Start managing your bookings, contracts, 
             and invoices professionally today.
           </p>
           <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700 px-8">
