@@ -2791,7 +2791,27 @@ Powered by MusoBuddy – less admin, more music
     try {
       const userId = req.user.id;
       const settings = await storage.getUserSettings(userId);
-      res.json(settings || {});
+      
+      if (settings) {
+        // Parse JSON strings back to arrays
+        const processedSettings = {
+          ...settings,
+          selectedInstruments: settings.selectedInstruments ? 
+            (typeof settings.selectedInstruments === 'string' ? 
+              JSON.parse(settings.selectedInstruments) : 
+              settings.selectedInstruments
+            ) : [],
+          gigTypes: settings.gigTypes ? 
+            (typeof settings.gigTypes === 'string' ? 
+              JSON.parse(settings.gigTypes) : 
+              settings.gigTypes
+            ) : [],
+        };
+        
+        res.json(processedSettings);
+      } else {
+        res.json({});
+      }
     } catch (error) {
       console.error("Error fetching user settings:", error);
       res.status(500).json({ message: "Failed to fetch settings" });
