@@ -10,12 +10,7 @@ export default function CalendarWidget() {
     queryKey: ["/api/bookings/upcoming"],
   });
 
-  // Phase 3: Read from main bookings table (renamed from bookings_new)
-  const { data: enquiries = [], isLoading: enquiriesLoading } = useQuery({
-    queryKey: ["/api/bookings"],
-  });
-
-  const isLoading = bookingsLoading || enquiriesLoading;
+  const isLoading = bookingsLoading;
 
   const formatDate = (dateString: string) => {
     // Parse the date string as a local date to avoid timezone shifts
@@ -55,49 +50,26 @@ export default function CalendarWidget() {
     }
   };
 
-  // Combine bookings and confirmed enquiries
+  // Get upcoming bookings (no need to combine with enquiries as they're now in the same table)
   const getUpcomingGigs = () => {
-    const upcoming = [];
     const now = new Date();
     
-    // Add actual bookings
-    bookings.forEach((booking: Booking) => {
-      if (new Date(booking.eventDate) >= now) {
-        upcoming.push({
-          id: booking.id,
-          title: booking.title,
-          clientName: booking.clientName,
-          eventDate: booking.eventDate,
-          eventTime: booking.eventTime,
-          venue: booking.venue,
-          fee: booking.fee,
-          status: booking.status,
-          type: 'booking'
-        });
-      }
-    });
-    
-    // Add confirmed enquiries with event dates
-    enquiries.forEach((enquiry: any) => {
-      if (enquiry.status === 'confirmed' && enquiry.eventDate && new Date(enquiry.eventDate) >= now) {
-        upcoming.push({
-          id: `enquiry-${enquiry.id}`,
-          title: enquiry.title,
-          clientName: enquiry.clientName,
-          eventDate: enquiry.eventDate,
-          eventTime: enquiry.eventTime || 'TBC',
-          venue: enquiry.venue || 'TBC',
-          fee: enquiry.estimatedValue || '0',
-          status: 'confirmed',
-          type: 'enquiry'
-        });
-      }
-    });
-    
-    // Sort by date and limit to 3
-    return upcoming
+    // Filter and sort upcoming bookings
+    return bookings
+      .filter((booking: Booking) => new Date(booking.eventDate) >= now)
       .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
-      .slice(0, 3);
+      .slice(0, 3)
+      .map((booking: Booking) => ({
+        id: booking.id,
+        title: booking.title,
+        clientName: booking.clientName,
+        eventDate: booking.eventDate,
+        eventTime: booking.eventTime,
+        venue: booking.venue,
+        fee: booking.fee,
+        status: booking.status,
+        type: 'booking'
+      }));
   };
 
   const upcomingGigs = getUpcomingGigs();
