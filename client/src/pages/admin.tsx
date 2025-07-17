@@ -24,8 +24,11 @@ import {
   DialogTrigger 
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus, BarChart3, Users as UsersIcon, Database } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AdminAnalytics from "@/components/admin-analytics";
+import SystemHealthMonitor from "@/components/system-health-monitor";
 
 interface AdminStats {
   totalUsers: number;
@@ -417,8 +420,30 @@ export default function Admin() {
           </h1>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Admin Tabs */}
+        <Tabs defaultValue="analytics" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="analytics" className="flex items-center space-x-2">
+              <BarChart3 className="h-4 w-4" />
+              <span>Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center space-x-2">
+              <UsersIcon className="h-4 w-4" />
+              <span>Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex items-center space-x-2">
+              <Database className="h-4 w-4" />
+              <span>System</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <AdminAnalytics />
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -843,6 +868,12 @@ export default function Admin() {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="system" className="space-y-6">
+            <SystemHealthMonitor />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

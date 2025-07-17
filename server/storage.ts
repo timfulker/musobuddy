@@ -1790,6 +1790,261 @@ export class DatabaseStorage implements IStorage {
     
     return (result.rowCount ?? 0) > 0;
   }
+
+  // Advanced admin analytics
+  async getBusinessIntelligence() {
+    try {
+      const [allUsers, allBookings, allContracts, allInvoices] = await Promise.all([
+        db.select().from(users),
+        db.select().from(bookings),
+        db.select().from(contracts),
+        db.select().from(invoices)
+      ]);
+
+      const now = new Date();
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const thisMonthBookings = allBookings.filter(b => b.createdAt >= thisMonth);
+      const lastMonthBookings = allBookings.filter(b => b.createdAt >= lastMonth && b.createdAt < thisMonth);
+      
+      const thisMonthRevenue = allInvoices
+        .filter(i => i.createdAt >= thisMonth)
+        .reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0);
+      
+      const lastMonthRevenue = allInvoices
+        .filter(i => i.createdAt >= lastMonth && i.createdAt < thisMonth)
+        .reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0);
+
+      const conversionRate = allBookings.length > 0 ? 
+        (allContracts.length / allBookings.length) * 100 : 0;
+
+      const averageBookingValue = allBookings.length > 0 ?
+        allInvoices.reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0) / allBookings.length : 0;
+
+      return {
+        totalUsers: allUsers.length,
+        totalBookings: allBookings.length,
+        totalContracts: allContracts.length,
+        totalInvoices: allInvoices.length,
+        bookingTrend: {
+          thisMonth: thisMonthBookings.length,
+          lastMonth: lastMonthBookings.length,
+          percentChange: lastMonthBookings.length > 0 ? 
+            ((thisMonthBookings.length - lastMonthBookings.length) / lastMonthBookings.length) * 100 : 0
+        },
+        revenueTrend: {
+          thisMonth: thisMonthRevenue,
+          lastMonth: lastMonthRevenue,
+          percentChange: lastMonthRevenue > 0 ? 
+            ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0
+        },
+        conversionRate,
+        averageBookingValue
+      };
+    } catch (error) {
+      console.error('Error getting business intelligence:', error);
+      return {};
+    }
+  }
+
+  async getGeographicDistribution() {
+    try {
+      const allBookings = await db.select().from(bookings);
+      
+      const distribution = allBookings.reduce((acc, booking) => {
+        const venue = booking.venue || 'Unknown';
+        const city = this.extractCityFromVenue(venue);
+        acc[city] = (acc[city] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return Object.entries(distribution)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10)
+        .map(([city, count]) => ({ city, count }));
+    } catch (error) {
+      console.error('Error getting geographic distribution:', error);
+      return [];
+    }
+  }
+
+  async getTopPerformers(limit: number = 10) {
+    try {
+      const allUsers = await db.select().from(users);
+      const allBookings = await db.select().from(bookings);
+      const allInvoices = await db.select().from(invoices);
+
+      const userPerformance = allUsers.map(user => {
+        const userBookings = allBookings.filter(b => b.userId === user.id);
+        const userInvoices = allInvoices.filter(i => i.userId === user.id);
+        const totalRevenue = userInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount || '0'), 0);
+        
+        return {
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          bookingCount: userBookings.length,
+          totalRevenue,
+          averageBookingValue: userBookings.length > 0 ? totalRevenue / userBookings.length : 0
+        };
+      });
+
+      return userPerformance
+        .sort((a, b) => b.totalRevenue - a.totalRevenue)
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error getting top performers:', error);
+      return [];
+    }
+  }
+
+  private extractCityFromVenue(venue: string): string {
+    // Simple city extraction logic - you can enhance this
+    if (!venue) return 'Unknown';
+    
+    const parts = venue.split(',');
+    if (parts.length >= 2) {
+      return parts[parts.length - 2].trim();
+    }
+    return venue.trim();
+  }
+
+  // System health and monitoring
+  async getSystemHealth() {
+    try {
+      const startTime = Date.now();
+      
+      // Test database connection
+      const dbStart = Date.now();
+      const userCount = await db.select().from(users).limit(1);
+      const dbTime = Date.now() - dbStart;
+      
+      // Memory usage (if available)
+      const memoryUsage = process.memoryUsage();
+      
+      // Check recent errors (last 24 hours)
+      const last24Hours = new Date();
+      last24Hours.setHours(last24Hours.getHours() - 24);
+      
+      const [recentBookings, recentContracts, recentInvoices] = await Promise.all([
+        db.select().from(bookings).where(gte(bookings.createdAt, last24Hours)),
+        db.select().from(contracts).where(gte(contracts.createdAt, last24Hours)),
+        db.select().from(invoices).where(gte(invoices.createdAt, last24Hours))
+      ]);
+      
+      const totalTime = Date.now() - startTime;
+      
+      return {
+        status: 'healthy',
+        timestamp: new Date(),
+        database: {
+          status: 'connected',
+          responseTime: dbTime,
+          recordsCount: userCount.length > 0 ? 'accessible' : 'empty'
+        },
+        memory: {
+          used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+          total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+          external: Math.round(memoryUsage.external / 1024 / 1024),
+          rss: Math.round(memoryUsage.rss / 1024 / 1024)
+        },
+        activity: {
+          last24Hours: {
+            bookings: recentBookings.length,
+            contracts: recentContracts.length,
+            invoices: recentInvoices.length
+          }
+        },
+        performance: {
+          totalCheckTime: totalTime,
+          dbResponseTime: dbTime
+        }
+      };
+    } catch (error) {
+      console.error('System health check failed:', error);
+      return {
+        status: 'unhealthy',
+        timestamp: new Date(),
+        error: error.message,
+        database: { status: 'error' },
+        memory: { status: 'unknown' },
+        activity: { status: 'error' }
+      };
+    }
+  }
+
+  async getPlatformMetrics() {
+    try {
+      const [allUsers, allBookings, allContracts, allInvoices] = await Promise.all([
+        db.select().from(users),
+        db.select().from(bookings),
+        db.select().from(contracts),
+        db.select().from(invoices)
+      ]);
+
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const weeklyActivity = {
+        users: allUsers.filter(u => u.createdAt >= oneWeekAgo).length,
+        bookings: allBookings.filter(b => b.createdAt >= oneWeekAgo).length,
+        contracts: allContracts.filter(c => c.createdAt >= oneWeekAgo).length,
+        invoices: allInvoices.filter(i => i.createdAt >= oneWeekAgo).length
+      };
+
+      const monthlyActivity = {
+        users: allUsers.filter(u => u.createdAt >= oneMonthAgo).length,
+        bookings: allBookings.filter(b => b.createdAt >= oneMonthAgo).length,
+        contracts: allContracts.filter(c => c.createdAt >= oneMonthAgo).length,
+        invoices: allInvoices.filter(i => i.createdAt >= oneMonthAgo).length
+      };
+
+      // Calculate growth rates
+      const userGrowthRate = allUsers.length > 0 ? 
+        (weeklyActivity.users / allUsers.length) * 100 : 0;
+      
+      const bookingGrowthRate = allBookings.length > 0 ? 
+        (weeklyActivity.bookings / allBookings.length) * 100 : 0;
+
+      // Platform health score (0-100)
+      const healthScore = Math.min(100, Math.max(0, 
+        (weeklyActivity.users * 10) + 
+        (weeklyActivity.bookings * 5) + 
+        (weeklyActivity.contracts * 3) + 
+        (weeklyActivity.invoices * 2)
+      ));
+
+      return {
+        totals: {
+          users: allUsers.length,
+          bookings: allBookings.length,
+          contracts: allContracts.length,
+          invoices: allInvoices.length
+        },
+        weekly: weeklyActivity,
+        monthly: monthlyActivity,
+        growthRates: {
+          users: userGrowthRate,
+          bookings: bookingGrowthRate
+        },
+        healthScore,
+        lastUpdated: now
+      };
+    } catch (error) {
+      console.error('Error getting platform metrics:', error);
+      return {
+        error: error.message,
+        totals: { users: 0, bookings: 0, contracts: 0, invoices: 0 },
+        weekly: { users: 0, bookings: 0, contracts: 0, invoices: 0 },
+        monthly: { users: 0, bookings: 0, contracts: 0, invoices: 0 },
+        growthRates: { users: 0, bookings: 0 },
+        healthScore: 0,
+        lastUpdated: new Date()
+      };
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

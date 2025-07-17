@@ -3258,6 +3258,74 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Business intelligence dashboard
+  app.get('/api/admin/business-intelligence', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const intelligence = await storage.getBusinessIntelligence();
+      res.json(intelligence);
+    } catch (error) {
+      console.error("Error fetching business intelligence:", error);
+      res.status(500).json({ message: "Failed to fetch business intelligence" });
+    }
+  });
+
+  // Revenue analytics
+  app.get('/api/admin/revenue-analytics', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const timeframe = req.query.timeframe || '12months';
+      const analytics = await storage.getRevenueAnalytics(timeframe);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching revenue analytics:", error);
+      res.status(500).json({ message: "Failed to fetch revenue analytics" });
+    }
+  });
+
+  // Geographic distribution of users
+  app.get('/api/admin/geographic-distribution', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const distribution = await storage.getGeographicDistribution();
+      res.json(distribution);
+    } catch (error) {
+      console.error("Error fetching geographic distribution:", error);
+      res.status(500).json({ message: "Failed to fetch geographic distribution" });
+    }
+  });
+
+  // Top performing users
+  app.get('/api/admin/top-performers', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit) || 10;
+      const performers = await storage.getTopPerformers(limit);
+      res.json(performers);
+    } catch (error) {
+      console.error("Error fetching top performers:", error);
+      res.status(500).json({ message: "Failed to fetch top performers" });
+    }
+  });
+
+  // System health monitoring
+  app.get('/api/admin/system-health', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const health = await storage.getSystemHealth();
+      res.json(health);
+    } catch (error) {
+      console.error("Error fetching system health:", error);
+      res.status(500).json({ message: "Failed to fetch system health" });
+    }
+  });
+
+  // Platform metrics
+  app.get('/api/admin/platform-metrics', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const metrics = await storage.getPlatformMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching platform metrics:", error);
+      res.status(500).json({ message: "Failed to fetch platform metrics" });
+    }
+  });
+
   // Admin users endpoint
   app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
