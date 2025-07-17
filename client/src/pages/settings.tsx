@@ -235,15 +235,27 @@ export default function Settings() {
       return await response.json();
     },
     onSuccess: (data) => {
-      console.log('✅ Settings saved successfully');
+      console.log('✅ Settings saved successfully:', data);
       setHasChanges(false);
       toast({
         title: "Success",
         description: "Settings saved successfully!",
       });
       
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      // Update the form with the saved data immediately
+      form.reset(data);
+      setSelectedInstruments(Array.isArray(data.selectedInstruments) ? data.selectedInstruments : []);
+      setGigTypes(Array.isArray(data.gigTypes) ? data.gigTypes : []);
+      
+      // Store the new data as initial data for comparison
+      setInitialData({
+        ...data,
+        selectedInstruments: data.selectedInstruments || [],
+        gigTypes: data.gigTypes || []
+      });
+      
+      // Don't invalidate queries immediately to prevent reload loop
+      // queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
     onError: (error) => {
       console.error('❌ Error saving settings:', error);
@@ -263,8 +275,8 @@ export default function Settings() {
       console.log('🔄 gigTypes from settings:', settings.gigTypes);
       console.log('🔄 hasChanges before update:', hasChanges);
       
-      // Only update form if we don't have pending changes
-      if (!hasChanges || saveSettings.isSuccess) {
+      // Only update form if we don't have initial data yet OR if save was successful
+      if (!initialData || saveSettings.isSuccess) {
         form.reset(settings);
         setSelectedInstruments(Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : []);
         
@@ -284,7 +296,7 @@ export default function Settings() {
         setHasChanges(false);
       }
     }
-  }, [settings, globalGigTypes, form, saveSettings.isPending, saveSettings.isSuccess, hasChanges]);
+  }, [settings, globalGigTypes, form, saveSettings.isPending, saveSettings.isSuccess]); // Removed hasChanges from dependencies
 
   // Watch for form changes
   useEffect(() => {

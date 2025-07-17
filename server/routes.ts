@@ -2828,10 +2828,23 @@ Powered by MusoBuddy – less admin, more music
       
       try {
         if (settings.gigTypes) {
-          gigTypes = JSON.parse(settings.gigTypes);
+          // Handle both array format and set format (PostgreSQL arrays might be stored as sets)
+          const gigTypesStr = settings.gigTypes.toString();
+          if (gigTypesStr.startsWith('[') && gigTypesStr.endsWith(']')) {
+            gigTypes = JSON.parse(gigTypesStr);
+          } else if (gigTypesStr.startsWith('{') && gigTypesStr.endsWith('}')) {
+            // Convert PostgreSQL set format to array
+            const setContent = gigTypesStr.slice(1, -1);
+            if (setContent.trim()) {
+              gigTypes = setContent.split(',').map(item => item.trim().replace(/^"|"$/g, ''));
+            }
+          } else {
+            gigTypes = [];
+          }
         }
       } catch (e) {
         console.warn('Failed to parse gigTypes:', e);
+        gigTypes = [];
       }
       
       res.json({
@@ -2872,14 +2885,29 @@ Powered by MusoBuddy – less admin, more music
       console.log('🔥 SETTINGS API: Saved successfully:', savedSettings.id);
       
       // Return the saved settings with parsed JSON fields
+      let parsedInstruments = [];
+      let parsedGigTypes = [];
+      
+      try {
+        if (savedSettings.selectedInstruments) {
+          parsedInstruments = JSON.parse(savedSettings.selectedInstruments);
+        }
+      } catch (e) {
+        console.warn('Failed to parse response selectedInstruments:', e);
+      }
+      
+      try {
+        if (savedSettings.gigTypes) {
+          parsedGigTypes = JSON.parse(savedSettings.gigTypes);
+        }
+      } catch (e) {
+        console.warn('Failed to parse response gigTypes:', e);
+      }
+      
       const responseData = {
         ...savedSettings,
-        selectedInstruments: savedSettings.selectedInstruments 
-          ? JSON.parse(savedSettings.selectedInstruments) 
-          : [],
-        gigTypes: savedSettings.gigTypes 
-          ? JSON.parse(savedSettings.gigTypes) 
-          : [],
+        selectedInstruments: parsedInstruments,
+        gigTypes: parsedGigTypes,
       };
       
       res.json(responseData);
