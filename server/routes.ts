@@ -423,7 +423,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      res.json(user);
+      
+      if (user) {
+        // Add admin status to user object
+        res.json({
+          ...user,
+          isAdmin: userId === "43963086" || user.isAdmin
+        });
+      } else {
+        res.json(null);
+      }
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -3244,6 +3253,109 @@ Hotel Lobby Entertainment`;
       res.status(500).json({ message: 'Failed to clean duplicates' });
     }
   });
+
+  // Admin routes - restrict to your specific user ID
+  const ADMIN_USER_ID = "43963086"; // Replace with your actual Replit user ID
+  
+  const isAdmin = (req: any, res: any, next: any) => {
+    const userId = req.user?.claims?.sub;
+    if (userId !== ADMIN_USER_ID) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  };
+
+  // Admin stats endpoint
+  app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  // Admin users endpoint
+  app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getUsersWithStats();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Admin bookings endpoint
+  app.get('/api/admin/bookings', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const bookings = await storage.getRecentBookingsAdmin();
+      res.json(bookings);
+    } catch (error) {
+      console.error("Error fetching admin bookings:", error);
+      res.status(500).json({ message: "Failed to fetch bookings" });
+    }
+  });
+
+  // Update user tier
+  app.patch('/api/admin/users/:id/tier', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { tier } = req.body;
+      
+      const success = await storage.updateUserTier(id, tier);
+      if (success) {
+        res.json({ message: "User tier updated successfully" });
+      } else {
+        res.status(404).json({ message: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error updating user tier:", error);
+      res.status(500).json({ message: "Failed to update user tier" });
+    }
+  });
+
+  // Toggle user admin status
+  app.patch('/api/admin/users/:id/toggle-admin', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const success = await storage.toggleUserAdmin(id);
+      if (success) {
+        res.json({ message: "User admin status updated successfully" });
+      } else {
+        res.status(404).json({ message: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error toggling user admin:", error);
+      res.status(500).json({ message: "Failed to toggle user admin" });
+    }
+  });
+
+  // Delete user account
+  app.delete('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Prevent self-deletion
+      if (id === req.user.claims.sub) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+      
+      const success = await storage.deleteUserAccount(id);
+      if (success) {
+        res.json({ message: "User account deleted successfully" });
+      } else {
+        res.status(404).json({ message: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting user account:", error);
+      res.status(500).json({ message: "Failed to delete user account" });
+    }
+  });
+
+
 
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {

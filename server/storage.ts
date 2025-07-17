@@ -43,6 +43,14 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   
+  // Admin operations
+  getUsersWithStats(): Promise<any[]>;
+  getAdminStats(): Promise<any>;
+  updateUserTier(userId: string, tier: string): Promise<boolean>;
+  toggleUserAdmin(userId: string): Promise<boolean>;
+  deleteUserAccount(userId: string): Promise<boolean>;
+  getRecentBookingsAdmin(): Promise<any[]>;
+  
   // Enquiry operations
   getEnquiries(userId: string): Promise<Enquiry[]>;
   getEnquiry(id: number, userId: string): Promise<Enquiry | undefined>;
@@ -1107,6 +1115,164 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedCount;
+  }
+
+  // Admin operations
+  async getUsersWithStats(): Promise<any[]> {
+    const { sql } = await import('drizzle-orm');
+    
+    // Get all users with their stats
+    const usersData = await db.select().from(users);
+    
+    const usersWithStats = await Promise.all(
+      usersData.map(async (user) => {
+        const [bookingsCount] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(bookings)
+          .where(eq(bookings.userId, user.id));
+        
+        const [contractsCount] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(contracts)
+          .where(eq(contracts.userId, user.id));
+        
+        const [invoicesCount] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(invoices)
+          .where(eq(invoices.userId, user.id));
+        
+        // Calculate total revenue from bookings
+        const [revenueData] = await db
+          .select({ 
+            total: sql<number>`COALESCE(SUM(CAST(fee AS DECIMAL)), 0)` 
+          })
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.userId, user.id),
+              ne(bookings.status, 'rejected')
+            )
+          );
+        
+        return {
+          ...user,
+          bookingsCount: bookingsCount?.count || 0,
+          contractsCount: contractsCount?.count || 0,
+          invoicesCount: invoicesCount?.count || 0,
+          totalRevenue: Number(revenueData?.total || 0),
+        };
+      })
+    );
+    
+    return usersWithStats;
+  }
+
+  async getAdminStats(): Promise<any> {
+    const { sql } = await import('drizzle-orm');
+    
+    const [totalUsers] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users);
+    
+    const [totalBookings] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(bookings);
+    
+    const [totalContracts] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(contracts);
+    
+    const [totalInvoices] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(invoices);
+    
+    const [totalRevenue] = await db
+      .select({ 
+        total: sql<number>`COALESCE(SUM(CAST(fee AS DECIMAL)), 0)` 
+      })
+      .from(bookings)
+      .where(ne(bookings.status, 'rejected'));
+    
+    // New users this month
+    const thisMonth = new Date();
+    thisMonth.setDate(1);
+    const [newUsersThisMonth] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, thisMonth));
+    
+    const avgBookingsPerUser = totalUsers?.count > 0 
+      ? (totalBookings?.count || 0) / totalUsers.count 
+      : 0;
+    
+    return {
+      totalUsers: totalUsers?.count || 0,
+      totalBookings: totalBookings?.count || 0,
+      totalContracts: totalContracts?.count || 0,
+      totalInvoices: totalInvoices?.count || 0,
+      totalRevenue: Number(totalRevenue?.total || 0),
+      newUsersThisMonth: newUsersThisMonth?.count || 0,
+      activeUsers: totalUsers?.count || 0, // Can be refined later
+      avgBookingsPerUser: Math.round(avgBookingsPerUser * 10) / 10,
+    };
+  }
+
+  async updateUserTier(userId: string, tier: string): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ tier, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    return result.rowCount > 0;
+  }
+
+  async toggleUserAdmin(userId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+    
+    const result = await db
+      .update(users)
+      .set({ isAdmin: !user.isAdmin, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    return result.rowCount > 0;
+  }
+
+  async deleteUserAccount(userId: string): Promise<boolean> {
+    try {
+      // Delete all user data in correct order (due to foreign key constraints)
+      await db.delete(bookings).where(eq(bookings.userId, userId));
+      await db.delete(contracts).where(eq(contracts.userId, userId));
+      await db.delete(invoices).where(eq(invoices.userId, userId));
+      await db.delete(complianceDocuments).where(eq(complianceDocuments.userId, userId));
+      await db.delete(userSettings).where(eq(userSettings.userId, userId));
+      await db.delete(emailTemplates).where(eq(emailTemplates.userId, userId));
+      await db.delete(clients).where(eq(clients.userId, userId));
+      await db.delete(users).where(eq(users.id, userId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting user account:', error);
+      return false;
+    }
+  }
+
+  async getRecentBookingsAdmin(): Promise<any[]> {
+    const recentBookings = await db
+      .select({
+        id: bookings.id,
+        clientName: bookings.clientName,
+        eventDate: bookings.eventDate,
+        venue: bookings.venue,
+        status: bookings.status,
+        fee: bookings.fee,
+        userId: bookings.userId,
+        userEmail: users.email,
+      })
+      .from(bookings)
+      .leftJoin(users, eq(bookings.userId, users.id))
+      .orderBy(desc(bookings.createdAt))
+      .limit(50);
+    
+    return recentBookings;
   }
 }
 

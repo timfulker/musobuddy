@@ -17,7 +17,8 @@ import {
   MessageSquare,
   Users,
   User,
-  BookOpen
+  BookOpen,
+  Crown
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -177,6 +178,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <BookOpen className="w-5 h-5" />
             <span>User Guide</span>
           </Link>
+          
+          {/* Admin section - only show for admin users */}
+          {user?.isAdmin && (
+            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
+              "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+              isActive("/admin") 
+                ? "bg-purple-600 text-white font-medium" 
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+            )}>
+              <Crown className="w-5 h-5" />
+              <span>Admin</span>
+            </Link>
+          )}
         </nav>
 
         {/* User Profile */}
