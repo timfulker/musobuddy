@@ -132,33 +132,16 @@ export default function ActionableEnquiries() {
 
   // Filter enquiries that need action (excluding resolved conflicts and completed gigs)
   const actionableEnquiries = enquiries.filter((enquiry: Enquiry) => {
-    // Early debugging to understand what's happening
-    const isCompleted = enquiry.status === 'completed';
-    const isRejected = enquiry.status === 'rejected';
-    
-    console.log('🔍 Actionable Filter Check:', {
-      id: enquiry.id,
-      title: enquiry.title?.substring(0, 30) + '...',
-      status: enquiry.status,
-      isCompleted,
-      isRejected,
-      shouldExclude: isCompleted || isRejected
-    });
-    
     // Exclude completed and rejected gigs from action required
-    if (isCompleted || isRejected) {
-      console.log('❌ Excluding from action required:', enquiry.id, enquiry.status);
+    if (enquiry.status === 'completed' || enquiry.status === 'rejected') {
       return false;
     }
     
     const conflicts = detectConflicts(enquiry);
     const isResolved = resolvedConflicts.has(enquiry.id);
     const hasUnresolvedConflicts = conflicts.length > 0 && !isResolved;
-    const shouldInclude = needsResponse(enquiry) || hasUnresolvedConflicts;
     
-    console.log('✅ Including in action required:', enquiry.id, 'needsResponse:', needsResponse(enquiry), 'hasUnresolvedConflicts:', hasUnresolvedConflicts);
-    
-    return shouldInclude;
+    return needsResponse(enquiry) || hasUnresolvedConflicts;
   });
 
   // Filter enquiries from this week, excluding calendar imports
@@ -275,7 +258,7 @@ export default function ActionableEnquiries() {
     const badgeInfo = getBadgeInfo();
     
     return (
-      <Link key={enquiry.id} href="/bookings">
+      <Link key={enquiry.id} href={`/bookings?status=${enquiry.status}&id=${enquiry.id}`}>
         <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer ${
           getStatusOverlay()
         } ${hasConflicts ? getConflictOverlay() : ''}`}>

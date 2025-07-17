@@ -65,7 +65,22 @@ export default function Enquiries() {
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
-  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(["contract_sent"]);
+  // Initialize filters based on URL parameters or default to "contract_sent"
+  const getInitialStatusFilters = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusParam = urlParams.get('status');
+    
+    // If redirected from dashboard with a specific status, use that status
+    if (statusParam) {
+      console.log('🔗 Dashboard redirect detected, setting filter to:', statusParam);
+      return [statusParam];
+    }
+    
+    // Default to "contract_sent" if no redirect
+    return ["contract_sent"];
+  };
+
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(getInitialStatusFilters());
   const [conflictResolutionOpen, setConflictResolutionOpen] = useState(false);
   const [conflictResolutionData, setConflictResolutionData] = useState<{
     primaryBooking: any;
@@ -98,12 +113,36 @@ export default function Enquiries() {
     }
   });
 
-  // Check URL params to auto-open form dialog
+  // Check URL params to auto-open form dialog or set status filter
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Handle dialog opening
     if (urlParams.get('action') === 'new') {
       setIsDialogOpen(true);
-      // Clean up URL
+    }
+    
+    // Handle dashboard redirect with status filter
+    const statusParam = urlParams.get('status');
+    const idParam = urlParams.get('id');
+    
+    if (statusParam) {
+      console.log('🔗 Dashboard redirect - setting filter to:', statusParam);
+      setActiveStatusFilters([statusParam]);
+      
+      // Optional: Scroll to specific booking if ID is provided
+      if (idParam) {
+        setTimeout(() => {
+          const element = document.getElementById(`booking-${idParam}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500); // Allow time for data to load
+      }
+    }
+    
+    // Clean up URL parameters
+    if (urlParams.get('action') === 'new' || statusParam || idParam) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -1552,7 +1591,7 @@ export default function Enquiries() {
 
               return (
                 <TooltipProvider key={enquiry.id}>
-                  <Card className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
+                  <Card id={`booking-${enquiry.id}`} className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
                     <CardContent className="p-4">
                       <div className="relative">
                         {/* Critical Conflict Red Stripe */}
