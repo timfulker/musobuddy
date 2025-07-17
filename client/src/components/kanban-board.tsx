@@ -37,6 +37,19 @@ export default function ActionableEnquiries() {
 
   // Detect conflicts for an enquiry (same logic as events window)
   const detectConflicts = (enquiry: Enquiry) => {
+    // For testing: simulate an orange conflict for the Saxophone enquiry
+    if (enquiry.title?.includes('Saxophone')) {
+      return [{
+        id: 9999,
+        title: 'Test Conflict (Same Date)',
+        clientName: 'Test Client',
+        startTime: '15:00',
+        endTime: '17:00',
+        type: 'booking',
+        hasTimeOverlap: false // This creates an orange conflict (same date, no time overlap)
+      }];
+    }
+    
     if (!enquiry.eventDate || !enquiry.startTime || !enquiry.endTime) return [];
     
     const enquiryDate = new Date(enquiry.eventDate).toDateString();
