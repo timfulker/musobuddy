@@ -214,6 +214,32 @@ export default function Admin() {
     },
   });
 
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete user');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleUpdateTier = () => {
     if (selectedUser && newTier) {
       updateTierMutation.mutate({ userId: selectedUser, tier: newTier });
@@ -441,6 +467,18 @@ export default function Admin() {
                           disabled={toggleAdminMutation.isPending}
                         >
                           {user.isAdmin ? "Remove Admin" : "Make Admin"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete ${user.firstName} ${user.lastName}? This action cannot be undone.`)) {
+                              deleteUserMutation.mutate(user.id);
+                            }
+                          }}
+                          disabled={deleteUserMutation.isPending}
+                        >
+                          Delete
                         </Button>
                       </div>
                     </div>
