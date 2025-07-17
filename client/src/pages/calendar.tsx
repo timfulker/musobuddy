@@ -711,10 +711,7 @@ export default function Calendar() {
                             : ''
                           }
                           ${day.hasEvents && day.events.length > 1
-                            ? // Check if this is a resolved conflict (orange ring) or regular multiple events (purple ring)
-                              day.events.some(event => hasResolvedConflicts(event, [...bookings, ...contracts]))
-                                ? 'ring-2 ring-orange-400 dark:ring-orange-500 shadow-orange-100 dark:shadow-orange-900/20'
-                                : 'ring-2 ring-purple-300 dark:ring-purple-600 shadow-purple-100 dark:shadow-purple-900/20'
+                            ? 'ring-2 ring-orange-400 dark:ring-orange-500 shadow-orange-100 dark:shadow-orange-900/20'
                             : ''
                           }
                         `}
@@ -817,7 +814,7 @@ export default function Calendar() {
                                         flex items-center justify-center text-center
                                         ${getStatusColor(event.status || 'new')} 
                                         ${day.events.length > 1
-                                          ? 'bg-opacity-80 border border-current border-opacity-50'
+                                          ? 'bg-opacity-90 border border-current border-opacity-70'
                                           : 'bg-opacity-20 border border-current border-opacity-30'
                                         }
                                       `}
@@ -837,7 +834,7 @@ export default function Calendar() {
                                       flex items-center justify-center text-center
                                       ${getStatusColor(day.events[0].status || 'new')} 
                                       ${day.events.length > 1
-                                        ? 'bg-opacity-80 border border-current border-opacity-50'
+                                        ? 'bg-opacity-90 border border-current border-opacity-70'
                                         : 'bg-opacity-20 border border-current border-opacity-30'
                                       }
                                     `}
