@@ -6,7 +6,7 @@ import { Link } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
 import { analyzeConflictSeverity, type ConflictAnalysis } from "@/utils/conflict-ui";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading } = useQuery({
@@ -34,6 +34,27 @@ export default function ActionableEnquiries() {
       }
     }
   }, []);
+
+  // Debug logging - summary of all enquiries by status
+  useEffect(() => {
+    if (enquiries.length > 0) {
+      const statusCounts = enquiries.reduce((acc: any, enquiry: any) => {
+        acc[enquiry.status] = (acc[enquiry.status] || 0) + 1;
+        return acc;
+      }, {});
+      console.log('📊 Enquiries by status:', statusCounts);
+      
+      // Log completed enquiries to understand the issue
+      const completedEnquiries = enquiries.filter((e: any) => e.status === 'completed');
+      console.log('✅ Completed enquiries:', completedEnquiries.length, completedEnquiries.map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        eventDate: e.eventDate,
+        createdAt: e.createdAt,
+        status: e.status
+      })));
+    }
+  }, [enquiries]);
 
   // Detect conflicts for an enquiry (same logic as events window)
   const detectConflicts = (enquiry: Enquiry) => {
@@ -109,44 +130,57 @@ export default function ActionableEnquiries() {
     return date >= startOfWeek && date <= endOfWeek;
   };
 
-  // Filter enquiries that need action (excluding resolved conflicts)
+  // Filter enquiries that need action (excluding resolved conflicts and completed gigs)
   const actionableEnquiries = enquiries.filter((enquiry: Enquiry) => {
+    // Early debugging to understand what's happening
+    const isCompleted = enquiry.status === 'completed';
+    const isRejected = enquiry.status === 'rejected';
+    
+    console.log('🔍 Actionable Filter Check:', {
+      id: enquiry.id,
+      title: enquiry.title?.substring(0, 30) + '...',
+      status: enquiry.status,
+      isCompleted,
+      isRejected,
+      shouldExclude: isCompleted || isRejected
+    });
+    
+    // Exclude completed and rejected gigs from action required
+    if (isCompleted || isRejected) {
+      console.log('❌ Excluding from action required:', enquiry.id, enquiry.status);
+      return false;
+    }
+    
     const conflicts = detectConflicts(enquiry);
     const isResolved = resolvedConflicts.has(enquiry.id);
     const hasUnresolvedConflicts = conflicts.length > 0 && !isResolved;
+    const shouldInclude = needsResponse(enquiry) || hasUnresolvedConflicts;
     
-    // Debug logging for actionable enquiries
-    if (enquiry.title?.includes('Saxophone')) {
-      console.log('Actionable Enquiries Filter - Saxophone enquiry:', {
-        id: enquiry.id,
-        title: enquiry.title,
-        eventDate: enquiry.eventDate,
-        eventTime: enquiry.eventTime,
-        eventEndTime: enquiry.eventEndTime,
-        status: enquiry.status,
-        needsResponse: needsResponse(enquiry),
-        conflicts: conflicts.length,
-        isResolved,
-        hasUnresolvedConflicts,
-        shouldInclude: needsResponse(enquiry) || hasUnresolvedConflicts,
-        allEnquiriesOnSameDate: enquiries.filter(e => e.eventDate === enquiry.eventDate).map(e => ({
-          id: e.id,
-          title: e.title,
-          eventTime: e.eventTime,
-          eventEndTime: e.eventEndTime
-        }))
-      });
-    }
+    console.log('✅ Including in action required:', enquiry.id, 'needsResponse:', needsResponse(enquiry), 'hasUnresolvedConflicts:', hasUnresolvedConflicts);
     
-    return needsResponse(enquiry) || hasUnresolvedConflicts;
+    return shouldInclude;
   });
 
   // Filter enquiries from this week, excluding calendar imports
-  const thisWeekEnquiries = enquiries.filter((enquiry: Enquiry) => 
-    enquiry.createdAt && 
-    isThisWeek(enquiry.createdAt) && 
-    !isCalendarImport(enquiry)
-  );
+  const thisWeekEnquiries = enquiries.filter((enquiry: Enquiry) => {
+    const isThisWeekEnquiry = enquiry.createdAt && isThisWeek(enquiry.createdAt);
+    const isImport = isCalendarImport(enquiry);
+    
+    // Debug logging for this week enquiries
+    if (enquiry.createdAt && new Date(enquiry.createdAt).getMonth() === 6) { // July is month 6
+      console.log('This Week Filter - July enquiry:', {
+        id: enquiry.id,
+        title: enquiry.title,
+        createdAt: enquiry.createdAt,
+        eventDate: enquiry.eventDate,
+        isThisWeek: isThisWeekEnquiry,
+        isCalendarImport: isImport,
+        shouldInclude: isThisWeekEnquiry && !isImport
+      });
+    }
+    
+    return isThisWeekEnquiry && !isImport;
+  });
 
   const renderEnquiryCard = (enquiry: Enquiry, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate!);
