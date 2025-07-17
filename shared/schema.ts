@@ -35,6 +35,76 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User activity tracking table
+export const userActivity = pgTable("user_activity", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  action: varchar("action").notNull(), // login, logout, page_view, feature_used
+  details: jsonb("details"), // Additional action details
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  sessionId: varchar("session_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User login history table
+export const userLoginHistory = pgTable("user_login_history", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  loginTime: timestamp("login_time").defaultNow(),
+  logoutTime: timestamp("logout_time"),
+  sessionDuration: integer("session_duration"), // in minutes
+  successful: boolean("successful").default(true),
+  failureReason: varchar("failure_reason"),
+});
+
+// User messages/announcements table
+export const userMessages = pgTable("user_messages", {
+  id: serial("id").primaryKey(),
+  fromUserId: varchar("from_user_id").notNull(), // Admin who sent the message
+  toUserId: varchar("to_user_id"), // Null for broadcast messages
+  subject: varchar("subject").notNull(),
+  content: text("content").notNull(),
+  type: varchar("type").notNull().default("announcement"), // announcement, message, alert
+  priority: varchar("priority").default("normal"), // low, normal, high, urgent
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Support tickets table
+export const supportTickets = pgTable("support_tickets", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  assignedToUserId: varchar("assigned_to_user_id"), // Admin assigned to handle
+  subject: varchar("subject").notNull(),
+  description: text("description").notNull(),
+  category: varchar("category").default("general"), // general, technical, billing, feature
+  priority: varchar("priority").default("medium"), // low, medium, high, urgent
+  status: varchar("status").default("open"), // open, in_progress, resolved, closed
+  resolution: text("resolution"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+// User audit logs table
+export const userAuditLogs = pgTable("user_audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  adminUserId: varchar("admin_user_id"), // Admin who made the change
+  action: varchar("action").notNull(), // created, updated, deleted, suspended, etc.
+  entityType: varchar("entity_type"), // user, booking, contract, etc.
+  entityId: varchar("entity_id"),
+  oldValues: jsonb("old_values"),
+  newValues: jsonb("new_values"),
+  reason: text("reason"),
+  ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 
 
 // Contracts table - Musicians' Union minimum fields + essential rider information
@@ -424,6 +494,35 @@ export const insertFeedbackSchema = createInsertSchema(feedback).omit({
   resolvedBy: true,
 });
 
+export const insertUserActivitySchema = createInsertSchema(userActivity).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserLoginHistorySchema = createInsertSchema(userLoginHistory).omit({
+  id: true,
+  loginTime: true,
+});
+
+export const insertUserMessageSchema = createInsertSchema(userMessages).omit({
+  id: true,
+  createdAt: true,
+  isRead: true,
+  readAt: true,
+});
+
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  resolvedAt: true,
+});
+
+export const insertUserAuditLogSchema = createInsertSchema(userAuditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 
 
 
@@ -453,4 +552,14 @@ export type InsertInstrumentMapping = z.infer<typeof insertInstrumentMappingSche
 export type InstrumentMapping = typeof instrumentMappings.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 export type Feedback = typeof feedback.$inferSelect;
+export type InsertUserActivity = z.infer<typeof insertUserActivitySchema>;
+export type UserActivity = typeof userActivity.$inferSelect;
+export type InsertUserLoginHistory = z.infer<typeof insertUserLoginHistorySchema>;
+export type UserLoginHistory = typeof userLoginHistory.$inferSelect;
+export type InsertUserMessage = z.infer<typeof insertUserMessageSchema>;
+export type UserMessage = typeof userMessages.$inferSelect;
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type InsertUserAuditLog = z.infer<typeof insertUserAuditLogSchema>;
+export type UserAuditLog = typeof userAuditLogs.$inferSelect;
 

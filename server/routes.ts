@@ -3524,6 +3524,293 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Advanced User Management Routes
+  
+  // User Activity & Analytics
+  app.get('/api/admin/users/:id/activity', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const limit = parseInt(req.query.limit) || 100;
+      const activity = await storage.getUserActivity(userId, limit);
+      res.json(activity);
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+      res.status(500).json({ message: 'Failed to fetch user activity' });
+    }
+  });
+
+  app.get('/api/admin/users/:id/login-history', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const limit = parseInt(req.query.limit) || 50;
+      const history = await storage.getUserLoginHistory(userId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error('Error fetching login history:', error);
+      res.status(500).json({ message: 'Failed to fetch login history' });
+    }
+  });
+
+  app.get('/api/admin/users/:id/analytics', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const analytics = await storage.getUserAnalytics(userId);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching user analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch user analytics' });
+    }
+  });
+
+  app.get('/api/admin/system-analytics', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const analytics = await storage.getSystemAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching system analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch system analytics' });
+    }
+  });
+
+  // User Account Management
+  app.patch('/api/admin/users/:id/suspend', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const { reason } = req.body;
+      const success = await storage.suspendUser(userId, reason);
+      if (success) {
+        res.json({ message: 'User suspended successfully' });
+      } else {
+        res.status(404).json({ message: 'User not found' });
+      }
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      res.status(500).json({ message: 'Failed to suspend user' });
+    }
+  });
+
+  app.patch('/api/admin/users/:id/activate', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const success = await storage.activateUser(userId);
+      if (success) {
+        res.json({ message: 'User activated successfully' });
+      } else {
+        res.status(404).json({ message: 'User not found' });
+      }
+    } catch (error) {
+      console.error('Error activating user:', error);
+      res.status(500).json({ message: 'Failed to activate user' });
+    }
+  });
+
+  app.patch('/api/admin/users/:id/force-password-change', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const success = await storage.forcePasswordChange(userId);
+      if (success) {
+        res.json({ message: 'Password change forced successfully' });
+      } else {
+        res.status(404).json({ message: 'User not found' });
+      }
+    } catch (error) {
+      console.error('Error forcing password change:', error);
+      res.status(500).json({ message: 'Failed to force password change' });
+    }
+  });
+
+  app.patch('/api/admin/users/bulk-tier-update', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userIds, tier } = req.body;
+      const success = await storage.bulkUpdateUserTiers(userIds, tier);
+      if (success) {
+        res.json({ message: 'User tiers updated successfully' });
+      } else {
+        res.status(400).json({ message: 'Failed to update user tiers' });
+      }
+    } catch (error) {
+      console.error('Error bulk updating user tiers:', error);
+      res.status(500).json({ message: 'Failed to update user tiers' });
+    }
+  });
+
+  // Communication Features
+  app.post('/api/admin/send-message', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const messageData = {
+        ...req.body,
+        fromUserId: req.user.id,
+      };
+      const message = await storage.sendUserMessage(messageData);
+      res.json(message);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  app.post('/api/admin/broadcast-announcement', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const announcement = {
+        ...req.body,
+        fromUserId: req.user.id,
+      };
+      const success = await storage.broadcastAnnouncement(announcement);
+      if (success) {
+        res.json({ message: 'Announcement sent successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to send announcement' });
+      }
+    } catch (error) {
+      console.error('Error broadcasting announcement:', error);
+      res.status(500).json({ message: 'Failed to broadcast announcement' });
+    }
+  });
+
+  app.get('/api/user/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const messages = await storage.getUserMessages(req.user.id);
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching user messages:', error);
+      res.status(500).json({ message: 'Failed to fetch messages' });
+    }
+  });
+
+  app.patch('/api/user/messages/:id/mark-read', isAuthenticated, async (req: any, res) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      const success = await storage.markMessageAsRead(messageId);
+      if (success) {
+        res.json({ message: 'Message marked as read' });
+      } else {
+        res.status(404).json({ message: 'Message not found' });
+      }
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      res.status(500).json({ message: 'Failed to mark message as read' });
+    }
+  });
+
+  // Support & Help
+  app.post('/api/support/tickets', isAuthenticated, async (req: any, res) => {
+    try {
+      const ticketData = {
+        ...req.body,
+        userId: req.user.id,
+      };
+      const ticket = await storage.createSupportTicket(ticketData);
+      res.json(ticket);
+    } catch (error) {
+      console.error('Error creating support ticket:', error);
+      res.status(500).json({ message: 'Failed to create support ticket' });
+    }
+  });
+
+  app.get('/api/support/tickets', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.isAdmin ? undefined : req.user.id;
+      const tickets = await storage.getSupportTickets(userId);
+      res.json(tickets);
+    } catch (error) {
+      console.error('Error fetching support tickets:', error);
+      res.status(500).json({ message: 'Failed to fetch support tickets' });
+    }
+  });
+
+  app.patch('/api/admin/support/tickets/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const ticketId = parseInt(req.params.id);
+      const updates = req.body;
+      const success = await storage.updateSupportTicket(ticketId, updates);
+      if (success) {
+        res.json({ message: 'Support ticket updated successfully' });
+      } else {
+        res.status(404).json({ message: 'Support ticket not found' });
+      }
+    } catch (error) {
+      console.error('Error updating support ticket:', error);
+      res.status(500).json({ message: 'Failed to update support ticket' });
+    }
+  });
+
+  app.patch('/api/admin/support/tickets/:id/assign', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const ticketId = parseInt(req.params.id);
+      const { adminId } = req.body;
+      const success = await storage.assignSupportTicket(ticketId, adminId || req.user.id);
+      if (success) {
+        res.json({ message: 'Support ticket assigned successfully' });
+      } else {
+        res.status(404).json({ message: 'Support ticket not found' });
+      }
+    } catch (error) {
+      console.error('Error assigning support ticket:', error);
+      res.status(500).json({ message: 'Failed to assign support ticket' });
+    }
+  });
+
+  // Bulk Operations
+  app.get('/api/admin/users/export', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const csvData = await storage.exportUsersToCSV();
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
+      res.send(csvData);
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      res.status(500).json({ message: 'Failed to export users' });
+    }
+  });
+
+  app.post('/api/admin/users/import', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { csvData } = req.body;
+      const result = await storage.importUsersFromCSV(csvData);
+      res.json(result);
+    } catch (error) {
+      console.error('Error importing users:', error);
+      res.status(500).json({ message: 'Failed to import users' });
+    }
+  });
+
+  app.delete('/api/admin/users/bulk-delete', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userIds } = req.body;
+      const success = await storage.bulkDeleteUsers(userIds);
+      if (success) {
+        res.json({ message: 'Users deleted successfully' });
+      } else {
+        res.status(400).json({ message: 'Failed to delete users' });
+      }
+    } catch (error) {
+      console.error('Error bulk deleting users:', error);
+      res.status(500).json({ message: 'Failed to delete users' });
+    }
+  });
+
+  // Audit & Security
+  app.get('/api/admin/audit-logs', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const logs = await storage.getSystemAuditLogs();
+      res.json(logs);
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+      res.status(500).json({ message: 'Failed to fetch audit logs' });
+    }
+  });
+
+  app.get('/api/admin/users/:id/audit-logs', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const logs = await storage.getUserAuditLogs(userId);
+      res.json(logs);
+    } catch (error) {
+      console.error('Error fetching user audit logs:', error);
+      res.status(500).json({ message: 'Failed to fetch user audit logs' });
+    }
+  });
+
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {
     console.log(`=== UNMATCHED ROUTE: ${req.method} ${req.originalUrl} ===`);

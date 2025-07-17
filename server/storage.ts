@@ -35,7 +35,21 @@ import {
   feedback,
   type Feedback,
   type InsertFeedback,
-
+  userActivity,
+  type UserActivity,
+  type InsertUserActivity,
+  userLoginHistory,
+  type UserLoginHistory,
+  type InsertUserLoginHistory,
+  userMessages,
+  type UserMessage,
+  type InsertUserMessage,
+  supportTickets,
+  type SupportTicket,
+  type InsertSupportTicket,
+  userAuditLogs,
+  type UserAuditLog,
+  type InsertUserAuditLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, ne, or } from "drizzle-orm";
@@ -155,6 +169,43 @@ export interface IStorage {
   updateFeedback(id: string, updates: Partial<InsertFeedback>, userId?: string): Promise<Feedback | undefined>;
   deleteFeedback(id: string, userId?: string): Promise<boolean>;
   updateFeedbackStatus(id: string, status: string, adminNotes?: string, resolvedBy?: string): Promise<Feedback | undefined>;
+
+  // User Activity & Analytics
+  logUserActivity(activity: InsertUserActivity): Promise<UserActivity>;
+  getUserActivity(userId: string, limit?: number): Promise<UserActivity[]>;
+  getUserLoginHistory(userId: string, limit?: number): Promise<UserLoginHistory[]>;
+  logUserLogin(loginData: InsertUserLoginHistory): Promise<UserLoginHistory>;
+  getUserAnalytics(userId: string): Promise<any>;
+  getSystemAnalytics(): Promise<any>;
+
+  // User Account Management
+  suspendUser(userId: string, reason?: string): Promise<boolean>;
+  activateUser(userId: string): Promise<boolean>;
+  forcePasswordChange(userId: string): Promise<boolean>;
+  updateUserPreferences(userId: string, preferences: any): Promise<boolean>;
+  bulkUpdateUserTiers(userIds: string[], tier: string): Promise<boolean>;
+
+  // Communication Features
+  sendUserMessage(message: InsertUserMessage): Promise<UserMessage>;
+  getUserMessages(userId: string): Promise<UserMessage[]>;
+  markMessageAsRead(messageId: number): Promise<boolean>;
+  broadcastAnnouncement(message: Omit<InsertUserMessage, 'toUserId'>): Promise<boolean>;
+
+  // Support & Help
+  createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
+  getSupportTickets(userId?: string): Promise<SupportTicket[]>;
+  updateSupportTicket(id: number, updates: Partial<SupportTicket>): Promise<boolean>;
+  assignSupportTicket(id: number, adminId: string): Promise<boolean>;
+
+  // Audit & Security
+  logUserAudit(auditLog: InsertUserAuditLog): Promise<UserAuditLog>;
+  getUserAuditLogs(userId: string): Promise<UserAuditLog[]>;
+  getSystemAuditLogs(): Promise<UserAuditLog[]>;
+
+  // Bulk Operations
+  exportUsersToCSV(): Promise<string>;
+  importUsersFromCSV(csvData: string): Promise<{ success: number; errors: string[] }>;
+  bulkDeleteUsers(userIds: string[]): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1426,6 +1477,318 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedFeedback;
+  }
+
+  // User Activity & Analytics
+  async logUserActivity(activity: InsertUserActivity): Promise<UserActivity> {
+    const [newActivity] = await db
+      .insert(userActivity)
+      .values({
+        ...activity,
+        createdAt: new Date(),
+      })
+      .returning();
+    return newActivity;
+  }
+
+  async getUserActivity(userId: string, limit = 100): Promise<UserActivity[]> {
+    return await db
+      .select()
+      .from(userActivity)
+      .where(eq(userActivity.userId, userId))
+      .orderBy(desc(userActivity.createdAt))
+      .limit(limit);
+  }
+
+  async getUserLoginHistory(userId: string, limit = 50): Promise<UserLoginHistory[]> {
+    return await db
+      .select()
+      .from(userLoginHistory)
+      .where(eq(userLoginHistory.userId, userId))
+      .orderBy(desc(userLoginHistory.loginTime))
+      .limit(limit);
+  }
+
+  async logUserLogin(loginData: InsertUserLoginHistory): Promise<UserLoginHistory> {
+    const [newLogin] = await db
+      .insert(userLoginHistory)
+      .values({
+        ...loginData,
+        loginTime: new Date(),
+      })
+      .returning();
+    return newLogin;
+  }
+
+  async getUserAnalytics(userId: string): Promise<any> {
+    const [bookingCount] = await db
+      .select({ count: bookings.id })
+      .from(bookings)
+      .where(eq(bookings.userId, userId));
+    
+    const [contractCount] = await db
+      .select({ count: contracts.id })
+      .from(contracts)
+      .where(eq(contracts.userId, userId));
+    
+    const [invoiceCount] = await db
+      .select({ count: invoices.id })
+      .from(invoices)
+      .where(eq(invoices.userId, userId));
+
+    return {
+      bookings: bookingCount?.count || 0,
+      contracts: contractCount?.count || 0,
+      invoices: invoiceCount?.count || 0,
+    };
+  }
+
+  async getSystemAnalytics(): Promise<any> {
+    const totalUsers = await db.select().from(users);
+    const totalBookings = await db.select().from(bookings);
+    const totalContracts = await db.select().from(contracts);
+    const totalInvoices = await db.select().from(invoices);
+
+    return {
+      totalUsers: totalUsers.length,
+      totalBookings: totalBookings.length,
+      totalContracts: totalContracts.length,
+      totalInvoices: totalInvoices.length,
+      activeUsers: totalUsers.filter(u => u.isActive).length
+    };
+  }
+
+  // User Account Management
+  async suspendUser(userId: string, reason?: string): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async activateUser(userId: string): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ isActive: true, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async forcePasswordChange(userId: string): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ forcePasswordChange: true, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async updateUserPreferences(userId: string, preferences: any): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ 
+        notificationPreferences: preferences,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async bulkUpdateUserTiers(userIds: string[], tier: string): Promise<boolean> {
+    if (userIds.length === 0) return false;
+    
+    const result = await db
+      .update(users)
+      .set({ tier, updatedAt: new Date() })
+      .where(or(...userIds.map(id => eq(users.id, id))));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Communication Features
+  async sendUserMessage(message: InsertUserMessage): Promise<UserMessage> {
+    const [newMessage] = await db
+      .insert(userMessages)
+      .values({
+        ...message,
+        createdAt: new Date(),
+      })
+      .returning();
+    return newMessage;
+  }
+
+  async getUserMessages(userId: string): Promise<UserMessage[]> {
+    return await db
+      .select()
+      .from(userMessages)
+      .where(or(eq(userMessages.toUserId, userId), eq(userMessages.toUserId, null)))
+      .orderBy(desc(userMessages.createdAt));
+  }
+
+  async markMessageAsRead(messageId: number): Promise<boolean> {
+    const result = await db
+      .update(userMessages)
+      .set({ isRead: true, readAt: new Date() })
+      .where(eq(userMessages.id, messageId));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async broadcastAnnouncement(message: Omit<InsertUserMessage, 'toUserId'>): Promise<boolean> {
+    const result = await db
+      .insert(userMessages)
+      .values({
+        ...message,
+        toUserId: null,
+        createdAt: new Date(),
+      });
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Support & Help
+  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
+    const [newTicket] = await db
+      .insert(supportTickets)
+      .values({
+        ...ticket,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newTicket;
+  }
+
+  async getSupportTickets(userId?: string): Promise<SupportTicket[]> {
+    const query = db
+      .select()
+      .from(supportTickets)
+      .orderBy(desc(supportTickets.createdAt));
+    
+    if (userId) {
+      query.where(eq(supportTickets.userId, userId));
+    }
+    
+    return await query;
+  }
+
+  async updateSupportTicket(id: number, updates: Partial<SupportTicket>): Promise<boolean> {
+    const result = await db
+      .update(supportTickets)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(supportTickets.id, id));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async assignSupportTicket(id: number, adminId: string): Promise<boolean> {
+    const result = await db
+      .update(supportTickets)
+      .set({ 
+        assignedToUserId: adminId,
+        status: 'in_progress',
+        updatedAt: new Date() 
+      })
+      .where(eq(supportTickets.id, id));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Audit & Security
+  async logUserAudit(auditLog: InsertUserAuditLog): Promise<UserAuditLog> {
+    const [newAudit] = await db
+      .insert(userAuditLogs)
+      .values({
+        ...auditLog,
+        createdAt: new Date(),
+      })
+      .returning();
+    return newAudit;
+  }
+
+  async getUserAuditLogs(userId: string): Promise<UserAuditLog[]> {
+    return await db
+      .select()
+      .from(userAuditLogs)
+      .where(eq(userAuditLogs.userId, userId))
+      .orderBy(desc(userAuditLogs.createdAt));
+  }
+
+  async getSystemAuditLogs(): Promise<UserAuditLog[]> {
+    return await db
+      .select()
+      .from(userAuditLogs)
+      .orderBy(desc(userAuditLogs.createdAt))
+      .limit(1000);
+  }
+
+  // Bulk Operations
+  async exportUsersToCSV(): Promise<string> {
+    const users = await this.getAllUsers();
+    const headers = ['ID', 'First Name', 'Last Name', 'Email', 'Tier', 'Is Admin', 'Is Active', 'Created At'];
+    const rows = users.map(user => [
+      user.id,
+      user.firstName || '',
+      user.lastName || '',
+      user.email || '',
+      user.tier || '',
+      user.isAdmin ? 'true' : 'false',
+      user.isActive ? 'true' : 'false',
+      user.createdAt?.toISOString() || ''
+    ]);
+    
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+    
+    return csvContent;
+  }
+
+  async importUsersFromCSV(csvData: string): Promise<{ success: number; errors: string[] }> {
+    const lines = csvData.split('\n');
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, ''));
+    const dataLines = lines.slice(1);
+    
+    let successCount = 0;
+    const errors: string[] = [];
+    
+    for (let i = 0; i < dataLines.length; i++) {
+      try {
+        const values = dataLines[i].split(',').map(v => v.replace(/"/g, ''));
+        const userData = {
+          id: values[0],
+          firstName: values[1],
+          lastName: values[2],
+          email: values[3],
+          tier: values[4] || 'free',
+          isAdmin: values[5] === 'true',
+          isActive: values[6] === 'true',
+          password: 'temp123',
+          forcePasswordChange: true,
+        };
+        
+        await this.upsertUser(userData);
+        successCount++;
+      } catch (error) {
+        errors.push(`Row ${i + 1}: ${error.message}`);
+      }
+    }
+    
+    return { success: successCount, errors };
+  }
+
+  async bulkDeleteUsers(userIds: string[]): Promise<boolean> {
+    if (userIds.length === 0) return false;
+    
+    const result = await db
+      .delete(users)
+      .where(or(...userIds.map(id => eq(users.id, id))));
+    
+    return (result.rowCount ?? 0) > 0;
   }
 }
 
