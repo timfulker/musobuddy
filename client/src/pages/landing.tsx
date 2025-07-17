@@ -20,9 +20,14 @@ export default function Landing() {
               <p className="text-sm text-gray-600">Professional Music Business Management</p>
             </div>
           </div>
-          <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700" aria-label="Get started with MusoBuddy">
-            Get Started Free
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={handleLogin} variant="outline" size="lg" aria-label="Login to your MusoBuddy account">
+              Login
+            </Button>
+            <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700" aria-label="Get started with MusoBuddy">
+              Get Started Free
+            </Button>
+          </div>
         </nav>
       </header>
 
