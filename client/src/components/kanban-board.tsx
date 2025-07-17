@@ -244,11 +244,11 @@ export default function ActionableEnquiries() {
                 {badgeInfo && (
                   <Badge variant={badgeInfo.variant} className={`text-xs ${badgeInfo.className}`}>
                     {severity.level === 'critical' ? (
-                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      <AlertTriangle className="w-3 h-3 mr-1 text-red-700" />
                     ) : severity.level === 'warning' ? (
-                      <AlertCircle className="w-3 h-3 mr-1" />
+                      <AlertCircle className="w-3 h-3 mr-1 text-amber-700" />
                     ) : (
-                      <Clock className="w-3 h-3 mr-1" />
+                      <Clock className="w-3 h-3 mr-1 text-blue-700" />
                     )}
                     {badgeInfo.text}
                   </Badge>
