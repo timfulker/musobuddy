@@ -79,6 +79,7 @@ const generateGigSuggestions = async (instruments: string[]): Promise<string[]> 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ instruments }),
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -203,7 +204,9 @@ export default function Settings() {
   const { data: globalGigTypes } = useQuery({
     queryKey: ['global-gig-types'],
     queryFn: async () => {
-      const response = await fetch('/api/global-gig-types');
+      const response = await fetch('/api/global-gig-types', {
+        credentials: 'include',
+      });
       if (!response.ok) {
         return [];
       }
@@ -225,6 +228,7 @@ export default function Settings() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
+        credentials: 'include', // This is crucial for session cookies
       });
       
       if (!response.ok) {
