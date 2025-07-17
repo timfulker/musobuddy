@@ -212,6 +212,74 @@ export default function Settings() {
     },
   });
 
+  // Save settings function - must be defined before useEffect that references it
+  const saveSettings = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
+      // Include selected instruments and gig types in the saved data
+      const settingsData = {
+        ...data,
+        selectedInstruments: Array.isArray(selectedInstruments) ? selectedInstruments : [],
+        gigTypes: Array.isArray(gigTypes) ? gigTypes : [],
+      };
+      
+      console.log('Saving settings:', settingsData);
+      
+      // Make actual API call to save settings
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settingsData),
+      });
+      
+      console.log('Save response status:', response.status);
+      console.log('Save response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Save error response:', errorText);
+        throw new Error(`Failed to save settings: ${response.status} ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Save result:', result);
+      return result;
+    },
+    onSuccess: (data) => {
+      console.log('✅ Settings saved successfully:', data);
+      setHasChanges(false);
+      toast({
+        title: "Success",
+        description: "Settings saved successfully!",
+      });
+      
+      // Update the form with the saved data immediately
+      form.reset(data);
+      setSelectedInstruments(data.selectedInstruments || []);
+      setGigTypes(data.gigTypes || []);
+      
+      // Store the new data as initial data for comparison
+      setInitialData({
+        ...data,
+        selectedInstruments: data.selectedInstruments || [],
+        gigTypes: data.gigTypes || []
+      });
+      
+      // Then invalidate queries to refresh from server
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['global-gig-types'] });
+    },
+    onError: (error) => {
+      console.error('❌ Error saving settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Update local state when settings are loaded
   useEffect(() => {
     if (settings && !saveSettings.isPending) {
@@ -347,73 +415,7 @@ export default function Settings() {
       )
     : CORE_INSTRUMENTS;
 
-  // Save settings function
-  const saveSettings = useMutation({
-    mutationFn: async (data: SettingsFormData) => {
-      // Include selected instruments and gig types in the saved data
-      const settingsData = {
-        ...data,
-        selectedInstruments: Array.isArray(selectedInstruments) ? selectedInstruments : [],
-        gigTypes: Array.isArray(gigTypes) ? gigTypes : [],
-      };
-      
-      console.log('Saving settings:', settingsData);
-      
-      // Make actual API call to save settings
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settingsData),
-      });
-      
-      console.log('Save response status:', response.status);
-      console.log('Save response ok:', response.ok);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Save error response:', errorText);
-        throw new Error(`Failed to save settings: ${response.status} ${errorText}`);
-      }
-      
-      const result = await response.json();
-      console.log('Save result:', result);
-      return result;
-    },
-    onSuccess: (data) => {
-      console.log('✅ Settings saved successfully:', data);
-      setHasChanges(false);
-      toast({
-        title: "Success",
-        description: "Settings saved successfully!",
-      });
-      
-      // Update the form with the saved data immediately
-      form.reset(data);
-      setSelectedInstruments(data.selectedInstruments || []);
-      setGigTypes(data.gigTypes || []);
-      
-      // Store the new data as initial data for comparison
-      setInitialData({
-        ...data,
-        selectedInstruments: data.selectedInstruments || [],
-        gigTypes: data.gigTypes || []
-      });
-      
-      // Then invalidate queries to refresh from server
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
-      queryClient.invalidateQueries({ queryKey: ['global-gig-types'] });
-    },
-    onError: (error) => {
-      console.error('❌ Error saving settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const onSubmit = (data: SettingsFormData) => {
     console.log('🚀 Form submitted with data:', data);
