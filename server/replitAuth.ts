@@ -153,6 +153,18 @@ export async function setupAuth(app: Express) {
       );
     });
   });
+
+  // Get current user endpoint
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
@@ -193,5 +205,27 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   } catch (error) {
     console.log('AUTHENTICATION ERROR:', error);
     return res.status(500).json({ message: "Authentication error" });
+  }
+};
+
+// Admin check function
+export const isAdmin: RequestHandler = async (req, res, next) => {
+  try {
+    const user = req.user as any;
+    
+    if (!req.isAuthenticated() || !user?.id) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    // Get user from database to check admin status
+    const dbUser = await storage.getUser(user.id);
+    if (!dbUser?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    
+    return next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    return res.status(500).json({ message: "Admin check failed" });
   }
 };
