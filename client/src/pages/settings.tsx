@@ -256,8 +256,8 @@ export default function Settings() {
       
       // Update the form with the saved data immediately
       form.reset(data);
-      setSelectedInstruments(data.selectedInstruments || []);
-      setGigTypes(data.gigTypes || []);
+      setSelectedInstruments(Array.isArray(data.selectedInstruments) ? data.selectedInstruments : []);
+      setGigTypes(Array.isArray(data.gigTypes) ? data.gigTypes : []);
       
       // Store the new data as initial data for comparison
       setInitialData({
@@ -291,10 +291,10 @@ export default function Settings() {
       // Only update form if we don't have pending changes
       if (!hasChanges || saveSettings.isSuccess) {
         form.reset(settings);
-        setSelectedInstruments(settings.selectedInstruments || []);
+        setSelectedInstruments(Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : []);
         
         // Use global gig types if available, otherwise use settings gig types
-        const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (settings.gigTypes || []);
+        const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (Array.isArray(settings.gigTypes) ? settings.gigTypes : []);
         setGigTypes(gigTypesToUse);
         
         // Store initial data for comparison
@@ -367,9 +367,10 @@ export default function Settings() {
 
   // Handle instrument selection changes
   const handleInstrumentToggle = async (instrument: string) => {
-    const newSelectedInstruments = selectedInstruments.includes(instrument)
-      ? selectedInstruments.filter(i => i !== instrument)
-      : [...selectedInstruments, instrument];
+    const currentInstruments = Array.isArray(selectedInstruments) ? selectedInstruments : [];
+    const newSelectedInstruments = currentInstruments.includes(instrument)
+      ? currentInstruments.filter(i => i !== instrument)
+      : [...currentInstruments, instrument];
     
     setSelectedInstruments(newSelectedInstruments);
     
@@ -381,8 +382,9 @@ export default function Settings() {
 
   // Add custom instrument
   const addCustomInstrument = () => {
-    if (customInstrument && !selectedInstruments.includes(customInstrument)) {
-      const newInstruments = [...selectedInstruments, customInstrument];
+    const currentInstruments = Array.isArray(selectedInstruments) ? selectedInstruments : [];
+    if (customInstrument && !currentInstruments.includes(customInstrument)) {
+      const newInstruments = [...currentInstruments, customInstrument];
       setSelectedInstruments(newInstruments);
       setCustomInstrument("");
       setShowInstrumentInput(false);
@@ -734,7 +736,7 @@ export default function Settings() {
                         <div key={instrument} className="flex items-center space-x-2">
                           <Checkbox
                             id={instrument}
-                            checked={selectedInstruments.includes(instrument)}
+                            checked={Array.isArray(selectedInstruments) && selectedInstruments.includes(instrument)}
                             onCheckedChange={() => handleInstrumentToggle(instrument)}
                           />
                           <Label htmlFor={instrument} className="text-sm cursor-pointer">
@@ -746,7 +748,7 @@ export default function Settings() {
                   </div>
                   
                   {/* Selected Instruments */}
-                  {selectedInstruments.length > 0 && (
+                  {Array.isArray(selectedInstruments) && selectedInstruments.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium mb-2">Selected Instruments (click to remove):</h4>
                       <div className="flex flex-wrap gap-2">
@@ -765,7 +767,7 @@ export default function Settings() {
                   )}
                   
                   {/* AI Gig Generation */}
-                  {selectedInstruments.length > 0 && (
+                  {Array.isArray(selectedInstruments) && selectedInstruments.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold">AI-Generated Gig Types</h3>
