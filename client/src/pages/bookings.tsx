@@ -72,7 +72,11 @@ export default function Enquiries() {
     conflictingBookings: any[];
     conflictSeverity: 'critical' | 'warning';
   } | null>(null);
-  const [resolvedConflicts, setResolvedConflicts] = useState<Set<number>>(new Set());
+  const [resolvedConflicts, setResolvedConflicts] = useState<Set<number>>(() => {
+    // Load resolved conflicts from localStorage on page load
+    const saved = localStorage.getItem('resolvedConflicts');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -1926,7 +1930,10 @@ export default function Enquiries() {
           onResolved={() => {
             // Mark this booking's conflict as resolved
             if (conflictResolutionData?.primaryBooking?.id) {
-              setResolvedConflicts(prev => new Set(prev).add(conflictResolutionData.primaryBooking.id));
+              const newResolvedConflicts = new Set(resolvedConflicts).add(conflictResolutionData.primaryBooking.id);
+              setResolvedConflicts(newResolvedConflicts);
+              // Persist to localStorage
+              localStorage.setItem('resolvedConflicts', JSON.stringify(Array.from(newResolvedConflicts)));
             }
             setConflictResolutionOpen(false);
             setConflictResolutionData(null);
