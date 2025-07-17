@@ -214,29 +214,34 @@ export default function Settings() {
 
   // Update local state when settings are loaded
   useEffect(() => {
-    if (settings) {
+    if (settings && !saveSettings.isPending) {
       console.log('🔄 Updating form with settings:', settings);
       console.log('🔄 selectedInstruments from settings:', settings.selectedInstruments);
       console.log('🔄 gigTypes from settings:', settings.gigTypes);
-      form.reset(settings);
-      setSelectedInstruments(settings.selectedInstruments || []);
+      console.log('🔄 hasChanges before update:', hasChanges);
       
-      // Use global gig types if available, otherwise use settings gig types
-      const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (settings.gigTypes || []);
-      setGigTypes(gigTypesToUse);
-      
-      // Store initial data for comparison
-      setInitialData({
-        ...settings,
-        selectedInstruments: settings.selectedInstruments || [],
-        gigTypes: gigTypesToUse
-      });
-      
-      // Reset hasChanges flag since we're loading fresh data
-      console.log('🔄 Resetting hasChanges to false');
-      setHasChanges(false);
+      // Only update form if we don't have pending changes
+      if (!hasChanges || saveSettings.isSuccess) {
+        form.reset(settings);
+        setSelectedInstruments(settings.selectedInstruments || []);
+        
+        // Use global gig types if available, otherwise use settings gig types
+        const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (settings.gigTypes || []);
+        setGigTypes(gigTypesToUse);
+        
+        // Store initial data for comparison
+        setInitialData({
+          ...settings,
+          selectedInstruments: settings.selectedInstruments || [],
+          gigTypes: gigTypesToUse
+        });
+        
+        // Reset hasChanges flag since we're loading fresh data
+        console.log('🔄 Resetting hasChanges to false');
+        setHasChanges(false);
+      }
     }
-  }, [settings, globalGigTypes, form]);
+  }, [settings, globalGigTypes, form, saveSettings.isPending, saveSettings.isSuccess, hasChanges]);
 
   // Watch for form changes
   useEffect(() => {
@@ -383,6 +388,20 @@ export default function Settings() {
         title: "Success",
         description: "Settings saved successfully!",
       });
+      
+      // Update the form with the saved data immediately
+      form.reset(data);
+      setSelectedInstruments(data.selectedInstruments || []);
+      setGigTypes(data.gigTypes || []);
+      
+      // Store the new data as initial data for comparison
+      setInitialData({
+        ...data,
+        selectedInstruments: data.selectedInstruments || [],
+        gigTypes: data.gigTypes || []
+      });
+      
+      // Then invalidate queries to refresh from server
       queryClient.invalidateQueries({ queryKey: ['settings'] });
       queryClient.invalidateQueries({ queryKey: ['global-gig-types'] });
     },
