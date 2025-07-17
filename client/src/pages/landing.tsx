@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, FileText, PoundSterling, Shield, BarChart3, CheckCircle } from "lucide-react";
+import { Music, Calendar, FileText, PoundSterling, Shield, BarChart3, CheckCircle, Star, Zap, Users, CreditCard, Smartphone, Brain } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 
 export default function Landing() {
@@ -28,28 +28,36 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-16 text-center">
+        <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full mb-6">
+          <Star className="w-4 h-4" />
+          <span className="font-semibold">Phase 1 Complete - Production Ready</span>
+        </div>
         <h2 className="text-5xl font-bold text-gray-900 mb-6">
           Streamline Your Music Business
         </h2>
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          MusoBuddy is the all-in-one platform for freelance musicians to automate admin workflows, 
-          from enquiry to payment. Reduce admin time by 70% and increase booking conversion rates.
+          MusoBuddy is the complete booking management platform for freelance musicians. 
+          Manage enquiries, generate contracts, track invoices, and handle compliance - 
+          all in one professional system that saves you 70% of your admin time.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700 px-8">
-            Start Free Trial
+            Start Using MusoBuddy
           </Button>
           <Button variant="outline" size="lg" className="px-8">
-            Watch Demo
+            View Features
           </Button>
         </div>
       </section>
 
       {/* Features Grid */}
       <section className="container mx-auto px-6 py-16">
-        <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
-          Everything You Need to Manage Your Music Business
+        <h3 className="text-3xl font-bold text-center text-gray-900 mb-4">
+          Phase 1: Complete Booking Management System
         </h3>
+        <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+          All core features are live and ready to use. Start managing your music business professionally today.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
@@ -125,6 +133,82 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Roadmap Section */}
+      <section className="bg-gray-50 py-16">
+        <div className="container mx-auto px-6">
+          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
+            Future Enhancements Coming Soon
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Phase 2 */}
+            <Card className="border-2 border-blue-200 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-gray-900">Phase 2: Advanced Automation</h4>
+                    <p className="text-sm text-blue-600 font-medium">Coming Q2 2025</p>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-center gap-2">
+                    <Brain className="w-4 h-4 text-blue-500" />
+                    <span>AI-powered email responses and client communication</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-blue-500" />
+                    <span>Smart scheduling with availability optimization</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-500" />
+                    <span>Automated contract terms based on gig type</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-blue-500" />
+                    <span>Advanced analytics and business insights</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Phase 3 */}
+            <Card className="border-2 border-purple-200 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-gray-900">Phase 3: Marketplace & Growth</h4>
+                    <p className="text-sm text-purple-600 font-medium">Coming Q3 2025</p>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-purple-500" />
+                    <span>Integrated payment processing and escrow</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-purple-500" />
+                    <span>Native mobile app for iOS and Android</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-purple-500" />
+                    <span>Client portal for bookings and payments</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-purple-500" />
+                    <span>Musician marketplace and referral system</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Benefits Section */}
       <section className="bg-gray-50 py-16">
         <div className="container mx-auto px-6">
@@ -178,13 +262,14 @@ export default function Landing() {
       <section className="py-16">
         <div className="container mx-auto px-6 text-center">
           <h3 className="text-3xl font-bold text-gray-900 mb-6">
-            Ready to Streamline Your Music Business?
+            Ready to Transform Your Music Business?
           </h3>
           <p className="text-xl text-gray-600 mb-8">
-            Join hundreds of musicians who have already transformed their admin workflows.
+            Phase 1 is complete and ready to use. Start managing your bookings, contracts, 
+            and invoices professionally today.
           </p>
           <Button onClick={handleLogin} size="lg" className="bg-purple-600 hover:bg-purple-700 px-8">
-            Start Your Free Trial
+            Get Started Now
           </Button>
         </div>
       </section>
