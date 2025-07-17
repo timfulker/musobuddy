@@ -3290,11 +3290,11 @@ Hotel Lobby Entertainment`;
   // Create user endpoint
   app.post('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const { firstName, lastName, email, tier, isAdmin } = req.body;
+      const { firstName, lastName, email, password, tier, isAdmin } = req.body;
       
       // Validate required fields
-      if (!firstName || !lastName || !email) {
-        return res.status(400).json({ message: "First name, last name, and email are required" });
+      if (!firstName || !lastName || !email || !password) {
+        return res.status(400).json({ message: "First name, last name, email, and password are required" });
       }
       
       // Check if user already exists
@@ -3303,18 +3303,26 @@ Hotel Lobby Entertainment`;
         return res.status(400).json({ message: "User with this email already exists" });
       }
       
+      // Hash the password
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
       // Create user
       const userData = {
         id: Date.now().toString(), // Generate a unique ID
         firstName,
         lastName,
         email,
+        password: hashedPassword,
         tier: tier || 'free',
         isAdmin: isAdmin || false
       };
       
       const user = await storage.createUser(userData);
-      res.json({ message: "User created successfully", user });
+      
+      // Remove password from response
+      const { password: _, ...userResponse } = user;
+      res.json({ message: "User created successfully", user: userResponse });
     } catch (error) {
       console.error("Error creating user:", error);
       res.status(500).json({ message: "Failed to create user" });

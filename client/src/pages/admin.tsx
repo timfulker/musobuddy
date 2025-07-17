@@ -64,6 +64,7 @@ export default function Admin() {
     firstName: "",
     lastName: "",
     email: "",
+    password: "",
     tier: "free",
     isAdmin: false
   });
@@ -199,6 +200,7 @@ export default function Admin() {
         firstName: "",
         lastName: "",
         email: "",
+        password: "",
         tier: "free",
         isAdmin: false
       });
@@ -221,7 +223,7 @@ export default function Admin() {
   };
 
   const handleCreateUser = () => {
-    if (createUserForm.firstName && createUserForm.lastName && createUserForm.email) {
+    if (createUserForm.firstName && createUserForm.lastName && createUserForm.email && createUserForm.password) {
       createUserMutation.mutate(createUserForm);
     }
   };
@@ -333,6 +335,16 @@ export default function Admin() {
                     />
                   </div>
                   <div>
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={createUserForm.password}
+                      onChange={(e) => setCreateUserForm({...createUserForm, password: e.target.value})}
+                      placeholder="Enter password"
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="tier">Tier</Label>
                     <Select value={createUserForm.tier} onValueChange={(value) => setCreateUserForm({...createUserForm, tier: value})}>
                       <SelectTrigger>
@@ -357,7 +369,7 @@ export default function Admin() {
                   </div>
                   <Button 
                     onClick={handleCreateUser}
-                    disabled={!createUserForm.firstName || !createUserForm.lastName || !createUserForm.email || createUserMutation.isPending}
+                    disabled={!createUserForm.firstName || !createUserForm.lastName || !createUserForm.email || !createUserForm.password || createUserMutation.isPending}
                     className="w-full bg-purple-600 hover:bg-purple-700"
                   >
                     {createUserMutation.isPending ? "Creating..." : "Create User"}
