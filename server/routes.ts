@@ -9,6 +9,7 @@ import {
 } from './calendar-import';
 import multer from 'multer';
 import OpenAI from 'openai';
+import bcrypt from 'bcrypt';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice route now registered in server/index.ts to avoid Vite interference
@@ -3304,7 +3305,6 @@ Hotel Lobby Entertainment`;
       }
       
       // Hash the password
-      const bcrypt = require('bcrypt');
       const hashedPassword = await bcrypt.hash(password, 10);
       
       // Create user
