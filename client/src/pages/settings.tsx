@@ -95,13 +95,19 @@ const generateGigSuggestions = async (instruments: string[]): Promise<string[]> 
 
 // API function for fetching settings
 const fetchSettings = async (): Promise<SettingsFormData> => {
-  const response = await fetch('/api/settings');
+  const response = await fetch('/api/settings', {
+    credentials: 'include', // Important for session-based auth
+  });
+  
+  console.log('🔥 Settings API response status:', response.status);
   
   if (!response.ok) {
-    throw new Error('Failed to fetch settings');
+    console.error('🔥 Settings API error:', response.status, response.statusText);
+    throw new Error(`Failed to fetch settings: ${response.status}`);
   }
   
   const data = await response.json();
+  console.log('🔥 Raw settings response:', data);
   
   // Parse stringified JSON fields
   let parsedInstruments = [];
@@ -194,13 +200,19 @@ export default function Settings() {
   });
 
   // Load existing settings data
-  const { data: settings, isLoading: settingsLoading } = useQuery({
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['settings'],
     queryFn: fetchSettings,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     select: (data) => {
-      console.log('Settings data loaded:', data);
+      console.log('🔥 Settings data loaded:', data);
+      console.log('🔥 Address fields:', {
+        addressLine1: data?.addressLine1,
+        city: data?.city,
+        county: data?.county,
+        postcode: data?.postcode,
+      });
       return data;
     },
   });
@@ -418,6 +430,20 @@ export default function Settings() {
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">Loading settings...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (settingsError) {
+    console.error('🔥 Settings query error:', settingsError);
+    return (
+      <div className="min-h-screen bg-background layout-consistent">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600">Error loading settings: {settingsError.message}</p>
+            <p className="text-muted-foreground mt-2">Please check if you're logged in.</p>
           </div>
         </div>
       </div>
