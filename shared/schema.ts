@@ -148,7 +148,12 @@ export const userSettings = pgTable("user_settings", {
   userId: varchar("user_id").notNull().unique(),
   businessName: varchar("business_name"),
   businessEmail: varchar("business_email"),
-  businessAddress: text("business_address"),
+  businessAddress: text("business_address"), // Legacy field for backward compatibility
+  addressLine1: varchar("address_line1"),
+  addressLine2: varchar("address_line2"),
+  city: varchar("city"),
+  county: varchar("county"),
+  postcode: varchar("postcode"),
   phone: varchar("phone"),
   website: varchar("website"),
   taxNumber: varchar("tax_number"),

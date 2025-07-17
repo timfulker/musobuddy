@@ -49,7 +49,13 @@ const ALL_INSTRUMENTS = [
 // Schema for form validation - only includes actual form fields
 const settingsFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
-  businessAddress: z.string().min(1, "Business address is required"),
+  businessEmail: z.string().min(1, "Business email is required").email("Please enter a valid email address"),
+  businessAddress: z.string().optional().or(z.literal("")), // Legacy field for backward compatibility
+  addressLine1: z.string().min(1, "Address line 1 is required"),
+  addressLine2: z.string().optional().or(z.literal("")),
+  city: z.string().min(1, "City is required"),
+  county: z.string().optional().or(z.literal("")),
+  postcode: z.string().min(1, "Postcode is required"),
   phone: z.string().min(1, "Phone number is required"),
   website: z.string().optional().or(z.literal("")),
   taxNumber: z.string().optional().or(z.literal("")),
@@ -166,7 +172,13 @@ export default function Settings() {
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       businessName: "",
+      businessEmail: "",
       businessAddress: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      county: "",
+      postcode: "",
       phone: "",
       website: "",
       taxNumber: "",
@@ -477,12 +489,12 @@ export default function Settings() {
                     />
                     <FormField
                       control={form.control}
-                      name="phone"
+                      name="businessEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Phone</FormLabel>
+                          <FormLabel className="text-sm font-medium">Business Email</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="+1 (555) 123-4567" />
+                            <Input {...field} placeholder="business@example.com" type="email" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -490,19 +502,114 @@ export default function Settings() {
                     />
                   </div>
                   
-                  <FormField
-                    control={form.control}
-                    name="businessAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Business Address</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} placeholder="123 Main Street, City, State 12345" rows={3} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Phone</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="+44 (0) 123 456 7890" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="emailFromName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Your Name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Business Address - Separate Fields */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Business Address
+                    </h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="addressLine1"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Address Line 1</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="123 Main Street" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="addressLine2"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Address Line 2 (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Apartment, suite, etc." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">City</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="London" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="county"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">County (Optional)</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Greater London" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="postcode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Postcode</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="SW1A 1AA" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField

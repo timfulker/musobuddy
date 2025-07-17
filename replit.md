@@ -127,6 +127,16 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 ## Changelog
 
 ```
+- July 17, 2025. Enhanced business address form with separate structured fields:
+  * **Structured Address Fields**: Split single business address field into separate components (Address Line 1, Address Line 2, City, County, Postcode)
+  * **UK Address Format**: Optimized field layout for UK address format with proper validation
+  * **Business Email Addition**: Added required business email field to settings form for performer confirmation emails
+  * **Database Schema Update**: Added new address fields to user_settings table (address_line1, address_line2, city, county, postcode)
+  * **Enhanced Form Validation**: Required fields for Address Line 1, City, Postcode; optional fields for Address Line 2, County
+  * **Professional Layout**: Improved visual hierarchy with grouped address fields and clear field labels
+  * **Backward Compatibility**: Maintained legacy businessAddress field for existing data migration
+  * **Status**: Business address now uses professional structured format improving data quality for contracts and invoices
+
 - July 17, 2025. Enhanced booking card layout with improved UX and navigation:
   * **Cleaner Card Design**: Increased padding from p-4 to p-6 for better breathing room
   * **Improved Spacing**: Enhanced gaps between sections (mb-3 to mb-4) for better visual hierarchy
