@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
+import { analyzeConflictSeverity, type ConflictAnalysis } from "@/utils/conflict-ui";
+import { useEffect, useState } from "react";
 
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading } = useQuery({
@@ -16,6 +18,55 @@ export default function ActionableEnquiries() {
     staleTime: 30000,
     cacheTime: 5 * 60 * 1000,
   });
+
+  // Track resolved conflicts using localStorage (same as events window)
+  const [resolvedConflicts, setResolvedConflicts] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    // Load resolved conflicts from localStorage
+    const savedResolvedConflicts = localStorage.getItem('resolvedConflicts');
+    if (savedResolvedConflicts) {
+      try {
+        const parsed = JSON.parse(savedResolvedConflicts);
+        setResolvedConflicts(new Set(parsed));
+      } catch (error) {
+        console.error('Error parsing resolved conflicts:', error);
+      }
+    }
+  }, []);
+
+  // Detect conflicts for an enquiry (same logic as events window)
+  const detectConflicts = (enquiry: Enquiry) => {
+    if (!enquiry.eventDate || !enquiry.startTime || !enquiry.endTime) return [];
+    
+    const enquiryDate = new Date(enquiry.eventDate).toDateString();
+    const enquiryStart = new Date(`${enquiry.eventDate}T${enquiry.startTime}`);
+    const enquiryEnd = new Date(`${enquiry.eventDate}T${enquiry.endTime}`);
+    
+    return enquiries.filter((other: Enquiry) => {
+      if (other.id === enquiry.id) return false;
+      if (!other.eventDate || !other.startTime || !other.endTime) return false;
+      
+      const otherDate = new Date(other.eventDate).toDateString();
+      if (otherDate !== enquiryDate) return false;
+      
+      const otherStart = new Date(`${other.eventDate}T${other.startTime}`);
+      const otherEnd = new Date(`${other.eventDate}T${other.endTime}`);
+      
+      // Check for time overlap
+      const hasTimeOverlap = enquiryStart < otherEnd && enquiryEnd > otherStart;
+      
+      return {
+        id: other.id,
+        title: other.title,
+        clientName: other.clientName,
+        startTime: other.startTime,
+        endTime: other.endTime,
+        type: 'booking',
+        hasTimeOverlap
+      };
+    }).filter(Boolean);
+  };
 
   const getEnquiryConflict = (enquiryId: number) => {
     return conflicts.find((conflict: any) => 
@@ -60,10 +111,14 @@ export default function ActionableEnquiries() {
     return date >= startOfWeek && date <= endOfWeek;
   };
 
-  // Filter enquiries that need action
-  const actionableEnquiries = enquiries.filter((enquiry: Enquiry) => 
-    needsResponse(enquiry) || getEnquiryConflict(enquiry.id)
-  );
+  // Filter enquiries that need action (excluding resolved conflicts)
+  const actionableEnquiries = enquiries.filter((enquiry: Enquiry) => {
+    const conflicts = detectConflicts(enquiry);
+    const isResolved = resolvedConflicts.has(enquiry.id);
+    const hasUnresolvedConflicts = conflicts.length > 0 && !isResolved;
+    
+    return needsResponse(enquiry) || hasUnresolvedConflicts;
+  });
 
   // Filter enquiries from this week, excluding calendar imports
   const thisWeekEnquiries = enquiries.filter((enquiry: Enquiry) => 
@@ -74,15 +129,85 @@ export default function ActionableEnquiries() {
 
   const renderEnquiryCard = (enquiry: Enquiry, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate!);
-    const conflict = getEnquiryConflict(enquiry.id);
-    const urgent = needsResponse(enquiry) || conflict;
+    const conflicts = detectConflicts(enquiry);
+    const isResolved = resolvedConflicts.has(enquiry.id);
+    
+    // Enhanced conflict detection with booking status awareness
+    const confirmedBookingConflicts = conflicts.filter(c => c.type === 'booking');
+    const unconfirmedEnquiryConflicts = conflicts.filter(c => c.type === 'enquiry');
+    
+    // Check if any conflicts have time overlaps
+    const hasTimeOverlap = conflicts.some(conflict => conflict.hasTimeOverlap);
+    
+    const conflictAnalysis: ConflictAnalysis = {
+      hasTimeOverlap,
+      sameVenue: false,
+      sameClient: false,
+      confirmedBooking: confirmedBookingConflicts.length > 0,
+      unconfirmedEnquiry: unconfirmedEnquiryConflicts.length > 0,
+      conflictCount: conflicts.length,
+      conflictDetails: conflicts.length > 0 ? 
+        `${confirmedBookingConflicts.length} confirmed booking(s), ${unconfirmedEnquiryConflicts.length} unconfirmed enquiry(ies)` 
+        : 'No conflicts'
+    };
+    
+    const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
+    const hasConflicts = conflicts.length > 0;
+    
+    // Status-based styling with inquiry color scheme
+    const getStatusOverlay = () => {
+      return "bg-gradient-to-br from-[#5DADE2]/10 to-[#5DADE2]/20 border-[#5DADE2]/30";
+    };
+    
+    // Conflict overlay styling
+    const getConflictOverlay = () => {
+      if (severity.level === 'critical') {
+        return 'border-red-500 bg-red-50 ring-2 ring-red-200';
+      } else if (severity.level === 'warning') {
+        return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
+      }
+      return '';
+    };
+    
+    // Determine the appropriate badge text and color
+    const getBadgeInfo = () => {
+      if (hasConflicts && isResolved) {
+        return {
+          text: "One of two bookings on same day",
+          variant: "outline" as const,
+          className: "text-amber-700 border-amber-500"
+        };
+      } else if (hasConflicts) {
+        if (severity.level === 'critical') {
+          return {
+            text: "Needs immediate attention",
+            variant: "destructive" as const,
+            className: "text-red-700 bg-red-100 border-red-300"
+          };
+        } else if (severity.level === 'warning') {
+          return {
+            text: "Needs immediate attention",
+            variant: "outline" as const,
+            className: "text-amber-700 bg-amber-100 border-amber-300"
+          };
+        }
+      } else if (needsResponse(enquiry)) {
+        return {
+          text: "Needs response",
+          variant: "secondary" as const,
+          className: "text-blue-700 bg-blue-100 border-blue-300"
+        };
+      }
+      return null;
+    };
+    
+    const badgeInfo = getBadgeInfo();
     
     return (
       <Link key={enquiry.id} href="/bookings">
-        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 ${
-          urgent ? 'border-l-red-500 bg-gradient-to-r from-red-50 to-white dark:from-red-950 dark:to-gray-900' : 
-          'border-l-blue-500 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900'
-        }`}>
+        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer ${
+          getStatusOverlay()
+        } ${hasConflicts ? getConflictOverlay() : ''}`}>
           <CardContent className="p-4">
             <div className="space-y-3">
               {/* Header with price and date */}
@@ -116,16 +241,16 @@ export default function ActionableEnquiries() {
               
               {/* Status indicators */}
               <div className="flex flex-wrap gap-1">
-                {conflict && (
-                  <Badge variant="destructive" className="text-xs">
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    Conflict
-                  </Badge>
-                )}
-                {needsResponse(enquiry) && (
-                  <Badge variant="secondary" className="bg-red-100 text-red-700 text-xs">
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    Response needed
+                {badgeInfo && (
+                  <Badge variant={badgeInfo.variant} className={`text-xs ${badgeInfo.className}`}>
+                    {severity.level === 'critical' ? (
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                    ) : severity.level === 'warning' ? (
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                    ) : (
+                      <Clock className="w-3 h-3 mr-1" />
+                    )}
+                    {badgeInfo.text}
                   </Badge>
                 )}
                 {enquiry.applyNowLink && (
