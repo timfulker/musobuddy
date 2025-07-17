@@ -24,6 +24,13 @@ export const users = pgTable("users", {
   password: varchar("password"), // Password for admin-created users
   isAdmin: boolean("is_admin").default(false), // Admin role flag
   tier: varchar("tier").default("free"), // User tier (free, pro, enterprise)
+  isActive: boolean("is_active").default(true), // Account active/suspended
+  lastLoginAt: timestamp("last_login_at"),
+  lastLoginIP: varchar("last_login_ip"),
+  loginAttempts: integer("login_attempts").default(0),
+  lockedUntil: timestamp("locked_until"),
+  forcePasswordChange: boolean("force_password_change").default(false),
+  notificationPreferences: jsonb("notification_preferences").default('{"email": true, "sms": false, "push": true}'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
