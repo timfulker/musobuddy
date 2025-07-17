@@ -601,6 +601,8 @@ export default function Enquiries() {
       case "booking_in_progress": return "bg-blue-100 text-blue-800";
       case "contract_sent": return "bg-purple-100 text-purple-800";
       case "confirmed": return "bg-green-100 text-green-800";
+      case "contract_received": return "bg-emerald-100 text-emerald-800";
+      case "completed": return "bg-slate-100 text-slate-800";
       case "rejected": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
@@ -670,7 +672,7 @@ export default function Enquiries() {
         else result = new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
         break;
       case "status":
-        const statusOrder = { "new": 0, "booking_in_progress": 1, "contract_sent": 2, "confirmed": 3, "rejected": 4 };
+        const statusOrder = { "new": 0, "booking_in_progress": 1, "contract_sent": 2, "confirmed": 3, "contract_received": 4, "completed": 5, "rejected": 6 };
         result = (statusOrder[a.status as keyof typeof statusOrder] || 99) - (statusOrder[b.status as keyof typeof statusOrder] || 99);
         break;
       case "client":
