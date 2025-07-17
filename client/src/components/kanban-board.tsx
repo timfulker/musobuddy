@@ -119,11 +119,21 @@ export default function ActionableEnquiries() {
       console.log('Actionable Enquiries Filter - Saxophone enquiry:', {
         id: enquiry.id,
         title: enquiry.title,
+        eventDate: enquiry.eventDate,
+        startTime: enquiry.startTime,
+        endTime: enquiry.endTime,
+        status: enquiry.status,
         needsResponse: needsResponse(enquiry),
         conflicts: conflicts.length,
         isResolved,
         hasUnresolvedConflicts,
-        shouldInclude: needsResponse(enquiry) || hasUnresolvedConflicts
+        shouldInclude: needsResponse(enquiry) || hasUnresolvedConflicts,
+        allEnquiriesOnSameDate: enquiries.filter(e => e.eventDate === enquiry.eventDate).map(e => ({
+          id: e.id,
+          title: e.title,
+          startTime: e.startTime,
+          endTime: e.endTime
+        }))
       });
     }
     
