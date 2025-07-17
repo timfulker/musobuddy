@@ -1,0 +1,41 @@
+chunk-RPCDYKBN.js?v=e9c97c9a:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+client:536 WebSocket connection to 'wss://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev:24678/?token=uLXPyA0v6sWL' failed: 
+setupWebSocket @ client:536
+client:560 [vite] server connection lost. Polling for restart...
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+bookings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+bookings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+bookings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+bookings:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+bookings.tsx:233 Conflict detection - Primary booking: {id: 3062, userId: '43963086', title: 'Fwd: Job Alert: £260-450, Saxophonist needed for private event in London [psG7F]', clientName: 'Tim Fulker', clientEmail: 'timfulker@gmail.com', …}
+bookings.tsx:234 Conflict detection - All bookings: []
+bookings.tsx:258 Found conflicting bookings: []
+@radix-ui_react-dialog.js?v=e9c97c9a:337 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ @radix-ui_react-dialog.js?v=e9c97c9a:337
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=e9c97c9a:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=e9c97c9a:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=e9c97c9a:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=e9c97c9a:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=e9c97c9a:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=e9c97c9a:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=e9c97c9a:19447
+commitRootImpl @ chunk-RPCDYKBN.js?v=e9c97c9a:19416
+commitRoot @ chunk-RPCDYKBN.js?v=e9c97c9a:19277
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=e9c97c9a:18895
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=e9c97c9a:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=e9c97c9a:19432
+commitRoot @ chunk-RPCDYKBN.js?v=e9c97c9a:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=e9c97c9a:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e9c97c9a:18718
+workLoop @ chunk-RPCDYKBN.js?v=e9c97c9a:197
+flushWork @ chunk-RPCDYKBN.js?v=e9c97c9a:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e9c97c9a:384
+:24678/:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT

@@ -18,7 +18,21 @@ export default function CalendarWidget() {
   const isLoading = bookingsLoading || enquiriesLoading;
 
   const formatDate = (dateString: string) => {
+    // Parse the date string as a local date to avoid timezone shifts
     const date = new Date(dateString);
+    // If the date string is in ISO format (YYYY-MM-DD), parse it manually to avoid timezone issues
+    if (dateString.includes('T') || dateString.includes('Z')) {
+      // It's an ISO timestamp, extract just the date part
+      const datePart = dateString.split('T')[0];
+      const [year, month, day] = datePart.split('-').map(Number);
+      const localDate = new Date(year, month - 1, day); // month is 0-indexed
+      return {
+        month: localDate.toLocaleDateString("en-GB", { month: "short" }).toUpperCase(),
+        day: localDate.getDate().toString(),
+      };
+    }
+    
+    // For regular date strings, use normal parsing
     return {
       month: date.toLocaleDateString("en-GB", { month: "short" }).toUpperCase(),
       day: date.getDate().toString(),
