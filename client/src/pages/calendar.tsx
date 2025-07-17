@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 import CalendarImport from "@/components/calendar-import";
+import type { Enquiry } from "@shared/schema";
 
 interface CalendarEvent {
   id: number;
@@ -25,6 +26,44 @@ export default function Calendar() {
   const [view, setView] = useState<CalendarView>('month');
   const [location, navigate] = useLocation();
   const { isMobile } = useResponsive();
+  const [resolvedConflicts, setResolvedConflicts] = useState<Set<number>>(new Set());
+
+  // Load resolved conflicts from localStorage
+  useEffect(() => {
+    const savedResolvedConflicts = localStorage.getItem('resolvedConflicts');
+    if (savedResolvedConflicts) {
+      try {
+        const parsed = JSON.parse(savedResolvedConflicts);
+        setResolvedConflicts(new Set(parsed));
+      } catch (error) {
+        console.error('Error parsing resolved conflicts:', error);
+      }
+    }
+  }, []);
+
+  // Detect conflicts for events on the same date
+  const detectConflicts = (event: CalendarEvent, allEvents: CalendarEvent[]) => {
+    if (!event.date) return [];
+    
+    const eventDate = new Date(event.date).toDateString();
+    
+    return allEvents.filter((other) => {
+      if (other.id === event.id) return false;
+      if (!other.date) return false;
+      
+      const otherDate = new Date(other.date).toDateString();
+      return otherDate === eventDate;
+    });
+  };
+
+  // Check if events have resolved conflicts
+  const hasResolvedConflicts = (event: CalendarEvent, allEvents: CalendarEvent[]) => {
+    const conflicts = detectConflicts(event, allEvents);
+    if (conflicts.length === 0) return false;
+    
+    // Check if any of the conflicts are resolved
+    return conflicts.some(conflict => resolvedConflicts.has(event.id) || resolvedConflicts.has(conflict.id));
+  };
 
   // Fetch data for calendar events - Phase 3: Only use main bookings table
   const { data: bookings = [] } = useQuery({
@@ -660,7 +699,10 @@ export default function Calendar() {
                             : ''
                           }
                           ${day.hasEvents && day.events.length > 1
-                            ? 'ring-2 ring-purple-300 dark:ring-purple-600 shadow-purple-100 dark:shadow-purple-900/20' 
+                            ? // Check if this is a resolved conflict (orange ring) or regular multiple events (purple ring)
+                              day.events.some(event => hasResolvedConflicts(event, [...bookings, ...contracts]))
+                                ? 'ring-2 ring-orange-400 dark:ring-orange-500 shadow-orange-100 dark:shadow-orange-900/20'
+                                : 'ring-2 ring-purple-300 dark:ring-purple-600 shadow-purple-100 dark:shadow-purple-900/20'
                             : ''
                           }
                         `}
@@ -761,7 +803,7 @@ export default function Calendar() {
                                       className={`
                                         flex-1 px-1 py-1 rounded-lg text-xs font-medium shadow-sm
                                         flex items-center justify-center text-center
-                                        ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900 dark:text-gray-100')} 
+                                        ${getStatusColor(event.status || 'new')} 
                                         bg-opacity-20 border border-current border-opacity-30
                                       `}
                                     >
@@ -778,7 +820,7 @@ export default function Calendar() {
                                     className={`
                                       flex-1 px-1 py-1 rounded-lg text-xs font-medium shadow-sm
                                       flex items-center justify-center text-center
-                                      ${getStatusColor(day.events[0].status || 'new').replace('text-white', 'text-gray-900 dark:text-gray-100')} 
+                                      ${getStatusColor(day.events[0].status || 'new')} 
                                       bg-opacity-20 border border-current border-opacity-30
                                     `}
                                   >
