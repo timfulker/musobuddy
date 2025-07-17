@@ -106,7 +106,9 @@ export default function Admin() {
   const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ['/api/admin/stats'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/stats');
+      const response = await fetch('/api/admin/stats', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },
@@ -116,7 +118,9 @@ export default function Admin() {
   const { data: users, isLoading: usersLoading } = useQuery<AdminUser[]>({
     queryKey: ['/api/admin/users'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/users');
+      const response = await fetch('/api/admin/users', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
     },
@@ -126,7 +130,9 @@ export default function Admin() {
   const { data: bookings, isLoading: bookingsLoading } = useQuery<AdminBooking[]>({
     queryKey: ['/api/admin/bookings'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/bookings');
+      const response = await fetch('/api/admin/bookings', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch bookings');
       return response.json();
     },
@@ -135,6 +141,13 @@ export default function Admin() {
   // Fetch feedback
   const { data: feedback, isLoading: feedbackLoading } = useQuery({
     queryKey: ['/api/feedback'],
+    queryFn: async () => {
+      const response = await fetch('/api/feedback', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch feedback');
+      return response.json();
+    },
   });
 
   // Update user tier mutation
@@ -145,6 +158,7 @@ export default function Admin() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ tier }),
       });
       if (!response.ok) throw new Error('Failed to update tier');
@@ -171,6 +185,7 @@ export default function Admin() {
     mutationFn: async (userId: string) => {
       const response = await fetch(`/api/admin/users/${userId}/toggle-admin`, {
         method: 'PATCH',
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to toggle admin');
       return response.json();
@@ -199,6 +214,7 @@ export default function Admin() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(userData),
       });
       if (!response.ok) {
@@ -241,6 +257,7 @@ export default function Admin() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(userData.updates),
       });
       if (!response.ok) {
@@ -275,6 +292,7 @@ export default function Admin() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ password }),
       });
       if (!response.ok) {

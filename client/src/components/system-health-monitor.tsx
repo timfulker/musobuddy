@@ -75,7 +75,9 @@ export default function SystemHealthMonitor() {
   const { data: health, isLoading: healthLoading } = useQuery<SystemHealth>({
     queryKey: ['/api/admin/system-health'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/system-health');
+      const response = await fetch('/api/admin/system-health', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch system health');
       return response.json();
     },
@@ -85,7 +87,9 @@ export default function SystemHealthMonitor() {
   const { data: metrics, isLoading: metricsLoading } = useQuery<PlatformMetrics>({
     queryKey: ['/api/admin/platform-metrics'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/platform-metrics');
+      const response = await fetch('/api/admin/platform-metrics', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch platform metrics');
       return response.json();
     },

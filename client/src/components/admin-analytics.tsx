@@ -51,7 +51,9 @@ export default function AdminAnalytics() {
   const { data: businessData, isLoading: biLoading } = useQuery<BusinessIntelligence>({
     queryKey: ['/api/admin/business-intelligence'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/business-intelligence');
+      const response = await fetch('/api/admin/business-intelligence', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch business intelligence');
       return response.json();
     },
@@ -60,7 +62,9 @@ export default function AdminAnalytics() {
   const { data: performers, isLoading: performersLoading } = useQuery<TopPerformer[]>({
     queryKey: ['/api/admin/top-performers'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/top-performers');
+      const response = await fetch('/api/admin/top-performers', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch top performers');
       return response.json();
     },
@@ -69,7 +73,9 @@ export default function AdminAnalytics() {
   const { data: geoData, isLoading: geoLoading } = useQuery<GeographicData[]>({
     queryKey: ['/api/admin/geographic-distribution'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/geographic-distribution');
+      const response = await fetch('/api/admin/geographic-distribution', {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch geographic data');
       return response.json();
     },
