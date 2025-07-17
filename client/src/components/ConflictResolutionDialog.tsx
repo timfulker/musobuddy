@@ -34,14 +34,14 @@ export function ConflictResolutionDialog({
     setEditingBooking(booking);
     setFormData({
       title: booking.title || '',
-      clientName: booking.client_name || '',
-      clientEmail: booking.client_email || '',
-      clientPhone: booking.client_phone || '',
-      eventDate: booking.event_date ? format(new Date(booking.event_date), 'yyyy-MM-dd') : '',
-      eventTime: booking.event_time || '',
-      eventEndTime: booking.event_end_time || '',
+      clientName: booking.clientName || '',
+      clientEmail: booking.clientEmail || '',
+      clientPhone: booking.clientPhone || '',
+      eventDate: booking.eventDate ? format(new Date(booking.eventDate), 'yyyy-MM-dd') : '',
+      eventTime: booking.eventTime || '',
+      eventEndTime: booking.eventEndTime || '',
       venue: booking.venue || '',
-      eventType: booking.event_type || '',
+      eventType: booking.eventType || '',
       status: booking.status || 'new',
       notes: booking.notes || ''
     });
@@ -112,27 +112,27 @@ export function ConflictResolutionDialog({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
         <div className="flex items-center space-x-2">
           <User className="w-4 h-4 text-gray-500" />
-          <span>{booking.client_name || 'No client name'}</span>
+          <span>{booking.clientName || 'No client name'}</span>
         </div>
         
         <div className="flex items-center space-x-2">
           <Mail className="w-4 h-4 text-gray-500" />
-          <span>{booking.client_email || 'No email'}</span>
+          <span>{booking.clientEmail || 'No email'}</span>
         </div>
         
         <div className="flex items-center space-x-2">
           <Phone className="w-4 h-4 text-gray-500" />
-          <span>{booking.client_phone || 'No phone'}</span>
+          <span>{booking.clientPhone || 'No phone'}</span>
         </div>
         
         <div className="flex items-center space-x-2">
           <CalendarDays className="w-4 h-4 text-gray-500" />
-          <span>{booking.event_date ? format(new Date(booking.event_date), 'PPP') : 'No date'}</span>
+          <span>{booking.eventDate ? format(new Date(booking.eventDate), 'PPP') : 'No date'}</span>
         </div>
         
         <div className="flex items-center space-x-2">
           <Clock className="w-4 h-4 text-gray-500" />
-          <span>{booking.event_time || 'No time'} - {booking.event_end_time || 'No end time'}</span>
+          <span>{booking.eventTime || 'No time'} - {booking.eventEndTime || 'No end time'}</span>
         </div>
         
         <div className="flex items-center space-x-2">

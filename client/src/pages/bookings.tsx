@@ -238,11 +238,11 @@ export default function Enquiries() {
         if (booking.id === primaryBooking.id) return false;
         
         // Skip bookings without event dates
-        if (!primaryBooking.event_date || !booking.event_date) return false;
+        if (!primaryBooking.eventDate || !booking.eventDate) return false;
         
         // Check if they're on the same date
-        const primaryDate = new Date(primaryBooking.event_date).toDateString();
-        const bookingDate = new Date(booking.event_date).toDateString();
+        const primaryDate = new Date(primaryBooking.eventDate).toDateString();
+        const bookingDate = new Date(booking.eventDate).toDateString();
         
         console.log('Comparing dates:', {
           primaryTitle: primaryBooking.title,
