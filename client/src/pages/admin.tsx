@@ -13,7 +13,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Layout } from "@/components/layout";
-import { Crown, Users, Calendar, TrendingUp, Shield } from "lucide-react";
+import { Crown, Users, Calendar, TrendingUp, Shield, Edit, Trash2, Mail } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus, UserPlus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AdminStats {
   totalUsers: number;
@@ -60,7 +61,17 @@ export default function Admin() {
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [newTier, setNewTier] = useState<string>("");
   const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
+  const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [createUserForm, setCreateUserForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    tier: "free",
+    isAdmin: false
+  });
+  const [editUserForm, setEditUserForm] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -116,6 +127,11 @@ export default function Admin() {
       if (!response.ok) throw new Error('Failed to fetch bookings');
       return response.json();
     },
+  });
+
+  // Fetch feedback
+  const { data: feedback, isLoading: feedbackLoading } = useQuery({
+    queryKey: ['/api/feedback'],
   });
 
   // Update user tier mutation
@@ -214,6 +230,71 @@ export default function Admin() {
     },
   });
 
+  // Edit user mutation
+  const editUserMutation = useMutation({
+    mutationFn: async (userData: { userId: string; updates: any }) => {
+      const response = await fetch(`/api/admin/users/${userData.userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData.updates),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update user');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "User updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setEditUserDialogOpen(false);
+      setEditingUser(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Send credentials mutation
+  const sendCredentialsMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const response = await fetch(`/api/admin/users/${userId}/send-credentials`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send credentials');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Credentials sent successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send credentials",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -240,6 +321,38 @@ export default function Admin() {
     },
   });
 
+  // Update feedback status mutation
+  const updateFeedbackMutation = useMutation({
+    mutationFn: async ({ id, status, adminNotes }: { id: string; status: string; adminNotes?: string }) => {
+      const response = await fetch(`/api/feedback/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status, adminNotes }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update feedback status');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Feedback status updated",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update feedback status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleUpdateTier = () => {
     if (selectedUser && newTier) {
       updateTierMutation.mutate({ userId: selectedUser, tier: newTier });
@@ -251,6 +364,45 @@ export default function Admin() {
   const handleCreateUser = () => {
     if (createUserForm.firstName && createUserForm.lastName && createUserForm.email && createUserForm.password) {
       createUserMutation.mutate(createUserForm);
+    }
+  };
+
+  const handleSendCredentials = (user: AdminUser) => {
+    const password = window.prompt(`Enter the password to send to ${user.firstName} ${user.lastName}:`);
+    if (password) {
+      sendCredentialsMutation.mutate({ userId: user.id, password });
+    }
+  };
+
+  const handleEditUser = (user: AdminUser) => {
+    setEditingUser(user);
+    setEditUserForm({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      password: "", // Leave blank for no password change
+      tier: user.tier,
+      isAdmin: user.isAdmin
+    });
+    setEditUserDialogOpen(true);
+  };
+
+  const handleUpdateUser = () => {
+    if (editingUser && editUserForm.firstName && editUserForm.lastName && editUserForm.email) {
+      const updates = {
+        firstName: editUserForm.firstName,
+        lastName: editUserForm.lastName,
+        email: editUserForm.email,
+        tier: editUserForm.tier,
+        isAdmin: editUserForm.isAdmin
+      };
+      
+      // Only include password if it's not empty
+      if (editUserForm.password.trim()) {
+        updates.password = editUserForm.password;
+      }
+      
+      editUserMutation.mutate({ userId: editingUser.id, updates });
     }
   };
 
@@ -463,6 +615,23 @@ export default function Admin() {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => handleEditUser(user)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSendCredentials(user)}
+                          disabled={sendCredentialsMutation.isPending}
+                        >
+                          <Mail className="h-4 w-4 mr-1" />
+                          Send Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => toggleAdminMutation.mutate(user.id)}
                           disabled={toggleAdminMutation.isPending}
                         >
@@ -478,6 +647,7 @@ export default function Admin() {
                           }}
                           disabled={deleteUserMutation.isPending}
                         >
+                          <Trash2 className="h-4 w-4 mr-1" />
                           Delete
                         </Button>
                       </div>
@@ -488,6 +658,90 @@ export default function Admin() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Edit User Dialog */}
+        <Dialog open={editUserDialogOpen} onOpenChange={setEditUserDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-firstName">First Name</Label>
+                  <Input
+                    id="edit-firstName"
+                    value={editUserForm.firstName}
+                    onChange={(e) => setEditUserForm({...editUserForm, firstName: e.target.value})}
+                    placeholder="First name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-lastName">Last Name</Label>
+                  <Input
+                    id="edit-lastName"
+                    value={editUserForm.lastName}
+                    onChange={(e) => setEditUserForm({...editUserForm, lastName: e.target.value})}
+                    placeholder="Last name"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editUserForm.email}
+                  onChange={(e) => setEditUserForm({...editUserForm, email: e.target.value})}
+                  placeholder="Email address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-password">New Password (leave blank to keep current)</Label>
+                <Input
+                  id="edit-password"
+                  type="password"
+                  value={editUserForm.password}
+                  onChange={(e) => setEditUserForm({...editUserForm, password: e.target.value})}
+                  placeholder="New password (optional)"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-tier">Tier</Label>
+                <Select value={editUserForm.tier} onValueChange={(value) => setEditUserForm({...editUserForm, tier: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="premium">Premium</SelectItem>
+                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-isAdmin"
+                  checked={editUserForm.isAdmin}
+                  onCheckedChange={(checked) => setEditUserForm({...editUserForm, isAdmin: checked as boolean})}
+                />
+                <Label htmlFor="edit-isAdmin">Admin user</Label>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setEditUserDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUpdateUser}
+                disabled={!editUserForm.firstName || !editUserForm.lastName || !editUserForm.email || editUserMutation.isPending}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {editUserMutation.isPending ? "Updating..." : "Update User"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Recent Bookings */}
         <Card>
@@ -510,6 +764,79 @@ export default function Admin() {
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       {booking.userName} ({booking.userEmail})
                     </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Feedback Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Beta Feedback</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {feedbackLoading ? (
+                <p>Loading feedback...</p>
+              ) : !feedback || feedback.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No feedback submitted yet.
+                </p>
+              ) : (
+                feedback?.map((item) => (
+                  <div key={item.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={item.type === 'bug' ? 'destructive' : item.type === 'feature' ? 'secondary' : 'outline'}>
+                            {item.type}
+                          </Badge>
+                          <Badge variant={item.priority === 'critical' ? 'destructive' : item.priority === 'high' ? 'secondary' : 'outline'}>
+                            {item.priority}
+                          </Badge>
+                        </div>
+                        <h4 className="font-medium">{item.title}</h4>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Select
+                          value={item.status}
+                          onValueChange={(status) => updateFeedbackMutation.mutate({ id: item.id, status })}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {item.description}
+                    </p>
+                    
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>
+                        {item.userName} ({item.userEmail}) • {new Date(item.createdAt).toLocaleDateString()}
+                      </span>
+                      {item.page && (
+                        <span>Page: {item.page}</span>
+                      )}
+                    </div>
+                    
+                    {item.adminNotes && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                        <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                          Admin Notes: {item.adminNotes}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))
               )}

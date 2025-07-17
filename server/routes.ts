@@ -3366,6 +3366,79 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Send user credentials via email
+  app.post('/api/admin/users/:id/send-credentials', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const { password } = req.body;
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Get admin user for "from" field
+      const adminUser = await storage.getUser(req.user.id);
+      const fromEmail = adminUser?.email || 'admin@musobuddy.com';
+      
+      const emailContent = `
+        <h2>Welcome to MusoBuddy!</h2>
+        <p>Your account has been created. Here are your login details:</p>
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>Password:</strong> ${password}</p>
+        <p>You can log in at: <a href="${req.protocol}://${req.get('host')}/login">Login to MusoBuddy</a></p>
+        <p>Please change your password after your first login.</p>
+        <p>Best regards,<br>MusoBuddy Team</p>
+      `;
+      
+      // Use the mailgun service to send email
+      const mailgun = require('mailgun.js');
+      const mg = mailgun.client({
+        username: 'api',
+        key: process.env.MAILGUN_API_KEY || ''
+      });
+      
+      if (process.env.MAILGUN_API_KEY) {
+        await mg.messages.create(process.env.MAILGUN_DOMAIN || '', {
+          from: `MusoBuddy <${fromEmail}>`,
+          to: user.email,
+          subject: 'Your MusoBuddy Account Details',
+          html: emailContent
+        });
+        
+        res.json({ message: 'Credentials sent successfully' });
+      } else {
+        res.status(500).json({ message: 'Email service not configured' });
+      }
+    } catch (error) {
+      console.error('Error sending credentials:', error);
+      res.status(500).json({ message: 'Failed to send credentials' });
+    }
+  });
+
+  // Update user information
+  app.patch('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const updates = req.body;
+      
+      // Hash password if provided
+      if (updates.password) {
+        const bcrypt = require('bcrypt');
+        updates.password = await bcrypt.hash(updates.password, 10);
+      }
+      
+      const success = await storage.updateUserInfo(userId, updates);
+      if (!success) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      res.json({ message: 'User updated successfully' });
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ message: 'Failed to update user' });
+    }
+  });
+
   // Delete user account
   app.delete('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
@@ -3388,7 +3461,81 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Feedback routes
+  app.get('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.isAdmin ? undefined : req.user.id;
+      const feedbackList = await storage.getFeedback(userId);
+      res.json(feedbackList);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      res.status(500).json({ message: 'Failed to fetch feedback' });
+    }
+  });
 
+  app.post('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const feedbackData = {
+        ...req.body,
+        userId: req.user.id,
+        userAgent: req.get('User-Agent') || '',
+      };
+      const feedback = await storage.createFeedback(feedbackData);
+      res.json(feedback);
+    } catch (error) {
+      console.error('Error creating feedback:', error);
+      res.status(500).json({ message: 'Failed to create feedback' });
+    }
+  });
+
+  app.patch('/api/feedback/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const feedbackId = req.params.id;
+      const userId = req.user.isAdmin ? undefined : req.user.id;
+      const updates = req.body;
+      
+      const feedback = await storage.updateFeedback(feedbackId, updates, userId);
+      if (!feedback) {
+        return res.status(404).json({ message: 'Feedback not found' });
+      }
+      res.json(feedback);
+    } catch (error) {
+      console.error('Error updating feedback:', error);
+      res.status(500).json({ message: 'Failed to update feedback' });
+    }
+  });
+
+  app.patch('/api/feedback/:id/status', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const feedbackId = req.params.id;
+      const { status, adminNotes } = req.body;
+      
+      const feedback = await storage.updateFeedbackStatus(feedbackId, status, adminNotes, req.user.id);
+      if (!feedback) {
+        return res.status(404).json({ message: 'Feedback not found' });
+      }
+      res.json(feedback);
+    } catch (error) {
+      console.error('Error updating feedback status:', error);
+      res.status(500).json({ message: 'Failed to update feedback status' });
+    }
+  });
+
+  app.delete('/api/feedback/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const feedbackId = req.params.id;
+      const userId = req.user.isAdmin ? undefined : req.user.id;
+      
+      const success = await storage.deleteFeedback(feedbackId, userId);
+      if (!success) {
+        return res.status(404).json({ message: 'Feedback not found' });
+      }
+      res.json({ message: 'Feedback deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      res.status(500).json({ message: 'Failed to delete feedback' });
+    }
+  });
 
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {

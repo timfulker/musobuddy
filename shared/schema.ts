@@ -391,6 +391,32 @@ export const insertInstrumentMappingSchema = createInsertSchema(instrumentMappin
   updatedAt: true,
 });
 
+// Feedback table for beta testers
+export const feedback = pgTable('feedback', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id).notNull(),
+  type: text('type').notNull(), // 'bug', 'feature', 'improvement', 'other'
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  priority: text('priority').notNull(), // 'low', 'medium', 'high', 'critical'
+  status: text('status').notNull().default('open'), // 'open', 'in-progress', 'resolved', 'closed'
+  page: text('page'), // current page when feedback was submitted
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  adminNotes: text('admin_notes'),
+  resolvedAt: timestamp('resolved_at'),
+  resolvedBy: text('resolved_by').references(() => users.id),
+});
+
+export const insertFeedbackSchema = createInsertSchema(feedback).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  resolvedAt: true,
+  resolvedBy: true,
+});
+
 
 
 
@@ -418,4 +444,6 @@ export type InsertBookingConflict = z.infer<typeof insertBookingConflictSchema>;
 export type BookingConflict = typeof bookingConflicts.$inferSelect;
 export type InsertInstrumentMapping = z.infer<typeof insertInstrumentMappingSchema>;
 export type InstrumentMapping = typeof instrumentMappings.$inferSelect;
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+export type Feedback = typeof feedback.$inferSelect;
 

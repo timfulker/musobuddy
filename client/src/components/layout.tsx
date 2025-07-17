@@ -5,6 +5,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import QuickFeedback from "./quick-feedback";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,7 +34,7 @@ export function Layout({ children }: LayoutProps) {
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
               MusoBuddy
             </h1>
-            <div className="w-10" /> {/* Spacer for centering */}
+            <QuickFeedback buttonText="Feedback" buttonSize="sm" />
           </div>
         </div>
       )}
@@ -48,6 +49,13 @@ export function Layout({ children }: LayoutProps) {
           {children}
         </div>
       </div>
+
+      {/* Desktop quick feedback button */}
+      {isDesktop && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <QuickFeedback buttonText="Feedback" buttonVariant="default" />
+        </div>
+      )}
 
       <MobileNav />
     </div>

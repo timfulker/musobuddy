@@ -25,6 +25,7 @@ import QuickAdd from "@/pages/quick-add";
 import AddressBook from "@/pages/address-book";
 import UserGuide from "@/pages/user-guide";
 import Admin from "@/pages/admin";
+import Feedback from "@/pages/feedback";
 import SupportChat from "@/components/support-chat";
 
 function Router() {
@@ -65,6 +66,7 @@ function Router() {
           <Route path="/settings" component={Settings} />
           <Route path="/templates" component={Templates} />
           <Route path="/user-guide" component={UserGuide} />
+          <Route path="/feedback" component={Feedback} />
           <Route path="/admin" component={Admin} />
         </>
       )}

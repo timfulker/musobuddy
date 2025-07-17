@@ -178,6 +178,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <BookOpen className="w-5 h-5" />
             <span>User Guide</span>
           </Link>
+          <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/feedback") 
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+          )}>
+            <MessageSquare className="w-5 h-5" />
+            <span>Feedback</span>
+          </Link>
           
           {/* Admin section - only show for admin users */}
           {user?.isAdmin && (

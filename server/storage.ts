@@ -32,6 +32,9 @@ import {
   type InstrumentMapping,
   type InsertInstrumentMapping,
   globalGigTypes,
+  feedback,
+  type Feedback,
+  type InsertFeedback,
 
 } from "@shared/schema";
 import { db } from "./db";
@@ -44,6 +47,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: any): Promise<User>;
+  updateUserInfo(userId: string, updates: any): Promise<boolean>;
   
   // Admin operations
   getUsersWithStats(): Promise<any[]>;
@@ -143,6 +147,14 @@ export interface IStorage {
   
   // Auto-completion for past bookings
   autoCompletePastBookings(userId: string): Promise<number>;
+  
+  // Feedback operations
+  getFeedback(userId?: string): Promise<Feedback[]>; // Get all feedback for admin, user's feedback if userId provided
+  getFeedbackItem(id: string, userId?: string): Promise<Feedback | undefined>;
+  createFeedback(feedback: InsertFeedback): Promise<Feedback>;
+  updateFeedback(id: string, updates: Partial<InsertFeedback>, userId?: string): Promise<Feedback | undefined>;
+  deleteFeedback(id: string, userId?: string): Promise<boolean>;
+  updateFeedbackStatus(id: string, status: string, adminNotes?: string, resolvedBy?: string): Promise<Feedback | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1295,6 +1307,125 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.email, email));
     return user;
+  }
+
+  async updateUserInfo(userId: string, updates: any): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Feedback operations
+  async getFeedback(userId?: string): Promise<Feedback[]> {
+    const query = db
+      .select({
+        id: feedback.id,
+        userId: feedback.userId,
+        type: feedback.type,
+        title: feedback.title,
+        description: feedback.description,
+        priority: feedback.priority,
+        status: feedback.status,
+        page: feedback.page,
+        userAgent: feedback.userAgent,
+        createdAt: feedback.createdAt,
+        updatedAt: feedback.updatedAt,
+        adminNotes: feedback.adminNotes,
+        resolvedAt: feedback.resolvedAt,
+        resolvedBy: feedback.resolvedBy,
+        userName: users.firstName,
+        userEmail: users.email,
+      })
+      .from(feedback)
+      .leftJoin(users, eq(feedback.userId, users.id))
+      .orderBy(desc(feedback.createdAt));
+    
+    if (userId) {
+      query.where(eq(feedback.userId, userId));
+    }
+    
+    return await query;
+  }
+
+  async getFeedbackItem(id: string, userId?: string): Promise<Feedback | undefined> {
+    const query = db
+      .select()
+      .from(feedback)
+      .where(eq(feedback.id, id));
+    
+    if (userId) {
+      query.where(and(eq(feedback.id, id), eq(feedback.userId, userId)));
+    }
+    
+    const [item] = await query;
+    return item;
+  }
+
+  async createFeedback(feedbackData: InsertFeedback): Promise<Feedback> {
+    const { nanoid } = await import('nanoid');
+    const [newFeedback] = await db
+      .insert(feedback)
+      .values({
+        ...feedbackData,
+        id: nanoid(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newFeedback;
+  }
+
+  async updateFeedback(id: string, updates: Partial<InsertFeedback>, userId?: string): Promise<Feedback | undefined> {
+    const query = db
+      .update(feedback)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(feedback.id, id));
+    
+    if (userId) {
+      query.where(and(eq(feedback.id, id), eq(feedback.userId, userId)));
+    }
+    
+    const [updatedFeedback] = await query.returning();
+    return updatedFeedback;
+  }
+
+  async deleteFeedback(id: string, userId?: string): Promise<boolean> {
+    const query = db
+      .delete(feedback)
+      .where(eq(feedback.id, id));
+    
+    if (userId) {
+      query.where(and(eq(feedback.id, id), eq(feedback.userId, userId)));
+    }
+    
+    const result = await query;
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async updateFeedbackStatus(id: string, status: string, adminNotes?: string, resolvedBy?: string): Promise<Feedback | undefined> {
+    const updates: any = {
+      status,
+      updatedAt: new Date(),
+    };
+    
+    if (adminNotes) {
+      updates.adminNotes = adminNotes;
+    }
+    
+    if (status === 'resolved' && resolvedBy) {
+      updates.resolvedAt = new Date();
+      updates.resolvedBy = resolvedBy;
+    }
+    
+    const [updatedFeedback] = await db
+      .update(feedback)
+      .set(updates)
+      .where(eq(feedback.id, id))
+      .returning();
+    
+    return updatedFeedback;
   }
 }
 
