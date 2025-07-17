@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema } from "@shared/schema";
 import { 
   parseAppleCalendar,
@@ -3255,16 +3255,7 @@ Hotel Lobby Entertainment`;
     }
   });
 
-  // Admin routes - restrict to your specific user ID
-  const ADMIN_USER_ID = "43963086"; // Replace with your actual Replit user ID
-  
-  const isAdmin = (req: any, res: any, next: any) => {
-    const userId = req.user?.claims?.sub;
-    if (userId !== ADMIN_USER_ID) {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    next();
-  };
+  // Admin routes are now handled by the auth middleware
 
   // Admin stats endpoint
   app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {

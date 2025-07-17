@@ -42,6 +42,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: any): Promise<User>;
   
   // Admin operations
   getUsersWithStats(): Promise<any[]>;

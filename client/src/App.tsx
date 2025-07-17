@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Bookings from "@/pages/bookings";
 import Contracts from "@/pages/contracts";
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/view-contract/:id" component={ViewContract} />
       <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/quick-add" component={QuickAdd} />
+      <Route path="/login" component={LoginPage} />
       
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
