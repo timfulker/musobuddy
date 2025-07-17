@@ -1125,21 +1125,32 @@ export class DatabaseStorage implements IStorage {
     console.log("🔥 saveGlobalGigTypes: Saving gig types for user:", userId);
     console.log("🔥 saveGlobalGigTypes: Valid gig types:", validGigTypes);
     
-    await db
-      .insert(globalGigTypes)
-      .values({
-        userId,
-        gigTypes: JSON.stringify(validGigTypes),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: globalGigTypes.userId,
-        set: {
+    // Check if record exists
+    const existingRecord = await db
+      .select()
+      .from(globalGigTypes)
+      .where(eq(globalGigTypes.userId, userId));
+    
+    if (existingRecord.length > 0) {
+      // Update existing record
+      await db
+        .update(globalGigTypes)
+        .set({
           gigTypes: JSON.stringify(validGigTypes),
           updatedAt: new Date(),
-        },
-      });
+        })
+        .where(eq(globalGigTypes.userId, userId));
+    } else {
+      // Insert new record
+      await db
+        .insert(globalGigTypes)
+        .values({
+          userId,
+          gigTypes: JSON.stringify(validGigTypes),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+    }
   }
 
   // Placeholder implementation for getBookingsNew (should be removed in actual implementation)
