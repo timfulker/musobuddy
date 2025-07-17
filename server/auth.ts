@@ -21,8 +21,8 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
-    saveUninitialized: true, // Changed to true to ensure session is created
-    rolling: true, // Reset session expiry on each request
+    saveUninitialized: false, // Keep false to prevent unnecessary session creation
+    rolling: false, // Don't reset session expiry on each request
     store: new memoryStore({
       checkPeriod: 86400000 // Prune expired entries every 24h
     }),
@@ -31,8 +31,7 @@ export function setupAuth(app: Express) {
       secure: false, // Set to true in production with HTTPS
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax' // Add sameSite policy for better session handling
-    },
-    name: 'connect.sid' // Explicitly set session name
+    }
   };
 
   app.set("trust proxy", 1);
