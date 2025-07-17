@@ -1928,9 +1928,18 @@ export default function Enquiries() {
           conflictingBookings={conflictResolutionData.conflictingBookings}
           conflictSeverity={conflictResolutionData.conflictSeverity}
           onResolved={() => {
-            // Mark this booking's conflict as resolved
+            // Mark all conflicting bookings as resolved (both primary and conflicting)
             if (conflictResolutionData?.primaryBooking?.id) {
-              const newResolvedConflicts = new Set(resolvedConflicts).add(conflictResolutionData.primaryBooking.id);
+              const newResolvedConflicts = new Set(resolvedConflicts);
+              
+              // Add primary booking
+              newResolvedConflicts.add(conflictResolutionData.primaryBooking.id);
+              
+              // Add all conflicting bookings
+              conflictResolutionData.conflictingBookings.forEach(booking => {
+                newResolvedConflicts.add(booking.id);
+              });
+              
               setResolvedConflicts(newResolvedConflicts);
               // Persist to localStorage
               localStorage.setItem('resolvedConflicts', JSON.stringify(Array.from(newResolvedConflicts)));
