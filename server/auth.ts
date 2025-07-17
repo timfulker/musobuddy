@@ -66,7 +66,10 @@ export function setupAuth(app: Express) {
     )
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    console.log('🔥 Serializing user:', user.id);
+    done(null, user.id);
+  });
   
   passport.deserializeUser(async (id: string, done) => {
     try {
@@ -85,11 +88,32 @@ export function setupAuth(app: Express) {
   });
 
   // Login endpoint
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json({ 
-      message: "Login successful",
-      user: req.user 
-    });
+  app.post("/api/login", (req, res, next) => {
+    console.log('🔥 Login attempt for:', req.body.email);
+    
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        console.error('🔥 Login error:', err);
+        return next(err);
+      }
+      if (!user) {
+        console.log('🔥 Login failed:', info);
+        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+      }
+      
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error('🔥 Login session error:', err);
+          return next(err);
+        }
+        console.log('🔥 Login successful for:', user.email);
+        console.log('🔥 Session ID after login:', req.sessionID);
+        res.status(200).json({ 
+          message: "Login successful",
+          user: user 
+        });
+      });
+    })(req, res, next);
   });
 
   // Logout endpoints (both GET and POST for flexibility)
