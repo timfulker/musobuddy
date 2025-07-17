@@ -149,18 +149,7 @@ export default function ActionableEnquiries() {
     const isThisWeekEnquiry = enquiry.createdAt && isThisWeek(enquiry.createdAt);
     const isImport = isCalendarImport(enquiry);
     
-    // Debug logging for this week enquiries
-    if (enquiry.createdAt && new Date(enquiry.createdAt).getMonth() === 6) { // July is month 6
-      console.log('This Week Filter - July enquiry:', {
-        id: enquiry.id,
-        title: enquiry.title,
-        createdAt: enquiry.createdAt,
-        eventDate: enquiry.eventDate,
-        isThisWeek: isThisWeekEnquiry,
-        isCalendarImport: isImport,
-        shouldInclude: isThisWeekEnquiry && !isImport
-      });
-    }
+    // Debug logging removed to prevent console spam
     
     return isThisWeekEnquiry && !isImport;
   });
