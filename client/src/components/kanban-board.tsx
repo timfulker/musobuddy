@@ -37,34 +37,22 @@ export default function ActionableEnquiries() {
 
   // Detect conflicts for an enquiry (same logic as events window)
   const detectConflicts = (enquiry: Enquiry) => {
-    // For testing: simulate an orange conflict for the Saxophone enquiry
-    if (enquiry.title?.includes('Saxophone')) {
-      return [{
-        id: 9999,
-        title: 'Test Conflict (Same Date)',
-        clientName: 'Test Client',
-        startTime: '15:00',
-        endTime: '17:00',
-        type: 'booking',
-        hasTimeOverlap: false // This creates an orange conflict (same date, no time overlap)
-      }];
-    }
-    
-    if (!enquiry.eventDate || !enquiry.startTime || !enquiry.endTime) return [];
+    // Use the correct field names from the database: eventTime and eventEndTime
+    if (!enquiry.eventDate || !enquiry.eventTime || !enquiry.eventEndTime) return [];
     
     const enquiryDate = new Date(enquiry.eventDate).toDateString();
-    const enquiryStart = new Date(`${enquiry.eventDate}T${enquiry.startTime}`);
-    const enquiryEnd = new Date(`${enquiry.eventDate}T${enquiry.endTime}`);
+    const enquiryStart = new Date(`${enquiry.eventDate}T${enquiry.eventTime}`);
+    const enquiryEnd = new Date(`${enquiry.eventDate}T${enquiry.eventEndTime}`);
     
     return enquiries.filter((other: Enquiry) => {
       if (other.id === enquiry.id) return false;
-      if (!other.eventDate || !other.startTime || !other.endTime) return false;
+      if (!other.eventDate || !other.eventTime || !other.eventEndTime) return false;
       
       const otherDate = new Date(other.eventDate).toDateString();
       if (otherDate !== enquiryDate) return false;
       
-      const otherStart = new Date(`${other.eventDate}T${other.startTime}`);
-      const otherEnd = new Date(`${other.eventDate}T${other.endTime}`);
+      const otherStart = new Date(`${other.eventDate}T${other.eventTime}`);
+      const otherEnd = new Date(`${other.eventDate}T${other.eventEndTime}`);
       
       // Check for time overlap
       const hasTimeOverlap = enquiryStart < otherEnd && enquiryEnd > otherStart;
@@ -133,8 +121,8 @@ export default function ActionableEnquiries() {
         id: enquiry.id,
         title: enquiry.title,
         eventDate: enquiry.eventDate,
-        startTime: enquiry.startTime,
-        endTime: enquiry.endTime,
+        eventTime: enquiry.eventTime,
+        eventEndTime: enquiry.eventEndTime,
         status: enquiry.status,
         needsResponse: needsResponse(enquiry),
         conflicts: conflicts.length,
@@ -144,8 +132,8 @@ export default function ActionableEnquiries() {
         allEnquiriesOnSameDate: enquiries.filter(e => e.eventDate === enquiry.eventDate).map(e => ({
           id: e.id,
           title: e.title,
-          startTime: e.startTime,
-          endTime: e.endTime
+          eventTime: e.eventTime,
+          eventEndTime: e.eventEndTime
         }))
       });
     }
@@ -193,8 +181,8 @@ export default function ActionableEnquiries() {
         id: enquiry.id,
         title: enquiry.title,
         eventDate: enquiry.eventDate,
-        startTime: enquiry.startTime,
-        endTime: enquiry.endTime,
+        eventTime: enquiry.eventTime,
+        eventEndTime: enquiry.eventEndTime,
         conflicts: conflicts,
         isResolved: isResolved,
         severity: severity,
@@ -286,6 +274,15 @@ export default function ActionableEnquiries() {
                     <span className="truncate">{enquiry.venue}</span>
                   </div>
                 )}
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span>
+                    {enquiry.eventTime && enquiry.eventEndTime 
+                      ? `${enquiry.eventTime} - ${enquiry.eventEndTime}`
+                      : '00:00 - 23:59'
+                    }
+                  </span>
+                </div>
               </div>
               
               {/* Status indicators */}

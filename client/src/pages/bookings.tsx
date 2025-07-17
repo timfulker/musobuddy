@@ -1667,6 +1667,15 @@ export default function Enquiries() {
                             {enquiry.venue && (
                               <p className="text-xs text-gray-500 truncate">{enquiry.venue}</p>
                             )}
+                            <div className="flex items-center text-xs text-gray-500 truncate">
+                              <Clock className="w-3 h-3 mr-1" />
+                              <span>
+                                {enquiry.eventTime && enquiry.eventEndTime 
+                                  ? `${enquiry.eventTime} - ${enquiry.eventEndTime}`
+                                  : '00:00 - 23:59'
+                                }
+                              </span>
+                            </div>
                           </div>
                         </div>
                         
