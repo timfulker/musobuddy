@@ -127,15 +127,16 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 ## Changelog
 
 ```
-- July 17, 2025. Conflict resolution system fully operational and ready for production use:
-  * **CRITICAL BUG FIXED**: Conflict resolution dialog was showing empty conflicting bookings array
-  * **Root Cause**: handleConflictClick was making separate API call that returned empty data instead of using loaded React Query data
-  * **Technical Solution**: Modified handleConflictClick to use existing enquiries data from React Query instead of apiRequest('/api/bookings')
-  * **User Experience**: Red conflict banners now properly open side-by-side editing dialog with all conflicting bookings displayed
-  * **Database Verification**: Confirmed 2 conflicting bookings exist on August 1st, 2025 (IDs: 6096, 6090)
-  * **Enhanced Debugging**: Added comprehensive logging to track conflict detection process
-  * **Status Colors Complete**: All 7 booking statuses (enquiry, in progress, confirmed, contract sent, contract received, completed, rejected) display correctly
-  * **Status**: Conflict resolution system fully functional - users can click conflict banners to resolve double bookings through side-by-side editing interface
+- July 17, 2025. Enhanced conflict resolution system with smart banner behavior fully operational:
+  * **Context-Aware Action Buttons**: Red conflicts (time overlap) show Edit/Reject only; Orange conflicts (same date) show Edit/Reject/Resolve
+  * **Smart Banner Behavior**: After clicking "Resolve", banners change from "Click to resolve" to "One of two bookings on same day"
+  * **Persistent Resolution State**: Resolved conflicts stored in localStorage and persist across page refreshes
+  * **Comprehensive Conflict Resolution**: Both primary and conflicting bookings marked as resolved simultaneously
+  * **Visual Consistency**: Orange border and tint maintained for visual reference to same-day bookings
+  * **User-Controlled Resolution**: Manual resolve button allows users to mark conflicts as handled when satisfied with arrangements
+  * **Enhanced Conflict Detection**: Distinguishes between critical time overlaps (red) and same-date scheduling (orange)
+  * **Production Ready**: Complete conflict resolution workflow with persistent state management and context-aware actions
+  * **Status**: Advanced conflict resolution system fully functional with smart banner behavior and persistent resolution tracking
 
 - July 17, 2025. Calendar timezone fix and data consistency resolution completed:
   * **CRITICAL BUG RESOLVED**: Fixed calendar component timezone conversion causing +1 day display offset
