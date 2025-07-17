@@ -7,6 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import logoImage from "/musobuddy-logo-purple.png";
 
 export default function LoginPage() {
@@ -15,6 +17,13 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Redirect if already logged in
+  if (!isLoading && isAuthenticated) {
+    setLocation("/");
+    return null;
+  }
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
@@ -34,11 +43,18 @@ export default function LoginPage() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate auth cache to force refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
       toast({
         title: "Login successful",
         description: "Welcome to MusoBuddy!",
       });
-      setLocation("/");
+      
+      // Small delay to ensure cache invalidation happens
+      setTimeout(() => {
+        setLocation("/");
+      }, 100);
     },
     onError: (error: Error) => {
       setError(error.message);
