@@ -2786,34 +2786,61 @@ Powered by MusoBuddy – less admin, more music
     }
   });
 
-  // User settings routes
+  // Settings routes
   app.get('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const settings = await storage.getUserSettings(userId);
       
-      if (settings) {
-        // Parse JSON strings back to arrays
-        const processedSettings = {
-          ...settings,
-          selectedInstruments: settings.selectedInstruments ? 
-            (typeof settings.selectedInstruments === 'string' ? 
-              JSON.parse(settings.selectedInstruments) : 
-              settings.selectedInstruments
-            ) : [],
-          gigTypes: settings.gigTypes ? 
-            (typeof settings.gigTypes === 'string' ? 
-              JSON.parse(settings.gigTypes) : 
-              settings.gigTypes
-            ) : [],
-        };
-        
-        res.json(processedSettings);
-      } else {
-        res.json({});
+      if (!settings) {
+        // Return default settings if none exist
+        return res.json({
+          businessName: "",
+          businessEmail: "",
+          addressLine1: "",
+          addressLine2: "",
+          city: "",
+          county: "",
+          postcode: "",
+          phone: "",
+          website: "",
+          taxNumber: "",
+          emailFromName: "",
+          nextInvoiceNumber: 1,
+          defaultTerms: "",
+          bankDetails: "",
+          selectedInstruments: [],
+          gigTypes: [],
+        });
       }
+      
+      // Parse JSON fields safely
+      let selectedInstruments = [];
+      let gigTypes = [];
+      
+      try {
+        if (settings.selectedInstruments) {
+          selectedInstruments = JSON.parse(settings.selectedInstruments);
+        }
+      } catch (e) {
+        console.warn('Failed to parse selectedInstruments:', e);
+      }
+      
+      try {
+        if (settings.gigTypes) {
+          gigTypes = JSON.parse(settings.gigTypes);
+        }
+      } catch (e) {
+        console.warn('Failed to parse gigTypes:', e);
+      }
+      
+      res.json({
+        ...settings,
+        selectedInstruments,
+        gigTypes,
+      });
     } catch (error) {
-      console.error("Error fetching user settings:", error);
+      console.error("Error fetching settings:", error);
       res.status(500).json({ message: "Failed to fetch settings" });
     }
   });
@@ -2821,54 +2848,44 @@ Powered by MusoBuddy – less admin, more music
   app.post('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      console.log("🔥 Saving settings for user:", userId);
-      console.log("🔥 Request body:", req.body);
-      console.log("🔥 customInstruments in request:", req.body.customInstruments);
+      const data = req.body;
       
-      const settingsData = { ...req.body, userId };
+      console.log('🔥 SETTINGS API: Received data:', JSON.stringify(data, null, 2));
       
-      // Save global gig types if provided
-      if (req.body.gigTypes) {
-        console.log("🔥 Processing gigTypes:", typeof req.body.gigTypes, req.body.gigTypes);
-        
-        let gigTypesToSave = [];
-        if (Array.isArray(req.body.gigTypes)) {
-          gigTypesToSave = req.body.gigTypes;
-        } else if (typeof req.body.gigTypes === 'string') {
-          try {
-            gigTypesToSave = JSON.parse(req.body.gigTypes);
-          } catch (e) {
-            console.error("🔥 Failed to parse gigTypes as JSON:", e);
-            gigTypesToSave = [];
-          }
-        }
-        
-        if (Array.isArray(gigTypesToSave)) {
-          await storage.saveGlobalGigTypes(userId, gigTypesToSave);
-          console.log("🔥 Global gig types saved:", gigTypesToSave);
-        } else {
-          console.error("🔥 gigTypes is not an array after processing:", typeof gigTypesToSave, gigTypesToSave);
-        }
-      }
+      // Prepare data for storage
+      const settingsData = {
+        ...data,
+        userId,
+        // Convert arrays to JSON strings for storage
+        selectedInstruments: Array.isArray(data.selectedInstruments) 
+          ? JSON.stringify(data.selectedInstruments) 
+          : data.selectedInstruments,
+        gigTypes: Array.isArray(data.gigTypes) 
+          ? JSON.stringify(data.gigTypes) 
+          : data.gigTypes,
+      };
       
-      // Convert arrays to JSON strings for storage
-      if (Array.isArray(settingsData.selectedInstruments)) {
-        settingsData.selectedInstruments = JSON.stringify(settingsData.selectedInstruments);
-      }
+      console.log('🔥 SETTINGS API: Prepared for storage:', JSON.stringify(settingsData, null, 2));
       
-      console.log("🔥 Settings data to save:", settingsData);
-      console.log("🔥 selectedInstruments in settings data:", settingsData.selectedInstruments);
-      console.log("🔥 customInstruments in settings data:", settingsData.customInstruments);
+      const savedSettings = await storage.upsertUserSettings(settingsData);
       
-      const settings = await storage.upsertUserSettings(settingsData);
-      console.log("🔥 Settings saved successfully:", settings);
-      console.log("🔥 customInstruments in saved settings:", settings?.customInstruments);
-      res.json(settings);
+      console.log('🔥 SETTINGS API: Saved successfully:', savedSettings.id);
+      
+      // Return the saved settings with parsed JSON fields
+      const responseData = {
+        ...savedSettings,
+        selectedInstruments: savedSettings.selectedInstruments 
+          ? JSON.parse(savedSettings.selectedInstruments) 
+          : [],
+        gigTypes: savedSettings.gigTypes 
+          ? JSON.parse(savedSettings.gigTypes) 
+          : [],
+      };
+      
+      res.json(responseData);
     } catch (error) {
-      console.error("Error saving user settings:", error);
-      console.error("Error details:", error.message);
-      console.error("Error stack:", error.stack);
-      res.status(500).json({ message: "Failed to save settings" });
+      console.error("🔥 SETTINGS API ERROR:", error);
+      res.status(500).json({ message: "Failed to save settings", error: error.message });
     }
   });
 

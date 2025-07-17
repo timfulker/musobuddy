@@ -46,7 +46,7 @@ const ALL_INSTRUMENTS = [
   "Kalimba", "Music Box", "Singing Bowl", "Rainstick", "DJ", "Vocals"
 ];
 
-// Schema for form validation - only includes actual form fields
+// Schema for form validation - includes all fields we want to save
 const settingsFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
   businessEmail: z.string().min(1, "Business email is required").email("Please enter a valid email address"),
@@ -63,7 +63,9 @@ const settingsFormSchema = z.object({
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
   bankDetails: z.string().optional().or(z.literal("")),
-  // Remove selectedInstruments and gigTypes from schema since they're managed separately
+  // Add the missing fields that we want to save
+  selectedInstruments: z.array(z.string()).optional(),
+  gigTypes: z.array(z.string()).optional(),
 });
 
 type SettingsFormData = z.infer<typeof settingsFormSchema>;
@@ -212,63 +214,36 @@ export default function Settings() {
     },
   });
 
-  // Save settings function - must be defined before useEffect that references it
+  // Save settings function - simplified version
   const saveSettings = useMutation({
     mutationFn: async (data: SettingsFormData) => {
-      // Include selected instruments and gig types in the saved data
-      const settingsData = {
-        ...data,
-        selectedInstruments: Array.isArray(selectedInstruments) ? selectedInstruments : [],
-        gigTypes: Array.isArray(gigTypes) ? gigTypes : [],
-      };
+      console.log('🚀 Saving settings:', data);
       
-      console.log('Saving settings:', settingsData);
-      
-      // Make actual API call to save settings
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(settingsData),
+        body: JSON.stringify(data),
       });
-      
-      console.log('Save response status:', response.status);
-      console.log('Save response ok:', response.ok);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Save error response:', errorText);
         throw new Error(`Failed to save settings: ${response.status} ${errorText}`);
       }
       
-      const result = await response.json();
-      console.log('Save result:', result);
-      return result;
+      return await response.json();
     },
     onSuccess: (data) => {
-      console.log('✅ Settings saved successfully:', data);
+      console.log('✅ Settings saved successfully');
       setHasChanges(false);
       toast({
         title: "Success",
         description: "Settings saved successfully!",
       });
       
-      // Update the form with the saved data immediately
-      form.reset(data);
-      setSelectedInstruments(Array.isArray(data.selectedInstruments) ? data.selectedInstruments : []);
-      setGigTypes(Array.isArray(data.gigTypes) ? data.gigTypes : []);
-      
-      // Store the new data as initial data for comparison
-      setInitialData({
-        ...data,
-        selectedInstruments: data.selectedInstruments || [],
-        gigTypes: data.gigTypes || []
-      });
-      
-      // Then invalidate queries to refresh from server
+      // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      queryClient.invalidateQueries({ queryKey: ['global-gig-types'] });
     },
     onError: (error) => {
       console.error('❌ Error saving settings:', error);
@@ -421,25 +396,16 @@ export default function Settings() {
 
   const onSubmit = (data: SettingsFormData) => {
     console.log('🚀 Form submitted with data:', data);
-    console.log('🚀 hasChanges:', hasChanges);
-    console.log('🚀 selectedInstruments:', selectedInstruments);
-    console.log('🚀 gigTypes:', gigTypes);
-    console.log('🚀 saveSettings.isPending:', saveSettings.isPending);
     
-    if (!hasChanges) {
-      console.log('🚀 No changes detected, skipping save');
-      return;
-    }
-    
-    // Add the selected instruments and gig types to the form data
-    const formDataWithInstruments = {
+    // Include instruments and gig types in the form data
+    const completeData = {
       ...data,
-      selectedInstruments: selectedInstruments,
-      gigTypes: gigTypes,
+      selectedInstruments,
+      gigTypes,
     };
     
-    console.log('🚀 Final form data being sent:', formDataWithInstruments);
-    saveSettings.mutate(formDataWithInstruments);
+    console.log('🚀 Complete data being sent:', completeData);
+    saveSettings.mutate(completeData);
   };
 
   if (settingsLoading) {
