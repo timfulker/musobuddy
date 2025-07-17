@@ -422,18 +422,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (user) {
-        // Add admin status to user object
-        res.json({
-          ...user,
-          isAdmin: userId === "43963086" || user.isAdmin
-        });
-      } else {
-        res.json(null);
-      }
+      // With local auth, user object is directly available
+      res.json(req.user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -443,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard stats
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -499,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enquiry routes
   app.get('/api/enquiries', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const enquiries = await storage.getEnquiries(userId);
       res.json(enquiries);
     } catch (error) {
@@ -510,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/enquiries/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       const enquiry = await storage.getEnquiry(id, userId);
       if (!enquiry) {
@@ -525,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/enquiries', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const data = { ...req.body, userId };
       
       // Convert eventDate string to Date if present
@@ -619,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/enquiries/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       const updates = req.body;
       const enquiry = await storage.updateEnquiry(id, updates, userId);
@@ -635,7 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/enquiries/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       
       // Find and delete any auto-created calendar bookings for this enquiry
@@ -668,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transfer existing enquiries to calendar (one-time migration)
   app.post('/api/transfer-enquiries-to-calendar', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const enquiries = await storage.getEnquiries(userId);
       let transferredCount = 0;
       let skippedCount = 0;
@@ -738,7 +728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send response to enquiry
   app.post('/api/enquiries/send-response', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { enquiryId, to, subject, body } = req.body;
       
       // Verify enquiry belongs to user
@@ -783,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Email Templates routes
   app.get('/api/templates', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       console.log('Templates request - userId:', userId);
       const templates = await storage.getEmailTemplates(userId);
       console.log('Templates fetched:', templates.length);
@@ -797,7 +787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/templates', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const data = { ...req.body, userId };
       const templateData = insertEmailTemplateSchema.parse(data);
       const template = await storage.createEmailTemplate(templateData);
@@ -810,7 +800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/templates/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       const updates = req.body;
       const template = await storage.updateEmailTemplate(id, updates, userId);
@@ -826,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/templates/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const id = parseInt(req.params.id);
       const success = await storage.deleteEmailTemplate(id, userId);
       if (!success) {
@@ -893,7 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Authenticated PDF download request for contract:', req.params.id);
     
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contractId = parseInt(req.params.id);
       
       const contract = await storage.getContract(contractId, userId);
@@ -992,8 +982,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let contract = null;
 
       // Try authenticated access first
-      if (req.user && req.user.claims && req.user.claims.sub) {
-        const userId = req.user.claims.sub;
+      if (req.user && req.user.claims && req.user.id) {
+        const userId = req.user.id;
         invoice = await storage.getInvoice(invoiceId, userId);
         if (invoice) {
           userSettings = await storage.getUserSettings(userId);
@@ -1049,8 +1039,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let contract = null;
 
       // Try authenticated access first
-      if (req.user && req.user.claims && req.user.claims.sub) {
-        const userId = req.user.claims.sub;
+      if (req.user && req.user.claims && req.user.id) {
+        const userId = req.user.id;
         invoice = await storage.getInvoice(invoiceId, userId);
         if (invoice) {
           userSettings = await storage.getUserSettings(userId);
@@ -1156,7 +1146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contract routes
   app.get('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contracts = await storage.getContracts(userId);
       res.json(contracts);
     } catch (error) {
@@ -1167,7 +1157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contractId = parseInt(req.params.id);
       
       const success = await storage.deleteContract(contractId, userId);
@@ -1185,7 +1175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bulk contract deletion
   app.post('/api/contracts/bulk-delete', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { contractIds } = req.body;
       
       if (!Array.isArray(contractIds) || contractIds.length === 0) {
@@ -1233,12 +1223,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔥 CONTRACT CREATION: req.user:', req.user);
       console.log('🔥 CONTRACT CREATION: req.isAuthenticated():', req.isAuthenticated());
       
-      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+      if (!req.user || !req.user.claims || !req.user.id) {
         console.log('🔥 CONTRACT CREATION: User object is missing or invalid');
         return res.status(401).json({ message: "User authentication failed - please log in again" });
       }
       
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       console.log('🔥 CONTRACT CREATION: User ID:', userId);
       console.log('🔥 CONTRACT CREATION: Request body:', JSON.stringify(req.body, null, 2));
       
@@ -1384,7 +1374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contractId = parseInt(req.params.id);
       const updates = req.body;
       
@@ -1421,7 +1411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice routes
   app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const invoices = await storage.getInvoices(userId);
       res.json(invoices);
     } catch (error) {
@@ -1432,7 +1422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const invoiceId = parseInt(req.params.id);
       
       console.log("🔥 Backend: DELETE request for invoice:", invoiceId, "by user:", userId);
@@ -1457,7 +1447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
       console.log("🔥 Backend: Invoice creation request received");
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       console.log("🔥 Backend: User ID:", userId);
       console.log("🔥 Backend: Request body:", JSON.stringify(req.body, null, 2));
       
@@ -1664,7 +1654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send invoice email using hybrid approach
   app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { invoiceId } = req.body;
       
       // Get the invoice details
@@ -1716,7 +1706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send contract email using hybrid approach
   app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { contractId, customMessage } = req.body;
       
       // Get the contract details
@@ -1757,7 +1747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send contract reminder
   app.post('/api/contracts/:id/send-reminder', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contractId = parseInt(req.params.id);
       
       const contract = await storage.getContractById(contractId);
@@ -1864,7 +1854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Regenerate contract signing link (manual on-demand regeneration)
   app.post('/api/contracts/:id/regenerate-link', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const contractId = parseInt(req.params.id);
       
       // Get the contract details
@@ -2289,7 +2279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice management routes
   app.post('/api/invoices/:id/mark-paid', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const invoiceId = parseInt(req.params.id);
       const { paidDate } = req.body;
       
@@ -2309,7 +2299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/invoices/:id/send-reminder', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const invoiceId = parseInt(req.params.id);
       
       const { invoiceManager } = await import('./invoice-manager');
@@ -2373,7 +2363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Phase 3: Main bookings endpoint - updated to use main bookings table
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const bookings = await storage.getBookings(userId);
       res.json(bookings);
     } catch (error) {
@@ -2385,7 +2375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new booking (enquiry)
   app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const data = { ...req.body, userId };
       
       // Convert eventDate string to Date if present
@@ -2405,7 +2395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update booking (enquiry)
   app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const bookingId = parseInt(req.params.id);
       const updateData = { ...req.body };
       
@@ -2429,7 +2419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete booking (enquiry)
   app.delete('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const bookingId = parseInt(req.params.id);
       
       const success = await storage.deleteBooking(bookingId, userId);
@@ -2445,7 +2435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/bookings/upcoming', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const bookings = await storage.getUpcomingBookings(userId);
       res.json(bookings);
     } catch (error) {
@@ -2457,7 +2447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auto-complete past bookings endpoint
   app.post('/api/bookings/auto-complete', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const updatedCount = await storage.autoCompletePastBookings(userId);
       res.json({ 
         message: `Auto-completed ${updatedCount} past bookings`,
@@ -2480,7 +2470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Compliance document routes
   app.get('/api/compliance', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const documents = await storage.getComplianceDocuments(userId);
       res.json(documents);
     } catch (error) {
@@ -2491,7 +2481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/compliance', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const documentData = insertComplianceDocumentSchema.parse({ ...req.body, userId });
       const document = await storage.createComplianceDocument(documentData);
       res.status(201).json(document);
@@ -2504,7 +2494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // File upload endpoint for compliance documents
   app.post('/api/compliance/upload', isAuthenticated, upload.single('documentFile'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -2566,7 +2556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send compliance documents to booking client
   app.post('/api/bookings/:bookingId/send-compliance', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const bookingId = parseInt(req.params.bookingId);
       const { documentIds, recipientEmail, customMessage } = req.body;
 
@@ -2776,7 +2766,7 @@ Powered by MusoBuddy – less admin, more music
   // Debug data counts for investigating data loss
   app.get('/api/debug-data-counts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const bookings = await storage.getBookings(userId);
       const enquiries = await storage.getEnquiries(userId);
       const contracts = await storage.getContracts(userId);
@@ -2799,7 +2789,7 @@ Powered by MusoBuddy – less admin, more music
   // User settings routes
   app.get('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const settings = await storage.getUserSettings(userId);
       res.json(settings || {});
     } catch (error) {
@@ -2810,7 +2800,7 @@ Powered by MusoBuddy – less admin, more music
 
   app.post('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       console.log("🔥 Saving settings for user:", userId);
       console.log("🔥 Request body:", req.body);
       console.log("🔥 customInstruments in request:", req.body.customInstruments);
@@ -2865,7 +2855,7 @@ Powered by MusoBuddy – less admin, more music
   // Global gig types routes
   app.get('/api/global-gig-types', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const gigTypes = await storage.getGlobalGigTypes(userId);
       res.json(gigTypes);
     } catch (error) {
@@ -2876,7 +2866,7 @@ Powered by MusoBuddy – less admin, more music
 
   app.post('/api/global-gig-types', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { gigTypes } = req.body;
       
       if (!Array.isArray(gigTypes)) {
@@ -2894,7 +2884,7 @@ Powered by MusoBuddy – less admin, more music
   // Client (Address Book) routes
   app.get('/api/clients', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const clients = await storage.getClients(userId);
       res.json(clients);
     } catch (error) {
@@ -2905,7 +2895,7 @@ Powered by MusoBuddy – less admin, more music
 
   app.post('/api/clients', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const clientData = insertClientSchema.parse({ ...req.body, userId });
       const client = await storage.createClient(clientData);
       res.status(201).json(client);
@@ -2917,7 +2907,7 @@ Powered by MusoBuddy – less admin, more music
 
   app.patch('/api/clients/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const clientId = parseInt(req.params.id);
       const updateData = req.body;
       
@@ -2935,7 +2925,7 @@ Powered by MusoBuddy – less admin, more music
 
   app.delete('/api/clients/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const clientId = parseInt(req.params.id);
       
       const success = await storage.deleteClient(clientId, userId);
@@ -2953,7 +2943,7 @@ Powered by MusoBuddy – less admin, more music
   // Conflict detection API routes
   app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const conflicts = await storage.getUnresolvedConflicts(userId);
       res.json(conflicts);
     } catch (error) {
@@ -2987,7 +2977,7 @@ Powered by MusoBuddy – less admin, more music
   // Import from Calendar file (.ics file)
   app.post('/api/calendar/import', isAuthenticated, upload.single('icsFile'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       console.log('📥 Calendar import request received');
       console.log('User ID:', userId);
@@ -3084,7 +3074,7 @@ Hotel Lobby Entertainment`;
   // Data cleanup service routes
   app.get('/api/cleanup/undo-items', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { dataCleanupService } = await import('./data-cleanup-service');
       
       const undoItems = dataCleanupService.getUndoItems(userId);
@@ -3097,7 +3087,7 @@ Hotel Lobby Entertainment`;
 
   app.post('/api/cleanup/undo/:table/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { table, id } = req.params;
       const { dataCleanupService } = await import('./data-cleanup-service');
       
@@ -3116,7 +3106,7 @@ Hotel Lobby Entertainment`;
 
   app.post('/api/cleanup/soft-delete/:table/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { table, id } = req.params;
       const { description } = req.body;
       const { dataCleanupService } = await import('./data-cleanup-service');
@@ -3147,7 +3137,7 @@ Hotel Lobby Entertainment`;
 
   app.post('/api/cleanup/flush-user-data', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { dataCleanupService } = await import('./data-cleanup-service');
       
       await dataCleanupService.flushUserData(userId);
@@ -3392,23 +3382,20 @@ Hotel Lobby Entertainment`;
       `;
       
       // Use the mailgun service to send email
-      const mailgun = require('mailgun.js');
-      const mg = mailgun.client({
-        username: 'api',
-        key: process.env.MAILGUN_API_KEY || ''
-      });
+      const { sendEmail } = await import('./mailgun-email');
+      const emailData = {
+        to: user.email,
+        from: `MusoBuddy <${fromEmail}>`,
+        subject: 'Your MusoBuddy Account Details',
+        html: emailContent
+      };
       
-      if (process.env.MAILGUN_API_KEY) {
-        await mg.messages.create(process.env.MAILGUN_DOMAIN || '', {
-          from: `MusoBuddy <${fromEmail}>`,
-          to: user.email,
-          subject: 'Your MusoBuddy Account Details',
-          html: emailContent
-        });
-        
+      const emailResult = await sendEmail(emailData);
+      
+      if (emailResult) {
         res.json({ message: 'Credentials sent successfully' });
       } else {
-        res.status(500).json({ message: 'Email service not configured' });
+        res.status(500).json({ message: 'Failed to send email' });
       }
     } catch (error) {
       console.error('Error sending credentials:', error);
@@ -3424,7 +3411,7 @@ Hotel Lobby Entertainment`;
       
       // Hash password if provided
       if (updates.password) {
-        const bcrypt = require('bcrypt');
+        const bcrypt = await import('bcrypt');
         updates.password = await bcrypt.hash(updates.password, 10);
       }
       
@@ -3445,7 +3432,7 @@ Hotel Lobby Entertainment`;
       const { id } = req.params;
       
       // Prevent self-deletion
-      if (id === req.user.claims.sub) {
+      if (id === req.user.id) {
         return res.status(400).json({ message: "Cannot delete your own account" });
       }
       

@@ -127,3 +127,13 @@ Preferred communication style: Simple, everyday language.
 - Conflict resolution system for booking overlaps
 
 The application is designed to be user-friendly while maintaining professional-grade features required for music business management. The architecture supports scalability and maintainability with clear separation of concerns between frontend, backend, and data layers.
+
+## Recent Changes: Latest modifications with dates
+
+### 2025-07-17 - Fixed Authentication and 500 Errors
+- **Critical Fix**: Resolved all 500 errors caused by leftover Replit Auth code
+- **Authentication**: Updated all routes from `req.user.claims.sub` to `req.user.id` for local auth
+- **Email System**: Fixed credential sending to use proper Mailgun integration
+- **Feedback System**: Added comprehensive feedback system for beta testing
+- **Module Imports**: Fixed ES module imports replacing CommonJS require statements
+- **Status**: All API endpoints now working properly with local authentication
