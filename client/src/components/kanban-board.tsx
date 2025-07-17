@@ -165,22 +165,6 @@ export default function ActionableEnquiries() {
     const conflicts = detectConflicts(enquiry);
     const isResolved = resolvedConflicts.has(enquiry.id);
     
-    // Debug logging for conflict detection
-    if (enquiry.title?.includes('Saxophone')) {
-      console.log('Debug - Saxophone enquiry:', {
-        id: enquiry.id,
-        title: enquiry.title,
-        eventDate: enquiry.eventDate,
-        startTime: enquiry.startTime,
-        endTime: enquiry.endTime,
-        conflicts: conflicts,
-        isResolved: isResolved,
-        severity: severity,
-        hasConflicts: hasConflicts,
-        needsResponse: needsResponse(enquiry)
-      });
-    }
-    
     // Enhanced conflict detection with booking status awareness
     const confirmedBookingConflicts = conflicts.filter(c => c.type === 'booking');
     const unconfirmedEnquiryConflicts = conflicts.filter(c => c.type === 'enquiry');
@@ -202,6 +186,22 @@ export default function ActionableEnquiries() {
     
     const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
     const hasConflicts = conflicts.length > 0;
+    
+    // Debug logging for conflict detection (after variables are defined)
+    if (enquiry.title?.includes('Saxophone')) {
+      console.log('Debug - Saxophone enquiry:', {
+        id: enquiry.id,
+        title: enquiry.title,
+        eventDate: enquiry.eventDate,
+        startTime: enquiry.startTime,
+        endTime: enquiry.endTime,
+        conflicts: conflicts,
+        isResolved: isResolved,
+        severity: severity,
+        hasConflicts: hasConflicts,
+        needsResponse: needsResponse(enquiry)
+      });
+    }
     
     // Status-based styling with inquiry color scheme
     const getStatusOverlay = () => {
