@@ -226,11 +226,8 @@ export default function Enquiries() {
     try {
       console.log('🔥 CONFLICT CLICK - Primary booking:', primaryBooking);
       
-      // Fetch all bookings to find conflicts
-      const response = await apiRequest('/api/bookings');
-      
-      // Handle both array and object responses
-      const allBookings = Array.isArray(response) ? response : response.data || [];
+      // Use already loaded enquiries data instead of making API call
+      const allBookings = enquiries || [];
       
       console.log('🔥 CONFLICT CLICK - All bookings count:', allBookings.length);
       console.log('🔥 CONFLICT CLICK - All bookings:', allBookings);
