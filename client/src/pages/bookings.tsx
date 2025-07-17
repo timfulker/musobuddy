@@ -230,16 +230,32 @@ export default function Enquiries() {
       // Handle both array and object responses
       const allBookings = Array.isArray(response) ? response : response.data || [];
       
+      console.log('Conflict detection - Primary booking:', primaryBooking);
+      console.log('Conflict detection - All bookings:', allBookings);
+      
       // Find bookings that conflict with the selected booking
       const conflictingBookings = allBookings.filter((booking: any) => {
         if (booking.id === primaryBooking.id) return false;
+        
+        // Skip bookings without event dates
+        if (!primaryBooking.event_date || !booking.event_date) return false;
         
         // Check if they're on the same date
         const primaryDate = new Date(primaryBooking.event_date).toDateString();
         const bookingDate = new Date(booking.event_date).toDateString();
         
+        console.log('Comparing dates:', {
+          primaryTitle: primaryBooking.title,
+          primaryDate,
+          bookingTitle: booking.title,
+          bookingDate,
+          matches: primaryDate === bookingDate
+        });
+        
         return primaryDate === bookingDate;
       });
+      
+      console.log('Found conflicting bookings:', conflictingBookings);
       
       setConflictResolutionData({
         primaryBooking,
