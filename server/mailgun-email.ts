@@ -16,6 +16,7 @@ interface EmailData {
   text?: string;
   html?: string;
   replyTo?: string;
+  cc?: string; // Add CC support
   attachments?: Array<{
     content: string;
     filename: string;
@@ -65,6 +66,11 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
       messageData['h:Reply-To'] = emailData.replyTo;
     }
 
+    // Add CC if specified
+    if (emailData.cc) {
+      messageData.cc = emailData.cc;
+    }
+
     // Add attachments if specified
     if (emailData.attachments && emailData.attachments.length > 0) {
       messageData.attachment = emailData.attachments.map(att => ({
@@ -80,6 +86,7 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
     console.log('✅ Email sent successfully:', result.id);
     console.log('📧 From:', emailData.from);
     console.log('📧 To:', emailData.to);
+    console.log('📧 CC:', emailData.cc || 'None');
     console.log('📧 Subject:', emailData.subject);
     
     return true;
@@ -290,6 +297,7 @@ export async function sendInvoiceEmail(
       subject: subject,
       html: emailHtml,
       replyTo: replyToEmail,
+      cc: invoice.ccEmail || undefined, // Add CC support
       attachments: [
         {
           content: pdfBuffer.toString('base64'),
