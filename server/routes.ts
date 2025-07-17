@@ -419,16 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     `);
   });
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      // With local auth, user object is directly available
-      res.json(req.user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Auth route is now handled in auth.ts to avoid conflicts
 
   // Dashboard stats
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {

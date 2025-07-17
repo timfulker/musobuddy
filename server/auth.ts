@@ -30,7 +30,9 @@ export function setupAuth(app: Express) {
       httpOnly: true,
       secure: false, // Set to true in production with HTTPS
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax' // Add sameSite policy for better session handling
     },
+    name: 'connect.sid' // Explicitly set session name
   };
 
   app.set("trust proxy", 1);
@@ -68,13 +70,16 @@ export function setupAuth(app: Express) {
   
   passport.deserializeUser(async (id: string, done) => {
     try {
+      console.log('🔥 Deserializing user with ID:', id);
       const user = await storage.getUser(id);
       if (!user) {
+        console.log('🔥 User not found in database for ID:', id);
         return done(null, false);
       }
+      console.log('🔥 User deserialized successfully:', user.email);
       done(null, user);
     } catch (error) {
-      console.error('Deserialization error:', error);
+      console.error('🔥 Deserialization error:', error);
       done(null, false);
     }
   });
@@ -118,9 +123,17 @@ export function setupAuth(app: Express) {
 
   // Get current user endpoint
   app.get("/api/auth/user", (req, res) => {
+    console.log('🔥 Auth check - Session ID:', req.sessionID);
+    console.log('🔥 Auth check - Session data:', req.session);
+    console.log('🔥 Auth check - User:', req.user);
+    console.log('🔥 Auth check - isAuthenticated():', req.isAuthenticated());
+    
     if (!req.isAuthenticated()) {
+      console.log('🔥 Auth FAILED - User not authenticated');
       return res.status(401).json({ message: "Not authenticated" });
     }
+    
+    console.log('🔥 Auth SUCCESS - Returning user:', req.user);
     res.json(req.user);
   });
 }

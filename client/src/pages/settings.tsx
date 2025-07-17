@@ -287,22 +287,29 @@ export default function Settings() {
 
   // Initialize form when settings are loaded (only on first load)
   useEffect(() => {
-    if (settings && !initialData && !saveSettings.isPending) {
-      console.log('🔄 INITIAL LOAD: Setting up form with settings:', settings);
-      console.log('🔄 Form fields being reset:', {
-        businessName: settings.businessName,
-        businessEmail: settings.businessEmail,
-        addressLine1: settings.addressLine1,
-        addressLine2: settings.addressLine2,
-        city: settings.city,
-        county: settings.county,
-        postcode: settings.postcode,
-        phone: settings.phone,
-        website: settings.website,
-      });
+    if (settings && !saveSettings.isPending) {
+      console.log('🔄 FORM RESET: Resetting form with settings:', settings);
       
-      // Reset form with settings
-      form.reset(settings);
+      // Force reset form with settings data
+      form.reset({
+        businessName: settings.businessName || "",
+        businessEmail: settings.businessEmail || "",
+        businessAddress: settings.businessAddress || "",
+        addressLine1: settings.addressLine1 || "",
+        addressLine2: settings.addressLine2 || "",
+        city: settings.city || "",
+        county: settings.county || "",
+        postcode: settings.postcode || "",
+        phone: settings.phone || "",
+        website: settings.website || "",
+        taxNumber: settings.taxNumber || "",
+        emailFromName: settings.emailFromName || "",
+        nextInvoiceNumber: settings.nextInvoiceNumber || 1,
+        defaultTerms: settings.defaultTerms || "",
+        bankDetails: settings.bankDetails || "",
+        selectedInstruments: settings.selectedInstruments || [],
+        gigTypes: settings.gigTypes || [],
+      });
       
       // Set local state
       const instruments = Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : [];
@@ -312,7 +319,7 @@ export default function Settings() {
       const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (Array.isArray(settings.gigTypes) ? settings.gigTypes : []);
       setGigTypes(gigTypesToUse);
       
-      // Store initial data for comparison - this prevents re-initialization
+      // Store initial data for comparison
       setInitialData({
         ...settings,
         selectedInstruments: instruments,
