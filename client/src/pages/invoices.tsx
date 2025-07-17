@@ -49,46 +49,6 @@ export default function Invoices() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isDesktop } = useResponsive();
 
-  // Check for URL parameters to auto-open dialog and pre-fill with enquiry data
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const createNew = params.get('create');
-    const enquiryId = params.get('enquiryId');
-    
-    if (createNew === 'true') {
-      setIsDialogOpen(true);
-      
-      // Pre-fill with enquiry data if enquiryId is provided
-      if (enquiryId && enquiries.length > 0) {
-        const selectedEnquiry = enquiries.find(e => e.id === parseInt(enquiryId));
-        if (selectedEnquiry) {
-          // Calculate due date (30 days from now)
-          const dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + 30);
-          
-          // Calculate performance date from event date
-          const performanceDate = selectedEnquiry.eventDate 
-            ? new Date(selectedEnquiry.eventDate).toISOString().split('T')[0]
-            : "";
-          
-          form.reset({
-            contractId: undefined,
-            clientName: selectedEnquiry.clientName || "",
-            clientEmail: selectedEnquiry.clientEmail || "",
-            ccEmail: "",
-            clientAddress: selectedEnquiry.clientAddress || "",
-            venueAddress: selectedEnquiry.venue || "",
-            amount: selectedEnquiry.estimatedValue ? selectedEnquiry.estimatedValue.toString() : "",
-            dueDate: dueDate.toISOString().split('T')[0],
-            performanceDate: performanceDate,
-            performanceFee: selectedEnquiry.estimatedValue ? selectedEnquiry.estimatedValue.toString() : "",
-            depositPaid: "",
-          });
-        }
-      }
-    }
-  }, [location, enquiries, form]);
-
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['/api/invoices'],
   });
@@ -128,7 +88,47 @@ export default function Invoices() {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
     form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
-  }, [form]);
+  }, []);
+
+  // Check for URL parameters to auto-open dialog and pre-fill with enquiry data
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const createNew = params.get('create');
+    const enquiryId = params.get('enquiryId');
+    
+    if (createNew === 'true') {
+      setIsDialogOpen(true);
+      
+      // Pre-fill with enquiry data if enquiryId is provided and enquiries are loaded
+      if (enquiryId && enquiries && enquiries.length > 0) {
+        const selectedEnquiry = enquiries.find(e => e.id === parseInt(enquiryId));
+        if (selectedEnquiry) {
+          // Calculate due date (30 days from now)
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 30);
+          
+          // Calculate performance date from event date
+          const performanceDate = selectedEnquiry.eventDate 
+            ? new Date(selectedEnquiry.eventDate).toISOString().split('T')[0]
+            : "";
+          
+          form.reset({
+            contractId: undefined,
+            clientName: selectedEnquiry.clientName || "",
+            clientEmail: selectedEnquiry.clientEmail || "",
+            ccEmail: "",
+            clientAddress: selectedEnquiry.clientAddress || "",
+            venueAddress: selectedEnquiry.venue || "",
+            amount: selectedEnquiry.estimatedValue ? selectedEnquiry.estimatedValue.toString() : "",
+            dueDate: dueDate.toISOString().split('T')[0],
+            performanceDate: performanceDate,
+            performanceFee: selectedEnquiry.estimatedValue ? selectedEnquiry.estimatedValue.toString() : "",
+            depositPaid: "",
+          });
+        }
+      }
+    }
+  }, [location, enquiries]);
 
   // Watch contract ID changes
   const selectedContractId = form.watch("contractId");
