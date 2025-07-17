@@ -2,11 +2,12 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import bcrypt from "bcrypt";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import connectPg from "connect-pg-simple";
-import MemoryStore from "memorystore";
+import { pool } from "./db";
 
 declare global {
   namespace Express {
@@ -14,29 +15,40 @@ declare global {
   }
 }
 
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+async function comparePasswords(supplied: string, stored: string) {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
+
 export function setupAuth(app: Express) {
-  // Use PostgreSQL store for stable, persistent sessions
-  const PostgresStore = connectPg(session);
-  const pgStore = new PostgresStore({
-    conString: process.env.DATABASE_URL,
-    tableName: 'user_sessions',
+  // PostgreSQL session store for stability
+  const PostgresSessionStore = connectPg(session);
+  const sessionStore = new PostgresSessionStore({
+    pool: pool,
     createTableIfMissing: true,
-    ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
+    tableName: 'sessions'
   });
-  
+
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-key-2025',
+    secret: process.env.SESSION_SECRET || 'musobuddy-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
-    rolling: true, // Extend session on activity
-    store: pgStore,
+    store: sessionStore,
     cookie: {
-      httpOnly: true,
       secure: false, // Set to true in production with HTTPS
+      httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      sameSite: 'lax'
     },
-    name: 'musobuddy.session'
   };
 
   app.set("trust proxy", 1);
@@ -46,23 +58,15 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(
-      {
-        usernameField: 'email', // Use email as username
-        passwordField: 'password'
-      },
+      { usernameField: 'email' },
       async (email, password, done) => {
         try {
           const user = await storage.getUserByEmail(email);
-          if (!user) {
-            return done(null, false, { message: 'Invalid email or password' });
+          if (!user || !(await comparePasswords(password, user.password))) {
+            return done(null, false);
+          } else {
+            return done(null, user);
           }
-
-          const isValid = await bcrypt.compare(password, user.password);
-          if (!isValid) {
-            return done(null, false, { message: 'Invalid email or password' });
-          }
-
-          return done(null, user);
         } catch (error) {
           return done(error);
         }
@@ -70,126 +74,78 @@ export function setupAuth(app: Express) {
     )
   );
 
-  passport.serializeUser((user, done) => {
-    console.log('🔥 Serializing user:', user.id);
-    done(null, user.id);
-  });
-  
+  passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: string, done) => {
     try {
-      console.log('🔥 Deserializing user with ID:', id);
       const user = await storage.getUser(id);
-      if (!user) {
-        console.log('🔥 User not found in database for ID:', id);
-        return done(null, false);
-      }
-      console.log('🔥 User deserialized successfully:', user.email);
       done(null, user);
     } catch (error) {
-      console.error('🔥 Deserialization error:', error);
-      done(null, false);
+      done(error);
     }
   });
 
-  // Login endpoint
-  app.post("/api/login", (req, res, next) => {
-    console.log('🔥 Login attempt for:', req.body.email);
-    
-    passport.authenticate("local", (err, user, info) => {
-      if (err) {
-        console.error('🔥 Login error:', err);
-        return next(err);
-      }
-      if (!user) {
-        console.log('🔥 Login failed:', info);
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
-      }
+  app.post("/api/register", async (req, res, next) => {
+    try {
+      const { email, password } = req.body;
       
-      req.logIn(user, (err) => {
-        if (err) {
-          console.error('🔥 Login session error:', err);
-          return next(err);
-        }
-        console.log('🔥 Login successful for:', user.email);
-        console.log('🔥 Session ID after login:', req.sessionID);
-        res.status(200).json({ 
-          message: "Login successful",
-          user: user 
-        });
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+
+      const user = await storage.createUser({
+        email,
+        password: await hashPassword(password),
       });
-    })(req, res, next);
+
+      req.login(user, (err) => {
+        if (err) return next(err);
+        res.status(201).json(user);
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: "Registration failed" });
+    }
   });
 
-  // Logout endpoints (both GET and POST for flexibility)
-  const logoutHandler = (req: any, res: any, next: any) => {
-    req.logout((err: any) => {
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    res.status(200).json(req.user);
+  });
+
+  app.post("/api/logout", (req, res, next) => {
+    req.logout((err) => {
       if (err) return next(err);
-      
-      // Destroy the session completely
-      req.session.destroy((err: any) => {
-        if (err) {
-          console.error('Session destruction error:', err);
-          return next(err);
-        }
-        
-        // Clear the session cookie
-        res.clearCookie('connect.sid');
-        
-        // For GET requests, redirect to login page
-        if (req.method === 'GET') {
-          res.redirect('/login');
-        } else {
-          // For POST requests, send JSON response
-          res.status(200).json({ message: "Logout successful" });
-        }
-      });
+      res.sendStatus(200);
     });
-  };
+  });
 
-  app.get("/api/logout", logoutHandler);
-  app.post("/api/logout", logoutHandler);
-
-  // Get current user endpoint
   app.get("/api/auth/user", (req, res) => {
-    console.log('🔥 Auth check - Session ID:', req.sessionID);
-    console.log('🔥 Auth check - Session data:', req.session);
-    console.log('🔥 Auth check - User:', req.user);
-    console.log('🔥 Auth check - isAuthenticated():', req.isAuthenticated());
-    console.log('🔥 Auth check - Passport session:', req.session?.passport);
-    
-    if (!req.isAuthenticated()) {
-      console.log('🔥 Auth FAILED - User not authenticated');
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    console.log('🔥 Auth SUCCESS - Returning user:', req.user);
+    if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
 }
 
-export const isAuthenticated = (req: any, res: any, next: any) => {
-  // More robust authentication check
-  if (req.isAuthenticated() && req.user && req.user.id) {
-    // Update session activity
-    if (req.session) {
-      req.session.touch();
-    }
+export function isAuthenticated(req: any, res: any, next: any) {
+  if (req.isAuthenticated()) {
     return next();
   }
-  
-  // Clear any corrupted session data
-  if (req.session) {
-    req.session.destroy((err: any) => {
-      if (err) console.error('Session destruction error:', err);
-    });
-  }
-  
-  res.status(401).json({ message: "Unauthorized" });
-};
+  res.status(401).json({ message: "Authentication required" });
+}
 
-export const isAdmin = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated() && req.user?.isAdmin) {
+export async function isAdmin(req: any, res: any, next: any) {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    const user = await storage.getUser(req.user.id);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    
     return next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    return res.status(500).json({ message: "Admin check failed" });
   }
-  res.status(403).json({ message: "Admin access required" });
-};
+}
