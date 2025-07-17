@@ -224,14 +224,16 @@ export default function Enquiries() {
 
   const handleConflictClick = async (primaryBooking: any) => {
     try {
+      console.log('🔥 CONFLICT CLICK - Primary booking:', primaryBooking);
+      
       // Fetch all bookings to find conflicts
       const response = await apiRequest('/api/bookings');
       
       // Handle both array and object responses
       const allBookings = Array.isArray(response) ? response : response.data || [];
       
-      console.log('Conflict detection - Primary booking:', primaryBooking);
-      console.log('Conflict detection - All bookings:', allBookings);
+      console.log('🔥 CONFLICT CLICK - All bookings count:', allBookings.length);
+      console.log('🔥 CONFLICT CLICK - All bookings:', allBookings);
       
       // Find bookings that conflict with the selected booking
       const conflictingBookings = allBookings.filter((booking: any) => {
@@ -244,7 +246,7 @@ export default function Enquiries() {
         const primaryDate = new Date(primaryBooking.eventDate).toDateString();
         const bookingDate = new Date(booking.eventDate).toDateString();
         
-        console.log('Comparing dates:', {
+        console.log('🔥 CONFLICT CLICK - Comparing dates:', {
           primaryTitle: primaryBooking.title,
           primaryDate,
           bookingTitle: booking.title,
@@ -255,15 +257,19 @@ export default function Enquiries() {
         return primaryDate === bookingDate;
       });
       
-      console.log('Found conflicting bookings:', conflictingBookings);
+      console.log('🔥 CONFLICT CLICK - Found conflicting bookings:', conflictingBookings);
+      console.log('🔥 CONFLICT CLICK - Setting conflict resolution data...');
       
       setConflictResolutionData({
         primaryBooking,
         conflictingBookings
       });
       setConflictResolutionOpen(true);
+      
+      console.log('🔥 CONFLICT CLICK - Dialog should be opening now');
+      
     } catch (error) {
-      console.error('Error fetching conflict data:', error);
+      console.error('🔥 CONFLICT CLICK - Error fetching conflict data:', error);
       toast({
         title: "Error",
         description: "Failed to load conflict data. Please try again.",
