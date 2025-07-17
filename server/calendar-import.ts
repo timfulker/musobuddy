@@ -120,6 +120,12 @@ export async function convertEventsToBookings(
                                      event.startTime.getHours(),
                                      event.startTime.getMinutes());
       
+      // Debug logging for timezone fix validation
+      console.log(`📅 Calendar Import Debug: ${event.title}`);
+      console.log(`  Original: ${event.startTime.toISOString()}`);
+      console.log(`  Local: ${localEventDate.toISOString()}`);
+      console.log(`  Date stored: ${localEventDate.getFullYear()}-${String(localEventDate.getMonth() + 1).padStart(2, '0')}-${String(localEventDate.getDate()).padStart(2, '0')}`);
+      
       await storage.createBooking({
         userId,
         contractId: null, // No contract associated with imported events
