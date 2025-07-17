@@ -17,6 +17,7 @@ interface ConflictResolutionDialogProps {
   primaryBooking: any;
   conflictingBookings: any[];
   onResolved: () => void;
+  conflictSeverity?: 'critical' | 'warning';
 }
 
 export function ConflictResolutionDialog({
@@ -24,7 +25,8 @@ export function ConflictResolutionDialog({
   onOpenChange,
   primaryBooking,
   conflictingBookings,
-  onResolved
+  onResolved,
+  conflictSeverity = 'critical'
 }: ConflictResolutionDialogProps) {
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
@@ -77,6 +79,47 @@ export function ConflictResolutionDialog({
     setFormData({});
   };
 
+  const handleResolve = async () => {
+    // For orange conflicts (same date, different times), mark as resolved
+    try {
+      toast({
+        title: "Conflict Resolved",
+        description: "The scheduling conflict has been marked as resolved. The bookings can coexist with different times.",
+        variant: "default"
+      });
+      
+      onResolved();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to resolve conflict. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleReject = async (booking: any) => {
+    try {
+      await apiRequest(`/api/bookings/${booking.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'rejected' })
+      });
+
+      toast({
+        title: "Booking Rejected",
+        description: `${booking.title} has been rejected and removed from the conflict.`
+      });
+
+      onResolved();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reject booking. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'new': return 'bg-blue-100 text-blue-800';
@@ -105,6 +148,14 @@ export function ConflictResolutionDialog({
             className="text-xs"
           >
             Edit
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handleReject(booking)}
+            className="text-xs"
+          >
+            Reject
           </Button>
         </div>
       </div>
@@ -154,17 +205,30 @@ export function ConflictResolutionDialog({
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <div className={`w-3 h-3 rounded-full ${conflictSeverity === 'critical' ? 'bg-red-500' : 'bg-amber-500'}`}></div>
             <span>Booking Conflict Resolution</span>
           </DialogTitle>
         </DialogHeader>
 
         {!editingBooking ? (
           <div className="space-y-6">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <h4 className="font-medium text-red-800 mb-2">Conflict Detected</h4>
-              <p className="text-red-700 text-sm">
-                The following bookings have conflicting dates and times. Review and edit them to resolve the conflict.
+            <div className={`border rounded-lg p-4 ${
+              conflictSeverity === 'critical' 
+                ? 'bg-red-50 border-red-200' 
+                : 'bg-amber-50 border-amber-200'
+            }`}>
+              <h4 className={`font-medium mb-2 ${
+                conflictSeverity === 'critical' ? 'text-red-800' : 'text-amber-800'
+              }`}>
+                {conflictSeverity === 'critical' ? 'Critical Conflict Detected' : 'Scheduling Conflict Detected'}
+              </h4>
+              <p className={`text-sm ${
+                conflictSeverity === 'critical' ? 'text-red-700' : 'text-amber-700'
+              }`}>
+                {conflictSeverity === 'critical' 
+                  ? 'The following bookings have overlapping times creating a double booking risk. Edit or reject bookings to resolve the conflict.'
+                  : 'The following bookings are on the same date but have different times. Review to ensure they can coexist or resolve the conflict.'
+                }
               </p>
             </div>
 
@@ -188,6 +252,15 @@ export function ConflictResolutionDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
+              {conflictSeverity === 'warning' && (
+                <Button 
+                  variant="default" 
+                  onClick={handleResolve}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Resolve Conflict
+                </Button>
+              )}
             </div>
           </div>
         ) : (

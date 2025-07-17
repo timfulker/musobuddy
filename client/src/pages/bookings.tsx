@@ -70,6 +70,7 @@ export default function Enquiries() {
   const [conflictResolutionData, setConflictResolutionData] = useState<{
     primaryBooking: any;
     conflictingBookings: any[];
+    conflictSeverity: 'critical' | 'warning';
   } | null>(null);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
@@ -241,9 +242,15 @@ export default function Enquiries() {
         return primaryDate === bookingDate;
       });
       
+      // Determine conflict severity based on time overlap
+      const conflicts = detectConflicts(primaryBooking);
+      const hasTimeOverlap = conflicts.some(conflict => conflict.hasTimeOverlap);
+      const conflictSeverity = hasTimeOverlap ? 'critical' : 'warning';
+      
       setConflictResolutionData({
         primaryBooking,
-        conflictingBookings
+        conflictingBookings,
+        conflictSeverity
       });
       setConflictResolutionOpen(true);
       
@@ -1907,6 +1914,7 @@ export default function Enquiries() {
           onOpenChange={setConflictResolutionOpen}
           primaryBooking={conflictResolutionData.primaryBooking}
           conflictingBookings={conflictResolutionData.conflictingBookings}
+          conflictSeverity={conflictResolutionData.conflictSeverity}
           onResolved={() => {
             setConflictResolutionOpen(false);
             setConflictResolutionData(null);
