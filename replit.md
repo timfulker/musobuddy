@@ -135,7 +135,7 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Status Button Improvements**: Enlarged from 6x6 to 8x8 pixels with proper gap spacing and color scheme alignment
   * **Centered Status Buttons**: Improved visual balance with centered positioning
   * **Removed Edit Icon**: Eliminated redundant edit icon since seven status buttons handle all status updates
-  * **Double-Click Navigation**: Added double-click functionality on entire card to open booking status dialog
+  * **Double-Click Navigation**: Added double-click functionality on entire card to open booking edit form (BookingDetailsDialog)
   * **Repositioned Status Badge**: Moved status badge from top-right to bottom-right aligned with card bottom
   * **Enhanced Respond Button**: Improved button styling with better spacing and click event handling
   * **Added All Filter**: Included "All" button in status filters to show all bookings when no specific status is selected

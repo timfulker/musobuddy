@@ -1631,8 +1631,8 @@ export default function Enquiries() {
                 <TooltipProvider key={enquiry.id}>
                   <Card id={`booking-${enquiry.id}`} className={`hover:shadow-lg transition-all duration-200 cursor-pointer ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}
                     onDoubleClick={() => {
-                      setSelectedBookingForUpdate(enquiry);
-                      setBookingStatusDialogOpen(true);
+                      setSelectedBookingForDetails(enquiry);
+                      setBookingDetailsDialogOpen(true);
                     }}
                   >
                     <CardContent className="p-6">
