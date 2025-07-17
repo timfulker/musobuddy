@@ -391,10 +391,10 @@ export default function ActionableEnquiries() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+                <AlertCircle className="w-5 h-5 mr-2 text-orange-500" />
                 Needs Response
               </h4>
-              <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+              <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-200">
                 {actionableEnquiries.length}
               </Badge>
             </div>
