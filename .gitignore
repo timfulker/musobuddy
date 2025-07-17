@@ -4,3 +4,47 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Development files
+attached_assets/
+debug-*.js
+test-*.js
+*-debug.js
+*-test.js
+rollback-*.ts
+webhook-system-backup-*.tar.gz
+*.log
+*.tmp
+
+# Documentation (keep core files only)
+phase2-email-correspondence.md
+progress-and-pitfalls.md
+improved-conflict-system.md
+email-*.md
+dns-*.md
+mailgun-*.md
+deployment-*.md
+clean-*.md
+alternative-*.md
+comprehensive-*.md
+backup-*.md
+message-to-*.txt
+cookies.txt
+r2-*.json
+r2-*.md
+
+# Development scripts
+clean-*.js
+debug-*.js
+diagnose-*.js
+find-*.js
+fix-*.js
+regenerate-*.js
+send-*.js
+setup-*.js
+quick-*.js
+minimal-*.js
+lunch-*.mjs
+enhanced-*.js
+final-*.js
+direct-*.ts
