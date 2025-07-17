@@ -114,23 +114,25 @@ export default function CalendarWidget() {
         {upcomingGigs.map((gig: any) => {
           const dateInfo = formatDate(gig.eventDate);
           return (
-            <div key={gig.id} className={`flex items-center space-x-3 p-3 rounded-lg ${getStatusColor(gig.status)}`}>
-              <div className="text-center">
-                <div className={`text-xs font-medium ${getStatusBadgeColor(gig.status)}`}>
-                  {dateInfo.month}
+            <Link key={gig.id} href={`/bookings?id=${gig.id}`}>
+              <div className={`flex items-center space-x-3 p-3 rounded-lg ${getStatusColor(gig.status)} hover:shadow-md transition-shadow cursor-pointer`}>
+                <div className="text-center">
+                  <div className={`text-xs font-medium ${getStatusBadgeColor(gig.status)}`}>
+                    {dateInfo.month}
+                  </div>
+                  <div className="text-lg font-bold">
+                    {dateInfo.day}
+                  </div>
                 </div>
-                <div className="text-lg font-bold">
-                  {dateInfo.day}
+                <div className="flex-1">
+                  <h4 className="font-medium">{gig.title}</h4>
+                  <p className="text-sm opacity-75">{gig.venue} • {gig.eventTime}</p>
+                  <p className={`text-xs ${getStatusBadgeColor(gig.status)}`}>
+                    £{gig.fee} • {gig.status === "confirmed" ? "Confirmed" : "Pending"}
+                  </p>
                 </div>
               </div>
-              <div className="flex-1">
-                <h4 className="font-medium">{gig.title}</h4>
-                <p className="text-sm opacity-75">{gig.venue} • {gig.eventTime}</p>
-                <p className={`text-xs ${getStatusBadgeColor(gig.status)}`}>
-                  £{gig.fee} • {gig.status === "confirmed" ? "Confirmed" : "Pending"}
-                </p>
-              </div>
-            </div>
+            </Link>
           );
         })}
 

@@ -69,6 +69,13 @@ export default function Enquiries() {
   const getInitialStatusFilters = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const statusParam = urlParams.get('status');
+    const idParam = urlParams.get('id');
+    
+    // If redirected with only ID parameter (new navigation system), show all bookings
+    if (idParam && !statusParam) {
+      console.log('🔗 ID-only redirect detected, showing all bookings for ID:', idParam);
+      return []; // Empty array means show all bookings
+    }
     
     // If redirected from dashboard with a specific status, use that status
     if (statusParam) {
@@ -122,11 +129,30 @@ export default function Enquiries() {
       setIsDialogOpen(true);
     }
     
-    // Handle dashboard redirect with status filter
+    // Handle navigation with ID parameter
     const statusParam = urlParams.get('status');
     const idParam = urlParams.get('id');
     
-    if (statusParam) {
+    if (idParam && !statusParam) {
+      // New navigation system: show all bookings when only ID is provided
+      console.log('🔗 ID-only navigation detected, showing all bookings and scrolling to ID:', idParam);
+      setActiveStatusFilters([]); // Show all bookings
+      
+      // Scroll to specific booking
+      setTimeout(() => {
+        const element = document.getElementById(`booking-${idParam}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add highlight effect
+          element.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+          element.style.borderRadius = '0.5rem';
+          setTimeout(() => {
+            element.style.boxShadow = '';
+          }, 2000);
+        }
+      }, 500); // Allow time for data to load
+    } else if (statusParam) {
+      // Legacy navigation: filter by status
       console.log('🔗 Dashboard redirect - setting filter to:', statusParam);
       setActiveStatusFilters([statusParam]);
       
@@ -719,8 +745,8 @@ export default function Enquiries() {
       enquiry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       enquiry.clientName.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Use activeStatusFilters instead of statusFilter
-    const matchesStatus = activeStatusFilters.includes(enquiry.status);
+    // If no filters are active (empty array), show all bookings
+    const matchesStatus = activeStatusFilters.length === 0 || activeStatusFilters.includes(enquiry.status);
     
     return matchesSearch && matchesStatus;
   });
@@ -1166,8 +1192,20 @@ export default function Enquiries() {
               </div>
               {/* Status Filter Buttons - Two Rows */}
               <div className="flex flex-col gap-2">
-                {/* Top Row - 4 buttons */}
+                {/* Top Row - All + 4 buttons */}
                 <div className="flex gap-2">
+                  <Button
+                    onClick={() => setActiveStatusFilters([])}
+                    variant={activeStatusFilters.length === 0 ? 'default' : 'outline'}
+                    size="sm"
+                    className={`${
+                      activeStatusFilters.length === 0 
+                        ? 'bg-gray-600 text-white border-gray-600 hover:bg-gray-700' 
+                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-600 hover:text-white'
+                    }`}
+                  >
+                    All
+                  </Button>
                   <Button
                     onClick={() => toggleStatusFilter('new')}
                     variant={activeStatusFilters.includes('new') ? 'default' : 'outline'}

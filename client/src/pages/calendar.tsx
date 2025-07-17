@@ -254,8 +254,8 @@ export default function Calendar() {
       const status = firstEvent.status || 'new';
       const id = firstEvent.id;
       
-      // Navigate to bookings page with status filter and ID
-      navigate(`/bookings?status=${status}&id=${id}`);
+      // Navigate to bookings page with ID only (show all bookings)
+      navigate(`/bookings?id=${id}`);
     }
   };
 
@@ -353,7 +353,7 @@ export default function Calendar() {
                   ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900')} 
                   bg-opacity-10 border-l-current
                 `}
-                onClick={() => navigate(`/bookings?status=${event.status || 'new'}&id=${event.id}`)}
+                onClick={() => navigate(`/bookings?id=${event.id}`)}
               >
                 <h3 className="font-semibold">{event.title}</h3>
                 <p className="text-sm opacity-75">{event.status}</p>
@@ -411,7 +411,7 @@ export default function Calendar() {
                       ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900')} 
                       bg-opacity-20 lg:block
                     `}
-                    onClick={() => navigate(`/bookings?status=${event.status || 'new'}&id=${event.id}`)}
+                    onClick={() => navigate(`/bookings?id=${event.id}`)}
                   >
                     {/* Mobile: show abbreviated title */}
                     <span className="lg:hidden">

@@ -258,7 +258,7 @@ export default function ActionableEnquiries() {
     const badgeInfo = getBadgeInfo();
     
     return (
-      <Link key={enquiry.id} href={`/bookings?status=${enquiry.status}&id=${enquiry.id}`}>
+      <Link key={enquiry.id} href={`/bookings?id=${enquiry.id}`}>
         <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer ${
           getStatusOverlay()
         } ${hasConflicts ? getConflictOverlay() : ''}`}>
