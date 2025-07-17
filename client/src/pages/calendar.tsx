@@ -426,16 +426,92 @@ export default function Calendar() {
       
       <div className="main-content">
         {/* Header */}
-        <header className="border-b border-gray-200 dark:border-slate-700 p-6 bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-          <div className="flex items-center justify-between">
+        <header className="border-b border-gray-200 dark:border-slate-700 p-4 lg:p-6 bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between lg:hidden">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 rounded-xl hover:bg-white dark:hover:bg-slate-800 shadow-sm md:hidden transition-all"
+                className="p-2 rounded-xl hover:bg-white dark:hover:bg-slate-800 shadow-sm transition-all"
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent ml-12 md:ml-0">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Calendar
+              </h1>
+            </div>
+            
+            {/* Mobile Navigation Controls */}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                onClick={goToPrevious}
+                size="sm"
+                className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={goToToday}
+                size="sm"
+                className="px-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:shadow-lg transition-all text-xs"
+              >
+                Today
+              </Button>
+              <Button
+                variant="outline"
+                onClick={goToNext}
+                size="sm"
+                className="rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-700"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile View Selector */}
+          <div className="mt-4 lg:hidden">
+            <div className="flex items-center justify-center space-x-1 bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
+              <Button
+                variant={view === 'day' ? 'default' : 'ghost'}
+                onClick={() => setView('day')}
+                size="sm"
+                className="rounded-md flex-1"
+              >
+                <Clock className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={view === 'week' ? 'default' : 'ghost'}
+                onClick={() => setView('week')}
+                size="sm"
+                className="rounded-md flex-1"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={view === 'month' ? 'default' : 'ghost'}
+                onClick={() => setView('month')}
+                size="sm"
+                className="rounded-md flex-1"
+              >
+                <CalendarIcon className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={view === 'year' ? 'default' : 'ghost'}
+                onClick={() => setView('year')}
+                size="sm"
+                className="rounded-md flex-1"
+              >
+                <Grid className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="hidden lg:flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Calendar
               </h1>
             </div>
@@ -531,27 +607,27 @@ export default function Calendar() {
         </header>
 
         {/* Calendar */}
-        <div className="p-6">
+        <div className="p-2 lg:p-6">
           <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-            <CardContent className="p-8">
+            <CardContent className="p-2 lg:p-8">
               {/* Date Header */}
-              <div className="text-center mb-8">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <div className="text-center mb-4 lg:mb-8">
+                <h2 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   {getFormattedDate()}
                 </h2>
               </div>
 
               {/* Calendar Content */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-lg">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-2 lg:p-4 shadow-lg">
                 {view === 'day' && renderDayView()}
                 {view === 'week' && renderWeekView()}
                 {view === 'month' && (
-                  <div className="grid grid-cols-7 gap-3">
+                  <div className="grid grid-cols-7 gap-1 lg:gap-3">
                     {/* Day headers */}
                     {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
                       <div
                         key={day}
-                        className="h-14 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-xl"
+                        className="h-8 lg:h-14 flex items-center justify-center text-xs lg:text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-lg lg:rounded-xl"
                       >
                         {day}
                       </div>
@@ -562,7 +638,7 @@ export default function Calendar() {
                       <div
                         key={index}
                         className={`
-                          h-24 cursor-pointer rounded-xl transition-all duration-200 relative
+                          h-16 lg:h-24 cursor-pointer rounded-lg lg:rounded-xl transition-all duration-200 relative
                           hover:scale-105 hover:shadow-md
                           ${day.hasEvents && day.events.length === 1
                             ? day.events[0].type === 'booking'
@@ -585,7 +661,7 @@ export default function Calendar() {
                       >
                         {/* Date number - positioned absolutely in top right */}
                         <div className={`
-                          absolute top-2 right-2 text-sm font-bold z-10
+                          absolute top-1 right-1 lg:top-2 lg:right-2 text-xs lg:text-sm font-bold z-10
                           ${day.isToday 
                             ? 'text-white' 
                             : day.hasEvents && day.events.length === 1
@@ -602,12 +678,12 @@ export default function Calendar() {
 
                         {/* Events display */}
                         {day.hasEvents && (
-                          <div className="h-full flex flex-col p-2">
+                          <div className="h-full flex flex-col p-1 lg:p-2">
                             {day.events.length === 1 ? (
                               // Single event - fill entire cell
                               <div
                                 className={`
-                                  flex-1 flex items-center justify-center text-center p-2
+                                  flex-1 flex items-center justify-center text-center p-1 lg:p-2
                                   ${getStatusColor(day.events[0].status || 'new').includes('text-white') 
                                     ? 'text-gray-900 dark:text-gray-100' 
                                     : 'text-gray-800 dark:text-gray-200'
@@ -625,7 +701,7 @@ export default function Calendar() {
                                   <div
                                     key={eventIndex}
                                     className={`
-                                      flex-1 px-2 py-1 rounded-lg text-xs font-medium shadow-sm
+                                      flex-1 px-1 lg:px-2 py-1 rounded-lg text-xs font-medium shadow-sm
                                       flex items-center justify-center text-center
                                       ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900 dark:text-gray-100')} 
                                       bg-opacity-20 border border-current border-opacity-30
@@ -637,7 +713,7 @@ export default function Calendar() {
                                   </div>
                                 ))}
                                 {day.events.length > 2 && (
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium text-center">
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 px-1 lg:px-2 font-medium text-center">
                                     +{day.events.length - 2} more
                                   </div>
                                 )}
