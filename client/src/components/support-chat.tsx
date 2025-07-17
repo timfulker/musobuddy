@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,20 +12,54 @@ interface Message {
   timestamp: Date;
 }
 
+const defaultMessages: Message[] = [
+  {
+    id: '1',
+    text: 'Hello! I\'m your MusoBuddy assistant. I can help you with contracts, invoices, bookings, and any questions about using the platform. How can I assist you today?',
+    sender: 'bot',
+    timestamp: new Date()
+  }
+];
+
 export default function SupportChat() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m your MusoBuddy assistant. I can help you with contracts, invoices, bookings, and any questions about using the platform. How can I assist you today?',
-      sender: 'bot',
-      timestamp: new Date()
-    }
-  ]);
+  const [isOpen, setIsOpen] = useState(() => {
+    const saved = localStorage.getItem('musobuddy-chat-open');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [isMinimized, setIsMinimized] = useState(() => {
+    const saved = localStorage.getItem('musobuddy-chat-minimized');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('musobuddy-chat-messages');
+    return saved ? JSON.parse(saved) : defaultMessages;
+  });
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [position, setPosition] = useState(() => {
+    const saved = localStorage.getItem('musobuddy-chat-position');
+    return saved ? JSON.parse(saved) : { x: 0, y: 0 };
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const { toast } = useToast();
+
+  // Save state to localStorage
+  useEffect(() => {
+    localStorage.setItem('musobuddy-chat-open', JSON.stringify(isOpen));
+  }, [isOpen]);
+
+  useEffect(() => {
+    localStorage.setItem('musobuddy-chat-minimized', JSON.stringify(isMinimized));
+  }, [isMinimized]);
+
+  useEffect(() => {
+    localStorage.setItem('musobuddy-chat-messages', JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem('musobuddy-chat-position', JSON.stringify(position));
+  }, [position]);
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -83,6 +117,34 @@ export default function SupportChat() {
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+    
+    // Keep within viewport bounds
+    const maxX = window.innerWidth - 320; // 320px is chat width
+    const maxY = window.innerHeight - (isMinimized ? 48 : 384); // 384px is chat height
+    
+    setPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY))
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   if (!isOpen) {
     return (
       <Button
@@ -96,8 +158,22 @@ export default function SupportChat() {
   }
 
   return (
-    <Card className={`fixed bottom-20 right-6 w-80 z-50 shadow-2xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl transition-all duration-300 ${isMinimized ? 'h-12' : 'h-96'}`}>
-      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+    <div
+      className="fixed z-50"
+      style={{
+        left: position.x || 'calc(100vw - 320px - 24px)',
+        top: position.y || 'calc(100vh - 80px - 384px)',
+        transform: position.x || position.y ? 'none' : 'translateY(0)'
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
+      <Card className={`w-80 shadow-2xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl transition-all duration-300 ${isMinimized ? 'h-12' : 'h-96'} ${isDragging ? 'cursor-grabbing' : ''}`}>
+      <CardHeader 
+        className="pb-3 flex flex-row items-center justify-between cursor-grab active:cursor-grabbing"
+        onMouseDown={handleMouseDown}
+      >
         <CardTitle className="text-sm font-semibold">MusoBuddy Support</CardTitle>
         <div className="flex items-center gap-2">
           <Button
@@ -172,5 +248,6 @@ export default function SupportChat() {
         </CardContent>
       )}
     </Card>
+    </div>
   );
 }
