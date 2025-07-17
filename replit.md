@@ -135,6 +135,8 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Enhanced Calendar Interaction**: Individual events in day and week views are now clickable with hover effects
   * **Mobile Calendar Responsiveness**: Calendar header redesigned with separate mobile/desktop layouts, compact mobile view selector
   * **Responsive Calendar Grid**: Month view optimized for mobile with smaller cells, reduced padding, and improved touch targets
+  * **Mobile Event Display**: Mobile calendar uses color-coded dots for multiple events, abbreviated titles for single events to prevent text overlap
+  * **Dual Display System**: Desktop shows full event text while mobile shows compact indicators maintaining readability
   * **Clean URL Management**: Parameters are automatically cleaned from URL after processing for aesthetic URLs
   * **Fallback Behavior**: Direct bookings page access still defaults to "contract_sent" filter for normal workflow
   * **Cross-Page Consistency**: All navigation from dashboard and calendar now maintains context and shows relevant events

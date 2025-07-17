@@ -358,11 +358,18 @@ export default function Calendar() {
                     className={`
                       text-xs p-1 rounded cursor-pointer hover:bg-opacity-40 transition-colors
                       ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900')} 
-                      bg-opacity-20
+                      bg-opacity-20 lg:block
                     `}
                     onClick={() => navigate(`/bookings?status=${event.status || 'new'}&id=${event.id}`)}
                   >
-                    {event.title}
+                    {/* Mobile: show abbreviated title */}
+                    <span className="lg:hidden">
+                      {event.title.length > 6 ? event.title.substring(0, 6) + '...' : event.title}
+                    </span>
+                    {/* Desktop: show full title */}
+                    <span className="hidden lg:inline">
+                      {event.title}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -679,46 +686,82 @@ export default function Calendar() {
                         {/* Events display */}
                         {day.hasEvents && (
                           <div className="h-full flex flex-col p-1 lg:p-2">
-                            {day.events.length === 1 ? (
-                              // Single event - fill entire cell
-                              <div
-                                className={`
-                                  flex-1 flex items-center justify-center text-center p-1 lg:p-2
-                                  ${getStatusColor(day.events[0].status || 'new').includes('text-white') 
-                                    ? 'text-gray-900 dark:text-gray-100' 
-                                    : 'text-gray-800 dark:text-gray-200'
-                                  }
-                                `}
-                              >
-                                <span className="text-xs font-medium leading-tight whitespace-pre-wrap break-words">
-                                  {day.events[0].title}
-                                </span>
-                              </div>
-                            ) : (
-                              // Multiple events - split space
-                              <div className="flex-1 flex flex-col space-y-1">
-                                {day.events.slice(0, 2).map((event, eventIndex) => (
-                                  <div
-                                    key={eventIndex}
-                                    className={`
-                                      flex-1 px-1 lg:px-2 py-1 rounded-lg text-xs font-medium shadow-sm
-                                      flex items-center justify-center text-center
-                                      ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900 dark:text-gray-100')} 
-                                      bg-opacity-20 border border-current border-opacity-30
-                                    `}
-                                  >
-                                    <span className="leading-tight whitespace-pre-wrap break-words">
-                                      {event.title}
-                                    </span>
+                            {/* Mobile view - use dots/indicators for events */}
+                            <div className="lg:hidden h-full flex flex-col justify-center">
+                              {day.events.length === 1 ? (
+                                // Single event - show abbreviated title
+                                <div className="flex flex-col items-center">
+                                  <div 
+                                    className={`w-3 h-3 rounded-full mb-1 ${getStatusColor(day.events[0].status || 'new').replace('text-white', 'bg-current')}`}
+                                  />
+                                  <span className="text-xs font-medium text-center leading-tight break-words max-w-full">
+                                    {day.events[0].title.length > 8 ? day.events[0].title.substring(0, 8) + '...' : day.events[0].title}
+                                  </span>
+                                </div>
+                              ) : (
+                                // Multiple events - show colored dots
+                                <div className="flex flex-col items-center space-y-1">
+                                  <div className="flex flex-wrap justify-center gap-1">
+                                    {day.events.slice(0, 4).map((event, eventIndex) => (
+                                      <div
+                                        key={eventIndex}
+                                        className={`w-2 h-2 rounded-full ${getStatusColor(event.status || 'new').replace('text-white', 'bg-current')}`}
+                                        title={event.title}
+                                      />
+                                    ))}
                                   </div>
-                                ))}
-                                {day.events.length > 2 && (
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 px-1 lg:px-2 font-medium text-center">
-                                    +{day.events.length - 2} more
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                                  {day.events.length > 4 && (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 font-medium text-center">
+                                      +{day.events.length - 4}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Desktop view - show full text */}
+                            <div className="hidden lg:flex lg:flex-col lg:h-full">
+                              {day.events.length === 1 ? (
+                                // Single event - fill entire cell
+                                <div
+                                  className={`
+                                    flex-1 flex items-center justify-center text-center p-2
+                                    ${getStatusColor(day.events[0].status || 'new').includes('text-white') 
+                                      ? 'text-gray-900 dark:text-gray-100' 
+                                      : 'text-gray-800 dark:text-gray-200'
+                                    }
+                                  `}
+                                >
+                                  <span className="text-xs font-medium leading-tight whitespace-pre-wrap break-words">
+                                    {day.events[0].title}
+                                  </span>
+                                </div>
+                              ) : (
+                                // Multiple events - split space
+                                <div className="flex-1 flex flex-col space-y-1">
+                                  {day.events.slice(0, 2).map((event, eventIndex) => (
+                                    <div
+                                      key={eventIndex}
+                                      className={`
+                                        flex-1 px-2 py-1 rounded-lg text-xs font-medium shadow-sm
+                                        flex items-center justify-center text-center
+                                        ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900 dark:text-gray-100')} 
+                                        bg-opacity-20 border border-current border-opacity-30
+                                      `}
+                                    >
+                                      <span className="leading-tight whitespace-pre-wrap break-words">
+                                        {event.title}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  {day.events.length > 2 && (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium text-center">
+                                      +{day.events.length - 2} more
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
