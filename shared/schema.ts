@@ -164,6 +164,7 @@ export const invoices = pgTable("invoices", {
   invoiceNumber: varchar("invoice_number").notNull().unique(),
   clientName: varchar("client_name").notNull(),
   clientEmail: varchar("client_email"), // Added client email directly to invoice
+  ccEmail: varchar("cc_email"), // Optional CC email for invoice notifications
   clientAddress: varchar("client_address"), // Client's address
   venueAddress: text("venue_address"), // Venue address where performance takes place
   performanceDate: timestamp("performance_date"),
