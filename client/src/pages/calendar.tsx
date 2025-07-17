@@ -62,7 +62,19 @@ export default function Calendar() {
     if (conflicts.length === 0) return false;
     
     // Check if any of the conflicts are resolved
-    return conflicts.some(conflict => resolvedConflicts.has(event.id) || resolvedConflicts.has(conflict.id));
+    const isResolved = conflicts.some(conflict => resolvedConflicts.has(event.id) || resolvedConflicts.has(conflict.id));
+    
+    // Debug logging
+    if (conflicts.length > 0) {
+      console.log(`🔍 Event ${event.id} "${event.title}" has ${conflicts.length} conflicts, resolved: ${isResolved}`, {
+        eventId: event.id,
+        conflictIds: conflicts.map(c => c.id),
+        resolvedConflicts: Array.from(resolvedConflicts),
+        isResolved
+      });
+    }
+    
+    return isResolved;
   };
 
   // Fetch data for calendar events - Phase 3: Only use main bookings table
@@ -804,7 +816,10 @@ export default function Calendar() {
                                         flex-1 px-1 py-1 rounded-lg text-xs font-medium shadow-sm
                                         flex items-center justify-center text-center
                                         ${getStatusColor(event.status || 'new')} 
-                                        bg-opacity-20 border border-current border-opacity-30
+                                        ${day.events.length > 1
+                                          ? 'bg-opacity-80 border border-current border-opacity-50'
+                                          : 'bg-opacity-20 border border-current border-opacity-30'
+                                        }
                                       `}
                                     >
                                       <span className="leading-tight break-words">
@@ -821,7 +836,10 @@ export default function Calendar() {
                                       flex-1 px-1 py-1 rounded-lg text-xs font-medium shadow-sm
                                       flex items-center justify-center text-center
                                       ${getStatusColor(day.events[0].status || 'new')} 
-                                      bg-opacity-20 border border-current border-opacity-30
+                                      ${day.events.length > 1
+                                        ? 'bg-opacity-80 border border-current border-opacity-50'
+                                        : 'bg-opacity-20 border border-current border-opacity-30'
+                                      }
                                     `}
                                   >
                                     <span className="leading-tight break-words">
