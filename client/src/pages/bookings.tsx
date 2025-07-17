@@ -1630,7 +1630,7 @@ export default function Enquiries() {
               return (
                 <TooltipProvider key={enquiry.id}>
                   <Card id={`booking-${enquiry.id}`} className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
-                    <CardContent className="p-4">
+                    <CardContent className="p-6">
                       <div className="relative">
                         {/* Critical Conflict Red Stripe */}
                         {severity.level === 'critical' && (
@@ -1690,7 +1690,7 @@ export default function Enquiries() {
                         
                         <div className={`pl-8 pr-8 ${(severity.level === 'critical' || severity.level === 'warning') ? 'pt-8' : ''}`}>
                           {/* Header with Price and Status */}
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center justify-between mb-4">
                             <div className="text-lg font-bold text-green-600">
                               {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
                             </div>
@@ -1713,8 +1713,8 @@ export default function Enquiries() {
                           </div>
                         
                         {/* Date and Event Info */}
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className={`relative flex-shrink-0 w-20 h-16 border rounded-lg flex flex-col items-center justify-center p-1 ${
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className={`relative flex-shrink-0 w-24 h-20 border rounded-lg flex flex-col items-center justify-center p-2 ${
                             isPastDate ? 'border-gray-300 bg-gray-100' :
                             severity.level === 'critical' ? 'border-rose-300 bg-rose-50' :
                             severity.level === 'warning' ? 'border-amber-300 bg-amber-50' :
@@ -1738,14 +1738,14 @@ export default function Enquiries() {
                             )}
                           </div>
                           
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold text-gray-900 truncate">{enquiry.title}</h3>
-                            <p className="text-xs text-gray-600 truncate">{enquiry.clientName}</p>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <h3 className="text-base font-semibold text-gray-900 truncate">{enquiry.title}</h3>
+                            <p className="text-sm text-gray-600 truncate">{enquiry.clientName}</p>
                             {enquiry.venue && (
-                              <p className="text-xs text-gray-500 truncate">{enquiry.venue}</p>
+                              <p className="text-sm text-gray-500 truncate">{enquiry.venue}</p>
                             )}
-                            <div className="flex items-center text-xs text-gray-500 truncate">
-                              <Clock className="w-3 h-3 mr-1" />
+                            <div className="flex items-center text-sm text-gray-500 truncate">
+                              <Clock className="w-4 h-4 mr-1" />
                               <span>
                                 {enquiry.eventTime && enquiry.eventEndTime 
                                   ? `${enquiry.eventTime} - ${enquiry.eventEndTime}`
@@ -1757,7 +1757,7 @@ export default function Enquiries() {
                         </div>
                         
                         {/* Conflict and Response Indicators */}
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-2 mb-4">
                           {hasConflicts && (
                             <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getConflictBadge(severity, conflicts.length)}`} title={formatConflictTooltip(severity, conflictAnalysis)}>
                               <span>{severity.icon}</span>
@@ -1778,18 +1778,18 @@ export default function Enquiries() {
                         </div>
                         
                         {/* Status Buttons */}
-                        <div className="flex justify-between items-center mb-3">
-                          <div className="flex gap-1">
+                        <div className="flex justify-center items-center mb-4">
+                          <div className="flex gap-2">
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   onClick={() => handleQuickStatusUpdate(enquiry.id, 'new')}
                                   variant="outline"
                                   size="sm"
-                                  className={`w-6 h-6 p-0 text-xs ${
+                                  className={`w-8 h-8 p-0 text-xs font-medium ${
                                     enquiry.status === 'new' 
-                                      ? 'bg-blue-500 text-white border-blue-500' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                      ? 'bg-[#5DADE2] text-white border-[#5DADE2]' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#5DADE2] hover:text-white'
                                   }`}
                                 >
                                   E
@@ -1804,10 +1804,10 @@ export default function Enquiries() {
                                   onClick={() => handleQuickStatusUpdate(enquiry.id, 'booking_in_progress')}
                                   variant="outline"
                                   size="sm"
-                                  className={`w-6 h-6 p-0 text-xs ${
+                                  className={`w-8 h-8 p-0 text-xs font-medium ${
                                     enquiry.status === 'booking_in_progress' 
-                                      ? 'bg-amber-500 text-white border-amber-500' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                      ? 'bg-[#F39C12] text-white border-[#F39C12]' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#F39C12] hover:text-white'
                                   }`}
                                 >
                                   P
@@ -1822,10 +1822,10 @@ export default function Enquiries() {
                                   onClick={() => handleQuickStatusUpdate(enquiry.id, 'confirmed')}
                                   variant="outline"
                                   size="sm"
-                                  className={`w-6 h-6 p-0 text-xs ${
+                                  className={`w-8 h-8 p-0 text-xs font-medium ${
                                     enquiry.status === 'confirmed' 
-                                      ? 'bg-green-500 text-white border-green-500' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                      ? 'bg-[#2980B9] text-white border-[#2980B9]' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#2980B9] hover:text-white'
                                   }`}
                                 >
                                   C
@@ -1840,10 +1840,10 @@ export default function Enquiries() {
                                   onClick={() => handleQuickStatusUpdate(enquiry.id, 'contract_sent')}
                                   variant="outline"
                                   size="sm"
-                                  className={`w-6 h-6 p-0 text-xs ${
+                                  className={`w-8 h-8 p-0 text-xs font-medium ${
                                     enquiry.status === 'contract_sent' 
-                                      ? 'bg-purple-500 text-white border-purple-500' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                      ? 'bg-[#9B59B6] text-white border-[#9B59B6]' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#9B59B6] hover:text-white'
                                   }`}
                                 >
                                   S
@@ -1858,10 +1858,10 @@ export default function Enquiries() {
                                   onClick={() => handleQuickStatusUpdate(enquiry.id, 'contract_received')}
                                   variant="outline"
                                   size="sm"
-                                  className={`w-6 h-6 p-0 text-xs ${
+                                  className={`w-8 h-8 p-0 text-xs font-medium ${
                                     enquiry.status === 'contract_received' 
-                                      ? 'bg-indigo-500 text-white border-indigo-500' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                      ? 'bg-[#27AE60] text-white border-[#27AE60]' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#27AE60] hover:text-white'
                                   }`}
                                 >
                                   R
@@ -1876,10 +1876,10 @@ export default function Enquiries() {
                                   onClick={() => handleQuickStatusUpdate(enquiry.id, 'completed')}
                                   variant="outline"
                                   size="sm"
-                                  className={`w-6 h-6 p-0 text-xs ${
+                                  className={`w-8 h-8 p-0 text-xs font-medium ${
                                     enquiry.status === 'completed' 
-                                      ? 'bg-gray-700 text-white border-gray-700' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                      ? 'bg-[#34495E] text-white border-[#34495E]' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#34495E] hover:text-white'
                                   }`}
                                 >
                                   ✓
@@ -1894,10 +1894,10 @@ export default function Enquiries() {
                                   onClick={() => handleQuickStatusUpdate(enquiry.id, 'rejected')}
                                   variant="outline"
                                   size="sm"
-                                  className={`w-6 h-6 p-0 text-xs ${
+                                  className={`w-8 h-8 p-0 text-xs font-medium ${
                                     enquiry.status === 'rejected' 
-                                      ? 'bg-red-500 text-white border-red-500' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300'
+                                      ? 'bg-[#C0392B] text-white border-[#C0392B]' 
+                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#C0392B] hover:text-white'
                                   }`}
                                 >
                                   ✗
@@ -1919,50 +1919,32 @@ export default function Enquiries() {
                                 }}
                                 variant="outline"
                                 size="sm"
-                                className="text-xs"
+                                className="text-sm px-4 py-2"
                               >
-                                <Reply className="w-3 h-3 mr-1" />
+                                <Reply className="w-4 h-4 mr-2" />
                                 Respond
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>Send email response to client</TooltipContent>
                           </Tooltip>
                           
-                          <div className="flex gap-1">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => {
-                                    setSelectedBookingForDetails(enquiry);
-                                    setBookingDetailsDialogOpen(true);
-                                  }}
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs w-8 h-8 p-0"
-                                >
-                                  <Info className="w-3 h-3" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>View booking details</TooltipContent>
-                            </Tooltip>
-                            
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => {
-                                    setSelectedBookingForUpdate(enquiry);
-                                    setBookingStatusDialogOpen(true);
-                                  }}
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs w-8 h-8 p-0"
-                                >
-                                  <Edit className="w-3 h-3" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Update booking status</TooltipContent>
-                            </Tooltip>
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={() => {
+                                  setSelectedBookingForDetails(enquiry);
+                                  setBookingDetailsDialogOpen(true);
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="text-sm px-4 py-2"
+                              >
+                                <Info className="w-4 h-4 mr-2" />
+                                Details
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>View booking details</TooltipContent>
+                          </Tooltip>
                         </div>
                         </div>
                       </div>
