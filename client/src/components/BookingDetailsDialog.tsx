@@ -31,6 +31,11 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
 
 const bookingDetailsSchema = z.object({
+  clientName: z.string().min(1, "Client name is required"),
+  eventDate: z.string().min(1, "Event date is required"),
+  eventTime: z.string().optional(),
+  venue: z.string().optional(),
+  fee: z.string().optional(),
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientPhone: z.string().optional(),
   clientAddress: z.string().optional(),
@@ -79,6 +84,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
     defaultValues: {
+      clientName: "",
+      eventDate: "",
+      eventTime: "",
+      venue: "",
+      fee: "",
       clientEmail: "",
       clientPhone: "",
       clientAddress: "",
@@ -105,6 +115,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   useEffect(() => {
     if (booking) {
       const bookingData = {
+        clientName: booking.clientName || "",
+        eventDate: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : "",
+        eventTime: booking.eventTime || "",
+        venue: booking.venue || "",
+        fee: booking.fee || "",
         clientEmail: booking.clientEmail || "",
         clientPhone: booking.clientPhone || "",
         clientAddress: booking.clientAddress || "",
@@ -277,37 +292,80 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Client Name</Label>
-                      <div className="p-2 bg-gray-50 rounded-md">{booking.clientName}</div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Event Date</Label>
-                      <div className="p-2 bg-gray-50 rounded-md">
-                        {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'Not set'}
-                      </div>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="clientName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="eventDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Date</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Event Time</Label>
-                      <div className="p-2 bg-gray-50 rounded-md">{booking.eventTime || 'Not set'}</div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Venue</Label>
-                      <div className="p-2 bg-gray-50 rounded-md">{booking.venue || 'Not set'}</div>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="eventTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Time</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="time" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="venue"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Venue</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="fee"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fee (£)</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.01" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <div className="space-y-2">
-                      <Label>Fee</Label>
-                      <div className="p-2 bg-gray-50 rounded-md">£{booking.fee || 'Not set'}</div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Status</Label>
-                      <div className="p-2 bg-gray-50 rounded-md">
+                      <Label className="text-gray-400">Status (edit via status buttons)</Label>
+                      <div className="p-2 bg-gray-100 rounded-md opacity-60">
                         <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
                           {booking.status}
                         </Badge>
