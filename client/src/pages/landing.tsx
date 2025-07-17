@@ -102,7 +102,7 @@ export default function Landing() {
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-2">Calendar Integration</h4>
               <p className="text-gray-600">
-                Two-way Google Calendar sync with availability checking and color-coded status indicators.
+                Import calendar events from Google Calendar, Apple Calendar, and Outlook with conflict detection.
               </p>
             </CardContent>
           </Card>
@@ -124,9 +124,9 @@ export default function Landing() {
               <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
                 <BarChart3 className="w-6 h-6 text-indigo-600" />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Analytics Dashboard</h4>
+              <h4 className="text-xl font-semibold text-gray-900 mb-2">Business Dashboard</h4>
               <p className="text-gray-600">
-                Track revenue, conversion rates, and booking trends with comprehensive business insights.
+                Monitor monthly revenue, active bookings, pending invoices, and enquiries requiring attention.
               </p>
             </CardContent>
           </Card>
@@ -169,6 +169,10 @@ export default function Landing() {
                     <BarChart3 className="w-4 h-4 text-blue-500" />
                     <span>Advanced analytics and business insights</span>
                   </li>
+                  <li className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-500" />
+                    <span>Email client integration for seamless communication</span>
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -201,6 +205,10 @@ export default function Landing() {
                   <li className="flex items-center gap-2">
                     <Star className="w-4 h-4 text-purple-500" />
                     <span>Musician marketplace and referral system</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-purple-500" />
+                    <span>Google Maps integration for multi-event per day feasibility</span>
                   </li>
                 </ul>
               </CardContent>
