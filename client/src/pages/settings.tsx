@@ -178,25 +178,7 @@ export default function Settings() {
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsFormSchema),
-    defaultValues: {
-      businessName: "",
-      businessEmail: "",
-      businessAddress: "",
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      county: "",
-      postcode: "",
-      phone: "",
-      website: "",
-      taxNumber: "",
-      emailFromName: "",
-      nextInvoiceNumber: 1,
-      defaultTerms: "",
-      bankDetails: "",
-      selectedInstruments: [],
-      gigTypes: [],
-    },
+    // Don't set default values here - let the form initialize from settings data
   });
 
   // Load existing settings data
@@ -285,13 +267,13 @@ export default function Settings() {
     },
   });
 
-  // Initialize form when settings are loaded (only on first load)
+  // Initialize form when settings are loaded
   useEffect(() => {
     if (settings && !saveSettings.isPending) {
       console.log('🔄 FORM RESET: Resetting form with settings:', settings);
       
-      // Force reset form with settings data
-      form.reset({
+      // Create the form data object with actual values
+      const formData = {
         businessName: settings.businessName || "",
         businessEmail: settings.businessEmail || "",
         businessAddress: settings.businessAddress || "",
@@ -309,7 +291,12 @@ export default function Settings() {
         bankDetails: settings.bankDetails || "",
         selectedInstruments: settings.selectedInstruments || [],
         gigTypes: settings.gigTypes || [],
-      });
+      };
+      
+      console.log('🔄 Actual form data to set:', formData);
+      
+      // Force reset form with settings data
+      form.reset(formData);
       
       // Set local state
       const instruments = Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : [];
