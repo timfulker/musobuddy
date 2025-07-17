@@ -156,6 +156,13 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
   * **Improved Dashboard Focus**: Dashboard now shows more relevant, near-term upcoming gigs instead of events months away
   * **Status**: Dashboard shows contextually relevant upcoming gigs with proper dialog close behavior
 
+- July 17, 2025. Contract view URL and email notification system fixes completed:
+  * **CloudFlare URL Priority**: Fixed contractViewUrl to use CloudFlare storage URL when available instead of hardcoded app URL
+  * **Enhanced Performer Email Detection**: Added fallback email detection for performer notifications (businessEmail → email → user claims)
+  * **Comprehensive Email Logging**: Added detailed logging for missing performer emails with checked sources
+  * **Client Accessibility**: Contract confirmation emails now properly link to CloudFlare URLs for client access without app dependency
+  * **Status**: Contract viewing system now prioritizes CloudFlare URLs and ensures performer notifications are sent
+
 - July 17, 2025. Calendar conflict resolution visual system fully completed and operational:
   * **Orange Ring System**: Multiple events on same day display with orange rings around date for clear visual distinction
   * **Vibrant Event Display**: Multiple events show with 90% opacity instead of faded 20% opacity for better visibility

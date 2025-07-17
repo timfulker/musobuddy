@@ -2080,10 +2080,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // Generate contract view URL - always use app-based view page for signed contracts
+        // Generate contract URLs - prioritize CloudFlare for signed contracts
         const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
         const contractDownloadUrl = `https://${currentDomain}/api/contracts/${signedContract.id}/download`;
-        const contractViewUrl = `https://${currentDomain}/view-contract/${signedContract.id}`;
+        
+        // Use CloudFlare URL for viewing if available, otherwise fall back to app URL
+        const contractViewUrl = cloudStorageUrl || `https://${currentDomain}/view-contract/${signedContract.id}`;
         
         console.log('🔥 CONTRACT SIGNING: Domain configuration:', {
           REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
@@ -2177,9 +2179,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Email to performer (business owner) with download link
-        if (userSettings?.businessEmail) {
+        // Try multiple email sources for performer notification
+        const performerEmail = userSettings?.businessEmail || 
+                             userSettings?.email || 
+                             (req.user?.claims?.email);
+        
+        if (performerEmail) {
           const performerEmailData: any = {
-            to: userSettings.businessEmail,
+            to: performerEmail,
             from: `${fromName} <${fromEmail}>`,
             subject: `Contract ${contract.contractNumber} Signed by Client ✓`,
             html: `
@@ -2241,6 +2248,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } else {
             console.log('✅ PERFORMER CONFIRMATION EMAIL SENT SUCCESSFULLY');
           }
+        } else {
+          console.warn('⚠️ No performer email available - checked businessEmail, email, and user claims');
+          console.warn('UserSettings:', userSettings);
+          console.warn('User claims:', req.user?.claims);
         }
       } catch (emailError) {
         console.error("❌ CRITICAL ERROR: Failed to send confirmation emails:", emailError);
