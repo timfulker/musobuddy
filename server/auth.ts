@@ -15,23 +15,28 @@ declare global {
 }
 
 export function setupAuth(app: Express) {
-  // Use memory store for now to avoid PostgreSQL connection issues
-  const memoryStore = MemoryStore(session);
+  // Use PostgreSQL store for stable, persistent sessions
+  const PostgresStore = connectPg(session);
+  const pgStore = new PostgresStore({
+    conString: process.env.DATABASE_URL,
+    tableName: 'user_sessions',
+    createTableIfMissing: true,
+    ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
   
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-key-2025',
     resave: false,
-    saveUninitialized: false, // Keep false to prevent unnecessary session creation
-    rolling: false, // Don't reset session expiry on each request
-    store: new memoryStore({
-      checkPeriod: 86400000 // Prune expired entries every 24h
-    }),
+    saveUninitialized: false,
+    rolling: true, // Extend session on activity
+    store: pgStore,
     cookie: {
       httpOnly: true,
       secure: false, // Set to true in production with HTTPS
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax' // Add sameSite policy for better session handling
-    }
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: 'lax'
+    },
+    name: 'musobuddy.session'
   };
 
   app.set("trust proxy", 1);
@@ -163,9 +168,22 @@ export function setupAuth(app: Express) {
 }
 
 export const isAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
+  // More robust authentication check
+  if (req.isAuthenticated() && req.user && req.user.id) {
+    // Update session activity
+    if (req.session) {
+      req.session.touch();
+    }
     return next();
   }
+  
+  // Clear any corrupted session data
+  if (req.session) {
+    req.session.destroy((err: any) => {
+      if (err) console.error('Session destruction error:', err);
+    });
+  }
+  
   res.status(401).json({ message: "Unauthorized" });
 };
 
