@@ -52,7 +52,7 @@ import {
   type InsertUserAuditLog,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, ne, or, count, avg, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte, ne, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - mandatory for Replit Auth
@@ -1321,20 +1321,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentBookingsAdmin(): Promise<any[]> {
-    // Return anonymized booking statistics instead of individual booking details
-    const bookingStats = await db
+    const recentBookings = await db
       .select({
+        id: bookings.id,
+        clientName: bookings.clientName,
+        eventDate: bookings.eventDate,
+        venue: bookings.venue,
         status: bookings.status,
-        count: count(),
-        avgValue: avg(bookings.estimatedValue),
-        date: sql`DATE(${bookings.eventDate})`.as('date')
+        estimatedValue: bookings.estimatedValue,
+        userId: bookings.userId,
+        userEmail: users.email,
       })
       .from(bookings)
-      .groupBy(bookings.status, sql`DATE(${bookings.eventDate})`)
-      .orderBy(desc(sql`DATE(${bookings.eventDate})`))
+      .leftJoin(users, eq(bookings.userId, users.id))
+      .orderBy(desc(bookings.createdAt))
       .limit(50);
     
-    return bookingStats;
+    return recentBookings;
   }
 
   async createUser(userData: any): Promise<any> {

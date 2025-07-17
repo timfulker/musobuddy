@@ -49,11 +49,13 @@ interface AdminUser {
   lastLogin: string;
 }
 
-interface AdminBookingStats {
-  status: string;
-  count: number;
-  avgValue: number;
-  date: string;
+interface AdminBooking {
+  id: number;
+  clientName: string;
+  eventDate: string;
+  serviceType: string;
+  userName: string;
+  userEmail: string;
 }
 
 export default function Admin() {
