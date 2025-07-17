@@ -21,7 +21,7 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Changed to true to ensure session is created
     rolling: true, // Reset session expiry on each request
     store: new memoryStore({
       checkPeriod: 86400000 // Prune expired entries every 24h
@@ -151,6 +151,7 @@ export function setupAuth(app: Express) {
     console.log('🔥 Auth check - Session data:', req.session);
     console.log('🔥 Auth check - User:', req.user);
     console.log('🔥 Auth check - isAuthenticated():', req.isAuthenticated());
+    console.log('🔥 Auth check - Passport session:', req.session?.passport);
     
     if (!req.isAuthenticated()) {
       console.log('🔥 Auth FAILED - User not authenticated');

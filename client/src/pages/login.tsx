@@ -33,6 +33,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(credentials),
+        credentials: 'include', // This is crucial for session cookies
       });
       
       if (!response.ok) {
