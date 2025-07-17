@@ -267,65 +267,42 @@ export default function Settings() {
     },
   });
 
-  // Update local state when settings are loaded
+  // Initialize form when settings are loaded (only on first load)
   useEffect(() => {
-    if (settings && !saveSettings.isPending) {
-      console.log('🔄 Updating form with settings:', settings);
-      console.log('🔄 selectedInstruments from settings:', settings.selectedInstruments);
-      console.log('🔄 gigTypes from settings:', settings.gigTypes);
-      console.log('🔄 hasChanges before update:', hasChanges);
+    if (settings && !initialData && !saveSettings.isPending) {
+      console.log('🔄 INITIAL LOAD: Setting up form with settings:', settings);
       
-      // Only update form if we don't have initial data yet OR if save was successful
-      if (!initialData || saveSettings.isSuccess) {
-        form.reset(settings);
-        setSelectedInstruments(Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : []);
-        
-        // Use global gig types if available, otherwise use settings gig types
-        const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (Array.isArray(settings.gigTypes) ? settings.gigTypes : []);
-        setGigTypes(gigTypesToUse);
-        
-        // Store initial data for comparison
-        setInitialData({
-          ...settings,
-          selectedInstruments: settings.selectedInstruments || [],
-          gigTypes: gigTypesToUse
-        });
-        
-        // Reset hasChanges flag since we're loading fresh data
-        console.log('🔄 Resetting hasChanges to false');
-        setHasChanges(false);
-      }
+      // Reset form with settings
+      form.reset(settings);
+      
+      // Set local state
+      setSelectedInstruments(Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : []);
+      
+      // Use global gig types if available, otherwise use settings gig types
+      const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (Array.isArray(settings.gigTypes) ? settings.gigTypes : []);
+      setGigTypes(gigTypesToUse);
+      
+      // Store initial data for comparison - this prevents re-initialization
+      setInitialData({
+        ...settings,
+        selectedInstruments: settings.selectedInstruments || [],
+        gigTypes: gigTypesToUse
+      });
+      
+      setHasChanges(false);
     }
-  }, [settings, globalGigTypes, form, saveSettings.isPending, saveSettings.isSuccess]); // Removed hasChanges from dependencies
+  }, [settings, globalGigTypes, form, initialData, saveSettings.isPending]);
 
-  // Watch for form changes
+  // Simple form watcher for detecting changes
   useEffect(() => {
+    if (!initialData) return;
+    
     const subscription = form.watch(() => {
-      if (initialData) {
-        setHasChanges(true);
-      }
+      setHasChanges(true);
     });
+    
     return () => subscription.unsubscribe();
   }, [form, initialData]);
-
-  // Watch for instrument/gig type changes
-  useEffect(() => {
-    if (initialData) {
-      // Compare current state with initial data
-      const currentInstruments = Array.isArray(selectedInstruments) ? selectedInstruments : [];
-      const initialInstruments = Array.isArray(initialData.selectedInstruments) ? initialData.selectedInstruments : [];
-      const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
-      const initialGigTypes = Array.isArray(initialData.gigTypes) ? initialData.gigTypes : [];
-      
-      const instrumentsChanged = JSON.stringify(currentInstruments.sort()) !== JSON.stringify(initialInstruments.sort());
-      const gigTypesChanged = JSON.stringify(currentGigTypes.sort()) !== JSON.stringify(initialGigTypes.sort());
-      
-      if (instrumentsChanged || gigTypesChanged) {
-        console.log('🔄 Detected changes - instruments:', instrumentsChanged, 'gigTypes:', gigTypesChanged);
-        setHasChanges(true);
-      }
-    }
-  }, [selectedInstruments, gigTypes, initialData]);
 
   // Function to generate AI-powered gig types
   const generateGigTypes = async (instruments: string[]) => {
@@ -353,18 +330,14 @@ export default function Settings() {
   };
 
   // Handle instrument selection changes
-  const handleInstrumentToggle = async (instrument: string) => {
+  const handleInstrumentToggle = (instrument: string) => {
     const currentInstruments = Array.isArray(selectedInstruments) ? selectedInstruments : [];
     const newSelectedInstruments = currentInstruments.includes(instrument)
       ? currentInstruments.filter(i => i !== instrument)
       : [...currentInstruments, instrument];
     
     setSelectedInstruments(newSelectedInstruments);
-    
-    // Auto-generate gig types when instruments are selected
-    if (newSelectedInstruments.length > 0) {
-      await generateGigTypes(newSelectedInstruments);
-    }
+    setHasChanges(true);
   };
 
   // Add custom instrument
@@ -375,9 +348,7 @@ export default function Settings() {
       setSelectedInstruments(newInstruments);
       setCustomInstrument("");
       setShowInstrumentInput(false);
-      
-      // Generate gig types for new instruments
-      generateGigTypes(newInstruments);
+      setHasChanges(true);
     }
   };
 
@@ -388,6 +359,7 @@ export default function Settings() {
       setGigTypes([...currentGigTypes, customGig]);
       setCustomGig("");
       setShowGigInput(false);
+      setHasChanges(true);
     }
   };
 
@@ -395,6 +367,7 @@ export default function Settings() {
   const removeGigType = (gigType: string) => {
     const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
     setGigTypes(currentGigTypes.filter(g => g !== gigType));
+    setHasChanges(true);
   };
 
   // Filter instruments based on search - show core instruments by default, all instruments when searching
@@ -482,7 +455,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Business Name</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Your Business Name" />
+                            <Input {...field} value={field.value || ""} placeholder="Your Business Name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -495,7 +468,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Business Email</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="business@example.com" type="email" />
+                            <Input {...field} value={field.value || ""} placeholder="business@example.com" type="email" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -511,7 +484,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Phone</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="+44 (0) 123 456 7890" />
+                            <Input {...field} value={field.value || ""} placeholder="+44 (0) 123 456 7890" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -524,7 +497,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Email From Name</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Your Name" />
+                            <Input {...field} value={field.value || ""} placeholder="Your Name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -546,7 +519,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Address Line 1</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="123 Main Street" />
+                            <Input {...field} value={field.value || ""} placeholder="123 Main Street" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -560,7 +533,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Address Line 2 (Optional)</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Apartment, suite, etc." />
+                            <Input {...field} value={field.value || ""} placeholder="Apartment, suite, etc." />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -575,7 +548,7 @@ export default function Settings() {
                           <FormItem>
                             <FormLabel className="text-sm font-medium">City</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="London" />
+                              <Input {...field} value={field.value || ""} placeholder="London" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -589,7 +562,7 @@ export default function Settings() {
                           <FormItem>
                             <FormLabel className="text-sm font-medium">County (Optional)</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Greater London" />
+                              <Input {...field} value={field.value || ""} placeholder="Greater London" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -603,7 +576,7 @@ export default function Settings() {
                           <FormItem>
                             <FormLabel className="text-sm font-medium">Postcode</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="SW1A 1AA" />
+                              <Input {...field} value={field.value || ""} placeholder="SW1A 1AA" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -620,7 +593,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Website</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="https://yourwebsite.com" />
+                            <Input {...field} value={field.value || ""} placeholder="https://yourwebsite.com" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -633,7 +606,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Tax Number</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="TAX123456" />
+                            <Input {...field} value={field.value || ""} placeholder="TAX123456" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
