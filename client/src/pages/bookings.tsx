@@ -72,6 +72,7 @@ export default function Enquiries() {
     conflictingBookings: any[];
     conflictSeverity: 'critical' | 'warning';
   } | null>(null);
+  const [resolvedConflicts, setResolvedConflicts] = useState<Set<number>>(new Set());
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
 
@@ -1539,6 +1540,7 @@ export default function Enquiries() {
                 if (severity.level === 'critical') {
                   return 'border-red-500 bg-red-50 ring-2 ring-red-200';
                 } else if (severity.level === 'warning') {
+                  // Keep orange styling even after resolution to show "one of two bookings on same day"
                   return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
                 }
                 return '';
@@ -1556,12 +1558,18 @@ export default function Enquiries() {
                         
                         {/* Warning Conflict Alert Banner */}
                         {severity.level === 'warning' && (
-                          <div 
-                            className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20 cursor-pointer hover:bg-amber-600 transition-colors"
-                            onClick={() => handleConflictClick(enquiry)}
-                          >
-                            ⚠️ POTENTIAL SCHEDULING CONFLICT - Click to resolve
-                          </div>
+                          resolvedConflicts.has(enquiry.id) ? (
+                            <div className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20">
+                              ⚠️ One of two bookings on same day
+                            </div>
+                          ) : (
+                            <div 
+                              className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-bold px-2 py-1 z-20 cursor-pointer hover:bg-amber-600 transition-colors"
+                              onClick={() => handleConflictClick(enquiry)}
+                            >
+                              ⚠️ POTENTIAL SCHEDULING CONFLICT - Click to resolve
+                            </div>
+                          )
                         )}
                         
                         {/* Critical Conflict Alert Banner */}
@@ -1916,6 +1924,10 @@ export default function Enquiries() {
           conflictingBookings={conflictResolutionData.conflictingBookings}
           conflictSeverity={conflictResolutionData.conflictSeverity}
           onResolved={() => {
+            // Mark this booking's conflict as resolved
+            if (conflictResolutionData?.primaryBooking?.id) {
+              setResolvedConflicts(prev => new Set(prev).add(conflictResolutionData.primaryBooking.id));
+            }
             setConflictResolutionOpen(false);
             setConflictResolutionData(null);
             queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
