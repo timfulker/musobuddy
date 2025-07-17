@@ -56,12 +56,9 @@ export default function ActionableEnquiries() {
       // Check for time overlap
       const hasTimeOverlap = enquiryStart < otherEnd && enquiryEnd > otherStart;
       
+      // Return the conflict object with the original enquiry data plus hasTimeOverlap
       return {
-        id: other.id,
-        title: other.title,
-        clientName: other.clientName,
-        startTime: other.startTime,
-        endTime: other.endTime,
+        ...other,
         type: 'booking',
         hasTimeOverlap
       };
@@ -131,6 +128,19 @@ export default function ActionableEnquiries() {
     const dateBox = formatDateBox(enquiry.eventDate!);
     const conflicts = detectConflicts(enquiry);
     const isResolved = resolvedConflicts.has(enquiry.id);
+    
+    // Debug logging for conflict detection
+    if (enquiry.title?.includes('Saxophone')) {
+      console.log('Debug - Saxophone enquiry:', {
+        id: enquiry.id,
+        title: enquiry.title,
+        eventDate: enquiry.eventDate,
+        startTime: enquiry.startTime,
+        endTime: enquiry.endTime,
+        conflicts: conflicts,
+        isResolved: isResolved
+      });
+    }
     
     // Enhanced conflict detection with booking status awareness
     const confirmedBookingConflicts = conflicts.filter(c => c.type === 'booking');
