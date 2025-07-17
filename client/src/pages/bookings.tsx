@@ -1629,7 +1629,12 @@ export default function Enquiries() {
 
               return (
                 <TooltipProvider key={enquiry.id}>
-                  <Card id={`booking-${enquiry.id}`} className={`hover:shadow-lg transition-all duration-200 ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}>
+                  <Card id={`booking-${enquiry.id}`} className={`hover:shadow-lg transition-all duration-200 cursor-pointer ${getStatusOverlay(enquiry.status)} ${isPastDate ? 'opacity-60' : ''} ${getConflictOverlay()} ${selectedBookings.has(enquiry.id) ? 'ring-2 ring-blue-400' : ''}`}
+                    onDoubleClick={() => {
+                      setSelectedBookingForUpdate(enquiry);
+                      setBookingStatusDialogOpen(true);
+                    }}
+                  >
                     <CardContent className="p-6">
                       <div className="relative">
                         {/* Critical Conflict Red Stripe */}
@@ -1689,26 +1694,10 @@ export default function Enquiries() {
                         </div>
                         
                         <div className={`pl-8 pr-8 ${(severity.level === 'critical' || severity.level === 'warning') ? 'pt-8' : ''}`}>
-                          {/* Header with Price and Status */}
+                          {/* Header with Price */}
                           <div className="flex items-center justify-between mb-4">
                             <div className="text-lg font-bold text-green-600">
                               {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
-                            </div>
-                            <div className="flex flex-col items-end">
-                              <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium text-center min-h-[24px] px-3 whitespace-nowrap`}>
-                                {enquiry.status === 'new' ? 'ENQUIRY' : 
-                                 enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
-                                 enquiry.status === 'confirmed' ? 'CONFIRMED' :
-                                 enquiry.status === 'contract_sent' ? 'CONTRACT RECEIVED' :
-                                 enquiry.status === 'completed' ? 'COMPLETED' :
-                                 enquiry.status === 'rejected' ? 'REJECTED' :
-                                 enquiry.status.replace('_', ' ').toUpperCase()}
-                              </Badge>
-                              {enquiry.previousStatus && enquiry.status === 'completed' && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Was: {enquiry.previousStatus.replace('_', ' ').toUpperCase()}
-                                </div>
-                              )}
                             </div>
                           </div>
                         
@@ -1908,12 +1897,13 @@ export default function Enquiries() {
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
+                        {/* Action Buttons and Status Badge */}
                         <div className="flex justify-between items-center">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedEnquiry(enquiry);
                                   setRespondDialogOpen(true);
                                 }}
@@ -1928,23 +1918,22 @@ export default function Enquiries() {
                             <TooltipContent>Send email response to client</TooltipContent>
                           </Tooltip>
                           
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                onClick={() => {
-                                  setSelectedBookingForDetails(enquiry);
-                                  setBookingDetailsDialogOpen(true);
-                                }}
-                                variant="outline"
-                                size="sm"
-                                className="text-sm px-4 py-2"
-                              >
-                                <Info className="w-4 h-4 mr-2" />
-                                Details
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>View booking details</TooltipContent>
-                          </Tooltip>
+                          <div className="flex flex-col items-end">
+                            <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium text-center min-h-[24px] px-3 whitespace-nowrap`}>
+                              {enquiry.status === 'new' ? 'ENQUIRY' : 
+                               enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
+                               enquiry.status === 'confirmed' ? 'CONFIRMED' :
+                               enquiry.status === 'contract_sent' ? 'CONTRACT RECEIVED' :
+                               enquiry.status === 'completed' ? 'COMPLETED' :
+                               enquiry.status === 'rejected' ? 'REJECTED' :
+                               enquiry.status.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                            {enquiry.previousStatus && enquiry.status === 'completed' && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Was: {enquiry.previousStatus.replace('_', ' ').toUpperCase()}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         </div>
                       </div>
