@@ -127,6 +127,18 @@ MusoBuddy is a comprehensive full-stack web application designed for freelance m
 ## Changelog
 
 ```
+- July 17, 2025. Intelligent dashboard-to-bookings navigation system implemented for seamless user experience:
+  * **Dashboard Event Linking**: Events in dashboard now link with status and ID parameters (/bookings?status=X&id=Y)
+  * **Smart Filter Detection**: Bookings page reads URL parameters and automatically sets appropriate status filter
+  * **Automatic Scrolling**: Page scrolls to and highlights the specific booking that was clicked from dashboard
+  * **Calendar Integration**: Calendar events now also pass correct status parameters instead of defaulting to "contract_sent"
+  * **Enhanced Calendar Interaction**: Individual events in day and week views are now clickable with hover effects
+  * **Clean URL Management**: Parameters are automatically cleaned from URL after processing for aesthetic URLs
+  * **Fallback Behavior**: Direct bookings page access still defaults to "contract_sent" filter for normal workflow
+  * **Cross-Page Consistency**: All navigation from dashboard and calendar now maintains context and shows relevant events
+  * **User Experience**: No more empty screens when clicking dashboard events - users immediately see the clicked booking
+  * **Status**: Complete navigation system operational with intelligent context-aware filtering across all pages
+
 - July 17, 2025. Enhanced conflict resolution system with smart banner behavior fully operational:
   * **Context-Aware Action Buttons**: Red conflicts (time overlap) show Edit/Reject only; Orange conflicts (same date) show Edit/Reject/Resolve
   * **Smart Banner Behavior**: After clicking "Resolve", banners change from "Click to resolve" to "One of two bookings on same day"

@@ -194,12 +194,17 @@ export default function Calendar() {
     return events;
   };
 
-  // Handle date click - navigate to bookings page
+  // Handle date click - navigate to bookings page with appropriate filter
   const handleDateClick = (date: Date) => {
     const events = getEventsForDate(date);
     if (events.length > 0) {
-      // Navigate to bookings page
-      navigate("/bookings");
+      // Get the first event to determine the appropriate filter
+      const firstEvent = events[0];
+      const status = firstEvent.status || 'new';
+      const id = firstEvent.id;
+      
+      // Navigate to bookings page with status filter and ID
+      navigate(`/bookings?status=${status}&id=${id}`);
     }
   };
 
@@ -293,10 +298,11 @@ export default function Calendar() {
               <div
                 key={index}
                 className={`
-                  p-4 rounded-lg border-l-4 shadow-sm
+                  p-4 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow
                   ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900')} 
                   bg-opacity-10 border-l-current
                 `}
+                onClick={() => navigate(`/bookings?status=${event.status || 'new'}&id=${event.id}`)}
               >
                 <h3 className="font-semibold">{event.title}</h3>
                 <p className="text-sm opacity-75">{event.status}</p>
@@ -350,10 +356,11 @@ export default function Calendar() {
                   <div
                     key={eventIndex}
                     className={`
-                      text-xs p-1 rounded
+                      text-xs p-1 rounded cursor-pointer hover:bg-opacity-40 transition-colors
                       ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900')} 
                       bg-opacity-20
                     `}
+                    onClick={() => navigate(`/bookings?status=${event.status || 'new'}&id=${event.id}`)}
                   >
                     {event.title}
                   </div>
