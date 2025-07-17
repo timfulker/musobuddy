@@ -3287,6 +3287,40 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Create user endpoint
+  app.post('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { firstName, lastName, email, tier, isAdmin } = req.body;
+      
+      // Validate required fields
+      if (!firstName || !lastName || !email) {
+        return res.status(400).json({ message: "First name, last name, and email are required" });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User with this email already exists" });
+      }
+      
+      // Create user
+      const userData = {
+        id: Date.now().toString(), // Generate a unique ID
+        firstName,
+        lastName,
+        email,
+        tier: tier || 'free',
+        isAdmin: isAdmin || false
+      };
+      
+      const user = await storage.createUser(userData);
+      res.json({ message: "User created successfully", user });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
   // Admin bookings endpoint
   app.get('/api/admin/bookings', isAuthenticated, isAdmin, async (req: any, res) => {
     try {

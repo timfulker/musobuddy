@@ -1141,16 +1141,16 @@ export class DatabaseStorage implements IStorage {
           .from(invoices)
           .where(eq(invoices.userId, user.id));
         
-        // Calculate total revenue from bookings
+        // Calculate total revenue from contracts (not bookings)
         const [revenueData] = await db
           .select({ 
             total: sql<number>`COALESCE(SUM(CAST(fee AS DECIMAL)), 0)` 
           })
-          .from(bookings)
+          .from(contracts)
           .where(
             and(
-              eq(bookings.userId, user.id),
-              ne(bookings.status, 'rejected')
+              eq(contracts.userId, user.id),
+              ne(contracts.status, 'draft')
             )
           );
         
@@ -1190,8 +1190,8 @@ export class DatabaseStorage implements IStorage {
       .select({ 
         total: sql<number>`COALESCE(SUM(CAST(fee AS DECIMAL)), 0)` 
       })
-      .from(bookings)
-      .where(ne(bookings.status, 'rejected'));
+      .from(contracts)
+      .where(ne(contracts.status, 'draft'));
     
     // New users this month
     const thisMonth = new Date();
@@ -1263,7 +1263,7 @@ export class DatabaseStorage implements IStorage {
         eventDate: bookings.eventDate,
         venue: bookings.venue,
         status: bookings.status,
-        fee: bookings.fee,
+        estimatedValue: bookings.estimatedValue,
         userId: bookings.userId,
         userEmail: users.email,
       })
@@ -1273,6 +1273,26 @@ export class DatabaseStorage implements IStorage {
       .limit(50);
     
     return recentBookings;
+  }
+
+  async createUser(userData: any): Promise<any> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<any> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+    return user;
   }
 }
 
