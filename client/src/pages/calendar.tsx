@@ -695,13 +695,31 @@ export default function Calendar() {
                                     className={`w-3 h-3 rounded-full mb-1 ${getStatusColor(day.events[0].status || 'new').replace('text-white', 'bg-current')}`}
                                   />
                                   <span className="text-xs font-medium text-center leading-tight break-words max-w-full">
-                                    {day.events[0].title.length > 8 ? day.events[0].title.substring(0, 8) + '...' : day.events[0].title}
+                                    {day.events[0].title.length > 6 ? day.events[0].title.substring(0, 6) + '...' : day.events[0].title}
                                   </span>
                                 </div>
-                              ) : (
-                                // Multiple events - show colored dots
+                              ) : day.events.length === 2 ? (
+                                // Two events - show stacked dots with count
                                 <div className="flex flex-col items-center space-y-1">
-                                  <div className="flex flex-wrap justify-center gap-1">
+                                  <div className="flex flex-col items-center space-y-1">
+                                    <div className="flex space-x-1">
+                                      {day.events.map((event, eventIndex) => (
+                                        <div
+                                          key={eventIndex}
+                                          className={`w-3 h-3 rounded-full ${getStatusColor(event.status || 'new').replace('text-white', 'bg-current')}`}
+                                          title={event.title}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                                      2 events
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                // Multiple events (3+) - show dots grid
+                                <div className="flex flex-col items-center space-y-1">
+                                  <div className="flex flex-wrap justify-center gap-1 max-w-full">
                                     {day.events.slice(0, 4).map((event, eventIndex) => (
                                       <div
                                         key={eventIndex}
@@ -710,11 +728,9 @@ export default function Calendar() {
                                       />
                                     ))}
                                   </div>
-                                  {day.events.length > 4 && (
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 font-medium text-center">
-                                      +{day.events.length - 4}
-                                    </div>
-                                  )}
+                                  <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                                    {day.events.length > 4 ? `${day.events.length} events` : `${day.events.length} events`}
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -736,29 +752,43 @@ export default function Calendar() {
                                     {day.events[0].title}
                                   </span>
                                 </div>
-                              ) : (
-                                // Multiple events - split space
+                              ) : day.events.length === 2 ? (
+                                // Two events - show abbreviated titles in separate boxes
                                 <div className="flex-1 flex flex-col space-y-1">
-                                  {day.events.slice(0, 2).map((event, eventIndex) => (
+                                  {day.events.map((event, eventIndex) => (
                                     <div
                                       key={eventIndex}
                                       className={`
-                                        flex-1 px-2 py-1 rounded-lg text-xs font-medium shadow-sm
+                                        flex-1 px-1 py-1 rounded-lg text-xs font-medium shadow-sm
                                         flex items-center justify-center text-center
                                         ${getStatusColor(event.status || 'new').replace('text-white', 'text-gray-900 dark:text-gray-100')} 
                                         bg-opacity-20 border border-current border-opacity-30
                                       `}
                                     >
-                                      <span className="leading-tight whitespace-pre-wrap break-words">
-                                        {event.title}
+                                      <span className="leading-tight break-words">
+                                        {event.title.length > 15 ? event.title.substring(0, 15) + '...' : event.title}
                                       </span>
                                     </div>
                                   ))}
-                                  {day.events.length > 2 && (
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 px-2 font-medium text-center">
-                                      +{day.events.length - 2} more
-                                    </div>
-                                  )}
+                                </div>
+                              ) : (
+                                // Multiple events (3+) - show first event and count
+                                <div className="flex-1 flex flex-col space-y-1">
+                                  <div
+                                    className={`
+                                      flex-1 px-1 py-1 rounded-lg text-xs font-medium shadow-sm
+                                      flex items-center justify-center text-center
+                                      ${getStatusColor(day.events[0].status || 'new').replace('text-white', 'text-gray-900 dark:text-gray-100')} 
+                                      bg-opacity-20 border border-current border-opacity-30
+                                    `}
+                                  >
+                                    <span className="leading-tight break-words">
+                                      {day.events[0].title.length > 12 ? day.events[0].title.substring(0, 12) + '...' : day.events[0].title}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 px-1 font-medium text-center bg-gray-100 dark:bg-gray-800 rounded py-1">
+                                    +{day.events.length - 1} more
+                                  </div>
                                 </div>
                               )}
                             </div>
