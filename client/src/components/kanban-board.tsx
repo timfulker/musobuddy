@@ -114,6 +114,19 @@ export default function ActionableEnquiries() {
     const isResolved = resolvedConflicts.has(enquiry.id);
     const hasUnresolvedConflicts = conflicts.length > 0 && !isResolved;
     
+    // Debug logging for actionable enquiries
+    if (enquiry.title?.includes('Saxophone')) {
+      console.log('Actionable Enquiries Filter - Saxophone enquiry:', {
+        id: enquiry.id,
+        title: enquiry.title,
+        needsResponse: needsResponse(enquiry),
+        conflicts: conflicts.length,
+        isResolved,
+        hasUnresolvedConflicts,
+        shouldInclude: needsResponse(enquiry) || hasUnresolvedConflicts
+      });
+    }
+    
     return needsResponse(enquiry) || hasUnresolvedConflicts;
   });
 
@@ -138,7 +151,10 @@ export default function ActionableEnquiries() {
         startTime: enquiry.startTime,
         endTime: enquiry.endTime,
         conflicts: conflicts,
-        isResolved: isResolved
+        isResolved: isResolved,
+        severity: severity,
+        hasConflicts: hasConflicts,
+        needsResponse: needsResponse(enquiry)
       });
     }
     
