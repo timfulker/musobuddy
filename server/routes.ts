@@ -2853,6 +2853,22 @@ Powered by MusoBuddy – less admin, more music
         ...settings,
         selectedInstruments,
         gigTypes,
+        // Ensure all required fields are present with fallbacks
+        businessName: settings.businessName || "",
+        businessEmail: settings.businessEmail || "",
+        businessAddress: settings.businessAddress || "",
+        addressLine1: settings.addressLine1 || "",
+        addressLine2: settings.addressLine2 || "",
+        city: settings.city || "",
+        county: settings.county || "",
+        postcode: settings.postcode || "",
+        phone: settings.phone || "",
+        website: settings.website || "",
+        taxNumber: settings.taxNumber || "",
+        emailFromName: settings.emailFromName || "",
+        defaultTerms: settings.defaultTerms || "",
+        bankDetails: settings.bankDetails || "",
+        nextInvoiceNumber: settings.nextInvoiceNumber || 1,
       };
       
       console.log('🔥 SETTINGS GET: Sending response:', JSON.stringify(responseData, null, 2));

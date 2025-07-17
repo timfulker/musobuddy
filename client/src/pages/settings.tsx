@@ -188,6 +188,8 @@ export default function Settings() {
       nextInvoiceNumber: 1,
       defaultTerms: "",
       bankDetails: "",
+      selectedInstruments: [],
+      gigTypes: [],
     },
   });
 
@@ -195,6 +197,8 @@ export default function Settings() {
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: fetchSettings,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
     select: (data) => {
       console.log('Settings data loaded:', data);
       return data;
@@ -212,6 +216,8 @@ export default function Settings() {
       const data = await response.json();
       return data.gigTypes || [];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Save settings function - simplified version
@@ -271,12 +277,24 @@ export default function Settings() {
   useEffect(() => {
     if (settings && !initialData && !saveSettings.isPending) {
       console.log('🔄 INITIAL LOAD: Setting up form with settings:', settings);
+      console.log('🔄 Form fields being reset:', {
+        businessName: settings.businessName,
+        businessEmail: settings.businessEmail,
+        addressLine1: settings.addressLine1,
+        addressLine2: settings.addressLine2,
+        city: settings.city,
+        county: settings.county,
+        postcode: settings.postcode,
+        phone: settings.phone,
+        website: settings.website,
+      });
       
       // Reset form with settings
       form.reset(settings);
       
       // Set local state
-      setSelectedInstruments(Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : []);
+      const instruments = Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : [];
+      setSelectedInstruments(instruments);
       
       // Use global gig types if available, otherwise use settings gig types
       const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (Array.isArray(settings.gigTypes) ? settings.gigTypes : []);
@@ -285,13 +303,13 @@ export default function Settings() {
       // Store initial data for comparison - this prevents re-initialization
       setInitialData({
         ...settings,
-        selectedInstruments: settings.selectedInstruments || [],
+        selectedInstruments: instruments,
         gigTypes: gigTypesToUse
       });
       
       setHasChanges(false);
     }
-  }, [settings, globalGigTypes, form, initialData, saveSettings.isPending]);
+  }, [settings, globalGigTypes, form, saveSettings.isPending]);
 
   // Simple form watcher for detecting changes
   useEffect(() => {
