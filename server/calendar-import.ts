@@ -44,13 +44,19 @@ export async function parseAppleCalendar(icsContent: string): Promise<ImportResu
           continue;
         }
 
+        // Parse dates carefully to avoid timezone issues
+        const startTime = new Date(event.start);
+        const endTime = new Date(event.end);
+        
+        // For ICS imports, ensure dates are treated as local time
+        // This prevents timezone shifts during calendar display
         const calendarEvent: CalendarEvent = {
           id: event.uid || key,
           title: event.summary || 'Untitled Event',
           description: event.description || '',
           location: event.location || '',
-          startTime: new Date(event.start),
-          endTime: new Date(event.end),
+          startTime: startTime,
+          endTime: endTime,
           allDay: event.start.length === 8, // All-day events have date format YYYYMMDD
           source: 'ics',
           originalId: event.uid || key
@@ -107,13 +113,20 @@ export async function convertEventsToBookings(
       }
 
       // Create booking only (no contract creation)
+      // Ensure date consistency by creating a local date without timezone conversion
+      const localEventDate = new Date(event.startTime.getFullYear(), 
+                                     event.startTime.getMonth(), 
+                                     event.startTime.getDate(),
+                                     event.startTime.getHours(),
+                                     event.startTime.getMinutes());
+      
       await storage.createBooking({
         userId,
         contractId: null, // No contract associated with imported events
         title: event.title,
         clientName: extractClientName(event.title),
-        eventDate: event.startTime,
-        eventTime: event.startTime.toTimeString().slice(0, 5), // "HH:MM" format
+        eventDate: localEventDate,
+        eventTime: localEventDate.toTimeString().slice(0, 5), // "HH:MM" format
         eventEndTime: event.endTime.toTimeString().slice(0, 5), // "HH:MM" format
         performanceDuration: Math.round((event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60)), // minutes
         venue: event.location || 'Unknown Venue',

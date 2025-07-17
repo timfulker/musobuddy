@@ -150,12 +150,9 @@ export default function Calendar() {
     // Add all bookings (not just confirmed ones)
     bookings.forEach((booking: any) => {
       if (booking.eventDate) {
-        // Handle both string and Date formats - use UTC to avoid timezone issues
+        // Handle both string and Date formats
         const bookingDate = new Date(booking.eventDate);
-        // Use local date string to avoid timezone conversion issues
-        const bookingDateStr = bookingDate.getFullYear() + '-' + 
-          String(bookingDate.getMonth() + 1).padStart(2, '0') + '-' + 
-          String(bookingDate.getDate()).padStart(2, '0');
+        const bookingDateStr = bookingDate.toISOString().split('T')[0];
         
         if (bookingDateStr === dateStr) {
           events.push({
@@ -173,10 +170,7 @@ export default function Calendar() {
     contracts.forEach((contract: any) => {
       if (contract.eventDate) {
         const contractDate = new Date(contract.eventDate);
-        // Use local date string to avoid timezone conversion issues
-        const contractDateStr = contractDate.getFullYear() + '-' + 
-          String(contractDate.getMonth() + 1).padStart(2, '0') + '-' + 
-          String(contractDate.getDate()).padStart(2, '0');
+        const contractDateStr = contractDate.toISOString().split('T')[0];
         
         if (contractDateStr === dateStr) {
           events.push({
