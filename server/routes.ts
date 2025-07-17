@@ -2792,6 +2792,8 @@ Powered by MusoBuddy – less admin, more music
       const userId = req.user.id;
       const settings = await storage.getUserSettings(userId);
       
+      console.log('🔥 SETTINGS GET: Raw settings from database:', JSON.stringify(settings, null, 2));
+      
       if (!settings) {
         // Return default settings if none exist
         return res.json({
@@ -2847,11 +2849,15 @@ Powered by MusoBuddy – less admin, more music
         gigTypes = [];
       }
       
-      res.json({
+      const responseData = {
         ...settings,
         selectedInstruments,
         gigTypes,
-      });
+      };
+      
+      console.log('🔥 SETTINGS GET: Sending response:', JSON.stringify(responseData, null, 2));
+      
+      res.json(responseData);
     } catch (error) {
       console.error("Error fetching settings:", error);
       res.status(500).json({ message: "Failed to fetch settings" });
