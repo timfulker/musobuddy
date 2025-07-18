@@ -1329,17 +1329,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // For PDF files, extract basic info from filename for now
-        console.log('PDF text extraction: Using filename-based parsing for now');
-        extractedText = `PDF Document: ${fileName}`;
-        
-        // Try to extract client name and date from filename
-        const nameMatch = fileName.match(/([A-Za-z]+[\s_-]+[A-Za-z]+)/);
-        const dateMatch = fileName.match(/(\d{2})(\d{2})(\d{4})/);
-        
-        if (nameMatch) extractedText += `\nClient: ${nameMatch[1]}`;
-        if (dateMatch) extractedText += `\nDate: ${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
-        
+        // Use pdf-parse for PDF files
+        try {
+          const pdfParse = (await import('pdf-parse')).default;
+          const pdfData = await pdfParse(fileBuffer);
+          extractedText = pdfData.text;
+          console.log('PDF text extraction: Successfully extracted', extractedText.length, 'characters');
+        } catch (pdfError) {
+          console.error('PDF parsing failed:', pdfError);
+          // Fallback to filename-based parsing
+          console.log('PDF text extraction: Falling back to filename-based parsing');
+          extractedText = `PDF Document: ${fileName}`;
+          
+          // Try to extract client name and date from filename
+          const nameMatch = fileName.match(/([A-Za-z]+[\s_-]+[A-Za-z]+)/);
+          const dateMatch = fileName.match(/(\d{2})(\d{2})(\d{4})/);
+          
+          if (nameMatch) extractedText += `\nClient: ${nameMatch[1]}`;
+          if (dateMatch) extractedText += `\nDate: ${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+        }
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
@@ -1365,10 +1373,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create parsing prompt based on document type
       const prompt = fileType === 'contract' ? `
-        Analyze this contract text and extract key information in JSON format:
+        Analyze this contract text and extract key information in JSON format. This is a Musicians' Union contract with structured information:
         {
           "clientName": "string or null",
           "venue": "string or null", 
+          "venueAddress": "string or null",
           "eventDate": "YYYY-MM-DD or null",
           "eventTime": "HH:MM or null",
           "eventEndTime": "HH:MM or null",
@@ -1383,11 +1392,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         IMPORTANT: 
-        - Use actual null values (not the string "null") for fields you cannot determine
-        - For numeric fields (fee, deposit), use actual numbers or null
-        - For string fields, use actual strings or null
-        - Extract dates in YYYY-MM-DD format
-        - Extract times in HH:MM format (24-hour)
+        - Extract the client's full name from the "between" section
+        - Extract venue name and address (usually after "to perform at")
+        - Look for date, start time, and finish time in the table
+        - Extract fee amounts (remove currency symbols, return as number)
+        - Extract deposit information from payment details
+        - Get client contact details (phone, email) from signature section
+        - Extract client address (usually after client name)
+        - Use actual null values (not strings) for missing fields
+        - For numeric fields, extract numbers only (no currency symbols)
         
         Contract text:
         ${extractedText}
@@ -1496,6 +1509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientPhone: safeParseValue(parsedData?.clientPhone, ''),
         clientEmail: safeParseValue(parsedData?.clientEmail, ''),
         venue: safeParseValue(parsedData?.venue, venue || ''),
+        venueAddress: safeParseValue(parsedData?.venueAddress, ''),
         eventDate: (() => {
           if (parsedData?.eventDate && parsedData.eventDate !== 'null' && parsedData.eventDate !== null) {
             const parsed = new Date(parsedData.eventDate);
