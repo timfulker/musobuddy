@@ -1429,7 +1429,7 @@ export default function Invoices() {
                         variant="outline" 
                         className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap min-w-[70px]" 
                         onClick={() => handleResendInvoice(invoice)}
-                        disabled={resendInvoiceMutation.isPending}
+                        disabled={sendInvoiceMutation.isPending}
                       >
                         <RefreshCw className="w-3 h-3 mr-1" />
                         Resend
@@ -1472,7 +1472,7 @@ export default function Invoices() {
                         variant="outline" 
                         className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap min-w-[70px]" 
                         onClick={() => handleResendInvoice(invoice)}
-                        disabled={resendInvoiceMutation.isPending}
+                        disabled={sendInvoiceMutation.isPending}
                       >
                         <RefreshCw className="w-3 h-3 mr-1" />
                         Resend
@@ -1515,7 +1515,7 @@ export default function Invoices() {
                         variant="outline" 
                         className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap min-w-[95px]" 
                         onClick={() => handleResendInvoice(invoice)}
-                        disabled={resendInvoiceMutation.isPending}
+                        disabled={sendInvoiceMutation.isPending}
                       >
                         <RefreshCw className="w-3 h-3 mr-1" />
                         Resend Copy
@@ -1643,7 +1643,7 @@ export default function Invoices() {
                     variant="outline" 
                     className="text-xs text-blue-600 hover:text-blue-700" 
                     onClick={() => handleResendInvoice(invoice)}
-                    disabled={resendInvoiceMutation.isPending}
+                    disabled={sendInvoiceMutation.isPending}
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Resend
@@ -1686,7 +1686,7 @@ export default function Invoices() {
                     variant="outline" 
                     className="text-xs text-blue-600 hover:text-blue-700" 
                     onClick={() => handleResendInvoice(invoice)}
-                    disabled={resendInvoiceMutation.isPending}
+                    disabled={sendInvoiceMutation.isPending}
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Resend
@@ -1729,7 +1729,7 @@ export default function Invoices() {
                     variant="outline" 
                     className="text-xs text-blue-600 hover:text-blue-700" 
                     onClick={() => handleResendInvoice(invoice)}
-                    disabled={resendInvoiceMutation.isPending}
+                    disabled={sendInvoiceMutation.isPending}
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Resend Copy
