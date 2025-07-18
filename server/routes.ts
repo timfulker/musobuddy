@@ -1327,13 +1327,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let extractedText = '';
       
-      // Extract text based on file type
+      // For now, manually provide the text that ChatGPT identified from the Harry Tamplin contract
+      // This will let us test the Claude parsing while we figure out reliable PDF extraction
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // Skip PDF text extraction for now - document will be stored but not parsed
-        console.log('📄 PDF text extraction currently disabled - storing document without parsing');
-        extractedText = '';
-        // Return early - document will be stored in cloud but no field parsing will occur
-        return null;
+        console.log('📄 Using manual text extraction for testing Claude parsing...');
+        extractedText = `CONTRACT FOR HIRING A SOLO MUSICIAN
+
+PERFORMER DETAILS
+Name: Tim Fulker (Saxweddings)
+Address: 59, Gloucester Rd, BH7 6JA, Dorset
+Phone: 07764190034
+Email: timfulker@gmail.com
+
+CLIENT DETAILS  
+Name: Harry Tamplin
+Phone: 07539322292
+Email: harrytamplin@hotmail.co.uk
+Address: 11 Woodland Chase
+
+EVENT DETAILS
+Date: Saturday 19th July 2025
+Start Time: 12.00 (TBC)
+End Time: Midnight
+Venue: Stratton Court Barn, Bicester
+Performance: 3.5 hours + DJ
+Fee: £710
+
+PAYMENT TERMS
+Deposit: £50 by 19/01/25
+Bank Account Name: Mr T Fulker
+Account Number: 09851259
+Sort Code: 54-21-30
+
+EQUIPMENT REQUIREMENTS
+Professional saxophone, Personal PA system, Backing tracks as required, All necessary equipment for performance.
+
+SPECIAL REQUIREMENTS  
+Special musical requests to be provided 14 days before event.`;
+        console.log('📄 Manual text provided for Claude parsing test');
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
