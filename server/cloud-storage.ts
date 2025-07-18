@@ -233,6 +233,51 @@ export function isCloudStorageConfigured(): boolean {
 }
 
 /**
+ * Upload arbitrary file to cloud storage
+ */
+export async function uploadToCloudStorage(
+  fileBuffer: Buffer,
+  storageKey: string,
+  contentType?: string
+): Promise<string> {
+  try {
+    console.log('☁️ Uploading file to cloud storage:', storageKey);
+    
+    // Check if cloud storage is configured
+    if (!isCloudStorageConfigured()) {
+      throw new Error('Cloud storage not configured');
+    }
+    
+    const client = getS3Client();
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: storageKey,
+      Body: fileBuffer,
+      ContentType: contentType || 'application/octet-stream',
+    });
+    
+    await client.send(command);
+    
+    // Generate presigned URL for secure access (valid for 7 days)
+    const getCommand = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: storageKey,
+    });
+    
+    const presignedUrl = await getSignedUrl(client, getCommand, { 
+      expiresIn: 7 * 24 * 60 * 60 // 7 days in seconds
+    });
+    
+    console.log('✅ File uploaded to cloud storage successfully');
+    return presignedUrl;
+    
+  } catch (error) {
+    console.error('❌ Error uploading file to cloud storage:', error);
+    throw error;
+  }
+}
+
+/**
  * Regenerate fresh presigned URL for existing cloud-hosted signing page
  * This solves the 7-day expiry problem for reminder periods > 7 days
  */
