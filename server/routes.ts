@@ -2804,6 +2804,19 @@ Powered by MusoBuddy – less admin, more music
           bankDetails: "",
           selectedInstruments: [],
           gigTypes: [],
+          // Theme defaults
+          themeTemplate: "classic",
+          themeTone: "professional",
+          themeFont: "times",
+          themeAccentColor: "#8B5CF6",
+          themeLogoUrl: "",
+          themeSignatureUrl: "",
+          themeBanner: "",
+          themeCustomTitle: "Invoice",
+          themeShowSetlist: false,
+          themeShowRiderNotes: false,
+          themeShowQrCode: false,
+          themeShowTerms: true,
         });
       }
       
@@ -2860,6 +2873,19 @@ Powered by MusoBuddy – less admin, more music
         defaultTerms: settings.defaultTerms || "",
         bankDetails: settings.bankDetails || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
+        // Theme fields with fallbacks
+        themeTemplate: settings.themeTemplate || "classic",
+        themeTone: settings.themeTone || "professional",
+        themeFont: settings.themeFont || "times",
+        themeAccentColor: settings.themeAccentColor || "#8B5CF6",
+        themeLogoUrl: settings.themeLogoUrl || "",
+        themeSignatureUrl: settings.themeSignatureUrl || "",
+        themeBanner: settings.themeBanner || "",
+        themeCustomTitle: settings.themeCustomTitle || "Invoice",
+        themeShowSetlist: settings.themeShowSetlist || false,
+        themeShowRiderNotes: settings.themeShowRiderNotes || false,
+        themeShowQrCode: settings.themeShowQrCode || false,
+        themeShowTerms: settings.themeShowTerms !== undefined ? settings.themeShowTerms : true,
       };
       
       console.log('🔥 SETTINGS GET: Sending response:', JSON.stringify(responseData, null, 2));
@@ -2927,6 +2953,54 @@ Powered by MusoBuddy – less admin, more music
     } catch (error) {
       console.error("🔥 SETTINGS API ERROR:", error);
       res.status(500).json({ message: "Failed to save settings", error: error.message });
+    }
+  });
+
+  // Theme preview API endpoint
+  app.post('/api/theme-preview', isAuthenticated, async (req: any, res) => {
+    try {
+      const { 
+        template, 
+        tone, 
+        font, 
+        accentColor, 
+        customTitle,
+        showSetlist,
+        showRiderNotes,
+        showQrCode,
+        showTerms,
+        businessName,
+        businessAddress,
+        businessPhone,
+        businessEmail
+      } = req.body;
+      
+      console.log('🎨 Theme preview request:', JSON.stringify(req.body, null, 2));
+      
+      // Generate sample PDF with theme settings
+      const { generateThemePreviewPDF } = await import('./theme-preview');
+      const pdfBuffer = await generateThemePreviewPDF({
+        template: template || 'classic',
+        tone: tone || 'professional',
+        font: font || 'times',
+        accentColor: accentColor || '#8B5CF6',
+        customTitle: customTitle || 'Invoice',
+        showSetlist: !!showSetlist,
+        showRiderNotes: !!showRiderNotes,
+        showQrCode: !!showQrCode,
+        showTerms: showTerms !== false,
+        businessName: businessName || 'Your Business',
+        businessAddress: businessAddress || 'Your Address',
+        businessPhone: businessPhone || 'Your Phone',
+        businessEmail: businessEmail || 'your@email.com'
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="theme-preview.pdf"');
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating theme preview:", error);
+      res.status(500).json({ message: "Failed to generate theme preview" });
     }
   });
 

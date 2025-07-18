@@ -15,7 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // Core instruments displayed by default
 const CORE_INSTRUMENTS = [
@@ -46,6 +47,41 @@ const ALL_INSTRUMENTS = [
   "Kalimba", "Music Box", "Singing Bowl", "Rainstick", "DJ", "Vocals"
 ];
 
+// Theme configuration constants
+const THEME_TEMPLATES = [
+  { id: "classic", label: "Classic", description: "Professional and traditional invoice format" },
+  { id: "modern", label: "Modern Minimal", description: "Clean and contemporary design" },
+  { id: "casual", label: "Casual", description: "Friendly and approachable style" },
+  { id: "dj", label: "DJ Mode", description: "Dark theme with neon highlights" },
+  { id: "busker", label: "Rustic", description: "Boho street performer style" },
+];
+
+const THEME_TONES = [
+  { id: "formal", label: "Formal", description: "Professional language and complete terms" },
+  { id: "casual", label: "Casual", description: "Friendly tone with music-focused language" },
+];
+
+const THEME_FONTS = [
+  { id: "roboto", label: "Roboto", description: "Professional and readable" },
+  { id: "raleway", label: "Raleway", description: "Elegant and modern" },
+  { id: "pacifico", label: "Pacifico", description: "Handwritten and personal" },
+  { id: "oswald", label: "Oswald", description: "Bold and impactful" },
+];
+
+const THEME_COLORS = [
+  "#673ab7", "#ff0066", "#00bcd4", "#4caf50", "#f44336", "#ff9800", "#9c27b0", "#3f51b5"
+];
+
+const CUSTOM_TITLES = [
+  { id: "invoice", label: "Invoice" },
+  { id: "performance-summary", label: "Performance Summary" },
+  { id: "booking-confirmation", label: "Booking Confirmation" },
+  { id: "gig-breakdown", label: "Gig Breakdown" },
+  { id: "set-list-costs", label: "Set List & Costs" },
+  { id: "showtime-receipt", label: "Showtime Receipt" },
+  { id: "custom", label: "Custom Title" },
+];
+
 // Schema for form validation - includes all fields we want to save
 const settingsFormSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
@@ -66,6 +102,19 @@ const settingsFormSchema = z.object({
   // Add the missing fields that we want to save
   selectedInstruments: z.array(z.string()).optional(),
   gigTypes: z.array(z.string()).optional(),
+  // Theme preferences
+  themeTemplate: z.string().optional(),
+  themeTone: z.string().optional(),
+  themeFont: z.string().optional(),
+  themeAccentColor: z.string().optional(),
+  themeLogoUrl: z.string().optional(),
+  themeSignatureUrl: z.string().optional(),
+  themeBanner: z.string().optional(),
+  themeShowSetlist: z.boolean().optional(),
+  themeShowRiderNotes: z.boolean().optional(),
+  themeShowQrCode: z.boolean().optional(),
+  themeShowTerms: z.boolean().optional(),
+  themeCustomTitle: z.string().optional(),
 });
 
 type SettingsFormData = z.infer<typeof settingsFormSchema>;
@@ -159,7 +208,44 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     bankDetails: data.bankDetails || "",
     selectedInstruments: parsedInstruments,
     gigTypes: parsedGigTypes,
+    // Theme preferences
+    themeTemplate: data.themeTemplate || "classic",
+    themeTone: data.themeTone || "formal",
+    themeFont: data.themeFont || "roboto",
+    themeAccentColor: data.themeAccentColor || "#673ab7",
+    themeLogoUrl: data.themeLogoUrl || "",
+    themeSignatureUrl: data.themeSignatureUrl || "",
+    themeBanner: data.themeBanner || "",
+    themeShowSetlist: data.themeShowSetlist || false,
+    themeShowRiderNotes: data.themeShowRiderNotes || false,
+    themeShowQrCode: data.themeShowQrCode || false,
+    themeShowTerms: data.themeShowTerms !== false, // Default to true
+    themeCustomTitle: data.themeCustomTitle || "",
   };
+};
+
+// Theme preview functionality
+const generateThemePreview = async (themeSettings: any) => {
+  try {
+    const response = await fetch('/api/theme-preview', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(themeSettings),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate theme preview');
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error generating theme preview:', error);
+    return null;
+  }
 };
 
 export default function Settings() {
@@ -175,6 +261,12 @@ export default function Settings() {
   const [isGeneratingGigTypes, setIsGeneratingGigTypes] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [customInstrument, setCustomInstrument] = useState("");
+
+  // State for theme preview
+  const [showThemePreview, setShowThemePreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [selectedCustomTitle, setSelectedCustomTitle] = useState("invoice");
   const [customGig, setCustomGig] = useState("");
   const [showInstrumentInput, setShowInstrumentInput] = useState(false);
   const [showGigInput, setShowGigInput] = useState(false);
@@ -928,6 +1020,368 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
+              {/* Theme Customization */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <SettingsIcon className="w-5 h-5 text-purple-600" />
+                    <span>Invoice & Contract Themes</span>
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    Customize your invoices and contracts with professional themes, fonts, and branding
+                  </p>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  {/* Template Selection */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Template Style</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {THEME_TEMPLATES.map((template) => (
+                        <FormField
+                          key={template.id}
+                          control={form.control}
+                          name="themeTemplate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  field.value === template.id
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                }`}>
+                                  <input
+                                    type="radio"
+                                    {...field}
+                                    value={template.id}
+                                    checked={field.value === template.id}
+                                    className="sr-only"
+                                  />
+                                  <div className="font-medium text-sm">{template.label}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {template.description}
+                                  </div>
+                                </label>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tone Selection */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Tone & Language</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {THEME_TONES.map((tone) => (
+                        <FormField
+                          key={tone.id}
+                          control={form.control}
+                          name="themeTone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  field.value === tone.id
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                }`}>
+                                  <input
+                                    type="radio"
+                                    {...field}
+                                    value={tone.id}
+                                    checked={field.value === tone.id}
+                                    className="sr-only"
+                                  />
+                                  <div className="font-medium text-sm">{tone.label}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {tone.description}
+                                  </div>
+                                </label>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Font Selection */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Font Style</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {THEME_FONTS.map((font) => (
+                        <FormField
+                          key={font.id}
+                          control={form.control}
+                          name="themeFont"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  field.value === font.id
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                }`}>
+                                  <input
+                                    type="radio"
+                                    {...field}
+                                    value={font.id}
+                                    checked={field.value === font.id}
+                                    className="sr-only"
+                                  />
+                                  <div className="font-medium text-sm">{font.label}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {font.description}
+                                  </div>
+                                </label>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Accent Color */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Accent Color</h3>
+                    <FormField
+                      control={form.control}
+                      name="themeAccentColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex space-x-2">
+                                {THEME_COLORS.map((color) => (
+                                  <button
+                                    key={color}
+                                    type="button"
+                                    onClick={() => field.onChange(color)}
+                                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                      field.value === color
+                                        ? 'border-white shadow-lg scale-110'
+                                        : 'border-gray-300 hover:scale-105'
+                                    }`}
+                                    style={{ backgroundColor: color }}
+                                  />
+                                ))}
+                              </div>
+                              <Input
+                                type="color"
+                                value={field.value}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                className="w-16 h-8 border-0 rounded cursor-pointer"
+                              />
+                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {field.value}
+                              </span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Custom Title */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Document Title</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {CUSTOM_TITLES.map((title) => (
+                        <button
+                          key={title.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCustomTitle(title.id);
+                            if (title.id === 'custom') {
+                              form.setValue('themeCustomTitle', '');
+                            } else {
+                              form.setValue('themeCustomTitle', title.label);
+                            }
+                          }}
+                          className={`p-2 text-sm rounded-lg border transition-all ${
+                            selectedCustomTitle === title.id
+                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                          }`}
+                        >
+                          {title.label}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedCustomTitle === 'custom' && (
+                      <FormField
+                        control={form.control}
+                        name="themeCustomTitle"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="Enter custom title"
+                                className="mt-2"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+
+                  {/* Feature Toggles */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Optional Features</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="themeShowSetlist"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium cursor-pointer">
+                                Show Setlist Section
+                              </FormLabel>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Add a section for song lists and performance details
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="themeShowRiderNotes"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium cursor-pointer">
+                                Show Rider Notes
+                              </FormLabel>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Include technical requirements and setup notes
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="themeShowQrCode"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium cursor-pointer">
+                                Show QR Code
+                              </FormLabel>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Add QR code for social media or playlist links
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="themeShowTerms"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium cursor-pointer">
+                                Show Terms & Conditions
+                              </FormLabel>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Include legal terms and payment conditions
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preview Button */}
+                  <div className="flex justify-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Button
+                      type="button"
+                      onClick={async () => {
+                        setIsGeneratingPreview(true);
+                        const currentValues = form.getValues();
+                        const themeSettings = {
+                          template: currentValues.themeTemplate,
+                          tone: currentValues.themeTone,
+                          font: currentValues.themeFont,
+                          accentColor: currentValues.themeAccentColor,
+                          customTitle: currentValues.themeCustomTitle,
+                          showSetlist: currentValues.themeShowSetlist,
+                          showRiderNotes: currentValues.themeShowRiderNotes,
+                          showQrCode: currentValues.themeShowQrCode,
+                          showTerms: currentValues.themeShowTerms,
+                          businessName: currentValues.businessName,
+                          businessAddress: `${currentValues.addressLine1}, ${currentValues.city}, ${currentValues.postcode}`,
+                          businessPhone: currentValues.phone,
+                          businessEmail: currentValues.businessEmail,
+                        };
+                        
+                        const url = await generateThemePreview(themeSettings);
+                        if (url) {
+                          setPreviewUrl(url);
+                          setShowThemePreview(true);
+                        } else {
+                          toast({
+                            title: "Preview Error",
+                            description: "Could not generate theme preview. Please try again.",
+                            variant: "destructive",
+                          });
+                        }
+                        setIsGeneratingPreview(false);
+                      }}
+                      disabled={isGeneratingPreview}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg transition-all"
+                    >
+                      {isGeneratingPreview ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating Preview...
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Preview Theme
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Save Button */}
               <div className="flex justify-end">
                 <Button
@@ -964,6 +1418,36 @@ export default function Settings() {
           </Form>
         </div>
       </div>
+
+      {/* Theme Preview Dialog */}
+      <Dialog open={showThemePreview} onOpenChange={setShowThemePreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Theme Preview</DialogTitle>
+            <DialogDescription>
+              Preview of your customized invoice and contract theme
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            {previewUrl ? (
+              <div className="border rounded-lg overflow-hidden">
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-[600px] border-0"
+                  title="Theme Preview"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                  <p className="text-gray-600 dark:text-gray-400">Loading preview...</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
