@@ -181,4 +181,6 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Progress Tags**: Added optional visual tags (Contract Sent, Contract Signed, Invoice Sent, Paid in Full) for better tracking
 - **Database Schema Enhancement**: Added new boolean fields for progress tracking while maintaining existing status system
 - **CTA Buttons**: Enhanced dashboard call-to-action buttons with improved filtering logic using new status mapping
-- **Status**: Fully stable application with comprehensive user documentation, complete theme customization system, and improved booking lifecycle management
+- **Manual Payment Tracking**: Added manual payment tracking controls with "Mark Deposit Paid" and "Mark Paid in Full" buttons
+- **Simplified Status Buttons**: Reduced status buttons to 5-stage workflow (Enquiry→Negotiation→Confirmed→Completed→Cancelled)
+- **Status**: Fully stable application with comprehensive user documentation, complete theme customization system, improved booking lifecycle management, and manual payment tracking capabilities

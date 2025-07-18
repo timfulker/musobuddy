@@ -74,7 +74,7 @@ export default function BookingCTAButtons() {
     invoicesData: invoices.slice(0, 2)
   });
 
-  // Use the new status mapping system for better filtering
+  // Use the simplified 5-stage workflow for filtering
   const needsResponse = bookings.filter(
     (booking) => booking.status === "new" || booking.responseNeeded
   );
@@ -85,7 +85,7 @@ export default function BookingCTAButtons() {
   });
 
   const needsInvoice = bookings.filter(booking => {
-    // Bookings that have signed contracts but no invoice sent
+    // Bookings that have signed contracts but no invoice sent yet
     return booking.contractSigned && !booking.invoiceSent;
   });
 

@@ -725,12 +725,13 @@ export default function Enquiries() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "new": return "bg-gray-100 text-gray-800";
-      case "booking_in_progress": return "bg-blue-100 text-blue-800";
-      case "contract_sent": return "bg-purple-100 text-purple-800";
+      case "booking_in_progress": return "bg-orange-100 text-orange-800";
       case "confirmed": return "bg-green-100 text-green-800";
-      case "contract_received": return "bg-emerald-100 text-emerald-800";
       case "completed": return "bg-slate-100 text-slate-800";
       case "rejected": return "bg-red-100 text-red-800";
+      // Legacy status support
+      case "contract_sent": return "bg-orange-100 text-orange-800";
+      case "contract_received": return "bg-orange-100 text-orange-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -1815,27 +1816,9 @@ export default function Enquiries() {
                           )}
                         </div>
                         
-                        {/* Status Buttons */}
+                        {/* Status Buttons - Simplified 5-stage workflow */}
                         <div className="flex justify-center items-center mb-4">
                           <div className="flex gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'new')}
-                                  variant="outline"
-                                  size="sm"
-                                  className={`w-8 h-8 p-0 text-xs font-medium ${
-                                    enquiry.status === 'new' 
-                                      ? 'bg-[#5DADE2] text-white border-[#5DADE2]' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#5DADE2] hover:text-white'
-                                  }`}
-                                >
-                                  E
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Set as Enquiry</TooltipContent>
-                            </Tooltip>
-                            
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
@@ -1848,10 +1831,10 @@ export default function Enquiries() {
                                       : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#F39C12] hover:text-white'
                                   }`}
                                 >
-                                  P
+                                  N
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Set as In Progress</TooltipContent>
+                              <TooltipContent>Set as Negotiation</TooltipContent>
                             </Tooltip>
                             
                             <Tooltip>
@@ -1870,42 +1853,6 @@ export default function Enquiries() {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Set as Confirmed</TooltipContent>
-                            </Tooltip>
-                            
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'contract_sent')}
-                                  variant="outline"
-                                  size="sm"
-                                  className={`w-8 h-8 p-0 text-xs font-medium ${
-                                    enquiry.status === 'contract_sent' 
-                                      ? 'bg-[#9B59B6] text-white border-[#9B59B6]' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#9B59B6] hover:text-white'
-                                  }`}
-                                >
-                                  S
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Set as Contract Sent</TooltipContent>
-                            </Tooltip>
-                            
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'contract_received')}
-                                  variant="outline"
-                                  size="sm"
-                                  className={`w-8 h-8 p-0 text-xs font-medium ${
-                                    enquiry.status === 'contract_received' 
-                                      ? 'bg-[#27AE60] text-white border-[#27AE60]' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#27AE60] hover:text-white'
-                                  }`}
-                                >
-                                  R
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Set as Contract Received</TooltipContent>
                             </Tooltip>
                             
                             <Tooltip>
@@ -1941,7 +1888,7 @@ export default function Enquiries() {
                                   ✗
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Set as Rejected</TooltipContent>
+                              <TooltipContent>Set as Cancelled</TooltipContent>
                             </Tooltip>
                           </div>
                         </div>
@@ -1970,11 +1917,10 @@ export default function Enquiries() {
                           <div className="flex flex-col items-end">
                             <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium text-center min-h-[24px] px-3 whitespace-nowrap`}>
                               {enquiry.status === 'new' ? 'ENQUIRY' : 
-                               enquiry.status === 'booking_in_progress' ? 'IN PROGRESS' :
+                               enquiry.status === 'booking_in_progress' ? 'NEGOTIATION' :
                                enquiry.status === 'confirmed' ? 'CONFIRMED' :
-                               enquiry.status === 'contract_sent' ? 'CONTRACT RECEIVED' :
                                enquiry.status === 'completed' ? 'COMPLETED' :
-                               enquiry.status === 'rejected' ? 'REJECTED' :
+                               enquiry.status === 'rejected' ? 'CANCELLED' :
                                enquiry.status.replace('_', ' ').toUpperCase()}
                             </Badge>
                             {enquiry.previousStatus && enquiry.status === 'completed' && (

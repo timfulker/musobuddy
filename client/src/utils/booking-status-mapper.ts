@@ -5,8 +5,8 @@ export interface BookingStatus {
   // Current system statuses
   oldStatus: string;
   
-  // New simplified statuses
-  newStatus: 'enquiry' | 'quoted' | 'confirmed' | 'completed' | 'cancelled';
+  // New simplified statuses (5-stage workflow)
+  newStatus: 'enquiry' | 'negotiation' | 'confirmed' | 'completed' | 'cancelled';
   
   // Progress tags
   tags: {
@@ -27,13 +27,18 @@ export const statusMapping: Record<string, BookingStatus> = {
   },
   'booking_in_progress': {
     oldStatus: 'booking_in_progress',
-    newStatus: 'quoted',
+    newStatus: 'negotiation',
     tags: {}
   },
   'contract_sent': {
     oldStatus: 'contract_sent',
-    newStatus: 'quoted',
+    newStatus: 'negotiation',
     tags: { contractSent: true }
+  },
+  'contract_received': {
+    oldStatus: 'contract_received',
+    newStatus: 'negotiation',
+    tags: { contractSent: true, contractSigned: true }
   },
   'confirmed': {
     oldStatus: 'confirmed',
@@ -53,7 +58,7 @@ export const statusMapping: Record<string, BookingStatus> = {
 };
 
 // Helper function to get new status from old status
-export function mapToNewStatus(oldStatus: string): 'enquiry' | 'quoted' | 'confirmed' | 'completed' | 'cancelled' {
+export function mapToNewStatus(oldStatus: string): 'enquiry' | 'negotiation' | 'confirmed' | 'completed' | 'cancelled' {
   const mapping = statusMapping[oldStatus];
   return mapping ? mapping.newStatus : 'enquiry';
 }
@@ -64,8 +69,8 @@ export function getDisplayStatus(oldStatus: string): string {
   if (!mapping) return oldStatus;
   
   const displayNames: Record<string, string> = {
-    'enquiry': 'New Enquiry',
-    'quoted': 'Quoted',
+    'enquiry': 'Enquiry',
+    'negotiation': 'Negotiation',
     'confirmed': 'Confirmed',
     'completed': 'Completed',
     'cancelled': 'Cancelled'
@@ -111,10 +116,10 @@ export function getStatusColor(status: string): string {
   const newStatus = mapToNewStatus(status);
   
   const colors: Record<string, string> = {
-    'enquiry': 'bg-blue-100 text-blue-800 border-blue-200',
-    'quoted': 'bg-orange-100 text-orange-800 border-orange-200',
+    'enquiry': 'bg-gray-100 text-gray-800 border-gray-200',
+    'negotiation': 'bg-orange-100 text-orange-800 border-orange-200',
     'confirmed': 'bg-green-100 text-green-800 border-green-200',
-    'completed': 'bg-gray-100 text-gray-800 border-gray-200',
+    'completed': 'bg-slate-100 text-slate-800 border-slate-200',
     'cancelled': 'bg-red-100 text-red-800 border-red-200'
   };
   
@@ -127,7 +132,7 @@ export function getStatusIcon(status: string): string {
   
   const icons: Record<string, string> = {
     'enquiry': '📧',
-    'quoted': '💬',
+    'negotiation': '💬',
     'confirmed': '✅',
     'completed': '🎉',
     'cancelled': '❌'
