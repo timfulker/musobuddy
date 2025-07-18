@@ -46,6 +46,7 @@ import {
   mapOldStatusToStage, 
   executeContextualAction,
   getDisplayStatus,
+  workflowStages,
   type WorkflowStage 
 } from "@/utils/workflow-system";
 
@@ -73,8 +74,11 @@ export default function Enquiries() {
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
-  // Remove filters for now - we'll rethink these later
+  // Smart filtering system
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState<{from: string, to: string}>({from: '', to: ''});
+  const [eventDateFilter, setEventDateFilter] = useState<string>('all'); // 'all', 'upcoming', 'past'
   const [conflictResolutionOpen, setConflictResolutionOpen] = useState(false);
   const [conflictResolutionData, setConflictResolutionData] = useState<{
     primaryBooking: any;
@@ -823,12 +827,39 @@ export default function Enquiries() {
   };
 
   const filteredEnquiries = enquiries.filter((enquiry: Enquiry) => {
+    // Search filter
     const matchesSearch = searchQuery === "" || 
       enquiry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      enquiry.clientName.toLowerCase().includes(searchQuery.toLowerCase());
+      enquiry.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      enquiry.clientEmail.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Show all bookings - no filtering by default
-    return matchesSearch;
+    // Status filter
+    const matchesStatus = activeStatusFilters.length === 0 || 
+      activeStatusFilters.includes(mapOldStatusToStage(enquiry.status));
+    
+    // Payment filter
+    const matchesPayment = paymentFilter === 'all' || 
+      (paymentFilter === 'paid' && enquiry.paidInFull) ||
+      (paymentFilter === 'unpaid' && !enquiry.paidInFull);
+    
+    // Event date filter
+    const matchesEventDate = (() => {
+      if (eventDateFilter === 'all') return true;
+      if (!enquiry.eventDate) return false;
+      
+      const eventDate = new Date(enquiry.eventDate);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      
+      if (eventDateFilter === 'upcoming') {
+        return eventDate >= now;
+      } else if (eventDateFilter === 'past') {
+        return eventDate < now;
+      }
+      return true;
+    })();
+    
+    return matchesSearch && matchesStatus && matchesPayment && matchesEventDate;
   });
 
   // Sort the filtered enquiries
@@ -1271,167 +1302,106 @@ export default function Enquiries() {
           </Dialog>
         </div>
 
-        {/* Filters */}
+        {/* Smart Filtering System */}
         <Card>
           <CardContent className="p-4">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {Object.entries(workflowStages).map(([status, config]) => {
+                const count = enquiries.filter(e => mapOldStatusToStage(e.status) === status).length;
+                const isActive = activeStatusFilters.includes(status);
+                
+                return (
+                  <Button
+                    key={status}
+                    onClick={() => {
+                      setActiveStatusFilters(prev => 
+                        prev.includes(status) 
+                          ? prev.filter(s => s !== status)
+                          : [...prev, status]
+                      );
+                    }}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className={`${isActive ? `${config.color} ${config.bgColor} border-current` : 'hover:bg-gray-50'}`}
+                  >
+                    <span className="mr-2">{config.icon}</span>
+                    {config.displayName}
+                    {count > 0 && (
+                      <span className="ml-2 px-2 py-1 text-xs bg-white/20 rounded-full">
+                        {count}
+                      </span>
+                    )}
+                  </Button>
+                );
+              })}
+              
+              {/* Clear All Filters */}
+              {activeStatusFilters.length > 0 && (
+                <Button
+                  onClick={() => setActiveStatusFilters([])}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
+            
+            {/* Secondary Filters */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Search enquiries..."
+                  placeholder="Search by client name or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              {/* Status Filter Buttons - Two Rows */}
-              <div className="flex flex-col gap-2">
-                {/* Top Row - All + 4 buttons */}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setActiveStatusFilters([])}
-                    variant={activeStatusFilters.length === 0 ? 'default' : 'outline'}
-                    size="sm"
-                    className={`${
-                      activeStatusFilters.length === 0 
-                        ? 'bg-gray-600 text-white border-gray-600 hover:bg-gray-700' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-600 hover:text-white'
-                    }`}
-                  >
-                    All
-                  </Button>
-                  <Button
-                    onClick={() => toggleStatusFilter('new')}
-                    variant={activeStatusFilters.includes('new') ? 'default' : 'outline'}
-                    size="sm"
-                    className={`${
-                      activeStatusFilters.includes('new') 
-                        ? 'bg-[#5DADE2] text-white border-[#5DADE2] hover:bg-[#3498DB]' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#5DADE2] hover:text-white'
-                    }`}
-                  >
-                    Enquiry
-                  </Button>
-                  <Button
-                    onClick={() => toggleStatusFilter('booking_in_progress')}
-                    variant={activeStatusFilters.includes('booking_in_progress') ? 'default' : 'outline'}
-                    size="sm"
-                    className={`${
-                      activeStatusFilters.includes('booking_in_progress') 
-                        ? 'bg-[#F39C12] text-white border-[#F39C12] hover:bg-[#E67E22]' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#F39C12] hover:text-white'
-                    }`}
-                  >
-                    In Progress
-                  </Button>
-                  <Button
-                    onClick={() => toggleStatusFilter('confirmed')}
-                    variant={activeStatusFilters.includes('confirmed') ? 'default' : 'outline'}
-                    size="sm"
-                    className={`${
-                      activeStatusFilters.includes('confirmed') 
-                        ? 'bg-[#2980B9] text-white border-[#2980B9] hover:bg-[#1F618D]' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#2980B9] hover:text-white'
-                    }`}
-                  >
-                    Confirmed
-                  </Button>
-                  <Button
-                    onClick={() => toggleStatusFilter('contract_sent')}
-                    variant={activeStatusFilters.includes('contract_sent') ? 'default' : 'outline'}
-                    size="sm"
-                    className={`${
-                      activeStatusFilters.includes('contract_sent') 
-                        ? 'bg-[#9B59B6] text-white border-[#9B59B6] hover:bg-[#7D3C98]' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#9B59B6] hover:text-white'
-                    }`}
-                  >
-                    Contract Sent
-                  </Button>
-                </div>
-                {/* Bottom Row - 3 buttons */}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => toggleStatusFilter('contract_received')}
-                    variant={activeStatusFilters.includes('contract_received') ? 'default' : 'outline'}
-                    size="sm"
-                    className={`${
-                      activeStatusFilters.includes('contract_received') 
-                        ? 'bg-[#27AE60] text-white border-[#27AE60] hover:bg-[#1E8449]' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#27AE60] hover:text-white'
-                    }`}
-                  >
-                    Contract Received
-                  </Button>
-                  <Button
-                    onClick={() => toggleStatusFilter('completed')}
-                    variant={activeStatusFilters.includes('completed') ? 'default' : 'outline'}
-                    size="sm"
-                    className={`${
-                      activeStatusFilters.includes('completed') 
-                        ? 'bg-[#34495E] text-white border-[#34495E] hover:bg-[#2C3E50]' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#34495E] hover:text-white'
-                    }`}
-                  >
-                    Completed
-                  </Button>
-                  <Button
-                    onClick={() => toggleStatusFilter('rejected')}
-                    variant={activeStatusFilters.includes('rejected') ? 'default' : 'outline'}
-                    size="sm"
-                    className={`${
-                      activeStatusFilters.includes('rejected') 
-                        ? 'bg-[#C0392B] text-white border-[#C0392B] hover:bg-[#A93226]' 
-                        : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#C0392B] hover:text-white'
-                    }`}
-                  >
-                    Rejected
-                  </Button>
-                </div>
-              </div>
+              
               <div className="flex items-center space-x-2">
+                <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Payments</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select value={eventDateFilter} onValueChange={setEventDateFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Dates</SelectItem>
+                    <SelectItem value="upcoming">Upcoming</SelectItem>
+                    <SelectItem value="past">Past</SelectItem>
+                  </SelectContent>
+                </Select>
+                
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-40">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="eventDate">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>Event Date</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="status">
-                      <div className="flex items-center space-x-2">
-                        <ArrowUpDown className="w-4 h-4" />
-                        <span>Status</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="client">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4" />
-                        <span>Client Name</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="value">
-                      <div className="flex items-center space-x-2">
-                        <DollarSign className="w-4 h-4" />
-                        <span>Value (High to Low)</span>
-                      </div>
-                    </SelectItem>
+                    <SelectItem value="eventDate">Event Date</SelectItem>
+                    <SelectItem value="status">Status</SelectItem>
+                    <SelectItem value="client">Client Name</SelectItem>
+                    <SelectItem value="value">Value</SelectItem>
                   </SelectContent>
                 </Select>
+                
                 <Button
                   onClick={() => setSortReverse(!sortReverse)}
                   variant="outline"
                   size="sm"
-                  className={`${
-                    sortReverse 
-                      ? 'bg-purple-100 text-purple-700 border-purple-300' 
-                      : 'text-gray-600 border-gray-300'
-                  }`}
+                  className="px-3"
                 >
-                  {sortReverse ? <ArrowDown className="w-4 h-4" /> : <ArrowUp className="w-4 h-4" />}
+                  {sortReverse ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                 </Button>
               </div>
             </div>
