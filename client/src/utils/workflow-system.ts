@@ -28,9 +28,9 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
   new: {
     stage: 'new',
     displayName: 'New Enquiry',
-    color: 'text-blue-800',
-    bgColor: 'bg-blue-100',
-    borderColor: 'border-blue-200',
+    color: 'text-white',
+    bgColor: 'bg-blue-500',
+    borderColor: 'border-blue-500',
     icon: '📧',
     description: 'Client has emailed you - no response sent yet',
     contextualActions: [
@@ -45,9 +45,9 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
   awaiting_response: {
     stage: 'awaiting_response',
     displayName: 'Awaiting Response',
-    color: 'text-yellow-800',
-    bgColor: 'bg-yellow-100',
-    borderColor: 'border-yellow-200',
+    color: 'text-yellow-900',
+    bgColor: 'bg-yellow-400',
+    borderColor: 'border-yellow-400',
     icon: '⏳',
     description: "You've replied - waiting to hear back",
     contextualActions: [
@@ -68,9 +68,9 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
   client_confirms: {
     stage: 'client_confirms',
     displayName: 'Client Confirms',
-    color: 'text-orange-800',
-    bgColor: 'bg-orange-100',
-    borderColor: 'border-orange-200',
+    color: 'text-white',
+    bgColor: 'bg-orange-500',
+    borderColor: 'border-orange-500',
     icon: '👍',
     description: 'Client says "yes" - not yet under contract',
     contextualActions: [
@@ -85,9 +85,9 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
   contract_sent: {
     stage: 'contract_sent',
     displayName: 'Contract Sent',
-    color: 'text-purple-800',
-    bgColor: 'bg-purple-100',
-    borderColor: 'border-purple-200',
+    color: 'text-white',
+    bgColor: 'bg-purple-500',
+    borderColor: 'border-purple-500',
     icon: '📋',
     description: "You've sent the contract - awaiting signature",
     contextualActions: [
@@ -102,9 +102,9 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
   confirmed: {
     stage: 'confirmed',
     displayName: 'Confirmed',
-    color: 'text-green-800',
-    bgColor: 'bg-green-100',
-    borderColor: 'border-green-200',
+    color: 'text-white',
+    bgColor: 'bg-green-500',
+    borderColor: 'border-green-500',
     icon: '✅',
     description: 'Signed contract returned - booking locked in',
     contextualActions: [
@@ -125,9 +125,9 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
   cancelled: {
     stage: 'cancelled',
     displayName: 'Cancelled',
-    color: 'text-red-800',
-    bgColor: 'bg-red-100',
-    borderColor: 'border-red-200',
+    color: 'text-white',
+    bgColor: 'bg-red-500',
+    borderColor: 'border-red-500',
     icon: '❌',
     description: 'Booking was cancelled or rejected',
     contextualActions: []
@@ -136,8 +136,8 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
     stage: 'completed',
     displayName: 'Completed',
     color: 'text-gray-800',
-    bgColor: 'bg-gray-100',
-    borderColor: 'border-gray-200',
+    bgColor: 'bg-gray-400',
+    borderColor: 'border-gray-400',
     icon: '🎉',
     description: 'Gig is finished',
     contextualActions: []

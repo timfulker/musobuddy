@@ -1645,28 +1645,34 @@ export default function Enquiries() {
               
               // Status-based styling with new color scheme
               const getStatusOverlay = (status: string) => {
-                switch (status) {
-                  case "new": return "bg-gradient-to-br from-[#5DADE2]/10 to-[#5DADE2]/20 border-[#5DADE2]/30"; // More Blue, Less Grey
-                  case "booking_in_progress": return "bg-gradient-to-br from-[#F39C12]/10 to-[#F39C12]/20 border-[#F39C12]/30"; // Amber
-                  case "confirmed": return "bg-gradient-to-br from-[#2980B9]/10 to-[#2980B9]/20 border-[#2980B9]/30"; // Royal Blue
-                  case "contract_sent": return "bg-gradient-to-br from-[#9B59B6]/10 to-[#9B59B6]/20 border-[#9B59B6]/30"; // Violet
-                  case "contract_received": return "bg-gradient-to-br from-[#27AE60]/10 to-[#27AE60]/20 border-[#27AE60]/30"; // Emerald Green
-                  case "completed": return "bg-gradient-to-br from-[#34495E]/10 to-[#34495E]/20 border-[#34495E]/30"; // Slate Navy
-                  case "rejected": return "bg-gradient-to-br from-[#C0392B]/10 to-[#C0392B]/20 border-[#C0392B]/30"; // Deep Red
+                const stage = mapOldStatusToStage(status);
+                const config = getStageConfig(stage);
+                
+                switch (stage) {
+                  case "new": return "bg-gradient-to-br from-blue-500/10 to-blue-500/20 border-blue-500/30"; // 🔵 Blue
+                  case "awaiting_response": return "bg-gradient-to-br from-yellow-400/10 to-yellow-400/20 border-yellow-400/30"; // 🟡 Yellow
+                  case "client_confirms": return "bg-gradient-to-br from-orange-500/10 to-orange-500/20 border-orange-500/30"; // 🟠 Orange
+                  case "contract_sent": return "bg-gradient-to-br from-purple-500/10 to-purple-500/20 border-purple-500/30"; // 🟣 Purple
+                  case "confirmed": return "bg-gradient-to-br from-green-500/10 to-green-500/20 border-green-500/30"; // 🟢 Green
+                  case "cancelled": return "bg-gradient-to-br from-red-500/10 to-red-500/20 border-red-500/30"; // 🔴 Red
+                  case "completed": return "bg-gradient-to-br from-gray-400/10 to-gray-400/20 border-gray-400/30"; // ⚪️ Grey
                   default: return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
                 }
               };
               
               const getStatusColor = (status: string) => {
-                switch (status) {
-                  case "new": return "text-white bg-[#5DADE2]"; // More Blue, Less Grey
-                  case "booking_in_progress": return "text-white bg-[#F39C12]"; // Amber
-                  case "confirmed": return "text-white bg-[#2980B9]"; // Royal Blue
-                  case "contract_sent": return "text-white bg-[#9B59B6]"; // Violet
-                  case "contract_received": return "text-white bg-[#27AE60]"; // Emerald Green
-                  case "completed": return "text-white bg-[#34495E]"; // Slate Navy
-                  case "rejected": return "text-white bg-[#C0392B]"; // Deep Red
-                  default: return "text-gray-800 bg-gray-100";
+                const stage = mapOldStatusToStage(status);
+                const config = getStageConfig(stage);
+                
+                switch (stage) {
+                  case "new": return "text-white bg-blue-500"; // 🔵 Blue
+                  case "awaiting_response": return "text-yellow-900 bg-yellow-400"; // 🟡 Yellow
+                  case "client_confirms": return "text-white bg-orange-500"; // 🟠 Orange
+                  case "contract_sent": return "text-white bg-purple-500"; // 🟣 Purple
+                  case "confirmed": return "text-white bg-green-500"; // 🟢 Green
+                  case "cancelled": return "text-white bg-red-500"; // 🔴 Red
+                  case "completed": return "text-gray-800 bg-gray-400"; // ⚪️ Grey
+                  default: return "text-gray-700 bg-gray-200";
                 }
               };
               
