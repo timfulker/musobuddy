@@ -58,6 +58,8 @@ const enquiryFormSchema = insertEnquirySchema.extend({
   title: true, // Remove title from validation since we auto-generate it
 });
 
+
+
 export default function Enquiries() {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -365,12 +367,12 @@ export default function Enquiries() {
     
     switch (action) {
       case 'create-contract':
-        // Navigate to contract creation page with booking ID
+        // Navigate to contracts page with booking ID for pre-filling
         window.location.href = `/contracts?action=new&bookingId=${bookingId}`;
         break;
       case 'create-invoice':
-        // Navigate to invoice creation page with booking ID
-        window.location.href = `/invoices?action=new&bookingId=${bookingId}`;
+        // Navigate to invoices page with booking ID for pre-filling
+        window.location.href = `/invoices?create=true&enquiryId=${bookingId}`;
         break;
       case 'mark-completed':
         // Update booking status to completed
@@ -473,6 +475,8 @@ export default function Enquiries() {
       status: "new",
     },
   });
+
+
 
   const createEnquiryMutation = useMutation({
     mutationFn: async (data: z.infer<typeof enquiryFormSchema>) => {
