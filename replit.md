@@ -182,6 +182,9 @@ The application is designed to be user-friendly while maintaining professional-g
 - **AI Parsing Fix**: Completely rebuilt PDF parsing to actually read document content instead of generating fictional data
 - **Vision-Based Extraction**: Implemented Claude Vision with pdf2pic for accurate text extraction from real PDF documents
 - **Data Accuracy**: Fixed critical AI hallucination issue where fake client details were being generated instead of extracted
+- **PDF Text Extraction**: Replaced complex PDF processing with simple pdf-parse text extraction and Claude Vision fallback
+- **ChatGPT Integration**: Used ChatGPT's recommended field structure and parsing approach for reliable document parsing
+- **Booking Recovery**: Fixed booking deletion issue - recreated Harry Tamplin booking (ID 6103) with correct details from contract
 
 ### 2025-07-18 - Application Stability and Comprehensive User Documentation
 - **Database Connection Fix**: Resolved WebSocket connection issues with Neon database causing startup failures

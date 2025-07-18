@@ -227,10 +227,9 @@ class DataCleanupService {
           }
         }
         
-        // Remove duplicates
+        // Log duplicates but don't auto-delete to prevent data loss
         for (const duplicate of duplicates) {
-          await storage.deleteBooking(duplicate.id, user.id);
-          console.log(`🧹 Removed duplicate booking ${duplicate.id} for user ${user.id}`);
+          console.log(`🧹 Found duplicate booking ${duplicate.id} for user ${user.id} (auto-deletion disabled)`);
         }
       }
     } catch (error) {
@@ -251,13 +250,11 @@ class DataCleanupService {
       for (const user of allUsers) {
         const bookings = await storage.getBookings(user.id);
         
-        // Remove bookings with missing or invalid data
-        for (const booking of bookings) {
-          if (!booking.eventDate || !booking.venue || booking.venue.trim() === '') {
-            await storage.deleteBooking(booking.id, user.id);
-            console.log(`🧹 Removed dead booking ${booking.id} for user ${user.id}`);
-          }
-        }
+        // Skip automatic deletion of bookings - user data should not be auto-deleted
+        // Previously this removed bookings with missing venue/date, but this was causing 
+        // legitimate bookings to be deleted during document import process
+        console.log(`🧹 Skipping dead data cleanup for ${bookings.length} bookings for user ${user.id} (auto-deletion disabled)`);
+        
       }
     } catch (error) {
       console.error('Error cleaning up dead data:', error);
