@@ -1,0 +1,61 @@
+/* Clean filter styling - remove purple lines and artifacts */
+.filter-container {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+  position: relative !important;
+}
+
+.filter-container::before,
+.filter-container::after,
+.filter-container *::before,
+.filter-container *::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  border-image: none !important;
+}
+
+.filter-container * {
+  background-image: none !important;
+  border-image: none !important;
+  border-image-source: none !important;
+}
+
+/* Remove any purple styling from buttons */
+.filter-container button {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  border-radius: 6px !important;
+}
+
+.filter-container button:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+/* Remove purple from select elements */
+.filter-container [data-radix-select-trigger],
+.filter-container [data-radix-select-content],
+.filter-container [data-radix-select-item] {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+}
+
+/* Override any CSS variables */
+.filter-container {
+  --primary: #374151 !important;
+  --primary-foreground: #ffffff !important;
+  --secondary: #f9fafb !important;
+  --secondary-foreground: #374151 !important;
+  --accent: #f3f4f6 !important;
+  --accent-foreground: #374151 !important;
+  --border: #e5e7eb !important;
+  --ring: #e5e7eb !important;
+}

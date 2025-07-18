@@ -321,7 +321,11 @@ button, input, select, textarea {
 
 /* Remove purple lines and particles from filter container */
 .filter-container,
-.filter-container * {
+.filter-container *,
+.filter-container div,
+.filter-container button,
+.filter-container input,
+.filter-container select {
   background-image: none !important;
   background-attachment: initial !important;
   background-clip: initial !important;
@@ -329,15 +333,130 @@ button, input, select, textarea {
   background-position: initial !important;
   background-repeat: initial !important;
   background-size: initial !important;
+  border-image: none !important;
+  border-image-source: none !important;
 }
 
 .filter-container::before,
 .filter-container::after,
 .filter-container *::before,
-.filter-container *::after {
+.filter-container *::after,
+.filter-container div::before,
+.filter-container div::after,
+.filter-container button::before,
+.filter-container button::after {
   content: none !important;
   display: none !important;
   background: none !important;
   border: none !important;
   box-shadow: none !important;
+  border-image: none !important;
+}
+
+/* Specifically target purple colors and remove them */
+.filter-container * {
+  border-color: #e5e7eb !important;
+}
+
+.filter-container *[style*="purple"],
+.filter-container *[style*="#673ab7"],
+.filter-container *[style*="rgb(103, 58, 183)"] {
+  border: 1px solid #e5e7eb !important;
+  background: white !important;
+}
+
+/* Remove all purple styling from filter container */
+.filter-container {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Target specific elements that might have purple styling */
+.filter-container [data-radix-collection-item],
+.filter-container [data-radix-select-trigger],
+.filter-container [data-radix-select-content],
+.filter-container [data-radix-select-item],
+.filter-container [data-state],
+.filter-container [data-orientation] {
+  background: white !important;
+  border-color: #e5e7eb !important;
+  color: #374151 !important;
+}
+
+/* Remove any purple from Radix UI components */
+.filter-container [data-radix-collection-item]:hover,
+.filter-container [data-radix-select-trigger]:hover,
+.filter-container [data-radix-select-item]:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+/* Override any purple theming */
+.filter-container .text-purple-600,
+.filter-container .text-purple-700,
+.filter-container .text-purple-800,
+.filter-container .border-purple-200,
+.filter-container .border-purple-300,
+.filter-container .border-purple-400,
+.filter-container .bg-purple-50,
+.filter-container .bg-purple-100,
+.filter-container .bg-purple-200 {
+  color: #374151 !important;
+  border-color: #e5e7eb !important;
+  background: white !important;
+}
+
+/* More targeted approach - remove purple lines specifically */
+.filter-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.filter-container > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Override any CSS variables that might be causing purple */
+.filter-container {
+  --primary: #374151 !important;
+  --primary-foreground: #ffffff !important;
+  --secondary: #f9fafb !important;
+  --secondary-foreground: #374151 !important;
+  --accent: #f3f4f6 !important;
+  --accent-foreground: #374151 !important;
+  --border: #e5e7eb !important;
+  --ring: #e5e7eb !important;
+}
+
+/* Remove purple from any buttons in the filter area */
+.filter-container button {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+}
+
+.filter-container button:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+.filter-container button[data-state="checked"],
+.filter-container button[data-state="selected"] {
+  background: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+  color: #374151 !important;
 }

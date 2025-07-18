@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import './filter-clean.css';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1304,8 +1305,8 @@ export default function Enquiries() {
         </div>
 
         {/* Smart Filtering System */}
-        <Card className="filter-container">
-          <CardContent className="p-4">
+        <Card className="filter-container bg-white border-gray-200" style={{ background: 'white', border: '1px solid #e5e7eb', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+          <CardContent className="p-4" style={{ background: 'white' }}>
             <div className="flex flex-wrap gap-2 mb-4">
               {Object.entries(workflowStages).map(([status, config]) => {
                 const count = enquiries.filter(e => mapOldStatusToStage(e.status) === status).length;
