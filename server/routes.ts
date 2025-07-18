@@ -1327,44 +1327,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let extractedText = '';
       
-      // For now, manually provide the text that ChatGPT identified from the Harry Tamplin contract
-      // This will let us test the Claude parsing while we figure out reliable PDF extraction
+      // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        console.log('📄 Using manual text extraction for testing Claude parsing...');
-        extractedText = `CONTRACT FOR HIRING A SOLO MUSICIAN
-
-PERFORMER DETAILS
-Name: Tim Fulker (Saxweddings)
-Address: 59, Gloucester Rd, BH7 6JA, Dorset
-Phone: 07764190034
-Email: timfulker@gmail.com
-
-CLIENT DETAILS  
-Name: Harry Tamplin
-Phone: 07539322292
-Email: harrytamplin@hotmail.co.uk
-Address: 11 Woodland Chase
-
-EVENT DETAILS
-Date: Saturday 19th July 2025
-Start Time: 12.00 (TBC)
-End Time: Midnight
-Venue: Stratton Court Barn, Bicester
-Performance: 3.5 hours + DJ
-Fee: £710
-
-PAYMENT TERMS
-Deposit: £50 by 19/01/25
-Bank Account Name: Mr T Fulker
-Account Number: 09851259
-Sort Code: 54-21-30
-
-EQUIPMENT REQUIREMENTS
-Professional saxophone, Personal PA system, Backing tracks as required, All necessary equipment for performance.
-
-SPECIAL REQUIREMENTS  
-Special musical requests to be provided 14 days before event.`;
-        console.log('📄 Manual text provided for Claude parsing test');
+        try {
+          console.log('📄 Attempting PDF text extraction with pdf2json...');
+          
+          const PDFParser = await import('pdf2json');
+          const pdfParser = new PDFParser.default(null, 1);
+          
+          const pdfData = await new Promise((resolve, reject) => {
+            pdfParser.on("pdfParser_dataError", reject);
+            pdfParser.on("pdfParser_dataReady", resolve);
+            pdfParser.parseBuffer(fileBuffer);
+          });
+          
+          // Extract text from parsed data
+          const pages = pdfData.Pages || [];
+          let fullText = '';
+          
+          for (const page of pages) {
+            const texts = page.Texts || [];
+            for (const textItem of texts) {
+              if (textItem.R && textItem.R[0] && textItem.R[0].T) {
+                const decodedText = decodeURIComponent(textItem.R[0].T);
+                fullText += decodedText + ' ';
+              }
+            }
+            fullText += '\n';
+          }
+          
+          extractedText = fullText.trim();
+          console.log(`📄 PDF text extraction successful: ${extractedText.length} characters`);
+          console.log('📄 First 500 characters:', extractedText.substring(0, 500));
+          
+        } catch (pdfError) {
+          console.error('📄 PDF text extraction failed:', pdfError);
+          console.log('📄 Skipping text extraction - document will be stored without parsing');
+          return null;
+        }
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
