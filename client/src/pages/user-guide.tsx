@@ -34,6 +34,23 @@ interface GuideStep {
 
 const guideSteps: GuideStep[] = [
   {
+    id: 'getting-started',
+    title: 'Getting Started',
+    description: 'Initial setup and dashboard overview',
+    icon: <PlayCircle className="h-5 w-5" />,
+    steps: [
+      'Login to your MusoBuddy account using your email and password',
+      'Complete your business setup in Settings (essential for professional documents)',
+      'Familiarize yourself with the dashboard showing key metrics',
+      'Explore the navigation menu: Bookings, Contracts, Invoices, Calendar, and Settings'
+    ],
+    tips: [
+      'The dashboard shows real-time stats: monthly revenue, active bookings, and pending invoices',
+      'All pages are responsive and work on mobile devices',
+      'Use the search functionality to quickly find specific bookings or contracts'
+    ]
+  },
+  {
     id: 'email-setup',
     title: 'Email Forwarding Setup',
     description: 'Automatically convert emails to enquiries',
@@ -41,67 +58,154 @@ const guideSteps: GuideStep[] = [
     steps: [
       'Forward client emails to leads@musobuddy.com',
       'AI automatically extracts client details, dates, and venues',
-      'Enquiries appear instantly in your dashboard',
-      'No manual data entry required'
+      'Enquiries appear instantly in your Bookings dashboard',
+      'Review and edit AI-extracted information if needed',
+      'Conflict detection runs automatically for date clashes'
     ],
     tips: [
-      'Works with any email provider (Gmail, Outlook, etc.)',
+      'Works with any email provider (Gmail, Outlook, Apple Mail, etc.)',
       'Forward voice message transcripts for phone enquiries',
-      'Perfect for WhatsApp and SMS screenshots'
+      'Perfect for WhatsApp and SMS screenshots',
+      'AI recognizes Encore booking platform emails with apply-now links'
     ]
   },
   {
-    id: 'contract-management',
-    title: 'Digital Contracts',
-    description: 'Professional contract creation and signing',
+    id: 'booking-management',
+    title: 'Booking Management',
+    description: 'Complete booking lifecycle from enquiry to completion',
+    icon: <Calendar className="h-5 w-5" />,
+    steps: [
+      'View all bookings in the main Bookings page with status indicators',
+      'Create new bookings manually using the "Add Booking" button',
+      'Edit booking details by clicking on any booking card',
+      'Use status workflow: New → Quoted → Confirmed → Completed',
+      'Add notes and track client communications',
+      'Set response deadlines and follow-up reminders'
+    ],
+    tips: [
+      'Conflict warnings appear as red badges when dates overlap',
+      'Filter bookings by status, date range, or search terms',
+      'Booking cards show key info: client, date, venue, value, and status',
+      'Use the calendar view to see all bookings in monthly format'
+    ]
+  },
+  {
+    id: 'contract-creation',
+    title: 'Contract Creation & Management',
+    description: 'Professional contract creation and digital signing',
     icon: <FileText className="h-5 w-5" />,
     steps: [
-      'Create contracts from enquiries or manually',
-      'Professional PDF generation with your branding',
-      'Send contracts via email with signing links',
-      'Clients sign digitally on any device',
-      'Both parties receive signed contract copies'
+      'Create contracts from existing bookings or manually',
+      'Fill in essential details: client info, event details, fees, and terms',
+      'Generate professional PDF contracts with your business branding',
+      'Send contracts via email with secure digital signing links',
+      'Track contract status: Draft → Sent → Signed → Completed'
     ],
     tips: [
-      'Contracts work even if MusoBuddy is offline',
-      'Digital signatures are legally binding',
-      'Automatic reminders for unsigned contracts'
+      'Contract templates include Musicians Union minimum requirements',
+      'Digital signatures are legally binding in the UK',
+      'Signed contracts are automatically stored in cloud storage',
+      'Both parties receive copies of signed contracts via email'
     ]
   },
   {
-    id: 'invoice-system',
-    title: 'Invoice Management',
-    description: 'Streamlined invoicing and payment tracking',
-    icon: <DollarSign className="h-5 w-5" />,
+    id: 'contract-signing',
+    title: 'Contract Signing Workflow',
+    description: 'How clients sign contracts digitally',
+    icon: <CheckCircle className="h-5 w-5" />,
     steps: [
-      'Create invoices from contracts or standalone',
-      'Auto-generated sequential invoice numbers',
-      'Professional PDF invoices with UK tax compliance',
-      'Email invoices with online viewing links',
-      'Track payments and send reminders'
+      'Client receives email with secure signing link',
+      'Link opens contract in browser (no app required)',
+      'Client reviews contract terms and event details',
+      'Client enters their name and provides digital signature',
+      'System captures IP address and timestamp for legal compliance',
+      'Signed contract is automatically emailed to both parties',
+      'Contract status updates to "Signed" in your dashboard'
     ],
     tips: [
-      'Invoice amounts auto-calculate from contract fees',
-      'Automatic overdue detection and reminders',
-      'Professional branding on all invoices'
+      'Signing links work on any device (phone, tablet, desktop)',
+      'Contracts remain accessible even if MusoBuddy is offline',
+      'Automatic reminders sent for unsigned contracts',
+      'Digital signatures include legal metadata for enforceability'
+    ]
+  },
+  {
+    id: 'invoice-creation',
+    title: 'Invoice Creation & Editing',
+    description: 'Professional invoicing with payment tracking',
+    icon: <DollarSign className="h-5 w-5" />,
+    steps: [
+      'Create invoices from signed contracts or manually',
+      'Invoice details auto-populate from contract information',
+      'Edit invoice amounts, due dates, and payment terms',
+      'Add line items for equipment, travel, or additional services',
+      'Generate professional PDF invoices with UK tax compliance',
+      'Preview invoices before sending to clients'
+    ],
+    tips: [
+      'Invoice numbers auto-increment (customizable in Settings)',
+      'Invoice amounts default to contract fee but can be edited',
+      'Include your bank details for client payments',
+      'Add CC email addresses for client accounts departments'
+    ]
+  },
+  {
+    id: 'invoice-sending',
+    title: 'Sending & Tracking Invoices',
+    description: 'Email delivery and payment monitoring',
+    icon: <Target className="h-5 w-5" />,
+    steps: [
+      'Send invoices directly from the system via email',
+      'Invoice PDFs are attached and also available via web link',
+      'Track invoice status: Draft → Sent → Paid → Overdue',
+      'Mark invoices as paid when payment is received',
+      'Send automated reminders for overdue invoices',
+      'Download invoice PDFs for your records'
+    ],
+    tips: [
+      'Email includes professional branding with your business name',
+      'Web links allow clients to view invoices without downloading',
+      'Payment tracking helps with cash flow management',
+      'Overdue detection runs automatically with reminder options'
     ]
   },
   {
     id: 'calendar-system',
-    title: 'Calendar & Booking Management',
-    description: 'Track gigs and manage your schedule',
+    title: 'Calendar & Scheduling',
+    description: 'Visual booking management and conflict detection',
     icon: <Calendar className="h-5 w-5" />,
     steps: [
-      'View all bookings in calendar format',
-      'Import .ics files from Google Calendar/Apple Calendar',
-      'Conflict detection for overlapping bookings',
-      'Mark dates as unavailable',
-      'Export calendar files for external calendars'
+      'View all bookings in calendar format by month',
+      'Import existing calendar events from .ics files',
+      'Export your MusoBuddy calendar to external calendar apps',
+      'Identify conflicts with red warning indicators',
+      'Mark dates as unavailable for booking',
+      'Switch between calendar and list views'
     ],
     tips: [
       'Calendar shows confirmed gigs, potential bookings, and conflicts',
       'Expired enquiries are hidden to keep calendar clean',
-      'Works with all major calendar applications'
+      'Works with Google Calendar, Apple Calendar, and Outlook',
+      'Conflict detection prevents double-booking mistakes'
+    ]
+  },
+  {
+    id: 'compliance-management',
+    title: 'Compliance & Document Management',
+    description: 'Track insurance, licenses, and certifications',
+    icon: <Users className="h-5 w-5" />,
+    steps: [
+      'Upload compliance documents (insurance, PAT testing, licenses)',
+      'Set expiry dates for automatic renewal reminders',
+      'Share compliance documents with clients for venue requirements',
+      'Track compliance status across all your documents',
+      'Receive alerts before documents expire'
+    ],
+    tips: [
+      'Many venues require public liability insurance and PAT certificates',
+      'Upload documents once and share with multiple clients',
+      'Automatic reminders help avoid expired certifications',
+      'Professional document sharing builds client trust'
     ]
   },
   {
@@ -112,17 +216,38 @@ const guideSteps: GuideStep[] = [
     steps: [
       'Add business name, address, and contact details',
       'Set up bank account information for invoices',
-      'Configure default payment terms',
+      'Configure default payment terms and invoice numbering',
       'Customize email branding with your business name',
-      'Set invoice numbering sequence',
-      'Configure conflict detection settings'
+      'Set buffer times for different event types',
+      'Configure instruments played and gig types'
     ],
     tips: [
       'Business details auto-populate on all invoices and contracts',
       'Email branding maintains professional appearance',
-      'Invoice numbering ensures legal compliance'
+      'Invoice numbering ensures legal compliance',
+      'Buffer times help with travel and setup scheduling'
     ]
   },
+  {
+    id: 'advanced-features',
+    title: 'Advanced Features',
+    description: 'Power user features and automation',
+    icon: <Lightbulb className="h-5 w-5" />,
+    steps: [
+      'Use AI-powered conflict resolution suggestions',
+      'Set up automated contract and invoice reminders',
+      'Import calendar events from other booking platforms',
+      'Use bulk operations for multiple bookings',
+      'Export data for accounting software integration',
+      'Configure custom gig types and instruments'
+    ],
+    tips: [
+      'AI learns from your booking patterns to improve suggestions',
+      'Automation reduces manual follow-up tasks',
+      'Data export helps with tax preparation',
+      'Custom configurations adapt the system to your specific needs'
+    ]
+  }
   {
     id: 'client-management',
     title: 'Client Address Book',
