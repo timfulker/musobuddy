@@ -363,6 +363,11 @@ export default function Enquiries() {
     paymentStatusUpdateMutation.mutate({ id: bookingId, paymentType, status });
   };
 
+  // Contract status update for individual bookings
+  const handleContractStatusUpdate = (bookingId: number, contractType: 'sent' | 'signed', status: boolean) => {
+    contractStatusUpdateMutation.mutate({ id: bookingId, contractType, status });
+  };
+
   // Toggle status filter
   const toggleStatusFilter = (status: string) => {
     setActiveStatusFilters(prev => {
@@ -577,6 +582,37 @@ export default function Enquiries() {
     },
   });
 
+  const contractStatusUpdateMutation = useMutation({
+    mutationFn: async ({ id, contractType, status }: { id: number; contractType: 'sent' | 'signed'; status: boolean }) => {
+      const updateData = contractType === 'sent' 
+        ? { contractSent: status }
+        : { contractSigned: status };
+      
+      const response = await apiRequest(`/api/bookings/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updateData),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      toast({
+        title: "Success",
+        description: "Contract status updated successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update contract status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: z.infer<typeof enquiryFormSchema>) => {
     // Auto-generate title from Event Type and Client Name
     const eventTypeDisplay = eventTypes.find(type => 
@@ -731,7 +767,7 @@ export default function Enquiries() {
       case "rejected": return "bg-red-100 text-red-800";
       // Legacy status support
       case "contract_sent": return "bg-orange-100 text-orange-800";
-      case "contract_received": return "bg-orange-100 text-orange-800";
+      case "contract_received": return "bg-green-100 text-green-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -1816,7 +1852,7 @@ export default function Enquiries() {
                           )}
                         </div>
                         
-                        {/* Status Buttons - Simplified 5-stage workflow */}
+                        {/* Status Buttons - Simplified 4-stage workflow */}
                         <div className="flex justify-center items-center mb-4">
                           <div className="flex gap-2">
                             <Tooltip>
@@ -1835,24 +1871,6 @@ export default function Enquiries() {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Set as Negotiation</TooltipContent>
-                            </Tooltip>
-                            
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'confirmed')}
-                                  variant="outline"
-                                  size="sm"
-                                  className={`w-8 h-8 p-0 text-xs font-medium ${
-                                    enquiry.status === 'confirmed' 
-                                      ? 'bg-[#2980B9] text-white border-[#2980B9]' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#2980B9] hover:text-white'
-                                  }`}
-                                >
-                                  C
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Set as Confirmed</TooltipContent>
                             </Tooltip>
                             
                             <Tooltip>
@@ -1918,7 +1936,7 @@ export default function Enquiries() {
                             <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium text-center min-h-[24px] px-3 whitespace-nowrap`}>
                               {enquiry.status === 'new' ? 'ENQUIRY' : 
                                enquiry.status === 'booking_in_progress' ? 'NEGOTIATION' :
-                               enquiry.status === 'confirmed' ? 'CONFIRMED' :
+                               enquiry.status === 'confirmed' ? 'CONTRACT SIGNED' :
                                enquiry.status === 'completed' ? 'COMPLETED' :
                                enquiry.status === 'rejected' ? 'CANCELLED' :
                                enquiry.status.replace('_', ' ').toUpperCase()}
@@ -1934,6 +1952,50 @@ export default function Enquiries() {
                         {/* Progress Tags - NEW FEATURE */}
                         <div className="mt-3 border-t pt-3">
                           <BookingProgressTags booking={enquiry} size="sm" />
+                        </div>
+                        
+                        {/* Contract Tracking Controls */}
+                        <div className="mt-3 border-t pt-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 font-medium">Contract Status:</span>
+                            <div className="flex gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handleContractStatusUpdate(enquiry.id, 'sent', !enquiry.contractSent)}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`text-xs px-2 py-1 h-6 ${
+                                      enquiry.contractSent 
+                                        ? 'bg-blue-100 text-blue-800 border-blue-300' 
+                                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-blue-50'
+                                    }`}
+                                  >
+                                    {enquiry.contractSent ? '📤 Contract Sent' : 'Mark Contract Sent'}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Toggle contract sent status</TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handleContractStatusUpdate(enquiry.id, 'signed', !enquiry.contractSigned)}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`text-xs px-2 py-1 h-6 ${
+                                      enquiry.contractSigned 
+                                        ? 'bg-green-100 text-green-800 border-green-300' 
+                                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-green-50'
+                                    }`}
+                                  >
+                                    {enquiry.contractSigned ? '🖋️ Contract Signed' : 'Mark Contract Signed'}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Toggle contract signed status</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
                         </div>
                         
                         {/* Payment Tracking Controls */}

@@ -5,8 +5,8 @@ export interface BookingStatus {
   // Current system statuses
   oldStatus: string;
   
-  // New simplified statuses (5-stage workflow)
-  newStatus: 'enquiry' | 'negotiation' | 'confirmed' | 'completed' | 'cancelled';
+  // New simplified statuses (4-stage workflow)
+  newStatus: 'enquiry' | 'negotiation' | 'contract_signed' | 'completed' | 'cancelled';
   
   // Progress tags
   tags: {
@@ -42,7 +42,7 @@ export const statusMapping: Record<string, BookingStatus> = {
   },
   'confirmed': {
     oldStatus: 'confirmed',
-    newStatus: 'confirmed',
+    newStatus: 'contract_signed',
     tags: { contractSigned: true }
   },
   'completed': {
@@ -58,7 +58,7 @@ export const statusMapping: Record<string, BookingStatus> = {
 };
 
 // Helper function to get new status from old status
-export function mapToNewStatus(oldStatus: string): 'enquiry' | 'negotiation' | 'confirmed' | 'completed' | 'cancelled' {
+export function mapToNewStatus(oldStatus: string): 'enquiry' | 'negotiation' | 'contract_signed' | 'completed' | 'cancelled' {
   const mapping = statusMapping[oldStatus];
   return mapping ? mapping.newStatus : 'enquiry';
 }
@@ -71,7 +71,7 @@ export function getDisplayStatus(oldStatus: string): string {
   const displayNames: Record<string, string> = {
     'enquiry': 'Enquiry',
     'negotiation': 'Negotiation',
-    'confirmed': 'Confirmed',
+    'contract_signed': 'Contract Signed',
     'completed': 'Completed',
     'cancelled': 'Cancelled'
   };
@@ -106,8 +106,8 @@ export function needsAttention(booking: any): {
   
   return {
     needsResponse: newStatus === 'enquiry' || booking.responseNeeded,
-    needsContract: newStatus === 'confirmed' && !tags.contractSent,
-    needsInvoice: newStatus === 'confirmed' && tags.contractSigned && !tags.invoiceSent
+    needsContract: newStatus === 'negotiation' && !tags.contractSent,
+    needsInvoice: newStatus === 'contract_signed' && !tags.invoiceSent
   };
 }
 
@@ -118,7 +118,7 @@ export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     'enquiry': 'bg-gray-100 text-gray-800 border-gray-200',
     'negotiation': 'bg-orange-100 text-orange-800 border-orange-200',
-    'confirmed': 'bg-green-100 text-green-800 border-green-200',
+    'contract_signed': 'bg-green-100 text-green-800 border-green-200',
     'completed': 'bg-slate-100 text-slate-800 border-slate-200',
     'cancelled': 'bg-red-100 text-red-800 border-red-200'
   };
@@ -133,7 +133,7 @@ export function getStatusIcon(status: string): string {
   const icons: Record<string, string> = {
     'enquiry': '📧',
     'negotiation': '💬',
-    'confirmed': '✅',
+    'contract_signed': '✅',
     'completed': '🎉',
     'cancelled': '❌'
   };

@@ -80,8 +80,8 @@ export default function BookingCTAButtons() {
   );
 
   const needsContract = bookings.filter(booking => {
-    // Bookings that are confirmed but haven't had a contract sent yet
-    return booking.status === "confirmed" && !booking.contractSent;
+    // Bookings in negotiation that haven't had a contract sent yet
+    return booking.status === "booking_in_progress" && !booking.contractSent;
   });
 
   const needsInvoice = bookings.filter(booking => {
@@ -110,7 +110,7 @@ export default function BookingCTAButtons() {
       count: needsContract.length,
       color: "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600",
       icon: FileText,
-      description: "Confirmed bookings without contracts",
+      description: "Negotiations ready for contracts",
       action: () => setLocation("/contracts"),
     },
     {
