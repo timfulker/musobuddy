@@ -1463,6 +1463,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
         console.log('📄 Document parsing successful:', parsedData);
+        console.log('📄 Fee value type:', typeof parsedData?.fee, 'Value:', parsedData?.fee);
+        console.log('📄 Deposit value type:', typeof parsedData?.deposit, 'Value:', parsedData?.deposit);
       } catch (error) {
         parseError = error;
         console.warn('⚠️ Document parsing failed, continuing with manual data:', error.message);
@@ -1513,6 +1515,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cloudStorageKey,
         signedAt: new Date(),
       };
+      
+      // Debug: Log the contract data being sent to database
+      console.log('📄 Contract data being sent to database:', JSON.stringify(contractData, null, 2));
       
       // Always create contract record, regardless of parsing success
       const contract = await storage.createContract(contractData);
