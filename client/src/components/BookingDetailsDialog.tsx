@@ -215,11 +215,33 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      
+      // Update form with parsed data if available
+      if (data.parsedData) {
+        const currentFormData = form.getValues();
+        const updatedFormData = {
+          ...currentFormData,
+          ...(data.parsedData.clientName && { clientName: data.parsedData.clientName }),
+          ...(data.parsedData.venue && { venue: data.parsedData.venue }),
+          ...(data.parsedData.eventDate && { eventDate: data.parsedData.eventDate }),
+          ...(data.parsedData.eventTime && { eventTime: data.parsedData.eventTime }),
+          ...(data.parsedData.clientPhone && { clientPhone: data.parsedData.clientPhone }),
+          ...(data.parsedData.clientEmail && { clientEmail: data.parsedData.clientEmail }),
+          ...(data.parsedData.fee && { fee: data.parsedData.fee.toString() }),
+          ...(data.parsedData.equipmentRequirements && { equipmentNeeded: data.parsedData.equipmentRequirements }),
+          ...(data.parsedData.specialRequirements && { specialRequests: data.parsedData.specialRequirements }),
+          ...(data.parsedData.clientAddress && { clientAddress: data.parsedData.clientAddress }),
+        };
+        form.reset(updatedFormData);
+        setHasChanges(true);
+      }
+      
       setUploadStatus({
         type: 'success',
-        message: `Contract "${data.contractNumber}" uploaded and linked to booking successfully`
+        message: `Contract "${data.contractNumber}" uploaded and parsed successfully${data.parsedData ? ' - Form updated with extracted information' : ''}`
       });
-      setTimeout(() => setUploadStatus(null), 5000);
+      setTimeout(() => setUploadStatus(null), 8000);
     },
     onError: (error) => {
       setUploadStatus({
@@ -247,11 +269,29 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      
+      // Update form with parsed data if available
+      if (data.parsedData) {
+        const currentFormData = form.getValues();
+        const updatedFormData = {
+          ...currentFormData,
+          ...(data.parsedData.clientName && { clientName: data.parsedData.clientName }),
+          ...(data.parsedData.clientEmail && { clientEmail: data.parsedData.clientEmail }),
+          ...(data.parsedData.clientAddress && { clientAddress: data.parsedData.clientAddress }),
+          ...(data.parsedData.venueAddress && { venue: data.parsedData.venueAddress }),
+          ...(data.parsedData.performanceDate && { eventDate: data.parsedData.performanceDate }),
+          ...(data.parsedData.performanceFee && { fee: data.parsedData.performanceFee.toString() }),
+        };
+        form.reset(updatedFormData);
+        setHasChanges(true);
+      }
+      
       setUploadStatus({
         type: 'success',
-        message: `Invoice "${data.invoiceNumber}" uploaded and linked to booking successfully`
+        message: `Invoice "${data.invoiceNumber}" uploaded and parsed successfully${data.parsedData ? ' - Form updated with extracted information' : ''}`
       });
-      setTimeout(() => setUploadStatus(null), 5000);
+      setTimeout(() => setUploadStatus(null), 8000);
     },
     onError: (error) => {
       setUploadStatus({
@@ -863,7 +903,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-sm text-gray-600 mb-4">
-                    Upload existing invoices and contracts to link them to this booking.
+                    Upload existing invoices and contracts to link them to this booking. 
+                    Documents will be automatically parsed to extract information and update the booking form.
                   </div>
                   
                   {/* Contract Import */}

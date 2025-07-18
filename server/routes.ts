@@ -1313,6 +1313,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Parse document using OpenAI
+  async function parseDocumentWithAI(fileBuffer: Buffer, fileName: string, fileType: 'contract' | 'invoice'): Promise<any> {
+    try {
+      // Check if OpenAI API key is available
+      if (!process.env.OPENAI_API_KEY) {
+        console.log('OpenAI API key not available, skipping document parsing');
+        return null;
+      }
+
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      // Convert buffer to base64 for OpenAI
+      const base64File = fileBuffer.toString('base64');
+      const mimeType = fileName.endsWith('.pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      
+      // Create parsing prompt based on document type
+      const prompt = fileType === 'contract' ? `
+        Analyze this contract document and extract key information in JSON format:
+        {
+          "clientName": "string",
+          "venue": "string", 
+          "eventDate": "YYYY-MM-DD",
+          "eventTime": "HH:MM",
+          "eventEndTime": "HH:MM",
+          "fee": "number",
+          "deposit": "number",
+          "clientAddress": "string",
+          "clientPhone": "string",
+          "clientEmail": "string",
+          "equipmentRequirements": "string",
+          "specialRequirements": "string",
+          "paymentInstructions": "string"
+        }
+        
+        Only include fields where you can confidently extract the information. Return "null" for any field you cannot determine.
+      ` : `
+        Analyze this invoice document and extract key information in JSON format:
+        {
+          "clientName": "string",
+          "clientEmail": "string",
+          "clientAddress": "string",
+          "amount": "number",
+          "performanceDate": "YYYY-MM-DD",
+          "performanceFee": "number",
+          "depositPaid": "number",
+          "dueDate": "YYYY-MM-DD",
+          "invoiceNumber": "string",
+          "venueAddress": "string"
+        }
+        
+        Only include fields where you can confidently extract the information. Return "null" for any field you cannot determine.
+      `;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: prompt
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType};base64,${base64File}`
+                }
+              }
+            ]
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 1000,
+      });
+
+      const parsedData = JSON.parse(response.choices[0].message.content);
+      console.log('📄 Document parsed successfully:', parsedData);
+      return parsedData;
+    } catch (error) {
+      console.error('Error parsing document:', error);
+      return null;
+    }
+  }
+
   // Import contract file and link to booking
   app.post('/api/contracts/import', isAuthenticated, multer({ storage: multer.memoryStorage() }).single('file'), async (req: any, res) => {
     try {
@@ -1324,6 +1409,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      // Parse document to extract information
+      const parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
+
       // Generate unique contract number
       const contractNumber = `C${Date.now()}`;
       
@@ -1332,17 +1420,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cloudStorageKey = `contracts/${contractNumber}-${file.originalname}`;
       const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
       
-      // Create contract record
+      // Create contract record using parsed data when available
       const contractData = {
         userId,
         enquiryId: bookingId ? parseInt(bookingId) : null,
         contractNumber,
-        clientName,
-        venue: venue || '',
-        eventDate: eventDate ? new Date(eventDate) : new Date(),
-        eventTime: eventTime || '00:00',
-        eventEndTime: eventTime || '00:00',
-        fee: 0,
+        clientName: parsedData?.clientName || clientName,
+        clientAddress: parsedData?.clientAddress || '',
+        clientPhone: parsedData?.clientPhone || '',
+        clientEmail: parsedData?.clientEmail || '',
+        venue: parsedData?.venue || venue || '',
+        eventDate: parsedData?.eventDate ? new Date(parsedData.eventDate) : (eventDate ? new Date(eventDate) : new Date()),
+        eventTime: parsedData?.eventTime || eventTime || '00:00',
+        eventEndTime: parsedData?.eventEndTime || eventTime || '00:00',
+        fee: parsedData?.fee || 0,
+        deposit: parsedData?.deposit || 0,
+        equipmentRequirements: parsedData?.equipmentRequirements || '',
+        specialRequirements: parsedData?.specialRequirements || '',
+        paymentInstructions: parsedData?.paymentInstructions || '',
         status: 'signed', // Imported contracts are assumed to be signed
         cloudStorageUrl,
         cloudStorageKey,
@@ -1351,20 +1446,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const contract = await storage.createContract(contractData);
       
-      // Update booking to reflect contract import
-      if (bookingId) {
-        await storage.updateBooking(parseInt(bookingId), { 
+      // Update booking with parsed information
+      if (bookingId && parsedData) {
+        const bookingUpdates: any = { 
           contractSent: true,
           contractSigned: true,
           status: 'confirmed'
-        }, userId);
+        };
+        
+        // Add parsed information to booking
+        if (parsedData.clientName) bookingUpdates.clientName = parsedData.clientName;
+        if (parsedData.venue) bookingUpdates.venue = parsedData.venue;
+        if (parsedData.eventDate) bookingUpdates.eventDate = new Date(parsedData.eventDate);
+        if (parsedData.eventTime) bookingUpdates.eventTime = parsedData.eventTime;
+        if (parsedData.clientPhone) bookingUpdates.clientPhone = parsedData.clientPhone;
+        if (parsedData.clientEmail) bookingUpdates.clientEmail = parsedData.clientEmail;
+        if (parsedData.fee) bookingUpdates.estimatedValue = parsedData.fee.toString();
+        
+        await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
       }
       
       res.json({
         success: true,
         contract,
         contractNumber,
-        message: 'Contract imported successfully'
+        parsedData,
+        message: 'Contract imported and parsed successfully'
       });
     } catch (error) {
       console.error('Error importing contract:', error);
@@ -1383,41 +1490,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      // Parse document to extract information
+      const parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'invoice');
+
       // Get user settings to get next invoice number
       const userSettings = await storage.getUserSettings(userId);
-      const invoiceNumber = `INV${userSettings?.nextInvoiceNumber || 1}`;
+      const invoiceNumber = parsedData?.invoiceNumber || `INV${userSettings?.nextInvoiceNumber || 1}`;
       
       // Upload file to cloud storage
       const { uploadToCloudStorage } = await import('./cloud-storage');
       const cloudStorageKey = `invoices/${invoiceNumber}-${file.originalname}`;
       const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
       
-      // Create invoice record
+      // Create invoice record using parsed data when available
       const invoiceData = {
         userId,
         bookingId: bookingId ? parseInt(bookingId) : null,
         invoiceNumber,
-        clientName,
-        clientEmail: clientEmail || '',
-        amount: 0,
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        clientName: parsedData?.clientName || clientName,
+        clientEmail: parsedData?.clientEmail || clientEmail || '',
+        clientAddress: parsedData?.clientAddress || '',
+        venueAddress: parsedData?.venueAddress || '',
+        amount: parsedData?.amount || 0,
+        performanceFee: parsedData?.performanceFee || 0,
+        depositPaid: parsedData?.depositPaid || 0,
+        dueDate: parsedData?.dueDate ? new Date(parsedData.dueDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         status: 'sent', // Imported invoices are assumed to be sent
         cloudStorageUrl,
         cloudStorageKey,
-        performanceDate: eventDate ? new Date(eventDate) : null,
+        performanceDate: parsedData?.performanceDate ? new Date(parsedData.performanceDate) : (eventDate ? new Date(eventDate) : null),
       };
       
       const invoice = await storage.createInvoice(invoiceData);
       
-      // Update booking to reflect invoice import
-      if (bookingId) {
-        await storage.updateBooking(parseInt(bookingId), { 
+      // Update booking with parsed information
+      if (bookingId && parsedData) {
+        const bookingUpdates: any = { 
           invoiceSent: true 
-        }, userId);
+        };
+        
+        // Add parsed information to booking
+        if (parsedData.clientName) bookingUpdates.clientName = parsedData.clientName;
+        if (parsedData.clientEmail) bookingUpdates.clientEmail = parsedData.clientEmail;
+        if (parsedData.performanceDate) bookingUpdates.eventDate = new Date(parsedData.performanceDate);
+        if (parsedData.performanceFee) bookingUpdates.estimatedValue = parsedData.performanceFee.toString();
+        if (parsedData.venueAddress) bookingUpdates.venue = parsedData.venueAddress;
+        
+        await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
       }
       
-      // Update next invoice number
-      if (userSettings) {
+      // Update next invoice number only if we generated it
+      if (userSettings && !parsedData?.invoiceNumber) {
         await storage.updateUserSettings(userId, {
           nextInvoiceNumber: (userSettings.nextInvoiceNumber || 1) + 1
         });
@@ -1427,7 +1550,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         invoice,
         invoiceNumber,
-        message: 'Invoice imported successfully'
+        parsedData,
+        message: 'Invoice imported and parsed successfully'
       });
     } catch (error) {
       console.error('Error importing invoice:', error);

@@ -204,8 +204,11 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Status Updates**: Mark Completed and Mark Confirmed buttons now properly update booking status with user feedback
 - **Enhanced User Experience**: Contextual actions now provide immediate feedback through toast notifications
 - **Document Import System**: Added comprehensive import functionality for existing invoices and contracts with automatic booking linking
+- **AI Document Parsing**: Implemented OpenAI-powered document parsing to extract key information from uploaded PDFs and Word documents
+- **Intelligent Form Updates**: Automatically populates booking form fields with extracted data from contracts and invoices
 - **Upload Integration**: Individual upload buttons in booking details dialog for context-specific document imports
 - **Cloud Storage Integration**: Imported documents automatically uploaded to cloud storage with proper file management
 - **Booking Status Updates**: Automatic status updates when documents are imported (contracts mark as signed, invoices as sent)
+- **Smart Data Extraction**: Parses client names, dates, venues, fees, contact information, and special requirements from uploaded documents
 - **User-Friendly Interface**: Clean upload interface with file type validation and upload status feedback
 - **Status**: Fully stable application with comprehensive user documentation, complete theme customization system, improved booking lifecycle management, complete manual tracking capabilities, optimized smart filtering for large datasets, enhanced button alignment for professional appearance, fully functional contextual action buttons with proper navigation, new date filtering options for better booking management, and complete document import system for existing invoices and contracts
