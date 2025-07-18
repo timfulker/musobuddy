@@ -196,7 +196,7 @@ export const bookings = pgTable("bookings", {
   eventType: varchar("event_type"),
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
   estimatedValue: varchar("estimated_value"),
-  status: varchar("status").notNull().default("new"), // new, booking_in_progress, contract_sent, confirmed, rejected, completed
+  status: varchar("status").notNull().default("new"), // Keep existing: new, booking_in_progress, contract_sent, confirmed, rejected, completed
   previousStatus: varchar("previous_status"), // Track status before auto-completion to completed
   notes: text("notes"),
   originalEmailContent: text("original_email_content"), // Store original email content
@@ -206,6 +206,18 @@ export const bookings = pgTable("bookings", {
   hasConflicts: boolean("has_conflicts").default(false), // Flag for potential conflicts
   conflictCount: integer("conflict_count").default(0), // Number of potential conflicts
   conflictDetails: text("conflict_details"), // JSON string with conflict details
+  
+  // New tag system for tracking progress states
+  contractSent: boolean("contract_sent").default(false), // Contract has been sent
+  contractSigned: boolean("contract_signed").default(false), // Contract has been signed
+  invoiceSent: boolean("invoice_sent").default(false), // Invoice has been sent
+  paidInFull: boolean("paid_in_full").default(false), // Payment received in full
+  depositPaid: boolean("deposit_paid").default(false), // Deposit has been paid
+  
+  // Financial tracking
+  quotedAmount: decimal("quoted_amount", { precision: 10, scale: 2 }), // Amount quoted to client
+  depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }), // Deposit amount if required
+  finalAmount: decimal("final_amount", { precision: 10, scale: 2 }), // Final agreed amount
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

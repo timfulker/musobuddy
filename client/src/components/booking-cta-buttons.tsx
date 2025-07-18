@@ -74,29 +74,26 @@ export default function BookingCTAButtons() {
     invoicesData: invoices.slice(0, 2)
   });
 
-  // Filter bookings that need responses (new or pending status)
+  // Use the new status mapping system for better filtering
   const needsResponse = bookings.filter(
-    (booking) => booking.status === "new" || booking.status === "booking_in_progress" || booking.responseNeeded
+    (booking) => booking.status === "new" || booking.responseNeeded
   );
 
-  // Filter bookings that need contracts sent (confirmed but no contract)
-  const confirmedBookings = bookings.filter(booking => booking.status === "confirmed");
-  const needsContract = confirmedBookings.filter(booking => {
-    const hasContract = contracts.some(contract => contract.enquiryId === booking.id);
-    return !hasContract;
+  const needsContract = bookings.filter(booking => {
+    // Bookings that are confirmed but haven't had a contract sent yet
+    return booking.status === "confirmed" && !booking.contractSent;
   });
 
-  // Filter bookings that need invoices sent (have signed contract but no invoice)
-  const signedContracts = contracts.filter(contract => contract.isSigned);
-  const needsInvoice = signedContracts.filter(contract => {
-    const hasInvoice = invoices.some(invoice => invoice.contractId === contract.id);
-    return !hasInvoice;
+  const needsInvoice = bookings.filter(booking => {
+    // Bookings that have signed contracts but no invoice sent
+    return booking.contractSigned && !booking.invoiceSent;
   });
 
   console.log("🔍 CTA Counts:", {
     needsResponse: needsResponse.length,
     needsContract: needsContract.length,
-    needsInvoice: needsInvoice.length
+    needsInvoice: needsInvoice.length,
+    totalBookings: bookings.length
   });
 
   const ctaButtons = [
