@@ -1511,8 +1511,8 @@ All terms have been agreed and signatures obtained.`;
           "clientEmail": "string or null",
           "clientAddress": "string or null",
           "amount": number or null,
-          "performanceDate": "YYYY-MM-DD or null",
-          "performanceFee": number or null,
+          "eventDate": "YYYY-MM-DD or null",
+          "fee": number or null,
           "depositPaid": number or null,
           "dueDate": "YYYY-MM-DD or null",
           "invoiceNumber": "string or null",
@@ -1666,7 +1666,10 @@ All terms have been agreed and signatures obtained.`;
         if (parsedData.eventTime) bookingUpdates.eventTime = parsedData.eventTime;
         if (parsedData.clientPhone) bookingUpdates.clientPhone = parsedData.clientPhone;
         if (parsedData.clientEmail) bookingUpdates.clientEmail = parsedData.clientEmail;
-        if (parsedData.fee) bookingUpdates.estimatedValue = parsedData.fee.toString();
+        if (parsedData.clientAddress) bookingUpdates.clientAddress = parsedData.clientAddress;
+        if (parsedData.fee) bookingUpdates.fee = parsedData.fee;
+        if (parsedData.equipmentRequirements) bookingUpdates.equipmentRequirements = parsedData.equipmentRequirements;
+        if (parsedData.specialRequirements) bookingUpdates.specialRequirements = parsedData.specialRequirements;
         
         await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
       }
@@ -1749,7 +1752,7 @@ All terms have been agreed and signatures obtained.`;
         clientAddress: safeParseValue(parsedData?.clientAddress, ''),
         venueAddress: safeParseValue(parsedData?.venueAddress, ''),
         amount: safeParseNumber(parsedData?.amount, 0),
-        performanceFee: safeParseNumber(parsedData?.performanceFee, 0),
+        fee: safeParseNumber(parsedData?.fee, 0),
         depositPaid: safeParseNumber(parsedData?.depositPaid, 0),
         dueDate: (() => {
           if (parsedData?.dueDate && parsedData.dueDate !== 'null' && parsedData.dueDate !== null) {
@@ -1761,9 +1764,9 @@ All terms have been agreed and signatures obtained.`;
         status: 'sent', // Imported invoices are assumed to be sent
         cloudStorageUrl,
         cloudStorageKey,
-        performanceDate: (() => {
-          if (parsedData?.performanceDate && parsedData.performanceDate !== 'null' && parsedData.performanceDate !== null) {
-            const parsed = new Date(parsedData.performanceDate);
+        eventDate: (() => {
+          if (parsedData?.eventDate && parsedData.eventDate !== 'null' && parsedData.eventDate !== null) {
+            const parsed = new Date(parsedData.eventDate);
             return isNaN(parsed.getTime()) ? (eventDate ? new Date(eventDate) : null) : parsed;
           }
           return eventDate ? new Date(eventDate) : null;
@@ -1782,8 +1785,8 @@ All terms have been agreed and signatures obtained.`;
         // Add parsed information to booking
         if (parsedData.clientName) bookingUpdates.clientName = parsedData.clientName;
         if (parsedData.clientEmail) bookingUpdates.clientEmail = parsedData.clientEmail;
-        if (parsedData.performanceDate) bookingUpdates.eventDate = new Date(parsedData.performanceDate);
-        if (parsedData.performanceFee) bookingUpdates.estimatedValue = parsedData.performanceFee.toString();
+        if (parsedData.eventDate) bookingUpdates.eventDate = new Date(parsedData.eventDate);
+        if (parsedData.fee) bookingUpdates.fee = parsedData.fee;
         if (parsedData.venueAddress) bookingUpdates.venue = parsedData.venueAddress;
         
         await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);

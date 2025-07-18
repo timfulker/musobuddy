@@ -168,8 +168,8 @@ export const invoices = pgTable("invoices", {
   ccEmail: varchar("cc_email"), // Optional CC email for invoice notifications
   clientAddress: varchar("client_address"), // Client's address
   venueAddress: text("venue_address"), // Venue address where performance takes place
-  performanceDate: timestamp("performance_date"),
-  performanceFee: decimal("performance_fee", { precision: 10, scale: 2 }),
+  eventDate: timestamp("event_date"),
+  fee: decimal("fee", { precision: 10, scale: 2 }),
   depositPaid: decimal("deposit_paid", { precision: 10, scale: 2 }).default("0"),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Amount due (fee minus deposit)
   dueDate: timestamp("due_date").notNull(),
@@ -194,9 +194,13 @@ export const bookings = pgTable("bookings", {
   eventEndTime: varchar("event_end_time"), // End time for performance
   performanceDuration: integer("performance_duration"), // Duration in minutes
   venue: varchar("venue"),
+  venueAddress: text("venue_address"),
+  clientAddress: text("client_address"),
   eventType: varchar("event_type"),
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
-  estimatedValue: varchar("estimated_value"),
+  fee: decimal("fee", { precision: 10, scale: 2 }),
+  equipmentRequirements: text("equipment_requirements"),
+  specialRequirements: text("special_requirements"),
   status: varchar("status").notNull().default("new"), // New 6-stage workflow: new, awaiting_response, client_confirms, contract_sent, confirmed, cancelled, completed
   previousStatus: varchar("previous_status"), // Track status before auto-completion to completed
   notes: text("notes"),

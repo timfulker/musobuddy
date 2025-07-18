@@ -160,6 +160,17 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Data Integrity**: Verified real user data is properly loaded and saved in settings form
 - **Status**: Complete admin panel with deep business insights, working CC email functionality, fully functional settings page with real data persistence, and resolved all authentication/session issues
 
+### 2025-07-18 - Field Name Standardization and Enhanced Time Fields
+- **Field Name Consistency**: Standardized field names across booking form, contracts, and invoices for improved AI parsing
+- **Contract Field Priority**: Used contract schema field names as the standard (clientName, clientEmail, clientAddress, venue, venueAddress, eventDate, eventTime, eventEndTime, fee, equipmentRequirements, specialRequirements)
+- **Invoice Schema Updates**: Renamed performanceDate→eventDate, performanceFee→fee for consistency with contract fields
+- **Booking Schema Enhancement**: Added venueAddress, clientAddress, equipmentRequirements, specialRequirements, and fee fields to match contract structure
+- **Database Migration**: Successfully updated database schema to support new consistent field names across all entities
+- **Parsing Improvements**: Enhanced AI document parsing to use standardized field names, improving accuracy for contract and invoice imports
+- **Form Updates**: Updated booking details form to include Start Time and End Time fields side-by-side for better user experience
+- **Backward Compatibility**: Maintained parsing logic to handle both old and new field names during transition period
+- **Status**: Field name standardization complete across all forms and AI parsing systems, improved time field layout in booking details
+
 ### 2025-07-18 - Application Stability and Comprehensive User Documentation
 - **Database Connection Fix**: Resolved WebSocket connection issues with Neon database causing startup failures
 - **Error Handling Enhancement**: Added comprehensive error handling throughout server startup process

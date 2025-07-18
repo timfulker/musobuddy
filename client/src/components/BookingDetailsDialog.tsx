@@ -40,10 +40,11 @@ const bookingDetailsSchema = z.object({
   clientEmail: z.string().email().optional().or(z.literal("")),
   clientPhone: z.string().optional(),
   clientAddress: z.string().optional(),
+  venueAddress: z.string().optional(),
   eventType: z.string().optional(),
   gigType: z.string().optional(),
-  equipmentNeeded: z.string().optional(),
-  specialRequests: z.string().optional(),
+  equipmentRequirements: z.string().optional(),
+  specialRequirements: z.string().optional(),
   setupTime: z.string().optional(),
   soundCheckTime: z.string().optional(),
   packupTime: z.string().optional(),
@@ -97,8 +98,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       clientAddress: "",
       eventType: "",
       gigType: "",
-      equipmentNeeded: "",
-      specialRequests: "",
+      equipmentRequirements: "",
+      specialRequirements: "",
       setupTime: "",
       soundCheckTime: "",
       packupTime: "",
@@ -129,8 +130,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
         clientAddress: booking.clientAddress || "",
         eventType: booking.eventType || "",
         gigType: booking.gigType || "",
-        equipmentNeeded: booking.equipmentNeeded || "",
-        specialRequests: booking.specialRequests || "",
+        equipmentRequirements: booking.equipmentRequirements || "",
+        specialRequirements: booking.specialRequirements || "",
         setupTime: booking.setupTime || "",
         soundCheckTime: booking.soundCheckTime || "",
         packupTime: booking.packupTime || "",
@@ -232,8 +233,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
           ...(data.parsedData.clientPhone && { clientPhone: data.parsedData.clientPhone }),
           ...(data.parsedData.clientEmail && { clientEmail: data.parsedData.clientEmail }),
           ...(data.parsedData.fee && { fee: data.parsedData.fee.toString() }),
-          ...(data.parsedData.equipmentRequirements && { equipmentNeeded: data.parsedData.equipmentRequirements }),
-          ...(data.parsedData.specialRequirements && { specialRequests: data.parsedData.specialRequirements }),
+          ...(data.parsedData.equipmentRequirements && { equipmentRequirements: data.parsedData.equipmentRequirements }),
+          ...(data.parsedData.specialRequirements && { specialRequirements: data.parsedData.specialRequirements }),
           ...(data.parsedData.clientAddress && { clientAddress: data.parsedData.clientAddress }),
         };
         form.reset(updatedFormData);
@@ -835,7 +836,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                 <CardContent className="grid gap-4">
                   <FormField
                     control={form.control}
-                    name="equipmentNeeded"
+                    name="equipmentRequirements"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Equipment Needed</FormLabel>
@@ -849,7 +850,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                   
                   <FormField
                     control={form.control}
-                    name="specialRequests"
+                    name="specialRequirements"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Special Requests</FormLabel>
