@@ -1439,23 +1439,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // Parse document to extract information
-      const parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
-
       // Generate unique contract number
       const contractNumber = `C${Date.now()}`;
       
-      // Upload file to cloud storage
+      // Always upload file to cloud storage first
       const { uploadToCloudStorage } = await import('./cloud-storage');
       const cloudStorageKey = `contracts/${contractNumber}-${file.originalname}`;
       const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
       
-      // Create contract record using parsed data when available
+      // Attempt to parse document to extract information
+      let parsedData = null;
+      let parseError = null;
+      
+      try {
+        parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
+        console.log('📄 Document parsing successful:', parsedData);
+      } catch (error) {
+        parseError = error;
+        console.warn('⚠️ Document parsing failed, continuing with manual data:', error.message);
+      }
+      
+      // Create contract record using parsed data when available, fallback to manual data
       const contractData = {
         userId,
         enquiryId: bookingId ? parseInt(bookingId) : null,
         contractNumber,
-        clientName: parsedData?.clientName || clientName,
+        clientName: parsedData?.clientName || clientName || `Client for ${file.originalname}`,
         clientAddress: parsedData?.clientAddress || '',
         clientPhone: parsedData?.clientPhone || '',
         clientEmail: parsedData?.clientEmail || '',
@@ -1474,9 +1483,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signedAt: new Date(),
       };
       
+      // Always create contract record, regardless of parsing success
       const contract = await storage.createContract(contractData);
       
-      // Update booking with parsed information
+      // Update booking with parsed information (only if parsing was successful)
       if (bookingId && parsedData) {
         const bookingUpdates: any = { 
           contractSent: true,
@@ -1496,12 +1506,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
       }
       
+      // Determine response message based on parsing success
+      const message = parsedData 
+        ? 'Contract imported and parsed successfully'
+        : `Contract imported successfully. ${parseError ? 'Auto-parsing failed, but' : ''} Contract is now available in your contracts list.`;
+      
       res.json({
         success: true,
         contract,
         contractNumber,
         parsedData,
-        message: 'Contract imported and parsed successfully'
+        parseError: parseError?.message || null,
+        message
       });
     } catch (error) {
       console.error('Error importing contract:', error);
@@ -1520,24 +1536,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // Parse document to extract information
-      const parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'invoice');
-
       // Get user settings to get next invoice number
       const userSettings = await storage.getUserSettings(userId);
+      
+      // Attempt to parse document to extract information
+      let parsedData = null;
+      let parseError = null;
+      
+      try {
+        parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'invoice');
+        console.log('📄 Invoice parsing successful:', parsedData);
+      } catch (error) {
+        parseError = error;
+        console.warn('⚠️ Invoice parsing failed, continuing with manual data:', error.message);
+      }
+
       const invoiceNumber = parsedData?.invoiceNumber || `INV${userSettings?.nextInvoiceNumber || 1}`;
       
-      // Upload file to cloud storage
+      // Always upload file to cloud storage
       const { uploadToCloudStorage } = await import('./cloud-storage');
       const cloudStorageKey = `invoices/${invoiceNumber}-${file.originalname}`;
       const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
       
-      // Create invoice record using parsed data when available
+      // Create invoice record using parsed data when available, fallback to manual data
       const invoiceData = {
         userId,
         bookingId: bookingId ? parseInt(bookingId) : null,
         invoiceNumber,
-        clientName: parsedData?.clientName || clientName,
+        clientName: parsedData?.clientName || clientName || `Client for ${file.originalname}`,
         clientEmail: parsedData?.clientEmail || clientEmail || '',
         clientAddress: parsedData?.clientAddress || '',
         venueAddress: parsedData?.venueAddress || '',
@@ -1551,9 +1577,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         performanceDate: parsedData?.performanceDate ? new Date(parsedData.performanceDate) : (eventDate ? new Date(eventDate) : null),
       };
       
+      // Always create invoice record, regardless of parsing success
       const invoice = await storage.createInvoice(invoiceData);
       
-      // Update booking with parsed information
+      // Update booking with parsed information (only if parsing was successful)
       if (bookingId && parsedData) {
         const bookingUpdates: any = { 
           invoiceSent: true 
@@ -1576,12 +1603,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Determine response message based on parsing success
+      const message = parsedData 
+        ? 'Invoice imported and parsed successfully'
+        : `Invoice imported successfully. ${parseError ? 'Auto-parsing failed, but' : ''} Invoice is now available in your invoices list.`;
+      
       res.json({
         success: true,
         invoice,
         invoiceNumber,
         parsedData,
-        message: 'Invoice imported and parsed successfully'
+        parseError: parseError?.message || null,
+        message
       });
     } catch (error) {
       console.error('Error importing invoice:', error);
