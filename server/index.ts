@@ -2,9 +2,25 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
+import { testDatabaseConnection } from "./db";
 import OpenAI from "openai";
 
 const app = express();
+
+// Test database connection at startup
+console.log('🔍 Testing database connection...');
+testDatabaseConnection()
+  .then(success => {
+    if (success) {
+      console.log('✅ Database connection verified successfully');
+    } else {
+      console.log('⚠️ Database connection failed, but continuing startup...');
+    }
+  })
+  .catch(error => {
+    console.error('❌ Database connection test error:', error);
+    console.log('⚠️ Continuing startup despite database connection issues...');
+  });
 
 // Essential middleware setup
 app.use(express.json({ limit: '50mb' }));
@@ -21,13 +37,16 @@ console.log('🤖 Instrument Mapping AI initialized:', !!instrumentMappingAI);
 console.log('🤖 Conflict Resolution AI initialized:', !!conflictResolutionAI);
 console.log('🤖 Support Chat AI initialized:', !!supportChatAI);
 
-// Initialize data cleanup service
+// Initialize data cleanup service with better error handling
 (async () => {
   try {
+    console.log('🧹 Initializing data cleanup service...');
     const { dataCleanupService } = await import('./data-cleanup-service');
     await dataCleanupService.initialize();
+    console.log('✅ Data cleanup service initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize data cleanup service:', error);
+    console.error('❌ Failed to initialize data cleanup service:', error);
+    console.log('⚠️ Continuing without data cleanup service...');
   }
 })();
 
@@ -310,35 +329,50 @@ console.log('✅ Dedicated webhook handler registered');
 // STEP 3: REGISTER ALL OTHER ROUTES
 console.log('🔧 Starting clean route registration...');
 
-// Initialize the server
-const server = await registerRoutes(app);
+// Initialize the server with error handling
+let server;
+try {
+  server = await registerRoutes(app);
+  console.log('✅ All routes registered successfully');
+} catch (error) {
+  console.error('❌ Failed to register routes:', error);
+  console.log('⚠️ Continuing with basic server setup...');
+  server = require('http').createServer(app);
+}
 
-console.log('✅ All routes registered successfully');
+// Debug: Show all registered routes with error handling
+try {
+  const routes = app._router.stack.map((middleware: any, index: number) => {
+    if (middleware.route) {
+      return `${index}: ${Object.keys(middleware.route.methods).join(', ')} ${middleware.route.path}`;
+    } else {
+      return `${index}: middleware - ${middleware.name || '<anonymous>'}`;
+    }
+  }).filter(Boolean);
 
-// Debug: Show all registered routes
-const routes = app._router.stack.map((middleware: any, index: number) => {
-  if (middleware.route) {
-    return `${index}: ${Object.keys(middleware.route.methods).join(', ')} ${middleware.route.path}`;
-  } else {
-    return `${index}: middleware - ${middleware.name || '<anonymous>'}`;
-  }
-}).filter(Boolean);
-
-console.log('🔍 Registered routes:');
-routes.forEach(route => console.log('  ' + route));
+  console.log('🔍 Registered routes:');
+  routes.forEach(route => console.log('  ' + route));
+} catch (error) {
+  console.error('❌ Error listing routes:', error);
+  console.log('⚠️ Continuing without route listing...');
+}
 
 // STEP 4: SETUP VITE MIDDLEWARE
 console.log('🔧 Setting up Vite middleware...');
 
-if (app.get('env') === 'development') {
-  await setupVite(app);
-  console.log('✅ Vite middleware set up');
-} else {
-  serveStatic(app);
-  console.log('✅ Static files served');
+try {
+  if (app.get('env') === 'development') {
+    await setupVite(app);
+    console.log('✅ Vite middleware set up');
+  } else {
+    serveStatic(app);
+    console.log('✅ Static files served');
+  }
+  console.log('✅ Vite middleware setup completed');
+} catch (error) {
+  console.error('❌ Failed to setup Vite middleware:', error);
+  console.log('⚠️ Continuing without Vite middleware...');
 }
-
-console.log('✅ Vite middleware setup completed');
 
 // Catch all unmatched routes for debugging
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -349,6 +383,42 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 const PORT = Number(process.env.PORT) || 5000;
-server.listen(PORT, "0.0.0.0", () => {
-  log(`Server running on port ${PORT}`);
+
+// Add graceful shutdown handling
+process.on('SIGINT', () => {
+  console.log('\n🔥 Received SIGINT, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
+
+process.on('SIGTERM', () => {
+  console.log('\n🔥 Received SIGTERM, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  console.log('⚠️ Attempting to continue...');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.log('⚠️ Attempting to continue...');
+});
+
+// Start the server with error handling
+try {
+  server.listen(PORT, "0.0.0.0", () => {
+    log(`Server running on port ${PORT}`);
+    console.log(`🚀 MusoBuddy server started successfully on http://0.0.0.0:${PORT}`);
+  });
+} catch (error) {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+}

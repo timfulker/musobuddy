@@ -30,14 +30,24 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-export function setupAuth(app: Express) {
-  // PostgreSQL session store for stability
-  const PostgresSessionStore = connectPg(session);
-  const sessionStore = new PostgresSessionStore({
-    pool: pool,
-    createTableIfMissing: true,
-    tableName: 'sessions'
-  });
+export async function setupAuth(app: Express) {
+  console.log('🔐 Setting up authentication...');
+  
+  try {
+    // PostgreSQL session store for stability
+    const PostgresSessionStore = connectPg(session);
+    const sessionStore = new PostgresSessionStore({
+      pool: pool,
+      createTableIfMissing: true,
+      tableName: 'sessions'
+    });
+    
+    // Test session store connection
+    sessionStore.on('error', (error) => {
+      console.error('❌ Session store error:', error);
+    });
+    
+    console.log('✅ Session store configured');
 
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'musobuddy-secret-key-change-in-production',
@@ -123,6 +133,14 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
+
+  console.log('✅ Authentication setup completed successfully');
+  
+  } catch (error) {
+    console.error('❌ Authentication setup failed:', error);
+    console.log('⚠️ Authentication may not work properly');
+    throw error;
+  }
 }
 
 export function isAuthenticated(req: any, res: any, next: any) {
