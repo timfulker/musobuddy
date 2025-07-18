@@ -1412,8 +1412,8 @@ export default function Enquiries() {
         {selectedBookings.size > 0 && (
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center space-x-3">
                   <span className="text-sm font-medium text-blue-900">
                     {selectedBookings.size} booking{selectedBookings.size === 1 ? '' : 's'} selected
                   </span>
@@ -1421,7 +1421,7 @@ export default function Enquiries() {
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedBookings(new Set())}
-                    className="text-blue-700 border-blue-300"
+                    className="text-blue-700 border-blue-300 text-xs px-3"
                   >
                     Clear Selection
                   </Button>
@@ -1435,16 +1435,16 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('new')}
                           variant="outline"
                           size="sm"
-                          className={`w-7 h-7 p-0 text-xs ${
+                          className={`w-8 h-8 p-0 text-sm ${
                             bulkUpdateStatus === 'new' 
                               ? 'bg-blue-500 text-white border-blue-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
                           }`}
                         >
-                          E
+                          📧
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Set as Enquiry</TooltipContent>
+                      <TooltipContent>Set as New Enquiry</TooltipContent>
                     </Tooltip>
                     
                     <Tooltip>
@@ -1453,34 +1453,34 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('booking_in_progress')}
                           variant="outline"
                           size="sm"
-                          className={`w-7 h-7 p-0 text-xs ${
+                          className={`w-8 h-8 p-0 text-sm ${
                             bulkUpdateStatus === 'booking_in_progress' 
-                              ? 'bg-amber-500 text-white border-amber-500' 
+                              ? 'bg-yellow-500 text-white border-yellow-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
                           }`}
                         >
-                          P
+                          ⏳
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Set as In Progress</TooltipContent>
+                      <TooltipContent>Set as Awaiting Response</TooltipContent>
                     </Tooltip>
                     
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          onClick={() => setBulkUpdateStatus('confirmed')}
+                          onClick={() => setBulkUpdateStatus('client_confirms')}
                           variant="outline"
                           size="sm"
-                          className={`w-7 h-7 p-0 text-xs ${
-                            bulkUpdateStatus === 'confirmed' 
-                              ? 'bg-green-500 text-white border-green-500' 
+                          className={`w-8 h-8 p-0 text-sm ${
+                            bulkUpdateStatus === 'client_confirms' 
+                              ? 'bg-orange-500 text-white border-orange-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
                           }`}
                         >
-                          C
+                          👍
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Set as Confirmed</TooltipContent>
+                      <TooltipContent>Set as Client Confirms</TooltipContent>
                     </Tooltip>
                     
                     <Tooltip>
@@ -1489,13 +1489,13 @@ export default function Enquiries() {
                           onClick={() => setBulkUpdateStatus('contract_sent')}
                           variant="outline"
                           size="sm"
-                          className={`w-7 h-7 p-0 text-xs ${
+                          className={`w-8 h-8 p-0 text-sm ${
                             bulkUpdateStatus === 'contract_sent' 
                               ? 'bg-purple-500 text-white border-purple-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
                           }`}
                         >
-                          S
+                          📋
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Set as Contract Sent</TooltipContent>
@@ -1504,52 +1504,71 @@ export default function Enquiries() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          onClick={() => setBulkUpdateStatus('contract_received')}
+                          onClick={() => setBulkUpdateStatus('confirmed')}
                           variant="outline"
                           size="sm"
-                          className={`w-7 h-7 p-0 text-xs ${
-                            bulkUpdateStatus === 'contract_received' 
-                              ? 'bg-indigo-500 text-white border-indigo-500' 
+                          className={`w-8 h-8 p-0 text-sm ${
+                            bulkUpdateStatus === 'confirmed' 
+                              ? 'bg-green-500 text-white border-green-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
                           }`}
                         >
-                          R
+                          ✅
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Set as Contract Received</TooltipContent>
+                      <TooltipContent>Set as Confirmed</TooltipContent>
                     </Tooltip>
                     
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          onClick={() => setBulkUpdateStatus('rejected')}
+                          onClick={() => setBulkUpdateStatus('cancelled')}
                           variant="outline"
                           size="sm"
-                          className={`w-7 h-7 p-0 text-xs ${
-                            bulkUpdateStatus === 'rejected' 
+                          className={`w-8 h-8 p-0 text-sm ${
+                            bulkUpdateStatus === 'cancelled' 
                               ? 'bg-red-500 text-white border-red-500' 
                               : 'bg-gray-200 text-gray-600 border-gray-300'
                           }`}
                         >
-                          ✗
+                          ❌
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Set as Rejected</TooltipContent>
+                      <TooltipContent>Set as Cancelled</TooltipContent>
+                    </Tooltip>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setBulkUpdateStatus('completed')}
+                          variant="outline"
+                          size="sm"
+                          className={`w-8 h-8 p-0 text-sm ${
+                            bulkUpdateStatus === 'completed' 
+                              ? 'bg-gray-500 text-white border-gray-500' 
+                              : 'bg-gray-200 text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          🎉
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Set as Completed</TooltipContent>
                     </Tooltip>
                   </div>
                   <Button
                     onClick={handleBulkStatusUpdate}
                     disabled={!bulkUpdateStatus || bulkUpdateMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-xs px-3"
                   >
                     {bulkUpdateMutation.isPending ? (
                       <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
                         Updating...
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="w-4 h-4 mr-2" />
+                        <CheckCircle className="w-3 h-3 mr-1" />
                         Update
                       </>
                     )}
@@ -1558,16 +1577,17 @@ export default function Enquiries() {
                     onClick={handleBulkDelete}
                     disabled={bulkDeleteMutation.isPending}
                     variant="destructive"
-                    className="bg-red-600 hover:bg-red-700"
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 text-xs px-3"
                   >
                     {bulkDeleteMutation.isPending ? (
                       <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
                         Deleting...
                       </>
                     ) : (
                       <>
-                        <Trash2 className="w-4 h-4 mr-2" />
+                        <Trash2 className="w-3 h-3 mr-1" />
                         Delete
                       </>
                     )}
