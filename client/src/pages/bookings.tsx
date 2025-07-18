@@ -1834,7 +1834,8 @@ export default function Enquiries() {
                               const stage = mapOldStatusToStage(enquiry.status);
                               const config = getStageConfig(stage);
                               
-                              return config.contextualActions.map((action, index) => (
+                              // Get contextual actions
+                              const contextualActions = config.contextualActions.map((action, index) => (
                                 <Tooltip key={index}>
                                   <TooltipTrigger asChild>
                                     <Button
@@ -1850,40 +1851,43 @@ export default function Enquiries() {
                                   <TooltipContent>{action.label}</TooltipContent>
                                 </Tooltip>
                               ));
+                              
+                              // Add Respond button to the same row for better alignment
+                              const respondButton = (
+                                <Tooltip key="respond">
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedEnquiry(enquiry);
+                                        setRespondDialogOpen(true);
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                      className="min-w-[120px] text-xs font-medium px-4 py-2"
+                                    >
+                                      <Reply className="w-4 h-4 mr-2" />
+                                      Respond
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Send email response to client</TooltipContent>
+                                </Tooltip>
+                              );
+                              
+                              return [...contextualActions, respondButton];
                             })()}
                           </div>
                           
-                          {/* Secondary Action Row */}
-                          <div className="flex justify-between items-center">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedEnquiry(enquiry);
-                                    setRespondDialogOpen(true);
-                                  }}
-                                  variant="outline"
-                                  size="sm"
-                                  className="min-w-[100px] text-sm px-4 py-2"
-                                >
-                                  <Reply className="w-4 h-4 mr-2" />
-                                  Respond
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Send email response to client</TooltipContent>
-                            </Tooltip>
-                            
-                            <div className="flex flex-col items-end">
-                              <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium text-center min-h-[24px] px-3 whitespace-nowrap border`}>
-                                {getDisplayStatus(enquiry.status)}
-                              </Badge>
-                              {enquiry.previousStatus && enquiry.status === 'completed' && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Was: {enquiry.previousStatus.replace('_', ' ').toUpperCase()}
-                                </div>
-                              )}
-                            </div>
+                          {/* Status Badge Row */}
+                          <div className="flex justify-center items-center">
+                            <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium text-center min-h-[24px] px-3 whitespace-nowrap border`}>
+                              {getDisplayStatus(enquiry.status)}
+                            </Badge>
+                            {enquiry.previousStatus && enquiry.status === 'completed' && (
+                              <div className="text-xs text-gray-500 ml-2">
+                                Was: {enquiry.previousStatus.replace('_', ' ').toUpperCase()}
+                              </div>
+                            )}
                           </div>
                         </div>
                         
