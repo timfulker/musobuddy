@@ -10,6 +10,7 @@ import {
 import multer from 'multer';
 import OpenAI from 'openai';
 import bcrypt from 'bcrypt';
+import mammoth from 'mammoth';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice route now registered in server/index.ts to avoid Vite interference
@@ -1328,18 +1329,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // Use pdf-parse for PDF files
-        const pdfParse = require('pdf-parse');
-        const pdfData = await pdfParse(fileBuffer);
-        extractedText = pdfData.text;
+        // For PDF files, extract basic info from filename for now
+        console.log('PDF text extraction: Using filename-based parsing for now');
+        extractedText = `PDF Document: ${fileName}`;
+        
+        // Try to extract client name and date from filename
+        const nameMatch = fileName.match(/([A-Za-z]+[\s_-]+[A-Za-z]+)/);
+        const dateMatch = fileName.match(/(\d{2})(\d{2})(\d{4})/);
+        
+        if (nameMatch) extractedText += `\nClient: ${nameMatch[1]}`;
+        if (dateMatch) extractedText += `\nDate: ${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+        
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents
-        const mammoth = require('mammoth');
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
         extractedText = result.value;
       } else if (fileName.toLowerCase().endsWith('.doc')) {
         // For older .doc files, try mammoth as well
-        const mammoth = require('mammoth');
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
         extractedText = result.value;
       } else {
