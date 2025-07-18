@@ -1329,12 +1329,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // Use pdf-parse for simple text extraction (recommended approach)
+        // Use pdf-parse for simple text extraction with proper import handling
         try {
-          const pdfParse = await import('pdf-parse');
+          const pdfParseModule = await import('pdf-parse');
+          const pdfParse = pdfParseModule.default;
           
           console.log('📄 Extracting text from PDF using pdf-parse...');
-          const pdfData = await pdfParse.default(fileBuffer);
+          const pdfData = await pdfParse(fileBuffer);
           extractedText = pdfData.text;
           
           console.log(`📄 PDF text extraction: Successfully extracted ${extractedText.length} characters`);
@@ -1342,8 +1343,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
         } catch (pdfError) {
           console.error('PDF text extraction failed:', pdfError);
-          console.log('📄 PDF text extraction failed, no text will be parsed');
-          return null;
+          
+          // Fallback: Try using Claude Vision directly on the PDF buffer converted to base64
+          try {
+            console.log('📄 Attempting fallback: Claude Vision on PDF');
+            const base64Pdf = fileBuffer.toString('base64');
+            
+            const Anthropic = await import('@anthropic-ai/sdk');
+            const anthropic = new Anthropic.default({
+              apiKey: process.env.ANTHROPIC_API_KEY,
+            });
+
+            const response = await anthropic.messages.create({
+              model: "claude-3-5-sonnet-20241022",
+              max_tokens: 4000,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: "Extract ALL text from this PDF document. Provide the complete text exactly as it appears, maintaining the original formatting and structure. Do not summarize or interpret - just extract the raw text content."
+                    },
+                    {
+                      type: "image",
+                      source: {
+                        type: "base64",
+                        media_type: "application/pdf",
+                        data: base64Pdf
+                      }
+                    }
+                  ]
+                }
+              ]
+            });
+            
+            extractedText = response.content[0].text;
+            console.log(`📄 Fallback extraction successful: ${extractedText.length} characters`);
+            
+          } catch (fallbackError) {
+            console.error('📄 Both PDF extraction methods failed:', fallbackError);
+            return null;
+          }
         }
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents
