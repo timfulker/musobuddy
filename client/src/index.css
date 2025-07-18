@@ -493,7 +493,7 @@ button, input, select, textarea {
   box-shadow: none !important;   /* Remove any purple shadows */
 }
 
-/* Target only thick grey horizontal/vertical lines - not form borders */
+/* Target only thick purple lines - not form borders */
 .filter-container::before,
 .filter-container::after {
   content: none !important;
@@ -504,4 +504,34 @@ button, input, select, textarea {
 .filter-container {
   border-image: none !important;
   background-image: none !important;
+}
+
+/* Override purple theming variables for filter container only */
+.filter-container {
+  --primary: #374151 !important;
+  --ring: #e5e7eb !important;
+  --chart-1: #374151 !important;
+  --chart-2: #6b7280 !important;
+  --chart-3: #9ca3af !important;
+  --chart-4: #d1d5db !important;
+  --chart-5: #e5e7eb !important;
+}
+
+/* Remove purple scrollbar inside filter */
+.filter-container ::-webkit-scrollbar-thumb {
+  background: #e5e7eb !important;
+}
+.filter-container ::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db !important;
+}
+
+/* Force override any purple styling on filter container children */
+.filter-container *[class*="purple"],
+.filter-container *[style*="purple"],
+.filter-container *[style*="hsl(262"],
+.filter-container *[style*="hsl(252"],
+.filter-container *[style*="hsl(272"] {
+  color: #374151 !important;
+  border-color: #e5e7eb !important;
+  background-color: white !important;
 }
