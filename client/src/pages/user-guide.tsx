@@ -247,7 +247,7 @@ const guideSteps: GuideStep[] = [
       'Data export helps with tax preparation',
       'Custom configurations adapt the system to your specific needs'
     ]
-  }
+  },
   {
     id: 'client-management',
     title: 'Client Address Book',
