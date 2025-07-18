@@ -1557,111 +1557,16 @@ ${extractedText}
       // Always create contract record, regardless of parsing success
       const contract = await storage.createContract(contractData);
       
-      // Update booking with parsed information (only if parsing was successful)
-      if (bookingId && parsedData) {
-        // First, get the existing booking to check current values
-        const existingBooking = await storage.getBooking(parseInt(bookingId), userId);
-        
-        const bookingUpdates: any = { 
+      // Update booking status only (data copying is now handled manually via "Copy from Contract" button)
+      if (bookingId) {
+        const bookingUpdates = { 
           contractSent: true,
           contractSigned: true,
           status: 'confirmed'
         };
         
-        // Smart update logic: Only update fields that are currently empty or null
-        // This preserves existing data while filling in missing information
-        const preservedFields: string[] = [];
-        const updatedFields: string[] = [];
-        
-        if (parsedData.client_name && (!existingBooking?.clientName || existingBooking.clientName.trim() === '')) {
-          bookingUpdates.clientName = parsedData.client_name;
-          updatedFields.push('clientName');
-        } else if (existingBooking?.clientName) {
-          preservedFields.push('clientName');
-        }
-        
-        if (parsedData.venue_name && (!existingBooking?.venue || existingBooking.venue.trim() === '')) {
-          bookingUpdates.venue = parsedData.venue_name;
-          updatedFields.push('venue');
-        } else if (existingBooking?.venue) {
-          preservedFields.push('venue');
-        }
-        
-        if (parsedData.venue_address && (!existingBooking?.venueAddress || existingBooking.venueAddress?.trim() === '')) {
-          bookingUpdates.venueAddress = parsedData.venue_address;
-          updatedFields.push('venueAddress');
-        } else if (existingBooking?.venueAddress) {
-          preservedFields.push('venueAddress');
-        }
-        
-        if (parsedData.event_date && !existingBooking?.eventDate) {
-          // Smart date handling: if parsed year is in past, assume next year
-          const parsedDate = new Date(parsedData.event_date);
-          const currentYear = new Date().getFullYear();
-          if (parsedDate.getFullYear() < currentYear) {
-            parsedDate.setFullYear(currentYear + 1);
-          }
-          bookingUpdates.eventDate = parsedDate;
-          updatedFields.push('eventDate');
-        } else if (existingBooking?.eventDate) {
-          preservedFields.push('eventDate');
-        }
-        
-        if (parsedData.start_time && (!existingBooking?.eventTime || existingBooking.eventTime.trim() === '')) {
-          bookingUpdates.eventTime = parsedData.start_time;
-          updatedFields.push('eventTime');
-        } else if (existingBooking?.eventTime) {
-          preservedFields.push('eventTime');
-        }
-        
-        if (parsedData.client_phone && (!existingBooking?.clientPhone || existingBooking.clientPhone?.trim() === '')) {
-          bookingUpdates.clientPhone = parsedData.client_phone;
-          updatedFields.push('clientPhone');
-        } else if (existingBooking?.clientPhone) {
-          preservedFields.push('clientPhone');
-        }
-        
-        if (parsedData.client_email && (!existingBooking?.clientEmail || existingBooking.clientEmail?.trim() === '')) {
-          bookingUpdates.clientEmail = parsedData.client_email;
-          updatedFields.push('clientEmail');
-        } else if (existingBooking?.clientEmail) {
-          preservedFields.push('clientEmail');
-        }
-        
-        if (parsedData.client_address && (!existingBooking?.clientAddress || existingBooking.clientAddress?.trim() === '')) {
-          bookingUpdates.clientAddress = parsedData.client_address;
-          updatedFields.push('clientAddress');
-        } else if (existingBooking?.clientAddress) {
-          preservedFields.push('clientAddress');
-        }
-        
-        if (parsedData.agreed_fee && (!existingBooking?.fee || existingBooking.fee === 0)) {
-          bookingUpdates.fee = parsedData.agreed_fee;
-          updatedFields.push('fee');
-        } else if (existingBooking?.fee) {
-          preservedFields.push('fee');
-        }
-        
-        if (parsedData.equipmentRequirements && (!existingBooking?.equipmentRequirements || existingBooking.equipmentRequirements?.trim() === '')) {
-          bookingUpdates.equipmentRequirements = parsedData.equipmentRequirements;
-          updatedFields.push('equipmentRequirements');
-        } else if (existingBooking?.equipmentRequirements) {
-          preservedFields.push('equipmentRequirements');
-        }
-        
-        if (parsedData.specialRequirements && (!existingBooking?.specialRequirements || existingBooking.specialRequirements?.trim() === '')) {
-          bookingUpdates.specialRequirements = parsedData.specialRequirements;
-          updatedFields.push('specialRequirements');
-        } else if (existingBooking?.specialRequirements) {
-          preservedFields.push('specialRequirements');
-        }
-        
-        // Log the smart update results for debugging
-        console.log('📋 Smart Contract Import Results:');
-        console.log('✅ Fields updated:', updatedFields.length > 0 ? updatedFields.join(', ') : 'None');
-        console.log('🔒 Fields preserved:', preservedFields.length > 0 ? preservedFields.join(', ') : 'None');
-        
         await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
+        console.log('📋 Booking status updated: contract marked as sent and signed');
       }
       
       // Determine response message based on parsing success

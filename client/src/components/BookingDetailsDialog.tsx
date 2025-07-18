@@ -80,6 +80,17 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     enabled: open // Only fetch when dialog is open
   });
 
+  // Fetch contracts for this booking to enable copying data
+  const { data: contracts } = useQuery({
+    queryKey: ['/api/contracts'],
+    enabled: open && booking !== null
+  });
+
+  // Find the most recent contract for this booking
+  const bookingContract = contracts?.find((contract: any) => 
+    contract.enquiryId === booking?.id
+  );
+
   // Extract gig types from user settings
   const userGigTypes = userSettings?.gigTypes || [];
 
@@ -230,31 +241,39 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       
-      // Update form with parsed data if available
-      if (data.parsedData) {
-        const currentFormData = form.getValues();
-        const updatedFormData = {
-          ...currentFormData,
-          ...(data.parsedData.clientName && { clientName: data.parsedData.clientName }),
-          ...(data.parsedData.venue && { venue: data.parsedData.venue }),
-          ...(data.parsedData.eventDate && { eventDate: data.parsedData.eventDate }),
-          ...(data.parsedData.eventTime && { eventTime: data.parsedData.eventTime }),
-          ...(data.parsedData.clientPhone && { clientPhone: data.parsedData.clientPhone }),
-          ...(data.parsedData.clientEmail && { clientEmail: data.parsedData.clientEmail }),
-          ...(data.parsedData.fee && { fee: data.parsedData.fee.toString() }),
-          ...(data.parsedData.equipmentRequirements && { equipmentRequirements: data.parsedData.equipmentRequirements }),
-          ...(data.parsedData.specialRequirements && { specialRequirements: data.parsedData.specialRequirements }),
-          ...(data.parsedData.clientAddress && { clientAddress: data.parsedData.clientAddress }),
-        };
-        form.reset(updatedFormData);
-        setHasChanges(true);
-      }
-      
       setUploadStatus({
         type: 'success',
-        message: `Contract "${data.contractNumber}" uploaded and parsed successfully${data.parsedData ? ' - Form updated with extracted information' : ''}`
+        message: `Contract "${data.contractNumber}" uploaded successfully. Parsing and auto-populating form in 20 seconds...`
       });
-      setTimeout(() => setUploadStatus(null), 8000);
+      
+      // Auto-populate form after 20 seconds to allow queries to refresh
+      setTimeout(async () => {
+        // Refresh contracts query to get the latest data
+        await queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
+        
+        // Wait a moment for the query to complete
+        setTimeout(() => {
+          const updatedContracts = queryClient.getQueryData(['/api/contracts']) as any[];
+          const latestContract = updatedContracts?.find((contract: any) => 
+            contract.enquiryId === booking?.id
+          );
+          
+          if (latestContract) {
+            handleCopyFromContract(latestContract);
+            setUploadStatus({
+              type: 'success',
+              message: `Contract parsed and form auto-populated successfully!`
+            });
+          } else {
+            setUploadStatus({
+              type: 'success',
+              message: `Contract uploaded successfully. Use "Copy from Contract" to populate form.`
+            });
+          }
+          
+          setTimeout(() => setUploadStatus(null), 5000);
+        }, 2000);
+      }, 20000);
     },
     onError: (error) => {
       setUploadStatus({
@@ -344,6 +363,69 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     formData.append('eventDate', booking.eventDate || '');
 
     uploadInvoiceMutation.mutate(formData);
+  };
+
+  // Function to copy contract data to booking form
+  const handleCopyFromContract = (contract?: any) => {
+    // Use provided contract or find the latest one
+    const contractToUse = contract || bookingContract;
+    
+    if (!contractToUse) {
+      toast({
+        title: "No Contract Found",
+        description: "No contract found for this booking to copy data from.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const currentFormData = form.getValues();
+    let fieldsUpdated = 0;
+    
+    const updatedFormData = {
+      ...currentFormData,
+      // Only update empty fields to preserve existing data
+      ...(contractToUse.clientName && !currentFormData.clientName.trim() && { clientName: contractToUse.clientName }),
+      ...(contractToUse.clientEmail && !currentFormData.clientEmail.trim() && { clientEmail: contractToUse.clientEmail }),
+      ...(contractToUse.clientPhone && !currentFormData.clientPhone?.trim() && { clientPhone: contractToUse.clientPhone }),
+      ...(contractToUse.clientAddress && !currentFormData.clientAddress?.trim() && { clientAddress: contractToUse.clientAddress }),
+      ...(contractToUse.venue && !currentFormData.venue?.trim() && { venue: contractToUse.venue }),
+      ...(contractToUse.venueAddress && !currentFormData.venueAddress?.trim() && { venueAddress: contractToUse.venueAddress }),
+      ...(contractToUse.eventDate && !currentFormData.eventDate && { 
+        eventDate: new Date(contractToUse.eventDate).toISOString().split('T')[0] 
+      }),
+      ...(contractToUse.eventTime && !currentFormData.eventTime?.trim() && { eventTime: contractToUse.eventTime }),
+      ...(contractToUse.eventEndTime && !currentFormData.eventEndTime?.trim() && { eventEndTime: contractToUse.eventEndTime }),
+      ...(contractToUse.fee && (!currentFormData.fee || currentFormData.fee === '0') && { fee: contractToUse.fee.toString() }),
+      ...(contractToUse.equipmentRequirements && !currentFormData.equipmentRequirements?.trim() && { 
+        equipmentRequirements: contractToUse.equipmentRequirements 
+      }),
+      ...(contractToUse.specialRequirements && !currentFormData.specialRequirements?.trim() && { 
+        specialRequirements: contractToUse.specialRequirements 
+      }),
+    };
+
+    // Count how many fields were actually updated
+    Object.keys(updatedFormData).forEach(key => {
+      if (updatedFormData[key] !== currentFormData[key]) {
+        fieldsUpdated++;
+      }
+    });
+
+    if (fieldsUpdated > 0) {
+      form.reset(updatedFormData);
+      setHasChanges(true);
+      
+      toast({
+        title: "Contract Data Copied",
+        description: `${fieldsUpdated} field${fieldsUpdated > 1 ? 's' : ''} updated from contract while preserving existing data.`,
+      });
+    } else {
+      toast({
+        title: "No Updates Needed",
+        description: "All relevant fields already contain data. Contract information preserved.",
+      });
+    }
   };
 
   const addCustomField = () => {
@@ -938,15 +1020,29 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                   <div className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-medium">Import Contract</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => document.getElementById('contract-upload')?.click()}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Upload Contract
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById('contract-upload')?.click()}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Upload Contract
+                        </Button>
+                        {bookingContract && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCopyFromContract}
+                            className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Copy from Contract
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <input
                       id="contract-upload"
@@ -957,6 +1053,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                     />
                     <div className="text-xs text-gray-500">
                       Supported formats: PDF, DOC, DOCX
+                      {bookingContract && (
+                        <span className="text-blue-600 ml-2">
+                          • Contract available for this booking
+                        </span>
+                      )}
                     </div>
                   </div>
                   
