@@ -8,6 +8,7 @@ import QuickActions from "@/components/quick-actions";
 import ComplianceAlerts from "@/components/compliance-alerts";
 import RecentSignedContracts from "@/components/RecentSignedContracts";
 import ConflictsWidget from "@/components/conflicts-widget";
+import BookingCTAButtons from "@/components/booking-cta-buttons";
 import MobileNav from "@/components/mobile-nav";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +66,7 @@ export default function Dashboard() {
                 <ActionableEnquiries />
               </div>
               <div className="space-y-6">
+                <BookingCTAButtons />
                 <CalendarWidget />
                 <QuickActions />
                 <ConflictsWidget />
@@ -105,10 +107,11 @@ export default function Dashboard() {
           
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 md:gap-6">
             <div className="xl:col-span-2">
-              <KanbanBoard />
+              <ActionableEnquiries />
             </div>
             
             <div className="space-y-3 md:space-y-6">
+              <BookingCTAButtons />
               <CalendarWidget />
               <QuickActions />
               <ConflictsWidget />
