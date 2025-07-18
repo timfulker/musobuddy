@@ -32,6 +32,7 @@ import BookingStatusDialog from "@/components/BookingStatusDialog";
 import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import { ConflictResolutionDialog } from "@/components/ConflictResolutionDialog";
+import BookingProgressTags from "@/components/booking-progress-tags";
 import { 
   analyzeConflictSeverity, 
   getConflictCardStyling, 
@@ -1948,6 +1949,11 @@ export default function Enquiries() {
                               </div>
                             )}
                           </div>
+                        </div>
+                        
+                        {/* Progress Tags - NEW FEATURE */}
+                        <div className="mt-3 border-t pt-3">
+                          <BookingProgressTags booking={enquiry} size="sm" />
                         </div>
                         </div>
                       </div>
