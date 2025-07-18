@@ -856,6 +856,21 @@ export default function Enquiries() {
         return eventDate >= now;
       } else if (eventDateFilter === 'past') {
         return eventDate < now;
+      } else if (eventDateFilter === 'next7days') {
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        nextWeek.setHours(23, 59, 59, 999);
+        return eventDate >= now && eventDate <= nextWeek;
+      } else if (eventDateFilter === 'next30days') {
+        const nextMonth = new Date();
+        nextMonth.setDate(nextMonth.getDate() + 30);
+        nextMonth.setHours(23, 59, 59, 999);
+        return eventDate >= now && eventDate <= nextMonth;
+      } else if (eventDateFilter === 'next90days') {
+        const nextQuarter = new Date();
+        nextQuarter.setDate(nextQuarter.getDate() + 90);
+        nextQuarter.setHours(23, 59, 59, 999);
+        return eventDate >= now && eventDate <= nextQuarter;
       }
       return true;
     })();
@@ -1380,6 +1395,9 @@ export default function Enquiries() {
                   <SelectContent>
                     <SelectItem value="all">All Dates</SelectItem>
                     <SelectItem value="upcoming">Upcoming</SelectItem>
+                    <SelectItem value="next7days">Next 7 Days</SelectItem>
+                    <SelectItem value="next30days">Next 30 Days</SelectItem>
+                    <SelectItem value="next90days">Next 90 Days</SelectItem>
                     <SelectItem value="past">Past</SelectItem>
                   </SelectContent>
                 </Select>
