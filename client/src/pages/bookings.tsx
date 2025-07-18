@@ -1866,9 +1866,9 @@ export default function Enquiries() {
                         </div>
                         
                         {/* Action Buttons Grid - Responsive Layout */}
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {/* Primary Action Row */}
-                          <div className="flex gap-2 justify-center flex-wrap">
+                          <div className="flex gap-1 justify-center flex-wrap">
                             {(() => {
                               // Get contextual actions based on booking's linked contracts/invoices
                               const contextualActions = getContextualActions(enquiry);
@@ -1881,18 +1881,17 @@ export default function Enquiries() {
                                       onClick={() => handleContextualAction(enquiry.id, action.action)}
                                       variant="default"
                                       size="sm"
-                                      className="min-w-[100px] sm:min-w-[120px] text-xs font-medium text-white transition-all duration-200 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                                      className="flex-1 max-w-[120px] min-w-[90px] text-xs font-medium text-white transition-all duration-200 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-2 py-1.5 h-8"
                                     >
-                                      <span className="mr-1 sm:mr-2">{action.icon}</span>
-                                      <span className="hidden sm:inline">{action.label}</span>
-                                      <span className="sm:hidden">{action.label.split(' ')[0]}</span>
+                                      <span className="mr-1">{action.icon}</span>
+                                      <span className="truncate">{action.label}</span>
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>{action.label}</TooltipContent>
                                 </Tooltip>
                               ));
                               
-                              // Add Respond button to the same row for better alignment
+                              // Add Respond button
                               const respondButton = (
                                 <Tooltip key="respond">
                                   <TooltipTrigger asChild>
@@ -1904,10 +1903,10 @@ export default function Enquiries() {
                                       }}
                                       variant="outline"
                                       size="sm"
-                                      className="min-w-[100px] sm:min-w-[120px] text-xs font-medium px-3 sm:px-4 py-2"
+                                      className="flex-1 max-w-[120px] min-w-[90px] text-xs font-medium px-2 py-1.5 h-8"
                                     >
-                                      <Reply className="w-4 h-4 mr-1 sm:mr-2" />
-                                      Respond
+                                      <Reply className="w-3 h-3 mr-1" />
+                                      <span className="truncate">Respond</span>
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>Send email response to client</TooltipContent>
