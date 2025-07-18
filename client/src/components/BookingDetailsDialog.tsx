@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music } from "lucide-react";
+import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
@@ -69,6 +69,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   const [newFieldValue, setNewFieldValue] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
+  const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -197,7 +198,100 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     },
   });
 
+  // Upload mutation for contracts
+  const uploadContractMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/contracts/import', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload contract');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
+      setUploadStatus({
+        type: 'success',
+        message: `Contract "${data.contractNumber}" uploaded and linked to booking successfully`
+      });
+      setTimeout(() => setUploadStatus(null), 5000);
+    },
+    onError: (error) => {
+      setUploadStatus({
+        type: 'error',
+        message: `Failed to upload contract: ${error.message}`
+      });
+      setTimeout(() => setUploadStatus(null), 5000);
+    },
+  });
 
+  // Upload mutation for invoices
+  const uploadInvoiceMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/invoices/import', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload invoice');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      setUploadStatus({
+        type: 'success',
+        message: `Invoice "${data.invoiceNumber}" uploaded and linked to booking successfully`
+      });
+      setTimeout(() => setUploadStatus(null), 5000);
+    },
+    onError: (error) => {
+      setUploadStatus({
+        type: 'error',
+        message: `Failed to upload invoice: ${error.message}`
+      });
+      setTimeout(() => setUploadStatus(null), 5000);
+    },
+  });
+
+  // Handle contract file upload
+  const handleContractUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !booking) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bookingId', booking.id.toString());
+    formData.append('clientName', booking.clientName);
+    formData.append('venue', booking.venue || '');
+    formData.append('eventDate', booking.eventDate || '');
+    formData.append('eventTime', booking.eventTime || '');
+
+    uploadContractMutation.mutate(formData);
+  };
+
+  // Handle invoice file upload
+  const handleInvoiceUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !booking) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bookingId', booking.id.toString());
+    formData.append('clientName', booking.clientName);
+    formData.append('clientEmail', booking.clientEmail || '');
+    formData.append('eventDate', booking.eventDate || '');
+
+    uploadInvoiceMutation.mutate(formData);
+  };
 
   const addCustomField = () => {
     if (newFieldName.trim() && newFieldValue.trim()) {
@@ -756,6 +850,84 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Document Imports */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    Import Documents
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm text-gray-600 mb-4">
+                    Upload existing invoices and contracts to link them to this booking.
+                  </div>
+                  
+                  {/* Contract Import */}
+                  <div className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Import Contract</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('contract-upload')?.click()}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Upload Contract
+                      </Button>
+                    </div>
+                    <input
+                      id="contract-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={handleContractUpload}
+                    />
+                    <div className="text-xs text-gray-500">
+                      Supported formats: PDF, DOC, DOCX
+                    </div>
+                  </div>
+                  
+                  {/* Invoice Import */}
+                  <div className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Import Invoice</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('invoice-upload')?.click()}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Upload Invoice
+                      </Button>
+                    </div>
+                    <input
+                      id="invoice-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={handleInvoiceUpload}
+                    />
+                    <div className="text-xs text-gray-500">
+                      Supported formats: PDF, DOC, DOCX
+                    </div>
+                  </div>
+                  
+                  {/* Upload Status */}
+                  {uploadStatus && (
+                    <div className={`text-sm p-3 rounded-md ${
+                      uploadStatus.type === 'success' 
+                        ? 'bg-green-50 text-green-700' 
+                        : 'bg-red-50 text-red-700'
+                    }`}>
+                      {uploadStatus.message}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

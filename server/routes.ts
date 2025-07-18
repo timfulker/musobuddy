@@ -1313,6 +1313,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import contract file and link to booking
+  app.post('/api/contracts/import', isAuthenticated, multer({ storage: multer.memoryStorage() }).single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { bookingId, clientName, venue, eventDate, eventTime } = req.body;
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Generate unique contract number
+      const contractNumber = `C${Date.now()}`;
+      
+      // Upload file to cloud storage
+      const { uploadToCloudStorage } = await import('./cloud-storage');
+      const cloudStorageKey = `contracts/${contractNumber}-${file.originalname}`;
+      const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
+      
+      // Create contract record
+      const contractData = {
+        userId,
+        enquiryId: bookingId ? parseInt(bookingId) : null,
+        contractNumber,
+        clientName,
+        venue: venue || '',
+        eventDate: eventDate ? new Date(eventDate) : new Date(),
+        eventTime: eventTime || '00:00',
+        eventEndTime: eventTime || '00:00',
+        fee: 0,
+        status: 'signed', // Imported contracts are assumed to be signed
+        cloudStorageUrl,
+        cloudStorageKey,
+        signedAt: new Date(),
+      };
+      
+      const contract = await storage.createContract(contractData);
+      
+      // Update booking to reflect contract import
+      if (bookingId) {
+        await storage.updateBooking(parseInt(bookingId), { 
+          contractSent: true,
+          contractSigned: true,
+          status: 'confirmed'
+        }, userId);
+      }
+      
+      res.json({
+        success: true,
+        contract,
+        contractNumber,
+        message: 'Contract imported successfully'
+      });
+    } catch (error) {
+      console.error('Error importing contract:', error);
+      res.status(500).json({ error: 'Failed to import contract' });
+    }
+  });
+
+  // Import invoice file and link to booking  
+  app.post('/api/invoices/import', isAuthenticated, multer({ storage: multer.memoryStorage() }).single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { bookingId, clientName, clientEmail, eventDate } = req.body;
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Get user settings to get next invoice number
+      const userSettings = await storage.getUserSettings(userId);
+      const invoiceNumber = `INV${userSettings?.nextInvoiceNumber || 1}`;
+      
+      // Upload file to cloud storage
+      const { uploadToCloudStorage } = await import('./cloud-storage');
+      const cloudStorageKey = `invoices/${invoiceNumber}-${file.originalname}`;
+      const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
+      
+      // Create invoice record
+      const invoiceData = {
+        userId,
+        bookingId: bookingId ? parseInt(bookingId) : null,
+        invoiceNumber,
+        clientName,
+        clientEmail: clientEmail || '',
+        amount: 0,
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        status: 'sent', // Imported invoices are assumed to be sent
+        cloudStorageUrl,
+        cloudStorageKey,
+        performanceDate: eventDate ? new Date(eventDate) : null,
+      };
+      
+      const invoice = await storage.createInvoice(invoiceData);
+      
+      // Update booking to reflect invoice import
+      if (bookingId) {
+        await storage.updateBooking(parseInt(bookingId), { 
+          invoiceSent: true 
+        }, userId);
+      }
+      
+      // Update next invoice number
+      if (userSettings) {
+        await storage.updateUserSettings(userId, {
+          nextInvoiceNumber: (userSettings.nextInvoiceNumber || 1) + 1
+        });
+      }
+      
+      res.json({
+        success: true,
+        invoice,
+        invoiceNumber,
+        message: 'Invoice imported successfully'
+      });
+    } catch (error) {
+      console.error('Error importing invoice:', error);
+      res.status(500).json({ error: 'Failed to import invoice' });
+    }
+  });
+
   // Support chat API
   app.post('/api/support-chat', isAuthenticated, async (req: any, res) => {
     try {
