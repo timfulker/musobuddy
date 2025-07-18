@@ -358,6 +358,11 @@ export default function Enquiries() {
     updateEnquiryStatusMutation.mutate({ id: bookingId, status });
   };
 
+  // Payment status update for individual bookings
+  const handlePaymentStatusUpdate = (bookingId: number, paymentType: 'deposit' | 'full', status: boolean) => {
+    paymentStatusUpdateMutation.mutate({ id: bookingId, paymentType, status });
+  };
+
   // Toggle status filter
   const toggleStatusFilter = (status: string) => {
     setActiveStatusFilters(prev => {
@@ -541,7 +546,36 @@ export default function Enquiries() {
     },
   });
 
-
+  const paymentStatusUpdateMutation = useMutation({
+    mutationFn: async ({ id, paymentType, status }: { id: number; paymentType: 'deposit' | 'full'; status: boolean }) => {
+      const updateData = paymentType === 'deposit' 
+        ? { depositPaid: status }
+        : { paidInFull: status };
+      
+      const response = await apiRequest(`/api/bookings/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updateData),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      toast({
+        title: "Success",
+        description: "Payment status updated successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update payment status",
+        variant: "destructive",
+      });
+    },
+  });
 
   const onSubmit = (data: z.infer<typeof enquiryFormSchema>) => {
     // Auto-generate title from Event Type and Client Name
@@ -1954,6 +1988,50 @@ export default function Enquiries() {
                         {/* Progress Tags - NEW FEATURE */}
                         <div className="mt-3 border-t pt-3">
                           <BookingProgressTags booking={enquiry} size="sm" />
+                        </div>
+                        
+                        {/* Payment Tracking Controls */}
+                        <div className="mt-3 border-t pt-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 font-medium">Payment Status:</span>
+                            <div className="flex gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handlePaymentStatusUpdate(enquiry.id, 'deposit', !enquiry.depositPaid)}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`text-xs px-2 py-1 h-6 ${
+                                      enquiry.depositPaid 
+                                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300' 
+                                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-yellow-50'
+                                    }`}
+                                  >
+                                    {enquiry.depositPaid ? '💳 Deposit Paid' : 'Mark Deposit Paid'}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Toggle deposit payment status</TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => handlePaymentStatusUpdate(enquiry.id, 'full', !enquiry.paidInFull)}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`text-xs px-2 py-1 h-6 ${
+                                      enquiry.paidInFull 
+                                        ? 'bg-green-100 text-green-800 border-green-300' 
+                                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-green-50'
+                                    }`}
+                                  >
+                                    {enquiry.paidInFull ? '💰 Paid in Full' : 'Mark Paid in Full'}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Toggle full payment status</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
                         </div>
                         </div>
                       </div>
