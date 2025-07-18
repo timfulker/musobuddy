@@ -1316,13 +1316,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Parse document using OpenAI
   async function parseDocumentWithAI(fileBuffer: Buffer, fileName: string, fileType: 'contract' | 'invoice'): Promise<any> {
     try {
-      // Check if OpenAI API key is available
-      if (!process.env.OPENAI_API_KEY) {
+      // Check if OpenAI API key is available (reuse email parsing key)
+      if (!process.env.OPENAI_EMAIL_PARSING_KEY) {
         console.log('OpenAI API key not available, skipping document parsing');
         return null;
       }
 
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY });
       
       // Convert buffer to base64 for OpenAI
       const base64File = fileBuffer.toString('base64');
