@@ -956,18 +956,18 @@ export default function Enquiries() {
 
       {/* Main Content */}
       <div className={`min-h-screen ${isDesktop ? 'ml-64' : ''}`}>
-        <div className="p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <div className="p-4 sm:p-6">
+          <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white ml-12 md:ml-0">Bookings</h1>
-                <p className="text-gray-600 dark:text-gray-400">Manage your booking lifecycle from enquiry to confirmed gig</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white ml-12 sm:ml-0">Bookings</h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 ml-12 sm:ml-0">Manage your booking lifecycle from enquiry to confirmed gig</p>
               </div>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="bg-purple-600 hover:bg-purple-700">
+              <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 New Enquiry
                 <ChevronDown className="w-4 h-4 ml-2" />
@@ -1350,7 +1350,7 @@ export default function Enquiries() {
             
             {/* Secondary Filters */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-              <div className="relative flex-1">
+              <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="Search by client name or email..."
@@ -1360,9 +1360,9 @@ export default function Enquiries() {
                 />
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 overflow-x-auto pb-2 lg:pb-0 w-full lg:w-auto">
                 <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 shrink-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1373,7 +1373,7 @@ export default function Enquiries() {
                 </Select>
                 
                 <Select value={eventDateFilter} onValueChange={setEventDateFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 shrink-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1384,7 +1384,7 @@ export default function Enquiries() {
                 </Select>
                 
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40 shrink-0">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1399,7 +1399,7 @@ export default function Enquiries() {
                   onClick={() => setSortReverse(!sortReverse)}
                   variant="outline"
                   size="sm"
-                  className="px-3"
+                  className="px-3 shrink-0"
                 >
                   {sortReverse ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                 </Button>
@@ -1411,8 +1411,8 @@ export default function Enquiries() {
         {/* Bulk Operations Bar */}
         {selectedBookings.size > 0 && (
           <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center space-x-3">
                   <span className="text-sm font-medium text-blue-900">
                     {selectedBookings.size} booking{selectedBookings.size === 1 ? '' : 's'} selected
@@ -1426,9 +1426,9 @@ export default function Enquiries() {
                     Clear Selection
                   </Button>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-blue-700">Update to:</span>
-                  <div className="flex gap-1">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span className="text-sm text-blue-700 shrink-0">Update to:</span>
+                  <div className="flex gap-1 flex-wrap justify-center sm:justify-start">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -1617,7 +1617,7 @@ export default function Enquiries() {
 
 
         {/* Enquiries List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {sortedEnquiries.length === 0 ? (
             <div className="col-span-full">
               <Card>
@@ -1715,7 +1715,7 @@ export default function Enquiries() {
                       setBookingDetailsDialogOpen(true);
                     }}
                   >
-                    <CardContent className="p-6">
+                    <CardContent className="p-4 sm:p-6">
                       <div className="relative">
                         {/* Critical Conflict Red Stripe */}
                         {severity.level === 'critical' && (
@@ -1846,10 +1846,10 @@ export default function Enquiries() {
                           )}
                         </div>
                         
-                        {/* Action Buttons Grid - Improved Alignment */}
+                        {/* Action Buttons Grid - Responsive Layout */}
                         <div className="space-y-3">
                           {/* Primary Action Row */}
-                          <div className="flex gap-2 justify-center">
+                          <div className="flex gap-2 justify-center flex-wrap">
                             {(() => {
                               const stage = mapOldStatusToStage(enquiry.status);
                               const config = getStageConfig(stage);
@@ -1862,10 +1862,11 @@ export default function Enquiries() {
                                       onClick={() => handleContextualAction(enquiry.id, action.action)}
                                       variant="default"
                                       size="sm"
-                                      className={`min-w-[120px] text-xs font-medium text-white transition-all duration-200 ${action.color}`}
+                                      className={`min-w-[100px] sm:min-w-[120px] text-xs font-medium text-white transition-all duration-200 ${action.color}`}
                                     >
-                                      <span className="mr-2">{action.icon}</span>
-                                      {action.label}
+                                      <span className="mr-1 sm:mr-2">{action.icon}</span>
+                                      <span className="hidden sm:inline">{action.label}</span>
+                                      <span className="sm:hidden">{action.label.split(' ')[0]}</span>
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>{action.label}</TooltipContent>
@@ -1884,9 +1885,9 @@ export default function Enquiries() {
                                       }}
                                       variant="outline"
                                       size="sm"
-                                      className="min-w-[120px] text-xs font-medium px-4 py-2"
+                                      className="min-w-[100px] sm:min-w-[120px] text-xs font-medium px-3 sm:px-4 py-2"
                                     >
-                                      <Reply className="w-4 h-4 mr-2" />
+                                      <Reply className="w-4 h-4 mr-1 sm:mr-2" />
                                       Respond
                                     </Button>
                                   </TooltipTrigger>
@@ -1904,7 +1905,7 @@ export default function Enquiries() {
                               {getDisplayStatus(enquiry.status)}
                             </Badge>
                             {enquiry.previousStatus && enquiry.status === 'completed' && (
-                              <div className="text-xs text-gray-500 ml-2">
+                              <div className="text-xs text-gray-500 ml-2 hidden sm:block">
                                 Was: {enquiry.previousStatus.replace('_', ' ').toUpperCase()}
                               </div>
                             )}
