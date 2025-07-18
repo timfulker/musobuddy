@@ -23,7 +23,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Filter, DollarSign, Clock, Calendar, User, Edit, Trash2, Reply, AlertCircle, CheckCircle, UserPlus, ArrowUpDown, ArrowUp, ArrowDown, FileSignature, Info, FileText, RefreshCw, CheckSquare, Square, ChevronDown, Zap } from "lucide-react";
 import { z } from "zod";
-import { insertClientSchema, type InsertClient } from "@shared/schema";
+import { insertClientSchema, type InsertClient, type BookingWithRelations } from "@shared/schema";
 import { Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -49,6 +49,7 @@ import {
   workflowStages,
   type WorkflowStage 
 } from "@/utils/workflow-system";
+import { getContextualActions, getRespondActions } from "@/utils/contextual-actions";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
@@ -326,7 +327,7 @@ export default function Enquiries() {
   };
 
   // Phase 3: Read from main bookings table (renamed from bookings_new)
-  const { data: enquiries = [], isLoading, error } = useQuery<Enquiry[]>({
+  const { data: enquiries = [], isLoading, error } = useQuery<BookingWithRelations[]>({
     queryKey: ["/api/bookings"],
   });
 
@@ -1851,18 +1852,18 @@ export default function Enquiries() {
                           {/* Primary Action Row */}
                           <div className="flex gap-2 justify-center flex-wrap">
                             {(() => {
-                              const stage = mapOldStatusToStage(enquiry.status);
-                              const config = getStageConfig(stage);
+                              // Get contextual actions based on booking's linked contracts/invoices
+                              const contextualActions = getContextualActions(enquiry);
                               
-                              // Get contextual actions
-                              const contextualActions = config.contextualActions.map((action, index) => (
+                              // Render contextual actions
+                              const actionButtons = contextualActions.map((action, index) => (
                                 <Tooltip key={index}>
                                   <TooltipTrigger asChild>
                                     <Button
                                       onClick={() => handleContextualAction(enquiry.id, action.action)}
                                       variant="default"
                                       size="sm"
-                                      className={`min-w-[100px] sm:min-w-[120px] text-xs font-medium text-white transition-all duration-200 ${action.color}`}
+                                      className="min-w-[100px] sm:min-w-[120px] text-xs font-medium text-white transition-all duration-200 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                                     >
                                       <span className="mr-1 sm:mr-2">{action.icon}</span>
                                       <span className="hidden sm:inline">{action.label}</span>
@@ -1895,7 +1896,7 @@ export default function Enquiries() {
                                 </Tooltip>
                               );
                               
-                              return [...contextualActions, respondButton];
+                              return [...actionButtons, respondButton];
                             })()}
                           </div>
                           

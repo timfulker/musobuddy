@@ -1248,6 +1248,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contract = await storage.createContract(contractData);
       console.log('🔥 CONTRACT CREATION: Contract created successfully:', contract.id);
       
+      // Update booking to reflect contract creation
+      if (contract.enquiryId) {
+        console.log('🔥 CONTRACT CREATION: Updating booking with contract tracking');
+        await storage.updateBooking(contract.enquiryId, { 
+          contractSent: true,
+          status: 'contract_sent'
+        }, userId);
+      }
+      
       res.status(201).json(contract);
     } catch (error) {
       console.error("🔥 CONTRACT CREATION ERROR:", error);
@@ -1462,6 +1471,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const invoice = await storage.createInvoice(invoiceData);
       console.log("🔥 Backend: Invoice created successfully:", invoice.id);
       
+      // Update booking to reflect invoice creation
+      if (invoice.bookingId) {
+        await storage.updateBooking(invoice.bookingId, { 
+          invoiceSent: true 
+        }, userId);
+      }
+      
       res.status(201).json(invoice);
     } catch (error) {
       console.error("🔥 Backend: Error creating invoice:", error);
@@ -1675,6 +1691,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedInvoice) {
         return res.status(404).json({ message: "Failed to update invoice status" });
       }
+      
+      // Update booking to reflect invoice being sent
+      if (invoice.bookingId) {
+        await storage.updateBooking(invoice.bookingId, { 
+          invoiceSent: true 
+        }, userId);
+      }
 
       console.log('📧 Sending invoice email with hybrid approach:', updatedInvoice.invoiceNumber);
       
@@ -1723,6 +1746,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update contract status to "sent" after successful email delivery
         // Note: Cloud storage metadata (URL, key, creation time) is handled by the email function
         await storage.updateContract(contractId, { status: 'sent' }, userId);
+        
+        // Update booking to reflect contract being sent
+        if (contract.enquiryId) {
+          await storage.updateBooking(contract.enquiryId, { 
+            contractSent: true,
+            status: 'contract_sent'
+          }, userId);
+        }
+        
         console.log('✅ Contract status updated to "sent" after successful email delivery');
         res.json({ message: "Contract email sent successfully with PDF attachment and static backup link" });
       } else {
@@ -2021,6 +2053,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!signedContract) {
         return res.status(500).json({ message: "Failed to sign contract" });
+      }
+      
+      // Update booking to reflect contract being signed
+      if (contract.enquiryId) {
+        await storage.updateBooking(contract.enquiryId, { 
+          contractSigned: true,
+          status: 'confirmed'
+        }, contract.userId);
       }
       
       // Send confirmation emails with download links (no PDF generation)
@@ -2351,11 +2391,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Email processing: Single Mailgun webhook handler in server/index.ts
 
-  // Phase 3: Main bookings endpoint - updated to use main bookings table
+  // Phase 3: Main bookings endpoint - updated to use main bookings table with relations
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const bookings = await storage.getBookings(userId);
+      const bookings = await storage.getBookingsWithRelations(userId);
       res.json(bookings);
     } catch (error) {
       console.error("Error fetching bookings:", error);

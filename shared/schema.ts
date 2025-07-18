@@ -161,6 +161,7 @@ export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   contractId: integer("contract_id"), // Made optional - can be null for standalone invoices
+  bookingId: integer("booking_id").references(() => bookings.id), // Direct link to booking
   invoiceNumber: varchar("invoice_number").notNull().unique(),
   clientName: varchar("client_name").notNull(),
   clientEmail: varchar("client_email"), // Added client email directly to invoice
@@ -392,13 +393,19 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
     fields: [invoices.contractId],
     references: [contracts.id],
   }),
+  booking: one(bookings, {
+    fields: [invoices.bookingId],
+    references: [bookings.id],
+  }),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one }) => ({
+export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   user: one(users, {
     fields: [bookings.userId],
     references: [users.id],
   }),
+  contracts: many(contracts),
+  invoices: many(invoices),
 }));
 
 export const complianceDocumentsRelations = relations(complianceDocuments, ({ one }) => ({
@@ -567,6 +574,10 @@ export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertBooking = z.infer<typeof insertBookingSchema>;
 export type Booking = typeof bookings.$inferSelect;
+export type BookingWithRelations = Booking & {
+  contracts: Contract[];
+  invoices: Invoice[];
+};
 export type InsertComplianceDocument = z.infer<typeof insertComplianceDocumentSchema>;
 export type ComplianceDocument = typeof complianceDocuments.$inferSelect;
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;

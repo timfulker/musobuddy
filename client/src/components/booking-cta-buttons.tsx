@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, FileText, Receipt, Clock, ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
+import { type BookingWithRelations } from "@shared/schema";
+import { getContextualActions } from "@/utils/contextual-actions";
+import { mapOldStatusToStage } from "@/utils/workflow-system";
 
 type Booking = {
   id: number;
@@ -30,19 +33,11 @@ type Invoice = {
 export default function BookingCTAButtons() {
   const [location, setLocation] = useLocation();
 
-  const { data: bookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery<BookingWithRelations[]>({
     queryKey: ["/api/bookings"],
   });
 
-  const { data: contracts = [], isLoading: contractsLoading } = useQuery<Contract[]>({
-    queryKey: ["/api/contracts"],
-  });
-
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery<Invoice[]>({
-    queryKey: ["/api/invoices"],
-  });
-
-  const isLoading = bookingsLoading || contractsLoading || invoicesLoading;
+  const isLoading = bookingsLoading;
 
   if (isLoading) {
     return (
@@ -67,26 +62,22 @@ export default function BookingCTAButtons() {
   // Debug logging
   console.log("🔍 CTA Buttons Debug:", {
     bookings: bookings.length,
-    contracts: contracts.length,
-    invoices: invoices.length,
-    bookingsData: bookings.slice(0, 2),
-    contractsData: contracts.slice(0, 2),
-    invoicesData: invoices.slice(0, 2)
+    bookingsData: bookings.slice(0, 2)
   });
 
-  // Use the simplified 5-stage workflow for filtering
+  // Use contextual actions to determine what bookings need attention
   const needsResponse = bookings.filter(
     (booking) => booking.status === "new" || booking.responseNeeded
   );
 
   const needsContract = bookings.filter(booking => {
-    // Bookings in negotiation that haven't had a contract sent yet
-    return booking.status === "booking_in_progress" && !booking.contractSent;
+    const actions = getContextualActions(booking);
+    return actions.some(action => action.id === 'create-contract' || action.id === 'send-contract');
   });
 
   const needsInvoice = bookings.filter(booking => {
-    // Bookings that have signed contracts but no invoice sent yet
-    return booking.contractSigned && !booking.invoiceSent;
+    const actions = getContextualActions(booking);
+    return actions.some(action => action.id === 'create-invoice' || action.id === 'send-invoice');
   });
 
   console.log("🔍 CTA Counts:", {

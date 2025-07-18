@@ -321,6 +321,42 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(bookings.createdAt));
   }
 
+  // Get bookings with linked contracts and invoices
+  async getBookingsWithRelations(userId: string): Promise<any[]> {
+    const bookingsData = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.userId, userId))
+      .orderBy(desc(bookings.createdAt));
+
+    // Get contracts for these bookings
+    const contractsData = await db
+      .select()
+      .from(contracts)
+      .where(eq(contracts.userId, userId));
+
+    // Get invoices for these bookings
+    const invoicesData = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.userId, userId));
+
+    // Combine the data
+    return bookingsData.map(booking => {
+      const relatedContracts = contractsData.filter(contract => contract.enquiryId === booking.id);
+      const relatedInvoices = invoicesData.filter(invoice => 
+        invoice.bookingId === booking.id || 
+        relatedContracts.some(contract => contract.id === invoice.contractId)
+      );
+
+      return {
+        ...booking,
+        contracts: relatedContracts,
+        invoices: relatedInvoices
+      };
+    });
+  }
+
   async createBooking(data: InsertEnquiry): Promise<Enquiry> {
     const [booking] = await db.insert(bookings).values(data).returning();
     return booking;
