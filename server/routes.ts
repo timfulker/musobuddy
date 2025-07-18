@@ -1490,12 +1490,15 @@ All terms have been agreed and signatures obtained.`;
         IMPORTANT: 
         - Return ONLY the JSON object, no other text
         - Extract the client's full name from the contract
-        - Extract venue name and address
+        - Extract venue name and FULL venue address (street, city, postcode)
         - Look for date, start time, and finish time
         - Extract fee amounts (remove currency symbols, return as number)
         - Extract deposit information from payment details
-        - Get client contact details (phone, email)
-        - Extract client address
+        - Get client contact details (phone, email, address)
+        - Extract client's FULL address (street, city, postcode) - look for billing address, client address, or address near client name/signature
+        - Extract venue's FULL address (street, city, postcode) - look for venue address, event location, or performance location
+        - For addresses, include all address lines if available (street number, street name, city, county, postcode)
+        - Look for addresses in signature sections, contact details, or billing information
         - Use actual null values (not strings) for missing fields
         - For numeric fields, extract numbers only (no currency symbols)
         
@@ -1650,6 +1653,7 @@ All terms have been agreed and signatures obtained.`;
         // Add parsed information to booking
         if (parsedData.clientName) bookingUpdates.clientName = parsedData.clientName;
         if (parsedData.venue) bookingUpdates.venue = parsedData.venue;
+        if (parsedData.venueAddress) bookingUpdates.venue = `${parsedData.venue || bookingUpdates.venue || ''}\n${parsedData.venueAddress}`.trim();
         if (parsedData.eventDate) {
           // Smart date handling: if parsed year is in past, assume next year
           const parsedDate = new Date(parsedData.eventDate);
