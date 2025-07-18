@@ -49,23 +49,23 @@ const ALL_INSTRUMENTS = [
 
 // Theme configuration constants
 const THEME_TEMPLATES = [
-  { id: "classic", label: "Classic", description: "Professional and traditional invoice format" },
-  { id: "modern", label: "Modern Minimal", description: "Clean and contemporary design" },
-  { id: "casual", label: "Casual", description: "Friendly and approachable style" },
-  { id: "dj", label: "DJ Mode", description: "Dark theme with neon highlights" },
-  { id: "busker", label: "Rustic", description: "Boho street performer style" },
+  { id: "classic", label: "Classic Business", description: "Professional and traditional invoice format" },
+  { id: "modern", label: "Modern Creative", description: "Clean and contemporary design" },
+  { id: "minimal", label: "Minimal Clean", description: "Simple and elegant style" },
 ];
 
 const THEME_TONES = [
-  { id: "formal", label: "Formal", description: "Professional language and complete terms" },
-  { id: "casual", label: "Casual", description: "Friendly tone with music-focused language" },
+  { id: "professional", label: "Professional", description: "Formal business language" },
+  { id: "friendly", label: "Friendly", description: "Warm and approachable tone" },
+  { id: "creative", label: "Creative", description: "Musical and artistic language" },
 ];
 
 const THEME_FONTS = [
-  { id: "roboto", label: "Roboto", description: "Professional and readable" },
-  { id: "raleway", label: "Raleway", description: "Elegant and modern" },
-  { id: "pacifico", label: "Pacifico", description: "Handwritten and personal" },
-  { id: "oswald", label: "Oswald", description: "Bold and impactful" },
+  { id: "times", label: "Times New Roman", description: "Classic and professional" },
+  { id: "arial", label: "Arial", description: "Clean and modern" },
+  { id: "helvetica", label: "Helvetica", description: "Swiss design classic" },
+  { id: "georgia", label: "Georgia", description: "Elegant serif font" },
+  { id: "roboto", label: "Roboto", description: "Contemporary sans-serif" },
 ];
 
 const THEME_COLORS = [
@@ -1170,7 +1170,7 @@ export default function Settings() {
                               </div>
                               <Input
                                 type="color"
-                                value={field.value}
+                                value={field.value || "#8B5CF6"}
                                 onChange={(e) => field.onChange(e.target.value)}
                                 className="w-16 h-8 border-0 rounded cursor-pointer"
                               />

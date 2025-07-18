@@ -33,10 +33,10 @@ const getFontFamily = (font: string) => {
   }
 };
 
-const getTemplateStyles = (template: string, accentColor: string) => {
+const getTemplateStyles = (template: string, accentColor: string, font: string) => {
   const baseStyles = `
     body {
-      font-family: ${getFontFamily('times')};
+      font-family: ${getFontFamily(font)};
       line-height: 1.6;
       color: #333;
       max-width: 800px;
@@ -196,7 +196,7 @@ export async function generateThemePreviewPDF(settings: ThemeSettings): Promise<
           <meta charset="utf-8">
           <title>Theme Preview</title>
           <style>
-            ${getTemplateStyles(settings.template, settings.accentColor)}
+            ${getTemplateStyles(settings.template, settings.accentColor, settings.font)}
           </style>
         </head>
         <body>
