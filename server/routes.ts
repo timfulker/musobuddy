@@ -1650,7 +1650,15 @@ All terms have been agreed and signatures obtained.`;
         // Add parsed information to booking
         if (parsedData.clientName) bookingUpdates.clientName = parsedData.clientName;
         if (parsedData.venue) bookingUpdates.venue = parsedData.venue;
-        if (parsedData.eventDate) bookingUpdates.eventDate = new Date(parsedData.eventDate);
+        if (parsedData.eventDate) {
+          // Smart date handling: if parsed year is in past, assume next year
+          const parsedDate = new Date(parsedData.eventDate);
+          const currentYear = new Date().getFullYear();
+          if (parsedDate.getFullYear() < currentYear) {
+            parsedDate.setFullYear(currentYear + 1);
+          }
+          bookingUpdates.eventDate = parsedDate;
+        }
         if (parsedData.eventTime) bookingUpdates.eventTime = parsedData.eventTime;
         if (parsedData.clientPhone) bookingUpdates.clientPhone = parsedData.clientPhone;
         if (parsedData.clientEmail) bookingUpdates.clientEmail = parsedData.clientEmail;
