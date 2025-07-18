@@ -493,43 +493,15 @@ button, input, select, textarea {
   box-shadow: none !important;   /* Remove any purple shadows */
 }
 
-/* Remove all lines, borders, shadows from filter container */
-.filter-container,
-.filter-container *,
+/* Target only thick grey horizontal/vertical lines - not form borders */
 .filter-container::before,
-.filter-container::after,
-.filter-container *::before,
-.filter-container *::after {
-  border: none !important;          /* No borders at all */
-  border-width: 0 !important;
-  box-shadow: none !important;      /* No shadows */
-  outline: none !important;         /* No focus outlines */
-  background-image: none !important; /* No gradients or bg lines */
-  content: none !important;         /* Kill pseudo-content */
-  display: block;                   /* Ensure no hidden lines from display props */
-}
-
-/* Specifically for child components (e.g., buttons, selects) */
-.filter-container button,
-.filter-container input,
-.filter-container select,
-.filter-container [data-radix-collection-item],
-.filter-container [data-radix-select-trigger],
-.filter-container [data-radix-select-content] {
-  border: none !important;
-  box-shadow: none !important;
-  ring: 0 !important;               /* No Tailwind ring */
-}
-
-/* Hide scrollbars if they're creating lines */
-.filter-container ::-webkit-scrollbar {
+.filter-container::after {
+  content: none !important;
   display: none !important;
 }
 
-/* Override any card-specific styles */
-.filter-container.card-clean,
-.filter-container .card {
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important; /* Blend into page bg if needed */
+/* Remove any thick border artifacts from the container itself */
+.filter-container {
+  border-image: none !important;
+  background-image: none !important;
 }
