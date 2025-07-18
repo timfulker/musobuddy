@@ -1329,102 +1329,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // Use Puppeteer to extract PDF text (already available in project)
+        // Use OpenAI Vision to extract text from PDF by converting to images
         try {
           const fs = await import('fs');
           const path = await import('path');
-          const puppeteer = await import('puppeteer');
+          const pdf2pic = await import('pdf2pic');
           
-          // Create temporary file for PDF processing
+          // Create temp directory
           const tempDir = path.join(process.cwd(), 'temp');
           await fs.promises.mkdir(tempDir, { recursive: true });
-          const tempPdfPath = path.join(tempDir, `temp_${Date.now()}.pdf`);
           
-          // Write buffer to temporary file
+          // Write PDF to temp file
+          const tempPdfPath = path.join(tempDir, `${Date.now()}.pdf`);
           await fs.promises.writeFile(tempPdfPath, fileBuffer);
           
-          // Launch Puppeteer to extract text
-          const browser = await puppeteer.launch({ 
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+          // Convert PDF to images
+          const convert = pdf2pic.fromPath(tempPdfPath, {
+            density: 300,
+            saveFilename: "page",
+            savePath: tempDir,
+            format: "png",
+            width: 2000,
+            height: 2000
           });
           
-          const page = await browser.newPage();
+          const results = await convert.bulk(-1, { responseType: "buffer" });
           
-          // Load PDF and extract text
-          const pdfDataUrl = `data:application/pdf;base64,${fileBuffer.toString('base64')}`;
-          await page.goto(pdfDataUrl);
+          let allExtractedText = '';
           
-          // Extract text from PDF
-          const textContent = await page.evaluate(() => {
-            return document.body.innerText || document.body.textContent || '';
-          });
+          // Process each page with OpenAI Vision
+          for (const result of results) {
+            const imageBuffer = result.buffer;
+            const base64Image = imageBuffer.toString('base64');
+            
+            // Use OpenAI Vision to extract text
+            const openai = new OpenAI({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY });
+            
+            const response = await openai.chat.completions.create({
+              model: "gpt-4o", // Latest model with vision capabilities
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: "Extract all text from this document image. Preserve the structure and formatting. Return only the extracted text, no additional commentary."
+                    },
+                    {
+                      type: "image_url",
+                      image_url: {
+                        url: `data:image/png;base64,${base64Image}`
+                      }
+                    }
+                  ]
+                }
+              ],
+              max_tokens: 4000
+            });
+            
+            const pageText = response.choices[0].message.content;
+            allExtractedText += pageText + '\n\n';
+          }
           
-          await browser.close();
-          
-          // Clean up temporary file
+          // Clean up temp files
           await fs.promises.unlink(tempPdfPath);
           
-          if (textContent && textContent.length > 50) {
-            extractedText = textContent;
-            console.log('PDF text extraction: Successfully extracted via Puppeteer', extractedText.length, 'characters');
+          if (allExtractedText.trim().length > 50) {
+            extractedText = allExtractedText.trim();
+            console.log('PDF text extraction: Successfully extracted via OpenAI Vision', extractedText.length, 'characters');
           } else {
-            throw new Error('Puppeteer extraction returned insufficient text');
+            throw new Error('OpenAI Vision extraction returned insufficient text');
           }
           
         } catch (pdfError) {
-          console.error('PDF parsing with Puppeteer failed:', pdfError);
-          // Try manual text extraction from the contract content we know
-          console.log('PDF text extraction: Using contract-specific parsing');
+          console.error('PDF extraction with OpenAI Vision failed:', pdfError);
           
-          // For the Harry Tamplin contract, provide the complete contract text
-          if (fileName.includes('Harry Tamplin') || fileName.includes('19072024')) {
-            extractedText = `Musicians' Union Contract - STANDARD LIVE ENGAGEMENT CONTRACT L2
-Hiring a Solo Musician
-An agreement made on 18/07/2024
-
-between Harry Charles Tamplin
-of 11 Woodland Chase
-
-and Tim Fulker t/a Saxweddings
-of 59, Gloucester Road, Bournemouth. BH7 6JA
-
-The Hirer engages the Musician to perform the following Engagement(s) at Stratton Court Barn
-Stratton Audley, Bicester OX27 9AJ
-
-on the date(s) and at the time(s) and for the fee(s), plus VAT if applicable, listed below:
-
-Date: Saturday 19th July 2025
-Start Time: 12.00 (TBC)
-Finish Time: Midnight
-Fee: £710 (3.5 hours +DJ)
-
-Payment of a £50 deposit to be made by 19/01/25
-Acc - Mr T Fulker
-No - 09851259
-Sort - 54 21 30
-Ref - Please use Name/Date
-
-Signed by the Hirer Harry Tamplin (Jul 21, 2024 18:56 GMT+1)
-Print Name Harry Tamplin
-Phone Number 07539322292
-Email harrytamplin@hotmail.co.uk
-
-Signed by the Musician TIM FULKER (Jul 24, 2024 20:21 GMT+1)
-Print Name Tim Fulker
-Phone Number 07764190034
-Email timfulker@gmail.com`;
-          } else {
-            // Generic fallback for other contracts
-            extractedText = `Musicians' Union Contract - ${fileName}
-            
-Unable to extract full text. Basic information:
-- Contract type: Musicians' Union Standard Live Engagement Contract L2
-- Filename: ${fileName}
-- Please manually verify contract details`;
-          }
+          // Fallback to filename-based extraction
+          extractedText = `PDF Document: ${fileName}`;
           
-          console.log('PDF text extraction: Used manual contract parsing', extractedText.length, 'characters');
+          const nameMatch = fileName.match(/([A-Za-z]+[\s_-]+[A-Za-z]+)/);
+          const dateMatch = fileName.match(/(\d{2})(\d{2})(\d{4})/);
+          
+          if (nameMatch) extractedText += `\nClient: ${nameMatch[1]}`;
+          if (dateMatch) extractedText += `\nDate: ${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+          
+          console.log('PDF text extraction: Used filename-based fallback');
         }
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents

@@ -127,7 +127,7 @@ button, input, select, textarea {
   --card-foreground: hsl(224, 71.4%, 4.1%);
   --border: hsl(220, 13%, 91%);
   --input: hsl(220, 13%, 91%);
-  --primary: hsl(262, 83%, 58%);
+  --primary: hsl(262, 83%, 68%);
   --primary-foreground: hsl(210, 20%, 98%);
   --secondary: hsl(220, 14.3%, 95.9%);
   --secondary-foreground: hsl(220.9, 39.3%, 11%);
@@ -135,21 +135,21 @@ button, input, select, textarea {
   --accent-foreground: hsl(220.9, 39.3%, 11%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(262, 83%, 58%);
+  --ring: hsl(262, 83%, 68%);
   --radius: 0.75rem;
-  --chart-1: hsl(262, 83%, 58%);
-  --chart-2: hsl(252, 83%, 68%);
-  --chart-3: hsl(272, 83%, 48%);
-  --chart-4: hsl(242, 83%, 68%);
-  --chart-5: hsl(282, 83%, 48%);
+  --chart-1: hsl(262, 83%, 68%);
+  --chart-2: hsl(252, 83%, 78%);
+  --chart-3: hsl(272, 83%, 58%);
+  --chart-4: hsl(242, 83%, 78%);
+  --chart-5: hsl(282, 83%, 58%);
   --sidebar-background: hsl(0, 0%, 98%);
   --sidebar-foreground: hsl(224, 71.4%, 4.1%);
-  --sidebar-primary: hsl(262, 83%, 58%);
+  --sidebar-primary: hsl(262, 83%, 68%);
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
   --sidebar-accent: hsl(220, 14.3%, 95.9%);
   --sidebar-accent-foreground: hsl(220.9, 39.3%, 11%);
   --sidebar-border: hsl(220, 13%, 91%);
-  --sidebar-ring: hsl(262, 83%, 58%);
+  --sidebar-ring: hsl(262, 83%, 68%);
 }
 
 .dark {
@@ -164,7 +164,7 @@ button, input, select, textarea {
   --card-foreground: hsl(210, 20%, 98%);
   --border: hsl(215, 27.9%, 16.9%);
   --input: hsl(215, 27.9%, 16.9%);
-  --primary: hsl(263, 70%, 50%);
+  --primary: hsl(263, 70%, 60%);
   --primary-foreground: hsl(210, 20%, 98%);
   --secondary: hsl(215, 27.9%, 16.9%);
   --secondary-foreground: hsl(210, 20%, 98%);
@@ -172,20 +172,20 @@ button, input, select, textarea {
   --accent-foreground: hsl(210, 20%, 98%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(263, 70%, 50%);
-  --chart-1: hsl(263, 70%, 50%);
-  --chart-2: hsl(253, 70%, 60%);
-  --chart-3: hsl(273, 70%, 40%);
-  --chart-4: hsl(243, 70%, 60%);
-  --chart-5: hsl(283, 70%, 40%);
+  --ring: hsl(263, 70%, 60%);
+  --chart-1: hsl(263, 70%, 60%);
+  --chart-2: hsl(253, 70%, 70%);
+  --chart-3: hsl(273, 70%, 50%);
+  --chart-4: hsl(243, 70%, 70%);
+  --chart-5: hsl(283, 70%, 50%);
   --sidebar-background: hsl(224, 71.4%, 4.1%);
   --sidebar-foreground: hsl(210, 20%, 98%);
-  --sidebar-primary: hsl(263, 70%, 50%);
+  --sidebar-primary: hsl(263, 70%, 60%);
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
   --sidebar-accent: hsl(215, 27.9%, 16.9%);
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
   --sidebar-border: hsl(215, 27.9%, 16.9%);
-  --sidebar-ring: hsl(263, 70%, 50%);
+  --sidebar-ring: hsl(263, 70%, 60%);
 }
 
 @layer base {
@@ -252,11 +252,11 @@ button, input, select, textarea {
 
 /* Clean gradient backgrounds without artifacts */
 .superhuman-gradient {
-  background: linear-gradient(135deg, hsl(262, 83%, 58%) 0%, hsl(263, 70%, 50%) 100%);
+  background: linear-gradient(135deg, hsl(262, 83%, 68%) 0%, hsl(263, 70%, 60%) 100%);
 }
 
 .superhuman-gradient-dark {
-  background: linear-gradient(135deg, hsl(263, 70%, 50%) 0%, hsl(253, 70%, 60%) 100%);
+  background: linear-gradient(135deg, hsl(263, 70%, 60%) 0%, hsl(253, 70%, 70%) 100%);
 }
 
 .music-card-hover {
@@ -282,12 +282,12 @@ button, input, select, textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(262, 83%, 58%);
+  background: hsl(262, 83%, 68%);
   border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(263, 70%, 50%);
+  background: hsl(263, 70%, 60%);
 }
 
 /* Clean filter container styling - remove purple lines */
