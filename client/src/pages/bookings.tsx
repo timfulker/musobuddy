@@ -1304,13 +1304,15 @@ export default function Enquiries() {
         </div>
 
         {/* Smart Filtering System */}
-        <Card className="bg-white border-gray-200 overflow-hidden" style={{ 
+        <Card className="bg-white border-gray-200 overflow-hidden filter-container" style={{ 
           background: 'white !important', 
           border: '1px solid #e5e7eb !important', 
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1) !important',
           backgroundImage: 'none !important',
-          borderImage: 'none !important'
-        }}>
+          borderImage: 'none !important',
+          '--primary': '#374151',
+          '--ring': '#e5e7eb'
+        } as React.CSSProperties}>
           <CardContent className="p-4" style={{ 
             background: 'white !important',
             backgroundImage: 'none !important',

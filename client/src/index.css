@@ -482,3 +482,41 @@ button, input, select, textarea {
   border-color: #d1d5db !important;
   color: #374151 !important;
 }
+
+/* Stronger global override for filter to remove all purple */
+.filter-container,
+.filter-container * {
+  --primary: #374151 !important; /* Gray instead of purple */
+  --ring: #e5e7eb !important;    /* Gray focus ring */
+  border-color: #e5e7eb !important;
+  background-color: white !important;
+  box-shadow: none !important;   /* Remove any purple shadows */
+}
+
+/* Hide purple scrollbars inside filter */
+.filter-container ::-webkit-scrollbar-thumb {
+  background: #e5e7eb !important; /* Gray scrollbar */
+}
+.filter-container ::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db !important;
+}
+
+/* Ensure no gradients or artifacts */
+.filter-container .superhuman-gradient,
+.filter-container .superhuman-gradient-dark {
+  background: none !important;
+}
+
+/* Hide purple scrollbars inside filter */
+.filter-container ::-webkit-scrollbar-thumb {
+  background: #e5e7eb !important; /* Gray scrollbar */
+}
+.filter-container ::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db !important;
+}
+
+/* Ensure no gradients or artifacts */
+.filter-container .superhuman-gradient,
+.filter-container .superhuman-gradient-dark {
+  background: none !important;
+}
