@@ -34,6 +34,7 @@ const bookingDetailsSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
   eventDate: z.string().min(1, "Event date is required"),
   eventTime: z.string().optional(),
+  eventEndTime: z.string().optional(),
   venue: z.string().optional(),
   fee: z.string().optional(),
   clientEmail: z.string().email().optional().or(z.literal("")),
@@ -88,6 +89,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       clientName: "",
       eventDate: "",
       eventTime: "",
+      eventEndTime: "",
       venue: "",
       fee: "",
       clientEmail: "",
@@ -119,6 +121,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
         clientName: booking.clientName || "",
         eventDate: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : "",
         eventTime: booking.eventTime || "",
+        eventEndTime: booking.eventEndTime || "",
         venue: booking.venue || "",
         fee: booking.fee || "",
         clientEmail: booking.clientEmail || "",
@@ -460,7 +463,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                       name="eventTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Event Time</FormLabel>
+                          <FormLabel>Start Time</FormLabel>
                           <FormControl>
                             <Input {...field} type="time" />
                           </FormControl>
@@ -470,18 +473,32 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
                     />
                     <FormField
                       control={form.control}
-                      name="venue"
+                      name="eventEndTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Venue</FormLabel>
+                          <FormLabel>End Time</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} type="time" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="venue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Venue</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
