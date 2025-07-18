@@ -179,6 +179,9 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Form Validation Fix**: Resolved duplicate venueAddress field that was causing form validation failures
 - **Database Error Fix**: Fixed "invalid input syntax for type numeric" by sanitizing empty strings to null for numeric fields
 - **Authentication Enhancement**: Added proper credentials to form requests for stable session handling
+- **AI Parsing Fix**: Completely rebuilt PDF parsing to actually read document content instead of generating fictional data
+- **Vision-Based Extraction**: Implemented Claude Vision with pdf2pic for accurate text extraction from real PDF documents
+- **Data Accuracy**: Fixed critical AI hallucination issue where fake client details were being generated instead of extracted
 
 ### 2025-07-18 - Application Stability and Comprehensive User Documentation
 - **Database Connection Fix**: Resolved WebSocket connection issues with Neon database causing startup failures

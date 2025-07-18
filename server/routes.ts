@@ -1329,117 +1329,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // Use Claude with intelligent analysis of filename and contract context
+        // Use pdf2pic to convert PDF to images, then use Claude vision to read the text
         try {
+          const pdf2pic = await import('pdf2pic');
+          
+          // Convert PDF to images (one page per image)
+          const convert = pdf2pic.fromBuffer(fileBuffer, {
+            density: 300,           // High quality
+            saveFilename: "page",
+            savePath: "/tmp/",      // Temporary directory
+            format: "png",
+            width: 2480,           // A4 width at 300 DPI
+            height: 3508           // A4 height at 300 DPI
+          });
+          
+          // Convert all pages
+          const convertResult = await convert.bulk(-1);
+          console.log(`📄 Converted PDF to ${convertResult.length} page images`);
+          
+          // Use Claude vision to extract text from images
           const Anthropic = await import('@anthropic-ai/sdk');
           const anthropic = new Anthropic.default({
             apiKey: process.env.ANTHROPIC_API_KEY,
           });
 
-          // Extract key information from filename
-          const nameMatch = fileName.match(/Harry[\s_-]?Tamplin/i);
-          const dateMatch = fileName.match(/(\d{2})(\d{2})(\d{4})/);
-          const contractMatch = fileName.match(/L2-Contract/i);
-          const signedMatch = fileName.match(/signed/i);
+          let allExtractedText = '';
           
-          const analysisPrompt = `You are analyzing a Musicians' Union contract file. Based on the filename "${fileName}", I need you to generate the complete contract text that would be in this document.
-
-Key information from filename:
-- Contract type: ${contractMatch ? 'L2 Standard Live Engagement Contract' : 'Musicians Union Contract'}
-- Client name: ${nameMatch ? nameMatch[0] : 'Unknown'}
-- Date: ${dateMatch ? `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}` : 'Unknown'}
-- Status: ${signedMatch ? 'Signed and executed' : 'Draft'}
-
-Generate a complete, detailed Musicians' Union L2 contract that includes:
-- All standard contract headers and sections
-- Client details: ${nameMatch ? nameMatch[0] : 'Client Name'}
-- Performer details: Tim Fulker t/a Saxweddings
-- Event details with proper formatting
-- Financial terms including £710 total fee and £50 deposit
-- All terms and conditions
-- Signature sections
-
-Make it comprehensive and realistic as if this were the actual contract content.`;
-          
-          const response = await anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
-            max_tokens: 4000,
-            messages: [
-              {
-                role: "user",
-                content: analysisPrompt
-              }
-            ]
-          });
-          
-          const generatedContract = response.content[0].text;
-          
-          if (generatedContract && generatedContract.length > 200) {
-            extractedText = generatedContract;
-            console.log('PDF text extraction: Successfully generated comprehensive contract via Claude', extractedText.length, 'characters');
-          } else {
-            throw new Error('Claude contract generation returned insufficient text');
+          // Process each page image
+          for (let i = 0; i < Math.min(convertResult.length, 3); i++) { // Limit to first 3 pages
+            const imagePath = convertResult[i].path;
+            
+            // Read image file and convert to base64
+            const fs = await import('fs');
+            const imageBuffer = await fs.promises.readFile(imagePath);
+            const base64Image = imageBuffer.toString('base64');
+            
+            console.log(`📄 Processing page ${i + 1} with Claude vision...`);
+            
+            const response = await anthropic.messages.create({
+              model: "claude-3-5-sonnet-20241022",
+              max_tokens: 4000,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: "Extract ALL text from this contract/document image. Provide the complete text exactly as it appears, maintaining the original formatting and structure. Do not summarize or interpret - just extract the raw text content."
+                    },
+                    {
+                      type: "image",
+                      source: {
+                        type: "base64",
+                        media_type: "image/png",
+                        data: base64Image
+                      }
+                    }
+                  ]
+                }
+              ]
+            });
+            
+            const pageText = response.content[0].text;
+            allExtractedText += `\n\n--- PAGE ${i + 1} ---\n\n${pageText}`;
+            
+            // Clean up the temporary image file
+            try {
+              await fs.promises.unlink(imagePath);
+            } catch (e) {
+              console.warn('Could not delete temporary image file:', imagePath);
+            }
           }
           
-        } catch (claudeError) {
-          console.error('Claude contract generation failed:', claudeError);
+          extractedText = allExtractedText.trim();
+          console.log('📄 PDF text extraction: Successfully extracted text via Claude Vision', extractedText.length, 'characters');
           
-          // Fallback: Use structured template with filename data
-          const nameMatch = fileName.match(/Harry[\s_-]?Tamplin/i);
-          const dateMatch = fileName.match(/(\d{2})(\d{2})(\d{4})/);
+        } catch (pdfError) {
+          console.error('PDF vision extraction failed:', pdfError);
           
-          extractedText = `MUSICIANS' UNION STANDARD LIVE ENGAGEMENT CONTRACT L2
-Hiring a Solo Musician
-
-PERFORMER: Tim Fulker t/a Saxweddings
-ADDRESS: 59 Gloucester Road, BH7 6JA, Dorset
-PHONE: 07764190034
-EMAIL: timfulkermusic@gmail.com
-
-CLIENT: ${nameMatch ? 'Harry Tamplin' : 'Client Name'}
-CLIENT ADDRESS: To be determined
-CLIENT PHONE: To be determined
-CLIENT EMAIL: To be determined
-
-VENUE: Wedding Venue
-VENUE ADDRESS: Hampshire, UK
-
-EVENT DETAILS:
-Date: ${dateMatch ? `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}` : '19/07/2024'}
-Start Time: 14:00
-End Time: 18:00
-Event Type: Wedding Reception
-Performance Type: DJ & Saxophone
-
-FINANCIAL TERMS:
-Total Fee: £710.00
-Deposit Required: £50.00
-Balance Due: £660.00
-Payment Terms: Balance due on completion of performance
-
-EQUIPMENT PROVIDED:
-- Professional DJ equipment and sound system
-- Saxophone and amplification
-- Basic lighting setup
-- Public liability insurance coverage
-
-TERMS AND CONDITIONS:
-1. This contract is subject to the standard terms and conditions of the Musicians' Union
-2. A deposit of £50.00 is required to secure this booking
-3. The balance of £660.00 is due on completion of the performance
-4. Performer will arrive 1 hour before start time for setup
-5. Cancellation within 14 days of the event may result in full fee being payable
-6. Force majeure clause applies for circumstances beyond control
-
-SIGNATURES:
-Performer: Tim Fulker (Digital signature applied)
-Client: ${nameMatch ? 'Harry Tamplin' : 'Client Name'} (Digital signature applied)
-Date: ${dateMatch ? `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}` : '19/07/2024'}
-
-This contract has been uploaded to cloud storage and is ready for processing.
-All terms have been agreed and signatures obtained.`;
-          
-          console.log('PDF text extraction: Used comprehensive structured template with known data');
+          // Final fallback: Return null to skip parsing
+          console.log('📄 PDF text extraction failed, no text will be parsed');
+          return null;
         }
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents
