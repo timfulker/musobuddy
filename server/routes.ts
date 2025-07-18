@@ -1329,62 +1329,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // Use pdf-parse for simple text extraction with proper import handling
+        // Use pdf2pic + Claude Vision approach for reliable PDF text extraction
         try {
-          const pdfParseModule = await import('pdf-parse');
-          const pdfParse = pdfParseModule.default;
+          console.log('📄 Converting PDF to image for Claude Vision analysis...');
           
-          console.log('📄 Extracting text from PDF using pdf-parse...');
-          const pdfData = await pdfParse(fileBuffer);
-          extractedText = pdfData.text;
+          const pdf2pic = await import('pdf2pic');
+          const options = {
+            density: 300,
+            saveFilename: "page",
+            savePath: "/tmp/",
+            format: "png",
+            width: 2000,
+            height: 2600
+          };
           
-          console.log(`📄 PDF text extraction: Successfully extracted ${extractedText.length} characters`);
+          const convertConfig = pdf2pic.fromBuffer(fileBuffer, options);
+          const result = await convertConfig(1, { responseType: "buffer" });
+          
+          if (!result || !result.buffer) {
+            throw new Error('Failed to convert PDF to image');
+          }
+          
+          const imageBase64 = result.buffer.toString('base64');
+          
+          console.log('📄 PDF converted to image, now analyzing with Claude Vision...');
+          
+          const Anthropic = await import('@anthropic-ai/sdk');
+          const anthropic = new Anthropic.default({
+            apiKey: process.env.ANTHROPIC_API_KEY,
+          });
+
+          const response = await anthropic.messages.create({
+            model: "claude-3-5-sonnet-20241022",
+            max_tokens: 4000,
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: "Extract ALL text from this document image. Provide the complete text exactly as it appears, maintaining the original formatting and structure. Do not summarize or interpret - just extract the raw text content."
+                  },
+                  {
+                    type: "image",
+                    source: {
+                      type: "base64",
+                      media_type: "image/png",
+                      data: imageBase64
+                    }
+                  }
+                ]
+              }
+            ]
+          });
+          
+          extractedText = response.content[0].text;
+          console.log(`📄 PDF text extraction successful: ${extractedText.length} characters`);
           console.log('📄 First 500 characters of extracted text:', extractedText.substring(0, 500));
           
         } catch (pdfError) {
-          console.error('PDF text extraction failed:', pdfError);
-          
-          // Fallback: Try using Claude Vision directly on the PDF buffer converted to base64
-          try {
-            console.log('📄 Attempting fallback: Claude Vision on PDF');
-            const base64Pdf = fileBuffer.toString('base64');
-            
-            const Anthropic = await import('@anthropic-ai/sdk');
-            const anthropic = new Anthropic.default({
-              apiKey: process.env.ANTHROPIC_API_KEY,
-            });
-
-            const response = await anthropic.messages.create({
-              model: "claude-3-5-sonnet-20241022",
-              max_tokens: 4000,
-              messages: [
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "text",
-                      text: "Extract ALL text from this PDF document. Provide the complete text exactly as it appears, maintaining the original formatting and structure. Do not summarize or interpret - just extract the raw text content."
-                    },
-                    {
-                      type: "image",
-                      source: {
-                        type: "base64",
-                        media_type: "application/pdf",
-                        data: base64Pdf
-                      }
-                    }
-                  ]
-                }
-              ]
-            });
-            
-            extractedText = response.content[0].text;
-            console.log(`📄 Fallback extraction successful: ${extractedText.length} characters`);
-            
-          } catch (fallbackError) {
-            console.error('📄 Both PDF extraction methods failed:', fallbackError);
-            return null;
-          }
+          console.error('📄 PDF text extraction failed:', pdfError);
+          return null;
         }
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents
