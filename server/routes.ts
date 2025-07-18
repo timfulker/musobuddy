@@ -3050,6 +3050,17 @@ All terms have been agreed and signatures obtained.`;
       const bookingId = parseInt(req.params.id);
       const updateData = { ...req.body };
       
+      // Sanitize numeric fields - convert empty strings to null
+      const numericFields = ['fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
+      numericFields.forEach(field => {
+        if (updateData[field] === '' || updateData[field] === undefined) {
+          updateData[field] = null;
+        } else if (updateData[field] && typeof updateData[field] === 'string') {
+          const parsed = parseFloat(updateData[field]);
+          updateData[field] = isNaN(parsed) ? null : parsed;
+        }
+      });
+      
       // Convert eventDate string to Date if present
       if (updateData.eventDate && typeof updateData.eventDate === 'string') {
         updateData.eventDate = new Date(updateData.eventDate);
@@ -3065,6 +3076,7 @@ All terms have been agreed and signatures obtained.`;
         return res.json({ message: "Booking rejected and deleted successfully", deleted: true });
       }
       
+      console.log('📝 Updating booking with sanitized data:', updateData);
       const updatedBooking = await storage.updateBooking(bookingId, updateData, userId);
       if (!updatedBooking) {
         return res.status(404).json({ message: "Booking not found" });

@@ -166,12 +166,22 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
 
   const updateBookingMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Sanitize data before sending - convert empty strings to null for numeric fields
+      const sanitizedData = { ...data };
+      const numericFields = ['fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
+      numericFields.forEach(field => {
+        if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
+          sanitizedData[field] = null;
+        }
+      });
+
       const response = await fetch(`/api/bookings/${booking?.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify(sanitizedData),
       });
       
       if (!response.ok) {
