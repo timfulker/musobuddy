@@ -41,6 +41,13 @@ import {
   getConflictActions, 
   formatConflictTooltip 
 } from "@/utils/conflict-ui";
+import { 
+  getStageConfig, 
+  mapOldStatusToStage, 
+  executeContextualAction,
+  getDisplayStatus,
+  type WorkflowStage 
+} from "@/utils/workflow-system";
 
 const enquiryFormSchema = insertEnquirySchema.extend({
   eventDate: z.string().optional(),
@@ -66,29 +73,8 @@ export default function Enquiries() {
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
-  // Initialize filters based on URL parameters or default to "contract_sent"
-  const getInitialStatusFilters = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const statusParam = urlParams.get('status');
-    const idParam = urlParams.get('id');
-    
-    // If redirected with only ID parameter (new navigation system), show all bookings
-    if (idParam && !statusParam) {
-      console.log('🔗 ID-only redirect detected, showing all bookings for ID:', idParam);
-      return []; // Empty array means show all bookings
-    }
-    
-    // If redirected from dashboard with a specific status, use that status
-    if (statusParam) {
-      console.log('🔗 Dashboard redirect detected, setting filter to:', statusParam);
-      return [statusParam];
-    }
-    
-    // Default to "contract_sent" if no redirect
-    return ["contract_sent"];
-  };
-
-  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>(getInitialStatusFilters());
+  // Remove filters for now - we'll rethink these later
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
   const [conflictResolutionOpen, setConflictResolutionOpen] = useState(false);
   const [conflictResolutionData, setConflictResolutionData] = useState<{
     primaryBooking: any;
@@ -366,6 +352,38 @@ export default function Enquiries() {
   // Contract status update for individual bookings
   const handleContractStatusUpdate = (bookingId: number, contractType: 'sent' | 'signed', status: boolean) => {
     contractStatusUpdateMutation.mutate({ id: bookingId, contractType, status });
+  };
+
+  // Handle contextual actions
+  const handleContextualAction = (bookingId: number, action: string) => {
+    console.log(`Executing contextual action: ${action} for booking ${bookingId}`);
+    
+    switch (action) {
+      case 'reply_enquiry':
+        updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'awaiting_response' });
+        break;
+      case 'send_followup':
+        // Just update last contacted time for now
+        // In future, this could open email template
+        break;
+      case 'client_confirms':
+        updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'client_confirms' });
+        break;
+      case 'send_contract':
+        updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'contract_sent' });
+        break;
+      case 'mark_confirmed':
+        updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'confirmed' });
+        break;
+      case 'send_invoice':
+        // Could redirect to invoice creation
+        break;
+      case 'mark_paid':
+        paymentStatusUpdateMutation.mutate({ id: bookingId, paymentType: 'full', status: true });
+        break;
+      default:
+        console.warn(`Unknown contextual action: ${action}`);
+    }
   };
 
   // Toggle status filter
@@ -759,17 +777,9 @@ export default function Enquiries() {
   }, [settings.eventTypes]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "new": return "bg-gray-100 text-gray-800";
-      case "booking_in_progress": return "bg-orange-100 text-orange-800";
-      case "confirmed": return "bg-green-100 text-green-800";
-      case "completed": return "bg-slate-100 text-slate-800";
-      case "rejected": return "bg-red-100 text-red-800";
-      // Legacy status support
-      case "contract_sent": return "bg-orange-100 text-orange-800";
-      case "contract_received": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
+    const stage = mapOldStatusToStage(status);
+    const config = getStageConfig(stage);
+    return `${config.bgColor} ${config.color} ${config.borderColor}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -817,10 +827,8 @@ export default function Enquiries() {
       enquiry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       enquiry.clientName.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // If no filters are active (empty array), show all bookings
-    const matchesStatus = activeStatusFilters.length === 0 || activeStatusFilters.includes(enquiry.status);
-    
-    return matchesSearch && matchesStatus;
+    // Show all bookings - no filtering by default
+    return matchesSearch;
   });
 
   // Sort the filtered enquiries
@@ -1624,26 +1632,16 @@ export default function Enquiries() {
             <div className="col-span-full">
               <Card>
                 <CardContent className="p-12 text-center">
-                  {activeStatusFilters.length === 0 ? (
-                    <>
-                      <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 text-lg">Select status filters to view bookings</p>
-                      <p className="text-gray-400">Click the status buttons above to show bookings</p>
-                    </>
-                  ) : (
-                    <>
-                      <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 text-lg">No bookings match your filters</p>
-                      <p className="text-gray-400">Try adjusting your status filters or search terms</p>
-                      <Button 
-                        className="mt-4 bg-purple-600 hover:bg-purple-700"
-                        onClick={() => setIsDialogOpen(true)}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Enquiry
-                      </Button>
-                    </>
-                  )}
+                  <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg">No bookings found</p>
+                  <p className="text-gray-400">Create your first booking to get started</p>
+                  <Button 
+                    className="mt-4 bg-purple-600 hover:bg-purple-700"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Booking
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -1852,62 +1850,30 @@ export default function Enquiries() {
                           )}
                         </div>
                         
-                        {/* Status Buttons - Simplified 4-stage workflow */}
+                        {/* Contextual Action Buttons */}
                         <div className="flex justify-center items-center mb-4">
                           <div className="flex gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'booking_in_progress')}
-                                  variant="outline"
-                                  size="sm"
-                                  className={`w-8 h-8 p-0 text-xs font-medium ${
-                                    enquiry.status === 'booking_in_progress' 
-                                      ? 'bg-[#F39C12] text-white border-[#F39C12]' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#F39C12] hover:text-white'
-                                  }`}
-                                >
-                                  N
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Set as Negotiation</TooltipContent>
-                            </Tooltip>
-                            
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'completed')}
-                                  variant="outline"
-                                  size="sm"
-                                  className={`w-8 h-8 p-0 text-xs font-medium ${
-                                    enquiry.status === 'completed' 
-                                      ? 'bg-[#34495E] text-white border-[#34495E]' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#34495E] hover:text-white'
-                                  }`}
-                                >
-                                  ✓
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Set as Completed</TooltipContent>
-                            </Tooltip>
-                            
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  onClick={() => handleQuickStatusUpdate(enquiry.id, 'rejected')}
-                                  variant="outline"
-                                  size="sm"
-                                  className={`w-8 h-8 p-0 text-xs font-medium ${
-                                    enquiry.status === 'rejected' 
-                                      ? 'bg-[#C0392B] text-white border-[#C0392B]' 
-                                      : 'bg-gray-200 text-gray-600 border-gray-300 hover:bg-[#C0392B] hover:text-white'
-                                  }`}
-                                >
-                                  ✗
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Set as Cancelled</TooltipContent>
-                            </Tooltip>
+                            {(() => {
+                              const stage = mapOldStatusToStage(enquiry.status);
+                              const config = getStageConfig(stage);
+                              
+                              return config.contextualActions.map((action, index) => (
+                                <Tooltip key={index}>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      onClick={() => handleContextualAction(enquiry.id, action.action)}
+                                      variant="default"
+                                      size="sm"
+                                      className={`text-xs font-medium text-white transition-all duration-200 ${action.color}`}
+                                    >
+                                      <span className="mr-1">{action.icon}</span>
+                                      {action.label}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{action.label}</TooltipContent>
+                                </Tooltip>
+                              ));
+                            })()}
                           </div>
                         </div>
 
@@ -1933,13 +1899,8 @@ export default function Enquiries() {
                           </Tooltip>
                           
                           <div className="flex flex-col items-end">
-                            <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium text-center min-h-[24px] px-3 whitespace-nowrap`}>
-                              {enquiry.status === 'new' ? 'ENQUIRY' : 
-                               enquiry.status === 'booking_in_progress' ? 'NEGOTIATION' :
-                               enquiry.status === 'confirmed' ? 'CONTRACT SIGNED' :
-                               enquiry.status === 'completed' ? 'COMPLETED' :
-                               enquiry.status === 'rejected' ? 'CANCELLED' :
-                               enquiry.status.replace('_', ' ').toUpperCase()}
+                            <Badge className={`${getStatusColor(enquiry.status)} text-xs font-medium text-center min-h-[24px] px-3 whitespace-nowrap border`}>
+                              {getDisplayStatus(enquiry.status)}
                             </Badge>
                             {enquiry.previousStatus && enquiry.status === 'completed' && (
                               <div className="text-xs text-gray-500 mt-1">
@@ -1954,93 +1915,16 @@ export default function Enquiries() {
                           <BookingProgressTags booking={enquiry} size="sm" />
                         </div>
                         
-                        {/* Contract Tracking Controls */}
-                        <div className="mt-3 border-t pt-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500 font-medium">Contract Status:</span>
-                            <div className="flex gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handleContractStatusUpdate(enquiry.id, 'sent', !enquiry.contractSent)}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`text-xs px-2 py-1 h-6 ${
-                                      enquiry.contractSent 
-                                        ? 'bg-blue-100 text-blue-800 border-blue-300' 
-                                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-blue-50'
-                                    }`}
-                                  >
-                                    {enquiry.contractSent ? '📤 Contract Sent' : 'Mark Contract Sent'}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Toggle contract sent status</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handleContractStatusUpdate(enquiry.id, 'signed', !enquiry.contractSigned)}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`text-xs px-2 py-1 h-6 ${
-                                      enquiry.contractSigned 
-                                        ? 'bg-green-100 text-green-800 border-green-300' 
-                                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-green-50'
-                                    }`}
-                                  >
-                                    {enquiry.contractSigned ? '🖋️ Contract Signed' : 'Mark Contract Signed'}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Toggle contract signed status</TooltipContent>
-                              </Tooltip>
+                        {/* Payment Status Display */}
+                        {enquiry.paidInFull && (
+                          <div className="mt-3 border-t pt-3">
+                            <div className="flex items-center justify-center">
+                              <Badge className="bg-green-100 text-green-800 border-green-300">
+                                💰 Paid in Full
+                              </Badge>
                             </div>
                           </div>
-                        </div>
-                        
-                        {/* Payment Tracking Controls */}
-                        <div className="mt-3 border-t pt-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500 font-medium">Payment Status:</span>
-                            <div className="flex gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handlePaymentStatusUpdate(enquiry.id, 'deposit', !enquiry.depositPaid)}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`text-xs px-2 py-1 h-6 ${
-                                      enquiry.depositPaid 
-                                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300' 
-                                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-yellow-50'
-                                    }`}
-                                  >
-                                    {enquiry.depositPaid ? '💳 Deposit Paid' : 'Mark Deposit Paid'}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Toggle deposit payment status</TooltipContent>
-                              </Tooltip>
-                              
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => handlePaymentStatusUpdate(enquiry.id, 'full', !enquiry.paidInFull)}
-                                    variant="outline"
-                                    size="sm"
-                                    className={`text-xs px-2 py-1 h-6 ${
-                                      enquiry.paidInFull 
-                                        ? 'bg-green-100 text-green-800 border-green-300' 
-                                        : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-green-50'
-                                    }`}
-                                  >
-                                    {enquiry.paidInFull ? '💰 Paid in Full' : 'Mark Paid in Full'}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Toggle full payment status</TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </div>
-                        </div>
+                        )}
                         </div>
                       </div>
                     </CardContent>

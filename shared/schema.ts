@@ -196,7 +196,7 @@ export const bookings = pgTable("bookings", {
   eventType: varchar("event_type"),
   gigType: varchar("gig_type"), // Type of gig: Sax, DJ, Band, etc.
   estimatedValue: varchar("estimated_value"),
-  status: varchar("status").notNull().default("new"), // Keep existing: new, booking_in_progress, contract_sent, confirmed, rejected, completed
+  status: varchar("status").notNull().default("new"), // New 6-stage workflow: new, awaiting_response, client_confirms, contract_sent, confirmed, cancelled, completed
   previousStatus: varchar("previous_status"), // Track status before auto-completion to completed
   notes: text("notes"),
   originalEmailContent: text("original_email_content"), // Store original email content
@@ -204,6 +204,9 @@ export const bookings = pgTable("bookings", {
   responseNeeded: boolean("response_needed").default(true), // Visual indicator for enquiries requiring response
   lastContactedAt: timestamp("last_contacted_at"), // Track last contact time
   hasConflicts: boolean("has_conflicts").default(false), // Flag for potential conflicts
+  
+  // New workflow tracking fields
+  completed: boolean("completed").default(false), // Booking completed flag
   conflictCount: integer("conflict_count").default(0), // Number of potential conflicts
   conflictDetails: text("conflict_details"), // JSON string with conflict details
   
