@@ -2940,6 +2940,16 @@ All terms have been agreed and signatures obtained.`;
         updateData.eventDate = new Date(updateData.eventDate);
       }
       
+      // If status is being set to rejected, delete the booking instead of updating
+      if (updateData.status === 'rejected') {
+        const deleteResult = await storage.deleteBooking(bookingId, userId);
+        if (!deleteResult) {
+          return res.status(404).json({ message: "Booking not found" });
+        }
+        console.log(`🗑️ Booking ${bookingId} rejected and deleted from system`);
+        return res.json({ message: "Booking rejected and deleted successfully", deleted: true });
+      }
+      
       const updatedBooking = await storage.updateBooking(bookingId, updateData, userId);
       if (!updatedBooking) {
         return res.status(404).json({ message: "Booking not found" });

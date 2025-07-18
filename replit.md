@@ -170,6 +170,9 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Form Updates**: Updated booking details form to include Start Time and End Time fields side-by-side for better user experience
 - **Backward Compatibility**: Maintained parsing logic to handle both old and new field names during transition period
 - **Status**: Field name standardization complete across all forms and AI parsing systems, improved time field layout in booking details
+- **Duplicate Booking Resolution**: Fixed issue where duplicate bookings were causing conflicts by implementing automatic deletion of rejected bookings
+- **Rejection Handling**: Rejected bookings are now automatically deleted from the system instead of remaining with rejected status
+- **Conflict Detection**: Eliminated false conflicts caused by duplicate bookings in the database
 
 ### 2025-07-18 - Application Stability and Comprehensive User Documentation
 - **Database Connection Fix**: Resolved WebSocket connection issues with Neon database causing startup failures

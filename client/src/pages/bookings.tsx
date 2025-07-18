@@ -578,15 +578,23 @@ export default function Enquiries() {
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] }); // Keep for backwards compatibility
       queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
-      toast({
-        title: "Success",
-        description: "Enquiry status updated successfully!",
-      });
+      
+      if (data.deleted) {
+        toast({
+          title: "Booking rejected",
+          description: "The booking has been removed from the system.",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Enquiry status updated successfully!",
+        });
+      }
       setRespondDialogOpen(false);
       setSelectedEnquiry(null);
     },
