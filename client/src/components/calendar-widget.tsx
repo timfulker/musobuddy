@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import type { Booking } from "@shared/schema";
+import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 
 export default function CalendarWidget() {
   const { data: allBookings = [], isLoading: bookingsLoading } = useQuery({
@@ -46,17 +47,29 @@ export default function CalendarWidget() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed": return "bg-green-50 text-green-900";
-      case "pending": return "bg-blue-50 text-blue-900";
-      default: return "bg-gray-50 text-gray-900";
+    const stage = mapOldStatusToStage(status);
+    switch (stage) {
+      case 'new-enquiry': return "bg-amber-50 text-amber-900 border-amber-200";
+      case 'awaiting-response': return "bg-orange-50 text-orange-900 border-orange-200";
+      case 'client-confirms': return "bg-blue-50 text-blue-900 border-blue-200";
+      case 'contract-sent': return "bg-indigo-50 text-indigo-900 border-indigo-200";
+      case 'confirmed': return "bg-green-50 text-green-900 border-green-200";
+      case 'cancelled': return "bg-red-50 text-red-900 border-red-200";
+      case 'completed': return "bg-purple-50 text-purple-900 border-purple-200";
+      default: return "bg-gray-50 text-gray-900 border-gray-200";
     }
   };
 
   const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "confirmed": return "text-green-600";
-      case "pending": return "text-blue-600";
+    const stage = mapOldStatusToStage(status);
+    switch (stage) {
+      case 'new-enquiry': return "text-amber-600";
+      case 'awaiting-response': return "text-orange-600";
+      case 'client-confirms': return "text-blue-600";
+      case 'contract-sent': return "text-indigo-600";
+      case 'confirmed': return "text-green-600";
+      case 'cancelled': return "text-red-600";
+      case 'completed': return "text-purple-600";
       default: return "text-gray-600";
     }
   };
@@ -130,6 +143,7 @@ export default function CalendarWidget() {
                 <div className="flex-1">
                   <h4 className="font-medium">{gig.title}</h4>
                   <p className="text-sm opacity-75">{gig.venue} • {gig.eventTime}</p>
+                  <p className="text-xs font-medium mt-1 opacity-90">{getDisplayStatus(gig.status)}</p>
                   <p className={`text-xs ${getStatusBadgeColor(gig.status)}`}>
                     £{gig.fee} • {gig.status === "confirmed" ? "Confirmed" : "Pending"}
                   </p>

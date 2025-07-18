@@ -1304,7 +1304,7 @@ export default function Enquiries() {
         </div>
 
         {/* Smart Filtering System */}
-        <Card>
+        <Card className="filter-container">
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-2 mb-4">
               {Object.entries(workflowStages).map(([status, config]) => {

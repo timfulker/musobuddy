@@ -250,7 +250,7 @@ button, input, select, textarea {
   }
 }
 
-/* Superhuman-inspired gradient backgrounds */
+/* Clean gradient backgrounds without artifacts */
 .superhuman-gradient {
   background: linear-gradient(135deg, hsl(262, 83%, 58%) 0%, hsl(263, 70%, 50%) 100%);
 }
@@ -288,4 +288,56 @@ button, input, select, textarea {
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(263, 70%, 50%);
+}
+
+/* Remove unwanted visual artifacts from filter section */
+.filter-container *::before,
+.filter-container *::after {
+  display: none !important;
+}
+
+/* Clean card and filter styling */
+.card-clean {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.filter-section {
+  background: white;
+  border: none;
+  box-shadow: none;
+}
+
+/* Prevent any pseudo-element artifacts */
+.no-artifacts,
+.no-artifacts::before,
+.no-artifacts::after {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove purple lines and particles from filter container */
+.filter-container,
+.filter-container * {
+  background-image: none !important;
+  background-attachment: initial !important;
+  background-clip: initial !important;
+  background-origin: initial !important;
+  background-position: initial !important;
+  background-repeat: initial !important;
+  background-size: initial !important;
+}
+
+.filter-container::before,
+.filter-container::after,
+.filter-container *::before,
+.filter-container *::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
