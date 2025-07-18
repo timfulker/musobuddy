@@ -1327,36 +1327,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let extractedText = '';
       
-      // Extract text based on file type
+      // Extract text based on file type - using pdf-parse as recommended
       if (fileName.toLowerCase().endsWith('.pdf')) {
         try {
-          console.log('📄 Attempting PDF text extraction with pdf2json...');
+          console.log('📄 Extracting PDF text using pdf-parse...');
           
-          const PDFParser = await import('pdf2json');
-          const pdfParser = new PDFParser.default(null, 1);
+          const pdfParse = await import('pdf-parse');
+          const pdfData = await pdfParse.default(fileBuffer);
           
-          const pdfData = await new Promise((resolve, reject) => {
-            pdfParser.on("pdfParser_dataError", reject);
-            pdfParser.on("pdfParser_dataReady", resolve);
-            pdfParser.parseBuffer(fileBuffer);
-          });
-          
-          // Extract text from parsed data
-          const pages = pdfData.Pages || [];
-          let fullText = '';
-          
-          for (const page of pages) {
-            const texts = page.Texts || [];
-            for (const textItem of texts) {
-              if (textItem.R && textItem.R[0] && textItem.R[0].T) {
-                const decodedText = decodeURIComponent(textItem.R[0].T);
-                fullText += decodedText + ' ';
-              }
-            }
-            fullText += '\n';
-          }
-          
-          extractedText = fullText.trim();
+          extractedText = pdfData.text;
           console.log(`📄 PDF text extraction successful: ${extractedText.length} characters`);
           console.log('📄 First 500 characters:', extractedText.substring(0, 500));
           
@@ -1391,31 +1370,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.ANTHROPIC_API_KEY,
       });
       
-      // Create parsing prompt based on document type (using ChatGPT's recommended approach)
+      // Create parsing prompt based on document type (using exact structure from attached file)
       const prompt = fileType === 'contract' ? `
-You are reading a standard musician hire contract. Extract the following fields and return as JSON:
+You are parsing a UK Musicians' Union live engagement contract for a solo musician.
+Extract the following fields and return them as JSON:
 
 - client_name
-- client_email  
+- client_email
 - client_phone
-- client_address
 - performer_name
 - performer_email
 - performer_phone
-- event_date (YYYY-MM-DD format)
+- event_date
 - start_time
 - end_time
 - venue_name
 - venue_address
-- agreed_fee (number only, no currency symbols)
-- deposit_amount (number only, no currency symbols)
+- agreed_fee
+- deposit_amount
 - deposit_due_date
 - bank_account_name
 - bank_account_number
 - bank_sort_code
 - extras_or_notes
 
-Use best judgement if data is implied or in a free-text format. Preserve formatting for venue address and fee description. Return ONLY valid JSON with no additional text.
+Return a valid JSON object with these fields, even if some values are missing.
 
 Contract text:
 ${extractedText}
