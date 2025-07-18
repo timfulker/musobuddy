@@ -1329,85 +1329,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // Use pdf2pic to convert PDF to images, then use Claude vision to read the text
+        // Use pdf-parse for simple text extraction (recommended approach)
         try {
-          const pdf2pic = await import('pdf2pic');
+          const pdfParse = await import('pdf-parse');
           
-          // Convert PDF to images (one page per image)
-          const convert = pdf2pic.fromBuffer(fileBuffer, {
-            density: 300,           // High quality
-            saveFilename: "page",
-            savePath: "/tmp/",      // Temporary directory
-            format: "png",
-            width: 2480,           // A4 width at 300 DPI
-            height: 3508           // A4 height at 300 DPI
-          });
+          console.log('📄 Extracting text from PDF using pdf-parse...');
+          const pdfData = await pdfParse.default(fileBuffer);
+          extractedText = pdfData.text;
           
-          // Convert all pages
-          const convertResult = await convert.bulk(-1);
-          console.log(`📄 Converted PDF to ${convertResult.length} page images`);
-          
-          // Use Claude vision to extract text from images
-          const Anthropic = await import('@anthropic-ai/sdk');
-          const anthropic = new Anthropic.default({
-            apiKey: process.env.ANTHROPIC_API_KEY,
-          });
-
-          let allExtractedText = '';
-          
-          // Process each page image
-          for (let i = 0; i < Math.min(convertResult.length, 3); i++) { // Limit to first 3 pages
-            const imagePath = convertResult[i].path;
-            
-            // Read image file and convert to base64
-            const fs = await import('fs');
-            const imageBuffer = await fs.promises.readFile(imagePath);
-            const base64Image = imageBuffer.toString('base64');
-            
-            console.log(`📄 Processing page ${i + 1} with Claude vision...`);
-            
-            const response = await anthropic.messages.create({
-              model: "claude-3-5-sonnet-20241022",
-              max_tokens: 4000,
-              messages: [
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "text",
-                      text: "Extract ALL text from this contract/document image. Provide the complete text exactly as it appears, maintaining the original formatting and structure. Do not summarize or interpret - just extract the raw text content."
-                    },
-                    {
-                      type: "image",
-                      source: {
-                        type: "base64",
-                        media_type: "image/png",
-                        data: base64Image
-                      }
-                    }
-                  ]
-                }
-              ]
-            });
-            
-            const pageText = response.content[0].text;
-            allExtractedText += `\n\n--- PAGE ${i + 1} ---\n\n${pageText}`;
-            
-            // Clean up the temporary image file
-            try {
-              await fs.promises.unlink(imagePath);
-            } catch (e) {
-              console.warn('Could not delete temporary image file:', imagePath);
-            }
-          }
-          
-          extractedText = allExtractedText.trim();
-          console.log('📄 PDF text extraction: Successfully extracted text via Claude Vision', extractedText.length, 'characters');
+          console.log(`📄 PDF text extraction: Successfully extracted ${extractedText.length} characters`);
+          console.log('📄 First 500 characters of extracted text:', extractedText.substring(0, 500));
           
         } catch (pdfError) {
-          console.error('PDF vision extraction failed:', pdfError);
-          
-          // Final fallback: Return null to skip parsing
+          console.error('PDF text extraction failed:', pdfError);
           console.log('📄 PDF text extraction failed, no text will be parsed');
           return null;
         }
@@ -1437,43 +1371,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.ANTHROPIC_API_KEY,
       });
       
-      // Create parsing prompt based on document type
+      // Create parsing prompt based on document type (using ChatGPT's recommended approach)
       const prompt = fileType === 'contract' ? `
-        Analyze this contract text and extract key information. Return ONLY a JSON object with no additional text or explanation:
-        {
-          "clientName": "string or null",
-          "venue": "string or null", 
-          "venueAddress": "string or null",
-          "eventDate": "YYYY-MM-DD or null",
-          "eventTime": "HH:MM or null",
-          "eventEndTime": "HH:MM or null",
-          "fee": number or null,
-          "deposit": number or null,
-          "clientAddress": "string or null",
-          "clientPhone": "string or null",
-          "clientEmail": "string or null",
-          "equipmentRequirements": "string or null",
-          "specialRequirements": "string or null",
-          "paymentInstructions": "string or null"
-        }
-        
-        IMPORTANT: 
-        - Return ONLY the JSON object, no other text
-        - Extract the client's full name from the contract
-        - Extract venue name and FULL venue address (street, city, postcode)
-        - Look for date, start time, and finish time
-        - Extract fee amounts (remove currency symbols, return as number)
-        - Extract deposit information from payment details
-        - Get client contact details (phone, email, address)
-        - Extract client's FULL address (street, city, postcode) - look for billing address, client address, or address near client name/signature
-        - Extract venue's FULL address (street, city, postcode) - look for venue address, event location, or performance location
-        - For addresses, include all address lines if available (street number, street name, city, county, postcode)
-        - Look for addresses in signature sections, contact details, or billing information
-        - Use actual null values (not strings) for missing fields
-        - For numeric fields, extract numbers only (no currency symbols)
-        
-        Contract text:
-        ${extractedText}
+You are reading a standard musician hire contract. Extract the following fields and return as JSON:
+
+- client_name
+- client_email  
+- client_phone
+- client_address
+- performer_name
+- performer_email
+- performer_phone
+- event_date (YYYY-MM-DD format)
+- start_time
+- end_time
+- venue_name
+- venue_address
+- agreed_fee (number only, no currency symbols)
+- deposit_amount (number only, no currency symbols)
+- deposit_due_date
+- bank_account_name
+- bank_account_number
+- bank_sort_code
+- extras_or_notes
+
+Use best judgement if data is implied or in a free-text format. Preserve formatting for venue address and fee description. Return ONLY valid JSON with no additional text.
+
+Contract text:
+${extractedText}
       ` : `
         Analyze this invoice text and extract key information. Return ONLY a JSON object with no additional text or explanation:
         {
@@ -1575,31 +1500,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return isNaN(parsed) ? defaultValue : parsed;
       };
 
-      // Create contract record using parsed data when available, fallback to manual data
+      // Create contract record using parsed data with new field names from ChatGPT's structure
       const contractData = {
         userId,
         enquiryId: bookingId ? parseInt(bookingId) : null,
         contractNumber,
-        clientName: safeParseValue(parsedData?.clientName, clientName || `Client for ${file.originalname}`),
-        clientAddress: safeParseValue(parsedData?.clientAddress, ''),
-        clientPhone: safeParseValue(parsedData?.clientPhone, ''),
-        clientEmail: safeParseValue(parsedData?.clientEmail, ''),
-        venue: safeParseValue(parsedData?.venue, venue || ''),
-        venueAddress: safeParseValue(parsedData?.venueAddress, ''),
+        clientName: safeParseValue(parsedData?.client_name, clientName || `Client for ${file.originalname}`),
+        clientAddress: safeParseValue(parsedData?.client_address, ''),
+        clientPhone: safeParseValue(parsedData?.client_phone, ''),
+        clientEmail: safeParseValue(parsedData?.client_email, ''),
+        venue: safeParseValue(parsedData?.venue_name, venue || ''),
+        venueAddress: safeParseValue(parsedData?.venue_address, ''),
         eventDate: (() => {
-          if (parsedData?.eventDate && parsedData.eventDate !== 'null' && parsedData.eventDate !== null) {
-            const parsed = new Date(parsedData.eventDate);
+          if (parsedData?.event_date && parsedData.event_date !== 'null' && parsedData.event_date !== null) {
+            const parsed = new Date(parsedData.event_date);
             return isNaN(parsed.getTime()) ? new Date() : parsed;
           }
           return eventDate ? new Date(eventDate) : new Date();
         })(),
-        eventTime: safeParseValue(parsedData?.eventTime, eventTime || '00:00'),
-        eventEndTime: safeParseValue(parsedData?.eventEndTime, eventTime || '00:00'),
-        fee: safeParseNumber(parsedData?.fee, 0),
-        deposit: safeParseNumber(parsedData?.deposit, 0),
-        equipmentRequirements: safeParseValue(parsedData?.equipmentRequirements, ''),
-        specialRequirements: safeParseValue(parsedData?.specialRequirements, ''),
-        paymentInstructions: safeParseValue(parsedData?.paymentInstructions, ''),
+        eventTime: safeParseValue(parsedData?.start_time, eventTime || '00:00'),
+        eventEndTime: safeParseValue(parsedData?.end_time, eventTime || '00:00'),
+        fee: safeParseNumber(parsedData?.agreed_fee, 0),
+        deposit: safeParseNumber(parsedData?.deposit_amount, 0),
+        equipmentRequirements: safeParseValue(parsedData?.extras_or_notes, ''),
+        specialRequirements: safeParseValue(parsedData?.extras_or_notes, ''),
+        paymentInstructions: `${safeParseValue(parsedData?.bank_account_name, '')} ${safeParseValue(parsedData?.bank_account_number, '')} ${safeParseValue(parsedData?.bank_sort_code, '')}`.trim(),
         status: 'signed', // Imported contracts are assumed to be signed
         cloudStorageUrl,
         cloudStorageKey,
@@ -1628,30 +1553,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const preservedFields: string[] = [];
         const updatedFields: string[] = [];
         
-        if (parsedData.clientName && (!existingBooking?.clientName || existingBooking.clientName.trim() === '')) {
-          bookingUpdates.clientName = parsedData.clientName;
+        if (parsedData.client_name && (!existingBooking?.clientName || existingBooking.clientName.trim() === '')) {
+          bookingUpdates.clientName = parsedData.client_name;
           updatedFields.push('clientName');
         } else if (existingBooking?.clientName) {
           preservedFields.push('clientName');
         }
         
-        if (parsedData.venue && (!existingBooking?.venue || existingBooking.venue.trim() === '')) {
-          bookingUpdates.venue = parsedData.venue;
+        if (parsedData.venue_name && (!existingBooking?.venue || existingBooking.venue.trim() === '')) {
+          bookingUpdates.venue = parsedData.venue_name;
           updatedFields.push('venue');
         } else if (existingBooking?.venue) {
           preservedFields.push('venue');
         }
         
-        if (parsedData.venueAddress && (!existingBooking?.venueAddress || existingBooking.venueAddress?.trim() === '')) {
-          bookingUpdates.venueAddress = parsedData.venueAddress;
+        if (parsedData.venue_address && (!existingBooking?.venueAddress || existingBooking.venueAddress?.trim() === '')) {
+          bookingUpdates.venueAddress = parsedData.venue_address;
           updatedFields.push('venueAddress');
         } else if (existingBooking?.venueAddress) {
           preservedFields.push('venueAddress');
         }
         
-        if (parsedData.eventDate && !existingBooking?.eventDate) {
+        if (parsedData.event_date && !existingBooking?.eventDate) {
           // Smart date handling: if parsed year is in past, assume next year
-          const parsedDate = new Date(parsedData.eventDate);
+          const parsedDate = new Date(parsedData.event_date);
           const currentYear = new Date().getFullYear();
           if (parsedDate.getFullYear() < currentYear) {
             parsedDate.setFullYear(currentYear + 1);
@@ -1662,36 +1587,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           preservedFields.push('eventDate');
         }
         
-        if (parsedData.eventTime && (!existingBooking?.eventTime || existingBooking.eventTime.trim() === '')) {
-          bookingUpdates.eventTime = parsedData.eventTime;
+        if (parsedData.start_time && (!existingBooking?.eventTime || existingBooking.eventTime.trim() === '')) {
+          bookingUpdates.eventTime = parsedData.start_time;
           updatedFields.push('eventTime');
         } else if (existingBooking?.eventTime) {
           preservedFields.push('eventTime');
         }
         
-        if (parsedData.clientPhone && (!existingBooking?.clientPhone || existingBooking.clientPhone?.trim() === '')) {
-          bookingUpdates.clientPhone = parsedData.clientPhone;
+        if (parsedData.client_phone && (!existingBooking?.clientPhone || existingBooking.clientPhone?.trim() === '')) {
+          bookingUpdates.clientPhone = parsedData.client_phone;
           updatedFields.push('clientPhone');
         } else if (existingBooking?.clientPhone) {
           preservedFields.push('clientPhone');
         }
         
-        if (parsedData.clientEmail && (!existingBooking?.clientEmail || existingBooking.clientEmail?.trim() === '')) {
-          bookingUpdates.clientEmail = parsedData.clientEmail;
+        if (parsedData.client_email && (!existingBooking?.clientEmail || existingBooking.clientEmail?.trim() === '')) {
+          bookingUpdates.clientEmail = parsedData.client_email;
           updatedFields.push('clientEmail');
         } else if (existingBooking?.clientEmail) {
           preservedFields.push('clientEmail');
         }
         
-        if (parsedData.clientAddress && (!existingBooking?.clientAddress || existingBooking.clientAddress?.trim() === '')) {
-          bookingUpdates.clientAddress = parsedData.clientAddress;
+        if (parsedData.client_address && (!existingBooking?.clientAddress || existingBooking.clientAddress?.trim() === '')) {
+          bookingUpdates.clientAddress = parsedData.client_address;
           updatedFields.push('clientAddress');
         } else if (existingBooking?.clientAddress) {
           preservedFields.push('clientAddress');
         }
         
-        if (parsedData.fee && (!existingBooking?.fee || existingBooking.fee === 0)) {
-          bookingUpdates.fee = parsedData.fee;
+        if (parsedData.agreed_fee && (!existingBooking?.fee || existingBooking.fee === 0)) {
+          bookingUpdates.fee = parsedData.agreed_fee;
           updatedFields.push('fee');
         } else if (existingBooking?.fee) {
           preservedFields.push('fee');
