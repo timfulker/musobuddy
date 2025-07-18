@@ -2977,9 +2977,9 @@ Powered by MusoBuddy – less admin, more music
       
       console.log('🎨 Theme preview request:', JSON.stringify(req.body, null, 2));
       
-      // Generate sample PDF with theme settings
-      const { generateThemePreviewPDF } = await import('./theme-preview');
-      const pdfBuffer = await generateThemePreviewPDF({
+      // Generate sample HTML with theme settings
+      const { generateThemePreviewHTML } = await import('./theme-preview-simple');
+      const htmlContent = await generateThemePreviewHTML({
         template: template || 'classic',
         tone: tone || 'professional',
         font: font || 'times',
@@ -2995,9 +2995,8 @@ Powered by MusoBuddy – less admin, more music
         businessEmail: businessEmail || 'your@email.com'
       });
       
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline; filename="theme-preview.pdf"');
-      res.send(pdfBuffer);
+      res.setHeader('Content-Type', 'text/html');
+      res.send(htmlContent);
     } catch (error) {
       console.error("Error generating theme preview:", error);
       res.status(500).json({ message: "Failed to generate theme preview" });
