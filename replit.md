@@ -173,6 +173,9 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Duplicate Booking Resolution**: Fixed issue where duplicate bookings were causing conflicts by implementing automatic deletion of rejected bookings
 - **Rejection Handling**: Rejected bookings are now automatically deleted from the system instead of remaining with rejected status
 - **Conflict Detection**: Eliminated false conflicts caused by duplicate bookings in the database
+- **Smart Data Preservation**: Implemented "Preserve Non-Empty Fields" protocol for contract/invoice imports
+- **Data Protection**: AI parsing now only fills empty fields, preserving existing booking data from accidental overwrites
+- **Import Intelligence**: System logs which fields are updated vs. preserved during document imports for transparency
 
 ### 2025-07-18 - Application Stability and Comprehensive User Documentation
 - **Database Connection Fix**: Resolved WebSocket connection issues with Neon database causing startup failures

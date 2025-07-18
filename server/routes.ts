@@ -1644,17 +1644,42 @@ All terms have been agreed and signatures obtained.`;
       
       // Update booking with parsed information (only if parsing was successful)
       if (bookingId && parsedData) {
+        // First, get the existing booking to check current values
+        const existingBooking = await storage.getBooking(parseInt(bookingId), userId);
+        
         const bookingUpdates: any = { 
           contractSent: true,
           contractSigned: true,
           status: 'confirmed'
         };
         
-        // Add parsed information to booking
-        if (parsedData.clientName) bookingUpdates.clientName = parsedData.clientName;
-        if (parsedData.venue) bookingUpdates.venue = parsedData.venue;
-        if (parsedData.venueAddress) bookingUpdates.venue = `${parsedData.venue || bookingUpdates.venue || ''}\n${parsedData.venueAddress}`.trim();
-        if (parsedData.eventDate) {
+        // Smart update logic: Only update fields that are currently empty or null
+        // This preserves existing data while filling in missing information
+        const preservedFields: string[] = [];
+        const updatedFields: string[] = [];
+        
+        if (parsedData.clientName && (!existingBooking?.clientName || existingBooking.clientName.trim() === '')) {
+          bookingUpdates.clientName = parsedData.clientName;
+          updatedFields.push('clientName');
+        } else if (existingBooking?.clientName) {
+          preservedFields.push('clientName');
+        }
+        
+        if (parsedData.venue && (!existingBooking?.venue || existingBooking.venue.trim() === '')) {
+          bookingUpdates.venue = parsedData.venue;
+          updatedFields.push('venue');
+        } else if (existingBooking?.venue) {
+          preservedFields.push('venue');
+        }
+        
+        if (parsedData.venueAddress && (!existingBooking?.venueAddress || existingBooking.venueAddress?.trim() === '')) {
+          bookingUpdates.venueAddress = parsedData.venueAddress;
+          updatedFields.push('venueAddress');
+        } else if (existingBooking?.venueAddress) {
+          preservedFields.push('venueAddress');
+        }
+        
+        if (parsedData.eventDate && !existingBooking?.eventDate) {
           // Smart date handling: if parsed year is in past, assume next year
           const parsedDate = new Date(parsedData.eventDate);
           const currentYear = new Date().getFullYear();
@@ -1662,14 +1687,64 @@ All terms have been agreed and signatures obtained.`;
             parsedDate.setFullYear(currentYear + 1);
           }
           bookingUpdates.eventDate = parsedDate;
+          updatedFields.push('eventDate');
+        } else if (existingBooking?.eventDate) {
+          preservedFields.push('eventDate');
         }
-        if (parsedData.eventTime) bookingUpdates.eventTime = parsedData.eventTime;
-        if (parsedData.clientPhone) bookingUpdates.clientPhone = parsedData.clientPhone;
-        if (parsedData.clientEmail) bookingUpdates.clientEmail = parsedData.clientEmail;
-        if (parsedData.clientAddress) bookingUpdates.clientAddress = parsedData.clientAddress;
-        if (parsedData.fee) bookingUpdates.fee = parsedData.fee;
-        if (parsedData.equipmentRequirements) bookingUpdates.equipmentRequirements = parsedData.equipmentRequirements;
-        if (parsedData.specialRequirements) bookingUpdates.specialRequirements = parsedData.specialRequirements;
+        
+        if (parsedData.eventTime && (!existingBooking?.eventTime || existingBooking.eventTime.trim() === '')) {
+          bookingUpdates.eventTime = parsedData.eventTime;
+          updatedFields.push('eventTime');
+        } else if (existingBooking?.eventTime) {
+          preservedFields.push('eventTime');
+        }
+        
+        if (parsedData.clientPhone && (!existingBooking?.clientPhone || existingBooking.clientPhone?.trim() === '')) {
+          bookingUpdates.clientPhone = parsedData.clientPhone;
+          updatedFields.push('clientPhone');
+        } else if (existingBooking?.clientPhone) {
+          preservedFields.push('clientPhone');
+        }
+        
+        if (parsedData.clientEmail && (!existingBooking?.clientEmail || existingBooking.clientEmail?.trim() === '')) {
+          bookingUpdates.clientEmail = parsedData.clientEmail;
+          updatedFields.push('clientEmail');
+        } else if (existingBooking?.clientEmail) {
+          preservedFields.push('clientEmail');
+        }
+        
+        if (parsedData.clientAddress && (!existingBooking?.clientAddress || existingBooking.clientAddress?.trim() === '')) {
+          bookingUpdates.clientAddress = parsedData.clientAddress;
+          updatedFields.push('clientAddress');
+        } else if (existingBooking?.clientAddress) {
+          preservedFields.push('clientAddress');
+        }
+        
+        if (parsedData.fee && (!existingBooking?.fee || existingBooking.fee === 0)) {
+          bookingUpdates.fee = parsedData.fee;
+          updatedFields.push('fee');
+        } else if (existingBooking?.fee) {
+          preservedFields.push('fee');
+        }
+        
+        if (parsedData.equipmentRequirements && (!existingBooking?.equipmentRequirements || existingBooking.equipmentRequirements?.trim() === '')) {
+          bookingUpdates.equipmentRequirements = parsedData.equipmentRequirements;
+          updatedFields.push('equipmentRequirements');
+        } else if (existingBooking?.equipmentRequirements) {
+          preservedFields.push('equipmentRequirements');
+        }
+        
+        if (parsedData.specialRequirements && (!existingBooking?.specialRequirements || existingBooking.specialRequirements?.trim() === '')) {
+          bookingUpdates.specialRequirements = parsedData.specialRequirements;
+          updatedFields.push('specialRequirements');
+        } else if (existingBooking?.specialRequirements) {
+          preservedFields.push('specialRequirements');
+        }
+        
+        // Log the smart update results for debugging
+        console.log('📋 Smart Contract Import Results:');
+        console.log('✅ Fields updated:', updatedFields.length > 0 ? updatedFields.join(', ') : 'None');
+        console.log('🔒 Fields preserved:', preservedFields.length > 0 ? preservedFields.join(', ') : 'None');
         
         await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
       }
@@ -1778,16 +1853,56 @@ All terms have been agreed and signatures obtained.`;
       
       // Update booking with parsed information (only if parsing was successful)
       if (bookingId && parsedData) {
+        // First, get the existing booking to check current values
+        const existingBooking = await storage.getBooking(parseInt(bookingId), userId);
+        
         const bookingUpdates: any = { 
           invoiceSent: true 
         };
         
-        // Add parsed information to booking
-        if (parsedData.clientName) bookingUpdates.clientName = parsedData.clientName;
-        if (parsedData.clientEmail) bookingUpdates.clientEmail = parsedData.clientEmail;
-        if (parsedData.eventDate) bookingUpdates.eventDate = new Date(parsedData.eventDate);
-        if (parsedData.fee) bookingUpdates.fee = parsedData.fee;
-        if (parsedData.venueAddress) bookingUpdates.venue = parsedData.venueAddress;
+        // Smart update logic: Only update fields that are currently empty or null
+        const preservedFields: string[] = [];
+        const updatedFields: string[] = [];
+        
+        if (parsedData.clientName && (!existingBooking?.clientName || existingBooking.clientName.trim() === '')) {
+          bookingUpdates.clientName = parsedData.clientName;
+          updatedFields.push('clientName');
+        } else if (existingBooking?.clientName) {
+          preservedFields.push('clientName');
+        }
+        
+        if (parsedData.clientEmail && (!existingBooking?.clientEmail || existingBooking.clientEmail?.trim() === '')) {
+          bookingUpdates.clientEmail = parsedData.clientEmail;
+          updatedFields.push('clientEmail');
+        } else if (existingBooking?.clientEmail) {
+          preservedFields.push('clientEmail');
+        }
+        
+        if (parsedData.eventDate && !existingBooking?.eventDate) {
+          bookingUpdates.eventDate = new Date(parsedData.eventDate);
+          updatedFields.push('eventDate');
+        } else if (existingBooking?.eventDate) {
+          preservedFields.push('eventDate');
+        }
+        
+        if (parsedData.fee && (!existingBooking?.fee || existingBooking.fee === 0)) {
+          bookingUpdates.fee = parsedData.fee;
+          updatedFields.push('fee');
+        } else if (existingBooking?.fee) {
+          preservedFields.push('fee');
+        }
+        
+        if (parsedData.venueAddress && (!existingBooking?.venueAddress || existingBooking.venueAddress?.trim() === '')) {
+          bookingUpdates.venueAddress = parsedData.venueAddress;
+          updatedFields.push('venueAddress');
+        } else if (existingBooking?.venueAddress) {
+          preservedFields.push('venueAddress');
+        }
+        
+        // Log the smart update results for debugging
+        console.log('📋 Smart Invoice Import Results:');
+        console.log('✅ Fields updated:', updatedFields.length > 0 ? updatedFields.join(', ') : 'None');
+        console.log('🔒 Fields preserved:', preservedFields.length > 0 ? preservedFields.join(', ') : 'None');
         
         await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
       }
