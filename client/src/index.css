@@ -493,30 +493,43 @@ button, input, select, textarea {
   box-shadow: none !important;   /* Remove any purple shadows */
 }
 
-/* Hide purple scrollbars inside filter */
-.filter-container ::-webkit-scrollbar-thumb {
-  background: #e5e7eb !important; /* Gray scrollbar */
-}
-.filter-container ::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db !important;
-}
-
-/* Ensure no gradients or artifacts */
-.filter-container .superhuman-gradient,
-.filter-container .superhuman-gradient-dark {
-  background: none !important;
-}
-
-/* Hide purple scrollbars inside filter */
-.filter-container ::-webkit-scrollbar-thumb {
-  background: #e5e7eb !important; /* Gray scrollbar */
-}
-.filter-container ::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db !important;
+/* Remove all lines, borders, shadows from filter container */
+.filter-container,
+.filter-container *,
+.filter-container::before,
+.filter-container::after,
+.filter-container *::before,
+.filter-container *::after {
+  border: none !important;          /* No borders at all */
+  border-width: 0 !important;
+  box-shadow: none !important;      /* No shadows */
+  outline: none !important;         /* No focus outlines */
+  background-image: none !important; /* No gradients or bg lines */
+  content: none !important;         /* Kill pseudo-content */
+  display: block;                   /* Ensure no hidden lines from display props */
 }
 
-/* Ensure no gradients or artifacts */
-.filter-container .superhuman-gradient,
-.filter-container .superhuman-gradient-dark {
-  background: none !important;
+/* Specifically for child components (e.g., buttons, selects) */
+.filter-container button,
+.filter-container input,
+.filter-container select,
+.filter-container [data-radix-collection-item],
+.filter-container [data-radix-select-trigger],
+.filter-container [data-radix-select-content] {
+  border: none !important;
+  box-shadow: none !important;
+  ring: 0 !important;               /* No Tailwind ring */
+}
+
+/* Hide scrollbars if they're creating lines */
+.filter-container ::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Override any card-specific styles */
+.filter-container.card-clean,
+.filter-container .card {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important; /* Blend into page bg if needed */
 }

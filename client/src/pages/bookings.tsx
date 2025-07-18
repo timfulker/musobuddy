@@ -1304,17 +1304,18 @@ export default function Enquiries() {
         </div>
 
         {/* Smart Filtering System */}
-        <Card className="bg-white border-gray-200 overflow-hidden filter-container" style={{ 
+        <Card className="bg-white overflow-hidden filter-container" style={{ 
           background: 'white !important', 
-          border: '1px solid #e5e7eb !important', 
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1) !important',
+          border: 'none !important', 
+          boxShadow: 'none !important',
+          outline: 'none !important',
           backgroundImage: 'none !important',
-          borderImage: 'none !important',
-          '--primary': '#374151',
-          '--ring': '#e5e7eb'
+          borderImage: 'none !important'
         } as React.CSSProperties}>
           <CardContent className="p-4" style={{ 
             background: 'white !important',
+            border: 'none !important',
+            boxShadow: 'none !important',
             backgroundImage: 'none !important',
             borderImage: 'none !important'
           }}>
@@ -1369,13 +1370,13 @@ export default function Enquiries() {
                   placeholder="Search by client name or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 border-none shadow-none"
                 />
               </div>
               
               <div className="flex items-center space-x-2 overflow-x-auto pb-2 lg:pb-0 w-full lg:w-auto">
                 <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                  <SelectTrigger className="w-32 shrink-0">
+                  <SelectTrigger className="w-32 shrink-0 border-none shadow-none">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1386,7 +1387,7 @@ export default function Enquiries() {
                 </Select>
                 
                 <Select value={eventDateFilter} onValueChange={setEventDateFilter}>
-                  <SelectTrigger className="w-32 shrink-0">
+                  <SelectTrigger className="w-32 shrink-0 border-none shadow-none">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1397,7 +1398,7 @@ export default function Enquiries() {
                 </Select>
                 
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40 shrink-0">
+                  <SelectTrigger className="w-40 shrink-0 border-none shadow-none">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1412,7 +1413,7 @@ export default function Enquiries() {
                   onClick={() => setSortReverse(!sortReverse)}
                   variant="outline"
                   size="sm"
-                  className="px-3 shrink-0"
+                  className="px-3 shrink-0 border-none shadow-none"
                 >
                   {sortReverse ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                 </Button>
