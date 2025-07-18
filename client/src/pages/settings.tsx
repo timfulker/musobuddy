@@ -15,7 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu, Eye } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu, Eye, ChevronDown, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // Core instruments displayed by default
@@ -274,6 +275,24 @@ export default function Settings() {
   // Track if form has been modified
   const [hasChanges, setHasChanges] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
+  
+  // Collapsible state for each section
+  const [expandedSections, setExpandedSections] = useState({
+    business: true,
+    contact: false,
+    address: false,
+    financial: false,
+    bank: false,
+    instruments: false,
+    themes: false,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsFormSchema),
@@ -582,13 +601,23 @@ export default function Settings() {
               
               {/* Business Information */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <Building className="w-5 h-5 text-purple-600" />
-                    <span>Business Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
+                <Collapsible open={expandedSections.business} onOpenChange={() => toggleSection('business')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Building className="w-5 h-5 text-purple-600" />
+                          <span>Business Information</span>
+                        </div>
+                        {expandedSections.business ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -755,18 +784,30 @@ export default function Settings() {
                       )}
                     />
                   </div>
-                </CardContent>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
 
               {/* Instruments & Gig Types */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <Music className="w-5 h-5 text-purple-600" />
-                    <span>Instruments & AI-Powered Gig Types</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
+                <Collapsible open={expandedSections.instruments} onOpenChange={() => toggleSection('instruments')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Music className="w-5 h-5 text-purple-600" />
+                          <span>Instruments & AI-Powered Gig Types</span>
+                        </div>
+                        {expandedSections.instruments ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-6">
                   
                   {/* Instruments Section */}
                   <div>
@@ -928,18 +969,30 @@ export default function Settings() {
                       )}
                     </div>
                   )}
-                </CardContent>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
 
               {/* Email Settings */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <Globe className="w-5 h-5 text-purple-600" />
-                    <span>Email Settings</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
+                <Collapsible open={expandedSections.contact} onOpenChange={() => toggleSection('contact')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Globe className="w-5 h-5 text-purple-600" />
+                          <span>Email Settings</span>
+                        </div>
+                        {expandedSections.contact ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
                   <FormField
                     control={form.control}
                     name="emailFromName"
@@ -953,18 +1006,30 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
-                </CardContent>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
 
               {/* Invoice Settings */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <Hash className="w-5 h-5 text-purple-600" />
-                    <span>Invoice Settings</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
+                <Collapsible open={expandedSections.financial} onOpenChange={() => toggleSection('financial')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Hash className="w-5 h-5 text-purple-600" />
+                          <span>Invoice Settings</span>
+                        </div>
+                        {expandedSections.financial ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
                   <FormField
                     control={form.control}
                     name="nextInvoiceNumber"
@@ -992,18 +1057,30 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
-                </CardContent>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
 
               {/* Bank Details */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <CreditCard className="w-5 h-5 text-purple-600" />
-                    <span>Bank Details</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
+                <Collapsible open={expandedSections.bank} onOpenChange={() => toggleSection('bank')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <CreditCard className="w-5 h-5 text-purple-600" />
+                          <span>Bank Details</span>
+                        </div>
+                        {expandedSections.bank ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
                   <FormField
                     control={form.control}
                     name="bankDetails"
@@ -1017,21 +1094,33 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
-                </CardContent>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
 
               {/* Theme Customization */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <SettingsIcon className="w-5 h-5 text-purple-600" />
-                    <span>Invoice & Contract Themes</span>
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    Customize your invoices and contracts with professional themes, fonts, and branding
-                  </p>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
+                <Collapsible open={expandedSections.themes} onOpenChange={() => toggleSection('themes')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <SettingsIcon className="w-5 h-5 text-purple-600" />
+                          <span>Invoice & Contract Themes</span>
+                        </div>
+                        {expandedSections.themes ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
+                        Customize your invoices and contracts with professional themes, fonts, and branding
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-6">
                   {/* Template Selection */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Template Style</h3>
@@ -1379,7 +1468,9 @@ export default function Settings() {
                       )}
                     </Button>
                   </div>
-                </CardContent>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
 
               {/* Save Button */}
