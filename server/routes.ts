@@ -1329,39 +1329,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        // For Harry Tamplin contract - use known data since PDF text extraction is failing
-        if (fileName.includes('Harry Tamplin') || fileName.includes('19072025')) {
-          console.log('📄 Using known Harry Tamplin contract data for parsing...');
-          extractedText = `
-CONTRACT FOR HIRING A SOLO MUSICIAN
-
-Client Details:
-Name: Harry Charles Tamplin
-Email: harrytamplin@hotmail.co.uk
-Phone: 07539322292
-Address: 11 Woodland Chase
-
-Event Details:
-Date: 19th July 2025
-Time: 7:00 PM - 11:00 PM
-Venue: Stratton Court Barn
-Venue Address: Stratton Audley, Bicester OX27 9AJ
-
-Performance Details:
-Fee: £710
-Equipment: Professional saxophone, Personal PA system, Backing tracks
-Special Requirements: Special musical requests to be provided 14 days before event
-
-Bank Details:
-Account Name: Mr T Fulker
-Account Number: 09851259
-Sort Code: 54-21-30
-`;
-          console.log('📄 Using Harry Tamplin contract data for parsing');
-        } else {
-          console.log('📄 PDF text extraction not available for this document');
-          return null;
-        }
+        // Skip PDF text extraction for now - document will be stored but not parsed
+        console.log('📄 PDF text extraction currently disabled - storing document without parsing');
+        extractedText = '';
+        // Return early - document will be stored in cloud but no field parsing will occur
+        return null;
       } else if (fileName.toLowerCase().endsWith('.docx')) {
         // Use mammoth for Word documents
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
