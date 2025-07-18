@@ -242,7 +242,8 @@ export async function sendContractEmail(
 export async function sendInvoiceEmail(
   invoice: Invoice,
   contract: Contract | null,
-  userSettings: UserSettings | null
+  userSettings: UserSettings | null,
+  customMessage?: string
 ): Promise<boolean> {
   try {
     console.log('📧 Sending invoice email with hybrid approach:', invoice.invoiceNumber);
@@ -287,7 +288,8 @@ export async function sendInvoiceEmail(
       invoice,
       contract,
       userSettings,
-      cloudStorageUrl
+      cloudStorageUrl,
+      customMessage
     );
     
     // Create email with PDF attachment
@@ -410,7 +412,8 @@ function generateInvoiceEmailHtml(
   invoice: Invoice,
   contract: Contract | null,
   userSettings: UserSettings | null,
-  cloudStorageUrl?: string | null
+  cloudStorageUrl?: string | null,
+  customMessage?: string
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
@@ -427,6 +430,10 @@ function generateInvoiceEmailHtml(
         <h2 style="color: #2563eb;">Invoice from ${businessName}</h2>
         
         <p>Dear ${invoice.clientName},</p>
+        
+        ${customMessage ? `<div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+          <p style="margin: 0; color: #92400e; font-style: italic;">${customMessage.replace(/\n/g, '<br>')}</p>
+        </div>` : ''}
         
         <p>Please find attached your invoice for the performance services.</p>
         

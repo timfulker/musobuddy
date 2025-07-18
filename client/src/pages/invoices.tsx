@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,6 +48,9 @@ export default function Invoices() {
   const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [customMessageDialog, setCustomMessageDialog] = useState(false);
+  const [invoiceToSend, setInvoiceToSend] = useState<Invoice | null>(null);
+  const [customMessage, setCustomMessage] = useState("");
   const { isDesktop } = useResponsive();
 
   const { data: invoices = [], isLoading } = useQuery({
@@ -445,10 +449,10 @@ export default function Invoices() {
 
   // Invoice action handlers
   const sendInvoiceMutation = useMutation({
-    mutationFn: async (invoice: Invoice) => {
+    mutationFn: async ({ invoiceId, customMessage }: { invoiceId: number, customMessage?: string }) => {
       console.log('🔥 Email Send: Starting invoice email send');
-      console.log('🔥 Email Send: Invoice ID:', invoice.id);
-      console.log('🔥 Email Send: Invoice data:', JSON.stringify(invoice, null, 2));
+      console.log('🔥 Email Send: Invoice ID:', invoiceId);
+      console.log('🔥 Email Send: Custom message:', customMessage);
       
       // Use direct fetch to avoid middleware interference (same fix as invoice creation)
       const response = await fetch('/api/invoices/send-email', {
@@ -457,7 +461,7 @@ export default function Invoices() {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Important for session handling
-        body: JSON.stringify({ invoiceId: invoice.id }),
+        body: JSON.stringify({ invoiceId, customMessage }),
       });
       
       console.log('🔥 Email Send: Response status:', response.status);
@@ -476,6 +480,9 @@ export default function Invoices() {
     onSuccess: () => {
       console.log('🔥 Email Send: SUCCESS');
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      setCustomMessageDialog(false);
+      setInvoiceToSend(null);
+      setCustomMessage("");
       toast({
         title: "Success",
         description: "Invoice sent successfully with view link!",
@@ -517,15 +524,31 @@ export default function Invoices() {
     console.log('=== INVOICE SEND DEBUG ===');
     console.log('Invoice ID:', invoice.id);
     console.log('Invoice data:', invoice);
-    console.log('Authentication check - making request...');
     
-    // Add visual feedback
-    toast({
-      title: "Sending Invoice...",
-      description: `Sending invoice ${invoice.invoiceNumber} with view link to ${invoice.clientEmail || 'client'}`,
-    });
+    // Check if invoice has client email
+    if (!invoice.clientEmail) {
+      toast({
+        title: "No Email Address",
+        description: "This invoice doesn't have a client email address. Please edit the invoice to add an email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    sendInvoiceMutation.mutate(invoice);
+    // Open custom message dialog
+    setInvoiceToSend(invoice);
+    setCustomMessage("");
+    setCustomMessageDialog(true);
+  };
+
+  const handleConfirmSendInvoice = () => {
+    if (invoiceToSend) {
+      console.log('Sending invoice with custom message:', customMessage);
+      sendInvoiceMutation.mutate({
+        invoiceId: invoiceToSend.id,
+        customMessage: customMessage.trim() || undefined
+      });
+    }
   };
 
   // Mark invoice as paid mutation
@@ -579,30 +602,21 @@ export default function Invoices() {
     sendReminderMutation.mutate(invoice);
   };
 
-  // Resend invoice mutation
-  const resendInvoiceMutation = useMutation({
-    mutationFn: async (invoice: Invoice) => {
-      console.log('Resending invoice:', invoice.id);
-      const response = await apiRequest('POST', '/api/invoices/send-email', { invoiceId: invoice.id });
-      return response.json();
-    },
-    onSuccess: () => {
+  const handleResendInvoice = (invoice: Invoice) => {
+    // Check if invoice has client email
+    if (!invoice.clientEmail) {
       toast({
-        title: "Success",
-        description: "Invoice resent successfully!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to resend invoice",
+        title: "No Email Address",
+        description: "This invoice doesn't have a client email address. Please edit the invoice to add an email address first.",
         variant: "destructive",
       });
-    },
-  });
-
-  const handleResendInvoice = (invoice: Invoice) => {
-    resendInvoiceMutation.mutate(invoice);
+      return;
+    }
+    
+    // Open custom message dialog for resend
+    setInvoiceToSend(invoice);
+    setCustomMessage("");
+    setCustomMessageDialog(true);
   };
 
   // Restore archived invoice mutation
@@ -1053,6 +1067,70 @@ export default function Invoices() {
                     </div>
                   </form>
                 </Form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Custom Message Dialog */}
+            <Dialog open={customMessageDialog} onOpenChange={setCustomMessageDialog}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Send Invoice Email</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {invoiceToSend && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        Invoice #{invoiceToSend.invoiceNumber}
+                      </h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Client:</strong> {invoiceToSend.clientName}</p>
+                        <p><strong>Email:</strong> {invoiceToSend.clientEmail}</p>
+                        {invoiceToSend.ccEmail && <p><strong>CC:</strong> {invoiceToSend.ccEmail}</p>}
+                        <p><strong>Amount:</strong> £{invoiceToSend.amount}</p>
+                        <p><strong>Due Date:</strong> {formatDate(invoiceToSend.dueDate)}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Add a personal message (optional)
+                    </label>
+                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-3">
+                      <p className="text-xs text-amber-700">
+                        <strong>Important:</strong> This message is for personal communication only. 
+                        Do not include payment terms, invoice details, or business changes here - 
+                        these should be made in the invoice itself.
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Use this space for friendly greetings, additional context, or special instructions that don't modify the invoice terms.
+                    </p>
+                    <Textarea
+                      placeholder="e.g., 'Thank you for your business!' or 'Please let me know if you have any questions about this invoice.'"
+                      value={customMessage}
+                      onChange={(e) => setCustomMessage(e.target.value)}
+                      rows={4}
+                      className="resize-none"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCustomMessageDialog(false)}
+                      disabled={sendInvoiceMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleConfirmSendInvoice}
+                      disabled={sendInvoiceMutation.isPending || !invoiceToSend?.clientEmail}
+                    >
+                      {sendInvoiceMutation.isPending ? "Sending..." : "Send Invoice"}
+                    </Button>
+                  </div>
+                </div>
               </DialogContent>
             </Dialog>
           </div>

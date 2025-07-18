@@ -1646,7 +1646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { invoiceId } = req.body;
+      const { invoiceId, customMessage } = req.body;
       
       // Get the invoice details
       const invoice = await storage.getInvoice(invoiceId, userId);
@@ -1680,7 +1680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use enhanced hybrid email function with PDF attachment + cloud storage
       const { sendInvoiceEmail } = await import('./mailgun-email');
-      const success = await sendInvoiceEmail(updatedInvoice, contract, userSettings);
+      const success = await sendInvoiceEmail(updatedInvoice, contract, userSettings, customMessage);
       
       if (success) {
         res.json({ message: "Invoice email sent successfully with PDF attachment and static backup link" });
