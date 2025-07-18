@@ -1367,41 +1367,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prompt = fileType === 'contract' ? `
         Analyze this contract text and extract key information in JSON format:
         {
-          "clientName": "string",
-          "venue": "string", 
-          "eventDate": "YYYY-MM-DD",
-          "eventTime": "HH:MM",
-          "eventEndTime": "HH:MM",
-          "fee": "number",
-          "deposit": "number",
-          "clientAddress": "string",
-          "clientPhone": "string",
-          "clientEmail": "string",
-          "equipmentRequirements": "string",
-          "specialRequirements": "string",
-          "paymentInstructions": "string"
+          "clientName": "string or null",
+          "venue": "string or null", 
+          "eventDate": "YYYY-MM-DD or null",
+          "eventTime": "HH:MM or null",
+          "eventEndTime": "HH:MM or null",
+          "fee": number or null,
+          "deposit": number or null,
+          "clientAddress": "string or null",
+          "clientPhone": "string or null",
+          "clientEmail": "string or null",
+          "equipmentRequirements": "string or null",
+          "specialRequirements": "string or null",
+          "paymentInstructions": "string or null"
         }
         
-        Only include fields where you can confidently extract the information. Return "null" for any field you cannot determine.
+        IMPORTANT: 
+        - Use actual null values (not the string "null") for fields you cannot determine
+        - For numeric fields (fee, deposit), use actual numbers or null
+        - For string fields, use actual strings or null
+        - Extract dates in YYYY-MM-DD format
+        - Extract times in HH:MM format (24-hour)
         
         Contract text:
         ${extractedText}
       ` : `
         Analyze this invoice text and extract key information in JSON format:
         {
-          "clientName": "string",
-          "clientEmail": "string",
-          "clientAddress": "string",
-          "amount": "number",
-          "performanceDate": "YYYY-MM-DD",
-          "performanceFee": "number",
-          "depositPaid": "number",
-          "dueDate": "YYYY-MM-DD",
-          "invoiceNumber": "string",
-          "venueAddress": "string"
+          "clientName": "string or null",
+          "clientEmail": "string or null",
+          "clientAddress": "string or null",
+          "amount": number or null,
+          "performanceDate": "YYYY-MM-DD or null",
+          "performanceFee": number or null,
+          "depositPaid": number or null,
+          "dueDate": "YYYY-MM-DD or null",
+          "invoiceNumber": "string or null",
+          "venueAddress": "string or null"
         }
         
-        Only include fields where you can confidently extract the information. Return "null" for any field you cannot determine.
+        IMPORTANT: 
+        - Use actual null values (not the string "null") for fields you cannot determine
+        - For numeric fields (amount, performanceFee, depositPaid), use actual numbers or null
+        - For string fields, use actual strings or null
+        - Extract dates in YYYY-MM-DD format
         
         Invoice text:
         ${extractedText}
@@ -1459,24 +1468,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn('⚠️ Document parsing failed, continuing with manual data:', error.message);
       }
       
+      // Helper function to safely parse values from AI response
+      const safeParseValue = (value: any, defaultValue: any) => {
+        if (value === null || value === undefined || value === 'null' || value === '') {
+          return defaultValue;
+        }
+        return value;
+      };
+
+      const safeParseNumber = (value: any, defaultValue: number = 0) => {
+        if (value === null || value === undefined || value === 'null' || value === '') {
+          return defaultValue;
+        }
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? defaultValue : parsed;
+      };
+
       // Create contract record using parsed data when available, fallback to manual data
       const contractData = {
         userId,
         enquiryId: bookingId ? parseInt(bookingId) : null,
         contractNumber,
-        clientName: parsedData?.clientName || clientName || `Client for ${file.originalname}`,
-        clientAddress: parsedData?.clientAddress || '',
-        clientPhone: parsedData?.clientPhone || '',
-        clientEmail: parsedData?.clientEmail || '',
-        venue: parsedData?.venue || venue || '',
-        eventDate: parsedData?.eventDate ? new Date(parsedData.eventDate) : (eventDate ? new Date(eventDate) : new Date()),
-        eventTime: parsedData?.eventTime || eventTime || '00:00',
-        eventEndTime: parsedData?.eventEndTime || eventTime || '00:00',
-        fee: parsedData?.fee || 0,
-        deposit: parsedData?.deposit || 0,
-        equipmentRequirements: parsedData?.equipmentRequirements || '',
-        specialRequirements: parsedData?.specialRequirements || '',
-        paymentInstructions: parsedData?.paymentInstructions || '',
+        clientName: safeParseValue(parsedData?.clientName, clientName || `Client for ${file.originalname}`),
+        clientAddress: safeParseValue(parsedData?.clientAddress, ''),
+        clientPhone: safeParseValue(parsedData?.clientPhone, ''),
+        clientEmail: safeParseValue(parsedData?.clientEmail, ''),
+        venue: safeParseValue(parsedData?.venue, venue || ''),
+        eventDate: parsedData?.eventDate && parsedData.eventDate !== 'null' ? new Date(parsedData.eventDate) : (eventDate ? new Date(eventDate) : new Date()),
+        eventTime: safeParseValue(parsedData?.eventTime, eventTime || '00:00'),
+        eventEndTime: safeParseValue(parsedData?.eventEndTime, eventTime || '00:00'),
+        fee: safeParseNumber(parsedData?.fee, 0),
+        deposit: safeParseNumber(parsedData?.deposit, 0),
+        equipmentRequirements: safeParseValue(parsedData?.equipmentRequirements, ''),
+        specialRequirements: safeParseValue(parsedData?.specialRequirements, ''),
+        paymentInstructions: safeParseValue(parsedData?.paymentInstructions, ''),
         status: 'signed', // Imported contracts are assumed to be signed
         cloudStorageUrl,
         cloudStorageKey,
@@ -1558,23 +1583,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cloudStorageKey = `invoices/${invoiceNumber}-${file.originalname}`;
       const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
       
+      // Helper function to safely parse values from AI response
+      const safeParseValue = (value: any, defaultValue: any) => {
+        if (value === null || value === undefined || value === 'null' || value === '') {
+          return defaultValue;
+        }
+        return value;
+      };
+
+      const safeParseNumber = (value: any, defaultValue: number = 0) => {
+        if (value === null || value === undefined || value === 'null' || value === '') {
+          return defaultValue;
+        }
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? defaultValue : parsed;
+      };
+
       // Create invoice record using parsed data when available, fallback to manual data
       const invoiceData = {
         userId,
         bookingId: bookingId ? parseInt(bookingId) : null,
         invoiceNumber,
-        clientName: parsedData?.clientName || clientName || `Client for ${file.originalname}`,
-        clientEmail: parsedData?.clientEmail || clientEmail || '',
-        clientAddress: parsedData?.clientAddress || '',
-        venueAddress: parsedData?.venueAddress || '',
-        amount: parsedData?.amount || 0,
-        performanceFee: parsedData?.performanceFee || 0,
-        depositPaid: parsedData?.depositPaid || 0,
-        dueDate: parsedData?.dueDate ? new Date(parsedData.dueDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        clientName: safeParseValue(parsedData?.clientName, clientName || `Client for ${file.originalname}`),
+        clientEmail: safeParseValue(parsedData?.clientEmail, clientEmail || ''),
+        clientAddress: safeParseValue(parsedData?.clientAddress, ''),
+        venueAddress: safeParseValue(parsedData?.venueAddress, ''),
+        amount: safeParseNumber(parsedData?.amount, 0),
+        performanceFee: safeParseNumber(parsedData?.performanceFee, 0),
+        depositPaid: safeParseNumber(parsedData?.depositPaid, 0),
+        dueDate: parsedData?.dueDate && parsedData.dueDate !== 'null' ? new Date(parsedData.dueDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         status: 'sent', // Imported invoices are assumed to be sent
         cloudStorageUrl,
         cloudStorageKey,
-        performanceDate: parsedData?.performanceDate ? new Date(parsedData.performanceDate) : (eventDate ? new Date(eventDate) : null),
+        performanceDate: parsedData?.performanceDate && parsedData.performanceDate !== 'null' ? new Date(parsedData.performanceDate) : (eventDate ? new Date(eventDate) : null),
       };
       
       // Always create invoice record, regardless of parsing success
