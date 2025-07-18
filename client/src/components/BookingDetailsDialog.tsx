@@ -52,7 +52,6 @@ const bookingDetailsSchema = z.object({
   parkingInfo: z.string().optional(),
   contactPerson: z.string().optional(),
   contactPhone: z.string().optional(),
-  venueAddress: z.string().optional(),
   venueContactInfo: z.string().optional(),
   dressCode: z.string().optional(),
   repertoire: z.string().optional(),
