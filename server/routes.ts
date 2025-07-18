@@ -1494,7 +1494,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientPhone: safeParseValue(parsedData?.clientPhone, ''),
         clientEmail: safeParseValue(parsedData?.clientEmail, ''),
         venue: safeParseValue(parsedData?.venue, venue || ''),
-        eventDate: parsedData?.eventDate && parsedData.eventDate !== 'null' ? new Date(parsedData.eventDate) : (eventDate ? new Date(eventDate) : new Date()),
+        eventDate: (() => {
+          if (parsedData?.eventDate && parsedData.eventDate !== 'null' && parsedData.eventDate !== null) {
+            const parsed = new Date(parsedData.eventDate);
+            return isNaN(parsed.getTime()) ? new Date() : parsed;
+          }
+          return eventDate ? new Date(eventDate) : new Date();
+        })(),
         eventTime: safeParseValue(parsedData?.eventTime, eventTime || '00:00'),
         eventEndTime: safeParseValue(parsedData?.eventEndTime, eventTime || '00:00'),
         fee: safeParseNumber(parsedData?.fee, 0),
@@ -1611,11 +1617,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: safeParseNumber(parsedData?.amount, 0),
         performanceFee: safeParseNumber(parsedData?.performanceFee, 0),
         depositPaid: safeParseNumber(parsedData?.depositPaid, 0),
-        dueDate: parsedData?.dueDate && parsedData.dueDate !== 'null' ? new Date(parsedData.dueDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        dueDate: (() => {
+          if (parsedData?.dueDate && parsedData.dueDate !== 'null' && parsedData.dueDate !== null) {
+            const parsed = new Date(parsedData.dueDate);
+            return isNaN(parsed.getTime()) ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : parsed;
+          }
+          return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        })(),
         status: 'sent', // Imported invoices are assumed to be sent
         cloudStorageUrl,
         cloudStorageKey,
-        performanceDate: parsedData?.performanceDate && parsedData.performanceDate !== 'null' ? new Date(parsedData.performanceDate) : (eventDate ? new Date(eventDate) : null),
+        performanceDate: (() => {
+          if (parsedData?.performanceDate && parsedData.performanceDate !== 'null' && parsedData.performanceDate !== null) {
+            const parsed = new Date(parsedData.performanceDate);
+            return isNaN(parsed.getTime()) ? (eventDate ? new Date(eventDate) : null) : parsed;
+          }
+          return eventDate ? new Date(eventDate) : null;
+        })(),
       };
       
       // Always create invoice record, regardless of parsing success
