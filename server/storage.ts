@@ -478,8 +478,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteContract(id: number, userId: string): Promise<boolean> {
+    console.log('🗑️ Deleting contract only - bookings are independent:', { contractId: id, userId });
     const result = await db.delete(contracts)
       .where(and(eq(contracts.id, id), eq(contracts.userId, userId)));
+    console.log('✅ Contract deleted, bookings unaffected:', result.rowCount > 0);
     return result.rowCount > 0;
   }
 
