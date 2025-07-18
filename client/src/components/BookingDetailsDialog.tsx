@@ -241,39 +241,30 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       
-      setUploadStatus({
-        type: 'success',
-        message: `Contract "${data.contractNumber}" uploaded successfully. Parsing and auto-populating form in 20 seconds...`
-      });
-      
-      // Auto-populate form after 20 seconds to allow queries to refresh
-      setTimeout(async () => {
-        // Refresh contracts query to get the latest data
-        await queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
+      // Use the contract data directly from the response for auto-population
+      if (data.contract) {
+        setUploadStatus({
+          type: 'success',
+          message: `Contract "${data.contractNumber}" uploaded successfully. Parsing and auto-populating form in 20 seconds...`
+        });
         
-        // Wait a moment for the query to complete
+        // Auto-populate form after 20 seconds using the contract data from the response
         setTimeout(() => {
-          const updatedContracts = queryClient.getQueryData(['/api/contracts']) as any[];
-          const latestContract = updatedContracts?.find((contract: any) => 
-            contract.enquiryId === booking?.id
-          );
-          
-          if (latestContract) {
-            handleCopyFromContract(latestContract);
-            setUploadStatus({
-              type: 'success',
-              message: `Contract parsed and form auto-populated successfully!`
-            });
-          } else {
-            setUploadStatus({
-              type: 'success',
-              message: `Contract uploaded successfully. Use "Copy from Contract" to populate form.`
-            });
-          }
-          
+          console.log('🔄 Auto-populating form with contract data:', data.contract);
+          handleCopyFromContract(data.contract);
+          setUploadStatus({
+            type: 'success',
+            message: `Contract parsed and form auto-populated successfully!`
+          });
           setTimeout(() => setUploadStatus(null), 5000);
-        }, 2000);
-      }, 20000);
+        }, 20000);
+      } else {
+        setUploadStatus({
+          type: 'success',
+          message: `Contract "${data.contractNumber}" uploaded successfully. Use "Copy from Contract" to populate form.`
+        });
+        setTimeout(() => setUploadStatus(null), 8000);
+      }
     },
     onError: (error) => {
       setUploadStatus({
@@ -370,7 +361,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     // Use provided contract or find the latest one
     const contractToUse = contract || bookingContract;
     
+    console.log('🔄 handleCopyFromContract called with:', contractToUse);
+    
     if (!contractToUse) {
+      console.log('❌ No contract found to copy from');
       toast({
         title: "No Contract Found",
         description: "No contract found for this booking to copy data from.",
@@ -380,6 +374,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     }
 
     const currentFormData = form.getValues();
+    console.log('📋 Current form data:', currentFormData);
     let fieldsUpdated = 0;
     
     const updatedFormData = {
