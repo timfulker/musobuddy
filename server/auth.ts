@@ -4,6 +4,7 @@ import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import connectPg from "connect-pg-simple";
@@ -24,10 +25,25 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    // Check if password is in bcrypt format (starts with $2b$)
+    if (stored.startsWith('$2b$')) {
+      return await bcrypt.compare(supplied, stored);
+    }
+    
+    // Handle scrypt format (with salt)
+    const [hashed, salt] = stored.split(".");
+    if (!hashed || !salt) {
+      console.error('❌ Invalid password format in database');
+      return false;
+    }
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error('❌ Password comparison error:', error);
+    return false;
+  }
 }
 
 export async function setupAuth(app: Express) {
