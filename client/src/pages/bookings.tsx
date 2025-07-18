@@ -364,6 +364,30 @@ export default function Enquiries() {
     console.log(`Executing contextual action: ${action} for booking ${bookingId}`);
     
     switch (action) {
+      case 'create-contract':
+        // Navigate to contract creation page with booking ID
+        window.location.href = `/contracts?action=new&bookingId=${bookingId}`;
+        break;
+      case 'create-invoice':
+        // Navigate to invoice creation page with booking ID
+        window.location.href = `/invoices?action=new&bookingId=${bookingId}`;
+        break;
+      case 'mark-completed':
+        // Update booking status to completed
+        updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'completed' });
+        toast({
+          title: "Booking completed",
+          description: "The booking has been marked as completed.",
+        });
+        break;
+      case 'mark-confirmed':
+        // Update booking status to confirmed
+        updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'confirmed' });
+        toast({
+          title: "Booking confirmed",
+          description: "The booking has been marked as confirmed.",
+        });
+        break;
       case 'reply_enquiry':
         updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'awaiting_response' });
         break;
@@ -376,9 +400,6 @@ export default function Enquiries() {
         break;
       case 'send_contract':
         updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'contract_sent' });
-        break;
-      case 'mark_confirmed':
-        updateEnquiryStatusMutation.mutate({ id: bookingId, status: 'confirmed' });
         break;
       case 'send_invoice':
         // Could redirect to invoice creation
