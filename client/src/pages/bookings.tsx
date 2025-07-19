@@ -871,25 +871,25 @@ export default function Enquiries() {
     });
   };
 
-  // Helper function to get explicit styling for active filter buttons
-  const getActiveFilterStyle = (status: string) => {
+  // Helper function to get inline styles for active filter buttons (this will override any CSS classes)
+  const getActiveFilterInlineStyle = (status: string) => {
     switch (status) {
       case 'new':
-        return 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600';
+        return { backgroundColor: '#3b82f6', color: 'white', borderColor: '#3b82f6' };
       case 'awaiting_response':
-        return 'bg-yellow-400 text-yellow-900 border-yellow-400 hover:bg-yellow-500';
+        return { backgroundColor: '#fbbf24', color: '#92400e', borderColor: '#fbbf24' };
       case 'client_confirms':
-        return 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600';
+        return { backgroundColor: '#f97316', color: 'white', borderColor: '#f97316' };
       case 'contract_sent':
-        return 'bg-purple-500 text-white border-purple-500 hover:bg-purple-600';
+        return { backgroundColor: '#8b5cf6', color: 'white', borderColor: '#8b5cf6' };
       case 'confirmed':
-        return 'bg-green-500 text-white border-green-500 hover:bg-green-600';
+        return { backgroundColor: '#10b981', color: 'white', borderColor: '#10b981' };
       case 'cancelled':
-        return 'bg-red-500 text-white border-red-500 hover:bg-red-600';
+        return { backgroundColor: '#ef4444', color: 'white', borderColor: '#ef4444' };
       case 'completed':
-        return 'bg-gray-500 text-white border-gray-500 hover:bg-gray-600';
+        return { backgroundColor: '#6b7280', color: 'white', borderColor: '#6b7280' };
       default:
-        return 'bg-gray-500 text-white border-gray-500 hover:bg-gray-600';
+        return { backgroundColor: '#6b7280', color: 'white', borderColor: '#6b7280' };
     }
   };
 
@@ -1406,11 +1406,12 @@ export default function Enquiries() {
                           : [...prev, status]
                       );
                     }}
-                    variant={isActive ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
+                    style={isActive ? getActiveFilterInlineStyle(status) : {}}
                     className={
                       isActive 
-                        ? getActiveFilterStyle(status)
+                        ? 'border-2'
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                     }
                   >
