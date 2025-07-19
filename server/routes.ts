@@ -1573,16 +1573,26 @@ ${extractedText}
       // Always create contract record, regardless of parsing success
       const contract = await storage.createContract(contractData);
       
-      // Update booking status only (data copying is now handled manually via "Copy from Contract" button)
+      // CRITICAL: Only update booking if it actually exists and belongs to this user
       if (bookingId) {
-        const bookingUpdates = { 
-          contractSent: true,
-          contractSigned: true,
-          status: 'confirmed'
-        };
-        
-        await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
-        console.log('📋 Booking status updated: contract marked as sent and signed');
+        try {
+          const existingBooking = await storage.getBooking(parseInt(bookingId), userId);
+          
+          if (existingBooking) {
+            const bookingUpdates = { 
+              contractSent: true,
+              contractSigned: true,
+              status: 'confirmed'
+            };
+            
+            await storage.updateBooking(parseInt(bookingId), bookingUpdates, userId);
+            console.log('📋 Booking status updated: contract marked as sent and signed');
+          } else {
+            console.warn(`⚠️ Booking ID ${bookingId} not found or doesn't belong to user ${userId}. Skipping booking update.`);
+          }
+        } catch (error) {
+          console.error(`❌ Error updating booking ${bookingId}:`, error);
+        }
       }
       
       // Determine response message based on parsing success
