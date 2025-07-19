@@ -79,6 +79,7 @@ export default function Enquiries() {
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<string>("");
   // Smart filtering system
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [activeGigTypeFilters, setActiveGigTypeFilters] = useState<string[]>([]);
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [dateRangeFilter, setDateRangeFilter] = useState<{from: string, to: string}>({from: '', to: ''});
   const [eventDateFilter, setEventDateFilter] = useState<string>('all'); // 'all', 'upcoming', 'past'
@@ -220,9 +221,14 @@ export default function Enquiries() {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       
-      // Force immediate refetch to ensure UI updates
+      // Force immediate cache removal and refetch to ensure UI updates
+      queryClient.removeQueries({ queryKey: ['/api/bookings'] });
       queryClient.refetchQueries({ queryKey: ['/api/bookings'] }).then(() => {
         console.log('🔍 Bookings data refetched successfully');
+        // Force a second refetch after a delay to ensure status mapping updates
+        setTimeout(() => {
+          queryClient.refetchQueries({ queryKey: ['/api/bookings'] });
+        }, 500);
       });
       
       toast({
@@ -913,7 +919,11 @@ export default function Enquiries() {
       return true;
     })();
     
-    return matchesSearch && matchesStatus && matchesPayment && matchesEventDate;
+    // Gig type filter
+    const matchesGigType = activeGigTypeFilters.length === 0 || 
+      activeGigTypeFilters.includes(enquiry.gigType || '');
+    
+    return matchesSearch && matchesStatus && matchesPayment && matchesEventDate && matchesGigType;
   });
 
   // Sort the filtered enquiries
@@ -1401,6 +1411,49 @@ export default function Enquiries() {
                 </Button>
               )}
             </div>
+            
+            {/* Gig Type Filters */}
+            {gigTypes.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="text-sm text-gray-600 self-center mr-2">Filter by type:</span>
+                {gigTypes.map((gigType) => {
+                  const isActive = activeGigTypeFilters.includes(gigType);
+                  return (
+                    <Button
+                      key={gigType}
+                      onClick={() => {
+                        setActiveGigTypeFilters(prev => 
+                          prev.includes(gigType) 
+                            ? prev.filter(g => g !== gigType)
+                            : [...prev, gigType]
+                        );
+                      }}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      className={`${
+                        isActive 
+                          ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-purple-50 hover:border-purple-300'
+                      }`}
+                    >
+                      {gigType}
+                    </Button>
+                  );
+                })}
+                
+                {/* Clear Gig Type Filters */}
+                {activeGigTypeFilters.length > 0 && (
+                  <Button
+                    onClick={() => setActiveGigTypeFilters([])}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    Clear Types
+                  </Button>
+                )}
+              </div>
+            )}
             
             {/* Secondary Filters */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">

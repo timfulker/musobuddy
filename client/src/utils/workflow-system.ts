@@ -173,6 +173,7 @@ export function mapOldStatusToStage(oldStatus: string): WorkflowStage {
   const statusMapping: Record<string, WorkflowStage> = {
     'new': 'new',
     'booking_in_progress': 'awaiting_response',
+    'client_confirms': 'client_confirms',
     'contract_sent': 'contract_sent',
     'confirmed': 'confirmed',
     'rejected': 'cancelled',
