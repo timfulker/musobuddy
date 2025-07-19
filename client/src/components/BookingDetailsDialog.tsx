@@ -405,18 +405,27 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     console.log('📋 Current form data:', currentFormData);
     let fieldsUpdated = 0;
     
+    // Define protected fields that should never be overwritten by contract imports
+    const protectedFields = ['clientName', 'eventDate'];
+    const isFieldProtected = (fieldName: string) => {
+      return protectedFields.includes(fieldName) && currentFormData[fieldName]?.trim?.() !== '';
+    };
+
     const updatedFormData = {
       ...currentFormData,
-      // Only update empty fields to preserve existing data
-      ...(contractToUse.clientName && !currentFormData.clientName.trim() && { clientName: contractToUse.clientName }),
+      // Protected fields: Never overwrite client name and event date if they exist
+      ...(contractToUse.clientName && !isFieldProtected('clientName') && !currentFormData.clientName.trim() && { 
+        clientName: contractToUse.clientName 
+      }),
+      ...(contractToUse.eventDate && !isFieldProtected('eventDate') && !currentFormData.eventDate && { 
+        eventDate: new Date(contractToUse.eventDate).toISOString().split('T')[0] 
+      }),
+      // Regular fields: Only update if empty
       ...(contractToUse.clientEmail && !currentFormData.clientEmail.trim() && { clientEmail: contractToUse.clientEmail }),
       ...(contractToUse.clientPhone && !currentFormData.clientPhone?.trim() && { clientPhone: contractToUse.clientPhone }),
       ...(contractToUse.clientAddress && !currentFormData.clientAddress?.trim() && { clientAddress: contractToUse.clientAddress }),
       ...(contractToUse.venue && !currentFormData.venue?.trim() && { venue: contractToUse.venue }),
       ...(contractToUse.venueAddress && !currentFormData.venueAddress?.trim() && { venueAddress: contractToUse.venueAddress }),
-      ...(contractToUse.eventDate && !currentFormData.eventDate && { 
-        eventDate: new Date(contractToUse.eventDate).toISOString().split('T')[0] 
-      }),
       ...(contractToUse.eventTime && !currentFormData.eventTime?.trim() && { 
         eventTime: convertTimeFormat(contractToUse.eventTime) 
       }),
@@ -432,10 +441,14 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       }),
     };
 
-    // Count how many fields were actually updated
+    // Count how many fields were actually updated and track protected fields
+    let protectedFieldsSkipped = 0;
     Object.keys(updatedFormData).forEach(key => {
       if (updatedFormData[key] !== currentFormData[key]) {
         fieldsUpdated++;
+      }
+      if (isFieldProtected(key) && contractToUse[key] && contractToUse[key] !== currentFormData[key]) {
+        protectedFieldsSkipped++;
       }
     });
 
@@ -443,14 +456,22 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       form.reset(updatedFormData);
       setHasChanges(true);
       
+      const protectedMessage = protectedFieldsSkipped > 0 
+        ? ` Protected fields (${protectedFields.join(', ')}) were preserved.`
+        : '';
+      
       toast({
         title: "Contract Data Copied",
-        description: `${fieldsUpdated} field${fieldsUpdated > 1 ? 's' : ''} updated from contract while preserving existing data.`,
+        description: `${fieldsUpdated} field${fieldsUpdated > 1 ? 's' : ''} updated from contract.${protectedMessage}`,
       });
     } else {
+      const allProtectedMessage = protectedFieldsSkipped > 0
+        ? ` Protected fields (${protectedFields.join(', ')}) were preserved.`
+        : '';
+      
       toast({
         title: "No Updates Needed",
-        description: "All relevant fields already contain data. Contract information preserved.",
+        description: `All relevant fields already contain data.${allProtectedMessage}`,
       });
     }
   };
