@@ -213,17 +213,21 @@ export default function Enquiries() {
     },
     onSuccess: (data) => {
       console.log('🔍 Bulk update success, invalidating queries...');
+      console.log('🔍 Bulk update responses:', data);
+      
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookings/upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       
-      // Force refetch after a short delay to ensure invalidation works
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ['/api/bookings'] });
-      }, 100);
+      // Force immediate refetch to ensure UI updates
+      queryClient.refetchQueries({ queryKey: ['/api/bookings'] }).then(() => {
+        console.log('🔍 Bookings data refetched successfully');
+      });
       
       toast({
-        title: "Success",
-        description: `${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'} updated successfully.`
+        title: "Status Updated",
+        description: `${selectedBookings.size} booking${selectedBookings.size === 1 ? '' : 's'} updated to "${bulkUpdateStatus.replace('_', ' ')}" successfully.`
       });
       setSelectedBookings(new Set());
       setBulkUpdateStatus("");

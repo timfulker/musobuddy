@@ -30,6 +30,11 @@ export const statusMapping: Record<string, BookingStatus> = {
     newStatus: 'negotiation',
     tags: {}
   },
+  'client_confirms': {
+    oldStatus: 'client_confirms',
+    newStatus: 'negotiation',
+    tags: {}
+  },
   'contract_sent': {
     oldStatus: 'contract_sent',
     newStatus: 'negotiation',
