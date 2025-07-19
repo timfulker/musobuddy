@@ -871,6 +871,28 @@ export default function Enquiries() {
     });
   };
 
+  // Helper function to get explicit styling for active filter buttons
+  const getActiveFilterStyle = (status: string) => {
+    switch (status) {
+      case 'new':
+        return 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600';
+      case 'awaiting_response':
+        return 'bg-yellow-400 text-yellow-900 border-yellow-400 hover:bg-yellow-500';
+      case 'client_confirms':
+        return 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600';
+      case 'contract_sent':
+        return 'bg-purple-500 text-white border-purple-500 hover:bg-purple-600';
+      case 'confirmed':
+        return 'bg-green-500 text-white border-green-500 hover:bg-green-600';
+      case 'cancelled':
+        return 'bg-red-500 text-white border-red-500 hover:bg-red-600';
+      case 'completed':
+        return 'bg-gray-500 text-white border-gray-500 hover:bg-gray-600';
+      default:
+        return 'bg-gray-500 text-white border-gray-500 hover:bg-gray-600';
+    }
+  };
+
   const filteredEnquiries = enquiries.filter((enquiry: Enquiry) => {
     // Search filter
     const matchesSearch = searchQuery === "" || 
@@ -1386,7 +1408,11 @@ export default function Enquiries() {
                     }}
                     variant={isActive ? "default" : "outline"}
                     size="sm"
-                    className={`${isActive ? `${config.color} ${config.bgColor} border-current` : 'hover:bg-gray-50'}`}
+                    className={
+                      isActive 
+                        ? getActiveFilterStyle(status)
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }
                   >
                     <span className="mr-2">{config.icon}</span>
                     {config.displayName}
