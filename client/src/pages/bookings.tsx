@@ -1408,10 +1408,9 @@ export default function Enquiries() {
                     }}
                     variant="outline"
                     size="sm"
-                    style={isActive ? getActiveFilterInlineStyle(status) : {}}
                     className={
                       isActive 
-                        ? 'border-2'
+                        ? `filter-btn-active-${status} border-2`
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                     }
                   >
