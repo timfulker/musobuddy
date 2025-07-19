@@ -1395,27 +1395,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prompt = fileType === 'contract' ? `
 You are reading a standard musician hire contract. Extract the following fields and return as JSON:
 
-- client_name
-- client_email  
-- client_phone
-- client_address
-- performer_name
-- performer_email
-- performer_phone
+IMPORTANT: Distinguish between client (person hiring) and performer (musician being hired):
+- client_name (the person/company hiring the musician)
+- client_email (email of the client/hirer)
+- client_phone (phone of the client/hirer)
+- client_address (ONLY the address of the client/hirer. If the only address shown is clearly the performer's address, leave this field null or empty)
+- performer_name (the musician being hired)
+- performer_email (email of the performer/musician)
+- performer_phone (phone of the performer/musician)
 - event_date (YYYY-MM-DD format)
-- start_time
-- end_time
-- venue_name
-- venue_address
+- start_time (extract time as written, e.g., "8pm", "20:00")
+- end_time (extract time as written, e.g., "11pm", "23:00")
+- venue_name (where the event takes place)
+- venue_address (address of the venue)
 - agreed_fee (number only, no currency symbols)
 - deposit_amount (number only, no currency symbols)
 - deposit_due_date
 - bank_account_name
 - bank_account_number
 - bank_sort_code
-- extras_or_notes
+- extras_or_notes (any special requirements, equipment needs, etc.)
 
-Use best judgement if data is implied or in a free-text format. Preserve formatting for venue address and fee description. Return ONLY valid JSON with no additional text.
+The contract will show details for both the person hiring (client) and the musician being hired (performer). Make sure to extract the correct address for each. Return ONLY valid JSON with no additional text.
 
 Contract text:
 ${extractedText}
@@ -1526,7 +1527,22 @@ ${extractedText}
         enquiryId: bookingId ? parseInt(bookingId) : null,
         contractNumber,
         clientName: safeParseValue(parsedData?.client_name, clientName || `Client for ${file.originalname}`),
-        clientAddress: safeParseValue(parsedData?.client_address, ''),
+        clientAddress: (() => {
+          const clientAddr = safeParseValue(parsedData?.client_address, '');
+          // Filter out known performer addresses to prevent confusion
+          const performerAddresses = [
+            '59, Gloucester Rd',
+            '59 Gloucester Road',
+            'BH7 6JA',
+            'Dorset BH7 6JA'
+          ];
+          
+          const isPerformerAddress = performerAddresses.some(addr => 
+            clientAddr && clientAddr.toLowerCase().includes(addr.toLowerCase())
+          );
+          
+          return isPerformerAddress ? '' : clientAddr;
+        })(),
         clientPhone: safeParseValue(parsedData?.client_phone, ''),
         clientEmail: safeParseValue(parsedData?.client_email, ''),
         venue: safeParseValue(parsedData?.venue_name, venue || ''),

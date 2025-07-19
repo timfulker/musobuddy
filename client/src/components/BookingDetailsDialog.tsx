@@ -74,6 +74,34 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Convert time from "8pm" format to "20:00" format
+  const convertTimeFormat = (timeStr: string): string => {
+    if (!timeStr) return '';
+    
+    // Already in 24-hour format
+    if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+      return timeStr;
+    }
+    
+    // Convert from 12-hour format like "8pm", "11pm", "2:30pm", etc.
+    const match = timeStr.toLowerCase().match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/);
+    if (match) {
+      let hour = parseInt(match[1]);
+      const minute = match[2] || '00';
+      const period = match[3];
+      
+      if (period === 'pm' && hour !== 12) {
+        hour += 12;
+      } else if (period === 'am' && hour === 12) {
+        hour = 0;
+      }
+      
+      return `${hour.toString().padStart(2, '0')}:${minute}`;
+    }
+    
+    return timeStr; // Return original if can't parse
+  };
+
   // Fetch user's personalized gig types from settings
   const { data: userSettings } = useQuery({
     queryKey: ['settings'],
@@ -389,8 +417,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       ...(contractToUse.eventDate && !currentFormData.eventDate && { 
         eventDate: new Date(contractToUse.eventDate).toISOString().split('T')[0] 
       }),
-      ...(contractToUse.eventTime && !currentFormData.eventTime?.trim() && { eventTime: contractToUse.eventTime }),
-      ...(contractToUse.eventEndTime && !currentFormData.eventEndTime?.trim() && { eventEndTime: contractToUse.eventEndTime }),
+      ...(contractToUse.eventTime && !currentFormData.eventTime?.trim() && { 
+        eventTime: convertTimeFormat(contractToUse.eventTime) 
+      }),
+      ...(contractToUse.eventEndTime && !currentFormData.eventEndTime?.trim() && { 
+        eventEndTime: convertTimeFormat(contractToUse.eventEndTime) 
+      }),
       ...(contractToUse.fee && (!currentFormData.fee || currentFormData.fee === '0') && { fee: contractToUse.fee.toString() }),
       ...(contractToUse.equipmentRequirements && !currentFormData.equipmentRequirements?.trim() && { 
         equipmentRequirements: contractToUse.equipmentRequirements 
