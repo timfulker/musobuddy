@@ -201,7 +201,8 @@ export default function Enquiries() {
           console.log(`🔍 Updating booking ${id} to status: ${status}`);
           const response = await apiRequest(`/api/bookings/${id}`, {
             method: 'PATCH',
-            body: { status }
+            body: JSON.stringify({ status }),
+            headers: { 'Content-Type': 'application/json' }
           });
           console.log(`🔍 Response for booking ${id}:`, response);
           return response;

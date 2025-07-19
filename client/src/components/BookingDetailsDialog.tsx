@@ -474,6 +474,36 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
         description: `All relevant fields already contain data.${allProtectedMessage}`,
       });
     }
+
+    // Automatically update booking status to "confirmed" when contract is imported
+    // Check if the imported contract is signed (has signature or signedAt date)
+    const contractIsSigned = contractToUse.signedAt || contractToUse.signature;
+    
+    if (enquiry && contractIsSigned && enquiry.status !== 'confirmed' && enquiry.status !== 'completed') {
+      // Update booking status asynchronously
+      fetch(`/api/bookings/${enquiry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'confirmed' })
+      }).then(() => {
+        // Refresh the data to show updated status
+        onEnquiryUpdate();
+        
+        toast({
+          title: "Status Updated",
+          description: "Booking status automatically updated to 'Confirmed' because the imported contract is signed.",
+        });
+      }).catch((error) => {
+        console.error('Failed to update booking status:', error);
+      });
+    } else if (enquiry && !contractIsSigned && enquiry.status === 'confirmed') {
+      // If importing an unsigned contract to a confirmed booking, suggest updating to contract_sent
+      toast({
+        title: "Contract Imported",
+        description: "Unsigned contract imported. Consider updating status to 'Contract Sent' if this reflects the current state.",
+      });
+    }
   };
 
   const addCustomField = () => {
