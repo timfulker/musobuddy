@@ -70,7 +70,7 @@ export class ContractService {
       try {
         console.log('🔧 Using contract parser...');
         const parseResult = await parseContractPDF(contractText);
-        const fieldsExtracted = Object.keys(parseResult).filter(k => parseResult[k] !== undefined && parseResult[k] !== null).length;
+        const fieldsExtracted = Object.keys(parseResult).filter(k => (parseResult as any)[k] !== undefined && (parseResult as any)[k] !== null).length;
         const confidence = Math.min(95, Math.max(10, 30 + (fieldsExtracted * 8)));
         
         result = {
