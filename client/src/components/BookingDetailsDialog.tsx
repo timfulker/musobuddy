@@ -491,9 +491,19 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       });
     }
 
-    // Clear the parsing result
+    // Clear the parsing result and force cache clear
     setContractParsingResult(null);
     setExtractedData(null);
+    
+    // Force clear any browser caches
+    if (typeof window !== 'undefined') {
+      // Clear any potential localStorage caches
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('contract') || key.includes('parsing')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
   };
 
   const addCustomField = () => {
@@ -523,6 +533,9 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
 
   const onSubmit = async (data: z.infer<typeof bookingDetailsSchema>) => {
     try {
+      // Clear all parsing caches immediately when save is clicked
+      setExtractedData(null);
+      setContractParsingResult(null);
       await updateBookingMutation.mutateAsync({
         ...data,
         customFields: JSON.stringify(customFields),

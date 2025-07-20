@@ -61,13 +61,23 @@ ${contractText}
 
 Focus on these key areas:
 1. "Print Name [NAME]" in the "Signed by the Hirer" section (this is the CLIENT NAME)
-2. "between [PERSON] of [ORGANIZATION/ADDRESS]" (extract PERSON as client name if Print Name not found)
-3. "of [CLIENT ADDRESS]" section for address
-4. "The Hirer engages the Musician to perform...at [VENUE]"
-5. Contact details (phone and email) in "Signed by the Hirer" section
-6. Table with columns: Date | Start Time | Finish Time | Fee
+2. "between [PERSON]" at the start of contract (extract PERSON as client name if Print Name not found)
+3. "of [ADDRESS]" after the client name for client address
+4. "The Hirer engages the Musician to perform...at [VENUE]" for venue name
+5. Venue address typically follows venue name on next line
+6. Contact details (phone and email) in "Signed by the Hirer" section
+7. Table with columns: Date | Start Time | Finish Time | Fee
 
-IMPORTANT: For client name, prioritize "Print Name" field over "between" field.
+CRITICAL: Extract ALL available information. Do not return null for fields that have clear values in the contract.
+
+EXAMPLE: For Robin Jarman contract:
+- Client: "Robin Jarman" (from "between Robin Jarman" or "Print Name Robin Jarman")
+- Address: "The Drift, Hall Lane, Upper Farringdon Nr Alton GU34 3EA" (from "of [ADDRESS]")
+- Venue: "The Drift" (from performance location)
+- Email: "robinjarman@live.co.uk" (from Signed by Hirer section)
+- Phone: "07557 982669" (from Signed by Hirer section)
+- Times: "1545" becomes "15:45", "1900" becomes "19:00"
+- Fee: "£260 for 2 hours" becomes 260
 
 Return exactly this JSON structure:
 {
@@ -78,8 +88,8 @@ Return exactly this JSON structure:
   "venue": "venue name from engagement details",
   "venueAddress": "venue address if different from client address",
   "eventDate": "YYYY-MM-DD format",
-  "eventTime": "HH:MM format from Start Time column",
-  "eventEndTime": "HH:MM format from Finish Time column",
+  "eventTime": "HH:MM format from Start Time column (convert '1545' to '15:45')",
+  "eventEndTime": "HH:MM format from Finish Time column (convert '1900' to '19:00')",
   "fee": 260.00,
   "equipmentRequirements": "any equipment notes",
   "specialRequirements": "any special requirements",
