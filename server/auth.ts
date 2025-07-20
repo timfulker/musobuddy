@@ -138,10 +138,19 @@ export async function setupAuth(app: Express) {
     res.status(200).json(req.user);
   });
 
+  // GET /logout for direct browser navigation (redirects to login)
+  app.get("/logout", (req, res, next) => {
+    req.logout((err) => {
+      if (err) return next(err);
+      res.redirect("/login");
+    });
+  });
+
+  // POST /api/logout for AJAX calls (returns JSON)
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
-      res.sendStatus(200);
+      res.json({ success: true, redirectTo: "/login" });
     });
   });
 
