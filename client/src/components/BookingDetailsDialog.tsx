@@ -479,9 +479,9 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     // Check if the imported contract is signed (has signature or signedAt date)
     const contractIsSigned = contractToUse.signedAt || contractToUse.signature;
     
-    if (enquiry && contractIsSigned && enquiry.status !== 'confirmed' && enquiry.status !== 'completed') {
+    if (booking && contractIsSigned && booking.status !== 'confirmed' && booking.status !== 'completed') {
       // Update booking status asynchronously
-      fetch(`/api/bookings/${enquiry.id}`, {
+      fetch(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -497,7 +497,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       }).catch((error) => {
         console.error('Failed to update booking status:', error);
       });
-    } else if (enquiry && !contractIsSigned && enquiry.status === 'confirmed') {
+    } else if (booking && !contractIsSigned && booking.status === 'confirmed') {
       // If importing an unsigned contract to a confirmed booking, suggest updating to contract_sent
       toast({
         title: "Contract Imported",
