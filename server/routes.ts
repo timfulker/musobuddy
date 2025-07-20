@@ -3597,6 +3597,53 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Emergency database clear endpoints
+  app.post('/api/cleanup/clear-bookings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get all bookings first
+      const allBookings = await storage.getBookings(userId);
+      
+      // Delete all bookings
+      for (const booking of allBookings) {
+        await storage.deleteBooking(booking.id, userId);
+      }
+      
+      console.log(`✅ Cleared ${allBookings.length} bookings for user ${userId}`);
+      res.json({ 
+        message: `Cleared ${allBookings.length} bookings successfully`,
+        count: allBookings.length 
+      });
+    } catch (error) {
+      console.error('Error clearing bookings:', error);
+      res.status(500).json({ error: 'Failed to clear bookings' });
+    }
+  });
+
+  app.post('/api/cleanup/clear-contracts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get all contracts first
+      const allContracts = await storage.getContracts(userId);
+      
+      // Delete all contracts
+      for (const contract of allContracts) {
+        await storage.deleteContract(contract.id, userId);
+      }
+      
+      console.log(`✅ Cleared ${allContracts.length} contracts for user ${userId}`);
+      res.json({ 
+        message: `Cleared ${allContracts.length} contracts successfully`,
+        count: allContracts.length 
+      });
+    } catch (error) {
+      console.error('Error clearing contracts:', error);
+      res.status(500).json({ error: 'Failed to clear contracts' });
+    }
+  });
+
   // Safe maintenance endpoints for checking and cleaning duplicates
   app.get('/api/maintenance/check-duplicates', async (req, res) => {
     try {

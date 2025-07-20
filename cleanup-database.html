@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Cleanup</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .cleanup-btn { background: #f44336; color: white; padding: 10px 20px; border: none; cursor: pointer; margin: 10px; }
+        .safe-btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; margin: 10px; }
+        .status { padding: 10px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🧹 Database Cleanup</h1>
+    <p>Clear your database before reimporting:</p>
+    
+    <div class="warning status">
+        <strong>Warning:</strong> This will permanently delete data. Make sure you have backups!
+    </div>
+    
+    <button class="cleanup-btn" onclick="clearBookings()">🗑️ Clear All Bookings</button>
+    <button class="cleanup-btn" onclick="clearContracts()">📄 Clear All Contracts</button>
+    <button class="safe-btn" onclick="checkInvoices()">📊 Check Invoices (Safe)</button>
+    
+    <div id="status"></div>
+
+    <script>
+        async function clearBookings() {
+            if (!confirm('Are you sure you want to delete ALL bookings? This cannot be undone!')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/cleanup/clear-bookings', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('status').innerHTML = `<div class="success">✅ ${data.message}</div>`;
+                } else {
+                    document.getElementById('status').innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function clearContracts() {
+            if (!confirm('Are you sure you want to delete ALL contracts? This cannot be undone!')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/cleanup/clear-contracts', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('status').innerHTML = `<div class="success">✅ ${data.message}</div>`;
+                } else {
+                    document.getElementById('status').innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function checkInvoices() {
+            try {
+                const response = await fetch('/api/invoices', {
+                    credentials: 'include'
+                });
+                const invoices = await response.json();
+                
+                document.getElementById('status').innerHTML = `<div class="success">✅ Found ${invoices.length} invoices (these will be preserved)</div>`;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<div class="error">❌ Error checking invoices: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
