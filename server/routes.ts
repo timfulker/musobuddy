@@ -2727,7 +2727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Extract text from PDF
-      const { extractPDFText } = require('./contract-parser-simple');
+      const { extractPDFText } = await import('./contract-parser-simple.js');
       let contractText: string;
       try {
         contractText = await extractPDFText(file.buffer);
@@ -2740,7 +2740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use intelligent parser
-      const { createIntelligentParser } = require('./intelligent-contract-parser');
+      const { createIntelligentParser } = await import('./intelligent-contract-parser.js');
       const intelligentParser = createIntelligentParser(storage);
       
       const extractedData = await intelligentParser.parseContract(contractText, userId);
@@ -2749,7 +2749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (bookingId) {
         // Apply to booking if provided
-        const contractService = getContractService();
+        const contractService = createContractService(storage);
         const booking = await storage.getBooking(parseInt(bookingId), userId);
         
         if (!booking) {
@@ -2816,7 +2816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const contractService = getContractService();
+      const contractService = createContractService(storage);
 
       if (bookingId) {
         // Parse and apply to booking
@@ -2878,7 +2878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🧪 Testing contract parsing for file:', file.originalname);
 
-      const contractService = getContractService();
+      const contractService = createContractService(storage);
       const testResult = await contractService.testParsing(file.buffer);
       
       res.json({
