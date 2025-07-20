@@ -337,7 +337,8 @@ try {
 } catch (error) {
   console.error('❌ Failed to register routes:', error);
   console.log('⚠️ Continuing with basic server setup...');
-  server = require('http').createServer(app);
+  const { createServer } = await import('http');
+  server = createServer(app);
 }
 
 // Debug: Show all registered routes with error handling
