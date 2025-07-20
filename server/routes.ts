@@ -1321,9 +1321,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Simple PDF extraction
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        const pdfParse = await import('pdf-parse');
-        const data = await pdfParse.default(fileBuffer);
-        extractedText = data.text || '';
+        try {
+          const pdfParse = (await import('pdf-parse')).default;
+          const data = await pdfParse(fileBuffer);
+          extractedText = data.text || '';
+        } catch (pdfError) {
+          console.error('PDF parsing failed:', pdfError);
+          return null;
+        }
       } else if (fileName.toLowerCase().endsWith('.docx') || fileName.toLowerCase().endsWith('.doc')) {
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
         extractedText = result.value;
@@ -1424,6 +1429,7 @@ Return JSON with these exact fields:
       
       // Simple document parsing
       let parsedData = null;
+      let parseError = null;
       try {
         parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
       } catch (error) {
