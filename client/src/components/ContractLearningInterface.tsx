@@ -51,6 +51,7 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
   const [extractionData, setExtractionData] = useState({
     clientName: '',
     clientEmail: '',
+    clientPhone: '',
     clientAddress: '',
     venue: '',
     venueAddress: '',
@@ -71,21 +72,8 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
   const handleStartExtraction = (contract: ImportedContract) => {
     setSelectedContract(contract);
     setStartTime(new Date());
-    setExtractionData({
-      clientName: '',
-      clientEmail: '',
-      clientAddress: '',
-      venue: '',
-      venueAddress: '',
-      eventDate: '',
-      eventTime: '',
-      eventEndTime: '',
-      fee: '',
-      equipmentRequirements: '',
-      specialRequirements: '',
-      performanceDuration: '',
-      eventType: '',
-    });
+    // Don't clear extraction data - preserve any existing form data
+    console.log('📝 Starting extraction for', contract.filename, '- preserving existing form data');
   };
 
   const handleSaveExtraction = async () => {
@@ -193,26 +181,7 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
                       </Button>
                       <Button
                         size="sm"
-                        onClick={() => {
-                          setSelectedContract(contract);
-                          setStartTime(new Date());
-                          // Clear form when starting new extraction
-                          setExtractionData({
-                            clientName: '',
-                            clientEmail: '',
-                            clientAddress: '',
-                            venue: '',
-                            venueAddress: '',
-                            eventDate: '',
-                            eventTime: '',
-                            eventEndTime: '',
-                            fee: '',
-                            equipmentRequirements: '',
-                            specialRequirements: '',
-                            performanceDuration: '',
-                            eventType: '',
-                          });
-                        }}
+                        onClick={() => handleStartExtraction(contract)}
                       >
                         <Edit className="h-4 w-4" />
                         Extract Data
@@ -283,6 +252,17 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
                     value={extractionData.clientEmail}
                     onChange={(e) => setExtractionData(prev => ({ ...prev, clientEmail: e.target.value }))}
                     placeholder="Enter client email"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="clientPhone">Client Phone</Label>
+                  <Input
+                    id="clientPhone"
+                    type="tel"
+                    value={extractionData.clientPhone}
+                    onChange={(e) => setExtractionData(prev => ({ ...prev, clientPhone: e.target.value }))}
+                    placeholder="Enter client phone number"
                   />
                 </div>
 
