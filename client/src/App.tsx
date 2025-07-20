@@ -62,6 +62,7 @@ function Router() {
           <Route path="/address-book" component={AddressBook} />
           <Route path="/contracts" component={Contracts} />
           <Route path="/contracts/learning" component={ContractsLearning} />
+          <Route path="/contracts-learning" component={ContractsLearning} />
           <Route path="/invoices" component={Invoices} />
           <Route path="/calendar" component={Calendar} />
           <Route path="/compliance" component={Compliance} />

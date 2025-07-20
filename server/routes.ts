@@ -821,6 +821,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get imported contracts for contract learning
+  app.get('/api/contracts/imported', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const importedContracts = await storage.getImportedContracts(userId);
+      res.json(importedContracts);
+    } catch (error) {
+      console.error("Error fetching imported contracts:", error);
+      res.status(500).json({ message: "Failed to fetch imported contracts" });
+    }
+  });
+
+  // Upload contract for learning system
+  const contractUpload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PDF files are allowed for contract learning'));
+      }
+    }
+  });
+
+  app.post('/api/contracts/import', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Upload to cloud storage
+      const storageKey = `contracts/imported/${userId}/${Date.now()}-${file.originalname}`;
+      const uploadResult = await uploadFileToCloudflare(file.buffer, storageKey, file.mimetype);
+      
+      if (!uploadResult.success) {
+        return res.status(500).json({ 
+          message: "Failed to upload to cloud storage",
+          error: uploadResult.error 
+        });
+      }
+      
+      // Create imported contract record
+      const importedContract = await storage.createImportedContract({
+        userId,
+        filename: file.originalname,
+        originalFilename: file.originalname,
+        cloudUrl: uploadResult.url || storageKey,
+        fileSize: file.size,
+        uploadedAt: new Date()
+      });
+
+      res.status(201).json({
+        success: true,
+        contract: importedContract,
+        message: "Contract uploaded successfully for learning system"
+      });
+    } catch (error) {
+      console.error("Error importing contract:", error);
+      res.status(500).json({ 
+        message: "Failed to import contract",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Public contract download route (for signed contracts)
   app.get('/api/contracts/:id/download', async (req, res) => {
     console.log('Public contract download request for contract:', req.params.id);
