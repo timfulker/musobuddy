@@ -1428,27 +1428,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (isMusiciansUnion) {
           console.log('📋 Detected Musicians\' Union contract - using simplified parsing');
           
-          prompt = `Extract client information from this Musicians' Union contract.
+          prompt = `Extract HIRER information from this Musicians' Union contract.
 
-The client is the HIRER (the person hiring the musician).
-Look for the pattern "between [CLIENT NAME] of [ADDRESS] and [MUSICIAN NAME]"
+CRITICAL: Tim Fulker is the MUSICIAN being hired. The HIRER/CLIENT is the person hiring Tim Fulker.
+
+Look for:
+1. "between [HIRER NAME]" - this is the CLIENT (NOT Tim Fulker)
+2. "Signed by the Hirer" section for contact details
+3. The first person mentioned is usually the HIRER
 
 Contract text:
 ${extractedText}
 
-Return JSON with these exact fields:
+Find the person HIRING Tim Fulker (not Tim Fulker himself):
 {
-  "client_name": "name of the hirer/client",
-  "client_email": "email address", 
-  "client_phone": "phone number",
-  "client_address": "full address",
+  "client_name": "name of person hiring Tim Fulker",
+  "client_email": "hirer email from Signed by the Hirer section", 
+  "client_phone": "hirer phone from Signed by the Hirer section",
+  "client_address": "hirer address",
   "venue": "performance venue",
   "event_date": "YYYY-MM-DD",
   "event_time": "HH:MM",
   "fee": "number only"
 }
 
-If any field is not found, use null.`;
+EXCLUDE Tim Fulker's information - he is the musician, not the client.`;
 
         } else if (isMusoBuddy) {
           console.log('📋 Detected MusoBuddy contract');
@@ -1718,18 +1722,26 @@ Return JSON:
         // Handle the new response format with success/action structure
         if (aiResponse && aiResponse.success && aiResponse.action === 'auto_save') {
           parsedData = aiResponse.data;
-          console.log('📄 Auto-save data extracted:', parsedData);
+          console.log('📄 USING AUTO-SAVE DATA:', JSON.stringify(parsedData, null, 2));
         } else if (aiResponse && aiResponse.action === 'manual_entry') {
           console.log('📄 Manual entry required:', aiResponse.message);
           parsedData = aiResponse.partialData || null;
-        } else {
+          console.log('📄 USING PARTIAL DATA:', JSON.stringify(parsedData, null, 2));
+        } else if (aiResponse && typeof aiResponse === 'object' && aiResponse.client_name) {
           // Handle direct data response (old format)
           parsedData = aiResponse;
+          console.log('📄 USING DIRECT DATA:', JSON.stringify(parsedData, null, 2));
+        } else {
+          parsedData = null;
+          console.log('📄 NO VALID DATA STRUCTURE FOUND');
         }
         
         console.log('📄 Final parsed data:', parsedData);
         console.log('📄 Fee value type:', typeof parsedData?.fee, 'Value:', parsedData?.fee);
         console.log('📄 Deposit value type:', typeof parsedData?.deposit, 'Value:', parsedData?.deposit);
+        console.log('📄 CLIENT NAME FROM PARSED DATA:', parsedData?.client_name);
+        console.log('📄 VENUE FROM PARSED DATA:', parsedData?.venue);
+        console.log('📄 EVENT TIME FROM PARSED DATA:', parsedData?.event_time);
       } catch (error) {
         parseError = error;
         console.warn('⚠️ Document parsing failed, continuing with manual data:', error.message);
