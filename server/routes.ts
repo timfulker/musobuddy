@@ -2760,8 +2760,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        // Apply extracted data to booking
-        const updateResult = await contractService.applyDataToBooking(extractedData, booking, storage);
+        // Apply extracted data to booking using existing contract service logic
+        const fieldsUpdated: string[] = [];
+        const updatedFields: any = {};
+
+        // Apply data preservation protocol - only update empty or default fields
+        const updateField = (fieldName: string, value: any, defaultValue?: any) => {
+          const currentValue = booking[fieldName];
+          
+          // Only update if field is empty, null, undefined, or matches default value
+          if (!currentValue || 
+              currentValue === defaultValue || 
+              (typeof currentValue === 'string' && currentValue.trim() === '') ||
+              (fieldName.includes('Time') && currentValue === '00:00')) {
+            
+            if (value !== null && value !== undefined && value !== '') {
+              updatedFields[fieldName] = value;
+              fieldsUpdated.push(fieldName);
+              console.log(`📝 Updating ${fieldName}: "${currentValue}" → "${value}"`);
+            }
+          } else {
+            console.log(`🔒 Preserving existing ${fieldName}: "${currentValue}"`);
+          }
+        };
+
+        // Apply extracted data with field mapping
+        if (extractedData.clientName) updateField('clientName', extractedData.clientName);
+        if (extractedData.clientEmail) updateField('clientEmail', extractedData.clientEmail);
+        if (extractedData.clientPhone) updateField('clientPhone', extractedData.clientPhone);
+        if (extractedData.clientAddress) updateField('clientAddress', extractedData.clientAddress);
+        if (extractedData.venue) updateField('venue', extractedData.venue);
+        if (extractedData.venueAddress) updateField('venueAddress', extractedData.venueAddress);
+        if (extractedData.eventDate) updateField('eventDate', extractedData.eventDate);
+        if (extractedData.eventTime) updateField('eventTime', extractedData.eventTime, '00:00');
+        if (extractedData.eventEndTime) updateField('eventEndTime', extractedData.eventEndTime, '00:00');
+        if (extractedData.fee) updateField('fee', extractedData.fee);
+        if (extractedData.equipmentRequirements) updateField('equipmentRequirements', extractedData.equipmentRequirements);
+        if (extractedData.specialRequirements) updateField('specialRequirements', extractedData.specialRequirements);
+
+        // Update booking if any fields changed
+        let updateResult = { updated: false, fieldsUpdated: [], fieldsUpdatedCount: 0 };
+        if (fieldsUpdated.length > 0) {
+          try {
+            // Handle date conversion
+            if (updatedFields.eventDate && typeof updatedFields.eventDate === 'string') {
+              updatedFields.eventDate = new Date(updatedFields.eventDate);
+            }
+            
+            await storage.updateBooking(booking.id, userId, updatedFields);
+            console.log(`✅ Intelligent parsing updated ${fieldsUpdated.length} fields`);
+            
+            updateResult = {
+              updated: true,
+              fieldsUpdated,
+              fieldsUpdatedCount: fieldsUpdated.length
+            };
+          } catch (error) {
+            console.error('❌ Failed to update booking:', error);
+            throw error;
+          }
+        }
         
         res.json({
           success: true,
