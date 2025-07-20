@@ -33,26 +33,41 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: `You are an expert at extracting client information from performance contracts, especially Musicians Union contracts.
+      system: `You are an expert at extracting client information from Musicians Union performance contracts.
 
-CRITICAL RULES:
-1. Extract the CLIENT/HIRER details, NOT the musician/performer details
-2. Tim Fulker is the MUSICIAN/PERFORMER - do NOT extract his details as the client
-3. Look for the person or organization HIRING the musician
-4. The client is who is PAYING for the performance
-5. Event details should be from the contract's performance information
-6. Fee should be the total performance fee in GBP (remove currency symbols and convert to number)
-7. If you cannot find specific information, use null
-8. Be very careful to distinguish between client and performer information
+CRITICAL EXTRACTION RULES:
+1. CLIENT/HIRER: Look for "Hirer:", "Client:", "Name of Hirer:", or person/organization hiring Tim Fulker
+2. VENUE: Look for "Venue:", "Location:", "Address of engagement:", or where performance takes place  
+3. CLIENT CONTACT: Look for hirer's email, phone, address (NOT Tim Fulker's details)
+4. EVENT TYPE: Wedding, corporate, private party, etc.
+5. FEE: Total performance fee in GBP (convert £250.00 to 250.00)
 
-Return ONLY valid JSON with no additional text or formatting.`,
+MUSICIANS UNION CONTRACT PATTERNS:
+- "Name of Hirer:" followed by client name
+- "Address of engagement:" for venue details
+- "Date of engagement:" for event date
+- "Time:" for start/end times
+- "Fee:" or "Total Fee:" for payment amount
+
+Tim Fulker = PERFORMER (ignore his details)
+Extract the HIRER/CLIENT who is paying for the performance.
+
+Return ONLY valid JSON with no additional text.`,
       messages: [{
         role: 'user',
-        content: `Extract the following information from this performance contract:
+        content: `Extract client and event information from this Musicians Union performance contract.
 
+EXAMPLE PATTERNS TO LOOK FOR:
+- "Name of Hirer: Robin Jarman" → clientName: "Robin Jarman"  
+- "Address of engagement: The Grand Hotel, London" → venue: "The Grand Hotel", venueAddress: "London"
+- "Date of engagement: 26th July 2025" → eventDate: "2025-07-26"
+- "Time: 15:45 - 19:00" → eventTime: "15:45", eventEndTime: "19:00"
+- "Fee: £260.00" → fee: 260.00
+
+CONTRACT TEXT:
 ${contractText}
 
-Return exactly this JSON structure with no additional text:
+Return exactly this JSON structure:
 {
   "clientName": "name of client/hirer (not the musician)",
   "clientEmail": "client email if found or null",
