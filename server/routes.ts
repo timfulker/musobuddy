@@ -5,7 +5,7 @@ import { setupAuthentication } from "./auth-config";
 import { isAuthenticated, isAdmin } from "./auth";
 import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema, insertImportedContractSchema } from "@shared/schema";
 import multer from 'multer';
-import { uploadFileToCloudflare, generateSignedUrl } from './cloud-storage';
+import { uploadFileToCloudflare } from './cloud-storage';
 import { createContractService } from './contract-service';
 import { 
   parseAppleCalendar,
@@ -4325,120 +4325,7 @@ Hotel Lobby Entertainment`;
     }
   });
 
-  // Learning-based contract parsing for booking forms (reuse existing upload middleware)
-
-  app.post('/api/contracts/intelligent-parse', isAuthenticated, upload.single('file'), async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { bookingId } = req.body;
-      const file = req.file;
-
-      if (!file) {
-        return res.status(400).json({ error: 'PDF file is required' });
-      }
-
-      // Extract text from PDF using pdf2json
-      let contractText = '';
-      try {
-        const PDFParser = (await import("pdf2json")).default;
-        const pdfParser = new PDFParser();
-        
-        const parsePromise = new Promise((resolve, reject) => {
-          pdfParser.on("pdfParser_dataError", reject);
-          pdfParser.on("pdfParser_dataReady", (pdfData) => {
-            let text = '';
-            if (pdfData.Pages) {
-              pdfData.Pages.forEach(page => {
-                if (page.Texts) {
-                  page.Texts.forEach(textItem => {
-                    if (textItem.R) {
-                      textItem.R.forEach(textRun => {
-                        if (textRun.T) {
-                          text += decodeURIComponent(textRun.T) + ' ';
-                        }
-                      });
-                    }
-                  });
-                }
-              });
-            }
-            resolve(text.trim());
-          });
-        });
-        
-        pdfParser.parseBuffer(file.buffer);
-        contractText = await parsePromise;
-        console.log('📄 Extracted PDF text length:', contractText.length);
-      } catch (pdfError) {
-        console.error('❌ PDF parsing failed:', pdfError);
-        return res.status(400).json({ 
-          error: 'Failed to extract text from PDF',
-          message: 'Please ensure the PDF contains readable text'
-        });
-      }
-
-      if (!contractText.trim()) {
-        return res.status(400).json({ 
-          error: 'No text found in PDF',
-          message: 'The PDF appears to be empty or contains only images'
-        });
-      }
-
-      // Parse contract using simple AI extraction
-      const { parseContractPDF } = await import('./contract-parser-simple');
-      const extractedData = await parseContractPDF(contractText);
-      
-      // Apply extracted data to booking if bookingId provided
-      let fieldsUpdated: string[] = [];
-      if (bookingId && extractedData) {
-        const booking = await storage.getBooking(bookingId, userId);
-        if (booking) {
-          const updates: any = {};
-          const fieldMappings = {
-            clientName: 'clientName',
-            clientEmail: 'clientEmail', 
-            clientPhone: 'clientPhone',
-            venue: 'venue',
-            venueAddress: 'venueAddress',
-            eventDate: 'eventDate',
-            eventTime: 'eventTime',
-            eventEndTime: 'eventEndTime',
-            fee: 'fee',
-            eventType: 'eventType'
-          };
-
-          Object.entries(fieldMappings).forEach(([extractedField, bookingField]) => {
-            if (extractedData[extractedField] && !booking[bookingField]) {
-              updates[bookingField] = extractedData[extractedField];
-              fieldsUpdated.push(bookingField);
-            }
-          });
-
-          if (Object.keys(updates).length > 0) {
-            await storage.updateBooking(bookingId, updates, userId);
-            console.log(`✅ Updated ${fieldsUpdated.length} fields in booking`);
-          }
-        }
-      }
-      
-      const fieldsExtracted = Object.keys(extractedData).filter(k => extractedData[k]).length;
-      
-      res.json({
-        success: true,
-        data: extractedData,
-        confidence: Math.min(95, 50 + (fieldsExtracted * 5)),
-        message: `Extracted ${fieldsExtracted} fields from contract`,
-        fieldsUpdated: fieldsUpdated
-      });
-      
-    } catch (error) {
-      console.error('Error parsing contract:', error);
-      res.status(500).json({ 
-        error: 'Failed to parse contract',
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
-      });
-    }
-  });
+  // Removed duplicate intelligent-parse endpoint - using unified contract-service.ts system
 
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {

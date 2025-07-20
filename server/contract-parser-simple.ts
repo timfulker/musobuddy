@@ -129,7 +129,7 @@ Return exactly this JSON structure:
             console.warn('⚠️ Skipping Tim Fulker as client name');
             return;
           }
-          cleanData[field] = cleaned;
+          (cleanData as any)[field] = cleaned;
         }
       }
     });
@@ -170,7 +170,7 @@ Return exactly this JSON structure:
           if (timeRegex.test(normalizedTime)) {
             const [hours, minutes] = normalizedTime.split(':').map(Number);
             if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-              cleanData[field] = normalizedTime;
+              (cleanData as any)[field] = normalizedTime;
             }
           } else {
             console.warn('⚠️ Invalid time format:', timeStr);
@@ -198,12 +198,12 @@ Return exactly this JSON structure:
     }
 
     console.log('✅ Enhanced contract parsing completed successfully');
-    console.log('📊 Extracted fields:', Object.keys(cleanData).filter(k => cleanData[k]).length);
+    console.log('📊 Extracted fields:', Object.keys(cleanData).filter(k => (cleanData as any)[k]).length);
     console.log('📋 Clean data:', cleanData);
 
     return cleanData;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Enhanced contract parsing failed:', error);
     throw error;
   }
@@ -214,17 +214,7 @@ export async function extractPDFText(buffer: Buffer): Promise<string> {
   try {
     console.log('📄 Extracting text from PDF buffer...');
 
-    // Try pdf-parse first (more reliable)
-    try {
-      const pdfParse = await import('pdf-parse');
-      const data = await pdfParse.default(buffer);
-      const text = data.text.trim();
-      console.log('✅ PDF text extracted successfully using pdf-parse');
-      console.log('📊 Text length:', text.length);
-      return text;
-    } catch (pdfParseError) {
-      console.warn('⚠️ pdf-parse failed, trying pdf2json:', pdfParseError.message);
-    }
+    // Using pdf2json for text extraction
 
     // Fallback to pdf2json
     const PDFParser = (await import("pdf2json")).default;
