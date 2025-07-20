@@ -176,18 +176,18 @@ export async function setupAuth(app: Express) {
             cleanup();
             
             if (isApiCall) {
-              res.json({ success: true, message: "Logged out successfully", redirectTo: "/login" });
+              res.json({ success: true, message: "Logged out successfully", redirectTo: "/" });
             } else {
-              res.redirect("/login?message=logged_out");
+              res.redirect("/?message=logged_out");
             }
           });
         } else {
           cleanup();
           
           if (isApiCall) {
-            res.json({ success: true, message: "Logged out successfully", redirectTo: "/login" });
+            res.json({ success: true, message: "Logged out successfully", redirectTo: "/" });
           } else {
-            res.redirect("/login?message=logged_out");
+            res.redirect("/?message=logged_out");
           }
         }
       });

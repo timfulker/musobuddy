@@ -54,25 +54,25 @@ export function useAuth() {
         // Force refetch of auth status
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
         
-        // Redirect to login page
+        // Redirect to landing page
         if (result.redirectTo) {
           window.location.href = result.redirectTo;
         } else {
-          window.location.href = '/login';
+          window.location.href = '/';
         }
       } else {
         console.error('❌ Logout failed:', response.status, response.statusText);
         
         // Even if server logout fails, clear client state and redirect
         queryClient.clear();
-        window.location.href = '/login?error=logout_failed';
+        window.location.href = '/?error=logout_failed';
       }
     } catch (error) {
       console.error('❌ Logout error:', error);
       
       // Fallback: clear client state and redirect anyway
       queryClient.clear();
-      window.location.href = '/login?error=logout_error';
+      window.location.href = '/?error=logout_error';
     }
   }, [queryClient]);
 
