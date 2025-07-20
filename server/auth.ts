@@ -142,7 +142,11 @@ export async function setupAuth(app: Express) {
   app.get("/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
-      res.redirect("/login");
+      req.session.destroy((err) => {
+        if (err) return next(err);
+        res.clearCookie('connect.sid');
+        res.redirect("/login");
+      });
     });
   });
 
@@ -150,7 +154,11 @@ export async function setupAuth(app: Express) {
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
-      res.json({ success: true, redirectTo: "/login" });
+      req.session.destroy((err) => {
+        if (err) return next(err);
+        res.clearCookie('connect.sid');
+        res.json({ success: true, redirectTo: "/login" });
+      });
     });
   });
 

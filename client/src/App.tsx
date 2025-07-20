@@ -53,13 +53,17 @@ function Router() {
       <Route path="/quick-add" component={QuickAdd} />
       <Route path="/login" component={LoginPage} />
       <Route path="/logout" component={() => {
-        // Client-side logout handler
+        // Client-side logout handler - clears cache and redirects
         fetch('/api/logout', {
           method: 'POST',
           credentials: 'include'
         }).then(() => {
+          // Clear React Query cache to force re-authentication
+          queryClient.clear();
           window.location.href = '/login';
         }).catch(() => {
+          // Even if logout fails, clear cache and redirect
+          queryClient.clear();
           window.location.href = '/login';
         });
         return <div>Logging out...</div>;
