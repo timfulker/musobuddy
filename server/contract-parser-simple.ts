@@ -44,7 +44,7 @@ CRITICAL UNDERSTANDING OF MUSICIANS' UNION CONTRACT FORMAT:
 - In signature section: "Signed by the Musician" = PERFORMER information (ignore this)
 
 EXTRACTION RULES:
-1. CLIENT NAME: Look for "between [NAME]" or "Signed by the Hirer: [NAME]"
+1. CLIENT NAME: Look for "Print Name [NAME]" in the "Signed by the Hirer" section. If not found, extract the person's name from "between [PERSON NAME] of [ORGANIZATION]" - use ONLY the person name, NOT the organization
 2. CLIENT ADDRESS: Look for "of [ADDRESS]" after the client name
 3. CLIENT CONTACT: Look in "Signed by the Hirer" section for phone/email
 4. VENUE: Look for "to perform...at [VENUE NAME]" or venue mentioned in engagement details
@@ -60,15 +60,18 @@ Return ONLY valid JSON with no additional text or formatting.`,
 ${contractText}
 
 Focus on these key areas:
-1. "between [CLIENT NAME]" section
-2. "of [CLIENT ADDRESS]" section  
-3. "The Hirer engages the Musician to perform...at [VENUE]"
-4. "Signed by the Hirer" section with contact details (phone and email)
-5. Table with columns: Date | Start Time | Finish Time | Fee
+1. "Print Name [NAME]" in the "Signed by the Hirer" section (this is the CLIENT NAME)
+2. "between [PERSON] of [ORGANIZATION/ADDRESS]" (extract PERSON as client name if Print Name not found)
+3. "of [CLIENT ADDRESS]" section for address
+4. "The Hirer engages the Musician to perform...at [VENUE]"
+5. Contact details (phone and email) in "Signed by the Hirer" section
+6. Table with columns: Date | Start Time | Finish Time | Fee
+
+IMPORTANT: For client name, prioritize "Print Name" field over "between" field.
 
 Return exactly this JSON structure:
 {
-  "clientName": "name of the HIRER (not Tim Fulker)",
+  "clientName": "person's name from Print Name field or between field (e.g. 'Lauren Beauchamp', not organization name)",
   "clientEmail": "hirer's email from signature section",
   "clientPhone": "hirer's phone from signature section", 
   "clientAddress": "address following 'of' after client name",
