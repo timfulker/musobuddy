@@ -52,6 +52,18 @@ function Router() {
       <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/quick-add" component={QuickAdd} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/logout" component={() => {
+        // Client-side logout handler
+        fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).then(() => {
+          window.location.href = '/login';
+        }).catch(() => {
+          window.location.href = '/login';
+        });
+        return <div>Logging out...</div>;
+      }} />
       
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
