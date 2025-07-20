@@ -4225,7 +4225,7 @@ Hotel Lobby Entertainment`;
       // Extract text from PDF
       let contractText = '';
       try {
-        const pdfParse = require('pdf-parse');
+        const pdfParse = (await import('pdf-parse')).default;
         const pdfData = await pdfParse(file.buffer);
         contractText = pdfData.text;
         console.log('📄 Extracted PDF text length:', contractText.length);
