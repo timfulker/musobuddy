@@ -1428,7 +1428,7 @@ export default function Enquiries() {
                     }}
                     variant="outline"
                     size="sm"
-                    style={isActive ? getActiveStyle(status) : {}}
+                    data-filter={isActive ? status : undefined}
                     className={
                       isActive 
                         ? 'border-2' 

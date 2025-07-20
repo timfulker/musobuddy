@@ -631,45 +631,52 @@ a[class*="purple"]:hover,
   --tw-ring-color: hsl(262, 83%, 72%) !important;
 }
 
-/* Custom filter button styles to ensure highlighting works */
-.filter-btn-active-new {
+/* Extremely specific filter button overrides - higher specificity than existing rules */
+.filter-container button[data-filter="new"] {
   background-color: #3b82f6 !important;
   color: white !important;
   border-color: #3b82f6 !important;
+  border-width: 2px !important;
 }
 
-.filter-btn-active-awaiting-response {
+.filter-container button[data-filter="awaiting_response"] {
   background-color: #fbbf24 !important;
   color: #92400e !important;
   border-color: #fbbf24 !important;
+  border-width: 2px !important;
 }
 
-.filter-btn-active-client-confirms {
+.filter-container button[data-filter="client_confirms"] {
   background-color: #f97316 !important;
   color: white !important;
   border-color: #f97316 !important;
+  border-width: 2px !important;
 }
 
-.filter-btn-active-contract-sent {
+.filter-container button[data-filter="contract_sent"] {
   background-color: #8b5cf6 !important;
   color: white !important;
   border-color: #8b5cf6 !important;
+  border-width: 2px !important;
 }
 
-.filter-btn-active-confirmed {
+.filter-container button[data-filter="confirmed"] {
   background-color: #10b981 !important;
   color: white !important;
   border-color: #10b981 !important;
+  border-width: 2px !important;
 }
 
-.filter-btn-active-cancelled {
+.filter-container button[data-filter="cancelled"] {
   background-color: #ef4444 !important;
   color: white !important;
   border-color: #ef4444 !important;
+  border-width: 2px !important;
 }
 
-.filter-btn-active-completed {
+.filter-container button[data-filter="completed"] {
   background-color: #6b7280 !important;
   color: white !important;
   border-color: #6b7280 !important;
+  border-width: 2px !important;
 }
