@@ -170,14 +170,22 @@ export class ContractService {
               const extractedValue = (parsingResult.data as any)[extractedField];
               const bookingValue = (booking as any)[bookingField];
               
-              // Check if field is empty or has default/placeholder values
+              // Check if field is empty, has default/placeholder values, or contains generic placeholder text
               const isEmpty = !bookingValue || bookingValue === '';
               const isDefaultTime = (bookingField === 'eventTime' || bookingField === 'eventEndTime') && 
                                     (bookingValue === '00:00' || bookingValue === '0:00');
+              const isGenericClientName = bookingField === 'clientName' && 
+                                         (bookingValue === 'Solo DJ & Saxophone' || 
+                                          bookingValue === 'DJ & Saxophone' ||
+                                          bookingValue === 'Solo Musician' ||
+                                          bookingValue === 'Musician');
               
-              if (extractedValue && (isEmpty || isDefaultTime)) {
+              if (extractedValue && (isEmpty || isDefaultTime || isGenericClientName)) {
                 updates[bookingField] = extractedValue;
                 fieldsUpdated.push(bookingField);
+                if (isGenericClientName) {
+                  console.log(`🔄 Replacing generic client name "${bookingValue}" with extracted "${extractedValue}"`);
+                }
               }
             });
 
