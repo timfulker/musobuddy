@@ -276,12 +276,50 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
           message: `Contract "${data.contractNumber}" uploaded successfully. Parsing and auto-populating form in 3 seconds...`
         });
         
-        // AI parsing disabled - use manual copy functionality only
-        setUploadStatus({
-          type: 'success',
-          message: `Contract uploaded successfully. Use "Copy from Contract" button to populate booking details.`
-        });
-        setTimeout(() => setUploadStatus(null), 8000);
+        // Auto-populate form after 3 seconds using the PARSED data from the response
+        setTimeout(() => {
+          console.log('🔄 Auto-populating form with parsed contract data:', data.parsedData);
+          
+          if (data.parsedData) {
+            // Map parsed data to booking form fields
+            const parsedFields = {
+              clientName: data.parsedData.client_name || '',
+              clientEmail: data.parsedData.client_email || '',
+              clientPhone: data.parsedData.client_phone || '',
+              clientAddress: data.parsedData.client_address || '',
+              venue: data.parsedData.venue_name || '',
+              venueAddress: data.parsedData.venue_address || '',
+              eventDate: data.parsedData.event_date ? new Date(data.parsedData.event_date) : null,
+              eventTime: data.parsedData.start_time || '',
+              eventEndTime: data.parsedData.end_time || '',
+              fee: data.parsedData.agreed_fee || null,
+              specialRequirements: data.parsedData.extras_or_notes || ''
+            };
+            
+            console.log('📝 Applying parsed fields to form:', parsedFields);
+            
+            // Apply each field to the form
+            Object.entries(parsedFields).forEach(([fieldName, value]) => {
+              if (value !== null && value !== '' && value !== undefined) {
+                form.setValue(fieldName as any, value);
+              }
+            });
+            
+            setUploadStatus({
+              type: 'success',
+              message: `Contract parsed and form auto-populated with client: ${data.parsedData.client_name || 'Unknown'}!`
+            });
+          } else {
+            // Fallback to using contract data if no parsed data
+            handleCopyFromContract(data.contract);
+            setUploadStatus({
+              type: 'success',
+              message: `Contract uploaded - please use "Copy from Contract" to populate form.`
+            });
+          }
+          
+          setTimeout(() => setUploadStatus(null), 5000);
+        }, 3000);
       } else {
         setUploadStatus({
           type: 'success',

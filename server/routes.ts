@@ -1394,35 +1394,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let prompt = '';
       
       if (fileType === 'contract') {
-        prompt = `ABSOLUTE CRITICAL RULE: Tim Fulker is the MUSICIAN/PERFORMER, NEVER the client.
+        // First, analyze the contract structure
+        const analysisPrompt = `Analyze this contract structure before extracting any data:
 
-This is a music contract. Extract the CLIENT information (the person HIRING Tim Fulker).
+1. What type of contract is this? (Performance agreement, service contract, etc.)
+2. List ALL party names mentioned in the contract
+3. For each party, what role indicators are near their name?
+4. Who is paying whom according to payment terms?
 
-STEP 1: Identify the two parties
-- Look for "between [CLIENT NAME] and Tim Fulker" or similar
-- Tim Fulker = musician (IGNORE his details)
-- The OTHER person = client (EXTRACT their details)
-
-STEP 2: Find CLIENT details (NOT Tim Fulker's details)
-- CLIENT NAME: The person hiring Tim Fulker (NOT Tim Fulker himself)
-- CLIENT ADDRESS: The client's address (NOT Tim Fulker's address)
-- CLIENT EMAIL: The client's email (NOT timfulkermusic@gmail.com)
-- CLIENT PHONE: The client's phone (NOT Tim Fulker's phone)
-
-STEP 3: Event information
-- VENUE: Where the performance happens
-- DATE: Performance date
-- TIME: Start and end times
-- FEE: Amount client pays Tim Fulker
-
-FORBIDDEN: Do not extract Tim Fulker's details as client information.
-
-Return JSON:
+Return a structured analysis in JSON format:
 {
-  "client_name": "string (NOT Tim Fulker)",
-  "client_email": "string (NOT timfulkermusic@gmail.com)", 
-  "client_phone": "string (NOT Tim Fulker's phone)",
-  "client_address": "string (NOT Tim Fulker's address)",
+  "contract_analysis": {
+    "contract_type": "string",
+    "all_parties": [
+      {"name": "Party Name", "role_indicators": ["client", "venue"], "context": "surrounding text"},
+      {"name": "Tim Fulker", "role_indicators": ["performer", "musician"], "context": "surrounding text"}
+    ],
+    "payment_direction": "Who pays whom",
+    "client_party": "Name of the party that is NOT Tim Fulker"
+  }
+}
+
+Contract text:
+${extractedText}`;
+
+        // Get structure analysis first
+        const analysisResponse = await anthropic.messages.create({
+          model: "claude-3-5-sonnet-20241022",
+          max_tokens: 800,
+          messages: [{ role: "user", content: analysisPrompt }]
+        });
+
+        const analysisText = analysisResponse.content[0].text;
+        console.log('📋 Contract analysis:', analysisText);
+
+        // Now extract data based on the analysis
+        prompt = `Based on this contract analysis, extract the CLIENT information (NOT Tim Fulker's information):
+
+${analysisText}
+
+EXTRACTION RULES:
+- Tim Fulker = PERFORMER/MUSICIAN (ignore his details)
+- CLIENT = The other party who is hiring Tim Fulker
+- Extract ONLY the client's contact information
+
+Return JSON with the CLIENT's details:
+{
+  "client_name": "string (the non-Tim Fulker party)",
+  "client_email": "string (client's email, not timfulkermusic@gmail.com)", 
+  "client_phone": "string (client's phone)",
+  "client_address": "string (client's address)",
   "venue_name": "string",
   "venue_address": "string",
   "event_date": "YYYY-MM-DD",
@@ -1491,9 +1512,19 @@ ${extractedText}`;
       const cloudStorageKey = `contracts/${contractNumber}-${file.originalname}`;
       const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
       
-      // AI parsing disabled - skip document parsing
+      // Attempt to parse document using improved two-step extraction
       let parsedData = null;
       let parseError = null;
+      
+      try {
+        parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
+        console.log('📄 Document parsing successful:', parsedData);
+        console.log('📄 Fee value type:', typeof parsedData?.fee, 'Value:', parsedData?.fee);
+        console.log('📄 Deposit value type:', typeof parsedData?.deposit, 'Value:', parsedData?.deposit);
+      } catch (error) {
+        parseError = error;
+        console.warn('⚠️ Document parsing failed, continuing with manual data:', error.message);
+      }
       
       // Helper function to safely parse values from AI response
       const safeParseValue = (value: any, defaultValue: any) => {
