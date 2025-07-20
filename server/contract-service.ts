@@ -186,6 +186,11 @@ export class ContractService {
               updates.eventDate = new Date(updates.eventDate);
             }
 
+            // Auto-confirm booking when contract is uploaded and parsed successfully
+            updates.status = 'confirmed';
+            updates.contractSigned = true;
+            fieldsUpdated.push('status', 'contractSigned');
+
             if (Object.keys(updates).length > 0) {
               await this.storage.updateBooking(bookingId, updates, userId);
               bookingResult = {
@@ -194,6 +199,7 @@ export class ContractService {
                 fieldsUpdatedCount: fieldsUpdated.length
               };
               console.log(`✅ Updated ${fieldsUpdated.length} fields in booking`);
+              console.log(`🎯 Booking auto-confirmed due to contract upload`);
             }
           }
         } catch (applyError) {
