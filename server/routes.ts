@@ -4210,6 +4210,73 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Learning-based contract parsing for booking forms
+  const contractUpload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PDF files are allowed'));
+      }
+    }
+  });
+
+  app.post('/api/contracts/intelligent-parse', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { bookingId } = req.body;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: 'PDF file is required' });
+      }
+
+      // Extract text from PDF
+      let contractText = '';
+      try {
+        const pdfParse = await import('pdf-parse');
+        const pdfData = await pdfParse.default(file.buffer);
+        contractText = pdfData.text;
+        console.log('📄 Extracted text from PDF:', contractText.substring(0, 200) + '...');
+      } catch (pdfError) {
+        console.error('❌ PDF parsing failed:', pdfError);
+        return res.status(400).json({ 
+          error: 'Failed to extract text from PDF',
+          message: 'Please ensure the PDF contains readable text'
+        });
+      }
+
+      if (!contractText.trim()) {
+        return res.status(400).json({ 
+          error: 'No text found in PDF',
+          message: 'The PDF appears to be empty or contains only images'
+        });
+      }
+
+      // Use learning system that improves from manual extractions
+      const { ContractLearningSystem } = await import('./contract-learning-system');
+      const learningSystem = new ContractLearningSystem(storage);
+      
+      const result = await learningSystem.intelligentExtraction(contractText, userId);
+      
+      // If bookingId provided, apply the extracted data
+      if (result.success && bookingId) {
+        const applyResult = await learningSystem.applyToBooking(bookingId, result.data, userId);
+        result.fieldsUpdated = applyResult.fieldsUpdated;
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error in learning-based parsing:', error);
+      res.status(500).json({ 
+        error: 'Failed to parse contract',
+        message: error.message 
+      });
+    }
+  });
+
   // Catch-all route to log any unmatched requests
   app.use('*', (req, res, next) => {
     console.log(`=== UNMATCHED ROUTE: ${req.method} ${req.originalUrl} ===`);

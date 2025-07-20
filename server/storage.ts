@@ -72,6 +72,10 @@ export interface IStorage {
   createUser(user: any): Promise<User>;
   updateUserInfo(userId: string, updates: any): Promise<boolean>;
   
+  // Contract learning operations
+  getManualExtractions(userId: string, limit?: number): Promise<any[]>;
+  saveManualCorrection(data: any): Promise<boolean>;
+  
   // Admin operations
   getUsersWithStats(): Promise<any[]>;
   getAdminStats(): Promise<any>;
@@ -2165,6 +2169,49 @@ export class DatabaseStorage implements IStorage {
   async createContractExtractionPattern(pattern: InsertContractExtractionPattern): Promise<ContractExtractionPattern> {
     const [result] = await db.insert(contractExtractionPatterns).values(pattern).returning();
     return result;
+  }
+
+  // Contract learning operations
+  async getManualExtractions(userId: string, limit: number = 5): Promise<any[]> {
+    try {
+      const extractions = await db
+        .select()
+        .from(contractExtractions)
+        .where(eq(contractExtractions.userId, userId))
+        .orderBy(desc(contractExtractions.createdAt))
+        .limit(limit);
+      
+      return extractions.map(extraction => ({
+        id: extraction.id,
+        importedContractId: extraction.importedContractId,
+        extractedData: extraction.extractedData,
+        extractionTimeSeconds: extraction.extractionTimeSeconds,
+        userId: extraction.userId,
+        createdAt: extraction.createdAt
+      }));
+    } catch (error) {
+      console.error('Error getting manual extractions:', error);
+      return [];
+    }
+  }
+
+  async saveManualCorrection(data: any): Promise<boolean> {
+    try {
+      // Store the manual correction as a learning pattern
+      await db.insert(contractExtractionPatterns).values({
+        contractId: data.contractId,
+        aiExtraction: data.aiExtraction,
+        manualExtraction: data.manualExtraction,
+        userId: data.userId,
+        createdAt: new Date()
+      });
+      
+      console.log('✅ Manual correction saved for learning');
+      return true;
+    } catch (error) {
+      console.error('Error saving manual correction:', error);
+      return false;
+    }
   }
 }
 
