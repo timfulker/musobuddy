@@ -4222,12 +4222,37 @@ Hotel Lobby Entertainment`;
         return res.status(400).json({ error: 'PDF file is required' });
       }
 
-      // Extract text from PDF
+      // Extract text from PDF using pdf2json
       let contractText = '';
       try {
-        const pdfParse = (await import('pdf-parse')).default;
-        const pdfData = await pdfParse(file.buffer);
-        contractText = pdfData.text;
+        const PDFParser = require("pdf2json");
+        const pdfParser = new PDFParser();
+        
+        const parsePromise = new Promise((resolve, reject) => {
+          pdfParser.on("pdfParser_dataError", reject);
+          pdfParser.on("pdfParser_dataReady", (pdfData) => {
+            let text = '';
+            if (pdfData.Pages) {
+              pdfData.Pages.forEach(page => {
+                if (page.Texts) {
+                  page.Texts.forEach(textItem => {
+                    if (textItem.R) {
+                      textItem.R.forEach(textRun => {
+                        if (textRun.T) {
+                          text += decodeURIComponent(textRun.T) + ' ';
+                        }
+                      });
+                    }
+                  });
+                }
+              });
+            }
+            resolve(text.trim());
+          });
+        });
+        
+        pdfParser.parseBuffer(file.buffer);
+        contractText = await parsePromise;
         console.log('📄 Extracted PDF text length:', contractText.length);
       } catch (pdfError) {
         console.error('❌ PDF parsing failed:', pdfError);
