@@ -140,25 +140,57 @@ export async function setupAuth(app: Express) {
 
   // GET /logout for direct browser navigation (redirects to login)
   app.get("/logout", (req, res, next) => {
+    console.log('🚪 GET /logout - destroying session');
     req.logout((err) => {
-      if (err) return next(err);
-      req.session.destroy((err) => {
-        if (err) return next(err);
-        res.clearCookie('connect.sid');
+      if (err) {
+        console.error('❌ Logout error:', err);
+        return next(err);
+      }
+      
+      if (req.session) {
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('❌ Session destroy error:', err);
+            return next(err);
+          }
+          console.log('✅ Session destroyed successfully');
+          res.clearCookie('connect.sid', { path: '/' });
+          res.clearCookie('connect.sid', { path: '/', domain: req.get('host') });
+          res.redirect("/login");
+        });
+      } else {
+        console.log('⚠️ No session to destroy');
+        res.clearCookie('connect.sid', { path: '/' });
         res.redirect("/login");
-      });
+      }
     });
   });
 
   // POST /api/logout for AJAX calls (returns JSON)
   app.post("/api/logout", (req, res, next) => {
+    console.log('🚪 POST /api/logout - destroying session');
     req.logout((err) => {
-      if (err) return next(err);
-      req.session.destroy((err) => {
-        if (err) return next(err);
-        res.clearCookie('connect.sid');
+      if (err) {
+        console.error('❌ Logout error:', err);
+        return next(err);
+      }
+      
+      if (req.session) {
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('❌ Session destroy error:', err);
+            return next(err);
+          }
+          console.log('✅ Session destroyed successfully');
+          res.clearCookie('connect.sid', { path: '/' });
+          res.clearCookie('connect.sid', { path: '/', domain: req.get('host') });
+          res.json({ success: true, redirectTo: "/login" });
+        });
+      } else {
+        console.log('⚠️ No session to destroy');
+        res.clearCookie('connect.sid', { path: '/' });
         res.json({ success: true, redirectTo: "/login" });
-      });
+      }
     });
   });
 
