@@ -4228,7 +4228,7 @@ Hotel Lobby Entertainment`;
         const pdfParse = require('pdf-parse');
         const pdfData = await pdfParse(file.buffer);
         contractText = pdfData.text;
-        console.log('📄 Extracted text from PDF:', contractText.substring(0, 200) + '...');
+        console.log('📄 Extracted PDF text length:', contractText.length);
       } catch (pdfError) {
         console.error('❌ PDF parsing failed:', pdfError);
         return res.status(400).json({ 
@@ -4244,21 +4244,55 @@ Hotel Lobby Entertainment`;
         });
       }
 
-      // Use learning system that improves from manual extractions
-      const { ContractLearningSystem } = await import('./contract-learning-system-clean');
-      const learningSystem = new ContractLearningSystem(storage);
+      // Parse contract using simple AI extraction
+      const { parseContractPDF } = await import('./contract-parser-simple');
+      const extractedData = await parseContractPDF(contractText);
       
-      const result = await learningSystem.intelligentExtraction(contractText, userId);
-      
-      // If bookingId provided, apply the extracted data
-      if (result.success && bookingId) {
-        const applyResult = await learningSystem.applyToBooking(bookingId, result.data, userId);
-        result.fieldsUpdated = applyResult.fieldsUpdated;
+      // Apply extracted data to booking if bookingId provided
+      let fieldsUpdated: string[] = [];
+      if (bookingId && extractedData) {
+        const booking = await storage.getBooking(bookingId, userId);
+        if (booking) {
+          const updates: any = {};
+          const fieldMappings = {
+            clientName: 'clientName',
+            clientEmail: 'clientEmail', 
+            clientPhone: 'clientPhone',
+            venue: 'venue',
+            venueAddress: 'venueAddress',
+            eventDate: 'eventDate',
+            eventTime: 'eventTime',
+            eventEndTime: 'eventEndTime',
+            fee: 'fee',
+            eventType: 'eventType'
+          };
+
+          Object.entries(fieldMappings).forEach(([extractedField, bookingField]) => {
+            if (extractedData[extractedField] && !booking[bookingField]) {
+              updates[bookingField] = extractedData[extractedField];
+              fieldsUpdated.push(bookingField);
+            }
+          });
+
+          if (Object.keys(updates).length > 0) {
+            await storage.updateBooking(bookingId, updates, userId);
+            console.log(`✅ Updated ${fieldsUpdated.length} fields in booking`);
+          }
+        }
       }
       
-      res.json(result);
+      const fieldsExtracted = Object.keys(extractedData).filter(k => extractedData[k]).length;
+      
+      res.json({
+        success: true,
+        data: extractedData,
+        confidence: Math.min(95, 50 + (fieldsExtracted * 5)),
+        message: `Extracted ${fieldsExtracted} fields from contract`,
+        fieldsUpdated: fieldsUpdated
+      });
+      
     } catch (error) {
-      console.error('Error in learning-based parsing:', error);
+      console.error('Error parsing contract:', error);
       res.status(500).json({ 
         error: 'Failed to parse contract',
         message: error instanceof Error ? error.message : 'Unknown error occurred'
