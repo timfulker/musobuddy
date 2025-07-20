@@ -1394,67 +1394,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let prompt = '';
       
       if (fileType === 'contract') {
-        // First, analyze the contract structure
-        const analysisPrompt = `Analyze this contract structure before extracting any data:
+        // Check if this is a Musicians' Union contract and use structural parsing
+        if (extractedText.includes("Musicians' Union") && extractedText.includes("Hiring a Solo Musician")) {
+          console.log('📋 Detected Musicians\' Union contract - using structural parsing');
+          
+          // Use structural parsing for Musicians' Union contracts
+          prompt = `TASK: Extract CLIENT information from this Musicians' Union contract using structural markers.
 
-1. What type of contract is this? (Performance agreement, service contract, etc.)
-2. List ALL party names mentioned in the contract
-3. For each party, what role indicators are near their name?
-4. Who is paying whom according to payment terms?
-
-Return a structured analysis in JSON format:
-{
-  "contract_analysis": {
-    "contract_type": "string",
-    "all_parties": [
-      {"name": "Party Name", "role_indicators": ["client", "venue"], "context": "surrounding text"},
-      {"name": "Tim Fulker", "role_indicators": ["performer", "musician"], "context": "surrounding text"}
-    ],
-    "payment_direction": "Who pays whom",
-    "client_party": "Name of the party that is NOT Tim Fulker"
-  }
-}
-
-Contract text:
-${extractedText}`;
-
-        // Get structure analysis first
-        const analysisResponse = await anthropic.messages.create({
-          model: "claude-3-5-sonnet-20241022",
-          max_tokens: 800,
-          messages: [{ role: "user", content: analysisPrompt }]
-        });
-
-        const analysisText = analysisResponse.content[0].text;
-        console.log('📋 Contract analysis:', analysisText);
-
-        // Now extract data based on the analysis
-        prompt = `Based on this contract analysis, extract the CLIENT information (NOT Tim Fulker's information):
-
-${analysisText}
+STRUCTURAL MARKERS TO USE:
+1. "between [HIRER NAME]" pattern - this is the CLIENT
+2. "Signed by the Hirer" section - contains CLIENT contact details
+3. "Signed by the Musician" section - contains PERFORMER details (IGNORE this)
 
 EXTRACTION RULES:
-- Tim Fulker = PERFORMER/MUSICIAN (ignore his details)
-- CLIENT = The other party who is hiring Tim Fulker
-- Extract ONLY the client's contact information
+- HIRER = CLIENT (the person hiring the musician)
+- Extract ONLY the hirer's information
+- IGNORE all musician/performer information
 
-Return JSON with the CLIENT's details:
+CONTRACT TEXT:
+${extractedText}
+
+RESPOND WITH JSON:
 {
-  "client_name": "string (the non-Tim Fulker party)",
-  "client_email": "string (client's email, not timfulkermusic@gmail.com)", 
-  "client_phone": "string (client's phone)",
-  "client_address": "string (client's address)",
-  "venue_name": "string",
-  "venue_address": "string",
-  "event_date": "YYYY-MM-DD",
-  "start_time": "HH:MM",
-  "end_time": "HH:MM", 
+  "client_name": "name from 'between [NAME]' or hirer signature section",
+  "client_email": "email from hirer signature section", 
+  "client_phone": "phone from hirer signature section",
+  "client_address": "address from 'between [NAME] of [ADDRESS]' or hirer section",
+  "venue_name": "venue name from contract",
+  "venue_address": "venue address from contract",
+  "event_date": "YYYY-MM-DD format",
+  "start_time": "HH:MM format",
+  "end_time": "HH:MM format", 
   "agreed_fee": number,
-  "extras_or_notes": "string"
-}
+  "extras_or_notes": "any special requirements or notes"
+}`;
+        } else {
+          // Fallback for other contract types - use general structural approach
+          console.log('📋 Using general contract parsing for non-MU contract');
+          
+          prompt = `TASK: Extract CLIENT information from this music performance contract.
 
-Contract text:
-${extractedText}`;
+STRUCTURAL APPROACH:
+1. Find the contract parties (usually "between X and Y" pattern)
+2. Identify signature sections to determine roles
+3. Extract the HIRER/CLIENT information (NOT the performer)
+
+CRITICAL RULES:
+- CLIENT = Person/organization hiring the musician
+- PERFORMER = The musician being hired (exclude this)
+- Look for "hirer", "client", "customer" vs "musician", "performer", "artist"
+
+CONTRACT TEXT:
+${extractedText}
+
+RESPOND WITH JSON:
+{
+  "client_name": "name of the hiring party",
+  "client_email": "client email address", 
+  "client_phone": "client phone number",
+  "client_address": "client address",
+  "venue_name": "performance venue",
+  "venue_address": "venue address",
+  "event_date": "YYYY-MM-DD format",
+  "start_time": "HH:MM format",
+  "end_time": "HH:MM format", 
+  "agreed_fee": number,
+  "extras_or_notes": "special requirements"
+}`;
+        }
       } else {
         prompt = `Parse this invoice and extract key information. Return only JSON:
 {
