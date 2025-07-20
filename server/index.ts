@@ -362,7 +362,7 @@ console.log('🔧 Setting up Vite middleware...');
 
 try {
   if (app.get('env') === 'development') {
-    await setupVite(app);
+    await setupVite(app, server);
     console.log('✅ Vite middleware set up');
   } else {
     serveStatic(app);
