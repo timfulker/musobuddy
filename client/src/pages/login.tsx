@@ -14,6 +14,8 @@ import logoImage from "/musobuddy-logo-purple.png";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -61,6 +63,42 @@ export default function LoginPage() {
       setError(error.message);
       toast({
         title: "Login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const passwordResetMutation = useMutation({
+    mutationFn: async (data: { email: string; newPassword: string }) => {
+      const response = await fetch('/api/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Password reset failed');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully updated. Please log in with your new password.",
+      });
+      setShowPasswordReset(false);
+      setNewPassword("");
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+      toast({
+        title: "Password reset failed",
         description: error.message,
         variant: "destructive",
       });
