@@ -4225,7 +4225,7 @@ Hotel Lobby Entertainment`;
       // Extract text from PDF using pdf2json
       let contractText = '';
       try {
-        const PDFParser = require("pdf2json");
+        const PDFParser = (await import("pdf2json")).default;
         const pdfParser = new PDFParser();
         
         const parsePromise = new Promise((resolve, reject) => {
