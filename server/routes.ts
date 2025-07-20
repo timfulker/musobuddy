@@ -1334,10 +1334,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (data.text && data.text.trim().length > 0) {
               extractedText = data.text;
               console.log(`✅ pdf-parse extraction successful: ${extractedText.length} characters`);
-              console.log('📄 First 500 characters:', extractedText.substring(0, 500));
+              console.log('📄 EXTRACTED TEXT START ===');
+              console.log(extractedText);
+              console.log('=== EXTRACTED TEXT END');
             }
           } catch (error) {
-            console.log('pdf-parse failed, trying pdf2json fallback...');
+            console.log('pdf-parse failed, trying pdf2json fallback...', error.message);
             
             // Method 2: Fallback to improved pdf2json
             const PDFParser = await import('pdf2json');
@@ -1511,6 +1513,10 @@ Return JSON:
       }
 
       console.log('🤖 Calling Claude API...');
+      console.log('🤖 PROMPT BEING SENT TO CLAUDE:');
+      console.log('='.repeat(50));
+      console.log(prompt);
+      console.log('='.repeat(50));
 
       const response = await anthropic.messages.create({
         model: "claude-3-5-sonnet-20241022",
@@ -1520,7 +1526,10 @@ Return JSON:
       });
 
       const responseText = response.content[0].text;
-      console.log('🤖 Claude raw response:', responseText);
+      console.log('🤖 CLAUDE RAW RESPONSE:');
+      console.log('='.repeat(50));
+      console.log(responseText);
+      console.log('='.repeat(50));
       
       // Better JSON extraction
       let parsedData = null;
