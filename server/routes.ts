@@ -1393,30 +1393,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create parsing prompt based on document type (using ChatGPT's recommended approach)
       const prompt = fileType === 'contract' ? `
-You are reading a standard musician hire contract. Extract the following fields and return as JSON:
+You are an expert at parsing Musicians' Union contracts. These contracts have a very specific format.
 
-IMPORTANT: Distinguish between client (person hiring) and performer (musician being hired):
-- client_name (the person/company hiring the musician)
-- client_email (email of the client/hirer)
-- client_phone (phone of the client/hirer)
-- client_address (ONLY the address of the client/hirer. If the only address shown is clearly the performer's address, leave this field null or empty)
+CRITICAL PARSING INSTRUCTIONS FOR MUSICIANS' UNION CONTRACTS:
+1. Look for the section that says "An agreement made on [DATE] between [CLIENT NAME] of [CLIENT ADDRESS] and [PERFORMER NAME] of [PERFORMER ADDRESS]"
+2. The CLIENT is the person/organization hiring the musician (called "Hirer" in the contract)
+3. The PERFORMER is the musician being hired
+4. In the signature section, look for "Signed by the Hirer" and "Signed by the Musician" - this will have phone numbers and emails
+5. Times may be in 4-digit format (like 1545 = 15:45)
+6. Dates may be written as "Saturday 26th July 2025" which should become "2025-07-26"
+7. Fees may include descriptive text like "£260 for 2 hours (split)" - extract just the numeric value
+
+EXAMPLE CONTRACT STRUCTURE:
+"An agreement made on 12/06/2025
+between Robin Jarman
+of The Drift, Hall Lane, Upper Farringdon Nr Alton GU34 3EA.
+and Tim Fulker  
+of 59, Gloucester Road, Bournemouth. Dorset BH7 6JA"
+
+This means:
+- CLIENT: Robin Jarman (the hirer)
+- CLIENT ADDRESS: The Drift, Hall Lane, Upper Farringdon Nr Alton GU34 3EA
+- PERFORMER: Tim Fulker (the musician)
+- PERFORMER ADDRESS: 59, Gloucester Road, Bournemouth. Dorset BH7 6JA
+
+Extract these exact fields and return ONLY valid JSON:
+- client_name (the person/company hiring - THE HIRER)
+- client_email (email of the client/hirer from signature section)
+- client_phone (phone of the client/hirer from signature section)
+- client_address (full address of the client/hirer)
 - performer_name (the musician being hired)
-- performer_email (email of the performer/musician)
-- performer_phone (phone of the performer/musician)
-- event_date (YYYY-MM-DD format)
-- start_time (extract time as written, e.g., "8pm", "20:00")
-- end_time (extract time as written, e.g., "11pm", "23:00")
-- venue_name (where the event takes place)
+- performer_email (email of the performer/musician from signature section)
+- performer_phone (phone of the performer/musician from signature section)
+- performer_address (address of the performer/musician)
+- event_date (date in YYYY-MM-DD format)
+- start_time (time in HH:MM format, convert 4-digit format like 1545 to 15:45)
+- end_time (time in HH:MM format, convert 4-digit format like 1900 to 19:00)
+- venue_name (name of the venue where performance takes place)
 - venue_address (address of the venue)
-- agreed_fee (number only, no currency symbols)
-- deposit_amount (number only, no currency symbols)
-- deposit_due_date
-- bank_account_name
-- bank_account_number
-- bank_sort_code
-- extras_or_notes (any special requirements, equipment needs, etc.)
-
-The contract will show details for both the person hiring (client) and the musician being hired (performer). Make sure to extract the correct address for each. Return ONLY valid JSON with no additional text.
+- agreed_fee (numeric value only, extract number from text like "£260 for 2 hours")
+- deposit_amount (numeric value only)
+- deposit_due_date (date in YYYY-MM-DD format)
+- bank_account_name (account holder name)
+- bank_account_number (account number)
+- bank_sort_code (sort code)
+- extras_or_notes (any additional notes or requirements)
 
 Contract text:
 ${extractedText}
