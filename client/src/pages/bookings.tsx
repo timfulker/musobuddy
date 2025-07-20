@@ -1396,6 +1396,26 @@ export default function Enquiries() {
                 const count = enquiries.filter(e => mapOldStatusToStage(e.status) === status).length;
                 const isActive = activeStatusFilters.includes(status);
                 
+                // Define colors directly inline for better control
+                const getActiveStyle = (status: string) => {
+                  const colors = {
+                    'new': { bg: '#3b82f6', text: 'white', border: '#3b82f6' },
+                    'awaiting_response': { bg: '#fbbf24', text: '#92400e', border: '#fbbf24' },
+                    'client_confirms': { bg: '#f97316', text: 'white', border: '#f97316' },
+                    'contract_sent': { bg: '#8b5cf6', text: 'white', border: '#8b5cf6' },
+                    'confirmed': { bg: '#10b981', text: 'white', border: '#10b981' },
+                    'cancelled': { bg: '#ef4444', text: 'white', border: '#ef4444' },
+                    'completed': { bg: '#6b7280', text: 'white', border: '#6b7280' }
+                  };
+                  const color = colors[status as keyof typeof colors];
+                  return color ? {
+                    backgroundColor: color.bg,
+                    color: color.text,
+                    borderColor: color.border,
+                    borderWidth: '2px'
+                  } : {};
+                };
+                
                 return (
                   <Button
                     key={status}
@@ -1408,9 +1428,10 @@ export default function Enquiries() {
                     }}
                     variant="outline"
                     size="sm"
+                    style={isActive ? getActiveStyle(status) : {}}
                     className={
                       isActive 
-                        ? `filter-btn-active-${status} border-2`
+                        ? 'border-2' 
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                     }
                   >

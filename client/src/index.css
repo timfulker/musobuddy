@@ -638,19 +638,19 @@ a[class*="purple"]:hover,
   border-color: #3b82f6 !important;
 }
 
-.filter-btn-active-awaiting_response {
+.filter-btn-active-awaiting-response {
   background-color: #fbbf24 !important;
   color: #92400e !important;
   border-color: #fbbf24 !important;
 }
 
-.filter-btn-active-client_confirms {
+.filter-btn-active-client-confirms {
   background-color: #f97316 !important;
   color: white !important;
   border-color: #f97316 !important;
 }
 
-.filter-btn-active-contract_sent {
+.filter-btn-active-contract-sent {
   background-color: #8b5cf6 !important;
   color: white !important;
   border-color: #8b5cf6 !important;
