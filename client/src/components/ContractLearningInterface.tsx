@@ -127,6 +127,8 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
       // Keep the form populated - don't clear the contract selection
       // This allows users to review their work and make additional extractions
       setStartTime(null); // Reset timer only
+      
+      console.log('✅ Manual extraction saved successfully - form data preserved');
     } catch (error) {
       toast({
         title: 'Error',
@@ -425,17 +427,24 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button
                 variant="outline"
-                onClick={() => setSelectedContract(null)}
+                onClick={() => {
+                  console.log('⚠️ User clicked Cancel - returning to contract selection');
+                  setSelectedContract(null);
+                }}
                 disabled={isExtracting}
               >
-                Cancel
+                ← Back to Contracts
               </Button>
               <Button
-                onClick={handleSaveExtraction}
+                onClick={() => {
+                  console.log('💾 User clicked Save - preserving form data');
+                  handleSaveExtraction();
+                }}
                 disabled={isExtracting}
+                className="bg-green-600 hover:bg-green-700"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isExtracting ? 'Saving...' : 'Save Extraction'}
+                {isExtracting ? 'Saving...' : 'Save & Continue'}
               </Button>
             </div>
           </CardContent>
