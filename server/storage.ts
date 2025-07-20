@@ -2155,8 +2155,12 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getContractExtractions(userId: string): Promise<ContractExtraction[]> {
-    return await db.select().from(contractExtractions).where(eq(contractExtractions.userId, userId)).orderBy(desc(contractExtractions.createdAt));
+  async getContractExtractions(userId: string, limit?: number): Promise<ContractExtraction[]> {
+    let query = db.select().from(contractExtractions).where(eq(contractExtractions.userId, userId)).orderBy(desc(contractExtractions.createdAt));
+    if (limit) {
+      query = query.limit(limit);
+    }
+    return await query;
   }
 
   async getContractExtractionPatterns(contractType?: string): Promise<ContractExtractionPattern[]> {

@@ -389,7 +389,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       formData.append('file', file);
       formData.append('bookingId', booking.id.toString());
 
-      const response = await fetch('/api/contracts/parse', {
+      const response = await fetch('/api/contracts/intelligent-parse', {
         method: 'POST',
         credentials: 'include',
         body: formData

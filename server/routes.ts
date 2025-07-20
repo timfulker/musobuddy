@@ -2706,7 +2706,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CONTRACT PARSING ROUTES - Enhanced Implementation
   // ========================================
 
-  // Main contract parsing endpoint
+  // Intelligent contract parsing endpoint - Uses training data
+  app.post('/api/contracts/intelligent-parse', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { bookingId } = req.body;
+      const file = req.file;
+
+      console.log('🧠 Intelligent contract parsing request received');
+      console.log('👤 User ID:', userId);
+      console.log('📁 File:', file ? file.originalname : 'No file');
+      console.log('🔗 Booking ID:', bookingId);
+
+      if (!file) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'PDF_FILE_REQUIRED',
+          message: 'Please upload a PDF contract file'
+        });
+      }
+
+      // Extract text from PDF
+      const { extractPDFText } = require('./contract-parser-simple');
+      let contractText: string;
+      try {
+        contractText = await extractPDFText(file.buffer);
+      } catch (extractError) {
+        return res.status(400).json({
+          success: false,
+          error: 'PDF_EXTRACTION_FAILED',
+          message: 'Failed to extract text from PDF'
+        });
+      }
+
+      // Use intelligent parser
+      const { createIntelligentParser } = require('./intelligent-contract-parser');
+      const intelligentParser = createIntelligentParser(storage);
+      
+      const extractedData = await intelligentParser.parseContract(contractText, userId);
+      const fieldsExtracted = Object.keys(extractedData).filter(k => extractedData[k] !== undefined && extractedData[k] !== null).length;
+      const confidence = Math.min(95, Math.max(50, 40 + (fieldsExtracted * 6)));
+
+      if (bookingId) {
+        // Apply to booking if provided
+        const contractService = getContractService();
+        const booking = await storage.getBooking(parseInt(bookingId), userId);
+        
+        if (!booking) {
+          return res.status(404).json({
+            success: false,
+            error: 'BOOKING_NOT_FOUND',
+            message: 'Booking not found'
+          });
+        }
+
+        // Apply extracted data to booking
+        const updateResult = await contractService.applyDataToBooking(extractedData, booking, storage);
+        
+        res.json({
+          success: true,
+          data: extractedData,
+          confidence,
+          fieldsExtracted,
+          message: `Intelligent parsing completed with ${confidence}% confidence using your training data`,
+          booking: {
+            updated: updateResult.updated,
+            fieldsUpdated: updateResult.fieldsUpdated,
+            fieldsUpdatedCount: updateResult.fieldsUpdatedCount
+          }
+        });
+      } else {
+        // Just return parsing results
+        res.json({
+          success: true,
+          data: extractedData,
+          confidence,
+          fieldsExtracted,
+          message: `Intelligent parsing completed with ${confidence}% confidence using your training data`
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Intelligent parsing error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'INTELLIGENT_PARSING_FAILED',
+        message: error.message || 'Intelligent parsing failed'
+      });
+    }
+  });
+
+  // Main contract parsing endpoint (fallback to simple parser)
   app.post('/api/contracts/parse', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
     try {
       const userId = req.user.id;
