@@ -3602,18 +3602,22 @@ Hotel Lobby Entertainment`;
     try {
       const userId = req.user.id;
       
-      // Get all bookings first
+      // Direct database deletion using SQL for complete removal
+      const { db } = await import('./db');
+      const { bookings } = await import('../shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Get count first
       const allBookings = await storage.getBookings(userId);
+      const count = allBookings.length;
       
-      // Delete all bookings
-      for (const booking of allBookings) {
-        await storage.deleteBooking(booking.id, userId);
-      }
+      // Direct database delete
+      await db.delete(bookings).where(eq(bookings.userId, userId));
       
-      console.log(`✅ Cleared ${allBookings.length} bookings for user ${userId}`);
+      console.log(`✅ Cleared ${count} bookings for user ${userId} via direct database deletion`);
       res.json({ 
-        message: `Cleared ${allBookings.length} bookings successfully`,
-        count: allBookings.length 
+        message: `Cleared ${count} bookings successfully`,
+        count: count 
       });
     } catch (error) {
       console.error('Error clearing bookings:', error);
@@ -3625,18 +3629,22 @@ Hotel Lobby Entertainment`;
     try {
       const userId = req.user.id;
       
-      // Get all contracts first
+      // Direct database deletion using SQL for complete removal
+      const { db } = await import('./db');
+      const { contracts } = await import('../shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Get count first
       const allContracts = await storage.getContracts(userId);
+      const count = allContracts.length;
       
-      // Delete all contracts
-      for (const contract of allContracts) {
-        await storage.deleteContract(contract.id, userId);
-      }
+      // Direct database delete
+      await db.delete(contracts).where(eq(contracts.userId, userId));
       
-      console.log(`✅ Cleared ${allContracts.length} contracts for user ${userId}`);
+      console.log(`✅ Cleared ${count} contracts for user ${userId} via direct database deletion`);
       res.json({ 
-        message: `Cleared ${allContracts.length} contracts successfully`,
-        count: allContracts.length 
+        message: `Cleared ${count} contracts successfully`,
+        count: count 
       });
     } catch (error) {
       console.error('Error clearing contracts:', error);
@@ -3677,6 +3685,7 @@ Hotel Lobby Entertainment`;
             <strong>Ready for Import:</strong> Your database is now clean and ready for reimporting your Google booking data.
         </div>
         
+        <button class="cleanup-btn" onclick="forceCleanup()">🗑️ Force Clear Database</button>
         <button class="safe-btn" onclick="checkStatus()">📊 Check Current Status</button>
         <button class="safe-btn" onclick="goToDashboard()">🏠 Return to Dashboard</button>
         
@@ -3706,6 +3715,46 @@ Hotel Lobby Entertainment`;
                 \`;
             } catch (error) {
                 document.getElementById('status').innerHTML = \`<div class="error status">Error checking status: \${error.message}</div>\`;
+            }
+        }
+
+        async function forceCleanup() {
+            if (!confirm('This will permanently delete ALL bookings and contracts. Continue?')) {
+                return;
+            }
+            
+            try {
+                document.getElementById('status').innerHTML = '<div class="warning status">🗑️ Force clearing database...</div>';
+                
+                const [bookingsRes, contractsRes] = await Promise.all([
+                    fetch('/api/cleanup/clear-bookings', { 
+                        method: 'POST', 
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' }
+                    }),
+                    fetch('/api/cleanup/clear-contracts', { 
+                        method: 'POST', 
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                ]);
+                
+                const bookingsResult = await bookingsRes.json();
+                const contractsResult = await contractsRes.json();
+                
+                document.getElementById('status').innerHTML = \`
+                    <div class="success status">
+                        <strong>✅ Force Cleanup Complete!</strong><br>
+                        • \${bookingsResult.message || 'Bookings cleared'}<br>
+                        • \${contractsResult.message || 'Contracts cleared'}<br>
+                    </div>
+                \`;
+                
+                // Auto-refresh status after cleanup
+                setTimeout(checkStatus, 2000);
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = \`<div class="error status">❌ Force cleanup failed: \${error.message}</div>\`;
             }
         }
 
