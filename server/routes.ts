@@ -1,7 +1,8 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, isAdmin } from "./auth";
+import { setupAuthentication } from "./auth-config";
+import { isAuthenticated, isAdmin } from "./auth";
 import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema, insertImportedContractSchema } from "@shared/schema";
 import multer from 'multer';
 import { uploadFileToCloudflare, generateSignedUrl } from './cloud-storage';
@@ -15,8 +16,8 @@ import bcrypt from 'bcrypt';
 export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice route now registered in server/index.ts to avoid Vite interference
   
-  // Auth middleware setup
-  await setupAuth(app);
+  // Auth middleware setup with configuration manager
+  await setupAuthentication(app);
 
   // Debug middleware to log all requests
   app.use((req, res, next) => {

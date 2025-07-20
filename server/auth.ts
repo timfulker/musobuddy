@@ -138,66 +138,93 @@ export async function setupAuth(app: Express) {
     res.status(200).json(req.user);
   });
 
-  // GET /logout for direct browser navigation (redirects to login)
-  app.get("/logout", (req, res, next) => {
-    console.log('🚪 GET /logout - destroying session');
-    req.logout((err) => {
-      if (err) {
-        console.error('❌ Logout error:', err);
-        return next(err);
+    // Comprehensive logout handling
+    const handleLogout = (req: any, res: any, isApiCall = false) => {
+      console.log(`🚪 ${isApiCall ? 'API' : 'Browser'} logout initiated`);
+      
+      const cleanup = () => {
+        // Clear all possible cookie variations
+        const cookieOptions = [
+          { path: '/' },
+          { path: '/', domain: req.get('host') },
+          { path: '/', domain: `.${req.get('host')}` }
+        ];
+        
+        cookieOptions.forEach(options => {
+          res.clearCookie('connect.sid', options);
+          res.clearCookie('session', options);
+        });
+        
+        console.log('✅ Logout completed successfully');
+      };
+
+      req.logout((err: any) => {
+        if (err) {
+          console.error('❌ Logout error:', err);
+          if (isApiCall) {
+            return res.status(500).json({ message: "Logout failed", error: err.message });
+          } else {
+            return res.redirect("/login?error=logout_failed");
+          }
+        }
+        
+        if (req.session) {
+          req.session.destroy((err: any) => {
+            if (err) {
+              console.error('❌ Session destroy error:', err);
+            }
+            cleanup();
+            
+            if (isApiCall) {
+              res.json({ success: true, message: "Logged out successfully", redirectTo: "/login" });
+            } else {
+              res.redirect("/login?message=logged_out");
+            }
+          });
+        } else {
+          cleanup();
+          
+          if (isApiCall) {
+            res.json({ success: true, message: "Logged out successfully", redirectTo: "/login" });
+          } else {
+            res.redirect("/login?message=logged_out");
+          }
+        }
+      });
+    };
+
+    // GET /logout for direct browser navigation
+    app.get("/logout", (req, res) => handleLogout(req, res, false));
+    
+    // POST /api/logout for AJAX calls
+    app.post("/api/logout", (req, res) => handleLogout(req, res, true));
+    
+    // Additional logout routes to catch any variations
+    app.get("/api/logout", (req, res) => handleLogout(req, res, true));
+    app.delete("/api/logout", (req, res) => handleLogout(req, res, true));
+
+    // Enhanced auth check endpoint
+    app.get("/api/auth/user", (req, res) => {
+      console.log('🔍 Auth check - isAuthenticated:', req.isAuthenticated(), 'user:', !!req.user);
+      
+      if (!req.isAuthenticated() || !req.user) {
+        console.log('❌ User not authenticated');
+        return res.status(401).json({ message: "Not authenticated" });
       }
       
-      if (req.session) {
-        req.session.destroy((err) => {
-          if (err) {
-            console.error('❌ Session destroy error:', err);
-            return next(err);
-          }
-          console.log('✅ Session destroyed successfully');
-          res.clearCookie('connect.sid', { path: '/' });
-          res.clearCookie('connect.sid', { path: '/', domain: req.get('host') });
-          res.redirect("/login");
-        });
-      } else {
-        console.log('⚠️ No session to destroy');
-        res.clearCookie('connect.sid', { path: '/' });
-        res.redirect("/login");
-      }
+      console.log('✅ User authenticated:', req.user.email);
+      res.json(req.user);
     });
-  });
 
-  // POST /api/logout for AJAX calls (returns JSON)
-  app.post("/api/logout", (req, res, next) => {
-    console.log('🚪 POST /api/logout - destroying session');
-    req.logout((err) => {
-      if (err) {
-        console.error('❌ Logout error:', err);
-        return next(err);
-      }
-      
-      if (req.session) {
-        req.session.destroy((err) => {
-          if (err) {
-            console.error('❌ Session destroy error:', err);
-            return next(err);
-          }
-          console.log('✅ Session destroyed successfully');
-          res.clearCookie('connect.sid', { path: '/' });
-          res.clearCookie('connect.sid', { path: '/', domain: req.get('host') });
-          res.json({ success: true, redirectTo: "/login" });
-        });
-      } else {
-        console.log('⚠️ No session to destroy');
-        res.clearCookie('connect.sid', { path: '/' });
-        res.json({ success: true, redirectTo: "/login" });
-      }
+    // Auth status endpoint for debugging
+    app.get("/api/auth/status", (req, res) => {
+      res.json({
+        isAuthenticated: req.isAuthenticated(),
+        hasUser: !!req.user,
+        sessionID: req.sessionID,
+        user: req.user ? { id: req.user.id, email: req.user.email } : null
+      });
     });
-  });
-
-  app.get("/api/auth/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
-  });
 
   console.log('✅ Authentication setup completed successfully');
   

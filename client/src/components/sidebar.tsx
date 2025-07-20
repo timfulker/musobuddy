@@ -30,12 +30,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logout();
   };
 
   const isActive = (path: string) => {
