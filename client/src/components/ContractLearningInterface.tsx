@@ -120,12 +120,13 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
       queryClient.invalidateQueries({ queryKey: ['/api/contracts/extractions'] });
       
       toast({
-        title: 'Success',
-        description: `Manual extraction saved in ${extractionTimeSeconds} seconds`,
+        title: 'Extraction Saved Successfully',
+        description: `Manual extraction saved in ${extractionTimeSeconds} seconds. This data will now improve AI parsing accuracy.`,
       });
 
-      setSelectedContract(null);
-      setStartTime(null);
+      // Keep the form populated - don't clear the contract selection
+      // This allows users to review their work and make additional extractions
+      setStartTime(null); // Reset timer only
     } catch (error) {
       toast({
         title: 'Error',
@@ -190,7 +191,26 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
                       </Button>
                       <Button
                         size="sm"
-                        onClick={() => handleStartExtraction(contract)}
+                        onClick={() => {
+                          setSelectedContract(contract);
+                          setStartTime(new Date());
+                          // Clear form when starting new extraction
+                          setExtractionData({
+                            clientName: '',
+                            clientEmail: '',
+                            clientAddress: '',
+                            venue: '',
+                            venueAddress: '',
+                            eventDate: '',
+                            eventTime: '',
+                            eventEndTime: '',
+                            fee: '',
+                            equipmentRequirements: '',
+                            specialRequirements: '',
+                            performanceDuration: '',
+                            eventType: '',
+                          });
+                        }}
                       >
                         <Edit className="h-4 w-4" />
                         Extract Data
@@ -227,11 +247,14 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
                 View PDF
               </Button>
               <Button
-                variant="outline"
+                variant="outline" 
                 size="sm"
-                onClick={() => setSelectedContract(null)}
+                onClick={() => {
+                  setSelectedContract(null);
+                  setStartTime(null);
+                }}
               >
-                Cancel
+                ← Back to Contracts
               </Button>
             </div>
 
