@@ -1394,25 +1394,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let prompt = '';
       
       if (fileType === 'contract') {
-        prompt = `Parse this Musicians' Union contract and extract client information. Look for:
+        prompt = `Parse this Musicians' Union contract and extract ALL the key information. Look for:
 
 1. CLIENT (the person hiring): Find "between [NAME] of [ADDRESS] and [MUSICIAN]"
-2. CLIENT CONTACT: Find "Signed by the Hirer" section with phone and email
-3. EVENT DATE: Look for "Saturday 26th July 2025" format  
-4. TIMES: Look for "Start Time 1545 Finish Time 1900" (convert to HH:MM)
-5. FEE: Look for "£260 for 2 hours"
+2. CLIENT CONTACT: Find "Signed by the Hirer" section with phone and email  
+3. VENUE: Find "perform the following Engagement(s) at [VENUE NAME] [VENUE ADDRESS]"
+4. EVENT DATE: Look for "Saturday 26th July 2025" format  
+5. TIMES: Look for "Start Time 1545 Finish Time 1900" (convert to HH:MM)
+6. FEE: Look for "£260 for 2 hours" (extract just the number)
 
-Return only this JSON structure:
+Return only this JSON structure with ALL fields:
 {
   "client_name": "string or null",
   "client_email": "string or null", 
   "client_phone": "string or null",
   "client_address": "string or null",
+  "venue_name": "string or null",
+  "venue_address": "string or null",
   "event_date": "YYYY-MM-DD or null",
   "start_time": "HH:MM or null",
   "end_time": "HH:MM or null", 
   "agreed_fee": number or null,
-  "venue_name": "string or null",
   "extras_or_notes": "string or null"
 }
 
