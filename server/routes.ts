@@ -2549,11 +2549,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const bookingId = parseInt(req.params.id);
       
-      const success = await storage.deleteBooking(bookingId, userId);
+      // Use soft delete to allow recovery
+      const { dataCleanupService } = await import('./data-cleanup-service');
+      const success = await dataCleanupService.softDelete('bookings', bookingId, userId, 'User deletion');
+      
       if (!success) {
         return res.status(404).json({ message: "Booking not found" });
       }
-      res.json({ message: "Booking deleted successfully" });
+      res.json({ message: "Booking deleted successfully (can be undone for 24 hours)" });
     } catch (error) {
       console.error("Error deleting booking:", error);
       res.status(500).json({ message: "Failed to delete booking" });
