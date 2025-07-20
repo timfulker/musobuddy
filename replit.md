@@ -179,10 +179,13 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Form Validation Fix**: Resolved duplicate venueAddress field that was causing form validation failures
 - **Database Error Fix**: Fixed "invalid input syntax for type numeric" by sanitizing empty strings to null for numeric fields
 - **Authentication Enhancement**: Added proper credentials to form requests for stable session handling
-- **AI Parsing Disabled**: After extensive testing, AI contract parsing proved unreliable and was disabled to prevent data corruption
-- **Manual Contract Management**: Contract upload and storage functionality retained with manual "Copy from Contract" feature
-- **Data Integrity Priority**: Prioritized data accuracy over automation - users now manually control all data population from contracts
-- **Reliable Workflow**: Contract import now focuses on secure storage and manual review rather than automated extraction
+- **Contract Parsing Core Issue Identified**: Root cause found - Claude was extracting musician (Tim Fulker) instead of client (Robin Jarman) from PDF text
+- **PDF Text Extraction Working**: Text extraction properly provides contract content to Claude API for processing
+- **Claude API Functional**: Debug testing confirms Claude correctly extracts client information when given proper prompts
+- **Validation System Working**: Data quality checks correctly reject musician names and accept valid client names
+- **Prompt Engineering Completed**: Updated prompts to explicitly identify Tim Fulker as musician and extract hirer information
+- **Debug Endpoint Available**: /api/debug-contract-parsing endpoint available for testing Claude extraction without file upload
+- **Parsing Status**: Technical implementation complete, ready for production testing with actual contract uploads
 
 ### 2025-07-18 - Application Stability and Comprehensive User Documentation
 - **Database Connection Fix**: Resolved WebSocket connection issues with Neon database causing startup failures
