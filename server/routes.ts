@@ -6,6 +6,7 @@ import { isAuthenticated, isAdmin } from "./auth";
 import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema, insertImportedContractSchema } from "@shared/schema";
 import multer from 'multer';
 import { uploadFileToCloudflare, generateSignedUrl } from './cloud-storage';
+import { createContractService } from './contract-service';
 import { 
   parseAppleCalendar,
   convertEventsToBookings
@@ -2595,6 +2596,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
   });
 
+  // Initialize contract service
+  const getContractService = () => createContractService(storage);
+
   // NEW: Contract Learning System Routes
 
   // Simple PDF storage endpoint - Phase 1 of contract learning system
@@ -2697,6 +2701,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to save extraction data' });
     }
   });
+
+  // ========================================
+  // CONTRACT PARSING ROUTES - Enhanced Implementation
+  // ========================================
+
+  // Main contract parsing endpoint
+  app.post('/api/contracts/parse', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { bookingId } = req.body;
+      const file = req.file;
+
+      console.log('📋 Contract parsing request received');
+      console.log('👤 User ID:', userId);
+      console.log('📁 File:', file ? file.originalname : 'No file');
+      console.log('🔗 Booking ID:', bookingId);
+
+      if (!file) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'PDF_FILE_REQUIRED',
+          message: 'Please upload a PDF contract file'
+        });
+      }
+
+      const contractService = getContractService();
+
+      if (bookingId) {
+        // Parse and apply to booking
+        const result = await contractService.parseAndApplyToBooking(
+          file.buffer,
+          userId,
+          parseInt(bookingId)
+        );
+
+        res.json({
+          success: result.parsing.success,
+          data: result.parsing.data,
+          confidence: result.parsing.confidence,
+          fieldsExtracted: result.parsing.fieldsExtracted,
+          message: result.parsing.message,
+          booking: {
+            updated: result.booking.updated,
+            fieldsUpdated: result.booking.fieldsUpdated,
+            fieldsUpdatedCount: result.booking.fieldsUpdatedCount
+          },
+          error: result.parsing.error
+        });
+      } else {
+        // Just parse without applying to booking
+        const result = await contractService.parseContract(file.buffer, userId);
+        
+        res.json({
+          success: result.success,
+          data: result.data,
+          confidence: result.confidence,
+          fieldsExtracted: result.fieldsExtracted,
+          message: result.message,
+          textLength: result.textLength,
+          error: result.error
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Contract parsing route error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'ROUTE_ERROR',
+        message: 'Contract parsing service failed',
+        data: {}
+      });
+    }
+  });
+
+  // Test contract parsing endpoint (for debugging)
+  app.post('/api/contracts/test-parse', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
+    try {
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ 
+          error: 'PDF file is required for testing' 
+        });
+      }
+
+      console.log('🧪 Testing contract parsing for file:', file.originalname);
+
+      const contractService = getContractService();
+      const testResult = await contractService.testParsing(file.buffer);
+      
+      res.json({
+        success: true,
+        filename: file.originalname,
+        fileSize: file.size,
+        textExtraction: testResult.textExtraction,
+        aiParsing: testResult.aiParsing,
+        overall: testResult.textExtraction.success && testResult.aiParsing.success
+      });
+      
+    } catch (error) {
+      console.error('❌ Test parsing error:', error);
+      res.status(500).json({ 
+        error: 'Test parsing failed',
+        message: error.message
+      });
+    }
+  });
+
+  // ========================================
+  // END CONTRACT PARSING ROUTES
+  // ========================================
 
   // Compliance document routes
   app.get('/api/compliance', isAuthenticated, async (req: any, res) => {
