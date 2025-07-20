@@ -276,12 +276,23 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
           message: `Contract "${data.contractNumber}" uploaded successfully. Parsing and auto-populating form in 3 seconds...`
         });
         
-        // Auto-populate form after 3 seconds using the PARSED data from the response
+        // Handle AI parsing results with data quality validation
         setTimeout(() => {
-          console.log('🔄 Auto-populating form with parsed contract data:', data.parsedData);
+          console.log('🔄 Processing contract parsing results:', data.parsedData);
           
           if (data.parsedData) {
-            // Map parsed data to booking form fields
+            // Check if parsing failed due to data quality issues
+            if (data.parsedData.success === false) {
+              console.log('⚠️ Data quality issues detected:', data.parsedData.issues);
+              setUploadStatus({
+                type: 'error',
+                message: data.parsedData.message || 'Contract has template data instead of real client information. Please enter details manually.'
+              });
+              setTimeout(() => setUploadStatus(null), 8000);
+              return;
+            }
+            
+            // Only auto-populate if we have high quality data
             const parsedFields = {
               clientName: data.parsedData.client_name || '',
               clientEmail: data.parsedData.client_email || '',
@@ -296,29 +307,35 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
               specialRequirements: data.parsedData.extras_or_notes || ''
             };
             
-            console.log('📝 Applying parsed fields to form:', parsedFields);
-            
-            // Apply each field to the form
+            // Only apply fields that have real data (not empty)
+            let fieldsApplied = 0;
             Object.entries(parsedFields).forEach(([fieldName, value]) => {
               if (value !== null && value !== '' && value !== undefined) {
                 form.setValue(fieldName as any, value);
+                fieldsApplied++;
               }
             });
             
-            setUploadStatus({
-              type: 'success',
-              message: `Contract parsed and form auto-populated with client: ${data.parsedData.client_name || 'Unknown'}!`
-            });
+            if (fieldsApplied > 0) {
+              setUploadStatus({
+                type: 'success',
+                message: `Contract parsed successfully! ${fieldsApplied} fields auto-populated with high-quality data.`
+              });
+            } else {
+              setUploadStatus({
+                type: 'error',
+                message: 'Contract uploaded but no client data found. Please enter details manually or use "Copy from Contract".'
+              });
+            }
           } else {
-            // Fallback to using contract data if no parsed data
-            handleCopyFromContract(data.contract);
+            // Fallback to manual copy
             setUploadStatus({
               type: 'success',
-              message: `Contract uploaded - please use "Copy from Contract" to populate form.`
+              message: 'Contract uploaded - please use "Copy from Contract" to populate form.'
             });
           }
           
-          setTimeout(() => setUploadStatus(null), 5000);
+          setTimeout(() => setUploadStatus(null), 8000);
         }, 3000);
       } else {
         setUploadStatus({

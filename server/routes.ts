@@ -1399,34 +1399,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('📋 Detected Musicians\' Union contract - using structural parsing');
           
           // Use structural parsing for Musicians' Union contracts
-          prompt = `TASK: Extract CLIENT information from this Musicians' Union contract using structural markers.
+          prompt = `TASK: Extract CLIENT information from this Musicians' Union contract with data quality validation.
 
 STRUCTURAL MARKERS TO USE:
 1. "between [HIRER NAME]" pattern - this is the CLIENT
 2. "Signed by the Hirer" section - contains CLIENT contact details
 3. "Signed by the Musician" section - contains PERFORMER details (IGNORE this)
 
-EXTRACTION RULES:
-- HIRER = CLIENT (the person hiring the musician)
-- Extract ONLY the hirer's information
-- IGNORE all musician/performer information
+DATA QUALITY RULES:
+- Extract client name ONLY if it's real person data
+- Return null for placeholder text like "Client for", "Hirer", "[blank]", template text
+- Validate that extracted data makes sense as real contact information
+- If you see incomplete or template data, mark it as low quality
 
 CONTRACT TEXT:
 ${extractedText}
 
 RESPOND WITH JSON:
 {
-  "client_name": "name from 'between [NAME]' or hirer signature section",
-  "client_email": "email from hirer signature section", 
-  "client_phone": "phone from hirer signature section",
-  "client_address": "address from 'between [NAME] of [ADDRESS]' or hirer section",
-  "venue_name": "venue name from contract",
-  "venue_address": "venue address from contract",
-  "event_date": "YYYY-MM-DD format",
-  "start_time": "HH:MM format",
-  "end_time": "HH:MM format", 
-  "agreed_fee": number,
-  "extras_or_notes": "any special requirements or notes"
+  "client_name": "real client name or null (no placeholder text)",
+  "client_email": "real email or null", 
+  "client_phone": "real phone or null",
+  "client_address": "real address or null",
+  "venue_name": "venue name or null",
+  "venue_address": "venue address or null",
+  "event_date": "YYYY-MM-DD format or null",
+  "start_time": "HH:MM format or null",
+  "end_time": "HH:MM format or null", 
+  "agreed_fee": "number or null",
+  "extras_or_notes": "notes or null",
+  "data_quality": "excellent|good|fair|poor",
+  "issues": ["list any problems like placeholder_text, incomplete_data, etc"],
+  "confidence": "0.0-1.0 score"
 }`;
         } else {
           // Fallback for other contract types - use general structural approach
@@ -1491,7 +1495,32 @@ ${extractedText}`;
       }
       
       const parsedData = JSON.parse(jsonMatch[0]);
-      console.log('📄 AI parsing successful:', parsedData);
+      console.log('📄 AI parsing result:', parsedData);
+      
+      // Validate data quality and handle poor quality data
+      if (parsedData.data_quality === 'poor' || parsedData.confidence < 0.7) {
+        console.log('⚠️ Poor data quality detected:', parsedData.issues);
+        return {
+          success: false,
+          action: 'manual_entry',
+          message: 'Contract data quality is insufficient for auto-extraction',
+          partialData: parsedData,
+          issues: parsedData.issues
+        };
+      }
+      
+      // Check for placeholder text issues
+      if (parsedData.issues && parsedData.issues.includes('placeholder_text')) {
+        console.log('⚠️ Placeholder text detected - requiring manual entry');
+        return {
+          success: false,
+          action: 'manual_entry', 
+          message: 'This contract appears to have template data instead of real client information. Please enter the client details manually.',
+          partialData: parsedData
+        };
+      }
+      
+      console.log('✅ High quality data extracted:', parsedData);
       return parsedData;
       
     } catch (error) {
