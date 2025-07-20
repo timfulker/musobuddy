@@ -37,15 +37,7 @@ export default function BookingCTAButtons() {
     queryKey: ["/api/bookings"],
   });
 
-  const { data: contracts = [], isLoading: contractsLoading } = useQuery<Contract[]>({
-    queryKey: ["/api/contracts"],
-  });
-
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery<Invoice[]>({
-    queryKey: ["/api/invoices"],
-  });
-
-  const isLoading = bookingsLoading || contractsLoading || invoicesLoading;
+  const isLoading = bookingsLoading;
 
   if (isLoading) {
     return (

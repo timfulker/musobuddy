@@ -2477,19 +2477,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create new booking (enquiry) with automatic status assignment
+  // Create new booking (enquiry)
   app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      let data = { ...req.body, userId };
+      const data = { ...req.body, userId };
       
       // Convert eventDate string to Date if present
       if (data.eventDate && typeof data.eventDate === 'string') {
         data.eventDate = new Date(data.eventDate);
       }
-      
-      // Automatically set correct status based on event date
-      data = setAutoStatusForBooking(data);
       
       const bookingData = insertEnquirySchema.parse(data);
       const booking = await storage.createBooking(bookingData);
@@ -2500,17 +2497,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update booking (enquiry) with automatic status assignment
+  // Update booking (enquiry)
   app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const bookingId = parseInt(req.params.id);
-      let updateData = { ...req.body };
-      
-      // Automatically set correct status based on event date if eventDate is being updated
-      if (updateData.eventDate) {
-        updateData = setAutoStatusForBooking(updateData);
-      }
+      const updateData = { ...req.body };
       
       // Sanitize numeric fields - convert empty strings to null
       const numericFields = ['fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
@@ -2557,14 +2549,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const bookingId = parseInt(req.params.id);
       
-      // Use soft delete to allow recovery
-      const { dataCleanupService } = await import('./data-cleanup-service');
-      const success = await dataCleanupService.softDelete('bookings', bookingId, userId, 'User deletion');
-      
+      const success = await storage.deleteBooking(bookingId, userId);
       if (!success) {
         return res.status(404).json({ message: "Booking not found" });
       }
-      res.json({ message: "Booking deleted successfully (can be undone for 24 hours)" });
+      res.json({ message: "Booking deleted successfully" });
     } catch (error) {
       console.error("Error deleting booking:", error);
       res.status(500).json({ message: "Failed to delete booking" });
@@ -2582,7 +2571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-complete past bookings endpoint with automatic status assignment for new bookings
+  // Auto-complete past bookings endpoint
   app.post('/api/bookings/auto-complete', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -2596,24 +2585,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to auto-complete past bookings" });
     }
   });
-
-  // Helper function to automatically set correct status based on event date
-  const setAutoStatusForBooking = (booking: any) => {
-    if (!booking.eventDate) return booking;
-    
-    const eventDate = new Date(booking.eventDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Past events should be completed, future events should be confirmed
-    if (eventDate < today && booking.status !== 'completed' && booking.status !== 'rejected') {
-      booking.status = 'completed';
-    } else if (eventDate >= today && booking.status === 'completed') {
-      booking.status = 'confirmed';
-    }
-    
-    return booking;
-  };
 
 
 
@@ -3621,179 +3592,6 @@ Hotel Lobby Entertainment`;
       console.error('Error flushing user data:', error);
       res.status(500).json({ error: 'Failed to flush user data' });
     }
-  });
-
-  // Emergency database clear endpoints
-  app.post('/api/cleanup/clear-bookings', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      
-      // Direct database deletion using SQL for complete removal
-      const { db } = await import('./db');
-      const { bookings } = await import('../shared/schema');
-      const { eq } = await import('drizzle-orm');
-      
-      // Get count first
-      const allBookings = await storage.getBookings(userId);
-      const count = allBookings.length;
-      
-      // Direct database delete
-      await db.delete(bookings).where(eq(bookings.userId, userId));
-      
-      console.log(`✅ Cleared ${count} bookings for user ${userId} via direct database deletion`);
-      res.json({ 
-        message: `Cleared ${count} bookings successfully`,
-        count: count 
-      });
-    } catch (error) {
-      console.error('Error clearing bookings:', error);
-      res.status(500).json({ error: 'Failed to clear bookings' });
-    }
-  });
-
-  app.post('/api/cleanup/clear-contracts', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      
-      // Direct database deletion using SQL for complete removal
-      const { db } = await import('./db');
-      const { contracts } = await import('../shared/schema');
-      const { eq } = await import('drizzle-orm');
-      
-      // Get count first
-      const allContracts = await storage.getContracts(userId);
-      const count = allContracts.length;
-      
-      // Direct database delete
-      await db.delete(contracts).where(eq(contracts.userId, userId));
-      
-      console.log(`✅ Cleared ${count} contracts for user ${userId} via direct database deletion`);
-      res.json({ 
-        message: `Cleared ${count} contracts successfully`,
-        count: count 
-      });
-    } catch (error) {
-      console.error('Error clearing contracts:', error);
-      res.status(500).json({ error: 'Failed to clear contracts' });
-    }
-  });
-
-  // Serve cleanup page
-  app.get('/cleanup-database.html', isAuthenticated, (req, res) => {
-    res.send(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Database Cleanup</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
-        .cleanup-btn { background: #f44336; color: white; padding: 12px 24px; border: none; cursor: pointer; margin: 10px; border-radius: 4px; }
-        .safe-btn { background: #4CAF50; color: white; padding: 12px 24px; border: none; cursor: pointer; margin: 10px; border-radius: 4px; }
-        .status { padding: 15px; margin: 15px 0; border-radius: 4px; }
-        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🧹 Database Cleanup Complete</h1>
-        
-        <div class="success status">
-            <strong>✅ Cleanup Successful!</strong><br>
-            • All bookings have been deleted<br>
-            • All contracts have been deleted<br>
-            • All invoices have been preserved<br>
-        </div>
-        
-        <div class="warning status">
-            <strong>Ready for Import:</strong> Your database is now clean and ready for reimporting your Google booking data.
-        </div>
-        
-        <button class="cleanup-btn" onclick="forceCleanup()">🗑️ Force Clear Database</button>
-        <button class="safe-btn" onclick="checkStatus()">📊 Check Current Status</button>
-        <button class="safe-btn" onclick="goToDashboard()">🏠 Return to Dashboard</button>
-        
-        <div id="status"></div>
-    </div>
-
-    <script>
-        async function checkStatus() {
-            try {
-                const [bookingsRes, contractsRes, invoicesRes] = await Promise.all([
-                    fetch('/api/bookings', { credentials: 'include' }),
-                    fetch('/api/contracts', { credentials: 'include' }),
-                    fetch('/api/invoices', { credentials: 'include' })
-                ]);
-                
-                const bookings = await bookingsRes.json();
-                const contracts = await contractsRes.json();
-                const invoices = await invoicesRes.json();
-                
-                document.getElementById('status').innerHTML = \`
-                    <div class="success status">
-                        <strong>Current Database Status:</strong><br>
-                        • Bookings: \${bookings.length} (should be 0)<br>
-                        • Contracts: \${contracts.length} (should be 0)<br>
-                        • Invoices: \${invoices.length} (preserved)<br>
-                    </div>
-                \`;
-            } catch (error) {
-                document.getElementById('status').innerHTML = \`<div class="error status">Error checking status: \${error.message}</div>\`;
-            }
-        }
-
-        async function forceCleanup() {
-            if (!confirm('This will permanently delete ALL bookings and contracts. Continue?')) {
-                return;
-            }
-            
-            try {
-                document.getElementById('status').innerHTML = '<div class="warning status">🗑️ Force clearing database...</div>';
-                
-                const [bookingsRes, contractsRes] = await Promise.all([
-                    fetch('/api/cleanup/clear-bookings', { 
-                        method: 'POST', 
-                        credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' }
-                    }),
-                    fetch('/api/cleanup/clear-contracts', { 
-                        method: 'POST', 
-                        credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' }
-                    })
-                ]);
-                
-                const bookingsResult = await bookingsRes.json();
-                const contractsResult = await contractsRes.json();
-                
-                document.getElementById('status').innerHTML = \`
-                    <div class="success status">
-                        <strong>✅ Force Cleanup Complete!</strong><br>
-                        • \${bookingsResult.message || 'Bookings cleared'}<br>
-                        • \${contractsResult.message || 'Contracts cleared'}<br>
-                    </div>
-                \`;
-                
-                // Auto-refresh status after cleanup
-                setTimeout(checkStatus, 2000);
-                
-            } catch (error) {
-                document.getElementById('status').innerHTML = \`<div class="error status">❌ Force cleanup failed: \${error.message}</div>\`;
-            }
-        }
-
-        function goToDashboard() {
-            window.location.href = '/';
-        }
-
-        // Auto-check status on page load
-        checkStatus();
-    </script>
-</body>
-</html>
-    `);
   });
 
   // Safe maintenance endpoints for checking and cleaning duplicates

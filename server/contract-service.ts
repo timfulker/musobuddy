@@ -170,22 +170,14 @@ export class ContractService {
               const extractedValue = (parsingResult.data as any)[extractedField];
               const bookingValue = (booking as any)[bookingField];
               
-              // Check if field is empty, has default/placeholder values, or contains generic placeholder text
+              // Check if field is empty or has default/placeholder values
               const isEmpty = !bookingValue || bookingValue === '';
               const isDefaultTime = (bookingField === 'eventTime' || bookingField === 'eventEndTime') && 
                                     (bookingValue === '00:00' || bookingValue === '0:00');
-              const isGenericClientName = bookingField === 'clientName' && 
-                                         (bookingValue === 'Solo DJ & Saxophone' || 
-                                          bookingValue === 'DJ & Saxophone' ||
-                                          bookingValue === 'Solo Musician' ||
-                                          bookingValue === 'Musician');
               
-              if (extractedValue && (isEmpty || isDefaultTime || isGenericClientName)) {
+              if (extractedValue && (isEmpty || isDefaultTime)) {
                 updates[bookingField] = extractedValue;
                 fieldsUpdated.push(bookingField);
-                if (isGenericClientName) {
-                  console.log(`🔄 Replacing generic client name "${bookingValue}" with extracted "${extractedValue}"`);
-                }
               }
             });
 
@@ -193,11 +185,6 @@ export class ContractService {
             if (updates.eventDate && typeof updates.eventDate === 'string') {
               updates.eventDate = new Date(updates.eventDate);
             }
-
-            // Auto-confirm booking when contract is uploaded and parsed successfully
-            updates.status = 'confirmed';
-            updates.contractSigned = true;
-            fieldsUpdated.push('status', 'contractSigned');
 
             if (Object.keys(updates).length > 0) {
               await this.storage.updateBooking(bookingId, updates, userId);
@@ -207,7 +194,6 @@ export class ContractService {
                 fieldsUpdatedCount: fieldsUpdated.length
               };
               console.log(`✅ Updated ${fieldsUpdated.length} fields in booking`);
-              console.log(`🎯 Booking auto-confirmed due to contract upload`);
             }
           }
         } catch (applyError) {
