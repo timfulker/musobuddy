@@ -2477,16 +2477,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create new booking (enquiry)
+  // Create new booking (enquiry) with automatic status assignment
   app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const data = { ...req.body, userId };
+      let data = { ...req.body, userId };
       
       // Convert eventDate string to Date if present
       if (data.eventDate && typeof data.eventDate === 'string') {
         data.eventDate = new Date(data.eventDate);
       }
+      
+      // Automatically set correct status based on event date
+      data = setAutoStatusForBooking(data);
       
       const bookingData = insertEnquirySchema.parse(data);
       const booking = await storage.createBooking(bookingData);
@@ -2497,12 +2500,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update booking (enquiry)
+  // Update booking (enquiry) with automatic status assignment
   app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const bookingId = parseInt(req.params.id);
-      const updateData = { ...req.body };
+      let updateData = { ...req.body };
+      
+      // Automatically set correct status based on event date if eventDate is being updated
+      if (updateData.eventDate) {
+        updateData = setAutoStatusForBooking(updateData);
+      }
       
       // Sanitize numeric fields - convert empty strings to null
       const numericFields = ['fee', 'deposit', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
@@ -2574,7 +2582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-complete past bookings endpoint
+  // Auto-complete past bookings endpoint with automatic status assignment for new bookings
   app.post('/api/bookings/auto-complete', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -2588,6 +2596,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to auto-complete past bookings" });
     }
   });
+
+  // Helper function to automatically set correct status based on event date
+  const setAutoStatusForBooking = (booking: any) => {
+    if (!booking.eventDate) return booking;
+    
+    const eventDate = new Date(booking.eventDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Past events should be completed, future events should be confirmed
+    if (eventDate < today && booking.status !== 'completed' && booking.status !== 'rejected') {
+      booking.status = 'completed';
+    } else if (eventDate >= today && booking.status === 'completed') {
+      booking.status = 'confirmed';
+    }
+    
+    return booking;
+  };
 
 
 
