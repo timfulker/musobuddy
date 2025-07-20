@@ -23,7 +23,7 @@ interface ContractData {
 
 export async function parseContractPDF(contractText: string): Promise<ContractData> {
   try {
-    console.log('🔍 Starting contract parsing...');
+    console.log('🔍 Starting enhanced contract parsing...');
     console.log('📄 Contract text length:', contractText.length);
 
     if (!contractText || contractText.trim().length < 50) {
@@ -33,56 +33,54 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: `You are an expert at extracting client information from Musicians Union performance contracts.
+      system: `You are an expert at extracting client information from Musicians' Union contracts and performance agreements.
 
-CRITICAL EXTRACTION RULES:
-1. CLIENT/HIRER: Look for "Hirer:", "Client:", "Name of Hirer:", or person/organization hiring Tim Fulker
-2. VENUE: Look for "Venue:", "Location:", "Address of engagement:", or where performance takes place  
-3. CLIENT CONTACT: Look for hirer's email, phone, address (NOT Tim Fulker's details)
-4. EVENT TYPE: Wedding, corporate, private party, etc.
-5. FEE: Total performance fee in GBP (convert £250.00 to 250.00)
+CRITICAL UNDERSTANDING OF MUSICIANS' UNION CONTRACT FORMAT:
+- "between [NAME]" = this is the CLIENT/HIRER
+- "of [ADDRESS]" following the client name = CLIENT ADDRESS
+- "and [MUSICIAN NAME]" = this is the performer (usually Tim Fulker)
+- "The Hirer engages the Musician to perform...at [VENUE]" = VENUE NAME
+- In signature section: "Signed by the Hirer" = CLIENT information
+- In signature section: "Signed by the Musician" = PERFORMER information (ignore this)
 
-MUSICIANS UNION CONTRACT PATTERNS:
-- "Name of Hirer:" followed by client name
-- "Address of engagement:" for venue details
-- "Date of engagement:" for event date
-- "Time:" for start/end times
-- "Fee:" or "Total Fee:" for payment amount
+EXTRACTION RULES:
+1. CLIENT NAME: Look for "between [NAME]" or "Signed by the Hirer: [NAME]"
+2. CLIENT ADDRESS: Look for "of [ADDRESS]" after the client name
+3. CLIENT CONTACT: Look in "Signed by the Hirer" section for phone/email
+4. VENUE: Look for "to perform...at [VENUE NAME]" or venue mentioned in engagement details
+5. VENUE ADDRESS: Often the same as client address, or mentioned separately
+6. NEVER extract Tim Fulker's details as the client - he is the musician
 
-Tim Fulker = PERFORMER (ignore his details)
-Extract the HIRER/CLIENT who is paying for the performance.
-
-Return ONLY valid JSON with no additional text.`,
+Return ONLY valid JSON with no additional text or formatting.`,
       messages: [{
         role: 'user',
-        content: `Extract client and event information from this Musicians Union performance contract.
+        content: `Extract the client/hirer information from this Musicians' Union contract:
 
-EXAMPLE PATTERNS TO LOOK FOR:
-- "Name of Hirer: Robin Jarman" → clientName: "Robin Jarman"  
-- "Address of engagement: The Grand Hotel, London" → venue: "The Grand Hotel", venueAddress: "London"
-- "Date of engagement: 26th July 2025" → eventDate: "2025-07-26"
-- "Time: 15:45 - 19:00" → eventTime: "15:45", eventEndTime: "19:00"
-- "Fee: £260.00" → fee: 260.00
-
-CONTRACT TEXT:
 ${contractText}
+
+Focus on these key areas:
+1. "between [CLIENT NAME]" section
+2. "of [CLIENT ADDRESS]" section  
+3. "The Hirer engages the Musician to perform...at [VENUE]"
+4. "Signed by the Hirer" section with contact details
+5. Date/time/fee table
 
 Return exactly this JSON structure:
 {
-  "clientName": "name of client/hirer (not the musician)",
-  "clientEmail": "client email if found or null",
-  "clientPhone": "client phone if found or null",
-  "clientAddress": "client address if found or null",
-  "venue": "event venue name or null",
-  "venueAddress": "venue address if found or null",
-  "eventDate": "YYYY-MM-DD format or null",
-  "eventTime": "HH:MM format start time or null",
-  "eventEndTime": "HH:MM format end time or null",
-  "fee": 150.00,
-  "equipmentRequirements": "equipment details or null",
-  "specialRequirements": "special requirements or null",
-  "eventType": "type of event or null",
-  "performanceDuration": "duration in minutes as string or null"
+  "clientName": "name of the HIRER (not Tim Fulker)",
+  "clientEmail": "hirer's email from signature section",
+  "clientPhone": "hirer's phone from signature section", 
+  "clientAddress": "address following 'of' after client name",
+  "venue": "venue name from engagement details",
+  "venueAddress": "venue address if different from client address",
+  "eventDate": "YYYY-MM-DD format",
+  "eventTime": "HH:MM format start time",
+  "eventEndTime": "HH:MM format end time",
+  "fee": 260.00,
+  "equipmentRequirements": "any equipment notes",
+  "specialRequirements": "any special requirements",
+  "eventType": "type of performance if mentioned",
+  "performanceDuration": "duration in minutes or hours"
 }`
       }]
     });
@@ -117,43 +115,63 @@ Return exactly this JSON structure:
       throw new Error('Failed to parse AI response as JSON');
     }
 
-    // Clean and validate the data
+    // Clean and validate the data with enhanced validation
     const cleanData: ContractData = {};
 
-    // Clean string fields
+    // Clean string fields with better validation
     const stringFields = ['clientName', 'clientEmail', 'clientPhone', 'clientAddress', 'venue', 'venueAddress', 'eventType', 'equipmentRequirements', 'specialRequirements', 'performanceDuration'];
     stringFields.forEach(field => {
       if (extractedData[field] && typeof extractedData[field] === 'string') {
         const cleaned = extractedData[field].trim();
-        if (cleaned && cleaned !== 'null' && cleaned !== 'N/A' && cleaned !== 'Not specified') {
+        if (cleaned && cleaned !== 'null' && cleaned !== 'N/A' && cleaned !== 'Not specified' && cleaned !== 'Tim Fulker') {
+          // Extra validation: don't include Tim Fulker as client
+          if (field === 'clientName' && cleaned.toLowerCase().includes('tim fulker')) {
+            console.warn('⚠️ Skipping Tim Fulker as client name');
+            return;
+          }
           cleanData[field] = cleaned;
         }
       }
     });
 
-    // Clean date field
+    // Enhanced date field validation
     if (extractedData.eventDate && typeof extractedData.eventDate === 'string') {
       const dateStr = extractedData.eventDate.trim();
       if (dateStr && dateStr !== 'null' && dateStr !== 'N/A') {
-        // Validate date format
+        // Handle various date formats
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (dateRegex.test(dateStr)) {
           cleanData.eventDate = dateStr;
         } else {
-          console.warn('⚠️ Invalid date format:', dateStr);
+          // Try to parse other date formats
+          const parsedDate = new Date(dateStr);
+          if (!isNaN(parsedDate.getTime())) {
+            cleanData.eventDate = parsedDate.toISOString().split('T')[0];
+          } else {
+            console.warn('⚠️ Invalid date format:', dateStr);
+          }
         }
       }
     }
 
-    // Clean time fields
+    // Enhanced time field validation
     ['eventTime', 'eventEndTime'].forEach(field => {
       if (extractedData[field] && typeof extractedData[field] === 'string') {
         const timeStr = extractedData[field].trim();
         if (timeStr && timeStr !== 'null' && timeStr !== 'N/A') {
-          // Validate time format
+          // Handle both HH:MM and HHMM formats
+          let normalizedTime = timeStr;
+          if (/^\d{4}$/.test(timeStr)) {
+            // Convert HHMM to HH:MM
+            normalizedTime = timeStr.slice(0, 2) + ':' + timeStr.slice(2);
+          }
+
           const timeRegex = /^\d{1,2}:\d{2}$/;
-          if (timeRegex.test(timeStr)) {
-            cleanData[field] = timeStr;
+          if (timeRegex.test(normalizedTime)) {
+            const [hours, minutes] = normalizedTime.split(':').map(Number);
+            if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+              cleanData[field] = normalizedTime;
+            }
           } else {
             console.warn('⚠️ Invalid time format:', timeStr);
           }
@@ -161,36 +179,37 @@ Return exactly this JSON structure:
       }
     });
 
-    // Clean fee field
+    // Enhanced fee field validation
     if (extractedData.fee !== undefined && extractedData.fee !== null) {
-      let feeValue: number;
+      let feeNum: number;
       if (typeof extractedData.fee === 'number') {
-        feeValue = extractedData.fee;
+        feeNum = extractedData.fee;
       } else if (typeof extractedData.fee === 'string') {
         // Remove currency symbols and parse
         const feeStr = extractedData.fee.replace(/[£$€,\s]/g, '');
-        feeValue = parseFloat(feeStr);
+        feeNum = parseFloat(feeStr);
       } else {
-        feeValue = NaN;
+        feeNum = NaN;
       }
 
-      if (!isNaN(feeValue) && feeValue > 0) {
-        cleanData.fee = feeValue;
+      if (!isNaN(feeNum) && feeNum > 0) {
+        cleanData.fee = feeNum;
       }
     }
 
-    console.log('✅ Contract parsing completed successfully');
+    console.log('✅ Enhanced contract parsing completed successfully');
     console.log('📊 Extracted fields:', Object.keys(cleanData).filter(k => cleanData[k]).length);
     console.log('📋 Clean data:', cleanData);
 
     return cleanData;
 
   } catch (error) {
-    console.error('❌ Contract parsing failed:', error);
+    console.error('❌ Enhanced contract parsing failed:', error);
     throw error;
   }
 }
 
+// Keep existing helper functions
 export async function extractPDFText(buffer: Buffer): Promise<string> {
   try {
     console.log('📄 Extracting text from PDF buffer...');
@@ -271,14 +290,14 @@ export async function parseContractFromBuffer(buffer: Buffer): Promise<ContractD
       throw new Error('Extracted text is too short - PDF may be empty or image-based');
     }
 
-    // Parse with AI
+    // Parse with enhanced AI
     const extractedData = await parseContractPDF(contractText);
 
-    console.log('✅ Complete contract parsing successful');
+    console.log('✅ Complete enhanced contract parsing successful');
     return extractedData;
 
   } catch (error) {
-    console.error('❌ Complete contract parsing failed:', error);
+    console.error('❌ Complete enhanced contract parsing failed:', error);
     throw error;
   }
 }
