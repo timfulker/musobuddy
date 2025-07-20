@@ -4225,8 +4225,8 @@ Hotel Lobby Entertainment`;
       // Extract text from PDF
       let contractText = '';
       try {
-        const pdfParse = await import('pdf-parse');
-        const pdfData = await pdfParse.default(file.buffer);
+        const pdfParse = require('pdf-parse');
+        const pdfData = await pdfParse(file.buffer);
         contractText = pdfData.text;
         console.log('📄 Extracted text from PDF:', contractText.substring(0, 200) + '...');
       } catch (pdfError) {
@@ -4261,7 +4261,7 @@ Hotel Lobby Entertainment`;
       console.error('Error in learning-based parsing:', error);
       res.status(500).json({ 
         error: 'Failed to parse contract',
-        message: error.message 
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
       });
     }
   });
