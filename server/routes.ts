@@ -1327,7 +1327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log('📄 Attempting PDF text extraction with pdf-parse...');
           
-          // Method 1: Try pdf-parse (more reliable than pdf2json)
+          // Method 1: Try pdf-parse (most reliable)
           try {
             const pdfParse = await import('pdf-parse');
             const data = await pdfParse.default(fileBuffer);
@@ -1335,7 +1335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`📄 PDF Parser Success - Pages found: ${data.numpages}`);
             console.log(`📄 Total characters extracted: ${data.text ? data.text.length : 0}`);
             
-            if (data.text && data.text.trim().length > 0) {
+            if (data.text && data.text.trim().length > 100) {
               extractedText = data.text;
               console.log(`✅ pdf-parse extraction successful: ${extractedText.length} characters`);
               console.log('📄 FIRST 500 CHARACTERS:');
@@ -1346,12 +1346,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`📄   - Has Musicians Union: ${extractedText.includes('Musicians')}`);
               console.log(`📄   - Has fee/£: ${extractedText.includes('£') || extractedText.includes('fee')}`);
             } else {
-              console.log('❌ pdf-parse returned empty text');
+              console.log('❌ pdf-parse returned insufficient text, trying fallback');
+              throw new Error('pdf-parse returned insufficient text');
             }
-          } catch (error) {
-            console.log('pdf-parse failed, trying pdf2json fallback...', error.message);
+          } catch (pdfParseError) {
+            console.log('📄 pdf-parse failed, trying pdf2json fallback...', pdfParseError.message);
             
-            // Method 2: Fallback to improved pdf2json
+            // Method 2: Fallback to improved pdf2json with better text handling
             const PDFParser = await import('pdf2json');
             const pdfParser = new PDFParser.default(null, 1);
             
@@ -1361,34 +1362,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
               pdfParser.parseBuffer(fileBuffer);
             });
             
-            // Improved text extraction with better spacing
+            // Better text extraction with improved spacing and decoding
             let fullText = '';
             const pages = pdfData.Pages || [];
+            console.log(`📄 pdf2json found ${pages.length} pages`);
             
             for (const page of pages) {
               const texts = page.Texts || [];
-              let pageText = '';
+              console.log(`📄 Page has ${texts.length} text elements`);
               
               for (const textItem of texts) {
                 if (textItem.R && textItem.R[0] && textItem.R[0].T) {
+                  const rawText = textItem.R[0].T;
                   try {
-                    let text = decodeURIComponent(textItem.R[0].T);
-                    // Clean up the text
-                    text = text.replace(/%20/g, ' ');
-                    text = text.replace(/\s+/g, ' ');
-                    pageText += text + ' ';
+                    // Better decoding and cleaning
+                    let cleanText = decodeURIComponent(rawText)
+                      .replace(/%20/g, ' ')
+                      .replace(/\s+/g, ' ')
+                      .trim();
+                    
+                    if (cleanText.length > 0) {
+                      fullText += cleanText + ' ';
+                    }
                   } catch (e) {
-                    // Skip problematic text
+                    console.log('📄 Skipping problematic text element:', rawText);
                   }
                 }
               }
-              
-              fullText += pageText + '\n';
+              fullText += '\n';
             }
             
             extractedText = fullText.trim();
-            console.log(`📄 PDF text extraction successful: ${extractedText.length} characters`);
-            console.log('📄 First 500 characters:', extractedText.substring(0, 500));
+            console.log(`📄 pdf2json fallback result: ${extractedText.length} characters`);
+            console.log('📄 pdf2json first 500 chars:', extractedText.substring(0, 500));
+            console.log('📄 pdf2json contains Robin Jarman:', extractedText.includes('Robin Jarman'));
           }
           
         } catch (pdfError) {
@@ -1420,6 +1427,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📄   - Contains Robin Jarman: ${extractedText.includes('Robin Jarman')}`);
       console.log(`📄   - Contains Tim Fulker: ${extractedText.includes('Tim Fulker')}`);
       console.log('📄 SENDING TO CLAUDE:')
+      
+      // Add comprehensive debugging before Claude call
+      console.log('🤖 DEBUGGING: About to send this text to Claude:');
+      console.log('🤖 TEXT LENGTH:', extractedText.length);
+      console.log('🤖 FIRST 500 CHARS:', extractedText.substring(0, 500));
+      console.log('🤖 CONTAINS ROBIN JARMAN:', extractedText.includes('Robin Jarman'));
+      console.log('🤖 CONTAINS MUSICIANS UNION:', extractedText.includes("Musicians' Union"));
+      console.log('🤖 CONTAINS AGREEMENT:', extractedText.toLowerCase().includes('agreement'));
+      console.log('🤖 RAW TEXT SAMPLE:', JSON.stringify(extractedText.substring(0, 200)));
       
       console.log(`📄 Extracted text length: ${extractedText.length} characters`);
       
@@ -1715,6 +1731,34 @@ Return JSON:
       hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
       keyLength: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.length : 0
     });
+  });
+
+  // Test PDF extraction directly
+  app.post('/api/debug-pdf-extraction', multer({ storage: multer.memoryStorage() }).single('file'), async (req: any, res) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.json({ error: 'No file provided' });
+      }
+
+      console.log('🔍 TESTING PDF EXTRACTION ONLY');
+      console.log(`📄 File: ${file.originalname}, Size: ${file.buffer.length} bytes`);
+
+      const extractedText = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
+      
+      res.json({
+        success: true,
+        fileName: file.originalname,
+        fileSize: file.buffer.length,
+        extractedText: extractedText ? extractedText.substring(0, 1000) : null,
+        textLength: extractedText ? extractedText.length : 0,
+        containsRobinJarman: extractedText ? extractedText.includes('Robin Jarman') : false,
+        containsTimFulker: extractedText ? extractedText.includes('Tim Fulker') : false
+      });
+
+    } catch (error) {
+      res.json({ error: error.message });
+    }
   });
 
   // Import contract file and link to booking
