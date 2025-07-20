@@ -170,14 +170,24 @@ export class ContractService {
               const extractedValue = (parsingResult.data as any)[extractedField];
               const bookingValue = (booking as any)[bookingField];
               
+              console.log(`🔍 Field ${bookingField}: extracted="${extractedValue}", current="${bookingValue}"`);
+              
               // Check if field is empty or has default/placeholder values
               const isEmpty = !bookingValue || bookingValue === '';
               const isDefaultTime = (bookingField === 'eventTime' || bookingField === 'eventEndTime') && 
                                     (bookingValue === '00:00' || bookingValue === '0:00');
               
-              if (extractedValue && (isEmpty || isDefaultTime)) {
+              // Special case: if clientName looks like a booking title instead of person name, allow override
+              const isClientNameTitle = bookingField === 'clientName' && bookingValue && 
+                                       (bookingValue.includes(' & ') || bookingValue.includes('DJ') || 
+                                        bookingValue.includes('Solo') || bookingValue.includes('Band'));
+              
+              if (extractedValue && (isEmpty || isDefaultTime || isClientNameTitle)) {
                 updates[bookingField] = extractedValue;
                 fieldsUpdated.push(bookingField);
+                console.log(`✅ Will update ${bookingField}: "${bookingValue}" → "${extractedValue}"`);
+              } else if (extractedValue) {
+                console.log(`❌ Skipped ${bookingField}: not empty and not default (current: "${bookingValue}")`);
               }
             });
 
