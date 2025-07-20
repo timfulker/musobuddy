@@ -1317,26 +1317,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Parse document using text extraction + OpenAI
   async function parseDocumentWithAI(fileBuffer: Buffer, fileName: string, fileType: 'contract' | 'invoice'): Promise<any> {
     try {
-      console.log(`📄 Extracting text from ${fileType} document: ${fileName}`);
+      console.log(`📄 Starting PDF text extraction for ${fileType}: ${fileName}`);
+      console.log(`📄 File buffer size: ${fileBuffer.length} bytes`);
       
       let extractedText = '';
       
       // Extract text based on file type
       if (fileName.toLowerCase().endsWith('.pdf')) {
         try {
-          console.log('📄 Attempting PDF text extraction...');
+          console.log('📄 Attempting PDF text extraction with pdf-parse...');
           
           // Method 1: Try pdf-parse (more reliable than pdf2json)
           try {
             const pdfParse = await import('pdf-parse');
             const data = await pdfParse.default(fileBuffer);
             
+            console.log(`📄 PDF Parser Success - Pages found: ${data.numpages}`);
+            console.log(`📄 Total characters extracted: ${data.text ? data.text.length : 0}`);
+            
             if (data.text && data.text.trim().length > 0) {
               extractedText = data.text;
               console.log(`✅ pdf-parse extraction successful: ${extractedText.length} characters`);
-              console.log('📄 EXTRACTED TEXT START ===');
-              console.log(extractedText);
-              console.log('=== EXTRACTED TEXT END');
+              console.log('📄 FIRST 500 CHARACTERS:');
+              console.log(extractedText.substring(0, 500));
+              console.log('📄 KEY INDICATORS CHECK:');
+              console.log(`📄   - Has Robin Jarman: ${extractedText.includes('Robin Jarman')}`);
+              console.log(`📄   - Has Tim Fulker: ${extractedText.includes('Tim Fulker')}`);
+              console.log(`📄   - Has Musicians Union: ${extractedText.includes('Musicians')}`);
+              console.log(`📄   - Has fee/£: ${extractedText.includes('£') || extractedText.includes('fee')}`);
+            } else {
+              console.log('❌ pdf-parse returned empty text');
             }
           } catch (error) {
             console.log('pdf-parse failed, trying pdf2json fallback...', error.message);
@@ -1400,9 +1410,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (!extractedText || extractedText.trim().length === 0) {
-        console.log('No text extracted from document');
+        console.log('❌ No text extracted from document');
         return null;
       }
+
+      console.log('📄 FINAL EXTRACTED TEXT STATS:');
+      console.log(`📄   - Length: ${extractedText.length} characters`);
+      console.log(`📄   - Lines: ${extractedText.split('\n').length}`);
+      console.log(`📄   - Contains Robin Jarman: ${extractedText.includes('Robin Jarman')}`);
+      console.log(`📄   - Contains Tim Fulker: ${extractedText.includes('Tim Fulker')}`);
+      console.log('📄 SENDING TO CLAUDE:')
       
       console.log(`📄 Extracted text length: ${extractedText.length} characters`);
       
