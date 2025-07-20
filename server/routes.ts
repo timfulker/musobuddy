@@ -4210,20 +4210,9 @@ Hotel Lobby Entertainment`;
     }
   });
 
-  // Learning-based contract parsing for booking forms
-  const contractUpload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-    fileFilter: (req, file, cb) => {
-      if (file.mimetype === 'application/pdf') {
-        cb(null, true);
-      } else {
-        cb(new Error('Only PDF files are allowed'));
-      }
-    }
-  });
+  // Learning-based contract parsing for booking forms (reuse existing upload middleware)
 
-  app.post('/api/contracts/intelligent-parse', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
+  app.post('/api/contracts/intelligent-parse', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { bookingId } = req.body;
