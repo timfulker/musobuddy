@@ -1491,19 +1491,9 @@ ${extractedText}`;
       const cloudStorageKey = `contracts/${contractNumber}-${file.originalname}`;
       const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
       
-      // Attempt to parse document to extract information
+      // AI parsing disabled - skip document parsing
       let parsedData = null;
       let parseError = null;
-      
-      try {
-        parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
-        console.log('📄 Document parsing successful:', parsedData);
-        console.log('📄 Fee value type:', typeof parsedData?.fee, 'Value:', parsedData?.fee);
-        console.log('📄 Deposit value type:', typeof parsedData?.deposit, 'Value:', parsedData?.deposit);
-      } catch (error) {
-        parseError = error;
-        console.warn('⚠️ Document parsing failed, continuing with manual data:', error.message);
-      }
       
       // Helper function to safely parse values from AI response
       const safeParseValue = (value: any, defaultValue: any) => {

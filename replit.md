@@ -179,12 +179,10 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Form Validation Fix**: Resolved duplicate venueAddress field that was causing form validation failures
 - **Database Error Fix**: Fixed "invalid input syntax for type numeric" by sanitizing empty strings to null for numeric fields
 - **Authentication Enhancement**: Added proper credentials to form requests for stable session handling
-- **AI Parsing Fix**: Completely rebuilt PDF parsing to actually read document content instead of generating fictional data
-- **Vision-Based Extraction**: Implemented Claude Vision with pdf2pic for accurate text extraction from real PDF documents
-- **Data Accuracy**: Fixed critical AI hallucination issue where fake client details were being generated instead of extracted
-- **PDF Text Extraction**: Replaced complex PDF processing with simple pdf-parse text extraction and Claude Vision fallback
-- **ChatGPT Integration**: Used ChatGPT's recommended field structure and parsing approach for reliable document parsing
-- **Booking Recovery**: Fixed booking deletion issue - recreated Harry Tamplin booking (ID 6103) with correct details from contract
+- **AI Parsing Disabled**: After extensive testing, AI contract parsing proved unreliable and was disabled to prevent data corruption
+- **Manual Contract Management**: Contract upload and storage functionality retained with manual "Copy from Contract" feature
+- **Data Integrity Priority**: Prioritized data accuracy over automation - users now manually control all data population from contracts
+- **Reliable Workflow**: Contract import now focuses on secure storage and manual review rather than automated extraction
 
 ### 2025-07-18 - Application Stability and Comprehensive User Documentation
 - **Database Connection Fix**: Resolved WebSocket connection issues with Neon database causing startup failures
