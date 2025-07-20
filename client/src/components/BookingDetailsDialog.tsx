@@ -465,7 +465,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       const extractedValue = extractedData[extractedField];
       const currentValue = currentFormData[formField];
       
-      if (extractedValue && (!currentValue || currentValue.trim() === '')) {
+      // Check if field is empty or has default/placeholder values
+      const isEmpty = !currentValue || currentValue.trim() === '';
+      const isDefaultTime = (formField === 'eventTime' || formField === 'eventEndTime') && 
+                            (currentValue === '00:00' || currentValue === '0:00');
+      
+      if (extractedValue && (isEmpty || isDefaultTime)) {
         updates[formField] = extractedValue;
         fieldsUpdated++;
       }

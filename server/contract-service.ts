@@ -170,7 +170,12 @@ export class ContractService {
               const extractedValue = (parsingResult.data as any)[extractedField];
               const bookingValue = (booking as any)[bookingField];
               
-              if (extractedValue && (!bookingValue || bookingValue === '')) {
+              // Check if field is empty or has default/placeholder values
+              const isEmpty = !bookingValue || bookingValue === '';
+              const isDefaultTime = (bookingField === 'eventTime' || bookingField === 'eventEndTime') && 
+                                    (bookingValue === '00:00' || bookingValue === '0:00');
+              
+              if (extractedValue && (isEmpty || isDefaultTime)) {
                 updates[bookingField] = extractedValue;
                 fieldsUpdated.push(bookingField);
               }

@@ -49,7 +49,7 @@ EXTRACTION RULES:
 3. CLIENT CONTACT: Look in "Signed by the Hirer" section for phone/email
 4. VENUE: Look for "to perform...at [VENUE NAME]" or venue mentioned in engagement details
 5. VENUE ADDRESS: Often the same as client address, or mentioned separately
-6. START/END TIMES: Look for "Start Time" and "Finish Time" or "End Time" in the contract
+6. START/FINISH TIMES: Look for "Start Time" and "Finish Time" in the contract table
 7. NEVER extract Tim Fulker's details as the client - he is the musician
 
 Return ONLY valid JSON with no additional text or formatting.`,
@@ -64,7 +64,7 @@ Focus on these key areas:
 2. "of [CLIENT ADDRESS]" section  
 3. "The Hirer engages the Musician to perform...at [VENUE]"
 4. "Signed by the Hirer" section with contact details (phone and email)
-5. Date/time/fee table with start and finish times
+5. Table with columns: Date | Start Time | Finish Time | Fee
 
 Return exactly this JSON structure:
 {
@@ -75,8 +75,8 @@ Return exactly this JSON structure:
   "venue": "venue name from engagement details",
   "venueAddress": "venue address if different from client address",
   "eventDate": "YYYY-MM-DD format",
-  "eventTime": "HH:MM format start time (look for Start Time)",
-  "eventEndTime": "HH:MM format end/finish time (look for Finish Time)",
+  "eventTime": "HH:MM format from Start Time column",
+  "eventEndTime": "HH:MM format from Finish Time column",
   "fee": 260.00,
   "equipmentRequirements": "any equipment notes",
   "specialRequirements": "any special requirements",
