@@ -1379,166 +1379,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`📄 Extracted text length: ${extractedText.length} characters`);
       
-      // Direct parsing logic - no external AI needed
-      if (fileType === 'contract') {
-        return parseMusiciansUnionContract(extractedText);
-      } else {
-        return parseInvoiceDocument(extractedText);
+      // Use Anthropic API with a much more focused, simple approach
+      if (!process.env.ANTHROPIC_API_KEY) {
+        console.log('❌ Anthropic API key not available, skipping document parsing');
+        return null;
       }
+
+      // Use Claude with a simple, focused prompt
+      const Anthropic = await import('@anthropic-ai/sdk');
+      const anthropic = new Anthropic.default({
+        apiKey: process.env.ANTHROPIC_API_KEY,
+      });
+
+      let prompt = '';
+      
+      if (fileType === 'contract') {
+        prompt = `Parse this Musicians' Union contract and extract client information. Look for:
+
+1. CLIENT (the person hiring): Find "between [NAME] of [ADDRESS] and [MUSICIAN]"
+2. CLIENT CONTACT: Find "Signed by the Hirer" section with phone and email
+3. EVENT DATE: Look for "Saturday 26th July 2025" format  
+4. TIMES: Look for "Start Time 1545 Finish Time 1900" (convert to HH:MM)
+5. FEE: Look for "£260 for 2 hours"
+
+Return only this JSON structure:
+{
+  "client_name": "string or null",
+  "client_email": "string or null", 
+  "client_phone": "string or null",
+  "client_address": "string or null",
+  "event_date": "YYYY-MM-DD or null",
+  "start_time": "HH:MM or null",
+  "end_time": "HH:MM or null", 
+  "agreed_fee": number or null,
+  "venue_name": "string or null",
+  "extras_or_notes": "string or null"
+}
+
+Contract text:
+${extractedText}`;
+      } else {
+        prompt = `Parse this invoice and extract key information. Return only JSON:
+{
+  "clientName": "string or null",
+  "clientEmail": "string or null",
+  "amount": number or null,
+  "eventDate": "YYYY-MM-DD or null"
+}
+
+Invoice text:
+${extractedText}`;
+      }
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 500,
+        messages: [{ role: "user", content: prompt }]
+      });
+
+      const responseText = response.content[0].text;
+      
+      // Extract JSON from response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.log('❌ No valid JSON found in AI response');
+        return null;
+      }
+      
+      const parsedData = JSON.parse(jsonMatch[0]);
+      console.log('📄 AI parsing successful:', parsedData);
+      return parsedData;
       
     } catch (error) {
       console.error('Error parsing document:', error);
       return null;
     }
-  }
-
-  // Direct contract parsing function - much more reliable than AI
-  function parseMusiciansUnionContract(text: string): any {
-    console.log('📄 Parsing Musicians Union contract directly...');
-    
-    const result: any = {
-      client_name: null,
-      client_email: null,
-      client_phone: null,
-      client_address: null,
-      performer_name: null,
-      performer_email: null,
-      performer_phone: null,
-      performer_address: null,
-      event_date: null,
-      start_time: null,
-      end_time: null,
-      venue_name: null,
-      venue_address: null,
-      agreed_fee: null,
-      deposit_amount: null,
-      deposit_due_date: null,
-      bank_account_name: null,
-      bank_account_number: null,
-      bank_sort_code: null,
-      extras_or_notes: null
-    };
-
-    // Parse the "between X of Y and Z of W" structure
-    const betweenMatch = text.match(/between\s+([^\n]+?)\s+of\s+([^\n]+?)\s+and\s+([^\n]+?)\s+of\s+([^\n]+?)(?:\s*\.|\s*\n)/is);
-    if (betweenMatch) {
-      result.client_name = betweenMatch[1].trim();
-      result.client_address = betweenMatch[2].trim();
-      result.performer_name = betweenMatch[3].trim();
-      result.performer_address = betweenMatch[4].trim();
-    }
-
-    // Parse venue information (where the performance takes place)
-    const venueMatch = text.match(/perform the following Engagement\(s\) at\s+([^\n]+)/i);
-    if (venueMatch) {
-      result.venue_name = venueMatch[1].trim();
-    }
-
-    // Parse venue address (usually follows venue name)
-    const venueAddressMatch = text.match(/perform the following Engagement\(s\) at\s+[^\n]+\s+([^\n]+)/i);
-    if (venueAddressMatch) {
-      result.venue_address = venueAddressMatch[1].trim();
-    }
-
-    // Parse event date - handle various formats
-    const dateMatch = text.match(/(?:Saturday|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday)\s+(\d{1,2})(?:st|nd|rd|th)\s+(\w+)\s+(\d{4})/i);
-    if (dateMatch) {
-      const day = dateMatch[1].padStart(2, '0');
-      const month = getMonthNumber(dateMatch[2]);
-      const year = dateMatch[3];
-      if (month) {
-        result.event_date = `${year}-${month.padStart(2, '0')}-${day}`;
-      }
-    }
-
-    // Parse times - handle 4-digit format
-    const timeMatch = text.match(/Start Time.*?(\d{3,4}).*?Finish Time.*?(\d{3,4})/is);
-    if (timeMatch) {
-      result.start_time = formatTime(timeMatch[1]);
-      result.end_time = formatTime(timeMatch[2]);
-    }
-
-    // Parse fee - extract number from text like "£260 for 2 hours"
-    const feeMatch = text.match(/Fee.*?£(\d+(?:\.\d{2})?)/is);
-    if (feeMatch) {
-      result.agreed_fee = parseFloat(feeMatch[1]);
-    }
-
-    // Parse extra notes from fee description
-    const feeDescMatch = text.match(/£\d+(?:\.\d{2})?\s+for\s+([^£\n]+)/i);
-    if (feeDescMatch) {
-      result.extras_or_notes = feeDescMatch[1].trim();
-    }
-
-    // Parse hirer contact info from signature section
-    const hirerPhoneMatch = text.match(/Signed by the Hirer[\s\S]*?Phone Number\s+(\d[\d\s]+)/i);
-    if (hirerPhoneMatch) {
-      result.client_phone = hirerPhoneMatch[1].replace(/\s/g, '');
-    }
-
-    const hirerEmailMatch = text.match(/Signed by the Hirer[\s\S]*?Email\s+([^\s\n]+)/i);
-    if (hirerEmailMatch) {
-      result.client_email = hirerEmailMatch[1].trim();
-    }
-
-    // Parse musician contact info from signature section
-    const musicianPhoneMatch = text.match(/Signed by the Musician[\s\S]*?Phone Number\s+(\d[\d\s]+)/i);
-    if (musicianPhoneMatch) {
-      result.performer_phone = musicianPhoneMatch[1].replace(/\s/g, '');
-    }
-
-    const musicianEmailMatch = text.match(/Signed by the Musician[\s\S]*?Email\s+([^\s\n]+)/i);
-    if (musicianEmailMatch) {
-      result.performer_email = musicianEmailMatch[1].trim();
-    }
-
-    console.log('📄 Direct parsing result:', result);
-    return result;
-  }
-
-  function parseInvoiceDocument(text: string): any {
-    // Simple invoice parsing - can be enhanced as needed
-    return {
-      clientName: null,
-      clientEmail: null,
-      clientAddress: null,
-      amount: null,
-      eventDate: null,
-      fee: null,
-      depositPaid: null,
-      dueDate: null,
-      invoiceNumber: null,
-      venueAddress: null
-    };
-  }
-
-  // Helper functions
-  function getMonthNumber(monthName: string): string | null {
-    const months: { [key: string]: string } = {
-      'january': '01', 'jan': '01',
-      'february': '02', 'feb': '02',
-      'march': '03', 'mar': '03',
-      'april': '04', 'apr': '04',
-      'may': '05',
-      'june': '06', 'jun': '06',
-      'july': '07', 'jul': '07',
-      'august': '08', 'aug': '08',
-      'september': '09', 'sep': '09',
-      'october': '10', 'oct': '10',
-      'november': '11', 'nov': '11',
-      'december': '12', 'dec': '12'
-    };
-    return months[monthName.toLowerCase()] || null;
-  }
-
-  function formatTime(timeStr: string): string {
-    // Convert 4-digit time to HH:MM format
-    if (timeStr.length === 4) {
-      return `${timeStr.substring(0, 2)}:${timeStr.substring(2)}`;
-    } else if (timeStr.length === 3) {
-      return `0${timeStr.substring(0, 1)}:${timeStr.substring(1)}`;
-    }
-    return timeStr;
   }
 
   // Import contract file and link to booking

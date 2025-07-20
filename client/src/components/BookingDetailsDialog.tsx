@@ -273,10 +273,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       if (data.contract) {
         setUploadStatus({
           type: 'success',
-          message: `Contract "${data.contractNumber}" uploaded successfully. Parsing and auto-populating form in 20 seconds...`
+          message: `Contract "${data.contractNumber}" uploaded successfully. Parsing and auto-populating form in 3 seconds...`
         });
         
-        // Auto-populate form after 20 seconds using the contract data from the response
+        // Auto-populate form after 3 seconds using the contract data from the response
         setTimeout(() => {
           console.log('🔄 Auto-populating form with contract data:', data.contract);
           handleCopyFromContract(data.contract);
@@ -285,7 +285,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
             message: `Contract parsed and form auto-populated successfully!`
           });
           setTimeout(() => setUploadStatus(null), 5000);
-        }, 20000);
+        }, 3000);
       } else {
         setUploadStatus({
           type: 'success',
