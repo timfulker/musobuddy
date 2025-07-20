@@ -50,6 +50,15 @@ import {
   userAuditLogs,
   type UserAuditLog,
   type InsertUserAuditLog,
+  importedContracts,
+  type ImportedContract,
+  type InsertImportedContract,
+  contractExtractions,
+  type ContractExtraction,
+  type InsertContractExtraction,
+  contractExtractionPatterns,
+  type ContractExtractionPattern,
+  type InsertContractExtractionPattern,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, ne, or } from "drizzle-orm";
@@ -206,6 +215,15 @@ export interface IStorage {
   exportUsersToCSV(): Promise<string>;
   importUsersFromCSV(csvData: string): Promise<{ success: number; errors: string[] }>;
   bulkDeleteUsers(userIds: string[]): Promise<boolean>;
+  
+  // Contract Learning System Operations
+  createImportedContract(contract: InsertImportedContract): Promise<ImportedContract>;
+  getImportedContracts(userId: string): Promise<ImportedContract[]>;
+  getImportedContract(id: number, userId: string): Promise<ImportedContract | undefined>;
+  saveContractExtraction(extraction: InsertContractExtraction): Promise<ContractExtraction>;
+  getContractExtractions(userId: string): Promise<ContractExtraction[]>;
+  getContractExtractionPatterns(contractType?: string): Promise<ContractExtractionPattern[]>;
+  createContractExtractionPattern(pattern: InsertContractExtractionPattern): Promise<ContractExtractionPattern>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2111,6 +2129,42 @@ export class DatabaseStorage implements IStorage {
         lastUpdated: new Date()
       };
     }
+  }
+
+  // Contract Learning System Operations
+  async createImportedContract(contract: InsertImportedContract): Promise<ImportedContract> {
+    const [result] = await db.insert(importedContracts).values(contract).returning();
+    return result;
+  }
+
+  async getImportedContracts(userId: string): Promise<ImportedContract[]> {
+    return await db.select().from(importedContracts).where(eq(importedContracts.userId, userId)).orderBy(desc(importedContracts.uploadedAt));
+  }
+
+  async getImportedContract(id: number, userId: string): Promise<ImportedContract | undefined> {
+    const [result] = await db.select().from(importedContracts).where(and(eq(importedContracts.id, id), eq(importedContracts.userId, userId)));
+    return result;
+  }
+
+  async saveContractExtraction(extraction: InsertContractExtraction): Promise<ContractExtraction> {
+    const [result] = await db.insert(contractExtractions).values(extraction).returning();
+    return result;
+  }
+
+  async getContractExtractions(userId: string): Promise<ContractExtraction[]> {
+    return await db.select().from(contractExtractions).where(eq(contractExtractions.userId, userId)).orderBy(desc(contractExtractions.createdAt));
+  }
+
+  async getContractExtractionPatterns(contractType?: string): Promise<ContractExtractionPattern[]> {
+    if (contractType) {
+      return await db.select().from(contractExtractionPatterns).where(eq(contractExtractionPatterns.contractType, contractType));
+    }
+    return await db.select().from(contractExtractionPatterns);
+  }
+
+  async createContractExtractionPattern(pattern: InsertContractExtractionPattern): Promise<ContractExtractionPattern> {
+    const [result] = await db.insert(contractExtractionPatterns).values(pattern).returning();
+    return result;
   }
 }
 

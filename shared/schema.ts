@@ -607,3 +607,71 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertUserAuditLog = z.infer<typeof insertUserAuditLogSchema>;
 export type UserAuditLog = typeof userAuditLogs.$inferSelect;
 
+// NEW: Contract Learning System Tables
+
+// Store imported contract files
+export const importedContracts = pgTable("imported_contracts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  filename: varchar("filename").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: varchar("mime_type"),
+  cloudStorageUrl: varchar("cloud_storage_url"),
+  cloudStorageKey: varchar("cloud_storage_key"),
+  contractType: varchar("contract_type"), // 'musicians_union', 'custom', etc.
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  bookingId: integer("booking_id").references(() => bookings.id),
+});
+
+// Store extraction patterns (the learning component)
+export const contractExtractionPatterns = pgTable("contract_extraction_patterns", {
+  id: serial("id").primaryKey(),
+  contractType: varchar("contract_type").notNull(), // 'musicians_union_standard'
+  fieldName: varchar("field_name").notNull(),    // 'client_name', 'event_date', etc.
+  extractionMethod: jsonb("extraction_method"),        // Rules for finding this field
+  successRate: decimal("success_rate"),           // Accuracy tracking
+  usageCount: integer("usage_count").default(0),
+  createdBy: varchar("created_by"),             // User who taught this pattern
+  isGlobal: boolean("is_global").default(false), // Available to all users
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Track manual extractions for learning
+export const contractExtractions = pgTable("contract_extractions", {
+  id: serial("id").primaryKey(),
+  importedContractId: integer("imported_contract_id").references(() => importedContracts.id),
+  extractedData: jsonb("extracted_data"),           // The manually extracted data
+  extractionTimeSeconds: integer("extraction_time_seconds"), // How long it took
+  userId: varchar("user_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for imported contracts
+export const importedContractsRelations = relations(importedContracts, ({ one, many }) => ({
+  booking: one(bookings, {
+    fields: [importedContracts.bookingId],
+    references: [bookings.id],
+  }),
+  extractions: many(contractExtractions),
+}));
+
+export const contractExtractionsRelations = relations(contractExtractions, ({ one }) => ({
+  importedContract: one(importedContracts, {
+    fields: [contractExtractions.importedContractId],
+    references: [importedContracts.id],
+  }),
+}));
+
+// Zod schemas for the new tables
+export const insertImportedContractSchema = createInsertSchema(importedContracts);
+export const insertContractExtractionPatternSchema = createInsertSchema(contractExtractionPatterns);
+export const insertContractExtractionSchema = createInsertSchema(contractExtractions);
+
+// Types for the new tables
+export type InsertImportedContract = z.infer<typeof insertImportedContractSchema>;
+export type ImportedContract = typeof importedContracts.$inferSelect;
+export type InsertContractExtractionPattern = z.infer<typeof insertContractExtractionPatternSchema>;
+export type ContractExtractionPattern = typeof contractExtractionPatterns.$inferSelect;
+export type InsertContractExtraction = z.infer<typeof insertContractExtractionSchema>;
+export type ContractExtraction = typeof contractExtractions.$inferSelect;
+

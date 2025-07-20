@@ -2,7 +2,9 @@ import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
-import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema } from "@shared/schema";
+import { insertEnquirySchema, insertContractSchema, insertInvoiceSchema, insertBookingSchema, insertComplianceDocumentSchema, insertEmailTemplateSchema, insertClientSchema, insertImportedContractSchema } from "@shared/schema";
+import multer from 'multer';
+import { uploadFileToCloudflare, generateSignedUrl } from './cloud-storage';
 import { 
   parseAppleCalendar,
   convertEventsToBookings
@@ -2516,6 +2518,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+
+  // Setup multer for file uploads (re-added for contract learning system)
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
+  // NEW: Contract Learning System Routes
+
+  // Simple PDF storage endpoint - Phase 1 of contract learning system
+  app.post('/api/contracts/import-pdf', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { bookingId, contractType = 'unknown' } = req.body;
+      const file = req.file;
+      
+      if (!file || file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ error: 'Please upload a PDF file' });
+      }
+
+      // Upload to Cloudflare R2 storage
+      const storageKey = `imported-contracts/${userId}/${Date.now()}-${file.originalname}`;
+      const uploadResult = await uploadFileToCloudflare(file.buffer, storageKey, file.mimetype);
+      
+      if (!uploadResult.success) {
+        return res.status(500).json({ 
+          error: 'Failed to upload to cloud storage',
+          details: uploadResult.error 
+        });
+      }
+      
+      // Store metadata and cloud storage information
+      const contractData = {
+        userId,
+        filename: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        cloudStorageUrl: uploadResult.url,
+        cloudStorageKey: uploadResult.key,
+        contractType,
+        bookingId: bookingId ? parseInt(bookingId) : null
+      };
+
+      const contractRecord = await storage.createImportedContract(contractData);
+      
+      res.json({
+        success: true,
+        contract: contractRecord,
+        message: 'Contract PDF imported successfully'
+      });
+    } catch (error) {
+      console.error('Error importing contract PDF:', error);
+      res.status(500).json({ error: 'Failed to import contract PDF' });
+    }
+  });
+
+  // Get imported contracts for a user
+  app.get('/api/contracts/imported', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const contracts = await storage.getImportedContracts(userId);
+      res.json(contracts);
+    } catch (error) {
+      console.error('Error fetching imported contracts:', error);
+      res.status(500).json({ error: 'Failed to fetch imported contracts' });
+    }
+  });
+
+  // Get a specific imported contract
+  app.get('/api/contracts/imported/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getImportedContract(contractId, userId);
+      
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      res.json(contract);
+    } catch (error) {
+      console.error('Error fetching imported contract:', error);
+      res.status(500).json({ error: 'Failed to fetch imported contract' });
+    }
+  });
+
+  // Save manual extraction data - Phase 2 of learning system
+  app.post('/api/contracts/save-extraction', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { importedContractId, extractedData, extractionTimeSeconds } = req.body;
+      
+      const extractionRecord = await storage.saveContractExtraction({
+        importedContractId,
+        extractedData,
+        extractionTimeSeconds,
+        userId
+      });
+      
+      res.json({
+        success: true,
+        extraction: extractionRecord,
+        message: 'Extraction data saved successfully'
+      });
+    } catch (error) {
+      console.error('Error saving extraction data:', error);
+      res.status(500).json({ error: 'Failed to save extraction data' });
+    }
+  });
 
   // Compliance document routes
   app.get('/api/compliance', isAuthenticated, async (req: any, res) => {

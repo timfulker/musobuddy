@@ -34,6 +34,63 @@ interface CloudStorageResult {
 }
 
 /**
+ * Generic file upload to Cloudflare R2
+ */
+export async function uploadFileToCloudflare(
+  fileBuffer: Buffer,
+  key: string,
+  contentType: string
+): Promise<CloudStorageResult> {
+  try {
+    console.log('☁️ Uploading file to cloud storage:', key);
+    
+    // Check if cloud storage is configured
+    if (!process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_ACCOUNT_ID || !process.env.R2_BUCKET_NAME) {
+      console.log('⚠️ Cloud storage not configured, skipping upload');
+      return {
+        success: false,
+        error: 'Cloud storage not configured',
+      };
+    }
+    
+    const client = getS3Client();
+    
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: contentType,
+    });
+    
+    await client.send(command);
+    
+    // Generate a signed URL for accessing the file
+    const getCommand = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    });
+    
+    const signedUrl = await getSignedUrl(client, getCommand, { 
+      expiresIn: 7 * 24 * 60 * 60 // 7 days in seconds
+    });
+    
+    console.log('✅ File uploaded successfully:', key);
+    
+    return {
+      success: true,
+      url: signedUrl,
+      key: key,
+    };
+  } catch (error) {
+    console.error('❌ Failed to upload file to cloud storage:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * Upload contract PDF to cloud storage
  */
 export async function uploadContractToCloud(
