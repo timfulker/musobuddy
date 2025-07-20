@@ -448,6 +448,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     const fieldMappings = {
       clientName: 'clientName',
       clientEmail: 'clientEmail',
+      clientPhone: 'clientPhone',
       clientAddress: 'clientAddress',
       venue: 'venue',
       venueAddress: 'venueAddress',
