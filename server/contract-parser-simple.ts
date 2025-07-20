@@ -33,47 +33,55 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: `You are an expert at extracting client information from Musicians' Union contracts. 
+      system: `You are an expert at extracting client information from Musicians' Union contracts and performance agreements.
 
-CRITICAL: Tim Fulker is the MUSICIAN. You need to extract the CLIENT/HIRER information.
+CRITICAL UNDERSTANDING OF MUSICIANS' UNION CONTRACT FORMAT:
+- "between [NAME]" = this is the CLIENT/HIRER
+- "of [ADDRESS]" following the client name = CLIENT ADDRESS
+- "and [MUSICIAN NAME]" = this is the performer (usually Tim Fulker)
+- "The Hirer engages the Musician to perform...at [VENUE]" = VENUE NAME
+- In signature section: "Signed by the Hirer" = CLIENT information
+- In signature section: "Signed by the Musician" = PERFORMER information (ignore this)
 
-FOR EVERY CONTRACT:
-1. Find "between [CLIENT NAME]" - this is the HIRER, not Tim Fulker
-2. Find "of [ADDRESS]" after the client name - this is CLIENT ADDRESS  
-3. Find "Signed by the Hirer" section - contains client phone and email
-4. Find venue in "to perform...at [VENUE]"
-5. Extract date, times, and fee from the table
+EXTRACTION RULES:
+1. CLIENT NAME: Look for "between [NAME]" or "Signed by the Hirer: [NAME]"
+2. CLIENT ADDRESS: Look for "of [ADDRESS]" after the client name
+3. CLIENT CONTACT: Look in "Signed by the Hirer" section for phone/email
+4. VENUE: Look for "to perform...at [VENUE NAME]" or venue mentioned in engagement details
+5. VENUE ADDRESS: Often the same as client address, or mentioned separately
+6. START/FINISH TIMES: Look for "Start Time" and "Finish Time" in the contract table
+7. NEVER extract Tim Fulker's details as the client - he is the musician
 
-ALWAYS return complete JSON with actual extracted values. Never return null or empty strings unless the information is truly missing from the contract.`,
+Return ONLY valid JSON with no additional text or formatting.`,
       messages: [{
         role: 'user',
-        content: `Extract ALL information from this Musicians' Union contract. Find the CLIENT (not Tim Fulker):
+        content: `Extract the client/hirer information from this Musicians' Union contract:
 
 ${contractText}
 
-Look for:
-- "between [CLIENT NAME]" (this is the hirer)
-- "of [CLIENT ADDRESS]" (client's address)  
-- "Signed by the Hirer" section (has phone/email)
-- Venue name and address
-- Performance details from the table
+Focus on these key areas:
+1. "between [CLIENT NAME]" section
+2. "of [CLIENT ADDRESS]" section  
+3. "The Hirer engages the Musician to perform...at [VENUE]"
+4. "Signed by the Hirer" section with contact details (phone and email)
+5. Table with columns: Date | Start Time | Finish Time | Fee
 
-Return valid JSON with extracted values:
+Return exactly this JSON structure:
 {
-  "clientName": "actual client name from contract",
-  "clientEmail": "client email from signature section",
-  "clientPhone": "client phone from signature section", 
-  "clientAddress": "client address from contract",
-  "venue": "venue name",
-  "venueAddress": "venue address",
-  "eventDate": "YYYY-MM-DD",
-  "eventTime": "HH:MM",
-  "eventEndTime": "HH:MM",
-  "fee": number,
-  "equipmentRequirements": "",
-  "specialRequirements": "",
-  "eventType": "",
-  "performanceDuration": ""
+  "clientName": "name of the HIRER (not Tim Fulker)",
+  "clientEmail": "hirer's email from signature section",
+  "clientPhone": "hirer's phone from signature section", 
+  "clientAddress": "address following 'of' after client name",
+  "venue": "venue name from engagement details",
+  "venueAddress": "venue address if different from client address",
+  "eventDate": "YYYY-MM-DD format",
+  "eventTime": "HH:MM format from Start Time column",
+  "eventEndTime": "HH:MM format from Finish Time column",
+  "fee": 260.00,
+  "equipmentRequirements": "any equipment notes",
+  "specialRequirements": "any special requirements",
+  "eventType": "type of performance if mentioned",
+  "performanceDuration": "duration in minutes or hours"
 }`
       }]
     });
