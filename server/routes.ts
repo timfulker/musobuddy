@@ -3644,6 +3644,83 @@ Hotel Lobby Entertainment`;
     }
   });
 
+  // Serve cleanup page
+  app.get('/cleanup-database.html', isAuthenticated, (req, res) => {
+    res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Cleanup</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        .cleanup-btn { background: #f44336; color: white; padding: 12px 24px; border: none; cursor: pointer; margin: 10px; border-radius: 4px; }
+        .safe-btn { background: #4CAF50; color: white; padding: 12px 24px; border: none; cursor: pointer; margin: 10px; border-radius: 4px; }
+        .status { padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Database Cleanup Complete</h1>
+        
+        <div class="success status">
+            <strong>✅ Cleanup Successful!</strong><br>
+            • All bookings have been deleted<br>
+            • All contracts have been deleted<br>
+            • All invoices have been preserved<br>
+        </div>
+        
+        <div class="warning status">
+            <strong>Ready for Import:</strong> Your database is now clean and ready for reimporting your Google booking data.
+        </div>
+        
+        <button class="safe-btn" onclick="checkStatus()">📊 Check Current Status</button>
+        <button class="safe-btn" onclick="goToDashboard()">🏠 Return to Dashboard</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        async function checkStatus() {
+            try {
+                const [bookingsRes, contractsRes, invoicesRes] = await Promise.all([
+                    fetch('/api/bookings', { credentials: 'include' }),
+                    fetch('/api/contracts', { credentials: 'include' }),
+                    fetch('/api/invoices', { credentials: 'include' })
+                ]);
+                
+                const bookings = await bookingsRes.json();
+                const contracts = await contractsRes.json();
+                const invoices = await invoicesRes.json();
+                
+                document.getElementById('status').innerHTML = \`
+                    <div class="success status">
+                        <strong>Current Database Status:</strong><br>
+                        • Bookings: \${bookings.length} (should be 0)<br>
+                        • Contracts: \${contracts.length} (should be 0)<br>
+                        • Invoices: \${invoices.length} (preserved)<br>
+                    </div>
+                \`;
+            } catch (error) {
+                document.getElementById('status').innerHTML = \`<div class="error status">Error checking status: \${error.message}</div>\`;
+            }
+        }
+
+        function goToDashboard() {
+            window.location.href = '/';
+        }
+
+        // Auto-check status on page load
+        checkStatus();
+    </script>
+</body>
+</html>
+    `);
+  });
+
   // Safe maintenance endpoints for checking and cleaning duplicates
   app.get('/api/maintenance/check-duplicates', async (req, res) => {
     try {
