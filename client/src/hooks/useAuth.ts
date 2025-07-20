@@ -7,8 +7,8 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
-    staleTime: 0, // No caching - always check server
-    refetchOnWindowFocus: true, // Check auth status when window gains focus
+    staleTime: 5000, // Cache for 5 seconds to reduce flashing
+    refetchOnWindowFocus: false, // Reduce unnecessary auth checks
     queryFn: async () => {
       const response = await fetch("/api/auth/user", {
         credentials: "include",

@@ -143,18 +143,9 @@ export async function setupAuth(app: Express) {
       console.log(`🚪 ${isApiCall ? 'API' : 'Browser'} logout initiated`);
       
       const cleanup = () => {
-        // Clear all possible cookie variations
-        const cookieOptions = [
-          { path: '/' },
-          { path: '/', domain: req.get('host') },
-          { path: '/', domain: `.${req.get('host')}` }
-        ];
-        
-        cookieOptions.forEach(options => {
-          res.clearCookie('connect.sid', options);
-          res.clearCookie('session', options);
-        });
-        
+        // Clear cookies - simplified to avoid domain issues
+        res.clearCookie('connect.sid', { path: '/' });
+        res.clearCookie('session', { path: '/' });
         console.log('✅ Logout completed successfully');
       };
 
