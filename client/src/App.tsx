@@ -60,11 +60,11 @@ function Router() {
         }).then(() => {
           // Clear React Query cache to force re-authentication
           queryClient.clear();
-          window.location.href = '/login';
+          window.location.href = '/';
         }).catch(() => {
           // Even if logout fails, clear cache and redirect
           queryClient.clear();
-          window.location.href = '/login';
+          window.location.href = '/';
         });
         return <div>Logging out...</div>;
       }} />
