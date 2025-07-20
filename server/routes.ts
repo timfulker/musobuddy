@@ -1394,51 +1394,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let prompt = '';
       
       if (fileType === 'contract') {
-        prompt = `You are an intelligent contract parser. Extract CLIENT information from this music contract.
+        prompt = `ABSOLUTE CRITICAL RULE: Tim Fulker is the MUSICIAN/PERFORMER, NEVER the client.
 
-CRITICAL RULES:
-- CLIENT = Person/organization HIRING the musician (the customer)
-- PERFORMER = The musician being hired (NOT the client)
-- Extract CLIENT details only, never performer details
+This is a music contract. Extract the CLIENT information (the person HIRING Tim Fulker).
 
-INTELLIGENT ANALYSIS APPROACH:
-1. Read the entire contract structure first
-2. Identify WHO is paying WHOM (payment direction)
-3. Look for role indicators: "Hirer", "Client", "Customer" vs "Performer", "Artist"
-4. Find signature sections and determine which party is which
+STEP 1: Identify the two parties
+- Look for "between [CLIENT NAME] and Tim Fulker" or similar
+- Tim Fulker = musician (IGNORE his details)
+- The OTHER person = client (EXTRACT their details)
 
-ADAPTIVE PATTERNS (works with ANY contract format):
-- Contract parties: "between X and Y", "Agreement with", "Client: X"
-- Payment indicators: "Client shall pay", "Fee payable by", "Invoice to"
-- Role sections: "Hirer details", "Customer information", "Client signature"
-- Contact placement: Usually with the paying/hiring party
+STEP 2: Find CLIENT details (NOT Tim Fulker's details)
+- CLIENT NAME: The person hiring Tim Fulker (NOT Tim Fulker himself)
+- CLIENT ADDRESS: The client's address (NOT Tim Fulker's address)
+- CLIENT EMAIL: The client's email (NOT timfulkermusic@gmail.com)
+- CLIENT PHONE: The client's phone (NOT Tim Fulker's phone)
 
-CLIENT EXTRACTION STRATEGY:
-- Name: From contract parties, hirer sections, or client details
-- Address: Associated with client/hirer name, not performer
-- Email/Phone: In client contact sections, not performer sections
-- Venue: Where performance takes place
-- Fee: Amount client pays to performer
+STEP 3: Event information
+- VENUE: Where the performance happens
+- DATE: Performance date
+- TIME: Start and end times
+- FEE: Amount client pays Tim Fulker
 
-CONTEXT-AWARE PARSING:
-- If contract says "between X and Y" → X is usually the client
-- If someone "hires" someone else → hirer = client
-- Signature sections marked "Client" or "Hirer" = client info
-- Payment flows FROM client TO performer
+FORBIDDEN: Do not extract Tim Fulker's details as client information.
 
-Return this JSON structure:
+Return JSON:
 {
-  "client_name": "string or null",
-  "client_email": "string or null", 
-  "client_phone": "string or null",
-  "client_address": "string or null",
-  "venue_name": "string or null",
-  "venue_address": "string or null",
-  "event_date": "YYYY-MM-DD or null",
-  "start_time": "HH:MM or null",
-  "end_time": "HH:MM or null", 
-  "agreed_fee": number or null,
-  "extras_or_notes": "string or null"
+  "client_name": "string (NOT Tim Fulker)",
+  "client_email": "string (NOT timfulkermusic@gmail.com)", 
+  "client_phone": "string (NOT Tim Fulker's phone)",
+  "client_address": "string (NOT Tim Fulker's address)",
+  "venue_name": "string",
+  "venue_address": "string",
+  "event_date": "YYYY-MM-DD",
+  "start_time": "HH:MM",
+  "end_time": "HH:MM", 
+  "agreed_fee": number,
+  "extras_or_notes": "string"
 }
 
 Contract text:
