@@ -1394,16 +1394,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let prompt = '';
       
       if (fileType === 'contract') {
-        prompt = `Parse this Musicians' Union contract and extract ALL the key information. Look for:
+        prompt = `Parse this Musicians' Union contract and extract the CLIENT information (NOT the performer).
 
-1. CLIENT (the person hiring): Find "between [NAME] of [ADDRESS] and [MUSICIAN]"
-2. CLIENT CONTACT: Find "Signed by the Hirer" section with phone and email  
-3. VENUE: Find "perform the following Engagement(s) at [VENUE NAME] [VENUE ADDRESS]"
-4. EVENT DATE: Look for "Saturday 26th July 2025" format  
-5. TIMES: Look for "Start Time 1545 Finish Time 1900" (convert to HH:MM)
-6. FEE: Look for "£260 for 2 hours" (extract just the number)
+CRITICAL: The CLIENT is the person HIRING the musician, NOT the musician themselves.
 
-Return only this JSON structure with ALL fields:
+Look for these specific sections:
+
+1. CLIENT INFO: Find "between [CLIENT NAME] of [CLIENT ADDRESS] and [PERFORMER NAME]" 
+   - Extract the FIRST name/address (before "and"), NOT the performer's details
+   - Example: "between Robin Jarman of The Drift, Hall Lane... and Tim Fulker" 
+   - CLIENT = "Robin Jarman", ADDRESS = "The Drift, Hall Lane..."
+
+2. CLIENT CONTACT: Find "Signed by the Hirer" section 
+   - Get email and phone from THIS section only
+   - This is the client's contact info, not the performer's
+
+3. VENUE: Find "perform the following Engagement(s) at [VENUE]"
+4. DATE: Look for date format like "Saturday 26th July 2025"  
+5. TIMES: "Start Time 1545 Finish Time 1900" (convert to HH:MM format)
+6. FEE: Look for "£260" or similar (extract number only)
+
+Return ONLY this JSON with CLIENT details (not performer):
 {
   "client_name": "string or null",
   "client_email": "string or null", 
