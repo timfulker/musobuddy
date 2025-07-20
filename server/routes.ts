@@ -1314,389 +1314,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Parse document using text extraction + OpenAI
+  // Simple PDF to Claude parsing - no complex fallbacks
   async function parseDocumentWithAI(fileBuffer: Buffer, fileName: string, fileType: 'contract' | 'invoice'): Promise<any> {
     try {
-      console.log(`📄 Starting PDF text extraction for ${fileType}: ${fileName}`);
-      console.log(`📄 File buffer size: ${fileBuffer.length} bytes`);
-      
       let extractedText = '';
       
-      // Extract text based on file type
+      // Simple PDF extraction
       if (fileName.toLowerCase().endsWith('.pdf')) {
-        try {
-          console.log('📄 Attempting PDF text extraction with pdf-parse...');
-          
-          // Method 1: Try pdf-parse (most reliable)
-          try {
-            const pdfParse = await import('pdf-parse');
-            const data = await pdfParse.default(fileBuffer);
-            
-            console.log(`📄 PDF Parser Success - Pages found: ${data.numpages}`);
-            console.log(`📄 Total characters extracted: ${data.text ? data.text.length : 0}`);
-            
-            if (data.text && data.text.trim().length > 100) {
-              extractedText = data.text;
-              console.log(`✅ pdf-parse extraction successful: ${extractedText.length} characters`);
-              console.log('📄 FIRST 500 CHARACTERS:');
-              console.log(extractedText.substring(0, 500));
-              console.log('📄 KEY INDICATORS CHECK:');
-              console.log(`📄   - Has Robin Jarman: ${extractedText.includes('Robin Jarman')}`);
-              console.log(`📄   - Has Tim Fulker: ${extractedText.includes('Tim Fulker')}`);
-              console.log(`📄   - Has Musicians Union: ${extractedText.includes('Musicians')}`);
-              console.log(`📄   - Has fee/£: ${extractedText.includes('£') || extractedText.includes('fee')}`);
-            } else {
-              console.log('❌ pdf-parse returned insufficient text, trying fallback');
-              throw new Error('pdf-parse returned insufficient text');
-            }
-          } catch (pdfParseError) {
-            console.log('📄 pdf-parse failed, trying pdf2json fallback...', pdfParseError.message);
-            
-            // Method 2: Fallback to improved pdf2json with better text handling
-            const PDFParser = await import('pdf2json');
-            const pdfParser = new PDFParser.default(null, 1);
-            
-            const pdfData = await new Promise((resolve, reject) => {
-              pdfParser.on("pdfParser_dataError", reject);
-              pdfParser.on("pdfParser_dataReady", resolve);
-              pdfParser.parseBuffer(fileBuffer);
-            });
-            
-            // Better text extraction with improved spacing and decoding
-            let fullText = '';
-            const pages = pdfData.Pages || [];
-            console.log(`📄 pdf2json found ${pages.length} pages`);
-            
-            for (const page of pages) {
-              const texts = page.Texts || [];
-              console.log(`📄 Page has ${texts.length} text elements`);
-              
-              for (const textItem of texts) {
-                if (textItem.R && textItem.R[0] && textItem.R[0].T) {
-                  const rawText = textItem.R[0].T;
-                  try {
-                    // Better decoding and cleaning
-                    let cleanText = decodeURIComponent(rawText)
-                      .replace(/%20/g, ' ')
-                      .replace(/\s+/g, ' ')
-                      .trim();
-                    
-                    if (cleanText.length > 0) {
-                      fullText += cleanText + ' ';
-                    }
-                  } catch (e) {
-                    console.log('📄 Skipping problematic text element:', rawText);
-                  }
-                }
-              }
-              fullText += '\n';
-            }
-            
-            extractedText = fullText.trim();
-            console.log(`📄 pdf2json fallback result: ${extractedText.length} characters`);
-            console.log('📄 pdf2json first 500 chars:', extractedText.substring(0, 500));
-            console.log('📄 pdf2json contains Robin Jarman:', extractedText.includes('Robin Jarman'));
-          }
-          
-        } catch (pdfError) {
-          console.error('📄 All PDF extraction methods failed:', pdfError);
-          console.log('📄 Skipping text extraction - document will be stored without parsing');
-          return null;
-        }
-      } else if (fileName.toLowerCase().endsWith('.docx')) {
-        // Use mammoth for Word documents
-        const result = await mammoth.extractRawText({ buffer: fileBuffer });
-        extractedText = result.value;
-      } else if (fileName.toLowerCase().endsWith('.doc')) {
-        // For older .doc files, try mammoth as well
+        const pdfParse = await import('pdf-parse');
+        const data = await pdfParse.default(fileBuffer);
+        extractedText = data.text || '';
+      } else if (fileName.toLowerCase().endsWith('.docx') || fileName.toLowerCase().endsWith('.doc')) {
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
         extractedText = result.value;
       } else {
-        console.log('Unsupported file type for text extraction');
         return null;
       }
       
       if (!extractedText || extractedText.trim().length === 0) {
-        console.log('❌ No text extracted from document');
         return null;
       }
 
-      console.log('📄 FINAL EXTRACTED TEXT STATS:');
-      console.log(`📄   - Length: ${extractedText.length} characters`);
-      console.log(`📄   - Lines: ${extractedText.split('\n').length}`);
-      console.log(`📄   - Contains Robin Jarman: ${extractedText.includes('Robin Jarman')}`);
-      console.log(`📄   - Contains Tim Fulker: ${extractedText.includes('Tim Fulker')}`);
-      console.log('📄 SENDING TO CLAUDE:')
-      
-      // Add comprehensive debugging before Claude call
-      console.log('🤖 DEBUGGING: About to send this text to Claude:');
-      console.log('🤖 TEXT LENGTH:', extractedText.length);
-      console.log('🤖 FIRST 500 CHARS:', extractedText.substring(0, 500));
-      console.log('🤖 CONTAINS ROBIN JARMAN:', extractedText.includes('Robin Jarman'));
-      console.log('🤖 CONTAINS MUSICIANS UNION:', extractedText.includes("Musicians' Union"));
-      console.log('🤖 CONTAINS AGREEMENT:', extractedText.toLowerCase().includes('agreement'));
-      console.log('🤖 RAW TEXT SAMPLE:', JSON.stringify(extractedText.substring(0, 200)));
-      
-      console.log(`📄 Extracted text length: ${extractedText.length} characters`);
-      
-      // Use Anthropic API with a much more focused, simple approach
-      if (!process.env.ANTHROPIC_API_KEY) {
-        console.log('❌ Anthropic API key not available, skipping document parsing');
-        return null;
-      }
-
-      // Use Claude with an intelligent, adaptive prompt
+      // Simple Claude call
       const Anthropic = await import('@anthropic-ai/sdk');
       const anthropic = new Anthropic.default({
         apiKey: process.env.ANTHROPIC_API_KEY,
       });
 
-      let prompt = '';
-      
-      if (fileType === 'contract') {
-        // Detect contract type
-        const isMusiciansUnion = extractedText.includes("Musicians' Union") || extractedText.includes("theMU.org");
-        const isMusoBuddy = extractedText.includes("MusoBuddy") || extractedText.includes("Performance Contract");
-        
-        if (isMusiciansUnion) {
-          console.log('📋 Detected Musicians\' Union contract - using simplified parsing');
-          
-          prompt = `Extract HIRER information from this Musicians' Union contract.
-
-CRITICAL: Tim Fulker is the MUSICIAN being hired. The HIRER/CLIENT is the person hiring Tim Fulker.
-
-Look for:
-1. "between [HIRER NAME]" - this is the CLIENT (NOT Tim Fulker)
-2. "Signed by the Hirer" section for contact details
-3. The first person mentioned is usually the HIRER
+      const prompt = `Extract client information from this ${fileType} document. Find the person/organization HIRING the musician (not the musician Tim Fulker).
 
 Contract text:
 ${extractedText}
 
-Find the person HIRING Tim Fulker (not Tim Fulker himself):
-{
-  "client_name": "name of person hiring Tim Fulker",
-  "client_email": "hirer email from Signed by the Hirer section", 
-  "client_phone": "hirer phone from Signed by the Hirer section",
-  "client_address": "hirer address",
-  "venue": "performance venue",
-  "event_date": "YYYY-MM-DD",
-  "event_time": "HH:MM",
-  "fee": "number only"
-}
-
-EXCLUDE Tim Fulker's information - he is the musician, not the client.`;
-
-        } else if (isMusoBuddy) {
-          console.log('📋 Detected MusoBuddy contract');
-          
-          prompt = `Extract client information from this MusoBuddy contract.
-
-The client name might be encoded in a filename pattern like "Client_Name_Goes_Here"
-
-Contract text:
-${extractedText}
-
-Look for:
-- Client Name field
-- Client Email field  
-- Event details
-- Fee information
-
-Return JSON:
-{
-  "client_name": "decoded client name",
-  "client_email": "email if found",
-  "client_phone": "phone if found", 
-  "venue": "venue name",
-  "event_date": "YYYY-MM-DD",
-  "event_time": "HH:MM",
-  "fee": "number only"
-}`;
-
-        } else {
-          console.log('📋 Using general contract parsing');
-          
-          prompt = `Extract client information from this performance contract.
-
-Find the person/organization HIRING the musician (not the musician themselves).
-
-Contract text:
-${extractedText}
-
-Return JSON:
-{
-  "client_name": "name of person hiring musician",
-  "client_email": "email address",
-  "client_phone": "phone number", 
-  "venue": "performance location",
-  "event_date": "YYYY-MM-DD",
-  "event_time": "HH:MM",
-  "fee": "number only"
-}`;
-        }
-      } else {
-        prompt = `Extract key information from this invoice:
-
-${extractedText}
-
-Return JSON:
+Return JSON with these exact fields:
 {
   "clientName": "client name",
-  "clientEmail": "client email",
-  "amount": 0,
-  "eventDate": "YYYY-MM-DD"
+  "clientEmail": "client email", 
+  "clientPhone": "client phone",
+  "clientAddress": "client address",
+  "venue": "venue name",
+  "venueAddress": "venue address",
+  "eventDate": "YYYY-MM-DD format",
+  "eventTime": "HH:MM format",
+  "eventEndTime": "HH:MM format",
+  "fee": number,
+  "equipmentRequirements": "equipment needed",
+  "specialRequirements": "special notes"
 }`;
-      }
-
-      console.log('🤖 Calling Claude API...');
-      console.log('🤖 PROMPT BEING SENT TO CLAUDE:');
-      console.log('='.repeat(50));
-      console.log(prompt);
-      console.log('='.repeat(50));
 
       const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250514",
         max_tokens: 1000,
-        temperature: 0.1, // Lower temperature for more consistent results
-        messages: [{ role: "user", content: prompt }]
-      });
-
-      const responseText = response.content[0].text;
-      console.log('🤖 CLAUDE RAW RESPONSE:');
-      console.log('='.repeat(50));
-      console.log(responseText);
-      console.log('='.repeat(50));
-      
-      // Better JSON extraction
-      let parsedData = null;
-      
-      // Try multiple JSON extraction methods
-      try {
-        // Method 1: Direct JSON parse if response is pure JSON
-        parsedData = JSON.parse(responseText);
-      } catch (e) {
-        // Method 2: Extract JSON from response text
-        const jsonPattern = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
-        const matches = responseText.match(jsonPattern);
-        
-        if (matches) {
-          for (const match of matches) {
-            try {
-              const testParse = JSON.parse(match);
-              if (testParse.client_name || testParse.clientName) {
-                parsedData = testParse;
-                break;
-              }
-            } catch (e) {
-              continue;
-            }
-          }
-        }
-      }
-      
-      if (!parsedData) {
-        console.log('❌ Failed to parse JSON from Claude response');
-        return null;
-      }
-      
-      console.log('✅ Parsed data from Claude:', parsedData);
-      
-      // Simple validation - just check if we got a reasonable client name
-      const clientName = parsedData.client_name || parsedData.clientName;
-      
-      if (!clientName || 
-          clientName.trim() === '' || 
-          clientName.toLowerCase().includes('tim fulker') ||
-          clientName.toLowerCase() === 'client for' ||
-          clientName === 'null') {
-        
-        console.log('⚠️ Data quality check failed - no valid client name');
-        return {
-          success: false,
-          action: 'manual_entry',
-          message: 'Could not extract valid client information',
-          partialData: parsedData
-        };
-      }
-      
-      console.log('✅ Data quality check passed');
-      return {
-        success: true,
-        action: 'auto_save', 
-        data: parsedData,
-        confidence: 0.9
-      };
-      
-    } catch (error) {
-      console.error('Error parsing document:', error);
-      return null;
-    }
-  }
-
-  // Debug endpoint to test contract parsing
-  app.post('/api/debug-contract-parsing', async (req, res) => {
-    try {
-      console.log('=== DEBUG CONTRACT PARSING ===');
-      
-      // Test with the Musicians Union contract text
-      const testContractText = `An agreement made on 12/06/2025
-between Robin Jarman
-of The Drift, Hall Lane, Upper Farringdon Nr Alton GU34 3EA
-and Tim Fulker
-of 59, Gloucester Road, Bournemouth. Dorset BH7 6JA
-The Hirer engages the Musician to perform the following Engagement(s) at The Drift
-Signed by the Hirer
-Print Name Robin Jarman
-Phone Number 07557 982669
-Email robinjarman@live.co.uk
-Signed by the Musician
-Print Name Tim Fulker`;
-
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return res.json({ error: 'Anthropic API key not available' });
-      }
-
-      const Anthropic = await import('@anthropic-ai/sdk');
-      const anthropic = new Anthropic.default({
-        apiKey: process.env.ANTHROPIC_API_KEY,
-      });
-
-      const prompt = `Extract the HIRER information from this Musicians' Union contract.
-
-IMPORTANT: The HIRER is the CLIENT (not Tim Fulker who is the musician).
-
-Contract text:
-${testContractText}
-
-Find the "between [HIRER NAME] of [ADDRESS] and [MUSICIAN NAME]" pattern.
-Extract ONLY the hirer's information.
-
-Return JSON:
-{
-  "client_name": "hirer name only",
-  "client_email": "hirer email from signature section",
-  "client_phone": "hirer phone from signature section", 
-  "client_address": "hirer address",
-  "venue": "performance venue",
-  "event_date": "2025-07-26",
-  "event_time": "15:45",
-  "fee": 260
-}`;
-
-      console.log('🤖 Test prompt:', prompt);
-
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 800,
         temperature: 0.1,
         messages: [{ role: "user", content: prompt }]
       });
 
       const responseText = response.content[0].text;
-      console.log('🤖 Claude response:', responseText);
-
-      // Try to parse JSON
+      
+      // Simple JSON extraction
       let parsedData = null;
       try {
         parsedData = JSON.parse(responseText);
@@ -1706,60 +1381,27 @@ Return JSON:
           parsedData = JSON.parse(jsonMatch[0]);
         }
       }
-
-      console.log('✅ Parsed result:', parsedData);
-
-      res.json({
-        success: true,
-        rawResponse: responseText,
-        parsedData: parsedData,
-        prompt: prompt
-      });
-
-    } catch (error) {
-      console.error('Debug test error:', error);
-      res.status(500).json({ 
-        error: error.message,
-        stack: error.stack 
-      });
-    }
-  });
-
-  // Check environment variables
-  app.get('/api/debug-env', (req, res) => {
-    res.json({
-      hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
-      keyLength: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.length : 0
-    });
-  });
-
-  // Test PDF extraction directly
-  app.post('/api/debug-pdf-extraction', multer({ storage: multer.memoryStorage() }).single('file'), async (req: any, res) => {
-    try {
-      const file = req.file;
-      if (!file) {
-        return res.json({ error: 'No file provided' });
-      }
-
-      console.log('🔍 TESTING PDF EXTRACTION ONLY');
-      console.log(`📄 File: ${file.originalname}, Size: ${file.buffer.length} bytes`);
-
-      const extractedText = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
       
-      res.json({
-        success: true,
-        fileName: file.originalname,
-        fileSize: file.buffer.length,
-        extractedText: extractedText ? extractedText.substring(0, 1000) : null,
-        textLength: extractedText ? extractedText.length : 0,
-        containsRobinJarman: extractedText ? extractedText.includes('Robin Jarman') : false,
-        containsTimFulker: extractedText ? extractedText.includes('Tim Fulker') : false
-      });
-
+      if (!parsedData) return null;
+      
+      // Basic validation - check for valid client name
+      const clientName = parsedData.clientName;
+      
+      if (!clientName || 
+          clientName.trim() === '' || 
+          clientName.toLowerCase().includes('tim fulker')) {
+        return null;
+      }
+      
+      return parsedData;
+      
     } catch (error) {
-      res.json({ error: error.message });
+      console.error('Error parsing document:', error);
+      return null;
     }
-  });
+  }
+
+
 
   // Import contract file and link to booking
   app.post('/api/contracts/import', isAuthenticated, multer({ storage: multer.memoryStorage() }).single('file'), async (req: any, res) => {
@@ -1780,37 +1422,10 @@ Return JSON:
       const cloudStorageKey = `contracts/${contractNumber}-${file.originalname}`;
       const cloudStorageUrl = await uploadToCloudStorage(file.buffer, cloudStorageKey, file.mimetype);
       
-      // Attempt to parse document using improved two-step extraction
+      // Simple document parsing
       let parsedData = null;
-      let parseError = null;
-      
       try {
-        const aiResponse = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
-        console.log('📄 Document parsing response:', aiResponse);
-        
-        // Handle the new response format with success/action structure
-        if (aiResponse && aiResponse.success && aiResponse.action === 'auto_save') {
-          parsedData = aiResponse.data;
-          console.log('📄 USING AUTO-SAVE DATA:', JSON.stringify(parsedData, null, 2));
-        } else if (aiResponse && aiResponse.action === 'manual_entry') {
-          console.log('📄 Manual entry required:', aiResponse.message);
-          parsedData = aiResponse.partialData || null;
-          console.log('📄 USING PARTIAL DATA:', JSON.stringify(parsedData, null, 2));
-        } else if (aiResponse && typeof aiResponse === 'object' && aiResponse.client_name) {
-          // Handle direct data response (old format)
-          parsedData = aiResponse;
-          console.log('📄 USING DIRECT DATA:', JSON.stringify(parsedData, null, 2));
-        } else {
-          parsedData = null;
-          console.log('📄 NO VALID DATA STRUCTURE FOUND');
-        }
-        
-        console.log('📄 Final parsed data:', parsedData);
-        console.log('📄 Fee value type:', typeof parsedData?.fee, 'Value:', parsedData?.fee);
-        console.log('📄 Deposit value type:', typeof parsedData?.deposit, 'Value:', parsedData?.deposit);
-        console.log('📄 CLIENT NAME FROM PARSED DATA:', parsedData?.client_name);
-        console.log('📄 VENUE FROM PARSED DATA:', parsedData?.venue);
-        console.log('📄 EVENT TIME FROM PARSED DATA:', parsedData?.event_time);
+        parsedData = await parseDocumentWithAI(file.buffer, file.originalname, 'contract');
       } catch (error) {
         parseError = error;
         console.warn('⚠️ Document parsing failed, continuing with manual data:', error.message);
@@ -1832,54 +1447,36 @@ Return JSON:
         return isNaN(parsed) ? defaultValue : parsed;
       };
 
-      // Create contract record using parsed data with new field names from ChatGPT's structure
+      // Create contract record using parsed data
       const contractData = {
         userId,
         enquiryId: bookingId ? parseInt(bookingId) : null,
         contractNumber,
-        clientName: safeParseValue(parsedData?.client_name, clientName || `Client for ${file.originalname}`),
-        clientAddress: (() => {
-          const clientAddr = safeParseValue(parsedData?.client_address, '');
-          // Filter out known performer addresses to prevent confusion
-          const performerAddresses = [
-            '59, Gloucester Rd',
-            '59 Gloucester Road',
-            'BH7 6JA',
-            'Dorset BH7 6JA'
-          ];
-          
-          const isPerformerAddress = performerAddresses.some(addr => 
-            clientAddr && clientAddr.toLowerCase().includes(addr.toLowerCase())
-          );
-          
-          return isPerformerAddress ? '' : clientAddr;
-        })(),
-        clientPhone: safeParseValue(parsedData?.client_phone, ''),
-        clientEmail: safeParseValue(parsedData?.client_email, ''),
+        clientName: safeParseValue(parsedData?.clientName, clientName || `Client for ${file.originalname}`),
+        clientAddress: safeParseValue(parsedData?.clientAddress, ''),
+        clientPhone: safeParseValue(parsedData?.clientPhone, ''),
+        clientEmail: safeParseValue(parsedData?.clientEmail, ''),
         venue: safeParseValue(parsedData?.venue, venue || ''),
-        venueAddress: safeParseValue(parsedData?.venue_address, ''),
+        venueAddress: safeParseValue(parsedData?.venueAddress, ''),
         eventDate: (() => {
-          if (parsedData?.event_date && parsedData.event_date !== 'null' && parsedData.event_date !== null) {
-            const parsed = new Date(parsedData.event_date);
+          if (parsedData?.eventDate) {
+            const parsed = new Date(parsedData.eventDate);
             return isNaN(parsed.getTime()) ? new Date() : parsed;
           }
           return eventDate ? new Date(eventDate) : new Date();
         })(),
-        eventTime: safeParseValue(parsedData?.event_time, eventTime || '00:00'),
-        eventEndTime: safeParseValue(parsedData?.end_time, eventTime || '00:00'),
+        eventTime: safeParseValue(parsedData?.eventTime, eventTime || '00:00'),
+        eventEndTime: safeParseValue(parsedData?.eventEndTime, eventTime || '00:00'),
         fee: safeParseNumber(parsedData?.fee, 0),
-        deposit: safeParseNumber(parsedData?.deposit_amount, 0),
-        equipmentRequirements: safeParseValue(parsedData?.extras_or_notes, ''),
-        specialRequirements: safeParseValue(parsedData?.extras_or_notes, ''),
-        paymentInstructions: `${safeParseValue(parsedData?.bank_account_name, '')} ${safeParseValue(parsedData?.bank_account_number, '')} ${safeParseValue(parsedData?.bank_sort_code, '')}`.trim(),
+        deposit: 0,
+        equipmentRequirements: safeParseValue(parsedData?.equipmentRequirements, ''),
+        specialRequirements: safeParseValue(parsedData?.specialRequirements, ''),
+        paymentInstructions: '',
         status: 'signed', // Imported contracts are assumed to be signed
         cloudStorageUrl,
         cloudStorageKey,
         signedAt: new Date(),
       };
-      
-      // Debug: Log the contract data being sent to database
-      console.log('📄 Contract data being sent to database:', JSON.stringify(contractData, null, 2));
       
       // Always create contract record, regardless of parsing success
       const contract = await storage.createContract(contractData);
