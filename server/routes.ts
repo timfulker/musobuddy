@@ -1385,7 +1385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return null;
       }
 
-      // Use Claude with a simple, focused prompt
+      // Use Claude with an intelligent, adaptive prompt
       const Anthropic = await import('@anthropic-ai/sdk');
       const anthropic = new Anthropic.default({
         apiKey: process.env.ANTHROPIC_API_KEY,
@@ -1394,27 +1394,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let prompt = '';
       
       if (fileType === 'contract') {
-        prompt = `Parse this Musicians' Union contract and extract the CLIENT information (NOT the performer).
+        prompt = `You are an intelligent contract parser. Extract CLIENT information from this music contract.
 
-CRITICAL: The CLIENT is the person HIRING the musician, NOT the musician themselves.
+CRITICAL RULES:
+- CLIENT = Person/organization HIRING the musician (the customer)
+- PERFORMER = The musician being hired (NOT the client)
+- Extract CLIENT details only, never performer details
 
-Look for these specific sections:
+INTELLIGENT ANALYSIS APPROACH:
+1. Read the entire contract structure first
+2. Identify WHO is paying WHOM (payment direction)
+3. Look for role indicators: "Hirer", "Client", "Customer" vs "Performer", "Artist"
+4. Find signature sections and determine which party is which
 
-1. CLIENT INFO: Find "between [CLIENT NAME] of [CLIENT ADDRESS] and [PERFORMER NAME]" 
-   - Extract the FIRST name/address (before "and"), NOT the performer's details
-   - Example: "between Robin Jarman of The Drift, Hall Lane... and Tim Fulker" 
-   - CLIENT = "Robin Jarman", ADDRESS = "The Drift, Hall Lane..."
+ADAPTIVE PATTERNS (works with ANY contract format):
+- Contract parties: "between X and Y", "Agreement with", "Client: X"
+- Payment indicators: "Client shall pay", "Fee payable by", "Invoice to"
+- Role sections: "Hirer details", "Customer information", "Client signature"
+- Contact placement: Usually with the paying/hiring party
 
-2. CLIENT CONTACT: Find "Signed by the Hirer" section 
-   - Get email and phone from THIS section only
-   - This is the client's contact info, not the performer's
+CLIENT EXTRACTION STRATEGY:
+- Name: From contract parties, hirer sections, or client details
+- Address: Associated with client/hirer name, not performer
+- Email/Phone: In client contact sections, not performer sections
+- Venue: Where performance takes place
+- Fee: Amount client pays to performer
 
-3. VENUE: Find "perform the following Engagement(s) at [VENUE]"
-4. DATE: Look for date format like "Saturday 26th July 2025"  
-5. TIMES: "Start Time 1545 Finish Time 1900" (convert to HH:MM format)
-6. FEE: Look for "£260" or similar (extract number only)
+CONTEXT-AWARE PARSING:
+- If contract says "between X and Y" → X is usually the client
+- If someone "hires" someone else → hirer = client
+- Signature sections marked "Client" or "Hirer" = client info
+- Payment flows FROM client TO performer
 
-Return ONLY this JSON with CLIENT details (not performer):
+Return this JSON structure:
 {
   "client_name": "string or null",
   "client_email": "string or null", 
