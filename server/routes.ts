@@ -1692,6 +1692,14 @@ Return JSON:
     }
   });
 
+  // Check environment variables
+  app.get('/api/debug-env', (req, res) => {
+    res.json({
+      hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+      keyLength: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.length : 0
+    });
+  });
+
   // Import contract file and link to booking
   app.post('/api/contracts/import', isAuthenticated, multer({ storage: multer.memoryStorage() }).single('file'), async (req: any, res) => {
     try {
