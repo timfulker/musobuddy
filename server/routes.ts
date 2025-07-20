@@ -4245,7 +4245,7 @@ Hotel Lobby Entertainment`;
       }
 
       // Use learning system that improves from manual extractions
-      const { ContractLearningSystem } = await import('./contract-learning-system');
+      const { ContractLearningSystem } = await import('./contract-learning-system-clean');
       const learningSystem = new ContractLearningSystem(storage);
       
       const result = await learningSystem.intelligentExtraction(contractText, userId);

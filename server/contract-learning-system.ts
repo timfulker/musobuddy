@@ -91,7 +91,7 @@ export class ContractLearningSystem {
       return {
         success: false,
         contractId: 0,
-        message: `Failed to import contract: ${error.message}`
+        message: `Failed to import contract: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }
@@ -147,7 +147,7 @@ Return ONLY a valid JSON object with these fields (use null for missing values):
         ]
       });
 
-      const responseText = response.content[0].text;
+      const responseText = response.content[0].type === 'text' ? response.content[0].text : '';
       
       // Parse the AI response
       let extractedData;
