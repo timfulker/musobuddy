@@ -37,11 +37,13 @@ export async function parseContractWithAI(contractText: string): Promise<Extract
 
   const prompt = `Extract client information from this Musicians Union contract. Tim Fulker is the musician - extract the HIRER/CLIENT details who is booking him.
 
-IMPORTANT PARSING RULES:
-- Venue name and venue address are separate - venue name is typically on first line, address on second line
+CRITICAL RULES:
+- Tim Fulker is the MUSICIAN - DO NOT extract his address or details as the client
+- Client address: Extract ONLY the address that appears after the client name and before "and Tim Fulker"
+- If client address appears to be placeholder text like "hirer's address" or is blank, return "address not supplied"
+- NEVER use Tim Fulker's address (59, Gloucester Road, Bournemouth) as the client address
+- Venue name and venue address are separate fields
 - Convert times like "8pm" to "20:00" format
-- Extract client address (the address after client name, before "and Tim Fulker")
-- Extract venue address separately from venue name
 
 Contract text:
 ${contractText}
@@ -106,6 +108,16 @@ Return only JSON:
     
     // Parse the JSON response
     const extractedData = JSON.parse(responseText);
+    
+    // Validate client address to prevent using Tim Fulker's address
+    if (extractedData.clientAddress && (
+      extractedData.clientAddress.includes('59, Gloucester Road') || 
+      extractedData.clientAddress.includes('Bournemouth') ||
+      extractedData.clientAddress.includes('BH7 6JA')
+    )) {
+      console.log('🚫 Detected Tim Fulker\'s address as client address, replacing with "address not supplied"');
+      extractedData.clientAddress = 'address not supplied';
+    }
     
     console.log('🧠 AI extraction completed successfully');
     console.log('🧠 Extracted data preview:', {
