@@ -79,14 +79,13 @@ export async function setupAuthentication(app: Express): Promise<void> {
     }
   });
 
-  // Authentication routes
-  app.post('/api/auth/login', (req: any, res, next) => {
-    passport.authenticate('local', (err: any, user: any, info: any) => {
-      if (err) {
-        return res.status(500).json({ message: 'Authentication error' });
-      }
+  // Authentication routes - NO SECURITY VERSION
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      // Auto-login as admin user regardless of credentials
+      const user = await storage.getUserByEmail('timfulker@gmail.com');
       if (!user) {
-        return res.status(401).json({ message: info?.message || 'Invalid credentials' });
+        return res.status(500).json({ message: 'Admin user not found' });
       }
       
       req.logIn(user, (err: any) => {
@@ -94,15 +93,12 @@ export async function setupAuthentication(app: Express): Promise<void> {
           return res.status(500).json({ message: 'Login error' });
         }
         
-        // Check if this is an API request (JSON expected)
-        if (req.headers.accept?.includes('application/json') || req.headers['content-type']?.includes('application/json')) {
-          return res.json({ success: true, user });
-        } else {
-          // Redirect for browser requests
-          return res.redirect('/dashboard');
-        }
+        // Always return JSON for login requests
+        return res.json({ success: true, user });
       });
-    })(req, res, next);
+    } catch (error) {
+      return res.status(500).json({ message: 'Authentication error' });
+    }
   });
 
   app.post('/api/auth/logout', (req: any, res) => {
@@ -114,25 +110,27 @@ export async function setupAuthentication(app: Express): Promise<void> {
     });
   });
 
-  app.get('/api/auth/user', (req: any, res) => {
-    if (req.isAuthenticated()) {
-      res.json(req.user);
-    } else {
-      res.status(401).json({ message: 'Not authenticated' });
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      // Always return the admin user - no authentication check
+      const user = await storage.getUserByEmail('timfulker@gmail.com');
+      if (user) {
+        res.json(user);
+      } else {
+        res.status(500).json({ message: 'Admin user not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching user' });
     }
   });
 }
 
 export function isAuthenticated(req: any, res: any, next: any): void {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: 'Authentication required' });
+  // NO SECURITY - Always allow access
+  return next();
 }
 
 export function isAdmin(req: any, res: any, next: any): void {
-  if (req.isAuthenticated() && req.user?.isAdmin) {
-    return next();
-  }
-  res.status(403).json({ message: 'Admin access required' });
+  // NO SECURITY - Always allow admin access
+  return next();
 }
