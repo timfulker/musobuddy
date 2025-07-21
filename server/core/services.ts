@@ -18,8 +18,7 @@ export class MailgunService {
   }
 
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
-    console.log('🔍 Contract email - Mailgun domain:', process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com');
-    const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
+    const domain = 'mg.musobuddy.com';
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
@@ -27,18 +26,12 @@ export class MailgunService {
       subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
       html: this.generateContractEmailHTML(contract, userSettings, signingUrl)
     };
-    
-    console.log('🔍 Contract email details:', {
-      from: emailData.from,
-      to: emailData.to,
-      domain: domain
-    });
 
     return await this.mailgun.messages.create(domain, emailData);
   }
 
   async sendInvoiceEmail(invoice: any, userSettings: any, pdfUrl: string, subject: string) {
-    const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
+    const domain = 'mg.musobuddy.com';
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
