@@ -430,8 +430,15 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       let fieldsUpdated = 0;
       const updates: any = {};
       
-      // Map extracted data to form fields (only if current field is empty)
-      if (extractedData.clientName && !currentData.clientName?.trim()) {
+      // Map extracted data to form fields (only if current field is empty or contains invalid data)
+      const isInvalidClientName = (name: string) => {
+        if (!name?.trim()) return true;
+        // Check for common invalid patterns
+        const invalid = ['of', 'address not supplied', 'timfulkermusic@gmail.com', 'tim fulker', '07764190034'].includes(name.toLowerCase().trim());
+        return invalid;
+      };
+
+      if (extractedData.clientName && isInvalidClientName(currentData.clientName)) {
         updates.clientName = extractedData.clientName;
         fieldsUpdated++;
       }
@@ -443,7 +450,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         updates.clientPhone = extractedData.clientPhone;
         fieldsUpdated++;
       }
-      if (extractedData.clientAddress && !currentData.clientAddress?.trim()) {
+      if (extractedData.clientAddress && (!currentData.clientAddress?.trim() || currentData.clientAddress.toLowerCase().includes('address not supplied'))) {
         updates.clientAddress = extractedData.clientAddress;
         fieldsUpdated++;
       }
@@ -451,7 +458,15 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         updates.venue = extractedData.venue;
         fieldsUpdated++;
       }
-      if (extractedData.venueAddress && !currentData.venueAddress?.trim()) {
+      const isInvalidAddress = (address: string) => {
+        if (!address?.trim()) return true;
+        // Check for invalid address patterns (user's own address instead of client's)
+        const userAddresses = ['59, gloucester road', '59 gloucester road', 'bh7 6ja', 'dorset'];
+        const lowerAddress = address.toLowerCase();
+        return userAddresses.some(invalid => lowerAddress.includes(invalid));
+      };
+
+      if (extractedData.venueAddress && (isInvalidAddress(currentData.venueAddress) || !currentData.venueAddress?.trim())) {
         updates.venueAddress = extractedData.venueAddress;
         fieldsUpdated++;
       }
