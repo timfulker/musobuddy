@@ -501,8 +501,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
           });
         } else {
           toast({
-            title: "Parsing Failed",
-            description: `AI extraction failed: ${errorMsg}. You can manually fill the form.`,
+            title: "Unable to Process Contract",
+            description: `The system had difficulty reading this PDF. Please check if the file contains clear text and try again, or fill the form manually.`,
             variant: "destructive",
           });
         }
@@ -521,8 +521,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     } catch (error) {
       console.error('Parse error:', error);
       toast({
-        title: "Parse Error",
-        description: "Failed to parse contract. The file was uploaded but AI parsing failed. Please try again or fill manually.",
+        title: "Processing Issue",
+        description: "Unable to automatically read this contract. The file was saved, but please fill the form manually.",
         variant: "destructive",
       });
     } finally {

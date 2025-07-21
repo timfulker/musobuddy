@@ -160,7 +160,7 @@ Return only JSON:
     // Return empty data with low confidence and error info
     return {
       confidence: 0,
-      error: `${errorType}: ${errorMessage}`,
+      error: `Unable to process this contract automatically. Please check if the PDF contains clear, readable text and try again.`,
       extractionFailed: true
     };
   }

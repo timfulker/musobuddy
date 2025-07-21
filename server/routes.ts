@@ -2785,7 +2785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contractText = await extractTextFromPDF(file.buffer);
       
       if (!contractText || contractText.trim().length < 50) {
-        return res.status(400).json({ error: 'Could not extract text from PDF. Please check the file quality.' });
+        return res.status(400).json({ error: 'Unable to read text from this PDF. Please try a different version or check if the PDF contains readable text.' });
       }
 
       // Parse with AI
