@@ -158,7 +158,7 @@ export default function UnifiedBookings() {
   };
 
   // Filter bookings for list view
-  const filteredBookings = bookings.filter((booking: any) => {
+  const filteredBookings = (bookings as any[]).filter((booking: any) => {
     const matchesSearch = searchQuery.length === 0 || 
       booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -235,37 +235,13 @@ export default function UnifiedBookings() {
     setSelectedBookings(newSelected);
   };
 
-  // Filter bookings based on search and status
-  const filteredBookings = (bookings as any[]).filter((booking: any) => {
-    const matchesSearch = !searchQuery || 
-      booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
   const selectAllBookings = () => {
     const allIds = new Set(filteredBookings.map((b: any) => b.id));
-    setSelectedBookings(allIds);
+    setSelectedBookings(allIds as Set<number>);
   };
 
   const clearAllSelections = () => {
     setSelectedBookings(new Set());
-  };
-
-  // Get status color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800';
-      case 'awaiting_response': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
   };
 
   // Bulk delete mutation
