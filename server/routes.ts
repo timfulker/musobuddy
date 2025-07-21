@@ -14,6 +14,42 @@ import {
 import OpenAI from 'openai';
 import bcrypt from 'bcrypt';
 
+// Validate PDF text extraction quality
+function validateContractText(text: string): { isValid: boolean; reason?: string } {
+  const textLength = text.trim().length;
+  
+  // Check for minimum content
+  if (textLength < 500) {
+    return { isValid: false, reason: 'Extracted text too short (less than 500 characters)' };
+  }
+  
+  // Check for common contract indicators
+  const hasContractKeywords = /musicians.?union|engagement|hirer|musician|contract|agreement/i.test(text);
+  if (!hasContractKeywords) {
+    return { isValid: false, reason: 'Text does not contain expected contract keywords' };
+  }
+  
+  // Check for excessive fragmentation (many single-character "words")
+  const words = text.split(/\s+/);
+  const singleCharWords = words.filter(w => w.trim().length === 1 || w.trim().length === 2);
+  const fragmentationRatio = singleCharWords.length / words.length;
+  
+  if (fragmentationRatio > 0.3) {
+    return { isValid: false, reason: `High text fragmentation detected (${Math.round(fragmentationRatio * 100)}% single/double character fragments)` };
+  }
+  
+  // Check for repeated meaningless fragments
+  const fragmentPattern = /\b(of|to|and|the|a|an|in|on|at|by)\b/gi;
+  const fragments = text.match(fragmentPattern) || [];
+  const fragmentRatio = fragments.length / words.length;
+  
+  if (fragmentRatio > 0.4) {
+    return { isValid: false, reason: `Excessive meaningless fragments detected (${Math.round(fragmentRatio * 100)}% common words only)` };
+  }
+  
+  return { isValid: true };
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice route now registered in server/index.ts to avoid Vite interference
   
@@ -2677,6 +2713,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to examine raw PDF text extraction
+  app.post('/api/contracts/debug-text-extraction', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      const file = req.file;
+      
+      if (!file || file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ error: 'Please upload a PDF file' });
+      }
+
+      console.log('🔍 DEBUG TEXT EXTRACTION for:', file.originalname);
+
+      // Extract text from PDF
+      const { extractTextFromPDF } = await import('./pdf-text-extractor');
+      const contractText = await extractTextFromPDF(file.buffer);
+      
+      res.json({
+        filename: file.originalname,
+        size: file.size,
+        extractedTextLength: contractText.length,
+        extractedText: contractText,
+        preview: contractText.substring(0, 1000)
+      });
+      
+    } catch (error) {
+      console.error('Debug text extraction failed:', error);
+      res.status(500).json({ error: 'Text extraction failed', details: error.message });
+    }
+  });
+
   // Contract parsing endpoint with AI extraction
   app.post('/api/contracts/parse-pdf', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
@@ -2700,6 +2765,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!contractText || contractText.trim().length < 50) {
         return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
+      }
+      
+      // Enhanced validation for corrupted PDF text extraction
+      const textQuality = validateContractText(contractText);
+      if (!textQuality.isValid) {
+        console.log('🚫 PDF text extraction failed quality validation:', textQuality.reason);
+        return res.status(400).json({ 
+          error: 'PDF text extraction appears corrupted. Please try re-downloading and re-uploading the contract PDF.',
+          details: textQuality.reason,
+          extractedTextPreview: contractText.substring(0, 200)
+        });
       }
       
       console.log('🔥 CONTRACT PARSING: Text extracted, length:', contractText.length);
