@@ -160,6 +160,7 @@ export class ContractService {
               eventTime: 'eventTime',
               eventEndTime: 'eventEndTime',
               fee: 'fee',
+              quotedAmount: 'fee', // Map quotedAmount to fee field
               eventType: 'eventType',
               equipmentRequirements: 'equipmentRequirements',
               specialRequirements: 'specialRequirements',
@@ -167,15 +168,20 @@ export class ContractService {
             };
 
             Object.entries(fieldMappings).forEach(([extractedField, bookingField]) => {
-              const extractedValue = (parsingResult.data as any)[extractedField];
+              let extractedValue = (parsingResult.data as any)[extractedField];
               const bookingValue = (booking as any)[bookingField];
+              
+              // Handle special time formats - convert "TBC" to empty string
+              if ((bookingField === 'eventTime' || bookingField === 'eventEndTime') && extractedValue === 'TBC') {
+                extractedValue = '';
+              }
               
               // Check if field is empty or has default/placeholder values
               const isEmpty = !bookingValue || bookingValue === '';
               const isDefaultTime = (bookingField === 'eventTime' || bookingField === 'eventEndTime') && 
                                     (bookingValue === '00:00' || bookingValue === '0:00');
               
-              if (extractedValue && (isEmpty || isDefaultTime)) {
+              if (extractedValue !== undefined && extractedValue !== null && extractedValue !== '' && (isEmpty || isDefaultTime)) {
                 updates[bookingField] = extractedValue;
                 fieldsUpdated.push(bookingField);
               }

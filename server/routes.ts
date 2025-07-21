@@ -2758,7 +2758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         };
 
-        // Apply extracted data with field mapping
+        // Apply extracted data with proper field mapping
         if (extractedData.clientName) updateField('clientName', extractedData.clientName);
         if (extractedData.clientEmail) updateField('clientEmail', extractedData.clientEmail);
         if (extractedData.clientPhone) updateField('clientPhone', extractedData.clientPhone);
@@ -2766,9 +2766,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (extractedData.venue) updateField('venue', extractedData.venue);
         if (extractedData.venueAddress) updateField('venueAddress', extractedData.venueAddress);
         if (extractedData.eventDate) updateField('eventDate', extractedData.eventDate);
-        if (extractedData.eventTime) updateField('eventTime', extractedData.eventTime, '00:00');
-        if (extractedData.eventEndTime) updateField('eventEndTime', extractedData.eventEndTime, '00:00');
-        if (extractedData.fee) updateField('fee', extractedData.fee);
+        
+        // Handle time fields - convert "TBC" to empty string for form fields
+        if (extractedData.eventTime) {
+          const timeValue = extractedData.eventTime === 'TBC' ? '' : extractedData.eventTime;
+          updateField('eventTime', timeValue, '');
+        }
+        if (extractedData.eventEndTime) {
+          const endTimeValue = extractedData.eventEndTime === 'TBC' ? '' : extractedData.eventEndTime;
+          updateField('eventEndTime', endTimeValue, '');
+        }
+        
+        // Handle fee field - map quotedAmount to fee
+        if (extractedData.quotedAmount) updateField('fee', extractedData.quotedAmount.toString());
+        if (extractedData.fee) updateField('fee', extractedData.fee.toString());
+        
         if (extractedData.equipmentRequirements) updateField('equipmentRequirements', extractedData.equipmentRequirements);
         if (extractedData.specialRequirements) updateField('specialRequirements', extractedData.specialRequirements);
 

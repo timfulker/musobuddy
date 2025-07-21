@@ -28,8 +28,8 @@ export const MUSICIANS_UNION_FIELD_MAPPINGS: MusiciansUnionFieldMapping[] = [
   },
   {
     contractField: "Fee",
-    bookingField: "quotedAmount",
-    aliases: ["Total Fee", "Payment", "£", "Cost"],
+    bookingField: "fee",
+    aliases: ["Total Fee", "Payment", "£", "Cost", "quotedAmount"],
     extractionRule: "Extract numeric value only, ignore currency symbols and additional text",
     examples: ["£710 (3.5 hours +DJ)", "£260 for 2 hours", "£150"]
   },
