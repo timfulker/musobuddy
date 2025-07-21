@@ -54,6 +54,17 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientName = clientEmail.split('@')[0];
     }
     
+    // Special handling: if email is FROM Tim Fulker, it's a test - extract client info from email body
+    if (clientName === 'Tim Fulker' || clientEmail.includes('timfulker')) {
+      console.log(`🧪 [${requestId}] Test email from Tim Fulker detected - parsing for actual client info`);
+      // Use AI to extract the real client details from the email content
+      const testEmailResult = await parseTestEmailForClient(bodyField, subjectField);
+      if (testEmailResult.clientName) {
+        clientName = testEmailResult.clientName;
+        clientEmail = testEmailResult.clientEmail || 'client@example.com';
+      }
+    }
+    
     // AI parsing
     const aiResult = await parseEmailWithAI(bodyField, subjectField);
     
@@ -193,6 +204,42 @@ async function startServer() {
   } catch (error) {
     console.error('❌ Server startup failed:', error);
     process.exit(1);
+  }
+}
+
+// Special function to parse test emails FROM Tim Fulker
+async function parseTestEmailForClient(emailBody: string, subject: string): Promise<any> {
+  const openai = process.env.OPENAI_EMAIL_PARSING_KEY ? 
+    new (await import('openai')).default({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
+    
+  if (!openai) {
+    return { clientName: null, clientEmail: null };
+  }
+
+  try {
+    const prompt = `This is a test email FROM musician Tim Fulker TO leads@mg.musobuddy.com. Extract the actual CLIENT information from the email content.
+
+Subject: ${subject}
+Content: ${emailBody}
+
+The email mentions a client who wants to book Tim. Extract their details in JSON:
+{
+  "clientName": "actual client name or Unknown Client if not mentioned",
+  "clientEmail": "client email if mentioned or null"
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      max_tokens: 200,
+      temperature: 0.1
+    });
+
+    return JSON.parse(response.choices[0].message.content || '{}');
+  } catch (error) {
+    console.log('🤖 Test email parsing failed, using fallback');
+    return { clientName: 'Unknown Client', clientEmail: null };
   }
 }
 

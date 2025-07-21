@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, DollarSign, Edit } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, DollarSign, Edit, Trash2, CheckCircle } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -50,7 +51,11 @@ export default function UnifiedBookings() {
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   
-  const { isDesktop, isMobile } = useResponsive();
+  // Bulk select states
+  const [selectedBookings, setSelectedBookings] = useState<Set<number>>(new Set());
+  const [bulkStatusUpdate, setBulkStatusUpdate] = useState<string>('');
+  
+  const { isDesktop } = useResponsive();
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   
@@ -117,7 +122,7 @@ export default function UnifiedBookings() {
       String(date.getDate()).padStart(2, '0');
     const events: CalendarEvent[] = [];
 
-    bookings.forEach((booking: any) => {
+    (bookings as any[]).forEach((booking: any) => {
       if (booking.eventDate) {
         const bookingDate = new Date(booking.eventDate);
         const bookingDateStr = bookingDate.getFullYear() + '-' + 
@@ -206,7 +211,7 @@ export default function UnifiedBookings() {
     const events = getEventsForDate(date);
     if (events.length > 0) {
       const firstEvent = events[0];
-      const booking = bookings.find((b: any) => b.id === firstEvent.id);
+      const booking = (bookings as any[]).find((b: any) => b.id === firstEvent.id);
       if (booking) {
         setSelectedBookingForDetails(booking);
         setBookingDetailsDialogOpen(true);
@@ -217,6 +222,119 @@ export default function UnifiedBookings() {
   const handleBookingClick = (booking: any) => {
     setSelectedBookingForDetails(booking);
     setBookingDetailsDialogOpen(true);
+  };
+
+  // Bulk select functions
+  const toggleBookingSelection = (bookingId: number) => {
+    const newSelected = new Set(selectedBookings);
+    if (newSelected.has(bookingId)) {
+      newSelected.delete(bookingId);
+    } else {
+      newSelected.add(bookingId);
+    }
+    setSelectedBookings(newSelected);
+  };
+
+  // Filter bookings based on search and status
+  const filteredBookings = (bookings as any[]).filter((booking: any) => {
+    const matchesSearch = !searchQuery || 
+      booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const selectAllBookings = () => {
+    const allIds = new Set(filteredBookings.map((b: any) => b.id));
+    setSelectedBookings(allIds);
+  };
+
+  const clearAllSelections = () => {
+    setSelectedBookings(new Set());
+  };
+
+  // Get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'new': return 'bg-blue-100 text-blue-800';
+      case 'awaiting_response': return 'bg-yellow-100 text-yellow-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Bulk delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (ids: number[]) => {
+      return await apiRequest(`/api/bookings/bulk-delete`, {
+        method: 'POST',
+        body: JSON.stringify({ ids })
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Bookings deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      setSelectedBookings(new Set());
+    },
+    onError: () => {
+      toast({ title: "Failed to delete bookings", variant: "destructive" });
+    }
+  });
+
+  // Bulk status update mutation
+  const statusUpdateMutation = useMutation({
+    mutationFn: async ({ ids, status }: { ids: number[], status: string }) => {
+      return await apiRequest(`/api/bookings/bulk-status`, {
+        method: 'POST',
+        body: JSON.stringify({ ids, status })
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Booking status updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      setSelectedBookings(new Set());
+      setBulkStatusUpdate('');
+    },
+    onError: () => {
+      toast({ title: "Failed to update booking status", variant: "destructive" });
+    }
+  });
+
+  // CSV Export function
+  const exportToCSV = () => {
+    const headers = ['ID', 'Client Name', 'Client Email', 'Event Type', 'Event Date', 'Event Time', 'Venue', 'Fee', 'Status'];
+    const csvData = filteredBookings.map((booking: any) => [
+      booking.id,
+      booking.clientName || '',
+      booking.clientEmail || '',
+      booking.eventType || '',
+      booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : '',
+      booking.eventTime || '',
+      booking.venue || '',
+      booking.fee || '',
+      booking.status || 'new'
+    ]);
+    
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map((field: any) => `"${field}"`).join(','))
+      .join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    toast({ title: "CSV export downloaded successfully" });
   };
 
   const days = generateCalendar();
@@ -314,7 +432,70 @@ export default function UnifiedBookings() {
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
+              
+              <Button 
+                variant="outline" 
+                onClick={exportToCSV}
+                disabled={filteredBookings.length === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
             </div>
+
+            {/* Bulk Actions Bar */}
+            {selectedBookings.size > 0 && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-medium text-blue-800">
+                        {selectedBookings.size} booking{selectedBookings.size === 1 ? '' : 's'} selected
+                      </span>
+                      <Button variant="outline" size="sm" onClick={clearAllSelections}>
+                        Clear selection
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Select value={bulkStatusUpdate} onValueChange={setBulkStatusUpdate}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="Change status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="new">New</SelectItem>
+                          <SelectItem value="awaiting_response">Awaiting Response</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {bulkStatusUpdate && (
+                        <Button
+                          size="sm"
+                          onClick={() => statusUpdateMutation.mutate({ 
+                            ids: Array.from(selectedBookings), 
+                            status: bulkStatusUpdate 
+                          })}
+                          disabled={statusUpdateMutation.isPending}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Update Status
+                        </Button>
+                      )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteMutation.mutate(Array.from(selectedBookings))}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete Selected
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Content Based on View Mode */}
             {viewMode === 'list' ? (
@@ -330,63 +511,103 @@ export default function UnifiedBookings() {
                     {searchQuery || statusFilter !== 'all' ? 'No bookings match your filters' : 'No bookings found'}
                   </div>
                 ) : (
-                  filteredBookings.map((booking: any) => (
-                    <Card 
-                      key={booking.id} 
-                      className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => handleBookingClick(booking)}
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-4 mb-2">
-                              <h3 className="text-lg font-semibold">
-                                {booking.eventType || 'Event'}
-                              </h3>
-                              <Badge className={getStatusColor(booking.status)}>
-                                {booking.status?.replace('_', ' ') || 'New'}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div className="flex items-center gap-4">
-                                <span className="flex items-center gap-1">
-                                  <User className="w-4 h-4" />
-                                  {booking.clientName || 'Unknown Client'}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4" />
-                                  {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'}
-                                </span>
-                                {booking.eventTime && (
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4" />
-                                    {booking.eventTime}
-                                  </span>
-                                )}
-                                {booking.fee && (
-                                  <span className="flex items-center gap-1">
-                                    <DollarSign className="w-4 h-4" />
-                                    £{booking.fee}
-                                  </span>
-                                )}
-                              </div>
-                              {booking.venue && (
-                                <div className="text-gray-500">
-                                  {booking.venue}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
-                            </Button>
-                          </div>
+                  <>
+                    {/* Select All Row */}
+                    <Card className="bg-gray-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={selectedBookings.size === filteredBookings.length && filteredBookings.length > 0}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                selectAllBookings();
+                              } else {
+                                clearAllSelections();
+                              }
+                            }}
+                          />
+                          <span className="text-sm font-medium">
+                            Select all bookings ({filteredBookings.length})
+                          </span>
                         </div>
                       </CardContent>
                     </Card>
-                  ))
+                    
+                    {/* Booking Cards */}
+                    {filteredBookings.map((booking: any) => (
+                      <Card 
+                        key={booking.id} 
+                        className={`hover:shadow-md transition-shadow ${
+                          selectedBookings.has(booking.id) ? 'border-blue-400 bg-blue-50' : ''
+                        }`}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center gap-4">
+                            <Checkbox
+                              checked={selectedBookings.has(booking.id)}
+                              onCheckedChange={() => toggleBookingSelection(booking.id)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <div 
+                              className="flex-1 cursor-pointer"
+                              onClick={() => handleBookingClick(booking)}
+                            >
+                              <div className="flex items-center gap-4 mb-2">
+                                <h3 className="text-lg font-semibold">
+                                  {booking.eventType || 'Event'}
+                                </h3>
+                                <Badge className={getStatusColor(booking.status)}>
+                                  {booking.status?.replace('_', ' ') || 'New'}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div className="flex items-center gap-4">
+                                  <span className="flex items-center gap-1">
+                                    <User className="w-4 h-4" />
+                                    {booking.clientName || 'Unknown Client'}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="w-4 h-4" />
+                                    {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'}
+                                  </span>
+                                  {booking.eventTime && (
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="w-4 h-4" />
+                                      {booking.eventTime}
+                                    </span>
+                                  )}
+                                  {booking.fee && (
+                                    <span className="flex items-center gap-1">
+                                      <DollarSign className="w-4 h-4" />
+                                      £{booking.fee}
+                                    </span>
+                                  )}
+                                </div>
+                                {booking.venue && (
+                                  <div className="text-gray-500">
+                                    {booking.venue}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBookingClick(booking);
+                                }}
+                              >
+                                <Edit className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </>
                 )}
               </div>
             ) : (
