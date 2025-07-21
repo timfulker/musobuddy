@@ -252,7 +252,10 @@ export async function extractPDFText(buffer: Buffer): Promise<string> {
         try {
           let text = '';
           if (pdfData.Pages) {
-            pdfData.Pages.forEach(page => {
+            pdfData.Pages.forEach((page, pageIndex) => {
+              console.log(`📄 Processing page ${pageIndex + 1}`);
+              
+              // Extract static text
               if (page.Texts) {
                 page.Texts.forEach(textItem => {
                   if (textItem.R) {
@@ -264,8 +267,25 @@ export async function extractPDFText(buffer: Buffer): Promise<string> {
                   }
                 });
               }
+              
+              // CRITICAL: Extract form field values (this is where the real data is!)
+              if (page.Fields) {
+                console.log(`📝 Found ${page.Fields.length} form fields on page ${pageIndex + 1}`);
+                page.Fields.forEach((field, fieldIndex) => {
+                  if (field.V) {
+                    const fieldValue = decodeURIComponent(field.V);
+                    text += `FORM_FIELD_${fieldIndex}: ${fieldValue} `;
+                    console.log(`✅ Form field ${fieldIndex}: "${fieldValue}"`);
+                  }
+                });
+              }
             });
           }
+          
+          console.log('✅ PDF text and form fields extracted successfully');
+          console.log('📊 Total content length:', text.length);
+          console.log('📄 Content preview:', text.substring(0, 800));
+          
           resolve(text.trim());
         } catch (parseError) {
           reject(parseError);
