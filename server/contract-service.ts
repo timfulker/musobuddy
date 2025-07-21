@@ -1,4 +1,5 @@
 import { parseContractFromBuffer, extractPDFText, parseContractPDF } from './contract-parser-simple';
+import { parseMusiciansUnionContract } from '../robust-musicians-union-parser';
 
 interface ContractParsingResult {
   success: boolean;
@@ -66,10 +67,10 @@ export class ContractService {
 
       let result: ContractParsingResult;
 
-      // Use contract parser
+      // Use robust Musicians Union parser
       try {
-        console.log('🔧 Using contract parser...');
-        const parseResult = await parseContractPDF(contractText);
+        console.log('🔧 Using robust Musicians Union parser...');
+        const parseResult = await parseMusiciansUnionContract(contractText);
         const fieldsExtracted = Object.keys(parseResult).filter(k => (parseResult as any)[k] !== undefined && (parseResult as any)[k] !== null).length;
         const confidence = Math.min(95, Math.max(10, 30 + (fieldsExtracted * 8)));
         

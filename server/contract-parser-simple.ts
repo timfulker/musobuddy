@@ -91,10 +91,12 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
           // CRITICAL: Block Tim Fulker's name from being used as client
           if (field === 'clientName') {
             const normalizedName = cleaned.toLowerCase();
-            if (normalizedName.includes('tim fulker') || normalizedName.includes('fulker')) {
+            // Only block exact match of "tim fulker" - not all names containing "fulker"
+            if (normalizedName === 'tim fulker' || normalizedName === 'fulker' || normalizedName === 'mr tim fulker') {
               console.warn('🚫 BLOCKED: Tim Fulker detected as client name:', cleaned);
               return;
             }
+            console.log(`✅ ALLOWED client name: "${cleaned}"`);
           }
           
           // CRITICAL: Block Tim Fulker's address from being used as client address
@@ -112,14 +114,18 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
               return; // Skip placeholder values - leave address blank
             }
             
+            // More specific address blocking - only block Tim's exact address
             const timAddressMarkers = [
-              '59', 'gloucester', 'bh7 6ja', 'dorset', 
-              'tim fulker', 'fulker', 'saxdj.co.uk'
+              '59, gloucester road', '59 gloucester road', '59, gloucester rd', '59 gloucester rd',
+              'bh7 6ja', 'bournemouth', 'tim fulker', 'saxdj.co.uk'
             ];
             
             const containsTimAddress = timAddressMarkers.some(marker => 
               normalizedAddress.includes(marker.toLowerCase())
             );
+            
+            console.log(`🔍 Checking address: "${cleaned}"`);
+            console.log(`🔍 Address markers check:`, timAddressMarkers.map(m => `"${m}": ${normalizedAddress.includes(m.toLowerCase())}`));
             
             if (containsTimAddress) {
               console.warn('🚫 BLOCKED: Tim Fulker\'s address detected as client address:', cleaned);
@@ -134,9 +140,11 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
               console.warn('🚫 BLOCKED: Tim Fulker\'s email detected as client email:', cleaned);
               return;
             }
+            console.log(`✅ ALLOWED client email: "${cleaned}"`);
           }
           
           (cleanData as any)[field] = cleaned;
+          console.log(`✅ ACCEPTED field ${field}: "${cleaned}"`);
         }
       }
     });
