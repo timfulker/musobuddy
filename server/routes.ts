@@ -2677,6 +2677,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Contract parsing endpoint with AI extraction
+  app.post('/api/contracts/parse-pdf', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const file = req.file;
+      
+      if (!file || file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ error: 'Please upload a PDF file' });
+      }
+
+      console.log('🔥 CONTRACT PARSING: Starting PDF parsing for user:', userId);
+      console.log('🔥 CONTRACT PARSING: File details:', {
+        filename: file.originalname,
+        size: file.size,
+        mimetype: file.mimetype
+      });
+
+      // Extract text from PDF
+      const { extractTextFromPDF } = await import('./pdf-text-extractor');
+      const contractText = await extractTextFromPDF(file.buffer);
+      
+      if (!contractText || contractText.trim().length < 50) {
+        return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
+      }
+      
+      console.log('🔥 CONTRACT PARSING: Text extracted, length:', contractText.length);
+      
+      // Parse with AI
+      const { parseContractWithAI } = await import('./contract-ai-parser');
+      const extractedData = await parseContractWithAI(contractText);
+      
+      console.log('🔥 CONTRACT PARSING: AI extraction completed with confidence:', extractedData.confidence);
+      
+      // Store uploaded contract for learning purposes
+      const storageKey = `parsed-contracts/${userId}/${Date.now()}-${file.originalname}`;
+      const uploadResult = await uploadFileToCloudflare(file.buffer, storageKey, file.mimetype);
+      
+      let contractRecord = null;
+      if (uploadResult.success) {
+        contractRecord = await storage.createImportedContract({
+          userId,
+          filename: file.originalname,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key,
+          contractType: 'musicians_union',
+          uploadedAt: new Date()
+        });
+
+        // Store extraction for learning (if we have contract learning system)
+        try {
+          if (storage.saveContractExtraction) {
+            await storage.saveContractExtraction({
+              importedContractId: contractRecord.id,
+              extractedData: extractedData,
+              userId,
+              extractionTimeSeconds: 0 // Auto extraction
+            });
+          }
+        } catch (extractionError) {
+          console.log('⚠️ Could not save extraction data (learning system may not be active):', extractionError.message);
+        }
+      }
+
+      res.json({
+        success: true,
+        data: extractedData,
+        contractId: contractRecord?.id || null,
+        message: `Contract parsed successfully with ${extractedData.confidence}% confidence`
+      });
+      
+    } catch (error) {
+      console.error('🔥 CONTRACT PARSING ERROR:', error);
+      res.status(500).json({ 
+        error: 'Failed to parse contract',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Test endpoint for debugging contract parsing with the example PDF
+  app.post('/api/contracts/test-parse', async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Use the example contract PDF from attached_assets
+      const pdfPath = path.join(process.cwd(), 'attached_assets', 'L2_Contract_Hiring_a_Solo_Musician___David_Abrahams___23082025___signed_1753065247472.pdf');
+      
+      if (!fs.existsSync(pdfPath)) {
+        return res.status(404).json({ error: 'Example contract PDF not found' });
+      }
+      
+      console.log('🔥 TEST PARSING: Using example contract at:', pdfPath);
+      
+      const pdfBuffer = fs.readFileSync(pdfPath);
+      const { extractTextFromPDF } = await import('./pdf-text-extractor');
+      const contractText = await extractTextFromPDF(pdfBuffer);
+      
+      console.log('🔥 TEST PARSING: Text extracted, length:', contractText.length);
+      
+      const { parseContractWithAI } = await import('./contract-ai-parser');
+      const extractedData = await parseContractWithAI(contractText);
+      
+      console.log('🔥 TEST PARSING: AI extraction completed:', extractedData);
+      
+      res.json({
+        success: true,
+        extractedText: contractText.substring(0, 500) + '...', // First 500 chars for debugging
+        data: extractedData
+      });
+    } catch (error) {
+      console.error('🔥 TEST PARSING ERROR:', error);
+      res.status(500).json({ 
+        error: 'Failed to parse test contract',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // END CONTRACT PARSING ROUTES
   // ========================================
 

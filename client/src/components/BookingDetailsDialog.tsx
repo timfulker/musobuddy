@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music } from "lucide-react";
+import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
@@ -72,6 +72,9 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   const [hasChanges, setHasChanges] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
   const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [contractFile, setContractFile] = useState<File | null>(null);
+  const [isParsingContract, setIsParsingContract] = useState(false);
+  const [parseResult, setParseResult] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -398,6 +401,110 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     form.reset(initialData);
     setHasChanges(false);
     onOpenChange(false);
+  };
+
+  const handleParseContract = async () => {
+    if (!contractFile || !booking) return;
+    
+    setIsParsingContract(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', contractFile);
+      
+      const response = await fetch('/api/contracts/parse-pdf', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to parse contract');
+      }
+      
+      const result = await response.json();
+      const extractedData = result.data;
+      
+      // Only update empty fields to preserve existing data
+      const currentData = form.getValues();
+      let fieldsUpdated = 0;
+      const updates: any = {};
+      
+      // Map extracted data to form fields (only if current field is empty)
+      if (extractedData.clientName && !currentData.clientName?.trim()) {
+        updates.clientName = extractedData.clientName;
+        fieldsUpdated++;
+      }
+      if (extractedData.clientEmail && !currentData.clientEmail?.trim()) {
+        updates.clientEmail = extractedData.clientEmail;
+        fieldsUpdated++;
+      }
+      if (extractedData.clientPhone && !currentData.clientPhone?.trim()) {
+        updates.clientPhone = extractedData.clientPhone;
+        fieldsUpdated++;
+      }
+      if (extractedData.clientAddress && !currentData.clientAddress?.trim()) {
+        updates.clientAddress = extractedData.clientAddress;
+        fieldsUpdated++;
+      }
+      if (extractedData.venue && !currentData.venue?.trim()) {
+        updates.venue = extractedData.venue;
+        fieldsUpdated++;
+      }
+      if (extractedData.venueAddress && !currentData.venueAddress?.trim()) {
+        updates.venueAddress = extractedData.venueAddress;
+        fieldsUpdated++;
+      }
+      if (extractedData.eventDate && !currentData.eventDate) {
+        updates.eventDate = extractedData.eventDate;
+        fieldsUpdated++;
+      }
+      if (extractedData.eventTime && !currentData.eventTime?.trim()) {
+        updates.eventTime = extractedData.eventTime;
+        fieldsUpdated++;
+      }
+      if (extractedData.eventEndTime && !currentData.eventEndTime?.trim()) {
+        updates.eventEndTime = extractedData.eventEndTime;
+        fieldsUpdated++;
+      }
+      if (extractedData.fee && (!currentData.fee || currentData.fee === '0')) {
+        updates.fee = extractedData.fee;
+        fieldsUpdated++;
+      }
+      if (extractedData.equipmentRequirements && !currentData.equipmentRequirements?.trim()) {
+        updates.equipmentRequirements = extractedData.equipmentRequirements;
+        fieldsUpdated++;
+      }
+      if (extractedData.specialRequirements && !currentData.specialRequirements?.trim()) {
+        updates.specialRequirements = extractedData.specialRequirements;
+        fieldsUpdated++;
+      }
+      
+      if (fieldsUpdated > 0) {
+        form.reset({ ...currentData, ...updates });
+        setHasChanges(true);
+      }
+      
+      setParseResult({
+        fieldsUpdated,
+        confidence: extractedData.confidence
+      });
+      
+      toast({
+        title: "Contract Parsed",
+        description: `Successfully extracted data from contract. ${fieldsUpdated} fields updated.`,
+      });
+      
+    } catch (error) {
+      console.error('Parse error:', error);
+      toast({
+        title: "Parse Error",
+        description: "Failed to parse contract. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsParsingContract(false);
+    }
   };
 
   const onSubmit = async (data: z.infer<typeof bookingDetailsSchema>) => {
@@ -952,9 +1059,71 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-
-
-
+              {/* PDF Contract Import */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Import PDF Contract
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a Musicians' Union contract to automatically extract and populate booking details
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contract-upload">Upload Musicians' Union Contract</Label>
+                    <Input
+                      id="contract-upload"
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => setContractFile(e.target.files?.[0] || null)}
+                    />
+                  </div>
+                  
+                  {contractFile && (
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        onClick={handleParseContract}
+                        disabled={isParsingContract}
+                        className="flex items-center gap-2"
+                      >
+                        {isParsingContract ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Parsing...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            Parse & Import Data
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setContractFile(null);
+                          setParseResult(null);
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {parseResult && (
+                    <div className="bg-green-50 p-3 rounded-md">
+                      <p className="text-sm text-green-700">
+                        Contract parsed successfully! {parseResult.fieldsUpdated || 0} fields updated.
+                        Confidence: {parseResult.confidence || 0}%
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Notes */}
               <Card>
