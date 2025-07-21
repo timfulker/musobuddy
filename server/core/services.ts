@@ -237,7 +237,7 @@ export class CloudStorageService {
     <script>
         function signContract() {
             if (confirm('By signing this contract, you agree to all terms and conditions. Continue?')) {
-                fetch('${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/sign/${contract.id}', {
+                fetch('https://musobuddy.replit.app/api/contracts/sign/${contract.id}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ signature: '${contract.clientName}', signedAt: new Date().toISOString() })
