@@ -14,12 +14,20 @@ export class MailgunService {
     this.mailgun = mg.client({
       username: 'api',
       key: process.env.MAILGUN_API_KEY || '',
-      url: 'https://api.eu.mailgun.net'
+      url: 'https://api.eu.mailgun.net',
+      public_key: process.env.MAILGUN_PUBLIC_KEY || ''
     });
   }
 
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
     const domain = 'mg.musobuddy.com';
+    
+    console.log('📧 Sending contract email with config:', {
+      domain,
+      to: contract.clientEmail,
+      apiKeyExists: !!process.env.MAILGUN_API_KEY,
+      apiKeyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 10) + '...'
+    });
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
@@ -28,7 +36,18 @@ export class MailgunService {
       html: this.generateContractEmailHTML(contract, userSettings, signingUrl)
     };
 
-    return await this.mailgun.messages.create(domain, emailData);
+    try {
+      const result = await this.mailgun.messages.create(domain, emailData);
+      console.log('✅ Email sent successfully:', result.id);
+      return result;
+    } catch (error: any) {
+      console.error('❌ Mailgun error details:', {
+        status: error.status,
+        message: error.message,
+        details: error.details
+      });
+      throw error;
+    }
   }
 
   async sendInvoiceEmail(invoice: any, userSettings: any, pdfUrl: string, subject: string) {
