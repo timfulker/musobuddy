@@ -14,7 +14,7 @@ import Bookings from "@/pages/bookings";
 import Contracts from "@/pages/contracts";
 
 import Invoices from "@/pages/invoices";
-import Calendar from "@/pages/calendar";
+
 
 import Compliance from "@/pages/compliance";
 import Settings from "@/pages/settings";
@@ -79,7 +79,7 @@ function Router() {
           <Route path="/contracts" component={Contracts} />
 
           <Route path="/invoices" component={Invoices} />
-          <Route path="/calendar" component={Calendar} />
+
           <Route path="/compliance" component={Compliance} />
           <Route path="/settings" component={Settings} />
           <Route path="/templates" component={Templates} />
