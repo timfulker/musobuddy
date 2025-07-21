@@ -44,6 +44,7 @@ CRITICAL RULES:
 - NEVER use Tim Fulker's address (59, Gloucester Road, Bournemouth) as the client address
 - Venue name and venue address are separate fields
 - Convert times like "8pm" to "20:00" format
+- HOME ADDRESS VENUES: If venue field contains "Home Address" or similar, set venue to "Client's Home" and use the client's address as the venue address
 
 Contract text:
 ${contractText}
@@ -117,6 +118,18 @@ Return only JSON:
     )) {
       console.log('🚫 Detected Tim Fulker\'s address as client address, replacing with "address not supplied"');
       extractedData.clientAddress = 'address not supplied';
+    }
+    
+    // Handle "Home Address" venues - when venue is client's home
+    if (extractedData.venue && (
+      extractedData.venue.toLowerCase().includes('home address') ||
+      extractedData.venue.toLowerCase().includes('home') && extractedData.venue.length < 20
+    )) {
+      console.log('🏠 Detected home address venue, using client address as venue address');
+      extractedData.venue = "Client's Home";
+      if (extractedData.clientAddress && extractedData.clientAddress !== 'address not supplied') {
+        extractedData.venueAddress = extractedData.clientAddress;
+      }
     }
     
     console.log('🧠 AI extraction completed successfully');

@@ -425,6 +425,13 @@ export default function Enquiries() {
     }
   };
 
+  // Handle individual booking deletion
+  const handleDeleteEnquiry = (enquiry: any) => {
+    if (confirm(`Are you sure you want to delete the booking for ${enquiry.clientName}? This action cannot be undone.`)) {
+      deleteEnquiryMutation.mutate(enquiry.id);
+    }
+  };
+
   // Toggle status filter
   const toggleStatusFilter = (status: string) => {
     setActiveStatusFilters(prev => {
