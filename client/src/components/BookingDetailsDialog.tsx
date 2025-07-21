@@ -414,13 +414,20 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
 
         // If booking was updated on the server, refresh the data
         if (result.booking?.updated && result.booking.fieldsUpdatedCount > 0) {
-          // Trigger booking refresh
-          if (onBookingUpdate) onBookingUpdate();
-          
           toast({
             title: "Contract Applied Successfully",
             description: `Updated ${result.booking.fieldsUpdatedCount} fields automatically. Check the form for updated values.`,
           });
+          
+          // Force refresh both backend data and form
+          if (onBookingUpdate) {
+            onBookingUpdate();
+          }
+          
+          // Force re-render by reloading the dialog data
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } else {
           toast({
             title: "Contract Parsed Successfully",

@@ -2723,8 +2723,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const confidence = parseResult.confidence || Math.min(95, Math.max(50, 40 + (fieldsExtracted * 6)));
 
       if (bookingId) {
-        // Apply to booking if provided
+        // Apply to booking if provided - use the NEW booking system
         const booking = await storage.getBooking(parseInt(bookingId), userId);
+        
+        // Ensure we got a booking from the new system
+        if (!booking || !booking.id) {
+          // Try the old getBooking method as fallback
+          const oldBooking = await storage.getBooking(parseInt(bookingId), userId);
+          if (!oldBooking) {
+            return res.status(404).json({
+              success: false,
+              error: 'BOOKING_NOT_FOUND', 
+              message: 'Booking not found in either system'
+            });
+          }
+        }
         
         if (!booking) {
           return res.status(404).json({
@@ -2744,8 +2757,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Only update if field is empty, null, undefined, or matches default value
           if (!currentValue || 
+              currentValue === null ||
+              currentValue === undefined ||
               currentValue === defaultValue || 
               (typeof currentValue === 'string' && currentValue.trim() === '') ||
+              (fieldName === 'fee' && (currentValue === null || currentValue === '0' || currentValue === '0.00')) ||
               (fieldName.includes('Time') && currentValue === '00:00')) {
             
             if (value !== null && value !== undefined && value !== '') {
@@ -2777,9 +2793,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updateField('eventEndTime', endTimeValue, '');
         }
         
-        // Handle fee field - map quotedAmount to fee
-        if (extractedData.quotedAmount) updateField('fee', extractedData.quotedAmount.toString());
-        if (extractedData.fee) updateField('fee', extractedData.fee.toString());
+        // Handle fee field - map quotedAmount to fee - CRITICAL: preserve as string for decimal type
+        if (extractedData.quotedAmount) {
+          const feeValue = parseFloat(extractedData.quotedAmount.toString());
+          if (!isNaN(feeValue) && feeValue > 0) {
+            updateField('fee', feeValue.toString());
+            console.log(`💰 Extracted fee: ${feeValue} (saved as string: "${feeValue.toString()}")`);
+          }
+        }
+        if (extractedData.fee) {
+          const feeValue = parseFloat(extractedData.fee.toString()); 
+          if (!isNaN(feeValue) && feeValue > 0) {
+            updateField('fee', feeValue.toString());
+            console.log(`💰 Extracted fee: ${feeValue} (saved as string: "${feeValue.toString()}")`);
+          }
+        }
         
         if (extractedData.equipmentRequirements) updateField('equipmentRequirements', extractedData.equipmentRequirements);
         if (extractedData.specialRequirements) updateField('specialRequirements', extractedData.specialRequirements);
@@ -2793,7 +2821,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               updatedFields.eventDate = new Date(updatedFields.eventDate);
             }
             
-            await storage.updateBooking(booking.id, updatedFields, userId);
+            // Debug log the data being sent to database
+            console.log('📝 Updating booking with sanitized data:', JSON.stringify(updatedFields, null, 2));
+            
+            // Use the correct updateBooking method for the new booking system
+            const updateResult = await storage.updateBooking(booking.id, updatedFields, userId);
+            if (!updateResult) {
+              console.error('❌ Failed to update booking - no result returned');
+              throw new Error('Failed to update booking');
+            }
             console.log(`✅ Intelligent parsing updated ${fieldsUpdated.length} fields`);
             
             updateResult = {
