@@ -19,7 +19,7 @@ export class MailgunService {
   }
 
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
-    const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
+    const domain = 'mg.musobuddy.com'; // Force use of production domain
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
@@ -32,7 +32,7 @@ export class MailgunService {
   }
 
   async sendInvoiceEmail(invoice: any, userSettings: any, pdfUrl: string, subject: string) {
-    const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
+    const domain = 'mg.musobuddy.com'; // Force use of production domain
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
