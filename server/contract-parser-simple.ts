@@ -15,6 +15,7 @@ interface ContractData {
   eventTime?: string;
   eventEndTime?: string;
   fee?: number;
+  quotedAmount?: number;
   equipmentRequirements?: string;
   specialRequirements?: string;
   eventType?: string;
@@ -23,79 +24,24 @@ interface ContractData {
 
 export async function parseContractPDF(contractText: string): Promise<ContractData> {
   try {
-    console.log('🔍 Starting enhanced contract parsing...');
+    console.log('🔍 Starting Musicians Union optimized contract parsing...');
     console.log('📄 Contract text length:', contractText.length);
 
     if (!contractText || contractText.trim().length < 50) {
       throw new Error('Contract text is too short or empty');
     }
 
+    // Import the optimized Musicians Union prompt
+    const { buildMusiciansUnionPrompt } = await import('./musicians-union-field-mapping');
+    const promptContent = buildMusiciansUnionPrompt(contractText);
+
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-20250514", 
       max_tokens: 1024,
-      system: `You are an expert at extracting client information from Musicians' Union contracts and performance agreements.
-
-CRITICAL UNDERSTANDING OF MUSICIANS' UNION CONTRACT FORMAT:
-- "between [NAME]" = this is the CLIENT/HIRER
-- "of [ADDRESS]" following the client name = CLIENT ADDRESS
-- "and [MUSICIAN NAME]" = this is the performer (usually Tim Fulker)
-- "The Hirer engages the Musician to perform...at [VENUE]" = VENUE NAME
-- In signature section: "Signed by the Hirer" = CLIENT information
-- In signature section: "Signed by the Musician" = PERFORMER information (ignore this)
-
-EXTRACTION RULES:
-1. CLIENT NAME: Look for "Print Name [NAME]" in the "Signed by the Hirer" section. If not found, extract the person's name from "between [PERSON NAME] of [ORGANIZATION]" - use ONLY the person name, NOT the organization
-2. CLIENT ADDRESS: Look for "of [ADDRESS]" after the client name
-3. CLIENT CONTACT: Look in "Signed by the Hirer" section for phone/email
-4. VENUE: Look for "to perform...at [VENUE NAME]" or venue mentioned in engagement details
-5. VENUE ADDRESS: Often the same as client address, or mentioned separately
-6. START/FINISH TIMES: Look for "Start Time" and "Finish Time" in the contract table
-7. NEVER extract Tim Fulker's details as the client - he is the musician
-
-Return ONLY valid JSON with no additional text or formatting.`,
+      system: "You are a specialized parser for Musicians' Union L2 contracts. Focus on accurate field mapping and data extraction using the provided field mapping rules. Return only valid JSON.",
       messages: [{
         role: 'user',
-        content: `Extract the client/hirer information from this Musicians' Union contract:
-
-${contractText}
-
-Focus on these key areas:
-1. "Print Name [NAME]" in the "Signed by the Hirer" section (this is the CLIENT NAME)
-2. "between [PERSON]" at the start of contract (extract PERSON as client name if Print Name not found)
-3. "of [ADDRESS]" after the client name for client address
-4. "The Hirer engages the Musician to perform...at [VENUE]" for venue name
-5. Venue address typically follows venue name on next line
-6. Contact details (phone and email) in "Signed by the Hirer" section
-7. Table with columns: Date | Start Time | Finish Time | Fee
-
-CRITICAL: Extract ALL available information. Do not return null for fields that have clear values in the contract.
-
-EXAMPLE: For Robin Jarman contract:
-- Client: "Robin Jarman" (from "between Robin Jarman" or "Print Name Robin Jarman")
-- Address: "The Drift, Hall Lane, Upper Farringdon Nr Alton GU34 3EA" (from "of [ADDRESS]")
-- Venue: "The Drift" (from performance location)
-- Email: "robinjarman@live.co.uk" (from Signed by Hirer section)
-- Phone: "07557 982669" (from Signed by Hirer section)
-- Times: "1545" becomes "15:45", "1900" becomes "19:00"
-- Fee: "£260 for 2 hours" becomes 260
-
-Return exactly this JSON structure:
-{
-  "clientName": "person's name from Print Name field or between field (e.g. 'Lauren Beauchamp', not organization name)",
-  "clientEmail": "hirer's email from signature section",
-  "clientPhone": "hirer's phone from signature section", 
-  "clientAddress": "address following 'of' after client name",
-  "venue": "venue name from engagement details",
-  "venueAddress": "venue address if different from client address",
-  "eventDate": "YYYY-MM-DD format",
-  "eventTime": "HH:MM format from Start Time column (convert '1545' to '15:45')",
-  "eventEndTime": "HH:MM format from Finish Time column (convert '1900' to '19:00')",
-  "fee": 260.00,
-  "equipmentRequirements": "any equipment notes",
-  "specialRequirements": "any special requirements",
-  "eventType": "type of performance if mentioned",
-  "performanceDuration": "duration in minutes or hours"
-}`
+        content: promptContent
       }]
     });
 
@@ -193,23 +139,25 @@ Return exactly this JSON structure:
       }
     });
 
-    // Enhanced fee field validation
-    if (extractedData.fee !== undefined && extractedData.fee !== null) {
-      let feeNum: number;
-      if (typeof extractedData.fee === 'number') {
-        feeNum = extractedData.fee;
-      } else if (typeof extractedData.fee === 'string') {
-        // Remove currency symbols and parse
-        const feeStr = extractedData.fee.replace(/[£$€,\s]/g, '');
-        feeNum = parseFloat(feeStr);
-      } else {
-        feeNum = NaN;
-      }
+    // Enhanced fee field validation - handle both fee and quotedAmount
+    ['fee', 'quotedAmount'].forEach(feeField => {
+      if (extractedData[feeField] !== undefined && extractedData[feeField] !== null) {
+        let feeNum: number;
+        if (typeof extractedData[feeField] === 'number') {
+          feeNum = extractedData[feeField];
+        } else if (typeof extractedData[feeField] === 'string') {
+          // Remove currency symbols and parse
+          const feeStr = extractedData[feeField].replace(/[£$€,\s]/g, '');
+          feeNum = parseFloat(feeStr);
+        } else {
+          feeNum = NaN;
+        }
 
-      if (!isNaN(feeNum) && feeNum > 0) {
-        cleanData.fee = feeNum;
+        if (!isNaN(feeNum) && feeNum > 0) {
+          (cleanData as any)[feeField] = feeNum;
+        }
       }
-    }
+    });
 
     console.log('✅ Enhanced contract parsing completed successfully');
     console.log('📊 Extracted fields:', Object.keys(cleanData).filter(k => (cleanData as any)[k]).length);
@@ -277,9 +225,9 @@ export async function extractPDFText(buffer: Buffer): Promise<string> {
     console.log('📊 Text length:', text.length);
 
     return text;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ PDF text extraction failed:', error);
-    throw new Error(`Failed to extract text from PDF: ${error.message}`);
+    throw new Error(`Failed to extract text from PDF: ${error.message || error}`);
   }
 }
 
