@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,26 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
   const [isExtracting, setIsExtracting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Preserve form data across re-renders
+  const formDataRef = useRef(extractionData);
+  
+  useEffect(() => {
+    console.log('🔄 ManualExtractionInterface component re-rendered');
+    console.log('📋 Current form data:', extractionData);
+    console.log('📦 Selected contract:', selectedContract?.filename);
+    
+    // Update ref with latest form data
+    formDataRef.current = extractionData;
+  }, [extractionData, selectedContract]);
+  
+  // Prevent form clearing on component re-mount
+  useEffect(() => {
+    if (formDataRef.current && Object.values(formDataRef.current).some(value => value !== '')) {
+      console.log('🔒 Restoring preserved form data:', formDataRef.current);
+      setExtractionData(formDataRef.current);
+    }
+  }, []);
 
   const handleStartExtraction = (contract: ImportedContract) => {
     setSelectedContract(contract);
@@ -105,7 +125,8 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
         }),
       });
 
-      queryClient.invalidateQueries({ queryKey: ['/api/contracts/extractions'] });
+      // Don't invalidate any queries that might cause component re-renders
+      // queryClient.invalidateQueries({ queryKey: ['/api/contracts/extractions'] });
       
       toast({
         title: 'Extraction Saved Successfully',
@@ -117,6 +138,7 @@ function ManualExtractionInterface({ contracts }: { contracts: ImportedContract[
       setStartTime(null); // Reset timer only
       
       console.log('✅ Manual extraction saved successfully - form data preserved');
+      console.log('📋 Current form data:', extractionData);
     } catch (error) {
       toast({
         title: 'Error',
@@ -664,7 +686,7 @@ export function ContractLearningInterface() {
 
         {/* Manual Extraction Tab */}
         <TabsContent value="extract" className="space-y-6">
-          <ManualExtractionInterface contracts={contracts} />
+          <ManualExtractionInterface key="manual-extraction" contracts={contracts} />
         </TabsContent>
       </Tabs>
     </div>
