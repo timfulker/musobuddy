@@ -380,7 +380,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBooking(data: InsertEnquiry): Promise<Enquiry> {
-    const [booking] = await db.insert(bookings).values(data).returning();
+    // Ensure all date fields are properly handled - don't let database auto-generate timestamps
+    const processedData = {
+      ...data,
+      eventDate: data.eventDate instanceof Date ? data.eventDate : 
+                 data.eventDate ? new Date(data.eventDate) : null,
+      lastContactedAt: data.lastContactedAt instanceof Date ? data.lastContactedAt :
+                      data.lastContactedAt ? new Date(data.lastContactedAt) : null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const [booking] = await db.insert(bookings).values(processedData).returning();
     return booking;
   }
 
