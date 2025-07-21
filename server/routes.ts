@@ -2677,35 +2677,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save manual extraction data - Phase 2 of learning system
-  app.post('/api/contracts/save-extraction', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { importedContractId, extractedData, extractionTimeSeconds } = req.body;
-      
-      const extractionRecord = await storage.saveContractExtraction({
-        importedContractId,
-        extractedData,
-        extractionTimeSeconds,
-        userId
-      });
-      
-      res.json({
-        success: true,
-        extraction: extractionRecord,
-        message: 'Extraction data saved successfully'
-      });
-    } catch (error) {
-      console.error('Error saving extraction data:', error);
-      res.status(500).json({ error: 'Failed to save extraction data' });
-    }
-  });
+  // Removed problematic contract learning save-extraction endpoint
 
   // ========================================
   // CONTRACT PARSING ROUTES - Enhanced Implementation
   // ========================================
 
-  // Intelligent contract parsing endpoint - Uses training data
+  // Smart contract parsing endpoint - Direct AI parsing without problematic learning system
   app.post('/api/contracts/intelligent-parse', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
     try {
       const userId = req.user.id;

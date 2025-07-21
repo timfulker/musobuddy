@@ -12,7 +12,7 @@ import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Bookings from "@/pages/bookings";
 import Contracts from "@/pages/contracts";
-import ContractsLearning from "@/pages/contracts-learning";
+
 import Invoices from "@/pages/invoices";
 import Calendar from "@/pages/calendar";
 
@@ -77,8 +77,7 @@ function Router() {
           <Route path="/bookings" component={Bookings} />
           <Route path="/address-book" component={AddressBook} />
           <Route path="/contracts" component={Contracts} />
-          <Route path="/contracts/learning" component={ContractsLearning} />
-          <Route path="/contracts-learning" component={ContractsLearning} />
+
           <Route path="/invoices" component={Invoices} />
           <Route path="/calendar" component={Calendar} />
           <Route path="/compliance" component={Compliance} />
