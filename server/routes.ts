@@ -2786,11 +2786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!textQuality.isValid) {
         console.log('⚠️ VALIDATION WARNING:', textQuality.reason);
         console.log('⚠️ Allowing contract through for debugging - validation temporarily disabled');
-        // return res.status(400).json({ 
-        //   error: 'PDF text extraction appears corrupted. Please try re-downloading and re-uploading the contract PDF.',
-        //   details: textQuality.reason,
-        //   extractedTextPreview: contractText.substring(0, 200)
-        // });
+        console.log('🔍 CONTRACT TEXT PREVIEW:', contractText.substring(0, 500));
       }
       
       console.log('🔥 CONTRACT PARSING: Text extracted, length:', contractText.length);
