@@ -2758,6 +2758,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const file = req.file;
       
+      console.log('🔍 MULTER DEBUG:', {
+        hasFile: !!file,
+        hasReqFiles: !!req.files,
+        bodyKeys: Object.keys(req.body),
+        headersContentType: req.headers['content-type'],
+        headersContentLength: req.headers['content-length']
+      });
+      
+      if (file) {
+        console.log('🔍 FILE DEBUG:', {
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+          hasBuffer: !!file.buffer,
+          bufferLength: file.buffer?.length
+        });
+      }
+      
       if (!file) {
         return res.status(400).json({ error: 'Please upload a PDF file' });
       }
