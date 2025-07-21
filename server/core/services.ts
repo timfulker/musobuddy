@@ -27,6 +27,12 @@ export class MailgunService {
       subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
       html: this.generateContractEmailHTML(contract, userSettings, signingUrl)
     };
+    
+    console.log('🔍 Contract email details:', {
+      from: emailData.from,
+      to: emailData.to,
+      domain: domain
+    });
 
     return await this.mailgun.messages.create(domain, emailData);
   }
