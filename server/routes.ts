@@ -2762,11 +2762,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Please upload a PDF file' });
       }
 
+      if (!file.buffer || file.size === 0) {
+        return res.status(400).json({ error: 'Uploaded file is empty or corrupted. Please try uploading the file again.' });
+      }
+
       console.log('🔥 CONTRACT PARSING: Starting PDF parsing for user:', userId);
       console.log('🔥 CONTRACT PARSING: File details:', {
         filename: file.originalname,
         size: file.size,
-        mimetype: file.mimetype
+        mimetype: file.mimetype,
+        hasBuffer: !!file.buffer
       });
 
       // Extract text from PDF
