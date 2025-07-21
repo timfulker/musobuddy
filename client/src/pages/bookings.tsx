@@ -63,15 +63,23 @@ export default function UnifiedBookings() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   
-  // Bulk selection functions
-  const isAllSelected = filteredBookings.length > 0 && selectedBookings.length === filteredBookings.length;
-  const isIndeterminate = selectedBookings.length > 0 && selectedBookings.length < filteredBookings.length;
-  
   const toggleSelectAll = () => {
+    const filtered = (bookings as any[]).filter((booking: any) => {
+      const matchesSearch = !searchQuery || 
+        booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+    
+    const isAllSelected = filtered.length > 0 && selectedBookings.length === filtered.length;
+    
     if (isAllSelected) {
       setSelectedBookings([]);
     } else {
-      setSelectedBookings(filteredBookings.map((b: any) => b.id));
+      setSelectedBookings(filtered.map((b: any) => b.id));
     }
   };
   
@@ -178,7 +186,7 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
-  // Filter bookings based on search and status
+  // Filter bookings based on search and status  
   const filteredBookings = (bookings as any[]).filter((booking: any) => {
     const matchesSearch = !searchQuery || 
       booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -236,7 +244,7 @@ export default function UnifiedBookings() {
       String(date.getDate()).padStart(2, '0');
     const events: CalendarEvent[] = [];
 
-    bookings.forEach((booking: any) => {
+    (bookings as any[]).forEach((booking: any) => {
       if (booking.eventDate) {
         const bookingDate = new Date(booking.eventDate);
         const bookingDateStr = bookingDate.getFullYear() + '-' + 
@@ -315,7 +323,7 @@ export default function UnifiedBookings() {
     const events = getEventsForDate(date);
     if (events.length > 0) {
       const firstEvent = events[0];
-      const booking = bookings.find((b: any) => b.id === firstEvent.id);
+      const booking = (bookings as any[]).find((b: any) => b.id === firstEvent.id);
       if (booking) {
         setSelectedBookingForDetails(booking);
         setBookingDetailsDialogOpen(true);
@@ -493,16 +501,17 @@ export default function UnifiedBookings() {
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <Checkbox
-                          checked={isAllSelected}
+                          checked={filteredBookings.length > 0 && selectedBookings.length === filteredBookings.length}
                           ref={(el) => {
                             if (el && el.querySelector('input')) {
+                              const isIndeterminate = selectedBookings.length > 0 && selectedBookings.length < filteredBookings.length;
                               (el.querySelector('input') as HTMLInputElement).indeterminate = isIndeterminate;
                             }
                           }}
                           onCheckedChange={toggleSelectAll}
                         />
                         <span className="text-sm font-medium">
-                          {isAllSelected ? 'Deselect All' : 'Select All'} ({filteredBookings.length} bookings)
+                          {(filteredBookings.length > 0 && selectedBookings.length === filteredBookings.length) ? 'Deselect All' : 'Select All'} ({filteredBookings.length} bookings)
                         </span>
                       </div>
                     </CardContent>
