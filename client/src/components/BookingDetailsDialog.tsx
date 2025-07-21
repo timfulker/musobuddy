@@ -490,16 +490,39 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         confidence: extractedData.confidence
       });
       
-      toast({
-        title: "Contract Parsed",
-        description: `Successfully extracted data from contract. ${fieldsUpdated} fields updated.`,
-      });
+      // Enhanced feedback based on confidence and extraction results
+      if (extractedData.extractionFailed) {
+        const errorMsg = extractedData.error || 'Unknown error';
+        if (errorMsg.includes('overloaded_error') || errorMsg.includes('Overloaded')) {
+          toast({
+            title: "AI Service Busy",
+            description: "The AI service is temporarily overloaded. Please try parsing again in a moment.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Parsing Failed",
+            description: `AI extraction failed: ${errorMsg}. You can manually fill the form.`,
+            variant: "destructive",
+          });
+        }
+      } else if (fieldsUpdated === 0) {
+        toast({
+          title: "No Updates Needed",
+          description: `Contract parsed with ${extractedData.confidence}% confidence, but all fields were already filled.`,
+        });
+      } else {
+        toast({
+          title: "Contract Parsed",
+          description: `Successfully extracted data from contract. ${fieldsUpdated} fields updated.`,
+        });
+      }
       
     } catch (error) {
       console.error('Parse error:', error);
       toast({
         title: "Parse Error",
-        description: "Failed to parse contract. Please try again.",
+        description: "Failed to parse contract. The file was uploaded but AI parsing failed. Please try again or fill manually.",
         variant: "destructive",
       });
     } finally {

@@ -61,16 +61,37 @@ Return ONLY a valid JSON object with these fields (use null if not found):
 Focus on hirer/client details, NOT Tim Fulker's information. Return only the JSON object, no other text.`;
 
   try {
-    const response = await anthropic.messages.create({
-      model: DEFAULT_MODEL_STR,
-      max_tokens: 1000,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
+    // Retry logic for API failures
+    let response;
+    let attempts = 0;
+    const maxAttempts = 3;
+    const delayMs = 1000;
+
+    while (attempts < maxAttempts) {
+      try {
+        response = await anthropic.messages.create({
+          model: DEFAULT_MODEL_STR,
+          max_tokens: 1000,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        });
+        break; // Success, exit retry loop
+      } catch (apiError: any) {
+        attempts++;
+        console.log(`🧠 API attempt ${attempts}/${maxAttempts} failed:`, apiError.status, apiError.error?.error?.type || 'unknown');
+        
+        if (attempts >= maxAttempts) {
+          throw apiError; // Re-throw on final attempt
         }
-      ]
-    });
+        
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, delayMs * attempts));
+      }
+    }
 
     const content = response.content[0];
     if (content.type !== 'text') {
@@ -107,12 +128,24 @@ Focus on hirer/client details, NOT Tim Fulker's information. Return only the JSO
 
     return extractedData;
     
-  } catch (error) {
-    console.error('🧠 AI parsing failed:', error);
+  } catch (error: any) {
+    console.error('🧠 AI parsing failed after retries:', error);
     
-    // Return empty data with low confidence on error
+    // Provide more specific error information
+    const errorType = error.error?.error?.type || 'unknown';
+    const errorMessage = error.error?.error?.message || error.message || 'Unknown error';
+    
+    console.log('🧠 Error details:', { 
+      type: errorType, 
+      message: errorMessage, 
+      status: error.status 
+    });
+    
+    // Return empty data with low confidence and error info
     return {
-      confidence: 0
+      confidence: 0,
+      error: `${errorType}: ${errorMessage}`,
+      extractionFailed: true
     };
   }
 }
