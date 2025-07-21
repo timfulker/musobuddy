@@ -1117,7 +1117,71 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
 
 
 
-
+              {/* Smart Contract Import */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Smart Contract Import
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a contract to automatically fill booking details using AI trained on your previous extractions
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleSmartContractUpload}
+                        className="hidden"
+                        id="smart-contract-upload"
+                      />
+                      <label
+                        htmlFor="smart-contract-upload"
+                        className="cursor-pointer flex flex-col items-center gap-2"
+                      >
+                        <Upload className="h-8 w-8 text-gray-400" />
+                        <span className="text-sm font-medium">Upload Contract PDF</span>
+                        <span className="text-xs text-gray-500">
+                          System will learn from this and improve future parsing
+                        </span>
+                      </label>
+                    </div>
+                    
+                    {contractParsingResult && (
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Brain className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-800">
+                            AI Extraction Complete ({contractParsingResult.confidence}% confidence)
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-600 mb-3">
+                          {contractParsingResult.message}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={applyExtractedData}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            Apply to Form
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setContractParsingResult(null)}
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Notes */}
               <Card>
