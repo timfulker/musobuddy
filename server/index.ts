@@ -165,13 +165,14 @@ async function startServer() {
       serveStatic(app);
     } catch (error) {
       console.log('⚠️ Vite setup failed, creating basic static serving:', error.message);
-      // Basic fallback static serving
+      // API 404 handler (must come before catch-all)
+      app.use('/api/*', (req, res) => {
+        res.status(404).json({ error: 'API endpoint not found' });
+      });
+      
+      // Basic fallback static serving for non-API routes
       app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api/')) {
-          res.send(`<!DOCTYPE html><html><head><title>MusoBuddy</title></head><body><h1>MusoBuddy Server Running</h1><p>API available at /api/</p></body></html>`);
-        } else {
-          res.status(404).json({ error: 'Not found' });
-        }
+        res.send(`<!DOCTYPE html><html><head><title>MusoBuddy</title></head><body><h1>MusoBuddy Server Running</h1><p>API available at /api/</p></body></html>`);
       });
     }
     
