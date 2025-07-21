@@ -2854,8 +2854,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fs = await import('fs');
       const path = await import('path');
       
-      // Use the example contract PDF from attached_assets
-      const pdfPath = path.join(process.cwd(), 'attached_assets', 'L2_Contract_Hiring_a_Solo_Musician___David_Abrahams___23082025___signed_1753065247472.pdf');
+      // Use the Hannah Hope contract PDF from attached_assets
+      const pdfPath = path.join(process.cwd(), 'attached_assets', 'L2-Contract-Hiring-a-Solo-Musician - Hannah Hope - 24-10-2025 - signed_1753089259099.pdf');
       
       if (!fs.existsSync(pdfPath)) {
         return res.status(404).json({ error: 'Example contract PDF not found' });
