@@ -1,0 +1,3 @@
+Let me create a simple debug endpoint to see what text is being extracted from the Robin Jarman PDF.
+
+This will help us understand why the AI is seeing your details instead of Robin Jarman's.
