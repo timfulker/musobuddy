@@ -45,13 +45,28 @@ export class Storage {
   }
 
   async createBooking(bookingData: any) {
-    const result = await db.insert(bookings).values(bookingData).returning();
+    // Convert date strings to Date objects for timestamp fields
+    const processedData = {
+      ...bookingData,
+      eventDate: bookingData.eventDate ? new Date(bookingData.eventDate) : null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const result = await db.insert(bookings).values(processedData).returning();
     return result[0];
   }
 
   async updateBooking(id: number, updates: any) {
+    // Convert date strings to Date objects for timestamp fields
+    const processedUpdates = {
+      ...updates,
+      eventDate: updates.eventDate ? new Date(updates.eventDate) : updates.eventDate,
+      updatedAt: new Date()
+    };
+    
     const result = await db.update(bookings)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(processedUpdates)
       .where(eq(bookings.id, id))
       .returning();
     return result[0];
@@ -75,13 +90,32 @@ export class Storage {
   }
 
   async createContract(contractData: any) {
-    const result = await db.insert(contracts).values(contractData).returning();
+    // Convert date strings to Date objects for timestamp fields
+    const processedData = {
+      ...contractData,
+      eventDate: contractData.eventDate ? new Date(contractData.eventDate) : null,
+      signedAt: contractData.signedAt ? new Date(contractData.signedAt) : null,
+      signingUrlCreatedAt: contractData.signingUrlCreatedAt ? new Date(contractData.signingUrlCreatedAt) : null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const result = await db.insert(contracts).values(processedData).returning();
     return result[0];
   }
 
   async updateContract(id: number, updates: any) {
+    // Convert date strings to Date objects for timestamp fields
+    const processedUpdates = {
+      ...updates,
+      eventDate: updates.eventDate ? new Date(updates.eventDate) : updates.eventDate,
+      signedAt: updates.signedAt ? new Date(updates.signedAt) : updates.signedAt,
+      signingUrlCreatedAt: updates.signingUrlCreatedAt ? new Date(updates.signingUrlCreatedAt) : updates.signingUrlCreatedAt,
+      updatedAt: new Date()
+    };
+    
     const result = await db.update(contracts)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(processedUpdates)
       .where(eq(contracts.id, id))
       .returning();
     return result[0];
