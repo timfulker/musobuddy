@@ -17,14 +17,14 @@ export class MailgunService {
     });
   }
 
-  async sendContractEmail(contract: any, userSettings: any, subject: string) {
+  async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
     const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
       to: contract.clientEmail,
       subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
-      html: this.generateContractEmailHTML(contract, userSettings)
+      html: this.generateContractEmailHTML(contract, userSettings, signingUrl)
     };
 
     return await this.mailgun.messages.create(domain, emailData);
@@ -43,8 +43,8 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
-  private generateContractEmailHTML(contract: any, userSettings: any) {
-    const signingUrl = `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/sign/${contract.id}`;
+  private generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
+    const finalSigningUrl = signingUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/sign/${contract.id}`;
     
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
@@ -61,7 +61,7 @@ export class MailgunService {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${signingUrl}" style="background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          <a href="${finalSigningUrl}" style="background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             Review and Sign Contract
           </a>
         </div>

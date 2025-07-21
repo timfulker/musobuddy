@@ -114,7 +114,11 @@ export async function registerRoutes(app: Express) {
       }
       
       const userSettings = await storage.getSettings(req.user.id);
-      await mailgunService.sendContractEmail(contract, userSettings, subject);
+      
+      // Use the cloud storage URL if available, otherwise fallback to local signing
+      const signingUrl = contract.cloudStorageUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/sign/${contract.id}`;
+      
+      await mailgunService.sendContractEmail(contract, userSettings, subject, signingUrl);
       
       res.json({ success: true });
     } catch (error) {
