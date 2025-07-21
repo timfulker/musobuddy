@@ -78,17 +78,49 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
     // Clean and validate the data with enhanced validation
     const cleanData: ContractData = {};
 
-    // Clean string fields with better validation
+    // Clean string fields with enhanced validation to prevent Tim's data being used as client data
     const stringFields = ['clientName', 'clientEmail', 'clientPhone', 'clientAddress', 'venue', 'venueAddress', 'eventType', 'equipmentRequirements', 'specialRequirements', 'performanceDuration'];
     stringFields.forEach(field => {
       if (extractedData[field] && typeof extractedData[field] === 'string') {
         const cleaned = extractedData[field].trim();
-        if (cleaned && cleaned !== 'null' && cleaned !== 'N/A' && cleaned !== 'Not specified' && cleaned !== 'Tim Fulker') {
-          // Extra validation: don't include Tim Fulker as client
-          if (field === 'clientName' && cleaned.toLowerCase().includes('tim fulker')) {
-            console.warn('⚠️ Skipping Tim Fulker as client name');
-            return;
+        if (cleaned && cleaned !== 'null' && cleaned !== 'N/A' && cleaned !== 'Not specified') {
+          
+          // CRITICAL: Block Tim Fulker's name from being used as client
+          if (field === 'clientName') {
+            const normalizedName = cleaned.toLowerCase();
+            if (normalizedName.includes('tim fulker') || normalizedName.includes('fulker')) {
+              console.warn('🚫 BLOCKED: Tim Fulker detected as client name:', cleaned);
+              return;
+            }
           }
+          
+          // CRITICAL: Block Tim Fulker's address from being used as client address
+          if (field === 'clientAddress') {
+            const normalizedAddress = cleaned.toLowerCase();
+            const timAddressMarkers = [
+              '59', 'gloucester', 'bh7 6ja', 'dorset', 
+              'tim fulker', 'fulker', 'saxdj.co.uk'
+            ];
+            
+            const containsTimAddress = timAddressMarkers.some(marker => 
+              normalizedAddress.includes(marker.toLowerCase())
+            );
+            
+            if (containsTimAddress) {
+              console.warn('🚫 BLOCKED: Tim Fulker\'s address detected as client address:', cleaned);
+              return;
+            }
+          }
+          
+          // CRITICAL: Block Tim's email from being used as client email
+          if (field === 'clientEmail') {
+            const normalizedEmail = cleaned.toLowerCase();
+            if (normalizedEmail.includes('timfulker') || normalizedEmail.includes('saxdj')) {
+              console.warn('🚫 BLOCKED: Tim Fulker\'s email detected as client email:', cleaned);
+              return;
+            }
+          }
+          
           (cleanData as any)[field] = cleaned;
         }
       }

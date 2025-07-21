@@ -171,6 +171,33 @@ export class ContractService {
               let extractedValue = (parsingResult.data as any)[extractedField];
               const bookingValue = (booking as any)[bookingField];
               
+              // CRITICAL: Prevent Tim Fulker's address from being used as client address
+              if (bookingField === 'clientAddress' && extractedValue) {
+                const normalizedAddress = extractedValue.toLowerCase();
+                const timAddressMarkers = [
+                  '59', 'gloucester', 'bh7 6ja', 'dorset', 
+                  'tim fulker', 'fulker', 'saxdj'
+                ];
+                
+                const containsTimAddress = timAddressMarkers.some(marker => 
+                  normalizedAddress.includes(marker.toLowerCase())
+                );
+                
+                if (containsTimAddress) {
+                  console.warn('🚫 BLOCKED: Tim Fulker\'s address detected as client address:', extractedValue);
+                  return; // Skip this field entirely
+                }
+              }
+              
+              // CRITICAL: Prevent Tim Fulker from being used as client name
+              if (bookingField === 'clientName' && extractedValue) {
+                const normalizedName = extractedValue.toLowerCase();
+                if (normalizedName.includes('tim fulker') || normalizedName.includes('fulker')) {
+                  console.warn('🚫 BLOCKED: Tim Fulker detected as client name:', extractedValue);
+                  return; // Skip this field entirely
+                }
+              }
+              
               // Handle special time formats - convert "TBC" to empty string
               if ((bookingField === 'eventTime' || bookingField === 'eventEndTime') && extractedValue === 'TBC') {
                 extractedValue = '';
@@ -182,8 +209,11 @@ export class ContractService {
                                     (bookingValue === '00:00' || bookingValue === '0:00');
               
               if (extractedValue !== undefined && extractedValue !== null && extractedValue !== '' && (isEmpty || isDefaultTime)) {
+                console.log(`📝 Setting ${bookingField} = "${extractedValue}"`);
                 updates[bookingField] = extractedValue;
                 fieldsUpdated.push(bookingField);
+              } else if (!isEmpty && !isDefaultTime) {
+                console.log(`🔒 Preserving existing ${bookingField} = "${bookingValue}"`);
               }
             });
 
