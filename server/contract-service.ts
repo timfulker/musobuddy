@@ -67,10 +67,10 @@ export class ContractService {
 
       let result: ContractParsingResult;
 
-      // Use robust Musicians Union parser
+      // Use simple contract parser (with enhanced PDF extraction)
       try {
-        console.log('🔧 Using robust Musicians Union parser...');
-        const parseResult = await parseMusiciansUnionContract(contractText);
+        console.log('🔧 Using enhanced contract parser with form field extraction...');
+        const parseResult = await parseContractPDF(contractText);
         const fieldsExtracted = Object.keys(parseResult).filter(k => (parseResult as any)[k] !== undefined && (parseResult as any)[k] !== null).length;
         const confidence = Math.min(95, Math.max(10, 30 + (fieldsExtracted * 8)));
         
