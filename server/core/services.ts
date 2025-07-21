@@ -18,6 +18,7 @@ export class MailgunService {
   }
 
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
+    console.log('🔍 Contract email - Mailgun domain:', process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com');
     const domain = process.env.MAILGUN_DOMAIN || 'mg.musobuddy.com';
     
     const emailData = {
