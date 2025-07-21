@@ -2753,7 +2753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Contract Parsing - Working Version  
-  app.post('/api/contracts/parse-pdf', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
+  app.post('/api/contracts/parse-pdf', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
       const userId = req.user.id;
       const file = req.file;
