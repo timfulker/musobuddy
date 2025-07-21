@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText, Brain } from "lucide-react";
+import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
@@ -72,8 +72,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   const [hasChanges, setHasChanges] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
   const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
-  const [contractParsingResult, setContractParsingResult] = useState<any>(null);
-  const [extractedData, setExtractedData] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -373,167 +371,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       toast({
         title: "Contract Imported",
         description: "Unsigned contract imported. Consider updating status to 'Contract Sent' if this reflects the current state.",
-      });
-    }
-  };
-
-  // Smart contract upload and parsing
-  const handleSmartContractUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !booking) return;
-
-    try {
-      setContractParsingResult({ loading: true, message: 'Processing contract...' });
-
-      // Extract text from PDF using existing PDF parsing logic
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('bookingId', booking.id.toString());
-
-      console.log('🔄 Starting smart contract upload for file:', file.name);
-      console.log('📋 Booking ID:', booking.id);
-      
-      const response = await fetch('/api/contracts/intelligent-parse', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
-      });
-
-      console.log('📡 Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Parse response failed:', errorText);
-        throw new Error(`Failed to parse contract: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log('📊 Parse result:', result);
-      
-      if (result.success) {
-        console.log('✅ Parsing successful');
-        console.log('📄 Extracted data:', result.data);
-        console.log('🎯 Confidence:', result.confidence);
-        console.log('📊 Fields extracted:', Object.keys(result.data || {}).filter(key => result.data[key]).length);
-        
-        setExtractedData(result.data);
-        setContractParsingResult({
-          loading: false,
-          success: true,
-          confidence: result.confidence,
-          message: result.message,
-          fieldsCount: Object.keys(result.data || {}).filter(key => result.data[key]).length
-        });
-
-        // If booking was updated on the server, refresh the data
-        if (result.booking?.updated && result.booking.fieldsUpdatedCount > 0) {
-          toast({
-            title: "Contract Applied Successfully",
-            description: `Updated ${result.booking.fieldsUpdatedCount} fields automatically. Check the form for updated values.`,
-          });
-          
-          // Force refresh both backend data and form
-          if (onBookingUpdate) {
-            onBookingUpdate();
-          }
-          
-          // Force re-render by reloading the dialog data
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        } else {
-          toast({
-            title: "Contract Parsed Successfully",
-            description: `Extracted ${Object.keys(result.data).filter(key => result.data[key]).length} fields with ${result.confidence}% confidence`,
-          });
-        }
-      } else {
-        throw new Error(result.message || 'Parsing failed');
-      }
-    } catch (error) {
-      console.error('Smart contract upload error:', error);
-      setContractParsingResult({
-        loading: false,
-        success: false,
-        message: (error as any).message || 'Failed to process contract'
-      });
-      
-      toast({
-        title: "Contract Processing Failed",
-        description: (error as any).message || "Please try again or use manual entry",
-        variant: "destructive",
-      });
-    }
-
-    // Reset file input
-    event.target.value = '';
-  };
-
-  const applyExtractedData = () => {
-    if (!extractedData) return;
-
-    const currentFormData = form.getValues();
-    let fieldsUpdated = 0;
-    const updates: any = {};
-
-    // Apply extracted data only to empty fields (preserve existing data)
-    const fieldMappings = {
-      clientName: 'clientName',
-      clientEmail: 'clientEmail',
-      clientPhone: 'clientPhone',
-      clientAddress: 'clientAddress',
-      venue: 'venue',
-      venueAddress: 'venueAddress',
-      eventDate: 'eventDate',
-      eventTime: 'eventTime',
-      eventEndTime: 'eventEndTime',
-      fee: 'fee',
-      equipmentRequirements: 'equipmentRequirements',
-      specialRequirements: 'specialRequirements',
-      eventType: 'eventType'
-    };
-
-    for (const [extractedField, formField] of Object.entries(fieldMappings)) {
-      const extractedValue = extractedData[extractedField];
-      const currentValue = (currentFormData as any)[formField];
-      
-      // Check if field is empty or has default/placeholder values
-      const isEmpty = !currentValue || currentValue.trim() === '';
-      const isDefaultTime = (formField === 'eventTime' || formField === 'eventEndTime') && 
-                            (currentValue === '00:00' || currentValue === '0:00');
-      
-      if (extractedValue && (isEmpty || isDefaultTime)) {
-        updates[formField] = extractedValue;
-        fieldsUpdated++;
-      }
-    }
-
-    if (fieldsUpdated > 0) {
-      form.reset({ ...currentFormData, ...updates });
-      setHasChanges(true);
-      
-      toast({
-        title: "AI Extraction Applied",
-        description: `Updated ${fieldsUpdated} fields from contract. Existing data was preserved.`,
-      });
-    } else {
-      toast({
-        title: "No Updates Applied",
-        description: "All relevant fields already contain data.",
-      });
-    }
-
-    // Clear the parsing result and force cache clear
-    setContractParsingResult(null);
-    setExtractedData(null);
-    
-    // Force clear any browser caches
-    if (typeof window !== 'undefined') {
-      // Clear any potential localStorage caches
-      Object.keys(localStorage).forEach(key => {
-        if (key.includes('contract') || key.includes('parsing')) {
-          localStorage.removeItem(key);
-        }
       });
     }
   };
@@ -1117,71 +954,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
 
 
 
-              {/* Smart Contract Import */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Smart Contract Import
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Upload a contract to automatically fill booking details using AI trained on your previous extractions
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleSmartContractUpload}
-                        className="hidden"
-                        id="smart-contract-upload"
-                      />
-                      <label
-                        htmlFor="smart-contract-upload"
-                        className="cursor-pointer flex flex-col items-center gap-2"
-                      >
-                        <Upload className="h-8 w-8 text-gray-400" />
-                        <span className="text-sm font-medium">Upload Contract PDF</span>
-                        <span className="text-xs text-gray-500">
-                          System will learn from this and improve future parsing
-                        </span>
-                      </label>
-                    </div>
-                    
-                    {contractParsingResult && (
-                      <div className="p-4 bg-blue-50 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Brain className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium text-blue-800">
-                            AI Extraction Complete ({contractParsingResult.confidence}% confidence)
-                          </span>
-                        </div>
-                        <p className="text-xs text-blue-600 mb-3">
-                          {contractParsingResult.message}
-                        </p>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={applyExtractedData}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            Apply to Form
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setContractParsingResult(null)}
-                          >
-                            Dismiss
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+
 
               {/* Notes */}
               <Card>
