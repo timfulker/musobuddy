@@ -34,21 +34,26 @@ export async function parseContractWithAI(contractText: string): Promise<Extract
   });
 
   console.log('🧠 Starting AI contract parsing with Anthropic...');
+  console.log('📄 Contract text being sent to AI (first 500 chars):', contractText.substring(0, 500));
 
   const prompt = `Extract client information from this Musicians Union contract. Tim Fulker is the musician - extract the HIRER/CLIENT details who is booking him.
 
+SPECIFIC CONTEXT: The client's name should be "Robin Jarman" - look for this name in the contract text.
+
 CRITICAL RULES:
-- Tim Fulker is the MUSICIAN - DO NOT extract his address or details as the client
+- Tim Fulker is the MUSICIAN - DO NOT extract his details (timfulkermusic@gmail.com, 07764190034, 59 Gloucester Road) as the client
+- Look for "Robin Jarman" as the client name
 - IGNORE template placeholders like "between", "of", "and", "on" - look for ACTUAL NAMES after these words
-- Client name: Extract the actual name that appears after "between" and before "and Tim Fulker"
-- Client address: Extract ONLY the address that appears after the client name and before "and Tim Fulker"
+- Client name: Extract "Robin Jarman" or the actual name that appears after "between" and before "and Tim Fulker"  
+- Client address: Look for "The Drift, Hall Lane, Eastbourne" or the address associated with Robin Jarman
 - If client address appears to be placeholder text like "hirer's address" or is blank, return "address not supplied"
 - NEVER use Tim Fulker's address (59, Gloucester Road, Bournemouth) as the client address
+- NEVER use Tim Fulker's email or phone as client contact details
 - Venue name and venue address are separate fields
 - Convert times like "8pm" to "20:00" format and military time like "1545" to "15:45"
 - HOME ADDRESS VENUES: If venue field contains "Home Address" or similar, set venue to "Client's Home" and use the client's address as the venue address
-- Email: Look for client email address (usually near "Email" label in client signature section)
-- Phone: Look for client phone number (usually near "Phone Number" label in client signature section)
+- Email: Look for client email address (usually near "Email" label in client signature section) - NOT timfulkermusic@gmail.com
+- Phone: Look for client phone number (usually near "Phone Number" label in client signature section) - NOT 07764190034
 
 Contract text:
 ${contractText}
