@@ -50,7 +50,10 @@ function validateContractText(text: string): { isValid: boolean; reason?: string
   // Check for specific corruption patterns that indicate incomplete field extraction
   if (text.includes('between of and of') || 
       text.includes('made on between') ||
-      text.match(/\bof\s+and\s+of\b/i)) {
+      text.includes('between  of  and  of') ||
+      text.match(/\bof\s+and\s+of\b/i) ||
+      text.match(/between\s+of\s+and\s+of/i) ||
+      text.match(/made\s+on\s+between\s+of/i)) {
     return { isValid: false, reason: 'Contract contains corrupted field extraction patterns (incomplete client/musician details)' };
   }
   
