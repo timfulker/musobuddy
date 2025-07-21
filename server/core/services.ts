@@ -169,8 +169,8 @@ export class CloudStorageService {
       ACL: 'public-read'
     }));
 
-    // Use the standard R2 public URL format that was working before
-    const url = `https://${this.bucketName}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
+    // Use the correct R2 public development URL
+    const url = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${key}`;
     return { url, key };
   }
 
