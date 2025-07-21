@@ -45,8 +45,8 @@ export class MailgunService {
   }
 
   private generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
-    // Always use the server endpoint, not the R2 URL
-    const finalSigningUrl = `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
+    // Use the R2 URL that was uploaded - contracts must be permanently accessible
+    const finalSigningUrl = signingUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
     
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
@@ -129,14 +129,16 @@ export class CloudStorageService {
     const htmlContent = this.generateContractHTML(contract, userSettings);
     const key = `contracts/signing/${contract.id}-${Date.now()}.html`;
     
+    // Upload to R2 with public read access metadata
     await this.s3.send(new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
       Body: htmlContent,
       ContentType: 'text/html',
-
+      CacheControl: 'public, max-age=31536000'
     }));
 
+    // For R2, we need to use the public URL format
     const accountId = process.env.R2_ACCOUNT_ID;
     const url = `https://${this.bucketName}.${accountId}.r2.cloudflarestorage.com/${key}`;
     return { url, key };
