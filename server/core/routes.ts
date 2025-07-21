@@ -78,18 +78,11 @@ export async function registerRoutes(app: Express) {
       const contractData = { ...req.body, userId: req.user.id };
       const contract = await storage.createContract(contractData);
       
-      // Generate signing page and upload to cloud storage
-      const userSettings = await storage.getSettings(req.user.id);
-      const { url, key } = await cloudStorageService.uploadContractSigningPage(contract, userSettings);
+      // TEMPORARY: Skip cloud storage for testing - use local signing page
+      console.log('Contract created successfully:', contract.id);
+      console.log('Cloud storage temporarily disabled for testing');
       
-      // Update contract with cloud storage info
-      const updatedContract = await storage.updateContract(contract.id, {
-        cloudStorageUrl: url,
-        cloudStorageKey: key,
-        signingUrlCreatedAt: new Date()
-      });
-      
-      res.json(updatedContract);
+      res.json(contract);
     } catch (error) {
       console.error('Contract creation error:', error);
       res.status(500).json({ error: 'Failed to create contract' });
