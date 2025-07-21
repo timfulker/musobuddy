@@ -152,6 +152,14 @@ Return valid JSON only:`;
 // CRITICAL: REGISTER WEBHOOK ROUTE FIRST, BEFORE ANY OTHER MIDDLEWARE
 console.log('🔧 === REGISTERING MAILGUN WEBHOOK FIRST ===');
 
+// Simple test endpoint to verify webhook connectivity
+app.post('/api/webhook/test', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
+  console.log('🔍 TEST WEBHOOK HIT:', new Date().toISOString());
+  console.log('🔍 Request body:', req.body);
+  console.log('🔍 Request headers:', req.headers);
+  res.status(200).json({ success: true, timestamp: new Date().toISOString(), message: 'Test webhook working' });
+});
+
 // CLEAN EMAIL FORWARDING WEBHOOK - REGISTERED FIRST FOR PRIORITY
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
