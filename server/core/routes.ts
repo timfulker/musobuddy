@@ -27,25 +27,25 @@ export async function registerRoutes(app: Express) {
   const server = createServer(app);
 
   // ===== BOOKING ROUTES =====
-  app.get('/api/bookings', async (req: any, res) => {
+  app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
-      const bookings = await storage.getBookings('43963086'); // Default user ID
+      const bookings = await storage.getBookings(req.user.id);
       res.json(bookings);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch bookings' });
     }
   });
 
-  app.post('/api/bookings', async (req: any, res) => {
+  app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
-      const booking = await storage.createBooking({ ...req.body, userId: '43963086' });
+      const booking = await storage.createBooking({ ...req.body, userId: req.user.id });
       res.json(booking);
     } catch (error) {
       res.status(500).json({ error: 'Failed to create booking' });
     }
   });
 
-  app.patch('/api/bookings/:id', async (req: any, res) => {
+  app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const booking = await storage.updateBooking(parseInt(req.params.id), req.body);
       res.json(booking);
@@ -54,7 +54,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  app.delete('/api/bookings/:id', async (req: any, res) => {
+  app.delete('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       await storage.deleteBooking(parseInt(req.params.id));
       res.json({ success: true });
@@ -64,23 +64,23 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== CONTRACT ROUTES =====
-  app.get('/api/contracts', async (req: any, res) => {
+  app.get('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
-      const contracts = await storage.getContracts('43963086');
+      const contracts = await storage.getContracts(req.user.id);
       res.json(contracts);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch contracts' });
     }
   });
 
-  app.post('/api/contracts', async (req: any, res) => {
+  app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
-      const contractData = { ...req.body, userId: '43963086' };
+      const contractData = { ...req.body, userId: req.user.id };
       const contract = await storage.createContract(contractData);
       
       // Generate signing page and upload to cloud storage
       try {
-        const userSettings = await storage.getSettings('43963086');
+        const userSettings = await storage.getSettings(req.user.id);
         const { url, key } = await cloudStorageService.uploadContractSigningPage(contract, userSettings);
         
         // Update contract with cloud storage info
@@ -104,7 +104,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  app.post('/api/contracts/send-email', async (req: any, res) => {
+  app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
     try {
       const { contractId, subject } = req.body;
       const contract = await storage.getContract(contractId);
@@ -113,7 +113,7 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       
-      const userSettings = await storage.getSettings('43963086');
+      const userSettings = await storage.getSettings(req.user.id);
       
       // Use the cloud storage URL if available, otherwise fallback to local signing
       const signingUrl = contract.cloudStorageUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;

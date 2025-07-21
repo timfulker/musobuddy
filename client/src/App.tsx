@@ -69,19 +69,25 @@ function Router() {
         return <div>Logging out...</div>;
       }} />
       
-      {/* Always show authenticated routes - auth bypassed */}
-      <Route path="/landing" component={Landing} />
-      <Route path="/" component={Dashboard} />
-      <Route path="/bookings" component={Bookings} />
-      <Route path="/address-book" component={AddressBook} />
-      <Route path="/contracts" component={Contracts} />
-      <Route path="/invoices" component={Invoices} />
-      <Route path="/compliance" component={Compliance} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/templates" component={Templates} />
-      <Route path="/user-guide" component={UserGuide} />
-      <Route path="/feedback" component={Feedback} />
-      <Route path="/admin" component={Admin} />
+      {!isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <>
+          <Route path="/" component={Dashboard} />
+          <Route path="/bookings" component={Bookings} />
+          <Route path="/address-book" component={AddressBook} />
+          <Route path="/contracts" component={Contracts} />
+
+          <Route path="/invoices" component={Invoices} />
+
+          <Route path="/compliance" component={Compliance} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/templates" component={Templates} />
+          <Route path="/user-guide" component={UserGuide} />
+          <Route path="/feedback" component={Feedback} />
+          <Route path="/admin" component={Admin} />
+        </>
+      )}
       <Route component={NotFound} />
     </Switch>
   );
