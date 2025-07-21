@@ -70,7 +70,14 @@ export default function UnifiedBookings() {
         booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+      // Handle simplified status filtering
+      const matchesStatus = statusFilter === 'all' || 
+        booking.status === statusFilter ||
+        // Group "awaiting_response" and "client_confirms" as "In Progress"
+        (statusFilter === 'awaiting_response' && (booking.status === 'awaiting_response' || booking.status === 'client_confirms')) ||
+        (statusFilter === 'client_confirms' && (booking.status === 'awaiting_response' || booking.status === 'client_confirms')) ||
+        // Map "cancelled" to "Rejected"
+        (statusFilter === 'cancelled' && booking.status === 'cancelled');
       return matchesSearch && matchesStatus;
     });
     
@@ -193,7 +200,14 @@ export default function UnifiedBookings() {
       booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+    // Handle simplified status filtering
+    const matchesStatus = statusFilter === 'all' || 
+      booking.status === statusFilter ||
+      // Group "awaiting_response" and "client_confirms" as "In Progress"
+      (statusFilter === 'awaiting_response' && (booking.status === 'awaiting_response' || booking.status === 'client_confirms')) ||
+      (statusFilter === 'client_confirms' && (booking.status === 'awaiting_response' || booking.status === 'client_confirms')) ||
+      // Map "cancelled" to "Rejected"
+      (statusFilter === 'cancelled' && booking.status === 'cancelled');
     
     return matchesSearch && matchesStatus;
   });
@@ -425,12 +439,11 @@ export default function UnifiedBookings() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="awaiting_response">Awaiting Response</SelectItem>
-                  <SelectItem value="client_confirms">Client Confirms</SelectItem>
-                  <SelectItem value="contract_sent">Contract Sent</SelectItem>
+                  <SelectItem value="awaiting_response">In Progress</SelectItem>
+                  <SelectItem value="client_confirms">In Progress</SelectItem>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="cancelled">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -465,13 +478,7 @@ export default function UnifiedBookings() {
                             Mark as New
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('awaiting_response')}>
-                            Mark as Awaiting Response
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('client_confirms')}>
-                            Mark as Client Confirms
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('contract_sent')}>
-                            Mark as Contract Sent
+                            Mark as In Progress
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('confirmed')}>
                             Mark as Confirmed
@@ -480,7 +487,7 @@ export default function UnifiedBookings() {
                             Mark as Completed
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('cancelled')}>
-                            Mark as Cancelled
+                            Mark as Rejected
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
