@@ -13,7 +13,8 @@ export class MailgunService {
     const mg = new Mailgun(formData);
     this.mailgun = mg.client({
       username: 'api',
-      key: process.env.MAILGUN_API_KEY || ''
+      key: process.env.MAILGUN_API_KEY || '',
+      url: 'https://api.eu.mailgun.net'
     });
   }
 
