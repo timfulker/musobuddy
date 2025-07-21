@@ -64,8 +64,8 @@ export class MailgunService {
   }
 
   private generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
-    // Use the R2 URL that was uploaded - contracts must be permanently accessible
-    const finalSigningUrl = signingUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
+    // Always use server endpoint for contract signing - R2 has access issues
+    const finalSigningUrl = `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
     
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">

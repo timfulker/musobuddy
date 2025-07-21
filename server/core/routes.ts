@@ -115,8 +115,8 @@ export async function registerRoutes(app: Express) {
       
       const userSettings = await storage.getSettings(req.user.id);
       
-      // Use the cloud storage URL if available, otherwise fallback to local signing
-      const signingUrl = contract.cloudStorageUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/sign/${contract.id}`;
+      // Always use server endpoint for reliable access
+      const signingUrl = `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
       
       await mailgunService.sendContractEmail(contract, userSettings, subject, signingUrl);
       
