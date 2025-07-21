@@ -14,52 +14,6 @@ import {
 import OpenAI from 'openai';
 import bcrypt from 'bcrypt';
 
-// Validate PDF text extraction quality
-function validateContractText(text: string): { isValid: boolean; reason?: string } {
-  const textLength = text.trim().length;
-  
-  // Check for minimum content
-  if (textLength < 500) {
-    return { isValid: false, reason: 'Extracted text too short (less than 500 characters)' };
-  }
-  
-  // Check for common contract indicators
-  const hasContractKeywords = /musicians.?union|engagement|hirer|musician|contract|agreement/i.test(text);
-  if (!hasContractKeywords) {
-    return { isValid: false, reason: 'Text does not contain expected contract keywords' };
-  }
-  
-  // Check for excessive fragmentation (many single-character "words")
-  const words = text.split(/\s+/);
-  const singleCharWords = words.filter(w => w.trim().length === 1 || w.trim().length === 2);
-  const fragmentationRatio = singleCharWords.length / words.length;
-  
-  if (fragmentationRatio > 0.3) {
-    return { isValid: false, reason: `High text fragmentation detected (${Math.round(fragmentationRatio * 100)}% single/double character fragments)` };
-  }
-  
-  // Check for repeated meaningless fragments
-  const fragmentPattern = /\b(of|to|and|the|a|an|in|on|at|by)\b/gi;
-  const fragments = text.match(fragmentPattern) || [];
-  const fragmentRatio = fragments.length / words.length;
-  
-  if (fragmentRatio > 0.4) {
-    return { isValid: false, reason: `Excessive meaningless fragments detected (${Math.round(fragmentRatio * 100)}% common words only)` };
-  }
-  
-  // Check for specific corruption patterns that indicate incomplete field extraction
-  if (text.includes('between of and of') || 
-      text.includes('made on between') ||
-      text.includes('between  of  and  of') ||
-      text.match(/\bof\s+and\s+of\b/i) ||
-      text.match(/between\s+of\s+and\s+of/i) ||
-      text.match(/made\s+on\s+between\s+of/i)) {
-    return { isValid: false, reason: 'Contract contains corrupted field extraction patterns (incomplete client/musician details)' };
-  }
-  
-  return { isValid: true };
-}
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice route now registered in server/index.ts to avoid Vite interference
   
@@ -2723,76 +2677,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Debug endpoint to examine raw PDF text extraction
-  app.post('/api/contracts/debug-text-extraction', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  // Contract parsing endpoint with AI extraction
+  app.post('/api/contracts/parse-pdf', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
+      const userId = req.user.id;
       const file = req.file;
       
       if (!file || file.mimetype !== 'application/pdf') {
         return res.status(400).json({ error: 'Please upload a PDF file' });
       }
 
-      console.log('🔍 DEBUG TEXT EXTRACTION for:', file.originalname);
-
-      // Extract text from PDF
-      const { extractTextFromPDF } = await import('./pdf-text-extractor');
-      const contractText = await extractTextFromPDF(file.buffer);
-      
-      res.json({
+      console.log('🔥 CONTRACT PARSING: Starting PDF parsing for user:', userId);
+      console.log('🔥 CONTRACT PARSING: File details:', {
         filename: file.originalname,
         size: file.size,
-        extractedTextLength: contractText.length,
-        extractedText: contractText,
-        preview: contractText.substring(0, 1000)
+        mimetype: file.mimetype
       });
-      
-    } catch (error) {
-      console.error('Debug text extraction failed:', error);
-      res.status(500).json({ error: 'Text extraction failed', details: error.message });
-    }
-  });
-
-  // AI Contract Parsing - Working Version  
-  app.post('/api/contracts/parse-pdf', isAuthenticated, upload.single('file'), async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const file = req.file;
-      
-      console.log('🔍 MULTER DEBUG:', {
-        hasFile: !!file,
-        hasReqFiles: !!req.files,
-        bodyKeys: Object.keys(req.body),
-        headersContentType: req.headers['content-type'],
-        headersContentLength: req.headers['content-length']
-      });
-      
-      if (file) {
-        console.log('🔍 FILE DEBUG:', {
-          originalname: file.originalname,
-          mimetype: file.mimetype,
-          size: file.size,
-          hasBuffer: !!file.buffer,
-          bufferLength: file.buffer?.length
-        });
-      }
-      
-      if (!file) {
-        return res.status(400).json({ error: 'Please upload a PDF file' });
-      }
 
       // Extract text from PDF
       const { extractTextFromPDF } = await import('./pdf-text-extractor');
       const contractText = await extractTextFromPDF(file.buffer);
       
       if (!contractText || contractText.trim().length < 50) {
-        return res.status(400).json({ error: 'Could not extract text from PDF. Please check the file quality.' });
+        return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
       }
-
+      
+      console.log('🔥 CONTRACT PARSING: Text extracted, length:', contractText.length);
+      
       // Parse with AI
       const { parseContractWithAI } = await import('./contract-ai-parser');
       const extractedData = await parseContractWithAI(contractText);
       
-      // Store uploaded contract
+      console.log('🔥 CONTRACT PARSING: AI extraction completed with confidence:', extractedData.confidence);
+      
+      // Store uploaded contract for learning purposes
       const storageKey = `parsed-contracts/${userId}/${Date.now()}-${file.originalname}`;
       const uploadResult = await uploadFileToCloudflare(file.buffer, storageKey, file.mimetype);
       
@@ -2801,24 +2719,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contractRecord = await storage.createImportedContract({
           userId,
           filename: file.originalname,
-          cloudUrl: uploadResult.url || storageKey,
           fileSize: file.size,
+          mimeType: file.mimetype,
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key,
+          contractType: 'musicians_union',
           uploadedAt: new Date()
         });
+
+        // Store extraction for learning (if we have contract learning system)
+        try {
+          if (storage.saveContractExtraction) {
+            await storage.saveContractExtraction({
+              importedContractId: contractRecord.id,
+              extractedData: extractedData,
+              userId,
+              extractionTimeSeconds: 0 // Auto extraction
+            });
+          }
+        } catch (extractionError) {
+          console.log('⚠️ Could not save extraction data (learning system may not be active):', extractionError.message);
+        }
       }
 
       res.json({
         success: true,
         data: extractedData,
         contractId: contractRecord?.id || null,
-        message: `Contract parsed with ${extractedData.confidence}% confidence`
+        message: `Contract parsed successfully with ${extractedData.confidence}% confidence`
       });
       
     } catch (error) {
-      console.error('Contract parsing error:', error);
+      console.error('🔥 CONTRACT PARSING ERROR:', error);
       res.status(500).json({ 
         error: 'Failed to parse contract',
-        details: error.message
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
@@ -2829,8 +2764,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fs = await import('fs');
       const path = await import('path');
       
-      // Use the Hannah Hope contract PDF from attached_assets
-      const pdfPath = path.join(process.cwd(), 'attached_assets', 'L2-Contract-Hiring-a-Solo-Musician - Hannah Hope - 24-10-2025 - signed_1753089259099.pdf');
+      // Use the example contract PDF from attached_assets
+      const pdfPath = path.join(process.cwd(), 'attached_assets', 'L2_Contract_Hiring_a_Solo_Musician___David_Abrahams___23082025___signed_1753065247472.pdf');
       
       if (!fs.existsSync(pdfPath)) {
         return res.status(404).json({ error: 'Example contract PDF not found' });
