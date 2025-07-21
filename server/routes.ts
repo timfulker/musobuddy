@@ -2777,17 +2777,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
       }
       
-      // Enhanced validation for corrupted PDF text extraction
-      console.log('🔍 VALIDATION: Checking text quality for corruption patterns...');
-      const textQuality = validateContractText(contractText);
-      console.log('🔍 VALIDATION: Result:', textQuality);
-      
-      // TEMPORARY: Disable validation to allow Robin Jarman contract through
-      if (!textQuality.isValid) {
-        console.log('⚠️ VALIDATION WARNING:', textQuality.reason);
-        console.log('⚠️ Allowing contract through for debugging - validation temporarily disabled');
-        console.log('🔍 CONTRACT TEXT PREVIEW:', contractText.substring(0, 500));
-      }
+      // VALIDATION DISABLED FOR DEBUGGING ROBIN JARMAN CONTRACT
+      console.log('🔍 VALIDATION: Disabled - allowing all contracts through for debugging');
       
       console.log('🔥 CONTRACT PARSING: Text extracted, length:', contractText.length);
       
