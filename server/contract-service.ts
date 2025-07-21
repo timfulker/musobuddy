@@ -174,6 +174,18 @@ export class ContractService {
               // CRITICAL: Prevent Tim Fulker's address from being used as client address
               if (bookingField === 'clientAddress' && extractedValue) {
                 const normalizedAddress = extractedValue.toLowerCase();
+                
+                // Check for placeholder/default values that mean "no address provided"
+                const placeholderValues = ['hirers address', 'hirer address', 'client address', 'address'];
+                const isPlaceholder = placeholderValues.some(placeholder => 
+                  normalizedAddress === placeholder || normalizedAddress === placeholder + ':'
+                );
+                
+                if (isPlaceholder) {
+                  console.warn('📝 SKIPPING: Placeholder address detected (field not filled):', extractedValue);
+                  return; // Skip placeholder values - leave address blank
+                }
+                
                 const timAddressMarkers = [
                   '59', 'gloucester', 'bh7 6ja', 'dorset', 
                   'tim fulker', 'fulker', 'saxdj'

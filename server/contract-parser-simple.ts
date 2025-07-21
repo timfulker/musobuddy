@@ -97,6 +97,18 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
           // CRITICAL: Block Tim Fulker's address from being used as client address
           if (field === 'clientAddress') {
             const normalizedAddress = cleaned.toLowerCase();
+            
+            // Check for placeholder/default values that mean "no address provided"
+            const placeholderValues = ['hirers address', 'hirer address', 'client address', 'address'];
+            const isPlaceholder = placeholderValues.some(placeholder => 
+              normalizedAddress === placeholder || normalizedAddress === placeholder + ':'
+            );
+            
+            if (isPlaceholder) {
+              console.warn('📝 SKIPPING: Placeholder address detected (field not filled):', cleaned);
+              return; // Skip placeholder values - leave address blank
+            }
+            
             const timAddressMarkers = [
               '59', 'gloucester', 'bh7 6ja', 'dorset', 
               'tim fulker', 'fulker', 'saxdj.co.uk'
