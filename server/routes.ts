@@ -2752,52 +2752,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Contract parsing endpoint with AI extraction
-  app.post('/api/contracts/parse-pdf', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  // AI Contract Parsing - Working Version  
+  app.post('/api/contracts/parse-pdf', isAuthenticated, contractUpload.single('file'), async (req: any, res) => {
     try {
       const userId = req.user.id;
       const file = req.file;
       
-      if (!file || file.mimetype !== 'application/pdf') {
+      if (!file) {
         return res.status(400).json({ error: 'Please upload a PDF file' });
       }
-
-      if (!file.buffer || file.size === 0) {
-        return res.status(400).json({ error: 'Uploaded file is empty or corrupted. Please try uploading the file again.' });
-      }
-
-      console.log('🔥 CONTRACT PARSING: Starting PDF parsing for user:', userId);
-      console.log('🔥 CONTRACT PARSING: File details:', {
-        filename: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype
-      });
 
       // Extract text from PDF
       const { extractTextFromPDF } = await import('./pdf-text-extractor');
       const contractText = await extractTextFromPDF(file.buffer);
       
       if (!contractText || contractText.trim().length < 50) {
-        return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
-      }
-      
-      // Validate extracted text quality
-      const { validatePDFTextQuality } = await import('./pdf-text-extractor');
-      const validation = validatePDFTextQuality(contractText);
-      
-      if (!validation.isValid) {
-        console.log('🔥 PDF VALIDATION FAILED:', validation.issues);
-        return res.status(400).json({ 
-          error: 'PDF appears to be corrupted or poorly scanned. Please obtain a clean PDF copy.',
-          issues: validation.issues
-        });
+        return res.status(400).json({ error: 'Could not extract text from PDF. Please check the file quality.' });
       }
 
       // Parse with AI
       const { parseContractWithAI } = await import('./contract-ai-parser');
       const extractedData = await parseContractWithAI(contractText);
       
-      // Store uploaded contract for learning purposes
+      // Store uploaded contract
       const storageKey = `parsed-contracts/${userId}/${Date.now()}-${file.originalname}`;
       const uploadResult = await uploadFileToCloudflare(file.buffer, storageKey, file.mimetype);
       
@@ -2806,41 +2783,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contractRecord = await storage.createImportedContract({
           userId,
           filename: file.originalname,
+          cloudUrl: uploadResult.url || storageKey,
           fileSize: file.size,
-          mimeType: file.mimetype,
-          cloudStorageUrl: uploadResult.url,
-          cloudStorageKey: uploadResult.key,
-          contractType: 'musicians_union',
           uploadedAt: new Date()
         });
-
-        // Store extraction for learning (if we have contract learning system)
-        try {
-          if (storage.saveContractExtraction) {
-            await storage.saveContractExtraction({
-              importedContractId: contractRecord.id,
-              extractedData: extractedData,
-              userId,
-              extractionTimeSeconds: 0 // Auto extraction
-            });
-          }
-        } catch (extractionError) {
-          console.log('⚠️ Could not save extraction data (learning system may not be active):', extractionError.message);
-        }
       }
 
       res.json({
         success: true,
         data: extractedData,
         contractId: contractRecord?.id || null,
-        message: `Contract parsed successfully with ${extractedData.confidence}% confidence`
+        message: `Contract parsed with ${extractedData.confidence}% confidence`
       });
       
     } catch (error) {
-      console.error('🔥 CONTRACT PARSING ERROR:', error);
+      console.error('Contract parsing error:', error);
       res.status(500).json({ 
         error: 'Failed to parse contract',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error.message
       });
     }
   });
