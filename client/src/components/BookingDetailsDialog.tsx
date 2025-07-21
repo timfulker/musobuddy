@@ -425,72 +425,57 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       const result = await response.json();
       const extractedData = result.data;
       
-      // Only update empty fields to preserve existing data
+      // Always overwrite booking form fields with contract data - contract is authoritative source
       const currentData = form.getValues();
       let fieldsUpdated = 0;
       const updates: any = {};
       
-      // Map extracted data to form fields (only if current field is empty or contains invalid data)
-      const isInvalidClientName = (name: string) => {
-        if (!name?.trim()) return true;
-        // Check for common invalid patterns
-        const invalid = ['of', 'address not supplied', 'timfulkermusic@gmail.com', 'tim fulker', '07764190034'].includes(name.toLowerCase().trim());
-        return invalid;
-      };
-
-      if (extractedData.clientName && isInvalidClientName(currentData.clientName)) {
+      // Map extracted data to form fields - always overwrite if contract has the data
+      if (extractedData.clientName) {
         updates.clientName = extractedData.clientName;
         fieldsUpdated++;
       }
-      if (extractedData.clientEmail && !currentData.clientEmail?.trim()) {
+      if (extractedData.clientEmail) {
         updates.clientEmail = extractedData.clientEmail;
         fieldsUpdated++;
       }
-      if (extractedData.clientPhone && !currentData.clientPhone?.trim()) {
+      if (extractedData.clientPhone) {
         updates.clientPhone = extractedData.clientPhone;
         fieldsUpdated++;
       }
-      if (extractedData.clientAddress && (!currentData.clientAddress?.trim() || currentData.clientAddress.toLowerCase().includes('address not supplied'))) {
+      if (extractedData.clientAddress) {
         updates.clientAddress = extractedData.clientAddress;
         fieldsUpdated++;
       }
-      if (extractedData.venue && !currentData.venue?.trim()) {
+      if (extractedData.venue) {
         updates.venue = extractedData.venue;
         fieldsUpdated++;
       }
-      const isInvalidAddress = (address: string) => {
-        if (!address?.trim()) return true;
-        // Check for invalid address patterns (user's own address instead of client's)
-        const userAddresses = ['59, gloucester road', '59 gloucester road', 'bh7 6ja', 'dorset'];
-        const lowerAddress = address.toLowerCase();
-        return userAddresses.some(invalid => lowerAddress.includes(invalid));
-      };
-
-      if (extractedData.venueAddress && (isInvalidAddress(currentData.venueAddress) || !currentData.venueAddress?.trim())) {
+      if (extractedData.venueAddress) {
         updates.venueAddress = extractedData.venueAddress;
         fieldsUpdated++;
       }
-      if (extractedData.eventDate && !currentData.eventDate) {
+      if (extractedData.eventDate) {
         updates.eventDate = extractedData.eventDate;
         fieldsUpdated++;
       }
-      if (extractedData.eventTime && !currentData.eventTime?.trim()) {
+      if (extractedData.eventTime) {
         updates.eventTime = extractedData.eventTime;
         fieldsUpdated++;
       }
-      if (extractedData.eventEndTime && !currentData.eventEndTime?.trim()) {
+      if (extractedData.eventEndTime) {
         updates.eventEndTime = extractedData.eventEndTime;
         fieldsUpdated++;
       }
-      if (extractedData.fee && (!currentData.fee || currentData.fee === '0')) {
-        updates.fee = extractedData.fee;
+      if (extractedData.fee) {
+        updates.fee = extractedData.fee.toString();
         fieldsUpdated++;
       }
-      if (extractedData.equipmentRequirements && !currentData.equipmentRequirements?.trim()) {
+      if (extractedData.equipmentRequirements) {
         updates.equipmentRequirements = extractedData.equipmentRequirements;
         fieldsUpdated++;
       }
-      if (extractedData.specialRequirements && !currentData.specialRequirements?.trim()) {
+      if (extractedData.specialRequirements) {
         updates.specialRequirements = extractedData.specialRequirements;
         fieldsUpdated++;
       }
@@ -523,13 +508,13 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         }
       } else if (fieldsUpdated === 0) {
         toast({
-          title: "No Updates Needed",
-          description: `Contract parsed with ${extractedData.confidence}% confidence, but all fields were already filled.`,
+          title: "No Data Extracted",
+          description: `Contract parsed with ${extractedData.confidence}% confidence, but no valid fields were found to update.`,
         });
       } else {
         toast({
-          title: "Contract Parsed",
-          description: `Successfully extracted data from contract. ${fieldsUpdated} fields updated.`,
+          title: "Contract Applied",
+          description: `Successfully applied contract data to booking form. ${fieldsUpdated} fields updated with authoritative contract information.`,
         });
       }
       
