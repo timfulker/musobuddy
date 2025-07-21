@@ -79,26 +79,12 @@ export async function setupAuthentication(app: Express): Promise<void> {
     }
   });
 
-  // Authentication routes - NO SECURITY VERSION
-  app.post('/api/auth/login', async (req: any, res) => {
-    try {
-      // Auto-login as admin user regardless of credentials
-      const user = await storage.getUserByEmail('timfulker@gmail.com');
-      if (!user) {
-        return res.status(500).json({ message: 'Admin user not found' });
-      }
-      
-      req.logIn(user, (err: any) => {
-        if (err) {
-          return res.status(500).json({ message: 'Login error' });
-        }
-        
-        return res.json({ success: true, user });
-      });
-    } catch (error) {
-      return res.status(500).json({ message: 'Authentication error' });
-    }
-  });
+  // Authentication routes
+  app.post('/api/auth/login', passport.authenticate('local', {
+    successRedirect: '/dashboard',
+    failureRedirect: '/login?error=invalid',
+    failureFlash: false
+  }));
 
   app.post('/api/auth/logout', (req: any, res) => {
     req.logout(() => {
@@ -109,24 +95,25 @@ export async function setupAuthentication(app: Express): Promise<void> {
     });
   });
 
-  app.get('/api/auth/user', async (req: any, res) => {
-    try {
-      const user = await storage.getUserByEmail('timfulker@gmail.com');
-      if (user) {
-        res.json(user);
-      } else {
-        res.status(500).json({ message: 'Admin user not found' });
-      }
-    } catch (error) {
-      res.status(500).json({ message: 'Error fetching user' });
+  app.get('/api/auth/user', (req: any, res) => {
+    if (req.isAuthenticated()) {
+      res.json(req.user);
+    } else {
+      res.status(401).json({ message: 'Not authenticated' });
     }
   });
 }
 
 export function isAuthenticated(req: any, res: any, next: any): void {
-  return next();
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: 'Authentication required' });
 }
 
 export function isAdmin(req: any, res: any, next: any): void {
-  return next();
+  if (req.isAuthenticated() && req.user?.isAdmin) {
+    return next();
+  }
+  res.status(403).json({ message: 'Admin access required' });
 }

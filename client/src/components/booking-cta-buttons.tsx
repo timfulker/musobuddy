@@ -166,7 +166,7 @@ export default function BookingCTAButtons() {
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="secondary" className="bg-white/20 text-white">
-                {needsContract.length}
+                {contracts.length}
               </Badge>
               <ArrowRight className="w-4 h-4" />
             </div>
@@ -185,7 +185,7 @@ export default function BookingCTAButtons() {
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="secondary" className="bg-white/20 text-white">
-                {needsInvoice.length}
+                {invoices.length}
               </Badge>
               <ArrowRight className="w-4 h-4" />
             </div>

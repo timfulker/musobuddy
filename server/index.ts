@@ -153,46 +153,25 @@ Extract in JSON format:
 
 async function startServer() {
   try {
-    // Setup authentication FIRST
+    // Setup authentication
     await setupAuthentication(app);
     
-    // Register all routes SECOND  
+    // Register all routes
     const server = await registerRoutes(app);
-    
-    // Debug: Log registered routes
-    console.log('✅ Auth and API routes registered');
     
     // Setup Vite middleware (with error handling)
     try {
       await setupVite(app, server);
       serveStatic(app);
     } catch (error) {
-      console.log('⚠️ Vite setup failed, serving static content');
-      
-      // Serve the built frontend for non-API routes
-      app.get('*', (req, res, next) => {
-        if (req.path.startsWith('/api/')) {
-          // Let API routes pass through to 404 handler
-          return next();
+      console.log('⚠️ Vite setup failed, creating basic static serving:', error.message);
+      // Basic fallback static serving
+      app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api/')) {
+          res.send(`<!DOCTYPE html><html><head><title>MusoBuddy</title></head><body><h1>MusoBuddy Server Running</h1><p>API available at /api/</p></body></html>`);
+        } else {
+          res.status(404).json({ error: 'Not found' });
         }
-        res.send(`<!DOCTYPE html>
-<html>
-  <head>
-    <title>MusoBuddy</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script type="module" crossorigin src="/assets/index.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`);
-      });
-      
-      // API 404 handler (after static routes)
-      app.use('/api/*', (req, res) => {
-        res.status(404).json({ error: 'API endpoint not found' });
       });
     }
     

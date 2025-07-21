@@ -1,9 +1,7 @@
 # R2 Public Access Configuration Required
 
-## Issue - RESOLVED
+## Issue
 Contract signing pages return 400 Bad Request because R2 bucket is not configured for public access.
-
-**UPDATE**: Found the bucket in business Cloudflare account (not personal account). Bucket exists with 191 objects and 44.18MB of data from last week.
 
 ## Root Cause
 During the architecture rebuild, the R2 bucket lost its public access configuration. The bucket `musobuddy-documents` exists and files upload successfully, but public URLs return 400 errors.
@@ -11,11 +9,11 @@ During the architecture rebuild, the R2 bucket lost its public access configurat
 ## Solution Required in Cloudflare Dashboard
 
 ### Steps to Fix:
-1. ✅ Go to **Cloudflare Dashboard** → **R2 Object Storage** 
-2. ✅ Click on bucket: **`musobuddy-documents`**
-3. ✅ Go to **Settings** tab
-4. ✅ Find **"Public Development URL"** section  
-5. ⏳ Click **"Enable"** button next to "Public Development URL"
+1. Go to **Cloudflare Dashboard** → **R2 Object Storage**
+2. Click on bucket: **`musobuddy-documents`**
+3. Go to **Settings** tab
+4. Find **"Public Access"** section
+5. Click **"Allow Access"** or **"Connect Domain"**
 6. This will enable public URL access for the bucket
 
 ### Alternative: Custom Domain
