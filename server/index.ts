@@ -339,16 +339,21 @@ console.log('✅ Dedicated webhook handler registered');
 console.log('🔧 Starting clean route registration...');
 
 // Initialize the server with error handling
-let server;
-try {
-  server = await registerRoutes(app);
-  console.log('✅ All routes registered successfully');
-} catch (error) {
-  console.error('❌ Failed to register routes:', error);
-  console.log('⚠️ Continuing with basic server setup...');
-  const { createServer } = await import('http');
-  server = createServer(app);
+async function initializeServer() {
+  let server;
+  try {
+    server = await registerRoutes(app);
+    console.log('✅ All routes registered successfully');
+  } catch (error) {
+    console.error('❌ Failed to register routes:', error);
+    console.log('⚠️ Continuing with basic server setup...');
+    const { createServer } = await import('http');
+    server = createServer(app);
+  }
+  return server;
 }
+
+const server = await initializeServer();
 
 // Debug: Show all registered routes with error handling
 try {
@@ -370,19 +375,23 @@ try {
 // STEP 4: SETUP VITE MIDDLEWARE
 console.log('🔧 Setting up Vite middleware...');
 
-try {
-  if (app.get('env') === 'development') {
-    await setupVite(app, server);
-    console.log('✅ Vite middleware set up');
-  } else {
-    serveStatic(app);
-    console.log('✅ Static files served');
+async function setupMiddleware() {
+  try {
+    if (app.get('env') === 'development') {
+      await setupVite(app, server);
+      console.log('✅ Vite middleware set up');
+    } else {
+      serveStatic(app);
+      console.log('✅ Static files served');
+    }
+    console.log('✅ Vite middleware setup completed');
+  } catch (error) {
+    console.error('❌ Failed to setup Vite middleware:', error);
+    console.log('⚠️ Continuing without Vite middleware...');
   }
-  console.log('✅ Vite middleware setup completed');
-} catch (error) {
-  console.error('❌ Failed to setup Vite middleware:', error);
-  console.log('⚠️ Continuing without Vite middleware...');
 }
+
+await setupMiddleware();
 
 // Catch all unmatched routes for debugging
 app.use((req: Request, res: Response, next: NextFunction) => {
