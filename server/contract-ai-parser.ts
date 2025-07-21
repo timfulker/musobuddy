@@ -37,11 +37,17 @@ export async function parseContractWithAI(contractText: string): Promise<Extract
 
   const prompt = `Extract client information from this Musicians Union contract. Tim Fulker is the musician - extract the HIRER/CLIENT details who is booking him.
 
+IMPORTANT PARSING RULES:
+- Venue name and venue address are separate - venue name is typically on first line, address on second line
+- Convert times like "8pm" to "20:00" format
+- Extract client address (the address after client name, before "and Tim Fulker")
+- Extract venue address separately from venue name
+
 Contract text:
 ${contractText}
 
 Return only JSON:
-{"clientName":"","clientEmail":"","clientPhone":"","venue":"","eventDate":"YYYY-MM-DD","eventTime":"HH:MM","fee":0,"confidence":95}`;
+{"clientName":"","clientEmail":"","clientPhone":"","clientAddress":"","venue":"","venueAddress":"","eventDate":"YYYY-MM-DD","eventTime":"HH:MM","eventEndTime":"HH:MM","fee":0,"confidence":95}`;
 
   try {
     // Retry logic for API failures
