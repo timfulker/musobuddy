@@ -34,32 +34,17 @@ export async function parseContractWithAI(contractText: string): Promise<Extract
   });
 
   console.log('🧠 Starting AI contract parsing with Anthropic...');
-  console.log('📄 Contract text being sent to AI (first 500 chars):', contractText.substring(0, 500));
 
-  const prompt = `You are reading a Musicians Union contract. Tim Fulker (the musician) has signed a contract with a client. Extract the CLIENT'S information (the person hiring Tim).
+  const prompt = `Extract client information from this Musicians Union contract. Tim Fulker is the musician - extract the HIRER/CLIENT details who is booking him.
 
-IMPORTANT CONTEXT:
-- TIM FULKER = Musician/Service Provider (DO NOT extract his details)
-- CLIENT = The person hiring Tim Fulker (THIS is who you need to extract)
-
-BANNED DETAILS (these belong to Tim Fulker - DO NOT use as client info):
-- timfulkermusic@gmail.com
-- 07764190034  
-- 59 Gloucester Road, Bournemouth, BH7 6JA
-
-EXTRACTION RULES:
-1. Client Name: Look for the name AFTER "between" - this is typically "Robin Jarman" or similar
-2. Client Address: Find the address associated with the client name (NOT Tim's address)
-3. Client Email: Find email in client signature section (NOT Tim's email)
-4. Client Phone: Find phone in client signature section (NOT Tim's phone)
-5. Venue: Extract performance location
-6. Event Details: Date, start time, end time, fee
-7. If any client detail is missing or unclear, use empty string ""
-
-The person hiring Tim Fulker should have details like:
-- Name: Robin Jarman
-- Address: The Drift, Hall Lane, Eastbourne, BN21 4JF
-- Different email/phone than Tim's
+CRITICAL RULES:
+- Tim Fulker is the MUSICIAN - DO NOT extract his address or details as the client
+- Client address: Extract ONLY the address that appears after the client name and before "and Tim Fulker"
+- If client address appears to be placeholder text like "hirer's address" or is blank, return "address not supplied"
+- NEVER use Tim Fulker's address (59, Gloucester Road, Bournemouth) as the client address
+- Venue name and venue address are separate fields
+- Convert times like "8pm" to "20:00" format
+- HOME ADDRESS VENUES: If venue field contains "Home Address" or similar, set venue to "Client's Home" and use the client's address as the venue address
 
 Contract text:
 ${contractText}
@@ -135,11 +120,12 @@ Return only JSON:
       extractedData.clientAddress = 'address not supplied';
     }
     
-    // Handle "Home" venues - when venue is client's home
+    // Handle "Home Address" venues - when venue is client's home
     if (extractedData.venue && (
-      extractedData.venue.toLowerCase().includes('home')
+      extractedData.venue.toLowerCase().includes('home address') ||
+      extractedData.venue.toLowerCase().includes('home') && extractedData.venue.length < 20
     )) {
-      console.log('🏠 Detected home venue, using client address as venue address');
+      console.log('🏠 Detected home address venue, using client address as venue address');
       extractedData.venue = "Client's Home";
       if (extractedData.clientAddress && extractedData.clientAddress !== 'address not supplied') {
         extractedData.venueAddress = extractedData.clientAddress;

@@ -425,57 +425,57 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       const result = await response.json();
       const extractedData = result.data;
       
-      // Always overwrite booking form fields with contract data - contract is authoritative source
+      // Only update empty fields to preserve existing data
       const currentData = form.getValues();
       let fieldsUpdated = 0;
       const updates: any = {};
       
-      // Map extracted data to form fields - always overwrite if contract has the data
-      if (extractedData.clientName) {
+      // Map extracted data to form fields (only if current field is empty)
+      if (extractedData.clientName && !currentData.clientName?.trim()) {
         updates.clientName = extractedData.clientName;
         fieldsUpdated++;
       }
-      if (extractedData.clientEmail) {
+      if (extractedData.clientEmail && !currentData.clientEmail?.trim()) {
         updates.clientEmail = extractedData.clientEmail;
         fieldsUpdated++;
       }
-      if (extractedData.clientPhone) {
+      if (extractedData.clientPhone && !currentData.clientPhone?.trim()) {
         updates.clientPhone = extractedData.clientPhone;
         fieldsUpdated++;
       }
-      if (extractedData.clientAddress) {
+      if (extractedData.clientAddress && !currentData.clientAddress?.trim()) {
         updates.clientAddress = extractedData.clientAddress;
         fieldsUpdated++;
       }
-      if (extractedData.venue) {
+      if (extractedData.venue && !currentData.venue?.trim()) {
         updates.venue = extractedData.venue;
         fieldsUpdated++;
       }
-      if (extractedData.venueAddress) {
+      if (extractedData.venueAddress && !currentData.venueAddress?.trim()) {
         updates.venueAddress = extractedData.venueAddress;
         fieldsUpdated++;
       }
-      if (extractedData.eventDate) {
+      if (extractedData.eventDate && !currentData.eventDate) {
         updates.eventDate = extractedData.eventDate;
         fieldsUpdated++;
       }
-      if (extractedData.eventTime) {
+      if (extractedData.eventTime && !currentData.eventTime?.trim()) {
         updates.eventTime = extractedData.eventTime;
         fieldsUpdated++;
       }
-      if (extractedData.eventEndTime) {
+      if (extractedData.eventEndTime && !currentData.eventEndTime?.trim()) {
         updates.eventEndTime = extractedData.eventEndTime;
         fieldsUpdated++;
       }
-      if (extractedData.fee) {
-        updates.fee = extractedData.fee.toString();
+      if (extractedData.fee && (!currentData.fee || currentData.fee === '0')) {
+        updates.fee = extractedData.fee;
         fieldsUpdated++;
       }
-      if (extractedData.equipmentRequirements) {
+      if (extractedData.equipmentRequirements && !currentData.equipmentRequirements?.trim()) {
         updates.equipmentRequirements = extractedData.equipmentRequirements;
         fieldsUpdated++;
       }
-      if (extractedData.specialRequirements) {
+      if (extractedData.specialRequirements && !currentData.specialRequirements?.trim()) {
         updates.specialRequirements = extractedData.specialRequirements;
         fieldsUpdated++;
       }
@@ -508,13 +508,13 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         }
       } else if (fieldsUpdated === 0) {
         toast({
-          title: "No Data Extracted",
-          description: `Contract parsed with ${extractedData.confidence}% confidence, but no valid fields were found to update.`,
+          title: "No Updates Needed",
+          description: `Contract parsed with ${extractedData.confidence}% confidence, but all fields were already filled.`,
         });
       } else {
         toast({
-          title: "Contract Applied",
-          description: `Successfully applied contract data to booking form. ${fieldsUpdated} fields updated with authoritative contract information.`,
+          title: "Contract Parsed",
+          description: `Successfully extracted data from contract. ${fieldsUpdated} fields updated.`,
         });
       }
       
