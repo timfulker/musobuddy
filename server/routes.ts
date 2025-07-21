@@ -2704,11 +2704,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🔥 CONTRACT PARSING: Text extracted, length:', contractText.length);
       
-      // DEBUG: Log first 500 characters of extracted text for Robin Jarman contracts
+      // DEBUG: Log first 1000 characters of extracted text for Robin Jarman contracts
       if (file.originalname && file.originalname.toLowerCase().includes('robin')) {
         console.log('🔍 DEBUG - Robin Jarman PDF text preview:');
-        console.log(contractText.substring(0, 500));
-        console.log('🔍 DEBUG - End of text preview');
+        console.log('========== START OF EXTRACTED TEXT ==========');
+        console.log(contractText.substring(0, 1000));
+        console.log('========== END OF EXTRACTED TEXT ==========');
+        console.log('🔍 DEBUG - Full text length:', contractText.length);
       }
       
       // Parse with AI
