@@ -47,6 +47,13 @@ function validateContractText(text: string): { isValid: boolean; reason?: string
     return { isValid: false, reason: `Excessive meaningless fragments detected (${Math.round(fragmentRatio * 100)}% common words only)` };
   }
   
+  // Check for specific corruption patterns that indicate incomplete field extraction
+  if (text.includes('between of and of') || 
+      text.includes('made on between') ||
+      text.match(/\bof\s+and\s+of\b/i)) {
+    return { isValid: false, reason: 'Contract contains corrupted field extraction patterns (incomplete client/musician details)' };
+  }
+  
   return { isValid: true };
 }
 
