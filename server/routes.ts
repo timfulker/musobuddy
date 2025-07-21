@@ -2762,24 +2762,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Please upload a PDF file' });
       }
 
-      if (!file.buffer || file.size === 0) {
-        return res.status(400).json({ error: 'Uploaded file is empty or corrupted. Please try uploading the file again.' });
+      if (!file.buffer) {
+        return res.status(400).json({ error: 'File upload failed - no data received. Please try uploading the file again.' });
+      }
+      
+      if (file.size === 0) {
+        return res.status(400).json({ error: 'Uploaded file is empty. Please check the file and try again.' });
       }
 
       console.log('🔥 CONTRACT PARSING: Starting PDF parsing for user:', userId);
+      console.log('🔥 RAW REQUEST DEBUG:', {
+        hasFile: !!file,
+        bodyKeys: Object.keys(req.body || {}),
+        filesKeys: req.files ? Object.keys(req.files) : 'no req.files',
+        contentType: req.headers['content-type'],
+        contentLength: req.headers['content-length']
+      });
       console.log('🔥 CONTRACT PARSING: File details:', {
         filename: file.originalname,
         size: file.size,
         mimetype: file.mimetype,
-        hasBuffer: !!file.buffer
+        hasBuffer: !!file.buffer,
+        bufferLength: file?.buffer?.length
       });
 
-      // Extract text from PDF
-      const { extractTextFromPDF } = await import('./pdf-text-extractor');
-      const contractText = await extractTextFromPDF(file.buffer);
+      // Extract text from PDF with enhanced error handling
+      console.log('🔍 About to extract text from buffer of size:', file.buffer?.length || 'undefined');
       
-      if (!contractText || contractText.trim().length < 50) {
-        return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
+      let contractText: string;
+      try {
+        const { extractTextFromPDF } = await import('./pdf-text-extractor');
+        contractText = await extractTextFromPDF(file.buffer);
+        
+        if (!contractText || contractText.trim().length < 50) {
+          return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
+        }
+        
+        console.log('🔍 Successfully extracted text, length:', contractText.length);
+      } catch (pdfError) {
+        console.error('🔥 PDF EXTRACTION ERROR:', pdfError);
+        return res.status(400).json({ 
+          error: 'Failed to process PDF file. The file may be corrupted or encrypted.',
+          details: pdfError instanceof Error ? pdfError.message : 'Unknown PDF error'
+        });
       }
       
       // VALIDATION DISABLED FOR DEBUGGING ROBIN JARMAN CONTRACT
