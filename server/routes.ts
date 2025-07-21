@@ -2704,6 +2704,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('🔥 CONTRACT PARSING: Text extracted, length:', contractText.length);
       
+      // DEBUG: Log first 500 characters of extracted text for Robin Jarman contracts
+      if (file.originalname && file.originalname.toLowerCase().includes('robin')) {
+        console.log('🔍 DEBUG - Robin Jarman PDF text preview:');
+        console.log(contractText.substring(0, 500));
+        console.log('🔍 DEBUG - End of text preview');
+      }
+      
       // Parse with AI
       const { parseContractWithAI } = await import('./contract-ai-parser');
       const extractedData = await parseContractWithAI(contractText);
