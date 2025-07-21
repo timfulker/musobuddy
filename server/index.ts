@@ -164,15 +164,32 @@ async function startServer() {
       await setupVite(app, server);
       serveStatic(app);
     } catch (error) {
-      console.log('⚠️ Vite setup failed, creating basic static serving:', error.message);
-      // API 404 handler (must come before catch-all)
-      app.use('/api/*', (req, res) => {
-        res.status(404).json({ error: 'API endpoint not found' });
+      console.log('⚠️ Vite setup failed, serving static content');
+      
+      // Serve the built frontend for non-API routes
+      app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api/')) {
+          // Let API routes pass through to 404 handler
+          return next();
+        }
+        res.send(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>MusoBuddy</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="module" crossorigin src="/assets/index.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`);
       });
       
-      // Basic fallback static serving for non-API routes
-      app.get('*', (req, res) => {
-        res.send(`<!DOCTYPE html><html><head><title>MusoBuddy</title></head><body><h1>MusoBuddy Server Running</h1><p>API available at /api/</p></body></html>`);
+      // API 404 handler (after static routes)
+      app.use('/api/*', (req, res) => {
+        res.status(404).json({ error: 'API endpoint not found' });
       });
     }
     
