@@ -2762,73 +2762,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Please upload a PDF file' });
       }
 
-      if (!file.buffer) {
-        return res.status(400).json({ error: 'File upload failed - no data received. Please try uploading the file again.' });
-      }
-      
-      if (file.size === 0) {
-        return res.status(400).json({ error: 'Uploaded file is empty. Please check the file and try again.' });
+      if (!file.buffer || file.size === 0) {
+        return res.status(400).json({ error: 'Uploaded file is empty or corrupted. Please try uploading the file again.' });
       }
 
       console.log('🔥 CONTRACT PARSING: Starting PDF parsing for user:', userId);
-      console.log('🔥 RAW REQUEST DEBUG:', {
-        hasFile: !!file,
-        bodyKeys: Object.keys(req.body || {}),
-        filesKeys: req.files ? Object.keys(req.files) : 'no req.files',
-        contentType: req.headers['content-type'],
-        contentLength: req.headers['content-length']
-      });
       console.log('🔥 CONTRACT PARSING: File details:', {
         filename: file.originalname,
         size: file.size,
-        mimetype: file.mimetype,
-        hasBuffer: !!file.buffer,
-        bufferLength: file?.buffer?.length
+        mimetype: file.mimetype
       });
 
-      // Extract text from PDF with enhanced error handling
-      console.log('🔍 About to extract text from buffer of size:', file.buffer?.length || 'undefined');
+      // Extract text from PDF
+      const { extractTextFromPDF } = await import('./pdf-text-extractor');
+      const contractText = await extractTextFromPDF(file.buffer);
       
-      let contractText: string;
-      try {
-        const { extractTextFromPDF } = await import('./pdf-text-extractor');
-        contractText = await extractTextFromPDF(file.buffer);
-        
-        if (!contractText || contractText.trim().length < 50) {
-          return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
-        }
-        
-        console.log('🔍 Successfully extracted text, length:', contractText.length);
-      } catch (pdfError) {
-        console.error('🔥 PDF EXTRACTION ERROR:', pdfError);
+      if (!contractText || contractText.trim().length < 50) {
+        return res.status(400).json({ error: 'Could not extract sufficient text from PDF. Please ensure the PDF is not scanned or corrupted.' });
+      }
+      
+      // Validate extracted text quality
+      const { validatePDFTextQuality } = await import('./pdf-text-extractor');
+      const validation = validatePDFTextQuality(contractText);
+      
+      if (!validation.isValid) {
+        console.log('🔥 PDF VALIDATION FAILED:', validation.issues);
         return res.status(400).json({ 
-          error: 'Failed to process PDF file. The file may be corrupted or encrypted.',
-          details: pdfError instanceof Error ? pdfError.message : 'Unknown PDF error'
+          error: 'PDF appears to be corrupted or poorly scanned. Please obtain a clean PDF copy.',
+          issues: validation.issues
         });
       }
-      
-      // VALIDATION DISABLED FOR DEBUGGING ROBIN JARMAN CONTRACT
-      console.log('🔍 VALIDATION: Disabled - allowing all contracts through for debugging');
-      
-      console.log('🔥 CONTRACT PARSING: Text extracted, length:', contractText.length);
-      
-      // DEBUG: Log first 1000 characters of extracted text for Robin Jarman contracts
-      if (file.originalname && file.originalname.toLowerCase().includes('robin')) {
-        console.log('🔍 DEBUG - Robin Jarman PDF text preview:');
-        console.log('========== START OF EXTRACTED TEXT ==========');
-        console.log(contractText.substring(0, 1000));
-        console.log('========== END OF EXTRACTED TEXT ==========');
-        console.log('🔍 DEBUG - Full text length:', contractText.length);
-      }
-      
-      console.log('🔥 CONTRACT PARSING: About to start AI parsing...');
+
       // Parse with AI
       const { parseContractWithAI } = await import('./contract-ai-parser');
-      console.log('🔥 CONTRACT PARSING: AI parser module loaded, calling parseContractWithAI...');
       const extractedData = await parseContractWithAI(contractText);
-      console.log('🔥 CONTRACT PARSING: AI parsing completed successfully!');
-      
-      console.log('🔥 CONTRACT PARSING: AI extraction completed with confidence:', extractedData.confidence);
       
       // Store uploaded contract for learning purposes
       const storageKey = `parsed-contracts/${userId}/${Date.now()}-${file.originalname}`;
