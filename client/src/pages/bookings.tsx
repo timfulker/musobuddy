@@ -2110,6 +2110,9 @@ export default function Enquiries() {
         open={bookingDetailsDialogOpen}
         onOpenChange={setBookingDetailsDialogOpen}
         booking={selectedBookingForDetails}
+        onBookingUpdate={() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+        }}
       />
       
       {/* Send Compliance Dialog */}

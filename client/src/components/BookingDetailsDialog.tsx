@@ -62,9 +62,10 @@ interface BookingDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   booking: Booking | null;
+  onBookingUpdate?: () => void;
 }
 
-export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDetailsDialogProps) {
+export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpdate }: BookingDetailsDialogProps) {
   const [customFields, setCustomFields] = useState<Array<{id: string, name: string, value: string}>>([]);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldValue, setNewFieldValue] = useState("");
@@ -411,10 +412,21 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
           fieldsCount: Object.keys(result.data).filter(key => result.data[key]).length
         });
 
-        toast({
-          title: "Contract Parsed Successfully",
-          description: `Extracted ${Object.keys(result.data).filter(key => result.data[key]).length} fields with ${result.confidence}% confidence`,
-        });
+        // If booking was updated on the server, refresh the data
+        if (result.booking?.updated && result.booking.fieldsUpdatedCount > 0) {
+          // Trigger booking refresh
+          if (onBookingUpdate) onBookingUpdate();
+          
+          toast({
+            title: "Contract Applied Successfully",
+            description: `Updated ${result.booking.fieldsUpdatedCount} fields automatically. Check the form for updated values.`,
+          });
+        } else {
+          toast({
+            title: "Contract Parsed Successfully",
+            description: `Extracted ${Object.keys(result.data).filter(key => result.data[key]).length} fields with ${result.confidence}% confidence`,
+          });
+        }
       } else {
         throw new Error(result.message || 'Parsing failed');
       }
