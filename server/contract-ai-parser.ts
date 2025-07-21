@@ -120,12 +120,11 @@ Return only JSON:
       extractedData.clientAddress = 'address not supplied';
     }
     
-    // Handle "Home Address" venues - when venue is client's home
+    // Handle "Home" venues - when venue is client's home
     if (extractedData.venue && (
-      extractedData.venue.toLowerCase().includes('home address') ||
-      extractedData.venue.toLowerCase().includes('home') && extractedData.venue.length < 20
+      extractedData.venue.toLowerCase().includes('home')
     )) {
-      console.log('🏠 Detected home address venue, using client address as venue address');
+      console.log('🏠 Detected home venue, using client address as venue address');
       extractedData.venue = "Client's Home";
       if (extractedData.clientAddress && extractedData.clientAddress !== 'address not supplied') {
         extractedData.venueAddress = extractedData.clientAddress;
