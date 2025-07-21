@@ -79,14 +79,26 @@ export async function setupAuthentication(app: Express): Promise<void> {
     }
   });
 
-  // Authentication routes
-  app.post('/api/auth/login', passport.authenticate('local', {
-    successRedirect: '/dashboard',
-    failureRedirect: '/login?error=invalid',
-    failureFlash: false
-  }));
+  // Authentication routes - updated to match client expectations
+  app.post('/api/login', (req, res, next) => {
+    passport.authenticate('local', (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({ message: 'Authentication error' });
+      }
+      if (!user) {
+        return res.status(401).json({ message: info?.message || 'Invalid credentials' });
+      }
+      
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: 'Login error' });
+        }
+        return res.json(user);
+      });
+    })(req, res, next);
+  });
 
-  app.post('/api/auth/logout', (req: any, res) => {
+  app.post('/api/logout', (req: any, res) => {
     req.logout(() => {
       req.session.destroy(() => {
         res.clearCookie('connect.sid');
