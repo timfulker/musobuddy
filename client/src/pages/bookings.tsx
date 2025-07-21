@@ -124,9 +124,25 @@ export default function Enquiries() {
       setIsDialogOpen(true);
     }
     
+    // Handle booking details dialog opening
+    const dialogParam = urlParams.get('dialog');
+    const idParam = urlParams.get('id');
+    
+    if (dialogParam === 'details' && idParam) {
+      // Find the booking by ID and open the details dialog
+      console.log('🔗 Auto-opening booking details dialog for ID:', idParam);
+      setActiveStatusFilters([]); // Show all bookings
+      
+      // Wait for data to load then open dialog
+      setTimeout(() => {
+        // This timeout allows React Query to fetch the data first
+        setSelectedBookingForDetails({ id: parseInt(idParam) });
+        setBookingDetailsDialogOpen(true);
+      }, 1000); // 1 second delay to ensure data loads
+    }
+    
     // Handle navigation with ID parameter
     const statusParam = urlParams.get('status');
-    const idParam = urlParams.get('id');
     
     if (idParam && !statusParam) {
       // New navigation system: show all bookings when only ID is provided
@@ -163,7 +179,7 @@ export default function Enquiries() {
     }
     
     // Clean up URL parameters
-    if (urlParams.get('action') === 'new' || statusParam || idParam) {
+    if (urlParams.get('action') === 'new' || statusParam || idParam || dialogParam) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);

@@ -281,16 +281,13 @@ export default function Calendar() {
 
   const handleDateDoubleClick = (date: Date) => {
     const events = getEventsForDate(date);
-    if (events.length === 1) {
-      // Single event - open its details directly
+    if (events.length >= 1) {
+      // Get the first event and navigate directly to booking details dialog
       const event = events[0];
       if (event.type === 'booking') {
+        // Navigate directly to booking details - no intermediate bookings page
         navigate(`/bookings?id=${event.id}&dialog=details`);
       }
-    } else if (events.length > 1) {
-      // Multiple events - show a selection dialog or go to first event
-      const firstEvent = events[0];
-      navigate(`/bookings?id=${firstEvent.id}&dialog=details`);
     }
   };
 
