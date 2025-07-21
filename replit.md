@@ -151,6 +151,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Contract Learning Removal**: Completely removed contract learning page and navigation menu item as requested by user
 - **Weekly Events Date Range Fixed**: Corrected week calculation to start Monday-Sunday with proper time boundaries and timezone handling
 - **Calendar Default View**: Changed bookings page default view from list to calendar view as requested
+- **Missing Status Filters Fixed**: Added missing "Client Confirms" and "Contract Sent" status options to filter dropdown and bulk actions
 - **Status**: Full architecture rebuild complete with guaranteed 4 fundamental systems operational, bulk select management implemented, and contract deletion bug resolved
 
 ### 2025-07-17 - Stable Branded Authentication System

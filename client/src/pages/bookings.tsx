@@ -426,6 +426,8 @@ export default function UnifiedBookings() {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="new">New</SelectItem>
                   <SelectItem value="awaiting_response">Awaiting Response</SelectItem>
+                  <SelectItem value="client_confirms">Client Confirms</SelectItem>
+                  <SelectItem value="contract_sent">Contract Sent</SelectItem>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -464,6 +466,12 @@ export default function UnifiedBookings() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('awaiting_response')}>
                             Mark as Awaiting Response
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('client_confirms')}>
+                            Mark as Client Confirms
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('contract_sent')}>
+                            Mark as Contract Sent
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('confirmed')}>
                             Mark as Confirmed
