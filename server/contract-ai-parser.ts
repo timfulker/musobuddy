@@ -39,16 +39,12 @@ export async function parseContractWithAI(contractText: string): Promise<Extract
 
 CRITICAL RULES:
 - Tim Fulker is the MUSICIAN - DO NOT extract his address or details as the client
-- IGNORE template placeholders like "between", "of", "and", "on" - look for ACTUAL NAMES after these words
-- Client name: Extract the actual name that appears after "between" and before "and Tim Fulker"
 - Client address: Extract ONLY the address that appears after the client name and before "and Tim Fulker"
 - If client address appears to be placeholder text like "hirer's address" or is blank, return "address not supplied"
 - NEVER use Tim Fulker's address (59, Gloucester Road, Bournemouth) as the client address
 - Venue name and venue address are separate fields
-- Convert times like "8pm" to "20:00" format and military time like "1545" to "15:45"
+- Convert times like "8pm" to "20:00" format
 - HOME ADDRESS VENUES: If venue field contains "Home Address" or similar, set venue to "Client's Home" and use the client's address as the venue address
-- Email: Look for client email address (usually near "Email" label in client signature section)
-- Phone: Look for client phone number (usually near "Phone Number" label in client signature section)
 
 Contract text:
 ${contractText}
@@ -124,11 +120,12 @@ Return only JSON:
       extractedData.clientAddress = 'address not supplied';
     }
     
-    // Handle "Home" venues - when venue is client's home
+    // Handle "Home Address" venues - when venue is client's home
     if (extractedData.venue && (
-      extractedData.venue.toLowerCase().includes('home')
+      extractedData.venue.toLowerCase().includes('home address') ||
+      extractedData.venue.toLowerCase().includes('home') && extractedData.venue.length < 20
     )) {
-      console.log('🏠 Detected home venue, using client address as venue address');
+      console.log('🏠 Detected home address venue, using client address as venue address');
       extractedData.venue = "Client's Home";
       if (extractedData.clientAddress && extractedData.clientAddress !== 'address not supplied') {
         extractedData.venueAddress = extractedData.clientAddress;
