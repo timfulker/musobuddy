@@ -45,7 +45,8 @@ export class MailgunService {
   }
 
   private generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
-    const finalSigningUrl = signingUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/sign/${contract.id}`;
+    // Always use the server endpoint, not the R2 URL
+    const finalSigningUrl = `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
     
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
@@ -132,7 +133,8 @@ export class CloudStorageService {
       Bucket: this.bucketName,
       Key: key,
       Body: htmlContent,
-      ContentType: 'text/html'
+      ContentType: 'text/html',
+
     }));
 
     const accountId = process.env.R2_ACCOUNT_ID;
@@ -203,7 +205,7 @@ export class CloudStorageService {
     <script>
         function signContract() {
             if (confirm('By signing this contract, you agree to all terms and conditions. Continue?')) {
-                fetch('/api/contracts/sign/${contract.id}', {
+                fetch('${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/sign/${contract.id}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ signature: '${contract.clientName}', signedAt: new Date().toISOString() })
@@ -217,6 +219,7 @@ export class CloudStorageService {
                     }
                 })
                 .catch(error => {
+                    console.error('Signing error:', error);
                     alert('Error signing contract. Please try again.');
                 });
             }
