@@ -456,6 +456,8 @@ export default function Settings() {
     if (!instruments.length) {
       setGigTypes([]);
       setAiSuggestions([]);
+      form.setValue('gigTypes', []);
+      setHasChanges(true);
       return [];
     }
     
@@ -464,8 +466,13 @@ export default function Settings() {
       const suggestions = await generateGigSuggestions(instruments);
       setAiSuggestions(suggestions);
       
-      // Replace gig types with fresh suggestions based on current instruments
-      setGigTypes(suggestions);
+      // Keep existing gig types and add new suggestions
+      const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
+      const combinedGigTypes = [...new Set([...currentGigTypes, ...suggestions])];
+      
+      setGigTypes(combinedGigTypes);
+      form.setValue('gigTypes', combinedGigTypes);
+      setHasChanges(true);
       
       return suggestions;
     } catch (error) {
@@ -484,6 +491,7 @@ export default function Settings() {
       : [...currentInstruments, instrument];
     
     setSelectedInstruments(newSelectedInstruments);
+    form.setValue('selectedInstruments', newSelectedInstruments);
     setHasChanges(true);
   };
 
@@ -493,6 +501,7 @@ export default function Settings() {
     if (customInstrument && !currentInstruments.includes(customInstrument)) {
       const newInstruments = [...currentInstruments, customInstrument];
       setSelectedInstruments(newInstruments);
+      form.setValue('selectedInstruments', newInstruments);
       setCustomInstrument("");
       setShowInstrumentInput(false);
       setHasChanges(true);
@@ -503,7 +512,9 @@ export default function Settings() {
   const addCustomGig = () => {
     const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
     if (customGig && !currentGigTypes.includes(customGig)) {
-      setGigTypes([...currentGigTypes, customGig]);
+      const newGigTypes = [...currentGigTypes, customGig];
+      setGigTypes(newGigTypes);
+      form.setValue('gigTypes', newGigTypes);
       setCustomGig("");
       setShowGigInput(false);
       setHasChanges(true);
@@ -513,7 +524,9 @@ export default function Settings() {
   // Remove gig type
   const removeGigType = (gigType: string) => {
     const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
-    setGigTypes(currentGigTypes.filter(g => g !== gigType));
+    const newGigTypes = currentGigTypes.filter(g => g !== gigType);
+    setGigTypes(newGigTypes);
+    form.setValue('gigTypes', newGigTypes);
     setHasChanges(true);
   };
 
@@ -939,7 +952,10 @@ export default function Settings() {
                                 className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 text-purple-800 cursor-pointer hover:bg-purple-100 transition-colors"
                                 onClick={() => {
                                   const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
-                                  setGigTypes([...currentGigTypes, suggestion]);
+                                  const newGigTypes = [...currentGigTypes, suggestion];
+                                  setGigTypes(newGigTypes);
+                                  form.setValue('gigTypes', newGigTypes);
+                                  setHasChanges(true);
                                 }}
                               >
                                 + {suggestion}
