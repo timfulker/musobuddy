@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, DollarSign, Edit, Trash2, CheckSquare, Square, MoreHorizontal } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, DollarSign, Trash2, CheckSquare, Square, MoreHorizontal } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -19,6 +19,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
+import BookingActionMenu from "@/components/booking-action-menu";
 import type { Enquiry } from "@shared/schema";
 
 type ViewMode = 'list' | 'calendar';
@@ -425,12 +426,11 @@ export default function UnifiedBookings() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="awaiting_response">Awaiting Response</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="client_confirms">Client Confirms</SelectItem>
-                  <SelectItem value="contract_sent">Contract Sent</SelectItem>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -464,14 +464,11 @@ export default function UnifiedBookings() {
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('new')}>
                             Mark as New
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('awaiting_response')}>
-                            Mark as Awaiting Response
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('in_progress')}>
+                            Mark as In Progress
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('client_confirms')}>
                             Mark as Client Confirms
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('contract_sent')}>
-                            Mark as Contract Sent
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('confirmed')}>
                             Mark as Confirmed
@@ -479,8 +476,8 @@ export default function UnifiedBookings() {
                           <DropdownMenuItem onClick={() => handleBulkStatusChange('completed')}>
                             Mark as Completed
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('cancelled')}>
-                            Mark as Cancelled
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('rejected')}>
+                            Mark as Rejected
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -595,10 +592,7 @@ export default function UnifiedBookings() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4 mr-1" />
-                              Edit
-                            </Button>
+                            <BookingActionMenu booking={booking} />
                           </div>
                         </div>
                       </CardContent>

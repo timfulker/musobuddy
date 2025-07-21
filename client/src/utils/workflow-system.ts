@@ -1,12 +1,11 @@
-// New 6-stage workflow system for booking management
+// Updated 6-stage workflow system for booking management
 export type WorkflowStage = 
-  | 'new'               // New Enquiry - Client has emailed, no response sent yet
-  | 'awaiting_response' // Awaiting Response - You've replied, waiting to hear back
+  | 'new'               // New - Client has enquired, no response sent yet
+  | 'in_progress'       // In Progress - You've responded, working with client
   | 'client_confirms'   // Client Confirms - Client says "yes" but not yet under contract
-  | 'contract_sent'     // Contract Sent - You've sent the contract, awaiting signature
-  | 'confirmed'         // Confirmed - Signed contract returned, booking locked in
-  | 'cancelled'         // Cancelled/Rejected - Booking was cancelled or rejected
-  | 'completed';        // Completed - Gig is finished (past date)
+  | 'confirmed'         // Confirmed - Contract signed, booking locked in
+  | 'completed'         // Completed - Gig is finished (past date)
+  | 'rejected';         // Rejected - Booking was rejected or cancelled
 
 export interface WorkflowConfig {
   stage: WorkflowStage;
@@ -42,14 +41,14 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
       }
     ]
   },
-  awaiting_response: {
-    stage: 'awaiting_response',
-    displayName: 'Awaiting Response',
+  in_progress: {
+    stage: 'in_progress',
+    displayName: 'In Progress',
     color: 'text-yellow-900',
     bgColor: 'bg-yellow-400',
     borderColor: 'border-yellow-400',
     icon: '⏳',
-    description: "You've replied - waiting to hear back",
+    description: "You've responded - working with client",
     contextualActions: [
       {
         label: 'Send Follow-Up',
@@ -82,23 +81,7 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
       }
     ]
   },
-  contract_sent: {
-    stage: 'contract_sent',
-    displayName: 'Contract Sent',
-    color: 'text-white',
-    bgColor: 'bg-purple-500',
-    borderColor: 'border-purple-500',
-    icon: '📋',
-    description: "You've sent the contract - awaiting signature",
-    contextualActions: [
-      {
-        label: 'Mark as Confirmed',
-        action: 'mark_confirmed',
-        icon: '✅',
-        color: 'bg-green-600 hover:bg-green-700'
-      }
-    ]
-  },
+
   confirmed: {
     stage: 'confirmed',
     displayName: 'Confirmed',
@@ -122,14 +105,14 @@ export const workflowStages: Record<WorkflowStage, WorkflowConfig> = {
       }
     ]
   },
-  cancelled: {
-    stage: 'cancelled',
-    displayName: 'Cancelled',
+  rejected: {
+    stage: 'rejected',
+    displayName: 'Rejected',
     color: 'text-white',
     bgColor: 'bg-red-500',
     borderColor: 'border-red-500',
     icon: '❌',
-    description: 'Booking was cancelled or rejected',
+    description: 'Booking was rejected or cancelled',
     contextualActions: []
   },
   completed: {
@@ -158,7 +141,7 @@ export function getDisplayStatus(status: string): string {
 // Helper function to get next stage
 export function getNextStage(currentStage: WorkflowStage): WorkflowStage | null {
   const stageOrder: WorkflowStage[] = [
-    'new', 'awaiting_response', 'client_confirms', 'contract_sent', 'confirmed', 'completed'
+    'new', 'in_progress', 'client_confirms', 'confirmed', 'completed', 'rejected'
   ];
   
   const currentIndex = stageOrder.indexOf(currentStage);
@@ -172,11 +155,14 @@ export function getNextStage(currentStage: WorkflowStage): WorkflowStage | null 
 export function mapOldStatusToStage(oldStatus: string): WorkflowStage {
   const statusMapping: Record<string, WorkflowStage> = {
     'new': 'new',
-    'booking_in_progress': 'awaiting_response',
+    'awaiting_response': 'in_progress', // Map old to new system
+    'booking_in_progress': 'in_progress',
+    'in_progress': 'in_progress',
     'client_confirms': 'client_confirms',
-    'contract_sent': 'contract_sent',
+    'contract_sent': 'confirmed', // Simplify workflow
     'confirmed': 'confirmed',
-    'rejected': 'cancelled',
+    'cancelled': 'rejected',
+    'rejected': 'rejected',
     'completed': 'completed'
   };
   
@@ -193,9 +179,9 @@ export function getStageFilters(bookings: any[]) {
   
   return {
     needsResponse: counts.new || 0,
-    needsFollowUp: counts.awaiting_response || 0,
+    needsFollowUp: counts.in_progress || 0,
     needsContract: counts.client_confirms || 0,
-    needsSignature: counts.contract_sent || 0,
+    needsSignature: 0, // Removed contract_sent status
     needsInvoice: bookings.filter(b => 
       mapOldStatusToStage(b.status) === 'confirmed' && !b.invoiceSent
     ).length,
@@ -214,8 +200,8 @@ export function executeContextualAction(
 ) {
   switch (action) {
     case 'reply_enquiry':
-      // Move to awaiting response
-      updateBookingStatus(bookingId, 'awaiting_response');
+      // Move to in progress
+      updateBookingStatus(bookingId, 'in_progress');
       break;
     case 'send_followup':
       // Stay in awaiting response but update last contacted

@@ -152,6 +152,9 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Weekly Events Date Range Fixed**: Corrected week calculation to start Monday-Sunday with proper time boundaries and timezone handling
 - **Calendar Default View**: Changed bookings page default view from list to calendar view as requested
 - **Missing Status Filters Fixed**: Added missing "Client Confirms" and "Contract Sent" status options to filter dropdown and bulk actions
+- **Status System Redesign**: Updated workflow to New → In Progress → Client Confirms → Confirmed → Completed + Rejected (simplified 6-stage system)
+- **Action Menu Implementation**: Replaced Edit button with comprehensive "Respond" menu containing all booking actions (always visible, non-contextual)
+- **Status Auto-Updates**: Actions now trigger automatic status changes (e.g., "Respond to Client" moves New → In Progress)
 - **Status**: Full architecture rebuild complete with guaranteed 4 fundamental systems operational, bulk select management implemented, and contract deletion bug resolved
 
 ### 2025-07-17 - Stable Branded Authentication System
