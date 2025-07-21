@@ -155,8 +155,25 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     console.log(`🌐 ALL WEBHOOK REQUESTS: ${req.method} ${req.path}`);
     console.log(`🌐 User-Agent: ${req.headers['user-agent']}`);
     console.log(`🌐 Content-Type: ${req.headers['content-type']}`);
+    console.log(`🌐 Headers:`, JSON.stringify(req.headers, null, 2));
+    console.log(`🌐 Body:`, JSON.stringify(req.body, null, 2));
   }
   next();
+});
+
+// ADD MULTIPLE WEBHOOK ENDPOINTS TO CATCH ALL POSSIBLE ROUTES
+app.post('/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
+  console.log('📧 ALTERNATIVE WEBHOOK ROUTE HIT: /webhook/mailgun');
+  // Forward to main handler
+  req.url = '/api/webhook/mailgun';
+  return app._router.handle(req, res);
+});
+
+app.post('/api/webhooks/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
+  console.log('📧 ALTERNATIVE WEBHOOK ROUTE HIT: /api/webhooks/mailgun');
+  // Forward to main handler
+  req.url = '/api/webhook/mailgun';
+  return app._router.handle(req, res);
 });
 
 // CLEAN EMAIL FORWARDING WEBHOOK
