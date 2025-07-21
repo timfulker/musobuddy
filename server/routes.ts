@@ -2800,9 +2800,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('🔍 DEBUG - Full text length:', contractText.length);
       }
       
+      console.log('🔥 CONTRACT PARSING: About to start AI parsing...');
       // Parse with AI
       const { parseContractWithAI } = await import('./contract-ai-parser');
+      console.log('🔥 CONTRACT PARSING: AI parser module loaded, calling parseContractWithAI...');
       const extractedData = await parseContractWithAI(contractText);
+      console.log('🔥 CONTRACT PARSING: AI parsing completed successfully!');
       
       console.log('🔥 CONTRACT PARSING: AI extraction completed with confidence:', extractedData.confidence);
       
