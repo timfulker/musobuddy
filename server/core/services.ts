@@ -159,16 +159,14 @@ export class CloudStorageService {
     const htmlContent = this.generateContractHTML(contract, userSettings);
     const key = `contracts/signing/${contract.id}-${Date.now()}.html`;
     
-    // Upload to R2 with public read metadata and CORS headers
+    // Upload to R2 with public access
     await this.s3.send(new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
       Body: htmlContent,
       ContentType: 'text/html',
       CacheControl: 'public, max-age=31536000',
-      Metadata: {
-        'public': 'true'
-      }
+      ACL: 'public-read'
     }));
 
     // Use the standard R2 public URL format that was working before
