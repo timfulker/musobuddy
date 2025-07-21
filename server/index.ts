@@ -26,6 +26,192 @@ testDatabaseConnection()
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// CRITICAL: REGISTER WEBHOOK ROUTE IMMEDIATELY AFTER BASIC MIDDLEWARE
+console.log('🔧 === REGISTERING MAILGUN WEBHOOK FIRST - BEFORE EVERYTHING ELSE ===');
+
+// CLEAN EMAIL FORWARDING WEBHOOK - REGISTERED BEFORE ANY OTHER ROUTES OR MIDDLEWARE
+app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
+  const requestId = Date.now().toString();
+  console.log(`📧 [${requestId}] Email webhook received`);
+  console.log(`📧 [${requestId}] Request body keys:`, Object.keys(req.body));
+  console.log(`📧 [${requestId}] Raw body:`, JSON.stringify(req.body, null, 2));
+  
+  try {
+    // Extract email data with comprehensive field checking
+    const fromField = req.body.From || req.body.from || req.body.sender || req.body['from-field'] || '';
+    const subjectField = req.body.Subject || req.body.subject || req.body['subject-field'] || '';
+    const bodyField = req.body['body-plain'] || req.body['stripped-text'] || req.body.text || req.body.message || req.body.body || '';
+    
+    console.log(`📧 [${requestId}] From: "${fromField}"`);
+    console.log(`📧 [${requestId}] Subject: "${subjectField}"`);
+    console.log(`📧 [${requestId}] Body length: ${bodyField.length}`);
+    console.log(`📧 [${requestId}] Body content: "${bodyField}"`);
+    
+    // Check if we have email data
+    if (!fromField && !subjectField && !bodyField) {
+      console.log(`❌ [${requestId}] No email data found in request`);
+      return res.status(400).json({ error: 'No email data found' });
+    }
+    
+    // Extract client email
+    let clientEmail = '';
+    const emailMatch = fromField.match(/[\w.-]+@[\w.-]+\.\w+/);
+    if (emailMatch) {
+      clientEmail = emailMatch[0];
+    }
+    
+    // Extract client name
+    let clientName = 'Unknown';
+    if (fromField.includes('<')) {
+      // Format: "John Doe <john@example.com>"
+      const nameMatch = fromField.match(/^([^<]+)/);
+      if (nameMatch) {
+        clientName = nameMatch[1].trim();
+      }
+    } else if (clientEmail) {
+      // Use email username as name
+      clientName = clientEmail.split('@')[0];
+    }
+    
+    // AI-Only Email Parsing System
+    console.log(`📧 [${requestId}] Using AI-only parsing for maximum accuracy and cost efficiency`);
+    
+    // Use AI to parse all fields from the email
+    const aiResult = await parseEmailWithAI(bodyField, subjectField);
+    
+    // Extract all data from AI results
+    const clientPhone = aiResult.clientPhone;
+    const eventDate = aiResult.eventDate;
+    const venue = aiResult.venue;
+    const eventType = aiResult.eventType;
+    const gigType = aiResult.gigType;
+    const eventTime = aiResult.eventTime;
+    const estimatedValue = aiResult.estimatedValue;
+    const applyNowLink = aiResult.applyNowLink;
+    
+    // Log AI results with enhanced formatting
+    if (clientPhone) console.log(`📧 [${requestId}] AI Phone: ${clientPhone}`);
+    if (eventDate) console.log(`📧 [${requestId}] AI Date: ${eventDate}`);
+    if (venue) console.log(`📧 [${requestId}] AI Venue: ${venue}`);
+    if (eventType) console.log(`📧 [${requestId}] AI Event type: ${eventType}`);
+    if (gigType) console.log(`📧 [${requestId}] AI Gig type: ${gigType}`);
+    if (eventTime) console.log(`📧 [${requestId}] AI Event time: ${eventTime}`);
+    if (estimatedValue) console.log(`📧 [${requestId}] AI Budget: ${estimatedValue}`);
+    if (applyNowLink) console.log(`📧 [${requestId}] 🎯 ENCORE Apply Now Link: ${applyNowLink}`);
+    
+    // Check for conflicts BEFORE creating enquiry (better timing)
+    let hasConflicts = false;
+    let conflictCount = 0;
+    
+    if (eventDate) {
+      try {
+        const { ConflictDetectionService } = await import('./conflict-detection');
+        const conflictService = new ConflictDetectionService(storage);
+        
+        // Create temporary enquiry object for conflict checking
+        const tempEnquiry = {
+          id: 0, // Will be set after creation
+          userId: '43963086',
+          title: subjectField || `Email from ${clientName}`,
+          clientName,
+          clientEmail: clientEmail || null,
+          clientPhone: clientPhone || null,
+          eventDate: eventDate ? new Date(eventDate) : null,
+          eventTime: eventTime,
+          eventEndTime: null,
+          performanceDuration: null,
+          venue,
+          venueAddress: null,
+          clientAddress: null,
+          eventType,
+          gigType,
+          fee: null,
+          equipmentRequirements: null,
+          specialRequirements: null,
+          estimatedValue: estimatedValue,
+          status: 'new' as const,
+          notes: bodyField || 'Email enquiry with no body content',
+          originalEmailContent: bodyField || null,
+          applyNowLink: applyNowLink || null,
+          responseNeeded: true,
+          lastContactedAt: null,
+          hasConflicts: false,
+          conflictCount: 0,
+          quotedAmount: null,
+          depositAmount: null,
+          finalAmount: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        const { conflicts } = await conflictService.checkEnquiryConflicts(tempEnquiry, '43963086');
+        
+        if (conflicts.length > 0) {
+          hasConflicts = true;
+          conflictCount = conflicts.length;
+          console.log(`⚠️ [${requestId}] CONFLICT DETECTED: ${conflicts.length} conflicts found`);
+          console.log(`⚠️ [${requestId}] Conflicts with:`, conflicts.map(c => `${c.type} #${c.id} - ${c.title}`));
+        }
+      } catch (error) {
+        console.error(`❌ [${requestId}] Error checking conflicts:`, error);
+      }
+    }
+    
+    // Create enquiry with AI-parsed data AND conflict flags
+    const enquiry = {
+      userId: '43963086',
+      title: subjectField || `Email from ${clientName}`,
+      clientName,
+      clientEmail: clientEmail || null,
+      clientPhone: clientPhone || null,
+      eventDate: eventDate ? new Date(eventDate) : null,
+      eventTime: eventTime,
+      eventEndTime: null,
+      performanceDuration: null,
+      venue,
+      venueAddress: null,
+      clientAddress: null,
+      eventType,
+      gigType,
+      fee: null,
+      equipmentRequirements: null,
+      specialRequirements: null,
+      estimatedValue: estimatedValue,
+      status: 'new' as const,
+      notes: bodyField || 'Email enquiry with no body content',
+      originalEmailContent: bodyField || null,
+      applyNowLink: applyNowLink || null,
+      responseNeeded: true,
+      lastContactedAt: null,
+      hasConflicts,
+      conflictCount,
+      quotedAmount: null,
+      depositAmount: null,
+      finalAmount: null
+    };
+    
+    console.log(`📧 [${requestId}] Creating enquiry for: ${clientName} (${clientEmail})`);
+    console.log(`📧 [${requestId}] Enquiry data:`, JSON.stringify(enquiry, null, 2));
+    
+    const newEnquiry = await storage.createBooking(enquiry);
+    console.log(`✅ [${requestId}] Created booking #${newEnquiry.id}${hasConflicts ? ` (${conflictCount} conflicts detected)` : ''}`);
+    
+    
+    res.status(200).json({
+      success: true,
+      enquiryId: newEnquiry.id,
+      clientName: enquiry.clientName,
+      clientEmail: enquiry.clientEmail
+    });
+    
+  } catch (error: any) {
+    console.error(`❌ [${requestId}] Error:`, error.message);
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+console.log('✅ MAILGUN WEBHOOK REGISTERED FIRST - BEFORE ALL OTHER MIDDLEWARE');
+
 // Initialize separate OpenAI clients for different functions
 const emailParsingAI = process.env.OPENAI_EMAIL_PARSING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
 const instrumentMappingAI = process.env.OPENAI_INSTRUMENT_MAPPING_KEY ? new OpenAI({ apiKey: process.env.OPENAI_INSTRUMENT_MAPPING_KEY }) : null;
@@ -147,36 +333,10 @@ Return valid JSON only:`;
   }
 }
 
-console.log('🔧 === STARTING ROUTE REGISTRATION ===');
+// CRITICAL: REGISTER WEBHOOK ROUTE FIRST, BEFORE ANY OTHER MIDDLEWARE
+console.log('🔧 === REGISTERING MAILGUN WEBHOOK FIRST ===');
 
-// CATCH-ALL MIDDLEWARE TO LOG ALL REQUESTS
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.path.includes('webhook')) {
-    console.log(`🌐 ALL WEBHOOK REQUESTS: ${req.method} ${req.path}`);
-    console.log(`🌐 User-Agent: ${req.headers['user-agent']}`);
-    console.log(`🌐 Content-Type: ${req.headers['content-type']}`);
-    console.log(`🌐 Headers:`, JSON.stringify(req.headers, null, 2));
-    console.log(`🌐 Body:`, JSON.stringify(req.body, null, 2));
-  }
-  next();
-});
-
-// ADD MULTIPLE WEBHOOK ENDPOINTS TO CATCH ALL POSSIBLE ROUTES
-app.post('/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
-  console.log('📧 ALTERNATIVE WEBHOOK ROUTE HIT: /webhook/mailgun');
-  // Forward to main handler
-  req.url = '/api/webhook/mailgun';
-  return app._router.handle(req, res);
-});
-
-app.post('/api/webhooks/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
-  console.log('📧 ALTERNATIVE WEBHOOK ROUTE HIT: /api/webhooks/mailgun');
-  // Forward to main handler
-  req.url = '/api/webhook/mailgun';
-  return app._router.handle(req, res);
-});
-
-// CLEAN EMAIL FORWARDING WEBHOOK
+// CLEAN EMAIL FORWARDING WEBHOOK - REGISTERED FIRST FOR PRIORITY
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
   console.log(`📧 [${requestId}] Email webhook received`);
