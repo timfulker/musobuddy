@@ -242,7 +242,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         description: "Booking details updated successfully",
       });
       setHasChanges(false);
-      onOpenChange(false);
+      // Keep dialog open after saving - removed onOpenChange(false)
     },
     onError: (error) => {
       console.error('Error updating booking:', error);
