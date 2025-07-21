@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, isAdmin } from "./auth";
 import { mailgunService, cloudStorageService, contractParserService } from "./services";
+import { webhookService } from "./webhook-service";
 import multer from "multer";
 import path from "path";
 
@@ -183,14 +184,27 @@ export async function registerRoutes(app: Express) {
       const contractId = parseInt(req.params.id);
       const { signature } = req.body;
       
+      // Update contract status to signed
       const updatedContract = await storage.updateContract(contractId, {
         status: 'signed',
         signedAt: new Date(),
         clientSignature: signature
       });
       
+      // WEBHOOK: Automatically update related booking status
+      if (updatedContract) {
+        try {
+          const webhookResult = await webhookService.handleContractSigned(contractId, updatedContract);
+          console.log('🎯 Contract signing webhook result:', webhookResult);
+        } catch (webhookError) {
+          console.error('❌ Webhook notification failed:', webhookError);
+          // Don't fail the contract signing if webhook fails
+        }
+      }
+      
       res.json({ success: true, contract: updatedContract });
     } catch (error) {
+      console.error('Contract signing error:', error);
       res.status(500).json({ error: 'Failed to sign contract' });
     }
   });
@@ -260,6 +274,16 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Bulk contract deletion error:', error);
       res.status(500).json({ error: 'Failed to delete contracts' });
+    }
+  });
+
+  // ===== WEBHOOK TEST ROUTE =====
+  app.post('/api/webhook/test', isAuthenticated, async (req, res) => {
+    try {
+      const result = await webhookService.testWebhook();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Webhook test failed' });
     }
   });
 
