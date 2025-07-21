@@ -209,7 +209,9 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Double Click Behavior**: Open the booking details dialog directly for the clicked event
 - **Navigation Enhancement**: Added query parameter support (`?dialog=details`) for direct dialog opening
 - **User Experience**: Eliminated confusion with random booking dialogs opening from old events
-- **Status**: Calendar navigation now works correctly with proper single/double-click distinction
+- **Dialog Data Population**: Fixed blank form issue by ensuring full booking object is passed to dialog instead of just ID
+- **Complete Fix**: Double-click now properly opens booking details dialog with all fields populated (client name, date, venue, etc.)
+- **Status**: Calendar navigation fully operational with proper single/double-click distinction and complete data population
 
 ### 2025-07-20 - CRITICAL Authentication System Stability Resolved
 - **Complete Authentication Fix**: Resolved all session destruction and logout functionality issues

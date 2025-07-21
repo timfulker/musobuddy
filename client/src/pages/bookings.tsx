@@ -133,11 +133,34 @@ export default function Enquiries() {
       console.log('🔗 Auto-opening booking details dialog for ID:', idParam);
       setActiveStatusFilters([]); // Show all bookings
       
-      // Wait for data to load then open dialog
+      // Wait for data to load then find and open the actual booking
       setTimeout(() => {
-        // This timeout allows React Query to fetch the data first
-        setSelectedBookingForDetails({ id: parseInt(idParam) });
-        setBookingDetailsDialogOpen(true);
+        // Find the booking in the loaded data
+        const targetId = parseInt(idParam);
+        // Access the bookings data from React Query cache or wait for it to load
+        const bookingsQuery = queryClient.getQueryData(['/api/bookings']);
+        if (bookingsQuery && Array.isArray(bookingsQuery)) {
+          const targetBooking = bookingsQuery.find((booking: any) => booking.id === targetId);
+          if (targetBooking) {
+            console.log('🔗 Found booking for dialog:', targetBooking);
+            setSelectedBookingForDetails(targetBooking);
+            setBookingDetailsDialogOpen(true);
+          } else {
+            console.warn('🔗 Booking not found in loaded data:', targetId);
+            // Fallback: try to refetch bookings and try again
+            queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+            setTimeout(() => {
+              const refreshedData = queryClient.getQueryData(['/api/bookings']);
+              if (refreshedData && Array.isArray(refreshedData)) {
+                const foundBooking = refreshedData.find((booking: any) => booking.id === targetId);
+                if (foundBooking) {
+                  setSelectedBookingForDetails(foundBooking);
+                  setBookingDetailsDialogOpen(true);
+                }
+              }
+            }, 500);
+          }
+        }
       }, 1000); // 1 second delay to ensure data loads
     }
     
