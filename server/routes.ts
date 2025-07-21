@@ -2793,7 +2793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               updatedFields.eventDate = new Date(updatedFields.eventDate);
             }
             
-            await storage.updateBooking(booking.id, userId, updatedFields);
+            await storage.updateBooking(booking.id, updatedFields, userId);
             console.log(`✅ Intelligent parsing updated ${fieldsUpdated.length} fields`);
             
             updateResult = {
