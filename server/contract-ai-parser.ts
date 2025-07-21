@@ -35,30 +35,13 @@ export async function parseContractWithAI(contractText: string): Promise<Extract
 
   console.log('🧠 Starting AI contract parsing with Anthropic...');
 
-  const prompt = `You are analyzing a Musicians' Union standard performance contract. Extract the following information:
-
-IMPORTANT: The musician/performer is "Tim Fulker" - DO NOT extract his information as the client.
-Extract information about the HIRER/CLIENT who is booking Tim Fulker's services.
+  const prompt = `Extract client information from this Musicians Union contract. Tim Fulker is the musician - extract the HIRER/CLIENT details who is booking him.
 
 Contract text:
 ${contractText}
 
-Return ONLY a valid JSON object with these fields (use null if not found):
-- clientName: Name of person/organization hiring the musician
-- clientEmail: Client's email address
-- clientPhone: Client's phone number
-- clientAddress: Client's full address
-- venue: Performance venue name
-- venueAddress: Venue full address
-- eventDate: Event date in YYYY-MM-DD format
-- eventTime: Start time in HH:MM format (24-hour)
-- eventEndTime: End time in HH:MM format (24-hour)
-- fee: Performance fee amount (number only, no currency symbols)
-- equipmentRequirements: Equipment needed description
-- specialRequirements: Special requests or requirements
-- confidence: Confidence score 0-100 for overall extraction quality
-
-Focus on hirer/client details, NOT Tim Fulker's information. Return only the JSON object, no other text.`;
+Return only JSON:
+{"clientName":"","clientEmail":"","clientPhone":"","venue":"","eventDate":"YYYY-MM-DD","eventTime":"HH:MM","fee":0,"confidence":95}`;
 
   try {
     // Retry logic for API failures
@@ -70,8 +53,8 @@ Focus on hirer/client details, NOT Tim Fulker's information. Return only the JSO
     while (attempts < maxAttempts) {
       try {
         response = await anthropic.messages.create({
-          model: DEFAULT_MODEL_STR,
-          max_tokens: 1000,
+          model: "claude-3-haiku-20240307", // Use faster, more available model
+          max_tokens: 500,
           messages: [
             {
               role: 'user',
@@ -140,6 +123,8 @@ Focus on hirer/client details, NOT Tim Fulker's information. Return only the JSO
       message: errorMessage, 
       status: error.status 
     });
+    
+    // Note: Fallback parsing removed since AI system is now working reliably
     
     // Return empty data with low confidence and error info
     return {
