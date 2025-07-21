@@ -149,6 +149,8 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Production Ready**: Robust error handling, proper authentication, and complete functionality
 - **Critical Bug Fix**: Contract deletion system completely missing - added deleteContract() storage method and DELETE API routes
 - **Contract Learning Removal**: Completely removed contract learning page and navigation menu item as requested by user
+- **Weekly Events Date Range Fixed**: Corrected week calculation to start Monday-Sunday with proper time boundaries and timezone handling
+- **Calendar Default View**: Changed bookings page default view from list to calendar view as requested
 - **Status**: Full architecture rebuild complete with guaranteed 4 fundamental systems operational, bulk select management implemented, and contract deletion bug resolved
 
 ### 2025-07-17 - Stable Branded Authentication System

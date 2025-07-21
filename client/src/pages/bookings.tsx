@@ -35,7 +35,7 @@ interface CalendarEvent {
 export default function UnifiedBookings() {
   // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    return (localStorage.getItem('bookingViewMode') as ViewMode) || 'list';
+    return (localStorage.getItem('bookingViewMode') as ViewMode) || 'calendar';
   });
   
   // Calendar state for calendar view

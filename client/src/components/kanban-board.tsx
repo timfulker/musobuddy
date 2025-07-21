@@ -124,10 +124,19 @@ export default function ActionableEnquiries() {
   const isThisWeek = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
+    
+    // Get start of current week (Monday)
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
+    const dayOfWeek = today.getDay();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday is 0, so 6 days from Monday
+    startOfWeek.setDate(today.getDate() - daysFromMonday);
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    // Get end of current week (Sunday)
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    
     return date >= startOfWeek && date <= endOfWeek;
   };
 
