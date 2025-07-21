@@ -233,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           console.log('🤖 OpenAI response:', response.choices[0].message.content);
 
-          const aiResult = JSON.parse(response.choices[0].message.content);
+          const aiResult = JSON.parse(response.choices[0].message.content || '{}');
           console.log('🤖 Parsed AI result:', aiResult);
           
           if (aiResult.gig_types && Array.isArray(aiResult.gig_types)) {
@@ -473,10 +473,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enquiry = await storage.createEnquiry(validatedData);
       console.log("Quick-add enquiry created:", enquiry);
       res.status(201).json(enquiry);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating enquiry via quick-add:", error);
       console.error("Error details:", error.stack);
-      res.status(500).json({ message: "Failed to create enquiry", error: error.message });
+      res.status(500).json({ message: "Failed to create enquiry", error: error.message || error });
     }
   });
 
@@ -2925,11 +2925,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         overall: testResult.textExtraction.success && testResult.aiParsing.success
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Test parsing error:', error);
       res.status(500).json({ 
         error: 'Test parsing failed',
-        message: error.message
+        message: error.message || error
       });
     }
   });
