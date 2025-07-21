@@ -232,6 +232,37 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Contract deletion routes
+  app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteContract(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Contract deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete contract' });
+    }
+  });
+
+  app.post('/api/contracts/bulk-delete', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractIds } = req.body;
+      
+      if (!Array.isArray(contractIds) || contractIds.length === 0) {
+        return res.status(400).json({ error: 'Contract IDs array is required' });
+      }
+
+      // Delete contracts one by one
+      for (const id of contractIds) {
+        await storage.deleteContract(parseInt(id));
+      }
+      
+      res.json({ success: true, deletedCount: contractIds.length });
+    } catch (error) {
+      console.error('Bulk contract deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete contracts' });
+    }
+  });
+
   // ===== INVOICE ROUTES =====
   app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
@@ -284,6 +315,37 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Invoice email error:', error);
       res.status(500).json({ error: 'Failed to send invoice email' });
+    }
+  });
+
+  // Invoice deletion routes
+  app.delete('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteInvoice(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Invoice deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete invoice' });
+    }
+  });
+
+  app.post('/api/invoices/bulk-delete', isAuthenticated, async (req: any, res) => {
+    try {
+      const { invoiceIds } = req.body;
+      
+      if (!Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+        return res.status(400).json({ error: 'Invoice IDs array is required' });
+      }
+
+      // Delete invoices one by one
+      for (const id of invoiceIds) {
+        await storage.deleteInvoice(parseInt(id));
+      }
+      
+      res.json({ success: true, deletedCount: invoiceIds.length });
+    } catch (error) {
+      console.error('Bulk invoice deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete invoices' });
     }
   });
 

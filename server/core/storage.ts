@@ -87,6 +87,11 @@ export class Storage {
     return result[0];
   }
 
+  async deleteContract(id: number) {
+    await db.delete(contracts).where(eq(contracts.id, id));
+    return true;
+  }
+
   // Invoices
   async getInvoices(userId: string) {
     return await db.select().from(invoices)
@@ -110,6 +115,11 @@ export class Storage {
       .where(eq(invoices.id, id))
       .returning();
     return result[0];
+  }
+
+  async deleteInvoice(id: number) {
+    await db.delete(invoices).where(eq(invoices.id, id));
+    return true;
   }
 
   // Settings
