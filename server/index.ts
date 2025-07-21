@@ -66,14 +66,14 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientPhone: aiResult.clientPhone,
       eventDate: aiResult.eventDate ? new Date(aiResult.eventDate) : null,
       eventTime: aiResult.eventTime,
-      eventEndTime: null,
+      eventEndTime: aiResult.eventEndTime,
       performanceDuration: null,
       venue: aiResult.venue,
       venueAddress: null,
       clientAddress: null,
       eventType: aiResult.eventType,
       gigType: aiResult.gigType,
-      fee: null,
+      fee: aiResult.estimatedValue ? parseFloat(aiResult.estimatedValue.toString().replace(/[£$,]/g, '')) : null,
       equipmentRequirements: null,
       specialRequirements: null,
       estimatedValue: aiResult.estimatedValue,
@@ -112,7 +112,7 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<any
     new (await import('openai')).default({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
     
   if (!openai) {
-    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
+    return { eventDate: null, eventTime: null, eventEndTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
   }
 
   try {
@@ -128,11 +128,12 @@ Extract in JSON format:
 {
   "eventDate": "YYYY-MM-DD or null",
   "eventTime": "HH:MM or null", 
+  "eventEndTime": "HH:MM or null",
   "venue": "venue name or null",
   "eventType": "wedding/party/corporate/etc or null",
   "gigType": "solo/duo/band/etc or null",
   "clientPhone": "phone number or null",
-  "estimatedValue": "amount or null",
+  "estimatedValue": "numeric amount only (e.g. 600, not £600)",
   "applyNowLink": "URL or null"
 }`;
 
@@ -144,10 +145,19 @@ Extract in JSON format:
       temperature: 0.1
     });
 
-    return JSON.parse(response.choices[0].message.content || '{}');
+    const parsed = JSON.parse(response.choices[0].message.content || '{}');
+    
+    // Parse time ranges like "7pm-10pm" or "19:00-22:00"
+    if (parsed.eventTime && parsed.eventTime.includes('-')) {
+      const [startTime, endTime] = parsed.eventTime.split('-');
+      parsed.eventTime = startTime.trim();
+      parsed.eventEndTime = endTime.trim();
+    }
+    
+    return parsed;
   } catch (error) {
     console.log('🤖 AI parsing failed, using fallback');
-    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
+    return { eventDate: null, eventTime: null, eventEndTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
   }
 }
 
