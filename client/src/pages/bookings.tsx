@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, DollarSign, Edit } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, DollarSign, Edit, Trash2, CheckSquare, Square, MoreHorizontal } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -50,9 +53,113 @@ export default function UnifiedBookings() {
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   
-  const { isDesktop, isMobile } = useResponsive();
+  // Bulk selection states
+  const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [bulkStatusChange, setBulkStatusChange] = useState<string>("");
+  const [showBulkStatusDialog, setShowBulkStatusDialog] = useState(false);
+  
+  const { isDesktop } = useResponsive();
   const [location, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // Bulk selection functions
+  const isAllSelected = filteredBookings.length > 0 && selectedBookings.length === filteredBookings.length;
+  const isIndeterminate = selectedBookings.length > 0 && selectedBookings.length < filteredBookings.length;
+  
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedBookings([]);
+    } else {
+      setSelectedBookings(filteredBookings.map((b: any) => b.id));
+    }
+  };
+  
+  const toggleSelectBooking = (bookingId: number) => {
+    setSelectedBookings(prev => 
+      prev.includes(bookingId) 
+        ? prev.filter(id => id !== bookingId)
+        : [...prev, bookingId]
+    );
+  };
+  
+  // Bulk delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (bookingIds: number[]) => {
+      const promises = bookingIds.map(id => 
+        apiRequest(`/api/bookings/${id}`, { method: 'DELETE' })
+      );
+      return Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      setSelectedBookings([]);
+      setShowDeleteDialog(false);
+      toast({
+        title: "Success",
+        description: `${selectedBookings.length} booking(s) deleted successfully`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete bookings",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Bulk status change mutation
+  const statusChangeMutation = useMutation({
+    mutationFn: async ({ bookingIds, status }: { bookingIds: number[], status: string }) => {
+      const promises = bookingIds.map(id => 
+        apiRequest(`/api/bookings/${id}`, { 
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        })
+      );
+      return Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      setSelectedBookings([]);
+      setShowBulkStatusDialog(false);
+      setBulkStatusChange("");
+      toast({
+        title: "Success",
+        description: `${selectedBookings.length} booking(s) status updated successfully`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update booking status",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleBulkDelete = () => {
+    if (selectedBookings.length > 0) {
+      setShowDeleteDialog(true);
+    }
+  };
+  
+  const handleBulkStatusChange = (status: string) => {
+    setBulkStatusChange(status);
+    setShowBulkStatusDialog(true);
+  };
+  
+  const confirmBulkDelete = () => {
+    deleteMutation.mutate(selectedBookings);
+  };
+  
+  const confirmBulkStatusChange = () => {
+    if (bulkStatusChange && selectedBookings.length > 0) {
+      statusChangeMutation.mutate({ bookingIds: selectedBookings, status: bulkStatusChange });
+    }
+  };
   
   // Toggle view mode and persist preference
   const toggleView = (mode: ViewMode) => {
@@ -69,6 +176,18 @@ export default function UnifiedBookings() {
   const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
     retry: 2,
+  });
+
+  // Filter bookings based on search and status
+  const filteredBookings = (bookings as any[]).filter((booking: any) => {
+    const matchesSearch = !searchQuery || 
+      booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
 
   // Calendar navigation functions
@@ -152,17 +271,7 @@ export default function UnifiedBookings() {
     }
   };
 
-  // Filter bookings for list view
-  const filteredBookings = bookings.filter((booking: any) => {
-    const matchesSearch = searchQuery.length === 0 || 
-      booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+
 
   // Generate calendar grid
   const generateCalendar = () => {
@@ -316,10 +425,90 @@ export default function UnifiedBookings() {
               </Select>
             </div>
 
+            {/* Bulk Actions Toolbar */}
+            {selectedBookings.length > 0 && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-medium text-blue-700">
+                        {selectedBookings.length} booking(s) selected
+                      </span>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedBookings([])}
+                      >
+                        Clear Selection
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            Change Status
+                            <MoreHorizontal className="w-4 h-4 ml-2" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('new')}>
+                            Mark as New
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('awaiting_response')}>
+                            Mark as Awaiting Response
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('confirmed')}>
+                            Mark as Confirmed
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('completed')}>
+                            Mark as Completed
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleBulkStatusChange('cancelled')}>
+                            Mark as Cancelled
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={handleBulkDelete}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Selected
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Content Based on View Mode */}
             {viewMode === 'list' ? (
               /* List View */
               <div className="space-y-4">
+                {/* Select All Header */}
+                {!bookingsLoading && filteredBookings.length > 0 && (
+                  <Card className="bg-gray-50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={isAllSelected}
+                          ref={(el) => {
+                            if (el && el.querySelector('input')) {
+                              (el.querySelector('input') as HTMLInputElement).indeterminate = isIndeterminate;
+                            }
+                          }}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                        <span className="text-sm font-medium">
+                          {isAllSelected ? 'Deselect All' : 'Select All'} ({filteredBookings.length} bookings)
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                
                 {bookingsLoading ? (
                   <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -333,13 +522,23 @@ export default function UnifiedBookings() {
                   filteredBookings.map((booking: any) => (
                     <Card 
                       key={booking.id} 
-                      className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => handleBookingClick(booking)}
+                      className={`hover:shadow-md transition-shadow ${
+                        selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                      }`}
                     >
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-4 mb-2">
+                          <div className="flex items-center gap-4 flex-1">
+                            <Checkbox
+                              checked={selectedBookings.includes(booking.id)}
+                              onCheckedChange={() => toggleSelectBooking(booking.id)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <div 
+                              className="flex-1 cursor-pointer" 
+                              onClick={() => handleBookingClick(booking)}
+                            >
+                              <div className="flex items-center gap-4 mb-2">
                               <h3 className="text-lg font-semibold">
                                 {booking.eventType || 'Event'}
                               </h3>
@@ -375,6 +574,7 @@ export default function UnifiedBookings() {
                                   {booking.venue}
                                 </div>
                               )}
+                            </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -476,6 +676,50 @@ export default function UnifiedBookings() {
         onOpenChange={setBookingStatusDialogOpen}
         booking={selectedBookingForUpdate}
       />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Selected Bookings</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedBookings.length} selected booking(s)? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmBulkDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Status Change Confirmation Dialog */}
+      <AlertDialog open={showBulkStatusDialog} onOpenChange={setShowBulkStatusDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Status for Selected Bookings</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change the status of {selectedBookings.length} selected booking(s) to "{bulkStatusChange?.replace('_', ' ')}"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmBulkStatusChange}
+              disabled={statusChangeMutation.isPending}
+            >
+              {statusChangeMutation.isPending ? "Updating..." : "Update Status"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       {/* Mobile Navigation */}
       {!isDesktop && <MobileNav />}
