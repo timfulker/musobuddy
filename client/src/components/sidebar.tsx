@@ -18,8 +18,7 @@ import {
   Users,
   User,
   BookOpen,
-  Crown,
-  Brain
+  Crown
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -124,15 +123,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <FileText className="w-5 h-5" />
             <span>Contracts</span>
           </Link>
-          <Link href="/contracts/learning" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/contracts/learning") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
-            <Brain className="w-5 h-5" />
-            <span>Contract Learning</span>
-          </Link>
+
           <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/invoices") 
