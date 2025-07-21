@@ -2813,7 +2813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (extractedData.specialRequirements) updateField('specialRequirements', extractedData.specialRequirements);
 
         // Update booking if any fields changed
-        let updateResult = { updated: false, fieldsUpdated: [], fieldsUpdatedCount: 0 };
+        let bookingUpdateResult = { updated: false, fieldsUpdated: [], fieldsUpdatedCount: 0 };
         if (fieldsUpdated.length > 0) {
           try {
             // Handle date conversion
@@ -2825,14 +2825,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('📝 Updating booking with sanitized data:', JSON.stringify(updatedFields, null, 2));
             
             // Use the correct updateBooking method for the new booking system
-            const updateResult = await storage.updateBooking(booking.id, updatedFields, userId);
-            if (!updateResult) {
+            const dbUpdateResult = await storage.updateBooking(booking.id, updatedFields, userId);
+            if (!dbUpdateResult) {
               console.error('❌ Failed to update booking - no result returned');
               throw new Error('Failed to update booking');
             }
             console.log(`✅ Intelligent parsing updated ${fieldsUpdated.length} fields`);
             
-            updateResult = {
+            bookingUpdateResult = {
               updated: true,
               fieldsUpdated,
               fieldsUpdatedCount: fieldsUpdated.length
@@ -2850,9 +2850,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fieldsExtracted,
           message: `Intelligent parsing completed with ${confidence}% confidence using your training data`,
           booking: {
-            updated: updateResult.updated,
-            fieldsUpdated: updateResult.fieldsUpdated,
-            fieldsUpdatedCount: updateResult.fieldsUpdatedCount
+            updated: bookingUpdateResult.updated,
+            fieldsUpdated: bookingUpdateResult.fieldsUpdated,
+            fieldsUpdatedCount: bookingUpdateResult.fieldsUpdatedCount
           }
         });
       } else {

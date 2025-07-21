@@ -384,12 +384,12 @@ export class DatabaseStorage implements IStorage {
     return booking;
   }
 
-  async updateBooking(id: number, data: Partial<InsertEnquiry>, userId: string): Promise<Enquiry | null> {
+  async updateBooking(id: number, data: Partial<InsertBooking>, userId: string): Promise<Booking | undefined> {
     const [booking] = await db.update(bookings)
       .set({ ...data, updatedAt: new Date() })
       .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
       .returning();
-    return booking || null;
+    return booking;
   }
 
   async deleteBooking(id: number, userId: string): Promise<boolean> {
