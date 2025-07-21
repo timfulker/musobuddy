@@ -2778,7 +2778,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Enhanced validation for corrupted PDF text extraction
+      console.log('🔍 VALIDATION: Checking text quality for corruption patterns...');
       const textQuality = validateContractText(contractText);
+      console.log('🔍 VALIDATION: Result:', textQuality);
+      
       if (!textQuality.isValid) {
         console.log('🚫 PDF text extraction failed quality validation:', textQuality.reason);
         return res.status(400).json({ 
