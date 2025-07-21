@@ -54,17 +54,6 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientName = clientEmail.split('@')[0];
     }
     
-    // Special handling: if email is FROM Tim Fulker, it's a test - extract client info from email body
-    if (clientName === 'Tim Fulker' || clientEmail.includes('timfulker')) {
-      console.log(`🧪 [${requestId}] Test email from Tim Fulker detected - parsing for actual client info`);
-      // Use AI to extract the real client details from the email content
-      const testEmailResult = await parseTestEmailForClient(bodyField, subjectField);
-      if (testEmailResult.clientName) {
-        clientName = testEmailResult.clientName;
-        clientEmail = testEmailResult.clientEmail || 'client@example.com';
-      }
-    }
-    
     // AI parsing
     const aiResult = await parseEmailWithAI(bodyField, subjectField);
     
@@ -77,14 +66,14 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientPhone: aiResult.clientPhone,
       eventDate: aiResult.eventDate ? new Date(aiResult.eventDate) : null,
       eventTime: aiResult.eventTime,
-      eventEndTime: aiResult.eventEndTime,
+      eventEndTime: null,
       performanceDuration: null,
       venue: aiResult.venue,
       venueAddress: null,
       clientAddress: null,
       eventType: aiResult.eventType,
       gigType: aiResult.gigType,
-      fee: aiResult.estimatedValue ? parseFloat(aiResult.estimatedValue.toString().replace(/[£$,]/g, '')) : null,
+      fee: null,
       equipmentRequirements: null,
       specialRequirements: null,
       estimatedValue: aiResult.estimatedValue,
@@ -123,7 +112,7 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<any
     new (await import('openai')).default({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
     
   if (!openai) {
-    return { eventDate: null, eventTime: null, eventEndTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
   }
 
   try {
@@ -139,12 +128,11 @@ Extract in JSON format:
 {
   "eventDate": "YYYY-MM-DD or null",
   "eventTime": "HH:MM or null", 
-  "eventEndTime": "HH:MM or null",
   "venue": "venue name or null",
   "eventType": "wedding/party/corporate/etc or null",
   "gigType": "solo/duo/band/etc or null",
   "clientPhone": "phone number or null",
-  "estimatedValue": "numeric amount only (e.g. 600, not £600)",
+  "estimatedValue": "amount or null",
   "applyNowLink": "URL or null"
 }`;
 
@@ -156,19 +144,10 @@ Extract in JSON format:
       temperature: 0.1
     });
 
-    const parsed = JSON.parse(response.choices[0].message.content || '{}');
-    
-    // Parse time ranges like "7pm-10pm" or "19:00-22:00"
-    if (parsed.eventTime && parsed.eventTime.includes('-')) {
-      const [startTime, endTime] = parsed.eventTime.split('-');
-      parsed.eventTime = startTime.trim();
-      parsed.eventEndTime = endTime.trim();
-    }
-    
-    return parsed;
+    return JSON.parse(response.choices[0].message.content || '{}');
   } catch (error) {
     console.log('🤖 AI parsing failed, using fallback');
-    return { eventDate: null, eventTime: null, eventEndTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
   }
 }
 
@@ -204,42 +183,6 @@ async function startServer() {
   } catch (error) {
     console.error('❌ Server startup failed:', error);
     process.exit(1);
-  }
-}
-
-// Special function to parse test emails FROM Tim Fulker
-async function parseTestEmailForClient(emailBody: string, subject: string): Promise<any> {
-  const openai = process.env.OPENAI_EMAIL_PARSING_KEY ? 
-    new (await import('openai')).default({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
-    
-  if (!openai) {
-    return { clientName: null, clientEmail: null };
-  }
-
-  try {
-    const prompt = `This is a test email FROM musician Tim Fulker TO leads@mg.musobuddy.com. Extract the actual CLIENT information from the email content.
-
-Subject: ${subject}
-Content: ${emailBody}
-
-The email mentions a client who wants to book Tim. Extract their details in JSON:
-{
-  "clientName": "actual client name or Unknown Client if not mentioned",
-  "clientEmail": "client email if mentioned or null"
-}`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-      max_tokens: 200,
-      temperature: 0.1
-    });
-
-    return JSON.parse(response.choices[0].message.content || '{}');
-  } catch (error) {
-    console.log('🤖 Test email parsing failed, using fallback');
-    return { clientName: 'Unknown Client', clientEmail: null };
   }
 }
 
