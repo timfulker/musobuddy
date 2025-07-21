@@ -201,6 +201,16 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Production Ready**: Stable 90% success rate with graceful handling of difficult PDFs and professional user feedback
 - **Status**: AI contract parsing system fully operational, protected, and user-friendly - no alarming "corrupted" messages
 
+### 2025-07-21 - Calendar Double-Click Navigation Fixed
+- **Issue Resolution**: Fixed calendar double-click behavior that was opening incorrect booking dialogs from 2013
+- **Root Cause**: Calendar had no actual double-click handler - was triggering single-click twice with wrong event IDs
+- **Implementation**: Added proper double-click detection with 300ms timeout to distinguish single vs double clicks
+- **Single Click Behavior**: Navigate to bookings page and highlight the specific event that was clicked
+- **Double Click Behavior**: Open the booking details dialog directly for the clicked event
+- **Navigation Enhancement**: Added query parameter support (`?dialog=details`) for direct dialog opening
+- **User Experience**: Eliminated confusion with random booking dialogs opening from old events
+- **Status**: Calendar navigation now works correctly with proper single/double-click distinction
+
 ### 2025-07-20 - CRITICAL Authentication System Stability Resolved
 - **Complete Authentication Fix**: Resolved all session destruction and logout functionality issues
 - **Unified Configuration**: Implemented auth-config.ts for centralized authentication management supporting both local and Replit modes

@@ -245,17 +245,52 @@ export default function Calendar() {
     return events;
   };
 
-  // Handle date click - navigate to bookings page with appropriate filter
+  // Handle date click - navigate to bookings page with date filter for single click
+  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
+  
   const handleDateClick = (date: Date) => {
+    // If there's already a click timeout, this is a double-click
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+      setClickTimeout(null);
+      handleDateDoubleClick(date);
+      return;
+    }
+    
+    // Set timeout for single-click
+    const timeout = setTimeout(() => {
+      setClickTimeout(null);
+      handleDateSingleClick(date);
+    }, 300); // 300ms delay to detect double-click
+    
+    setClickTimeout(timeout);
+  };
+
+  const handleDateSingleClick = (date: Date) => {
     const events = getEventsForDate(date);
     if (events.length > 0) {
-      // Get the first event to determine the appropriate filter
+      // Single click - navigate to bookings page and highlight the first event
       const firstEvent = events[0];
-      const status = firstEvent.status || 'new';
-      const id = firstEvent.id;
-      
-      // Navigate to bookings page with ID only (show all bookings)
-      navigate(`/bookings?id=${id}`);
+      navigate(`/bookings?id=${firstEvent.id}`);
+    } else {
+      // No events - just navigate to bookings page with date filter
+      const dateStr = date.toISOString().split('T')[0];
+      navigate(`/bookings?date=${dateStr}`);
+    }
+  };
+
+  const handleDateDoubleClick = (date: Date) => {
+    const events = getEventsForDate(date);
+    if (events.length === 1) {
+      // Single event - open its details directly
+      const event = events[0];
+      if (event.type === 'booking') {
+        navigate(`/bookings?id=${event.id}&dialog=details`);
+      }
+    } else if (events.length > 1) {
+      // Multiple events - show a selection dialog or go to first event
+      const firstEvent = events[0];
+      navigate(`/bookings?id=${firstEvent.id}&dialog=details`);
     }
   };
 
