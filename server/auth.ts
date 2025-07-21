@@ -227,9 +227,16 @@ export async function setupAuth(app: Express) {
 }
 
 export function isAuthenticated(req: any, res: any, next: any) {
-  if (req.isAuthenticated()) {
+  console.log('🔍 Auth check - isAuthenticated:', req.isAuthenticated(), 'user:', !!req.user);
+  
+  if (req.isAuthenticated() && req.user) {
+    // Add user ID to request for easy access
+    req.userId = req.user.id;
+    console.log('✅ User authenticated:', req.user.email || req.user.id);
     return next();
   }
+  
+  console.log('❌ User not authenticated');
   res.status(401).json({ message: "Authentication required" });
 }
 
