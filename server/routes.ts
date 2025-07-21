@@ -139,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, response: response.choices[0].message.content });
     } catch (error) {
       console.error('🤖 OpenAI test error:', error);
-      res.json({ error: error.message });
+      res.json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const normalizedInstrument = instrument.toLowerCase();
         
         // Always prioritize expanded default mappings for known instruments
-        const gigTypes = defaultGigMappings[normalizedInstrument];
+        const gigTypes = defaultGigMappings[normalizedInstrument as keyof typeof defaultGigMappings];
         if (gigTypes) {
           console.log('🎵 Using expanded default mapping for', normalizedInstrument);
           allSuggestions.push(...gigTypes);
@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (aiResult.gig_types && Array.isArray(aiResult.gig_types)) {
             console.log('🤖 Adding AI suggestions:', aiResult.gig_types);
             // Extract just the type names from the AI response and clean them up
-            const gigTypeNames = aiResult.gig_types.map(item => {
+            const gigTypeNames = aiResult.gig_types.map((item: any) => {
               let name = typeof item === 'string' ? item : item.type || item.name || item;
               // Clean up long descriptions by taking only the part before the colon
               if (name.includes(':')) {
@@ -266,14 +266,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         } catch (error) {
           console.error('🤖 OpenAI Error:', error);
-          console.log('AI suggestions not available for unknown instruments:', unknownInstruments, error.message);
+          console.log('AI suggestions not available for unknown instruments:', unknownInstruments, error instanceof Error ? error.message : 'Unknown error');
         }
       } else if (unknownInstruments.length > 0) {
         console.log('OpenAI API key not available for unknown instruments:', unknownInstruments);
       }
 
       // Remove duplicates and sort
-      const uniqueSuggestions = [...new Set(allSuggestions)].sort();
+      const uniqueSuggestions = Array.from(new Set(allSuggestions)).sort();
 
       console.log('🎵 Final suggestions:', uniqueSuggestions);
       res.json({ suggestions: uniqueSuggestions });
@@ -561,7 +561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eventEndTime: enquiry.eventEndTime,
             performanceDuration: enquiry.performanceDuration,
             venue: enquiry.venue,
-            fee: parseFloat(enquiry.estimatedValue || '0'),
+            fee: enquiry.quotedAmount ? parseFloat(enquiry.quotedAmount.toString()) : 0,
             status: 'confirmed', // Show as confirmed in calendar
             notes: `Auto-created from enquiry #${enquiry.id}. Status: ${enquiry.status}${enquiry.notes ? '. Notes: ' + enquiry.notes : ''}`
           };
@@ -680,7 +680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 eventEndTime: enquiry.eventEndTime,
                 performanceDuration: enquiry.performanceDuration,
                 venue: enquiry.venue,
-                fee: parseFloat(enquiry.estimatedValue || '0'),
+                fee: enquiry.quotedAmount ? parseFloat(enquiry.quotedAmount.toString()) : 0,
                 status: 'confirmed',
                 notes: `Auto-created from enquiry #${enquiry.id}. Status: ${enquiry.status}${enquiry.notes ? '. Notes: ' + enquiry.notes : ''}`
               };
@@ -745,6 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         html: body.replace(/\n/g, '<br>')
       };
       
+      const { sendEmail } = await import('./mailgun-email');
       const success = await sendEmail(emailParams);
       
       if (success) {
@@ -872,7 +873,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const importedContract = await storage.createImportedContract({
         userId,
         filename: file.originalname,
-        originalFilename: file.originalname,
         cloudUrl: uploadResult.url || storageKey,
         fileSize: file.size,
         uploadedAt: new Date()
@@ -1659,10 +1659,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("=== INVOICE UPDATE ERROR ===");
       console.error("Error message:", error.message);
       console.error("Error name:", error.name);
-      console.error("Error code:", error.code);
-      console.error("Error stack:", error.stack);
-      console.error("Invoice ID:", invoiceId);
-      console.error("User ID:", userId);
+      console.error("Error code:", (error as any).code);
+      console.error("Error stack:", (error as any).stack);
+      console.error("Invoice ID:", req.params.id);
+      console.error("User ID:", req.user?.id);
       console.error("Request body:", JSON.stringify(req.body, null, 2));
       res.status(500).json({ message: "Failed to update invoice", error: error.message, details: error.stack });
     }
@@ -1918,7 +1918,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (emailSent) {
         // Update contract reminder tracking
         await storage.updateContract(contractId, { 
-          lastReminderSent: new Date().toISOString(),
           reminderCount: (contract.reminderCount || 0) + 1
         }, userId);
         

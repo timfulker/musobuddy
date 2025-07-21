@@ -117,12 +117,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
   });
 
   // Find the most recent contract for this booking
-  const bookingContract = contracts?.find((contract: any) => 
+  const bookingContract = contracts ? contracts.find((contract: any) => 
     contract.enquiryId === booking?.id
-  );
+  ) : null;
 
   // Extract gig types from user settings
-  const userGigTypes = userSettings?.gigTypes || [];
+  const userGigTypes = userSettings && userSettings.gigTypes ? userSettings.gigTypes : [];
 
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
@@ -172,17 +172,17 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
         gigType: booking.gigType || "",
         equipmentRequirements: booking.equipmentRequirements || "",
         specialRequirements: booking.specialRequirements || "",
-        setupTime: booking.setupTime || "",
-        soundCheckTime: booking.soundCheckTime || "",
-        packupTime: booking.packupTime || "",
-        travelTime: booking.travelTime || "",
-        parkingInfo: booking.parkingInfo || "",
-        contactPerson: booking.contactPerson || "",
-        contactPhone: booking.contactPhone || "",
+        setupTime: "",
+        soundCheckTime: "",
+        packupTime: "",
+        travelTime: "",
+        parkingInfo: "",
+        contactPerson: "",
+        contactPhone: "",
         venueAddress: booking.venueAddress || "",
-        venueContactInfo: booking.venueContactInfo || "",
-        dressCode: booking.dressCode || "",
-        repertoire: booking.repertoire || "",
+        venueContactInfo: "",
+        dressCode: "",
+        repertoire: "",
         notes: booking.notes || "",
       };
       
@@ -190,8 +190,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       setInitialData(bookingData);
       setHasChanges(false);
       
-      // Initialize custom fields
-      setCustomFields(booking.customFields ? JSON.parse(booking.customFields) : []);
+      // Initialize custom fields - customFields doesn't exist in schema yet
+      setCustomFields([]);
     }
   }, [booking, form]);
 
@@ -278,7 +278,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     // Define protected fields that should never be overwritten by contract imports
     const protectedFields = ['clientName', 'eventDate'];
     const isFieldProtected = (fieldName: string) => {
-      return protectedFields.includes(fieldName) && currentFormData[fieldName]?.trim?.() !== '';
+      return protectedFields.includes(fieldName) && (currentFormData as any)[fieldName]?.trim?.() !== '';
     };
 
     const updatedFormData = {
@@ -291,7 +291,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
         eventDate: new Date(contractToUse.eventDate).toISOString().split('T')[0] 
       }),
       // Regular fields: Only update if empty
-      ...(contractToUse.clientEmail && !currentFormData.clientEmail.trim() && { clientEmail: contractToUse.clientEmail }),
+      ...(contractToUse.clientEmail && !currentFormData.clientEmail?.trim() && { clientEmail: contractToUse.clientEmail }),
       ...(contractToUse.clientPhone && !currentFormData.clientPhone?.trim() && { clientPhone: contractToUse.clientPhone }),
       ...(contractToUse.clientAddress && !currentFormData.clientAddress?.trim() && { clientAddress: contractToUse.clientAddress }),
       ...(contractToUse.venue && !currentFormData.venue?.trim() && { venue: contractToUse.venue }),
@@ -314,10 +314,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
     // Count how many fields were actually updated and track protected fields
     let protectedFieldsSkipped = 0;
     Object.keys(updatedFormData).forEach(key => {
-      if (updatedFormData[key] !== currentFormData[key]) {
+      if ((updatedFormData as any)[key] !== (currentFormData as any)[key]) {
         fieldsUpdated++;
       }
-      if (isFieldProtected(key) && contractToUse[key] && contractToUse[key] !== currentFormData[key]) {
+      if (isFieldProtected(key) && (contractToUse as any)[key] && (contractToUse as any)[key] !== (currentFormData as any)[key]) {
         protectedFieldsSkipped++;
       }
     });
@@ -358,7 +358,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
         body: JSON.stringify({ status: 'confirmed' })
       }).then(() => {
         // Refresh the data to show updated status
-        onEnquiryUpdate();
+        if (onBookingUpdate) onBookingUpdate();
         
         toast({
           title: "Status Updated",
@@ -423,12 +423,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
       setContractParsingResult({
         loading: false,
         success: false,
-        message: error.message || 'Failed to process contract'
+        message: (error as any).message || 'Failed to process contract'
       });
       
       toast({
         title: "Contract Processing Failed",
-        description: error.message || "Please try again or use manual entry",
+        description: (error as any).message || "Please try again or use manual entry",
         variant: "destructive",
       });
     }
@@ -463,7 +463,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking }: BookingDet
 
     for (const [extractedField, formField] of Object.entries(fieldMappings)) {
       const extractedValue = extractedData[extractedField];
-      const currentValue = currentFormData[formField];
+      const currentValue = (currentFormData as any)[formField];
       
       // Check if field is empty or has default/placeholder values
       const isEmpty = !currentValue || currentValue.trim() === '';
