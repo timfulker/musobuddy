@@ -5,7 +5,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import puppeteer from 'puppeteer';
 import Anthropic from '@anthropic-ai/sdk';
 
-// Mailgun Service
+// Restored original working Mailgun configuration from before rebuild
 export class MailgunService {
   private mailgun: any;
   
@@ -13,13 +13,12 @@ export class MailgunService {
     const mg = new Mailgun(formData);
     this.mailgun = mg.client({
       username: 'api',
-      key: process.env.MAILGUN_API_KEY || '',
-      url: 'https://api.eu.mailgun.net'
+      key: process.env.MAILGUN_API_KEY || ''
     });
   }
 
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
-    const domain = 'mg.musobuddy.com';
+    const domain = process.env.MAILGUN_DOMAIN || 'sandboxXXX.mailgun.org';
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
@@ -32,7 +31,7 @@ export class MailgunService {
   }
 
   async sendInvoiceEmail(invoice: any, userSettings: any, pdfUrl: string, subject: string) {
-    const domain = 'mg.musobuddy.com';
+    const domain = process.env.MAILGUN_DOMAIN || 'sandboxXXX.mailgun.org';
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
