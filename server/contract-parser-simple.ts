@@ -24,8 +24,9 @@ interface ContractData {
 
 export async function parseContractPDF(contractText: string): Promise<ContractData> {
   try {
-    console.log('🔍 Starting Musicians Union optimized contract parsing...');
+    console.log('🔍 === STARTING MUSICIANS UNION CONTRACT PARSING ===');
     console.log('📄 Contract text length:', contractText.length);
+    console.log('📄 First 500 characters:', contractText.substring(0, 500));
 
     if (!contractText || contractText.trim().length < 50) {
       throw new Error('Contract text is too short or empty');
@@ -50,7 +51,9 @@ export async function parseContractPDF(contractText: string): Promise<ContractDa
       throw new Error('Invalid response type from AI');
     }
 
-    console.log('🤖 Raw AI response:', content.text);
+    console.log('🤖 === RAW AI RESPONSE ===');
+    console.log(content.text);
+    console.log('🤖 === END AI RESPONSE ===');
 
     // Extract JSON from response - handle various formats
     let jsonText = content.text.trim();

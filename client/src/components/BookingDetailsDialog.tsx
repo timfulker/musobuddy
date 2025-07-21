@@ -390,26 +390,39 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       formData.append('file', file);
       formData.append('bookingId', booking.id.toString());
 
+      console.log('🔄 Starting smart contract upload for file:', file.name);
+      console.log('📋 Booking ID:', booking.id);
+      
       const response = await fetch('/api/contracts/intelligent-parse', {
         method: 'POST',
         credentials: 'include',
         body: formData
       });
 
+      console.log('📡 Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to parse contract');
+        const errorText = await response.text();
+        console.error('❌ Parse response failed:', errorText);
+        throw new Error(`Failed to parse contract: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
+      console.log('📊 Parse result:', result);
       
       if (result.success) {
+        console.log('✅ Parsing successful');
+        console.log('📄 Extracted data:', result.data);
+        console.log('🎯 Confidence:', result.confidence);
+        console.log('📊 Fields extracted:', Object.keys(result.data || {}).filter(key => result.data[key]).length);
+        
         setExtractedData(result.data);
         setContractParsingResult({
           loading: false,
           success: true,
           confidence: result.confidence,
           message: result.message,
-          fieldsCount: Object.keys(result.data).filter(key => result.data[key]).length
+          fieldsCount: Object.keys(result.data || {}).filter(key => result.data[key]).length
         });
 
         // If booking was updated on the server, refresh the data
