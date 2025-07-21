@@ -106,13 +106,13 @@ export class CloudStorageService {
   private bucketName: string;
 
   constructor() {
-    this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'musobuddy';
+    this.bucketName = process.env.R2_BUCKET_NAME || 'musobuddy';
     this.s3 = new S3Client({
       region: 'auto',
-      endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || ''
+        accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || ''
       }
     });
   }
@@ -128,7 +128,7 @@ export class CloudStorageService {
       ContentType: 'text/html'
     }));
 
-    const url = `https://${this.bucketName}.${process.env.CLOUDFLARE_R2_DOMAIN || 'r2.cloudflarestorage.com'}/${key}`;
+    const url = `https://${this.bucketName}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
     return { url, key };
   }
 
