@@ -37,30 +37,21 @@ export async function parseContractWithAI(contractText: string): Promise<Extract
 
   const prompt = `Extract client information from this Musicians Union contract. Tim Fulker is the musician - extract the HIRER/CLIENT details who is booking him.
 
-CRITICAL PARSING RULES:
-- IGNORE template placeholders like "between", "of", "and", "on" - these are NOT the actual names
-- Look for ACTUAL NAMES: The client name appears after "between" and before "and Tim Fulker"
-- VENUE EXTRACTION: Look for "Engagement(s) at" followed by the venue name and address
-- CLIENT ADDRESS: Extract the address that appears after the client name (not venue address)
-- Tim Fulker is the MUSICIAN - DO NOT extract his information as the client
+CRITICAL RULES:
+- Tim Fulker is the MUSICIAN - DO NOT extract his address or details as the client
+- IGNORE template placeholders like "between", "of", "and", "on" - look for ACTUAL NAMES after these words
+- Client name: Extract the actual name that appears after "between" and before "and Tim Fulker"
+- Client address: Extract ONLY the address that appears after the client name and before "and Tim Fulker"
+- If client address appears to be placeholder text like "hirer's address" or is blank, return "address not supplied"
 - NEVER use Tim Fulker's address (59, Gloucester Road, Bournemouth) as the client address
-- Convert times like "1545" to "15:45" and "1900" to "19:00" format
-- HOME ADDRESS VENUES: If venue field contains "Home" or is the same as client address, set venue to "Client's Home"
-
-EXAMPLE STRUCTURE:
-"between [CLIENT NAME] of [CLIENT ADDRESS] and Tim Fulker"
-"Engagement(s) at [VENUE NAME] [VENUE ADDRESS]"
+- Venue name and venue address are separate fields
+- Convert times like "8pm" to "20:00" format and military time like "1545" to "15:45"
+- HOME ADDRESS VENUES: If venue field contains "Home Address" or similar, set venue to "Client's Home" and use the client's address as the venue address
+- Email: Look for client email address (usually near "Email" label in client signature section)
+- Phone: Look for client phone number (usually near "Phone Number" label in client signature section)
 
 Contract text:
 ${contractText}
-
-EXTRACTION PATTERNS:
-- Client name: Look for text after "between" and before "of" (e.g., "between Robin Jarman")
-- Client address: Look for text after client name following "of" (e.g., "of The Drift, Hall Lane...")
-- Venue: Look for text after "Engagement(s) at" (e.g., "at The Drift")
-- Email: Look for "Email" followed by email address
-- Phone: Look for "Phone Number" followed by number
-- Times: Convert military time (1545 = 15:45, 1900 = 19:00)
 
 Return only JSON:
 {"clientName":"","clientEmail":"","clientPhone":"","clientAddress":"","venue":"","venueAddress":"","eventDate":"YYYY-MM-DD","eventTime":"HH:MM","eventEndTime":"HH:MM","fee":0,"confidence":95}`;
