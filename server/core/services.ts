@@ -13,12 +13,13 @@ export class MailgunService {
     const mg = new Mailgun(formData);
     this.mailgun = mg.client({
       username: 'api',
-      key: process.env.MAILGUN_API_KEY || ''
+      key: process.env.MAILGUN_API_KEY || '',
+      url: 'https://api.eu.mailgun.net'
     });
   }
 
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
-    const domain = process.env.MAILGUN_DOMAIN;
+    const domain = 'mg.musobuddy.com';
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
@@ -31,7 +32,7 @@ export class MailgunService {
   }
 
   async sendInvoiceEmail(invoice: any, userSettings: any, pdfUrl: string, subject: string) {
-    const domain = process.env.MAILGUN_DOMAIN;
+    const domain = 'mg.musobuddy.com';
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
