@@ -2703,30 +2703,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Extract text from PDF
-      const { extractPDFText } = await import('./contract-parser-simple.js');
-      let contractText: string;
-      try {
-        contractText = await extractPDFText(file.buffer);
-      } catch (extractError) {
+      // Use contract service for parsing (handles PDF extraction internally)
+      console.log('🔄 Processing contract with enhanced Musicians Union parsing...');
+
+      // Use contract service for parsing
+      const contractService = createContractService(storage);
+      const parseResult = await contractService.parseContract(file.buffer, userId);
+      
+      if (!parseResult.success) {
         return res.status(400).json({
           success: false,
-          error: 'PDF_EXTRACTION_FAILED',
-          message: 'Failed to extract text from PDF'
+          error: 'AI_PARSING_FAILED',
+          message: parseResult.error || 'Failed to parse contract with AI'
         });
       }
-
-      // Use intelligent parser
-      const { createIntelligentParser } = await import('./intelligent-contract-parser.js');
-      const intelligentParser = createIntelligentParser(storage);
       
-      const extractedData = await intelligentParser.parseContract(contractText, userId);
-      const fieldsExtracted = Object.keys(extractedData).filter(k => extractedData[k] !== undefined && extractedData[k] !== null).length;
-      const confidence = Math.min(95, Math.max(50, 40 + (fieldsExtracted * 6)));
+      const extractedData = parseResult.data || {};
+      const fieldsExtracted = parseResult.fieldsExtracted || Object.keys(extractedData).filter(k => extractedData[k] !== undefined && extractedData[k] !== null).length;
+      const confidence = parseResult.confidence || Math.min(95, Math.max(50, 40 + (fieldsExtracted * 6)));
 
       if (bookingId) {
         // Apply to booking if provided
-        const contractService = createContractService(storage);
         const booking = await storage.getBooking(parseInt(bookingId), userId);
         
         if (!booking) {
