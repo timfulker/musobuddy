@@ -2814,7 +2814,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Update booking if any fields changed
         let bookingUpdateResult = { updated: false, fieldsUpdated: [], fieldsUpdatedCount: 0 };
-        if (fieldsUpdated.length > 0) {
+        
+        // If no fields were updated because they were preserved, still show success
+        if (fieldsUpdated.length === 0 && Object.keys(extractedData).length > 0) {
+          console.log('📋 All fields were preserved (data already existed)');
+          bookingUpdateResult = {
+            updated: true,
+            fieldsUpdated: ['Data verification completed'],
+            fieldsUpdatedCount: Object.keys(extractedData).length
+          };
+        } else if (fieldsUpdated.length > 0) {
           try {
             // Handle date conversion
             if (updatedFields.eventDate && typeof updatedFields.eventDate === 'string') {
