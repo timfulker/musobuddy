@@ -24,27 +24,120 @@ interface ContractData {
 
 export async function parseContractPDF(contractText: string): Promise<ContractData> {
   try {
-    console.log('🔍 === STARTING MUSICIANS UNION CONTRACT PARSING ===');
+    console.log('🔍 === STARTING MUSICIANS UNION L2 CONTRACT PARSER ===');
     console.log('📄 Contract text length:', contractText.length);
-    console.log('📄 First 500 characters:', contractText.substring(0, 500));
 
     if (!contractText || contractText.trim().length < 50) {
       throw new Error('Contract text is too short or empty');
     }
 
-    // Import the optimized Musicians Union prompt
-    const { buildMusiciansUnionPrompt } = await import('./musicians-union-field-mapping');
-    const promptContent = buildMusiciansUnionPrompt(contractText);
+    // Extract form fields from PDF (identical positions across all MU contracts)
+    const formFieldPattern = /FORM_FIELD_(\d+):\s*([^\s].*?)(?=\s+FORM_FIELD_\d+:|$)/g;
+    const formFields = new Map<number, string>();
+    let match;
+    
+    console.log('📝 === EXTRACTING FORM FIELDS ===');
+    while ((match = formFieldPattern.exec(contractText)) !== null) {
+      const fieldIndex = parseInt(match[1]);
+      const fieldValue = match[2].trim();
+      formFields.set(fieldIndex, fieldValue);
+      console.log(`Form field ${fieldIndex}: "${fieldValue}"`);
+    }
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514", 
-      max_tokens: 1024,
-      system: "You are a specialized parser for Musicians' Union L2 contracts. Focus on accurate field mapping and data extraction using the provided field mapping rules. Return only valid JSON.",
-      messages: [{
-        role: 'user',
-        content: promptContent
-      }]
-    });
+    // MUSICIANS UNION L2 CONTRACT STANDARD FIELD MAPPING
+    // These positions are IDENTICAL across all contracts
+    const contractData: ContractData = {};
+    
+    // Based on Robin Jarman contract analysis:
+    // Field 0: Robin Jarman (Client Name)
+    // Field 1: 12/06/2025 (Event Date) 
+    // Field 2: The Drift (Venue)
+    // Field 3: Hall Lane, Upper Farringdon Nr Alton GU34 3EA. (Venue Address)
+    // Field 4: Robin Jarman (Client Name duplicate)
+    // Field 5: robinjarman@live.co.uk (Client Email)
+    // Field 6: 07557 982669 (Client Phone)
+    // Field 7: The Drift, Hall Lane, Upper Farringdon Nr Alton GU34 3EA. (Client Address)
+    // Field 8: timfulkermusic@gmail.com (Musician email - ignore)
+    
+    // Client Name (from field 0 or 4)
+    const clientName = formFields.get(0) || formFields.get(4);
+    if (clientName && clientName !== 'timfulkermusic@gmail.com' && !clientName.toLowerCase().includes('tim fulker')) {
+      contractData.clientName = clientName;
+      console.log(`✅ Client Name: "${clientName}"`);
+    }
+    
+    // Event Date (field 1)
+    const eventDate = formFields.get(1);
+    if (eventDate) {
+      contractData.eventDate = eventDate;
+      console.log(`✅ Event Date: "${eventDate}"`);
+    }
+    
+    // Venue (field 2)
+    const venue = formFields.get(2);
+    if (venue) {
+      contractData.venue = venue;
+      console.log(`✅ Venue: "${venue}"`);
+    }
+    
+    // Venue Address (field 3)
+    const venueAddress = formFields.get(3);
+    if (venueAddress) {
+      contractData.venueAddress = venueAddress;
+      console.log(`✅ Venue Address: "${venueAddress}"`);
+    }
+    
+    // Client Email (field 5)
+    const clientEmail = formFields.get(5);
+    if (clientEmail && !clientEmail.includes('timfulker') && !clientEmail.includes('saxdj')) {
+      contractData.clientEmail = clientEmail;
+      console.log(`✅ Client Email: "${clientEmail}"`);
+    }
+    
+    // Client Phone (field 6)
+    const clientPhone = formFields.get(6);
+    if (clientPhone) {
+      contractData.clientPhone = clientPhone;
+      console.log(`✅ Client Phone: "${clientPhone}"`);
+    }
+    
+    // Client Address (field 7)
+    const clientAddress = formFields.get(7);
+    if (clientAddress && 
+        !clientAddress.toLowerCase().includes('gloucester') && 
+        !clientAddress.toLowerCase().includes('bh7')) {
+      contractData.clientAddress = clientAddress;
+      console.log(`✅ Client Address: "${clientAddress}"`);
+    }
+
+    // Extract fee from static text
+    const feePattern = /Fee.*?£(\d+(?:\.\d{2})?)/i;
+    const feeMatch = contractText.match(feePattern);
+    if (feeMatch) {
+      contractData.fee = parseFloat(feeMatch[1]);
+      console.log(`✅ Fee: £${feeMatch[1]}`);
+    }
+
+    // Extract times from static text
+    const timePattern = /(\d{1,2}:\d{2})/g;
+    const times = contractText.match(timePattern);
+    if (times && times.length >= 2) {
+      contractData.eventTime = times[0];
+      contractData.eventEndTime = times[1];
+      console.log(`✅ Times: ${times[0]} - ${times[1]}`);
+    }
+
+    console.log('✅ === MUSICIANS UNION PARSING COMPLETE ===');
+    console.log('📊 Extracted fields:', Object.keys(contractData).length);
+    console.log('📋 Final data:', contractData);
+
+    return contractData;
+
+  } catch (error: any) {
+    console.error('❌ Deterministic contract parsing failed:', error);
+    throw error;
+  }
+}
 
     const content = response.content[0];
     if (content.type !== 'text') {
