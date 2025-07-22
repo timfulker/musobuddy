@@ -90,6 +90,37 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
+  // CRITICAL MISSING METHOD: Generic email sending for confirmation emails
+  async sendEmail(emailData: any): Promise<boolean> {
+    const domain = 'mg.musobuddy.com';
+    
+    try {
+      console.log('📧 Sending generic email via Mailgun...');
+      console.log('📧 Email data:', {
+        from: emailData.from,
+        to: emailData.to,
+        subject: emailData.subject,
+        hasHtml: !!emailData.html
+      });
+      
+      const result = await this.mailgun.messages.create(domain, {
+        from: emailData.from,
+        to: emailData.to,
+        subject: emailData.subject,
+        html: emailData.html || '',
+        text: emailData.text || ''
+      });
+      
+      console.log('✅ Generic email sent successfully:', result.id);
+      return true;
+      
+    } catch (error: any) {
+      console.error('❌ Failed to send generic email:', error);
+      console.error('Error details:', error.message);
+      return false;
+    }
+  }
+
   // AUTOMATIC PROFESSIONAL CONTRACT PDF GENERATION
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
     try {

@@ -323,18 +323,16 @@ export async function registerRoutes(app: Express) {
             <input type="text" id="signatureName" value="${contract.clientName}" required 
                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
         </div>
-        ${!contract.clientPhone ? `
         <div style="margin: 15px 0;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">Phone Number:</label>
-            <input type="tel" id="clientPhone" placeholder="07123 456789" 
-                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
-        </div>` : ''}
-        ${!contract.clientAddress ? `
+            <input type="tel" id="clientPhone" value="${contract.clientPhone || ''}" placeholder="07123 456789" 
+                   ${contract.clientPhone ? 'readonly style="background-color: #f9f9f9; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"' : 'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"'} />
+        </div>
         <div style="margin: 15px 0;">
             <label style="display: block; font-weight: bold; margin-bottom: 5px;">Address:</label>
             <textarea id="clientAddress" rows="3" placeholder="Full address including postcode"
-                      style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
-        </div>` : ''}
+                      ${contract.clientAddress ? 'readonly style="background-color: #f9f9f9; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"' : 'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"'}>${contract.clientAddress || ''}</textarea>
+        </div>
         <div style="margin: 20px 0;">
             <label style="display: flex; align-items: center; cursor: pointer;">
                 <input type="checkbox" id="agreeTerms" required style="margin-right: 10px;" />
