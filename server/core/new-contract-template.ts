@@ -128,38 +128,43 @@ export async function generateProfessionalContract(contract: any, userSettings: 
 
       currentY += 25;
 
-      // Table-like layout for event details
+      // Event Details Table with proper borders and backgrounds
       const eventDetails = [
-        ['Date', eventDateStr],
-        ['Start Time', contract.eventTime || 'Time TBC'],
-        ['End Time', contract.eventEndTime || 'Time TBC'],
+        ['Client Name', contract.clientName || 'Not provided'],
+        ['Client Email', contract.clientEmail || 'Not provided'],
+        ['Client Address', contract.clientAddress || 'Not provided'],
+        ['Client Phone', contract.clientPhone || 'Not provided'],
+        ['Event Date', eventDateStr],
+        ['Event Time', contract.eventTime || 'Time TBC'],
         ['Venue', contract.venue || 'Venue TBC'],
-        ['Venue Address', contract.venueAddress || 'Address not provided'],
+        ['Performance Fee', `£${contract.fee || '0.00'}`],
       ];
 
       eventDetails.forEach(([label, value], i) => {
-        // Alternate row colors
-        const fillColor = i % 2 === 0 ? grayRow : '#FFFFFF';
+        // Alternate row colors like the reference
+        const fillColor = i % 2 === 0 ? '#E5E7EB' : '#FFFFFF';
         
+        // Draw the row background
+        doc
+          .rect(50, currentY, doc.page.width - 100, 25)
+          .fill(fillColor)
+          .stroke('#D1D5DB');
+
         // Label column
         doc
-          .rect(50, currentY, 150, 22)
-          .fill(fillColor)
           .fillColor(textMain)
           .font('Helvetica-Bold')
           .fontSize(11)
-          .text(label, 55, currentY + 6);
+          .text(label, 55, currentY + 8);
 
-        // Value column
+        // Value column  
         doc
-          .rect(200, currentY, doc.page.width - 250, 22)
-          .fill(fillColor)
           .fillColor(textSecondary)
           .font('Helvetica')
           .fontSize(11)
-          .text(value, 205, currentY + 6);
+          .text(value, 200, currentY + 8);
 
-        currentY += 22;
+        currentY += 25;
       });
 
       currentY += 20;
@@ -213,32 +218,122 @@ export async function generateProfessionalContract(contract: any, userSettings: 
 
       currentY += 60;
 
-      // Section: Terms and Conditions
+      // Section: Terms and Conditions with gray background boxes
       doc
         .fillColor(textMain)
         .font('Helvetica-Bold')
         .fontSize(14)
         .text('Terms and Conditions', 50, currentY);
 
-      currentY += 25;
-      const terms = [
-        '1. Payment is due on the date of performance unless otherwise agreed in writing.',
-        '2. All equipment is provided by the performer unless specified in technical requirements.',
-        '3. The venue must provide safe access to electricity and ensure adequate security.',
-        '4. No recording or transmission without written consent from the performer.',
-        '5. Cancellation by the client within 7 days of the event date will result in full payment being due.',
-        '6. The performer reserves the right to use a suitable substitute in case of illness or emergency.'
-      ];
+      currentY += 20;
+
+      // Payment Terms & Conditions - Gray Box
+      doc
+        .rect(50, currentY, doc.page.width - 100, 120)
+        .fill('#F3F4F6')
+        .stroke('#D1D5DB');
 
       doc
+        .fillColor(blue)
+        .font('Helvetica-Bold')
+        .fontSize(12)
+        .text('Payment Terms & Conditions', 60, currentY + 10);
+
+      currentY += 30;
+      doc
+        .fillColor(textMain)
         .font('Helvetica')
         .fontSize(10)
-        .fillColor(textSecondary);
+        .text(`Payment Due Date: Full payment of £${contract.fee || '0.00'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.`, 60, currentY, { width: 475 });
 
-      terms.forEach(term => {
-        doc.text(term, 50, currentY, { width: 495 });
-        currentY += 25;
-      });
+      currentY += 30;
+      doc.text('Payment Methods: Cash or bank transfer to the performer\'s designated account (details provided separately).', 60, currentY, { width: 475 });
+
+      currentY += 25;
+      doc.text(`Deposit: £${contract.deposit || '0.00'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.`, 60, currentY, { width: 475 });
+
+      currentY += 25;
+      doc.text('Late Payment: Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.', 60, currentY, { width: 475 });
+
+      currentY += 40;
+
+      // Cancellation & Refund Policy - Gray Box
+      doc
+        .rect(50, currentY, doc.page.width - 100, 140)
+        .fill('#F3F4F6')
+        .stroke('#D1D5DB');
+
+      doc
+        .fillColor(blue)
+        .font('Helvetica-Bold')
+        .fontSize(12)
+        .text('Cancellation & Refund Policy', 60, currentY + 10);
+
+      currentY += 30;
+      doc
+        .fillColor(textMain)
+        .font('Helvetica')
+        .fontSize(10)
+        .text('Client Cancellation:', 60, currentY);
+
+      currentY += 15;
+      doc.text('• More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee', 70, currentY, { width: 465 });
+
+      currentY += 15;
+      doc.text('• 30 days or less before event: Full performance fee becomes due regardless of cancellation', 70, currentY, { width: 465 });
+
+      currentY += 15;
+      doc.text('• Same day cancellation: Full fee due plus any additional costs incurred', 70, currentY, { width: 465 });
+
+      currentY += 20;
+      doc.text('Performer Cancellation: In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.', 60, currentY, { width: 475 });
+
+      currentY += 25;
+      doc.text('Rescheduling: Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.', 60, currentY, { width: 475 });
+
+      currentY += 40;
+
+      // Force Majeure - Gray Box
+      doc
+        .rect(50, currentY, doc.page.width - 100, 60)
+        .fill('#F3F4F6')
+        .stroke('#D1D5DB');
+
+      doc
+        .fillColor(blue)
+        .font('Helvetica-Bold')
+        .fontSize(12)
+        .text('Force Majeure', 60, currentY + 10);
+
+      currentY += 30;
+      doc
+        .fillColor(textMain)
+        .font('Helvetica')
+        .fontSize(10)
+        .text('Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.', 60, currentY, { width: 475 });
+
+      currentY += 50;
+
+      // Performance Contingencies - Gray Box
+      doc
+        .rect(50, currentY, doc.page.width - 100, 80)
+        .fill('#F3F4F6')
+        .stroke('#D1D5DB');
+
+      doc
+        .fillColor(blue)
+        .font('Helvetica-Bold')
+        .fontSize(12)
+        .text('Performance Contingencies', 60, currentY + 10);
+
+      currentY += 30;
+      doc
+        .fillColor(textMain)
+        .font('Helvetica')
+        .fontSize(10)
+        .text('The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.', 60, currentY, { width: 475 });
+
+      currentY += 60;
 
       currentY += 20;
 
