@@ -507,6 +507,42 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Contract PDF download route
+  app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.user.id;
+      
+      console.log('📄 Contract PDF download request:', { contractId, userId });
+      
+      // Get contract and verify ownership
+      const contract = await storage.getContract(contractId, userId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      // Get user settings for PDF generation
+      const userSettings = await storage.getSettings(userId);
+      
+      // Generate PDF using MailgunService
+      console.log('📄 Generating PDF for download...');
+      const pdfBuffer = await mailgunService.generateContractPDF(contract, userSettings);
+      console.log('✅ PDF generated for download, size:', pdfBuffer.length, 'bytes');
+      
+      // Set proper headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      
+      // Send the PDF buffer
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ Contract PDF download error:', error);
+      res.status(500).json({ error: 'Failed to generate contract PDF' });
+    }
+  });
+
   // Contract deletion routes
   app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
     try {
