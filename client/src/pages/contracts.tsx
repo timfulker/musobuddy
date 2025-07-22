@@ -418,12 +418,12 @@ export default function Contracts() {
   };
 
   const handleViewSignedContract = (contract: Contract) => {
-    // Use Cloudflare URL if available, fallback to local view
-    if (contract.cloudStorageUrl) {
-      // Open Cloudflare signed contract page directly
+    // Always open Cloudflare URL for signed contracts, regenerate if missing
+    if (contract.status === 'signed' && contract.cloudStorageUrl) {
+      // For signed contracts, we want to view the actual signed version on Cloudflare
       window.open(contract.cloudStorageUrl, '_blank');
     } else {
-      // Fallback to local view for older contracts
+      // For draft/unsigned contracts or missing cloud URLs, use local view
       setLocation(`/view-contract/${contract.id}`);
     }
   };

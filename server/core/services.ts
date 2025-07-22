@@ -695,7 +695,7 @@ export class CloudStorageService {
             submitBtn.disabled = true;
             
             try {
-                const response = await fetch('${appUrl}/api/contracts/sign/${contract.id}', {
+                const response = await fetch('/api/contracts/sign/${contract.id}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
