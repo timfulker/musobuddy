@@ -24,34 +24,25 @@ import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
 
 const contractFormSchema = z.object({
-  // Required fields (Musicians' Union minimum)
-  contractNumber: z.string().min(1, "Contract number is required").refine(
-    (val) => val.includes('(') && val.includes(')') && val.includes('-'),
-    "Contract number should be in format (dd/mm/yyyy - Client Name)"
-  ),
+  // TESTING: Only 4 required fields as requested
   clientName: z.string().min(1, "Client name is required"),
-  venue: z.string().min(1, "Venue is required"),
+  clientEmail: z.string().email("Valid email required").min(1, "Client email is required"),
   eventDate: z.string().min(1, "Event date is required"),
-  eventTime: z.string().min(1, "Start time is required"),
-  eventEndTime: z.string().min(1, "Finish time is required"),
   fee: z.string().min(1, "Performance fee is required"),
-  deposit: z.string().optional(),
   
-  // Optional fields (can be filled by musician or marked as client-fillable)
+  // Everything else optional
+  contractNumber: z.string().optional(),
+  venue: z.string().optional(),
+  eventTime: z.string().optional(),
+  eventEndTime: z.string().optional(),
+  deposit: z.string().optional(),
   clientAddress: z.string().optional(),
   clientPhone: z.string().optional(),
-  clientEmail: z.string().email("Valid email required").min(1, "Client email is required for contract delivery"),
   venueAddress: z.string().optional(),
-  
-  // Essential rider/payment information
   paymentInstructions: z.string().optional(),
   equipmentRequirements: z.string().optional(),
   specialRequirements: z.string().optional(),
-  
-  // Client-fillable field tracking
   clientFillableFields: z.array(z.string()).optional(),
-  
-  // System fields
   enquiryId: z.number().optional(),
   status: z.string().default("draft"),
   reminderEnabled: z.boolean().default(false),
