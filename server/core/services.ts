@@ -50,13 +50,29 @@ export class MailgunService {
       };
 
       console.log('📧 Sending email via Mailgun...');
+      console.log('📧 Message data:', {
+        from: messageData.from,
+        to: messageData.to,
+        subject: messageData.subject,
+        hasAttachment: !!messageData.attachment,
+        attachmentCount: messageData.attachment?.length || 0
+      });
+      
       const result = await this.mailgun.messages.create(domain, messageData);
       console.log('✅ Contract email with PDF sent successfully:', result.id);
+      console.log('📧 Mailgun response:', result);
       return result;
       
     } catch (error: any) {
       console.error('❌ Contract email error:', error);
-      console.error('❌ Error stack:', error.stack);
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.status,
+        details: error.details,
+        type: error.type,
+        stack: error.stack
+      });
+      console.error('❌ Full error object:', JSON.stringify(error, null, 2));
       throw error;
     }
   }

@@ -167,7 +167,12 @@ export async function registerRoutes(app: Express) {
       });
       
       console.log('✅ Contract email sent successfully for contract:', contractId);
-      res.json({ success: true });
+      res.json({ 
+        success: true,
+        message: 'Contract email sent successfully via Mailgun',
+        recipient: contract.clientEmail,
+        messageId: result.id || 'No ID returned'
+      });
       
     } catch (error: any) {
       console.error('❌ Contract email error:', error);
