@@ -1,11 +1,23 @@
 import express, { type Request, Response } from "express";
 import { setupVite, serveStatic } from "./vite";
+import { serveStaticFixed } from "./static-serve";
 import { setupAuthentication } from "./core/auth";
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
 
 const app = express();
+
+// Environment validation
+const requiredEnvVars = ['DATABASE_URL', 'SESSION_SECRET'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ Missing required environment variables:', missingVars);
+  console.log('⚠️ Continuing with reduced functionality...');
+} else {
+  console.log('✅ All required environment variables present');
+}
 
 // Database connection test
 console.log('🔍 Testing database connection...');
@@ -160,29 +172,50 @@ async function startServer() {
     // Register all routes AFTER authentication
     const server = await registerRoutes(app);
     
-    // Setup Vite middleware (with error handling)
+    // Add production error handling
     try {
-      await setupVite(app, server);
-      serveStatic(app);
+      if (process.env.NODE_ENV === 'production') {
+        console.log('🏭 Production mode: serving static files');
+        serveStaticFixed(app);
+      } else {
+        await setupVite(app, server);
+        serveStatic(app);
+      }
     } catch (error) {
-      console.log('⚠️ Vite setup failed, creating basic static serving:', error.message);
-      // Basic fallback static serving
+      console.log('⚠️ Static serving setup failed:', error.message);
+      
+      // Minimal fallback for broken deployments
       app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api/')) {
-          res.send(`<!DOCTYPE html><html><head><title>MusoBuddy</title></head><body><h1>MusoBuddy Server Running</h1><p>API available at /api/</p></body></html>`);
+        if (req.path.startsWith('/api/')) {
+          res.status(404).json({ error: 'API endpoint not found' });
         } else {
-          res.status(404).json({ error: 'Not found' });
+          res.status(500).send(`
+            <!DOCTYPE html>
+            <html>
+            <head><title>MusoBuddy - Server Error</title></head>
+            <body>
+              <h1>Server Configuration Error</h1>
+              <p>The server is having trouble serving static files.</p>
+              <p>API is available at /api/ endpoints.</p>
+            </body>
+            </html>
+          `);
         }
       });
     }
     
+    // Use environment PORT with fallback
     const port = process.env.PORT || 5000;
+    
     server.listen(port, "0.0.0.0", () => {
       console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
+      console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
+      console.log(`📁 Serving from: ${process.env.NODE_ENV === 'production' ? 'dist/public' : 'development'}`);
     });
     
   } catch (error) {
     console.error('❌ Server startup failed:', error);
+    console.error('Stack:', error.stack);
     process.exit(1);
   }
 }
