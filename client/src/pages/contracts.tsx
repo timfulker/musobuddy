@@ -418,12 +418,24 @@ export default function Contracts() {
   };
 
   const handleViewSignedContract = (contract: Contract) => {
-    // Always open Cloudflare URL for signed contracts, regenerate if missing
+    console.log('🎯 FRONTEND: handleViewSignedContract called');
+    console.log('🎯 Contract status:', contract.status);
+    console.log('🎯 Cloud storage URL:', contract.cloudStorageUrl);
+    
+    // For signed contracts, prioritize cloud storage URL
     if (contract.status === 'signed' && contract.cloudStorageUrl) {
-      // For signed contracts, we want to view the actual signed version on Cloudflare
+      console.log('✅ Opening signed contract from cloud storage');
       window.open(contract.cloudStorageUrl, '_blank');
-    } else {
-      // For draft/unsigned contracts or missing cloud URLs, use local view
+    } 
+    // For signed contracts without cloud URL, use download endpoint
+    else if (contract.status === 'signed') {
+      console.log('⚠️ Using download endpoint for signed contract');
+      const downloadUrl = `/api/contracts/${contract.id}/download`;
+      window.open(downloadUrl, '_blank');
+    }
+    // For draft/unsigned contracts, use local view
+    else {
+      console.log('📄 Opening draft contract in local view');
       setLocation(`/view-contract/${contract.id}`);
     }
   };

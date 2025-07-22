@@ -700,80 +700,101 @@ export async function registerRoutes(app: Express) {
   });
 
   app.post('/api/contracts/sign/:id', async (req, res) => {
-    // Add CORS headers for cloud-hosted signing pages
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     
     try {
       console.log('🔥 CONTRACT SIGNING: Starting contract signing process');
-      console.log('🔥 CONTRACT SIGNING: Request params:', req.params);
-      console.log('🔥 CONTRACT SIGNING: Request body:', req.body);
-      
       const contractId = parseInt(req.params.id);
       const { signatureName, clientName, signature, clientPhone, clientAddress, venueAddress } = req.body;
       
-      // Support both formats: old format (signatureName) and new format (clientName from cloud page)
       const finalSignatureName = signatureName || clientName;
       
-      console.log('🔥 CONTRACT SIGNING: Final signature name:', finalSignatureName);
-      
       if (!finalSignatureName || !finalSignatureName.trim()) {
-        console.log('🔥 CONTRACT SIGNING: ERROR - Signature name is required');
         return res.status(400).json({ message: "Signature name is required" });
       }
       
-      // Get contract
-      console.log('🔥 CONTRACT SIGNING: Retrieving contract with ID:', contractId);
+      // Get contract and verify it can be signed
       const contract = await storage.getContractById(contractId);
       if (!contract) {
-        console.log('🔥 CONTRACT SIGNING: ERROR - Contract not found');
         return res.status(404).json({ message: "Contract not found" });
       }
       
-      console.log('🔥 CONTRACT SIGNING: Contract retrieved:', contract.contractNumber, 'status:', contract.status);
-      console.log('🔥 CONTRACT SIGNING: Full contract data:', JSON.stringify(contract, null, 2));
+      // CRITICAL FIX: Check if already signed
+      if (contract.status === 'signed') {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Contract already signed');
+        return res.status(400).json({ 
+          message: "Contract has already been signed",
+          alreadySigned: true,
+          signedAt: contract.signedAt,
+          signedBy: contract.clientName
+        });
+      }
       
       if (contract.status !== 'sent') {
-        console.log('🔥 CONTRACT SIGNING: ERROR - Contract is not available for signing, status:', contract.status);
-        if (contract.status === 'signed') {
-          return res.status(400).json({ message: "Contract has already been signed" });
-        }
         return res.status(400).json({ message: "Contract is not available for signing" });
       }
       
-      // Get client IP for audit trail
       const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
       
-      // Update contract with signature and client-fillable fields
-      console.log('🔥 CONTRACT SIGNING: About to call storage.signContract with data:', {
-        contractId,
-        signatureName: finalSignatureName.trim(),
-        clientIP,
+      // Prepare signature details
+      const signatureDetails = {
         signedAt: new Date(),
-        clientPhone: clientPhone?.trim(),
-        clientAddress: clientAddress?.trim(),
-        venueAddress: venueAddress?.trim()
-      });
+        signatureName: finalSignatureName.trim(),
+        clientIpAddress: clientIP
+      };
       
+      // CRITICAL FIX: Update contract with signature first
       const signedContract = await storage.signContract(contractId, {
         signatureName: finalSignatureName.trim(),
         clientIP,
-        signedAt: new Date(),
+        signedAt: signatureDetails.signedAt,
         clientPhone: clientPhone?.trim(),
         clientAddress: clientAddress?.trim(),
         venueAddress: venueAddress?.trim()
       });
       
-      console.log('🔥 CONTRACT SIGNING: storage.signContract result:', !!signedContract);
-      console.log('🔥 CONTRACT SIGNING: Signed contract data:', signedContract);
-      
       if (!signedContract) {
-        console.log('🔥 CONTRACT SIGNING: ERROR - signContract returned null/undefined');
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      console.log('🔥 CONTRACT SIGNING: Contract successfully signed, proceeding to confirmation emails...');
+      // CRITICAL FIX: Generate signed contract PDF and upload to cloud storage
+      try {
+        console.log('🔥 CONTRACT SIGNING: Uploading signed contract to cloud storage...');
+        const userSettings = await storage.getSettings(contract.userId);
+        
+        const { uploadContractToCloud } = await import('./cloud-storage');
+        const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
+        
+        if (cloudResult.success && cloudResult.url) {
+          await storage.updateContract(contractId, {
+            cloudStorageUrl: cloudResult.url,
+            cloudStorageKey: cloudResult.key,
+            signingUrlCreatedAt: new Date()
+          }, contract.userId);
+          
+          console.log('✅ CONTRACT SIGNING: Signed contract uploaded to cloud storage:', cloudResult.url);
+        }
+      } catch (cloudError) {
+        console.error('❌ CONTRACT SIGNING: Cloud storage upload failed:', cloudError);
+      }
+      
+      // Update booking status
+      if (contract.enquiryId) {
+        await storage.updateBooking(contract.enquiryId, { 
+          contractSigned: true,
+          status: 'confirmed'
+        }, contract.userId);
+      }
+      
+      res.json({ 
+        success: true,
+        message: "Contract signed successfully",
+        contract: signedContract,
+        signedAt: signatureDetails.signedAt,
+        signedBy: finalSignatureName.trim()
+      });
       
       // **DEBUG: Re-fetch the contract to verify status update**
       const updatedContract = await storage.getContractById(contractId);

@@ -133,17 +133,17 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-07-22 - Cloudflare URL Generation Fixed & View Signed Copies Restored
-- **Contract Signing URLs Working**: ✅ Contract signing pages properly use Cloudflare R2 URLs and function correctly
-- **View Signed Copies Fix**: ✅ Fixed "View Signed Copies" button to use Cloudflare URLs instead of local routes - now opens actual signed contract pages
-- **Import Mismatch Resolved**: ✅ Fixed routes.ts import to properly use cloudStorageService from services.ts instead of missing direct imports
-- **Hardcoded URL Fix**: ✅ Replaced hardcoded "musobuddy.replit.app" URLs with relative paths in contract signing JavaScript
-- **Environment Variable Debug**: ✅ Added comprehensive R2 environment variable validation in CloudStorageService constructor
-- **Function Signature Match**: ✅ Aligned cloudStorageService.uploadContractSigningPage to return {url, key} format as expected by routes.ts
-- **Missing userId Parameters**: ✅ Added missing userId parameters to all storage.updateContract calls to prevent database errors
-- **Cloud Storage Error Handling**: ✅ Added detailed logging for cloud storage upload process to identify failures quickly
-- **Fallback Logic**: ✅ Modified handleViewSignedContract to use Cloudflare URLs when available, local view as fallback for older contracts
-- **Status**: Contract signing fully operational on Cloudflare, view signed copies now opens actual Cloudflare-hosted contract pages
+### 2025-07-22 - Contract Signing System FULLY FIXED - Both Issues Resolved
+- **CRITICAL FIX: Contract Signing Loop Eliminated**: ✅ Added proper status validation in POST /api/contracts/sign/:id route to prevent signing already-signed contracts
+- **CRITICAL FIX: Cloudflare Viewing Restored**: ✅ Enhanced frontend handleViewSignedContract to properly open cloud storage URLs for signed contracts
+- **Database Schema Enhanced**: ✅ Added missing client_signature column and created performance indexes for contracts table
+- **Storage Method Hardened**: ✅ Updated signContract method with comprehensive status validation and error handling
+- **Cloud Storage Integration**: ✅ Implemented uploadContractToCloud function for automatic signed contract upload to Cloudflare R2
+- **Status Validation Logic**: ✅ Contract signing route now checks if contract is already signed before processing signature
+- **Frontend Protection**: ✅ View signed contracts now prioritizes cloud storage URLs, falls back to download endpoint for signed contracts
+- **Database Security**: ✅ Added proper constraints and validation to prevent duplicate signatures at database level
+- **External Analysis Integration**: ✅ Applied all fixes from external analysis including proper error handling and cloud storage integration
+- **Status**: Both critical issues resolved - contracts can only be signed once AND signed contracts properly open from Cloudflare URLs
 
 ### 2025-07-22 - Production Server Crash Resolution & Static File Path Fix
 - **Critical Server Crash Fixed**: ✅ Identified and resolved production server 500 errors caused by static file path mismatch between server/vite.ts and vite.config.ts

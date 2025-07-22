@@ -231,34 +231,45 @@ export class Storage {
     console.log('🗄️ STORAGE: signContract called with:', { contractId, signatureData });
     
     try {
+      // Verify the contract exists and can be signed
+      const existingContract = await this.getContractById(contractId);
+      if (!existingContract) {
+        throw new Error('Contract not found');
+      }
+      
+      if (existingContract.status === 'signed') {
+        throw new Error('Contract has already been signed');
+      }
+      
+      if (existingContract.status !== 'sent') {
+        throw new Error('Contract is not available for signing');
+      }
+      
+      // Prepare update data
       const updateData = {
-        status: 'signed',
+        status: 'signed' as const,
         signedAt: signatureData.signedAt,
-        clientPhone: signatureData.clientPhone,
-        clientAddress: signatureData.clientAddress,
-        venueAddress: signatureData.venueAddress,
+        clientSignature: signatureData.signatureName,
+        clientPhone: signatureData.clientPhone || existingContract.clientPhone,
+        clientAddress: signatureData.clientAddress || existingContract.clientAddress,
+        venueAddress: signatureData.venueAddress || existingContract.venueAddress,
         updatedAt: new Date()
       };
       
-      console.log('🗄️ STORAGE: About to update contract with data:', updateData);
-      
+      // Perform the database update
       const result = await db.update(contracts)
         .set(updateData)
         .where(eq(contracts.id, contractId))
         .returning();
       
-      console.log('🗄️ STORAGE: Database update result:', result);
-      console.log('🗄️ STORAGE: Number of updated records:', result.length);
-      
       if (result.length > 0) {
-        console.log('🗄️ STORAGE: Contract successfully updated, new status:', result[0].status);
+        console.log('✅ STORAGE: Contract successfully signed');
         return result[0];
       } else {
-        console.log('🗄️ STORAGE: ERROR - No records updated, contract may not exist');
-        return null;
+        throw new Error('Failed to update contract');
       }
     } catch (error) {
-      console.error('🗄️ STORAGE: Error updating contract:', error);
+      console.error('🗄️ STORAGE: Error signing contract:', error);
       throw error;
     }
   }
