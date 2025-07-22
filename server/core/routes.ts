@@ -488,6 +488,60 @@ export async function registerRoutes(app: Express) {
         }
       }
       
+      // CRITICAL MISSING FEATURE: Send confirmation emails to both parties after successful signing
+      console.log('📧 Sending contract signing confirmation emails...');
+      try {
+        const userSettings = await storage.getSettings(updatedContract.userId);
+        
+        // Send signed contract email to CLIENT
+        console.log('📧 Sending signed contract to client:', updatedContract.clientEmail);
+        const clientEmailResult = await mailgunService.sendContractEmail(
+          updatedContract,
+          userSettings,
+          'Contract signed confirmation',
+          { 
+            signedAt: updateData.signedAt,
+            signatureName: updatedContract.clientName,
+            clientIpAddress: ipAddress || 'Contract Signing Page'
+          }
+        );
+        
+        // Send signed contract notification to MUSICIAN (business owner)
+        if (userSettings?.emailAddress) {
+          console.log('📧 Sending signed contract notification to musician:', userSettings.emailAddress);
+          const musicianEmailData = {
+            to: userSettings.emailAddress,
+            from: `MusoBuddy <noreply@mg.musobuddy.com>`,
+            subject: `Contract Signed ✓ - ${updatedContract.contractNumber}`,
+            html: `
+              <h2>Great news! Your contract has been signed</h2>
+              <p><strong>Contract:</strong> ${updatedContract.contractNumber}</p>
+              <p><strong>Client:</strong> ${updatedContract.clientName}</p>
+              <p><strong>Event Date:</strong> ${new Date(updatedContract.eventDate).toLocaleDateString('en-GB')}</p>
+              <p><strong>Venue:</strong> ${updatedContract.venue}</p>
+              <p><strong>Fee:</strong> £${updatedContract.fee}</p>
+              <p><strong>Signed At:</strong> ${new Date(updateData.signedAt).toLocaleString('en-GB')}</p>
+              <hr>
+              <p>Your booking is now confirmed. You can view the signed contract in your dashboard.</p>
+              <p><em>Powered by MusoBuddy</em></p>
+            `
+          };
+          
+          const musicianEmailResult = await mailgunService.sendEmail(musicianEmailData);
+          console.log('📧 Musician notification email sent:', musicianEmailResult);
+        }
+        
+        if (clientEmailResult) {
+          console.log('✅ Contract signing confirmation emails sent successfully');
+        } else {
+          console.log('⚠️ Contract signing email failed but contract was still signed');
+        }
+        
+      } catch (emailError) {
+        console.error('❌ Failed to send contract signing confirmation emails:', emailError);
+        // Don't fail the signing process if emails fail
+      }
+      
       res.json({ success: true, contract: updatedContract });
     } catch (error) {
       console.error('Contract signing error:', error);
