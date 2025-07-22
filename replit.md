@@ -142,6 +142,8 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Operational Constraints**: ✅ HTML generation uses 200-300MB memory vs 100MB for PDFKit, 2-3 second generation vs 1 second
 - **Professional Formatting**: ✅ Colored headers, alternating table rows, professional signature blocks, complete legal footer
 - **Default Behavior**: ✅ Normal contract downloads now use HTML system, legacy PDFKit available with ?pdfkit=true
+- **System Dependencies Fixed**: ✅ Puppeteer properly configured with system Chromium path (/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium)
+- **Robust Fallback**: ✅ Intelligent fallback to PDFKit when HTML generation fails, ensuring zero downtime for contract generation
 
 ### 2025-07-22 - Contract System Code Consolidation + Dead Code Removal
 - **PDF Download Route Fixed**: ✅ Added missing `/api/contracts/:id/download` route that properly generates and serves PDF content instead of HTML

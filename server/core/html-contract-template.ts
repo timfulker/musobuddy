@@ -432,7 +432,7 @@ export async function generateHTMLContractPDF(contract: any, userSettings: any):
   try {
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -466,34 +466,6 @@ export async function generateHTMLContractPDF(contract: any, userSettings: any):
     
   } catch (error) {
     console.error('❌ Puppeteer PDF generation failed:', error);
-    console.log('🔄 Falling back to external PDF service...');
-    
-    // Fallback to external PDF service (HTMLCSSto PDF API)
-    try {
-      const response = await fetch('https://htmlcsstoimage.com/demo_run/pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          html: html,
-          css: '', // CSS is embedded in HTML
-          google_fonts: 'Arial',
-          format: 'A4',
-          width: 794,
-          height: 1123
-        })
-      });
-      
-      if (response.ok) {
-        const pdfBuffer = Buffer.from(await response.arrayBuffer());
-        console.log('✅ External PDF service generated contract, size:', pdfBuffer.length, 'bytes');
-        return pdfBuffer;
-      }
-    } catch (externalError) {
-      console.error('❌ External PDF service failed:', externalError);
-    }
-    
-    throw new Error(`HTML PDF generation failed: ${error.message}. Try using ?pdfkit=true for legacy generation.`);
+    throw new Error(`HTML PDF generation failed: ${error.message}`);
   }
 }
