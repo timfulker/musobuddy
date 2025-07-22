@@ -548,45 +548,81 @@ export async function registerRoutes(app: Express) {
         }, contract.userId);
       }
       
-      // RESTORED ORIGINAL WORKING CONFIRMATION EMAIL SYSTEM
-      console.log('🔥 CONTRACT SIGNING: Sending confirmation emails to both parties...');
-      console.log('🔥 CONTRACT SIGNING: Contract ID:', contractId, 'Updated contract:', !!updatedContract);
+      // Send confirmation emails with download links (no PDF generation)
       try {
-        // Import the working sendEmail function from the original system
+        console.log('🔥 CONTRACT SIGNING: Attempting to retrieve user settings for userId:', contract.userId);
+        const userSettings = await storage.getUserSettings(contract.userId);
+        console.log('🔥 CONTRACT SIGNING: User settings retrieved successfully:', !!userSettings);
+        
         console.log('🔥 CONTRACT SIGNING: Importing sendEmail function...');
         const { sendEmail } = await import('./mailgun-email-restored');
         console.log('🔥 CONTRACT SIGNING: sendEmail function imported successfully');
-        const userSettings = await storage.getSettings(updatedContract.userId);
         
-        // Get email settings
-        const fromName = userSettings?.businessName || userSettings?.emailFromName || 'MusoBuddy';
+        console.log('🔥 CONTRACT SIGNING: Starting confirmation email process');
+        console.log('🔥 CONTRACT SIGNING: User settings:', userSettings);
+        console.log('🔥 CONTRACT SIGNING: Contract data:', {
+          id: contract.id,
+          contractNumber: contract.contractNumber,
+          clientName: contract.clientName,
+          clientEmail: contract.clientEmail,
+          eventDate: contract.eventDate,
+          eventTime: contract.eventTime,
+          venue: contract.venue,
+          fee: contract.fee,
+          userId: contract.userId
+        });
+        
+        // Generate contract URLs - prioritize CloudFlare for signed contracts
+        const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
+        const contractDownloadUrl = `https://${currentDomain}/api/contracts/${signedContract.id}/download`;
+        
+        // Use CloudFlare URL for viewing if available, otherwise fall back to app URL
+        const contractViewUrl = `https://${currentDomain}/view-contract/${signedContract.id}`;
+        
+        console.log('🔥 CONTRACT SIGNING: Domain configuration:', {
+          REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
+          currentDomain,
+          contractDownloadUrl,
+          contractViewUrl
+        });
+        
+        // Smart email handling - use authenticated domain for sending, Gmail for replies
+        const userBusinessEmail = userSettings?.businessEmail;
+        const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
+        
+        // Always use authenticated domain for FROM to avoid SPF issues
         const fromEmail = 'noreply@mg.musobuddy.com';
-        const replyToEmail = userSettings?.emailAddress || userSettings?.businessEmail || null;
-        const finalSignatureName = signature || updatedContract.clientName;
-        const clientIP = ipAddress || 'Contract Signing Page';
         
-        // Generate contract URLs for email links
-        const contractViewUrl = `https://musobuddy.replit.app/api/contracts/public/${contractId}`;
-        const contractDownloadUrl = `https://musobuddy.replit.app/api/contracts/${contractId}/download`;
+        // If user has Gmail (or other non-authenticated domain), use it as reply-to
+        const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
         
-        // EMAIL TO CLIENT: Confirmation with professional styling
+        console.log('=== CONTRACT SIGNING CONFIRMATION EMAIL ===');
+        console.log('To:', contract.clientEmail);
+        console.log('From:', `${fromName} <${fromEmail}>`);
+        console.log('Reply-To:', replyToEmail);
+        console.log('Contract download URL:', contractDownloadUrl);
+        console.log('Contract view URL:', contractViewUrl);
+        console.log('User settings:', userSettings);
+        console.log('Performer email:', userSettings?.businessEmail);
+        
+        // Email to client with download link
         const clientEmailData: any = {
-          to: updatedContract.clientEmail,
+          to: contract.clientEmail,
           from: `${fromName} <${fromEmail}>`,
-          subject: `Contract ${updatedContract.contractNumber} - Signed Successfully ✓`,
+          subject: `Contract ${contract.contractNumber} Successfully Signed ✓`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <h2 style="color: #4CAF50; margin-bottom: 20px;">Contract Signed Successfully ✓</h2>
               
-              <p>Dear ${updatedContract.clientName},</p>
-              <p>Your performance contract <strong>${updatedContract.contractNumber}</strong> has been successfully signed!</p>
+              <p>Dear ${contract.clientName},</p>
+              <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed!</p>
               
               <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0; color: #333;">Event Details</h3>
-                <p><strong>Date:</strong> ${new Date(updatedContract.eventDate).toLocaleDateString('en-GB')}</p>
-                <p><strong>Time:</strong> ${updatedContract.eventTime}</p>
-                <p><strong>Venue:</strong> ${updatedContract.venue}</p>
-                <p><strong>Fee:</strong> £${updatedContract.fee}</p>
+                <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+                <p><strong>Time:</strong> ${contract.eventTime}</p>
+                <p><strong>Venue:</strong> ${contract.venue}</p>
+                <p><strong>Fee:</strong> £${contract.fee}</p>
                 <p><strong>Signed by:</strong> ${finalSignatureName.trim()}</p>
                 <p><strong>Signed on:</strong> ${new Date().toLocaleString('en-GB')}</p>
               </div>
@@ -606,10 +642,10 @@ export async function registerRoutes(app: Express) {
               </p>
             </div>
           `,
-          text: `Contract ${updatedContract.contractNumber} successfully signed by ${finalSignatureName.trim()}. Event: ${new Date(updatedContract.eventDate).toLocaleDateString('en-GB')} at ${updatedContract.venue}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
+          text: `Contract ${contract.contractNumber} successfully signed by ${finalSignatureName.trim()}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
         };
         
-        // Add reply-to if user has external email
+        // Add reply-to if user has Gmail or other external email
         if (replyToEmail) {
           clientEmailData.replyTo = replyToEmail;
         }
@@ -632,29 +668,29 @@ export async function registerRoutes(app: Express) {
           console.log('✅ CLIENT CONFIRMATION EMAIL SENT SUCCESSFULLY');
         }
         
-        // EMAIL TO PERFORMER: Business owner notification with multiple fallback sources
+        // Email to performer (business owner) with download link
+        // Try multiple email sources for performer notification
         const performerEmail = userSettings?.businessEmail || 
                              userSettings?.email || 
-                             userSettings?.emailAddress || 
-                             'timfulker@gmail.com'; // Fallback to known email
+                             (req.user?.claims?.email);
         
         if (performerEmail) {
           const performerEmailData: any = {
             to: performerEmail,
             from: `${fromName} <${fromEmail}>`,
-            subject: `Contract ${updatedContract.contractNumber} Signed by Client ✓`,
+            subject: `Contract ${contract.contractNumber} Signed by Client ✓`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <h2 style="color: #4CAF50; margin-bottom: 20px;">Contract Signed! ✓</h2>
                 
-                <p>Great news! Contract <strong>${updatedContract.contractNumber}</strong> has been signed by ${updatedContract.clientName}.</p>
+                <p>Great news! Contract <strong>${contract.contractNumber}</strong> has been signed by ${contract.clientName}.</p>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                   <h3 style="margin-top: 0; color: #333;">Event Details</h3>
-                  <p><strong>Date:</strong> ${new Date(updatedContract.eventDate).toLocaleDateString('en-GB')}</p>
-                  <p><strong>Time:</strong> ${updatedContract.eventTime}</p>
-                  <p><strong>Venue:</strong> ${updatedContract.venue}</p>
-                  <p><strong>Fee:</strong> £${updatedContract.fee}</p>
+                  <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+                  <p><strong>Time:</strong> ${contract.eventTime}</p>
+                  <p><strong>Venue:</strong> ${contract.venue}</p>
+                  <p><strong>Fee:</strong> £${contract.fee}</p>
                 </div>
                 
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3; margin: 20px 0;">
@@ -677,7 +713,7 @@ export async function registerRoutes(app: Express) {
                 </p>
               </div>
             `,
-            text: `Contract ${updatedContract.contractNumber} signed by ${finalSignatureName.trim()} on ${new Date().toLocaleString('en-GB')}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
+            text: `Contract ${contract.contractNumber} signed by ${finalSignatureName.trim()} on ${new Date().toLocaleString('en-GB')}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
           };
           
           // Add reply-to for performer email too
@@ -703,25 +739,30 @@ export async function registerRoutes(app: Express) {
             console.log('✅ PERFORMER CONFIRMATION EMAIL SENT SUCCESSFULLY');
           }
         } else {
-          console.warn('⚠️ No performer email available - checked businessEmail, email, and emailAddress');
+          console.warn('⚠️ No performer email available - checked businessEmail, email, and user claims');
           console.warn('UserSettings:', userSettings);
+          console.warn('User claims:', req.user?.claims);
         }
       } catch (emailError) {
         console.error("❌ CRITICAL ERROR: Failed to send confirmation emails:", emailError);
         console.error("Email error details:", {
-          message: emailError?.message,
-          stack: emailError?.stack,
-          name: emailError?.name,
-          status: emailError?.status,
-          type: emailError?.type
+          message: emailError.message,
+          stack: emailError.stack,
+          name: emailError.name,
+          status: emailError.status,
+          type: emailError.type
         });
         // Don't fail the signing process if email fails
       }
       
-      res.json({ success: true, contract: updatedContract });
+      res.json({ 
+        message: "Contract signed successfully",
+        contract: signedContract 
+      });
+      
     } catch (error) {
-      console.error('Contract signing error:', error);
-      res.status(500).json({ error: 'Failed to sign contract' });
+      console.error("Error signing contract:", error);
+      res.status(500).json({ message: "Failed to sign contract" });
     }
   });
 
