@@ -158,7 +158,7 @@ export async function registerRoutes(app: Express) {
       // FIXED: Pass customMessage as subject parameter
       const emailSubject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
       
-      await mailgunService.sendContractEmail(contract, userSettings, emailSubject, signingUrl);
+      const emailResult = await mailgunService.sendContractEmail(contract, userSettings, emailSubject, signingUrl);
       
       // Update contract status to 'sent' when email is successfully sent
       await storage.updateContract(contractId, {
@@ -171,7 +171,8 @@ export async function registerRoutes(app: Express) {
         success: true,
         message: 'Contract email sent successfully via Mailgun',
         recipient: contract.clientEmail,
-        messageId: result.id || 'No ID returned'
+        messageId: emailResult?.id || 'No ID returned',
+        signingUrl: signingUrl
       });
       
     } catch (error: any) {

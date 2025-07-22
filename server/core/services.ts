@@ -99,11 +99,15 @@ export class MailgunService {
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
         const chunks: Buffer[] = [];
 
-        doc.on('data', chunks.push.bind(chunks));
+        doc.on('data', (chunk) => chunks.push(chunk));
         doc.on('end', () => {
           const pdfBuffer = Buffer.concat(chunks);
           console.log('✅ Professional PDF contract generated, size:', pdfBuffer.length, 'bytes');
           resolve(pdfBuffer);
+        });
+        doc.on('error', (error) => {
+          console.error('❌ PDF generation error:', error);
+          reject(error);
         });
 
         // Professional header with branding
