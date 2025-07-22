@@ -133,6 +133,18 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-07-22 - Cloudflare URL Generation Fixed & View Signed Copies Restored
+- **Contract Signing URLs Working**: ✅ Contract signing pages properly use Cloudflare R2 URLs and function correctly
+- **View Signed Copies Fix**: ✅ Fixed "View Signed Copies" button to use Cloudflare URLs instead of local routes - now opens actual signed contract pages
+- **Import Mismatch Resolved**: ✅ Fixed routes.ts import to properly use cloudStorageService from services.ts instead of missing direct imports
+- **Hardcoded URL Fix**: ✅ Replaced hardcoded "musobuddy.replit.app" URLs with relative paths in contract signing JavaScript
+- **Environment Variable Debug**: ✅ Added comprehensive R2 environment variable validation in CloudStorageService constructor
+- **Function Signature Match**: ✅ Aligned cloudStorageService.uploadContractSigningPage to return {url, key} format as expected by routes.ts
+- **Missing userId Parameters**: ✅ Added missing userId parameters to all storage.updateContract calls to prevent database errors
+- **Cloud Storage Error Handling**: ✅ Added detailed logging for cloud storage upload process to identify failures quickly
+- **Fallback Logic**: ✅ Modified handleViewSignedContract to use Cloudflare URLs when available, local view as fallback for older contracts
+- **Status**: Contract signing fully operational on Cloudflare, view signed copies now opens actual Cloudflare-hosted contract pages
+
 ### 2025-07-22 - Production Server Crash Resolution & Static File Path Fix
 - **Critical Server Crash Fixed**: ✅ Identified and resolved production server 500 errors caused by static file path mismatch between server/vite.ts and vite.config.ts
 - **Static File Serving Corrected**: ✅ Created server/static-serve.ts with correct path to dist/public directory, bypassing restricted vite.ts file

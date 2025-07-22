@@ -418,8 +418,14 @@ export default function Contracts() {
   };
 
   const handleViewSignedContract = (contract: Contract) => {
-    // Navigate to view contract page in same window
-    setLocation(`/view-contract/${contract.id}`);
+    // Use Cloudflare URL if available, fallback to local view
+    if (contract.cloudStorageUrl) {
+      // Open Cloudflare signed contract page directly
+      window.open(contract.cloudStorageUrl, '_blank');
+    } else {
+      // Fallback to local view for older contracts
+      setLocation(`/view-contract/${contract.id}`);
+    }
   };
 
   const handleSelectContract = (contractId: number) => {
