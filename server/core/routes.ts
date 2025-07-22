@@ -783,6 +783,7 @@ export async function registerRoutes(app: Express) {
       }
       
       res.json({ 
+        success: true,
         message: "Contract signed successfully",
         contract: signedContract 
       });
