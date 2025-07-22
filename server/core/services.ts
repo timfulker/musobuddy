@@ -22,42 +22,41 @@ export class MailgunService {
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
     const domain = 'mg.musobuddy.com';
     
-    console.log('📧 Sending contract email with PDF attachment:', {
+    console.log('📧 Sending contract email with PDF attachment');
+    console.log('📧 Config check:', {
       domain,
       to: contract.clientEmail,
       apiKeyExists: !!process.env.MAILGUN_API_KEY,
-      apiKeyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 10) + '...',
-      signingUrl
+      contractId: contract.id
     });
-
-    // Generate PDF attachment using PDFKit (Chrome-free)
-    const pdfBuffer = await this.generateContractPDF(contract, userSettings);
     
-    // Create proper email data object for Mailgun
-    const emailData = {
-      from: `MusoBuddy <noreply@${domain}>`,
-      to: contract.clientEmail,
-      subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
-      html: this.generateContractEmailHTML(contract, userSettings, signingUrl),
-      attachment: [
-        {
-          data: pdfBuffer,
-          filename: `Contract-${contract.contractNumber || contract.id}.pdf`,
-          contentType: 'application/pdf'
-        }
-      ]
-    };
-
     try {
-      const result = await this.mailgun.messages.create(domain, emailData);
-      console.log('✅ Email sent successfully with PDF attachment:', result.id);
-      return result;
-    } catch (error: any) {
-      console.error('❌ Mailgun error details:', {
-        status: error.status,
-        message: error.message,
-        details: error.details
+      // Generate PDF attachment using PDFKit (Chrome-free!)
+      console.log('📄 Generating PDF...');
+      const pdfBuffer = await this.generateContractPDF(contract, userSettings);
+      console.log('✅ PDF generated successfully, size:', pdfBuffer.length);
+      
+      // Create FormData for Mailgun with attachment (WORKING FORMAT)
+      const form = new formData();
+      form.append('from', `MusoBuddy <noreply@${domain}>`);
+      form.append('to', contract.clientEmail);
+      form.append('subject', subject || `Contract ready for signing - ${contract.contractNumber}`);
+      form.append('html', this.generateContractEmailHTML(contract, userSettings, signingUrl));
+      
+      // Add PDF as attachment (CORRECT FORMAT)
+      form.append('attachment', pdfBuffer, {
+        filename: `Contract-${contract.contractNumber}.pdf`,
+        contentType: 'application/pdf'
       });
+
+      console.log('📧 Sending email via Mailgun...');
+      const result = await this.mailgun.messages.create(domain, form);
+      console.log('✅ Contract email with PDF sent successfully:', result.id);
+      return result;
+      
+    } catch (error: any) {
+      console.error('❌ Contract email error:', error);
+      console.error('❌ Error stack:', error.stack);
       throw error;
     }
   }
