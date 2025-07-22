@@ -22,34 +22,24 @@ export class MailgunService {
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
     const domain = 'mg.musobuddy.com';
     
-    // Generate PDF attachment - this was working last week
-    const pdfBuffer = await this.generateContractPDF(contract, userSettings);
-    
     console.log('📧 Sending contract email with config:', {
       domain,
       to: contract.clientEmail,
       apiKeyExists: !!process.env.MAILGUN_API_KEY,
       apiKeyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 10) + '...',
-      hasPdfAttachment: !!pdfBuffer
+      signingUrl
     });
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
       to: contract.clientEmail,
       subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
-      html: this.generateContractEmailHTML(contract, userSettings, signingUrl),
-      attachment: [
-        {
-          data: pdfBuffer,
-          filename: `Contract-${contract.contractNumber || contract.id}.pdf`,
-          contentType: 'application/pdf'
-        }
-      ]
+      html: this.generateContractEmailHTML(contract, userSettings, signingUrl)
     };
 
     try {
       const result = await this.mailgun.messages.create(domain, emailData);
-      console.log('✅ Email sent successfully with PDF attachment:', result.id);
+      console.log('✅ Email sent successfully with signing link:', result.id);
       return result;
     } catch (error: any) {
       console.error('❌ Mailgun error details:', {
