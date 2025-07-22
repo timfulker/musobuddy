@@ -192,6 +192,33 @@ export class Storage {
     return { id, ...updates };
   }
 
+  // Contract signing methods (missing methods that routes.ts calls)
+  async getContractById(id: number) {
+    const result = await db.select().from(contracts).where(eq(contracts.id, id));
+    return result[0] || null;
+  }
+
+  async getUserSettings(userId: string) {
+    const result = await db.select().from(userSettings).where(eq(userSettings.userId, userId));
+    return result[0] || null;
+  }
+
+  async signContract(contractId: number, signatureData: any) {
+    const result = await db.update(contracts)
+      .set({
+        status: 'signed',
+        clientSignature: signatureData.signatureName,
+        signedAt: signatureData.signedAt,
+        clientPhone: signatureData.clientPhone,
+        clientAddress: signatureData.clientAddress,
+        venueAddress: signatureData.venueAddress,
+        updatedAt: new Date()
+      })
+      .where(eq(contracts.id, contractId))
+      .returning();
+    return result[0] || null;
+  }
+
   // Admin functions
   async getAllUsers() {
     return await db.select().from(users).orderBy(desc(users.createdAt));
