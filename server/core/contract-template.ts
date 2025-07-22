@@ -20,16 +20,8 @@ export async function generateAndyUrquhartContract(contract: any, userSettings: 
         reject(error);
       });
 
-      // MusoBuddy Logo - Purple rectangle in top right
-      console.log('🎨 Drawing MusoBuddy logo...');
-      doc.fillColor('#8B5CF6')
-         .rect(450, 50, 80, 30)
-         .fill();
-
-      doc.fillColor('#FFFFFF')
-         .fontSize(10)
-         .font('Helvetica-Bold')
-         .text('MusoBuddy', 465, 62);
+      // Simple header without logo - matching Andy Urquahart template
+      console.log('🎨 Simple header layout...');
 
       // Header
       console.log('📝 Adding header...');
@@ -50,95 +42,93 @@ export async function generateAndyUrquhartContract(contract: any, userSettings: 
          .font('Helvetica')
          .text(`(${dateStr} - ${contract.clientName || 'Client'})`, 50, 160, { align: 'center' });
 
-      // DRAFT in orange
+      // DRAFT label centered - matching Andy template 
       console.log('🟠 Adding DRAFT label...');
-      doc.fillColor('#FF8C00')
+      doc.fillColor('#000000')
          .fontSize(14)
          .font('Helvetica-Bold')
          .text('DRAFT', 50, 190, { align: 'center' });
 
-      // Purple separator line
-      console.log('💜 Drawing separator line...');
-      doc.strokeColor('#8B5CF6')
-         .lineWidth(4)
-         .moveTo(50, 220)
-         .lineTo(545, 220)
-         .stroke();
+      // Clean spacing without purple line - matching Andy template
+      console.log('💜 Clean spacing layout...');
 
       // Performer Details
       console.log('👤 Adding performer details...');
       doc.fillColor('#000000')
          .fontSize(18)
          .font('Helvetica-Bold')
-         .text('Performer Details', 50, 250);
+         .text('Performer Details', 50, 230);
 
       doc.fontSize(16)
          .font('Helvetica-Bold')
-         .text('Tim Fulker', 50, 280);
+         .text('Tim Fulker', 50, 260);
 
       doc.fontSize(12)
          .font('Helvetica')
-         .text('59, Gloucester Rd Bournemouth Dorset BH7 6JA', 50, 305)
-         .text('Phone: 07765190034', 50, 325)
-         .text('Email: timfulkermusic@gmail.com', 50, 345);
+         .text('59, Gloucester Rd Bournemouth Dorset BH7 6JA', 50, 285)
+         .text('Phone: 07765190034', 50, 305)
+         .text('Email: timfulkermusic@gmail.com', 50, 325);
 
-      // Event Details with simple table
+      // Event Details - Simple text layout like Andy Urquahart template
       console.log('📋 Drawing event details table...');
       doc.fontSize(18)
          .font('Helvetica-Bold')
-         .text('Event Details', 50, 385);
+         .text('Event Details', 50, 365);
 
-      // Table data
-      const tableData = [
-        ['Client Name', contract.clientName || ''],
-        ['Client Email', contract.clientEmail || ''],
-        ['Client Address', contract.clientAddress || ''],
-        ['Client Phone', contract.clientPhone || ''],
-        ['Event Date', eventDate.toLocaleDateString('en-GB', { 
-          weekday: 'long', 
-          day: 'numeric', 
-          month: 'long', 
-          year: 'numeric' 
-        })],
-        ['Event Time', contract.eventTime || ''],
-        ['Venue', contract.venue || ''],
-        ['Performance Fee', `£${parseFloat(contract.fee || 0).toFixed(2)}`]
-      ];
+      // Simple text layout with proper spacing - exactly like Andy's template
+      let currentY = 410;
+      const lineHeight = 25;
 
-      // Draw table rows
-      let startY = 420;
-      const rowHeight = 25;
-      const leftColWidth = 120;
-      const rightColWidth = 300;
+      doc.fontSize(12)
+         .font('Helvetica');
 
-      tableData.forEach((row, index) => {
-        const y = startY + (index * rowHeight);
+      // Client Name
+      doc.text('Client Name', 60, currentY)
+         .text(contract.clientName || '', 250, currentY);
+      currentY += lineHeight;
 
-        // Alternating row background
-        if (index % 2 === 0) {
-          doc.fillColor('#F8F9FA')
-             .rect(50, y - 2, leftColWidth + rightColWidth, rowHeight)
-             .fill();
-        }
+      // Client Email  
+      doc.text('Client Email', 60, currentY)
+         .text(contract.clientEmail || '', 250, currentY);
+      currentY += lineHeight;
 
-        // Draw borders
-        doc.strokeColor('#DDDDDD')
-           .lineWidth(0.5)
-           .rect(50, y - 2, leftColWidth, rowHeight)
-           .stroke()
-           .rect(50 + leftColWidth, y - 2, rightColWidth, rowHeight)
-           .stroke();
+      // Client Address
+      doc.text('Client Address', 60, currentY)
+         .text(contract.clientAddress || '', 250, currentY);
+      currentY += lineHeight;
 
-        // Add text
-        doc.fillColor('#000000')
-           .fontSize(11)
-           .font('Helvetica')
-           .text(row[0], 55, y + 5, { width: leftColWidth - 10 })
-           .text(row[1], 55 + leftColWidth, y + 5, { width: rightColWidth - 10 });
-      });
+      // Client Phone
+      doc.text('Client Phone', 60, currentY)
+         .text(contract.clientPhone || '', 250, currentY);
+      currentY += lineHeight;
+
+      // Event Date
+      doc.text('Event Date', 60, currentY)
+         .text(eventDate.toLocaleDateString('en-GB', { 
+           weekday: 'long', 
+           day: 'numeric', 
+           month: 'long', 
+           year: 'numeric' 
+         }), 250, currentY);
+      currentY += lineHeight;
+
+      // Event Time
+      doc.text('Event Time', 60, currentY)
+         .text(contract.eventTime || '', 250, currentY);
+      currentY += lineHeight;
+
+      // Venue
+      doc.text('Venue', 60, currentY)
+         .text(contract.venue || '', 250, currentY);
+      currentY += lineHeight;
+
+      // Performance Fee
+      doc.text('Performance Fee', 60, currentY)
+         .text(`£${parseFloat(contract.fee || 0).toFixed(2)}`, 250, currentY);
+      currentY += lineHeight;
 
       // Terms and Conditions
-      const termsY = startY + (tableData.length * rowHeight) + 30;
+      const termsY = currentY + 40;
 
       console.log('📄 Adding terms and conditions...');
       doc.fontSize(18)
