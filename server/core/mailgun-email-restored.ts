@@ -1,7 +1,7 @@
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import type { Contract, Invoice, UserSettings } from '@shared/schema';
-import { generateContractPDF, generateInvoicePDF } from './pdf-generator-original';
+import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
 import { uploadContractToCloud, uploadInvoiceToCloud, isCloudStorageConfigured } from './cloud-storage';
 import { storage } from './storage';
 

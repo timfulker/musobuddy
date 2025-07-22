@@ -520,6 +520,9 @@ export async function registerRoutes(app: Express) {
       
       if (contract.status !== 'sent') {
         console.log('🔥 CONTRACT SIGNING: ERROR - Contract is not available for signing, status:', contract.status);
+        if (contract.status === 'signed') {
+          return res.status(400).json({ message: "Contract has already been signed" });
+        }
         return res.status(400).json({ message: "Contract is not available for signing" });
       }
       
