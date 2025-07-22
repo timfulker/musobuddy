@@ -517,6 +517,7 @@ export async function registerRoutes(app: Express) {
       }
       
       console.log('🔥 CONTRACT SIGNING: Contract retrieved:', contract.contractNumber, 'status:', contract.status);
+      console.log('🔥 CONTRACT SIGNING: Full contract data:', JSON.stringify(contract, null, 2));
       
       if (contract.status !== 'sent') {
         console.log('🔥 CONTRACT SIGNING: ERROR - Contract is not available for signing, status:', contract.status);
@@ -558,6 +559,11 @@ export async function registerRoutes(app: Express) {
       }
       
       console.log('🔥 CONTRACT SIGNING: Contract successfully signed, proceeding to confirmation emails...');
+      
+      // **DEBUG: Re-fetch the contract to verify status update**
+      const updatedContract = await storage.getContractById(contractId);
+      console.log('🔥 CONTRACT SIGNING: DEBUG - Contract status after signing:', updatedContract?.status);
+      console.log('🔥 CONTRACT SIGNING: DEBUG - Contract signedAt after signing:', updatedContract?.signedAt);
       
       // Update booking to reflect contract being signed
       if (contract.enquiryId) {
