@@ -101,13 +101,13 @@ export class MailgunService {
         fee: contract.fee
       }, null, 2));
       
-      console.log('📥 Importing NEW contract template...');
-      const { generateAndyUrquhartContract } = await import('./contract-template.js');
-      console.log('✅ NEW Template imported successfully');
+      console.log('📥 Testing PROFESSIONAL contract template...');
+      const { generateProfessionalContract } = await import('./new-contract-template.js');
+      console.log('✅ Professional Template imported successfully');
       
-      console.log('🎯 Calling NEW generateAndyUrquhartContract...');
-      const result = await generateAndyUrquhartContract(contract, userSettings);
-      console.log('✅ NEW generateAndyUrquhartContract completed, buffer size:', result.length);
+      console.log('🎯 Calling PROFESSIONAL generateProfessionalContract...');
+      const result = await generateProfessionalContract(contract, userSettings);
+      console.log('✅ PROFESSIONAL generateProfessionalContract completed, buffer size:', result.length);
       
       return result;
     } catch (error: any) {
