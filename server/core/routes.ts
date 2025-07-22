@@ -527,6 +527,16 @@ export async function registerRoutes(app: Express) {
       const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
       
       // Update contract with signature and client-fillable fields
+      console.log('🔥 CONTRACT SIGNING: About to call storage.signContract with data:', {
+        contractId,
+        signatureName: finalSignatureName.trim(),
+        clientIP,
+        signedAt: new Date(),
+        clientPhone: clientPhone?.trim(),
+        clientAddress: clientAddress?.trim(),
+        venueAddress: venueAddress?.trim()
+      });
+      
       const signedContract = await storage.signContract(contractId, {
         signatureName: finalSignatureName.trim(),
         clientIP,
@@ -536,9 +546,15 @@ export async function registerRoutes(app: Express) {
         venueAddress: venueAddress?.trim()
       });
       
+      console.log('🔥 CONTRACT SIGNING: storage.signContract result:', !!signedContract);
+      console.log('🔥 CONTRACT SIGNING: Signed contract data:', signedContract);
+      
       if (!signedContract) {
+        console.log('🔥 CONTRACT SIGNING: ERROR - signContract returned null/undefined');
         return res.status(500).json({ message: "Failed to sign contract" });
       }
+      
+      console.log('🔥 CONTRACT SIGNING: Contract successfully signed, proceeding to confirmation emails...');
       
       // Update booking to reflect contract being signed
       if (contract.enquiryId) {

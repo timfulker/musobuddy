@@ -204,19 +204,39 @@ export class Storage {
   }
 
   async signContract(contractId: number, signatureData: any) {
-    const result = await db.update(contracts)
-      .set({
+    console.log('🗄️ STORAGE: signContract called with:', { contractId, signatureData });
+    
+    try {
+      const updateData = {
         status: 'signed',
-        clientSignature: signatureData.signatureName,
         signedAt: signatureData.signedAt,
         clientPhone: signatureData.clientPhone,
         clientAddress: signatureData.clientAddress,
         venueAddress: signatureData.venueAddress,
         updatedAt: new Date()
-      })
-      .where(eq(contracts.id, contractId))
-      .returning();
-    return result[0] || null;
+      };
+      
+      console.log('🗄️ STORAGE: About to update contract with data:', updateData);
+      
+      const result = await db.update(contracts)
+        .set(updateData)
+        .where(eq(contracts.id, contractId))
+        .returning();
+      
+      console.log('🗄️ STORAGE: Database update result:', result);
+      console.log('🗄️ STORAGE: Number of updated records:', result.length);
+      
+      if (result.length > 0) {
+        console.log('🗄️ STORAGE: Contract successfully updated, new status:', result[0].status);
+        return result[0];
+      } else {
+        console.log('🗄️ STORAGE: ERROR - No records updated, contract may not exist');
+        return null;
+      }
+    } catch (error) {
+      console.error('🗄️ STORAGE: Error updating contract:', error);
+      throw error;
+    }
   }
 
   // Admin functions
