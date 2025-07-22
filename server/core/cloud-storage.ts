@@ -225,13 +225,56 @@ function generateContractSigningPageHTML(
         <p>Please review the contract details above and click below to sign digitally.</p>
         
         <div style="margin: 30px 0;">
-          <a href="https://musobuddy.replit.app/sign-contract/${contract.id}" class="sign-button">
+          <button onclick="openSigningForm()" class="sign-button">
             📝 Sign Contract Online
-          </a>
+          </button>
           
           <a href="https://musobuddy.replit.app/api/contracts/${contract.id}/download" class="download-button">
             📄 Download PDF
           </a>
+        </div>
+        
+        <div id="signingForm" style="display: none; margin-top: 30px; text-align: left; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <h4>Digital Signature</h4>
+          <div style="margin: 15px 0;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Full Name (as it appears on the contract):</label>
+            <input type="text" id="clientName" value="${contract.clientName}" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px;">
+          </div>
+          
+          <div style="margin: 15px 0;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Type your signature:</label>
+            <input type="text" id="typedSignature" placeholder="Type your full name as your signature" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px; font-family: 'Brush Script MT', cursive, serif; font-size: 18px;">
+          </div>
+          
+          <div style="margin: 15px 0;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Phone (optional):</label>
+            <input type="tel" id="clientPhone" placeholder="Your contact number" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px;">
+          </div>
+          
+          <div style="margin: 20px 0;">
+            <label style="display: flex; align-items: center;">
+              <input type="checkbox" id="agreeTerms" style="margin-right: 10px;">
+              <span>I agree to the terms and conditions of this contract</span>
+            </label>
+          </div>
+          
+          <button onclick="submitSignature()" id="submitBtn" class="sign-button" style="width: 100%;">
+            ✅ Submit Digital Signature
+          </button>
+          
+          <div id="loading" style="display: none; text-align: center; margin-top: 20px;">
+            <p>Processing signature...</p>
+          </div>
+          
+          <div id="successMessage" style="display: none; background: #dcfce7; border: 1px solid #16a34a; color: #166534; padding: 15px; border-radius: 8px; margin-top: 20px;">
+            <h4>✅ Contract Signed Successfully!</h4>
+            <p>Thank you! Your signature has been recorded and both parties will receive confirmation emails.</p>
+          </div>
+          
+          <div id="errorMessage" style="display: none; background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 15px; border-radius: 8px; margin-top: 20px;">
+            <h4>❌ Signature Error</h4>
+            <p id="errorText">There was an error processing your signature. Please try again.</p>
+          </div>
         </div>
         
         <p style="font-size: 14px; color: #64748b; margin-top: 20px;">
@@ -245,7 +288,76 @@ function generateContractSigningPageHTML(
       </div>
       
       <script>
-        // Simple analytics for signing page access
+        function openSigningForm() {
+          document.getElementById('signingForm').style.display = 'block';
+          document.querySelector('.sign-button').style.display = 'none';
+        }
+        
+        async function submitSignature() {
+          const typedSignature = document.getElementById('typedSignature').value.trim();
+          const agreeTerms = document.getElementById('agreeTerms').checked;
+          const submitBtn = document.getElementById('submitBtn');
+          
+          // Validation
+          if (!typedSignature) {
+            alert('Please type your signature before submitting.');
+            return;
+          }
+          
+          if (!agreeTerms) {
+            alert('Please agree to the terms and conditions.');
+            return;
+          }
+          
+          // Create typed signature canvas
+          const typeCanvas = document.createElement('canvas');
+          typeCanvas.width = 350;
+          typeCanvas.height = 150;
+          const typeCtx = typeCanvas.getContext('2d');
+          
+          // Style the typed signature
+          typeCtx.fillStyle = '#1e293b';
+          typeCtx.font = '2rem "Brush Script MT", cursive, serif';
+          typeCtx.textAlign = 'center';
+          typeCtx.textBaseline = 'middle';
+          typeCtx.fillText(typedSignature, typeCanvas.width / 2, typeCanvas.height / 2);
+          
+          const signatureData = typeCanvas.toDataURL();
+          
+          // Show loading
+          document.getElementById('loading').style.display = 'block';
+          submitBtn.disabled = true;
+          
+          try {
+            const response = await fetch('https://musobuddy.replit.app/api/contracts/sign/${contract.id}', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                clientName: document.getElementById('clientName').value,
+                signature: signatureData,
+                contractId: '${contract.id}',
+                clientPhone: document.getElementById('clientPhone').value || null
+              })
+            });
+            
+            if (response.ok) {
+              document.getElementById('successMessage').style.display = 'block';
+              document.getElementById('signingForm').style.display = 'none';
+            } else {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Failed to sign contract');
+            }
+          } catch (error) {
+            console.error('Error signing contract:', error);
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('errorText').textContent = error.message || 'There was an error processing your signature. Please try again or contact support.';
+            submitBtn.disabled = false;
+          } finally {
+            document.getElementById('loading').style.display = 'none';
+          }
+        }
+        
+        // Analytics for signing page access
         if (typeof fetch !== 'undefined') {
           fetch('https://musobuddy.replit.app/api/analytics/signing-page-view', {
             method: 'POST',
