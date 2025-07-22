@@ -432,7 +432,17 @@ export async function generateHTMLContractPDF(contract: any, userSettings: any):
   try {
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu'
+      ]
     });
     
     const page = await browser.newPage();
@@ -456,6 +466,34 @@ export async function generateHTMLContractPDF(contract: any, userSettings: any):
     
   } catch (error) {
     console.error('❌ Puppeteer PDF generation failed:', error);
-    throw new Error(`HTML PDF generation failed: ${error.message}`);
+    console.log('🔄 Falling back to external PDF service...');
+    
+    // Fallback to external PDF service (HTMLCSSto PDF API)
+    try {
+      const response = await fetch('https://htmlcsstoimage.com/demo_run/pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: html,
+          css: '', // CSS is embedded in HTML
+          google_fonts: 'Arial',
+          format: 'A4',
+          width: 794,
+          height: 1123
+        })
+      });
+      
+      if (response.ok) {
+        const pdfBuffer = Buffer.from(await response.arrayBuffer());
+        console.log('✅ External PDF service generated contract, size:', pdfBuffer.length, 'bytes');
+        return pdfBuffer;
+      }
+    } catch (externalError) {
+      console.error('❌ External PDF service failed:', externalError);
+    }
+    
+    throw new Error(`HTML PDF generation failed: ${error.message}. Try using ?pdfkit=true for legacy generation.`);
   }
 }
