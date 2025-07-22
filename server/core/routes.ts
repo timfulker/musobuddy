@@ -443,6 +443,9 @@ export async function registerRoutes(app: Express) {
     res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     
+    console.log('🚨 CONTRACT SIGNING ENDPOINT CALLED! ID:', req.params.id);
+    console.log('🚨 Request body:', JSON.stringify(req.body, null, 2));
+    
     try {
       const contractId = parseInt(req.params.id);
       const { signature, clientPhone, clientAddress, agreedToTerms, signedAt, ipAddress } = req.body;
