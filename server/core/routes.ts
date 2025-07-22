@@ -27,6 +27,143 @@ const upload = multer({
 export async function registerRoutes(app: Express) {
   const server = createServer(app);
 
+  // ===== PUBLIC CONTRACT SIGNING ROUTES (MUST BE FIRST - NO AUTHENTICATION) =====
+  // Contract signing page (PUBLIC)
+  app.get('/contracts/sign/:id', async (req, res) => {
+    try {
+      console.log('🎯 CONTRACT SIGNING ROUTE HIT:', req.params.id);
+      const contractId = parseInt(req.params.id);
+      
+      if (isNaN(contractId)) {
+        return res.status(400).send('<h1>Invalid Contract ID</h1>');
+      }
+      
+      // Check if contract exists
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).send('<h1>Contract Not Found</h1>');
+      }
+      
+      // Get user settings for branding
+      const userSettings = await storage.getSettings(contract.userId);
+      
+      // Generate contract signing page
+      const signingPageHTML = await mailgunService.generateContractSigningPageHTML(contract, userSettings);
+      res.send(signingPageHTML);
+      
+    } catch (error: any) {
+      console.error('❌ Contract signing page error:', error);
+      res.status(500).send('<h1>Server Error</h1><p>Unable to load contract signing page.</p>');
+    }
+  });
+
+  // Contract signing OPTIONS (PUBLIC - for CORS)
+  app.options('/api/contracts/sign/:id', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(200).end();
+  });
+
+  // Contract signing API (PUBLIC)
+  app.post('/api/contracts/sign/:id', async (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    
+    try {
+      console.log('🔥 CONTRACT SIGNING: Starting contract signing process');
+      const contractId = parseInt(req.params.id);
+      const { signatureName, clientName, signature, clientPhone, clientAddress, venueAddress } = req.body;
+      
+      const finalSignatureName = signatureName || clientName;
+      
+      if (!finalSignatureName || !finalSignatureName.trim()) {
+        return res.status(400).json({ message: "Signature name is required" });
+      }
+      
+      // Get contract and verify it can be signed
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      // CRITICAL FIX: Check if already signed
+      if (contract.status === 'signed') {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Contract already signed');
+        return res.status(400).json({ 
+          message: "Contract has already been signed",
+          alreadySigned: true,
+          signedAt: contract.signedAt,
+          signedBy: contract.clientName
+        });
+      }
+      
+      if (contract.status !== 'sent') {
+        return res.status(400).json({ message: "Contract is not available for signing" });
+      }
+      
+      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      
+      // Prepare signature details
+      const signatureDetails = {
+        signedAt: new Date(),
+        signatureName: finalSignatureName.trim(),
+        clientIpAddress: clientIP
+      };
+      
+      // Sign contract
+      const signedContract = await storage.signContract(contractId, {
+        signatureName: finalSignatureName.trim(),
+        clientIP,
+        signedAt: signatureDetails.signedAt,
+        clientPhone: clientPhone?.trim(),
+        clientAddress: clientAddress?.trim(),
+        venueAddress: venueAddress?.trim()
+      });
+      
+      if (!signedContract) {
+        return res.status(500).json({ message: "Failed to sign contract" });
+      }
+      
+      // Upload to cloud storage and send confirmation emails
+      try {
+        const userSettings = await storage.getSettings(contract.userId);
+        
+        const { uploadContractToCloud } = await import('./cloud-storage');
+        const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
+        
+        if (cloudResult.success && cloudResult.url) {
+          await storage.updateContract(contractId, {
+            cloudStorageUrl: cloudResult.url,
+            cloudStorageKey: cloudResult.key,
+            signingUrlCreatedAt: new Date()
+          }, contract.userId);
+        }
+        
+        // Send confirmation emails
+        const { sendContractConfirmationEmails } = await import('./mailgun-email-restored');
+        await sendContractConfirmationEmails(signedContract, userSettings);
+        
+      } catch (emailError: any) {
+        console.error('❌ Email/cloud error (contract still signed):', emailError);
+      }
+      
+      return res.json({
+        success: true,
+        message: "Contract signed successfully! Both parties have been notified.",
+        signedAt: signatureDetails.signedAt,
+        signedBy: finalSignatureName.trim()
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Contract signing error:', error);
+      return res.status(500).json({ 
+        message: "An error occurred while signing the contract. Please try again." 
+      });
+    }
+  });
+
   // ===== BOOKING ROUTES =====
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
