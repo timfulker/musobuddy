@@ -103,51 +103,176 @@ export default function Admin() {
   }
 
   // Fetch admin stats
-  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<AdminStats>({
     queryKey: ['/api/admin/stats'],
     queryFn: async () => {
+      console.log('📊 Fetching admin stats...');
       const response = await fetch('/api/admin/stats', {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
-      if (!response.ok) throw new Error('Failed to fetch stats');
-      return response.json();
+      
+      console.log('📊 Admin stats response:', response.status, response.statusText);
+      
+      if (response.status === 401) {
+        console.log('❌ Admin stats: Authentication required');
+        throw new Error('Authentication required');
+      }
+      
+      if (response.status === 403) {
+        console.log('❌ Admin stats: Admin access required');
+        throw new Error('Admin access required');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Admin stats error:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Admin stats loaded:', data);
+      return data;
     },
+    retry: (failureCount, error) => {
+      // Don't retry auth errors
+      if (error.message.includes('Authentication') || error.message.includes('Admin access')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   // Fetch admin users
-  const { data: users, isLoading: usersLoading } = useQuery<AdminUser[]>({
+  const { data: users, isLoading: usersLoading, error: usersError } = useQuery<AdminUser[]>({
     queryKey: ['/api/admin/users'],
     queryFn: async () => {
+      console.log('👥 Fetching admin users...');
       const response = await fetch('/api/admin/users', {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
-      if (!response.ok) throw new Error('Failed to fetch users');
-      return response.json();
+      
+      console.log('👥 Admin users response:', response.status, response.statusText);
+      
+      if (response.status === 401) {
+        console.log('❌ Admin users: Authentication required');
+        throw new Error('Authentication required');
+      }
+      
+      if (response.status === 403) {
+        console.log('❌ Admin users: Admin access required');
+        throw new Error('Admin access required');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Admin users error:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Admin users loaded:', data.length, 'users');
+      return data;
     },
+    retry: (failureCount, error) => {
+      if (error.message.includes('Authentication') || error.message.includes('Admin access')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   // Fetch admin bookings
-  const { data: bookings, isLoading: bookingsLoading } = useQuery<AdminBooking[]>({
+  const { data: bookings, isLoading: bookingsLoading, error: bookingsError } = useQuery<AdminBooking[]>({
     queryKey: ['/api/admin/bookings'],
     queryFn: async () => {
+      console.log('📅 Fetching admin bookings...');
       const response = await fetch('/api/admin/bookings', {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
-      if (!response.ok) throw new Error('Failed to fetch bookings');
-      return response.json();
+      
+      console.log('📅 Admin bookings response:', response.status, response.statusText);
+      
+      if (response.status === 401) {
+        console.log('❌ Admin bookings: Authentication required');
+        throw new Error('Authentication required');
+      }
+      
+      if (response.status === 403) {
+        console.log('❌ Admin bookings: Admin access required');
+        throw new Error('Admin access required');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Admin bookings error:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Admin bookings loaded:', data.length, 'bookings');
+      return data;
     },
+    retry: (failureCount, error) => {
+      if (error.message.includes('Authentication') || error.message.includes('Admin access')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   // Fetch feedback
-  const { data: feedback, isLoading: feedbackLoading } = useQuery({
+  const { data: feedback, isLoading: feedbackLoading, error: feedbackError } = useQuery({
     queryKey: ['/api/feedback'],
     queryFn: async () => {
+      console.log('💬 Fetching feedback...');
       const response = await fetch('/api/feedback', {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
-      if (!response.ok) throw new Error('Failed to fetch feedback');
-      return response.json();
+      
+      console.log('💬 Feedback response:', response.status, response.statusText);
+      
+      if (response.status === 401) {
+        console.log('❌ Feedback: Authentication required');
+        throw new Error('Authentication required');
+      }
+      
+      if (response.status === 403) {
+        console.log('❌ Feedback: Admin access required');
+        throw new Error('Admin access required');
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Feedback error:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Feedback loaded:', data.length, 'items');
+      return data;
     },
+    retry: (failureCount, error) => {
+      if (error.message.includes('Authentication') || error.message.includes('Admin access')) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   // Update user tier mutation

@@ -567,10 +567,12 @@ export async function registerRoutes(app: Express) {
         }, contract.userId);
       }
       
-      // Send confirmation emails with download links (no PDF generation)
+      // **CRITICAL FIX: Enhanced email confirmation with better error handling**
       try {
         console.log('🔥 CONTRACT SIGNING: Attempting to retrieve user settings for userId:', contract.userId);
-        const userSettings = await storage.getUserSettings(contract.userId);
+        
+        // **FIX: Use the correct function name**
+        const userSettings = await storage.getSettings(contract.userId);
         console.log('🔥 CONTRACT SIGNING: User settings retrieved successfully:', !!userSettings);
         
         console.log('🔥 CONTRACT SIGNING: Importing sendEmail function...');
