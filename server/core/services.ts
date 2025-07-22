@@ -125,24 +125,22 @@ export class MailgunService {
         }
         doc.moveDown(2);
 
-        // Performer Details Section
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
-           .text('Performer Details');
-        doc.moveDown(0.8);
+        // Performer Details Section with elegant styling
+        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1e40af')
+           .text('PERFORMER DETAILS', { align: 'left' });
+        doc.moveDown(1);
         
-        doc.fontSize(11).font('Helvetica').fillColor('#000000');
-        doc.text('Tim Fulker');
-        doc.moveDown(0.3);
+        doc.fontSize(11).font('Helvetica').fillColor('#374151');
+        doc.text('Tim Fulker', { continued: false });
+        doc.fillColor('#6b7280');
         doc.text('59, Gloucester Rd Bournemouth Dorset BH7 6JA');
-        doc.moveDown(0.3);
         doc.text('Phone: 07765190034');
-        doc.moveDown(0.3);
         doc.text('Email: timfulkermusic@gmail.com');
         doc.moveDown(2);
 
-        // Event Details Section
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
-           .text('Event Details');
+        // Event Details Section with professional styling
+        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1e40af')
+           .text('EVENT DETAILS', { align: 'left' });
         doc.moveDown(1);
         
         // Table layout matching Andy Urquahart format
@@ -151,13 +149,13 @@ export class MailgunService {
         const rightCol = 320;
         let currentY = startY;
         
-        // Helper function for table rows with exact spacing and colors
+        // Helper function for professional table rows
         const addDetailRow = (label: string, value: string) => {
-          doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
+          doc.fontSize(11).font('Helvetica-Bold').fillColor('#1e40af')
              .text(label, leftCol, currentY);
-          doc.fontSize(11).font('Helvetica').fillColor('#111827')
+          doc.fontSize(11).font('Helvetica').fillColor('#374151')
              .text(value, rightCol, currentY);
-          currentY += 20;
+          currentY += 22;
         };
         
         addDetailRow('Client Name', contract.clientName || '');
@@ -171,16 +169,16 @@ export class MailgunService {
         
         doc.y = currentY + 20;
 
-        // Terms and Conditions - exact Andy Urquahart format with colors
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
-           .text('Terms and Conditions');
-        doc.moveDown(0.5);
+        // Terms and Conditions with elegant formatting
+        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1e40af')
+           .text('TERMS AND CONDITIONS', { align: 'left' });
+        doc.moveDown(1);
         
         doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Payment Terms & Conditions');
         doc.moveDown(0.5);
         
-        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.fontSize(10).font('Helvetica').fillColor('#4b5563');
         doc.text(`Payment Due Date: Full payment of £${parseFloat(contract.fee || 0).toFixed(2)} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.`);
         doc.moveDown(0.5);
         
@@ -197,7 +195,7 @@ export class MailgunService {
            .text('Cancellation & Refund Policy');
         doc.moveDown(0.5);
         
-        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.fontSize(10).font('Helvetica').fillColor('#4b5563');
         doc.text('Client Cancellation:');
         doc.moveDown(0.3);
         doc.text('        More than 30 days before event: Any deposit paid will be refunded minus a £50');
@@ -216,7 +214,7 @@ export class MailgunService {
            .text('Force Majeure');
         doc.moveDown(0.5);
         
-        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.fontSize(10).font('Helvetica').fillColor('#4b5563');
         doc.text('Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.');
         doc.moveDown(1);
 
@@ -224,7 +222,7 @@ export class MailgunService {
            .text('Performance Contingencies');
         doc.moveDown(0.5);
         
-        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.fontSize(10).font('Helvetica').fillColor('#4b5563');
         doc.text('The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.');
         doc.moveDown(1);
 
@@ -232,7 +230,7 @@ export class MailgunService {
            .text('Professional Performance Standards');
         doc.moveDown(0.5);
         
-        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.fontSize(10).font('Helvetica').fillColor('#4b5563');
         doc.text('Payment Schedule: The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.');
         doc.moveDown(0.5);
         
@@ -257,16 +255,16 @@ export class MailgunService {
         doc.text('Professional Insurance: The performer maintains professional liability insurance as required for musical performance engagements.');
         doc.moveDown(2);
 
-        // Signatures Section
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
-           .text('Signatures');
+        // Signatures Section with professional styling
+        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1e40af')
+           .text('SIGNATURES', { align: 'left' });
         doc.moveDown(1);
         
         doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Performer');
         doc.moveDown(2);
         
-        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.fontSize(10).font('Helvetica').fillColor('#4b5563');
         doc.text('Signed by: Tim Fulker');
         doc.moveDown(0.3);
         doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`);
@@ -278,7 +276,7 @@ export class MailgunService {
            .text('Client');
         doc.moveDown(2);
         
-        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.fontSize(10).font('Helvetica').fillColor('#4b5563');
         doc.text('Status: Awaiting Signature');
         doc.moveDown(0.3);
         doc.text(`This contract has been sent to ${contract.clientEmail} for digital signature.`);
