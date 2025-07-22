@@ -32,6 +32,30 @@ export class Storage {
     return result[0];
   }
 
+  async updateUser(id: string, updates: any) {
+    const result = await db.update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateUserPassword(id: string, password: string) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await db.update(users)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteUser(id: string) {
+    const result = await db.delete(users)
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
   // Bookings
   async getBookings(userId: string) {
     return await db.select().from(bookings)

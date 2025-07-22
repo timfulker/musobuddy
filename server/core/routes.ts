@@ -1054,6 +1054,102 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Admin user management routes
+  app.post('/api/admin/users', isAdmin, async (req: any, res) => {
+    try {
+      const { firstName, lastName, email, password, tier, isAdmin } = req.body;
+      
+      // Basic validation
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+      
+      const newUser = await storage.createUser({
+        firstName,
+        lastName,
+        email,
+        password,
+        tier: tier || 'free',
+        isAdmin: isAdmin || false
+      });
+      
+      res.json(newUser);
+    } catch (error) {
+      console.error('Create user error:', error);
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  app.patch('/api/admin/users/:userId/tier', isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { tier } = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, { tier });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Update user tier error:', error);
+      res.status(500).json({ error: 'Failed to update user tier' });
+    }
+  });
+
+  app.patch('/api/admin/users/:userId/toggle-admin', isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Get current user to toggle admin status
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      const updatedUser = await storage.updateUser(userId, { 
+        isAdmin: !user.isAdmin 
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Toggle admin status error:', error);
+      res.status(500).json({ error: 'Failed to toggle admin status' });
+    }
+  });
+
+  app.post('/api/admin/users/:userId/send-credentials', isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { password } = req.body;
+      
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required' });
+      }
+      
+      // Update user password
+      const updatedUser = await storage.updateUserPassword(userId, password);
+      
+      // In a real implementation, you'd send an email here
+      // For now, just return success
+      res.json({ 
+        message: 'Password updated successfully',
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error('Send credentials error:', error);
+      res.status(500).json({ error: 'Failed to update password' });
+    }
+  });
+
+  app.delete('/api/admin/users/:userId', isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      await storage.deleteUser(userId);
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('Delete user error:', error);
+      res.status(500).json({ error: 'Failed to delete user' });
+    }
+  });
+
   // ===== DEBUG ROUTES =====
   app.get('/api/debug-data-counts', async (req, res) => {
     try {
