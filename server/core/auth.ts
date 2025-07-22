@@ -75,14 +75,14 @@ export async function setupAuthentication(app: Express): Promise<void> {
   ));
 
   passport.serializeUser((user: any, done) => {
-    console.log('📝 Serializing user:', user.id);
+    // Only log during initial serialization, not on every request
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: string, done) => {
     try {
       const user = await storage.getUser(id);
-      console.log('📖 Deserializing user:', id, user ? '✅' : '❌');
+      // Removed excessive logging - only log errors
       done(null, user || null);
     } catch (error) {
       console.error('❌ Deserialize error:', error);

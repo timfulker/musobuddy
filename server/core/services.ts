@@ -93,7 +93,7 @@ export class MailgunService {
   // AUTOMATIC PROFESSIONAL CONTRACT PDF GENERATION
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
     // Use the exact Andy Urquahart format
-    const { generateAndyUrquhartContract } = await import('./contract-template.js');
+    const { generateAndyUrquhartContract } = await import('./contract-template');
     return generateAndyUrquhartContract(contract, userSettings);
   }
 
