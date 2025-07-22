@@ -2,8 +2,7 @@ import { type Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, isAdmin } from "./auth";
-import { mailgunService, contractParserService } from "./services";
-import { uploadContractSigningPage, uploadInvoiceToCloud } from "./cloud-storage";
+import { mailgunService, contractParserService, cloudStorageService } from "./services";
 import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
 import multer from "multer";
@@ -114,15 +113,15 @@ export async function registerRoutes(app: Express) {
           cloudStorageUrl: url,
           cloudStorageKey: key,
           signingUrlCreatedAt: new Date()
-        });
+        }, req.user.id);
         
-        console.log('Contract created with cloud storage:', contract.id);
-        console.log('Signing URL:', url);
+        console.log('✅ Contract created with cloud storage:', contract.id);
+        console.log('🔗 Cloudflare signing URL:', url);
         res.json(updatedContract);
       } catch (storageError) {
-        console.error('Cloud storage error:', storageError);
-        console.log('Contract created without cloud storage - using local signing');
-        res.json(contract);
+        console.error('❌ CRITICAL: Cloud storage upload failed:', storageError);
+        console.error('❌ This prevents Cloudflare URLs from being generated');
+        throw new Error('Cloud storage required for contract signing - ' + storageError.message);
       }
     } catch (error) {
       console.error('Contract creation error:', error);
@@ -168,7 +167,7 @@ export async function registerRoutes(app: Express) {
           cloudStorageUrl: url,
           cloudStorageKey: key,
           signingUrlCreatedAt: new Date()
-        });
+        }, req.user.id);
         
         signingUrl = url;
         console.log('✅ Created R2 signing URL:', url);
@@ -190,7 +189,7 @@ export async function registerRoutes(app: Express) {
       await storage.updateContract(contractId, {
         status: 'sent',
         sentAt: new Date()
-      });
+      }, req.user.id);
       
       console.log('✅ Contract email sent successfully for contract:', contractId);
       res.json({ 

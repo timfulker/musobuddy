@@ -329,7 +329,7 @@ function generateContractSigningPageHTML(
           submitBtn.disabled = true;
           
           try {
-            const response = await fetch('https://musobuddy.replit.app/api/contracts/sign/${contract.id}', {
+            const response = await fetch('/api/contracts/sign/${contract.id}', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -359,7 +359,7 @@ function generateContractSigningPageHTML(
         
         // Analytics for signing page access
         if (typeof fetch !== 'undefined') {
-          fetch('https://musobuddy.replit.app/api/analytics/signing-page-view', {
+          fetch('/api/analytics/signing-page-view', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contractId: '${contract.id}', timestamp: Date.now() })
