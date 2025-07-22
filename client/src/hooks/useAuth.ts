@@ -1,99 +1,40 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  isAdmin: boolean;
-}
+export function useAuth() {
+  const queryClient = useQueryClient();
 
-interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  loading: boolean;
-  error: string | null;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Check authentication status on mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
-    try {
-      console.log('🔍 Checking authentication status...');
-
-      const response = await fetch('/api/auth/user', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    staleTime: 5000,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const response = await fetch("/api/auth/user", {
+        credentials: "include",
       });
 
-      if (response.ok) {
-        const userData = await response.json();
-        console.log('✅ User authenticated:', userData.email);
-        setUser(userData);
-      } else {
+      console.log('🔍 Auth check response:', response.status);
+
+      if (response.status === 401) {
         console.log('❌ User not authenticated');
-        setUser(null);
+        return null;
       }
-    } catch (error) {
-      console.error('❌ Auth check error:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const login = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('🔑 Attempting login for:', email);
-
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log('✅ Login successful:', data.email);
-        setUser(data);
-      } else {
-        console.log('❌ Login failed:', data.message);
-        throw new Error(data.message || 'Login failed');
+      if (!response.ok) {
+        console.error('❌ Auth error:', response.status, response.statusText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error: any) {
-      console.error('❌ Login error:', error);
-      setError(error.message || 'Login failed');
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const logout = async () => {
+      const userData = await response.json();
+      console.log('✅ User authenticated:', userData.email);
+      return userData;
+    },
+  });
+
+  const logout = useCallback(async () => {
     try {
-      setLoading(true);
-      console.log('🚪 Logging out...');
+      console.log('🚪 Initiating logout...');
 
       const response = await fetch('/api/logout', {
         method: 'POST',
@@ -104,43 +45,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.ok) {
-        console.log('✅ Logout successful');
-        setUser(null);
-        // Redirect to home page
-        window.location.href = '/';
+        const result = await response.json();
+        console.log('✅ Logout successful:', result);
+
+        // Clear all queries to reset the app state
+        queryClient.clear();
+
+        // Force refetch of auth status
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+        // Redirect to landing page
+        if (result.redirectTo) {
+          window.location.href = result.redirectTo;
+        } else {
+          window.location.href = '/';
+        }
       } else {
-        console.error('❌ Logout failed');
-        // Force logout on client side anyway
-        setUser(null);
-        window.location.href = '/';
+        console.error('❌ Logout failed:', response.status, response.statusText);
+
+        // Even if server logout fails, clear client state and redirect
+        queryClient.clear();
+        window.location.href = '/?error=logout_failed';
       }
     } catch (error) {
       console.error('❌ Logout error:', error);
-      // Force logout on client side anyway
-      setUser(null);
-      window.location.href = '/';
-    } finally {
-      setLoading(false);
+
+      // Fallback: clear client state and redirect anyway
+      queryClient.clear();
+      window.location.href = '/?error=logout_error';
     }
+  }, [queryClient]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      console.log('🔑 Attempting login for:', email);
+
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('✅ Login successful:', userData.email);
+
+        // Invalidate auth query to refetch user data
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+        return { success: true, user: userData };
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed' }));
+        console.error('❌ Login failed:', response.status, errorData);
+        return { success: false, error: errorData.message || 'Login failed' };
+      }
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      return { success: false, error: 'Network error during login' };
+    }
+  }, [queryClient]);
+
+  return {
+    user,
+    isLoading,
+    isAuthenticated: !!user && !error,
+    logout,
+    login,
   };
-
-  return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      loading,
-      error
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 }
