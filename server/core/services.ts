@@ -36,21 +36,21 @@ export class MailgunService {
       const pdfBuffer = await this.generateContractPDF(contract, userSettings);
       console.log('✅ PDF generated successfully, size:', pdfBuffer.length);
       
-      // Create FormData for Mailgun with attachment (WORKING FORMAT)
-      const form = new formData();
-      form.append('from', `MusoBuddy <noreply@${domain}>`);
-      form.append('to', contract.clientEmail);
-      form.append('subject', subject || `Contract ready for signing - ${contract.contractNumber}`);
-      form.append('html', this.generateContractEmailHTML(contract, userSettings, signingUrl));
-      
-      // Add PDF as attachment (CORRECT FORMAT)
-      form.append('attachment', pdfBuffer, {
-        filename: `Contract-${contract.contractNumber}.pdf`,
-        contentType: 'application/pdf'
-      });
+      // Use working format from pre-rebuild version (messageData.attachment format)
+      const messageData: any = {
+        from: `MusoBuddy <noreply@${domain}>`,
+        to: contract.clientEmail,
+        subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
+        html: this.generateContractEmailHTML(contract, userSettings, signingUrl),
+        attachment: [{
+          data: pdfBuffer,
+          filename: `Contract-${contract.contractNumber}.pdf`,
+          contentType: 'application/pdf'
+        }]
+      };
 
       console.log('📧 Sending email via Mailgun...');
-      const result = await this.mailgun.messages.create(domain, form);
+      const result = await this.mailgun.messages.create(domain, messageData);
       console.log('✅ Contract email with PDF sent successfully:', result.id);
       return result;
       
