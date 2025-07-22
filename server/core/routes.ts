@@ -275,31 +275,125 @@ export async function registerRoutes(app: Express) {
         <h3>Event Details</h3>
         <p><strong>Client:</strong> ${contract.clientName}</p>
         <p><strong>Date:</strong> ${new Date(contract.eventDate).toDateString()}</p>
-        <p><strong>Time:</strong> ${contract.eventTime}</p>
+        <p><strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}</p>
         <p><strong>Venue:</strong> ${contract.venue}</p>
-        <p><strong>Fee:</strong> £${contract.fee}</p>
+        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
     </div>
     
-    <div style="text-align: center; margin: 40px 0;">
-        <button class="sign-button" onclick="signContract()">Sign Contract</button>
+    <div class="terms-section" style="margin: 30px 0; padding: 20px; background: #f9f9f9; border-radius: 6px;">
+        <h3>Terms & Conditions</h3>
+        <ol style="margin: 15px 0; padding-left: 25px;">
+            <li>Payment is due on the date of performance unless otherwise agreed.</li>
+            <li>All equipment is provided by the performer unless specified otherwise.</li>
+            <li>The venue must provide safe access to electricity and ensure security.</li>
+            <li>No recording or transmission without written consent from the performer.</li>
+        </ol>
     </div>
+    
+    <form id="signingForm" style="margin: 30px 0; padding: 20px; background: #fff; border: 2px solid #e5e5e5; border-radius: 8px;">
+        <h3>Complete Contract Details & Sign</h3>
+        <div style="margin: 15px 0;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Full Name (for signature):</label>
+            <input type="text" id="signatureName" value="${contract.clientName}" required 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>
+        ${!contract.clientPhone ? `
+        <div style="margin: 15px 0;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Phone Number:</label>
+            <input type="tel" id="clientPhone" placeholder="07123 456789" 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>` : ''}
+        ${!contract.clientAddress ? `
+        <div style="margin: 15px 0;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Address:</label>
+            <textarea id="clientAddress" rows="3" placeholder="Full address including postcode"
+                      style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+        </div>` : ''}
+        <div style="margin: 20px 0;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="agreeTerms" required style="margin-right: 10px;" />
+                <span>I agree to all terms and conditions stated in this contract</span>
+            </label>
+        </div>
+        <div style="text-align: center;">
+            <button type="submit" class="sign-button">Sign Contract</button>
+        </div>
+    </form>
     
     <script>
-        function signContract() {
-            if (confirm('By signing this contract, you agree to all terms. Continue?')) {
-                fetch('/api/contracts/sign/${contract.id}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ signature: '${contract.clientName}' })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h2>✅ Contract Signed Successfully</h2></div>';
-                    }
-                });
+        document.getElementById('signingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const signatureName = document.getElementById('signatureName').value.trim();
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+            
+            if (!signatureName) {
+                alert('Please enter your full name for signature');
+                return;
             }
-        }
+            
+            if (!agreeTerms) {
+                alert('Please agree to the terms and conditions');
+                return;
+            }
+            
+            // Collect optional fields
+            const clientPhone = document.getElementById('clientPhone') ? document.getElementById('clientPhone').value.trim() : '';
+            const clientAddress = document.getElementById('clientAddress') ? document.getElementById('clientAddress').value.trim() : '';
+            
+            const signatureData = {
+                signature: signatureName,
+                clientPhone: clientPhone || null,
+                clientAddress: clientAddress || null,
+                agreedToTerms: true,
+                signedAt: new Date().toISOString(),
+                ipAddress: 'Contract Signing Page'
+            };
+            
+            // Disable form during submission
+            const form = document.getElementById('signingForm');
+            form.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Processing signature...</h3></div>';
+            
+            fetch('https://musobuddy.replit.app/api/contracts/sign/${contract.id}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(signatureData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.body.innerHTML = \`
+                        <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
+                            <h1 style="color:#28a745;">✅ Contract Signed Successfully</h1>
+                            <h2>${contract.contractNumber}</h2>
+                            <p style="font-size:18px;margin:30px 0;">Thank you, \${signatureName}!</p>
+                            <p>Your contract has been successfully signed and saved.</p>
+                            <p>You will receive a confirmation email shortly.</p>
+                            <div style="margin:40px 0;padding:20px;background:#f8f9fa;border-radius:8px;">
+                                <h3>Event Summary</h3>
+                                <p><strong>Date:</strong> ${new Date(contract.eventDate).toDateString()}</p>
+                                <p><strong>Time:</strong> ${contract.eventTime}</p>
+                                <p><strong>Venue:</strong> ${contract.venue}</p>
+                                <p><strong>Fee:</strong> £${contract.fee}</p>
+                            </div>
+                        </div>
+                    \`;
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                console.error('Signing error:', error);
+                document.body.innerHTML = \`
+                    <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
+                        <h2 style="color:#dc3545;">❌ Signing Failed</h2>
+                        <p>There was an issue processing your signature.</p>
+                        <p>Please try again or contact support.</p>
+                        <button onclick="location.reload()" style="background:#6366f1;color:white;padding:12px 24px;border:none;border-radius:6px;cursor:pointer;">Try Again</button>
+                    </div>
+                \`;
+            });
+        });
     </script>
 </body>
 </html>`;
@@ -311,17 +405,51 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Handle preflight requests for contract signing
+  app.options('/api/contracts/sign/:id', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(200).end();
+  });
+
   app.post('/api/contracts/sign/:id', async (req, res) => {
+    // Add CORS headers for R2 signing pages
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    
     try {
       const contractId = parseInt(req.params.id);
-      const { signature } = req.body;
+      const { signature, clientPhone, clientAddress, agreedToTerms, signedAt, ipAddress } = req.body;
+      
+      console.log('📝 Contract signing request:', {
+        contractId,
+        signature,
+        clientPhone: clientPhone || 'Not provided',
+        clientAddress: clientAddress || 'Not provided',
+        agreedToTerms
+      });
+      
+      // Prepare update data
+      const updateData: any = {
+        status: 'signed',
+        signedAt: new Date(signedAt || new Date()),
+        clientSignature: signature
+      };
+      
+      // Include optional client details if provided
+      if (clientPhone && clientPhone.trim()) {
+        updateData.clientPhone = clientPhone.trim();
+      }
+      if (clientAddress && clientAddress.trim()) {
+        updateData.clientAddress = clientAddress.trim();
+      }
+      
+      console.log('📝 Updating contract with data:', updateData);
       
       // Update contract status to signed
-      const updatedContract = await storage.updateContract(contractId, {
-        status: 'signed',
-        signedAt: new Date(),
-        clientSignature: signature
-      });
+      const updatedContract = await storage.updateContract(contractId, updateData);
       
       // WEBHOOK: Automatically update related booking status
       if (updatedContract) {

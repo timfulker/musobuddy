@@ -106,13 +106,17 @@ export class MailgunService {
           resolve(pdfBuffer);
         });
 
-        // Title - centered and professional
-        doc.fontSize(18).text('Performance Contract', { align: 'center' });
-        doc.moveDown(0.5);
-        doc.fontSize(14).text(`(${new Date(contract.eventDate).toLocaleDateString('en-GB')} - ${contract.clientName})`, { align: 'center' });
+        // Professional header with branding
+        doc.fontSize(24).fillColor('#2563eb').text('PERFORMANCE CONTRACT', { align: 'center' });
+        doc.fontSize(12).fillColor('#666666').text(`Contract Number: ${contract.contractNumber}`, { align: 'center' });
+        doc.moveDown(0.3);
+        doc.fontSize(11).fillColor('#666666').text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, { align: 'center' });
         doc.moveDown(2);
-        doc.fontSize(16).text('DRAFT', { align: 'center' });
-        doc.moveDown(3);
+        
+        // Professional divider line
+        doc.strokeColor('#2563eb').lineWidth(2)
+           .moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(1.5);
 
         // Performer Details Section
         doc.fontSize(14).text('Performer Details', { underline: true });
@@ -124,51 +128,47 @@ export class MailgunService {
         doc.text('Email: timfulkermusic@gmail.com');
         doc.moveDown(2);
 
-        // Event Details Section - formatted as table
-        doc.fontSize(14).text('Event Details', { underline: true });
+        // Event Details Section with professional styling
+        doc.fillColor('#333333').fontSize(16).text('EVENT DETAILS', { underline: true });
         doc.moveDown(1);
         
-        const leftCol = 80;
-        const rightCol = 300;
+        // Professional table-style layout
+        const leftCol = 60;
+        const rightCol = 280;
         let yPos = doc.y;
         
-        doc.fontSize(11);
-        doc.text('Client Name', leftCol, yPos);
-        doc.text(contract.clientName, rightCol, yPos);
-        yPos += 25;
+        // Helper function for table rows
+        const addTableRow = (label: string, value: string, yPosition: number) => {
+          // Light background for alternating rows
+          if (Math.floor((yPosition - doc.y + 150) / 25) % 2 === 0) {
+            doc.rect(50, yPosition - 3, 495, 22).fill('#f8f9fa');
+          }
+          doc.fillColor('#666666').fontSize(11).font('Helvetica-Bold').text(label, leftCol, yPosition);
+          doc.fillColor('#333333').fontSize(11).font('Helvetica').text(value, rightCol, yPosition);
+          return yPosition + 25;
+        };
         
-        doc.text('Client Email', leftCol, yPos);
-        doc.text(contract.clientEmail, rightCol, yPos);
-        yPos += 25;
+        yPos = addTableRow('Client Name', contract.clientName, yPos);
+        yPos = addTableRow('Client Email', contract.clientEmail, yPos);
         
         if (contract.clientAddress) {
-          doc.text('Client Address', leftCol, yPos);
-          doc.text(contract.clientAddress, rightCol, yPos);
-          yPos += 25;
+          yPos = addTableRow('Client Address', contract.clientAddress, yPos);
         }
         
         if (contract.clientPhone) {
-          doc.text('Client Phone', leftCol, yPos);
-          doc.text(contract.clientPhone, rightCol, yPos);
-          yPos += 25;
+          yPos = addTableRow('Client Phone', contract.clientPhone, yPos);
         }
         
-        doc.text('Event Date', leftCol, yPos);
-        doc.text(new Date(contract.eventDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), rightCol, yPos);
-        yPos += 25;
+        yPos = addTableRow('Event Date', new Date(contract.eventDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), yPos);
+        yPos = addTableRow('Event Time', `${contract.eventTime}${contract.eventEndTime ? ' - ' + contract.eventEndTime : ''}`, yPos);
+        yPos = addTableRow('Venue', contract.venue || 'To be confirmed', yPos);
+        yPos = addTableRow('Performance Fee', `£${parseFloat(contract.fee).toFixed(2)}`, yPos);
         
-        doc.text('Event Time', leftCol, yPos);
-        doc.text(`${contract.eventTime}${contract.eventEndTime ? ' - ' + contract.eventEndTime : ''}`, rightCol, yPos);
-        yPos += 25;
-        
-        doc.text('Venue', leftCol, yPos);
-        doc.text(contract.venue, rightCol, yPos);
-        yPos += 25;
-        
-        doc.text('Performance Fee', leftCol, yPos);
-        doc.text(`£${parseFloat(contract.fee).toFixed(2)}`, rightCol, yPos);
-        
-        doc.y = yPos + 40;
+        // Professional section divider
+        doc.y = yPos + 20;
+        doc.strokeColor('#e5e5e5').lineWidth(1)
+           .moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(1.5);
 
         // Comprehensive Terms and Conditions
         doc.fontSize(14).text('Terms and Conditions', { underline: true });
