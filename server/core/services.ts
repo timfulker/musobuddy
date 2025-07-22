@@ -63,36 +63,7 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
-  async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
-    let browser;
-    try {
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-      });
-      
-      const page = await browser.newPage();
-      await page.setViewport({ width: 1200, height: 1600 });
-      
-      const html = this.generateContractHTML(contract, userSettings);
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
-        printBackground: true
-      });
-      
-      return pdfBuffer;
-    } catch (error) {
-      console.error('❌ PDF generation error:', error);
-      throw new Error('Failed to generate contract PDF');
-    } finally {
-      if (browser) {
-        await browser.close();
-      }
-    }
-  }
+
 
   generateContractHTML(contract: any, userSettings: any): string {
     const formatDate = (date: any) => {
@@ -324,14 +295,15 @@ export class CloudStorageService {
   }
 
   async uploadInvoiceToCloud(invoice: any, userSettings: any): Promise<{url: string, key: string}> {
-    const pdfBuffer = await this.generateInvoicePDF(invoice, userSettings);
-    const key = `invoices/${invoice.id}-${Date.now()}.pdf`;
+    // Generate HTML invoice instead of PDF
+    const htmlContent = this.generateInvoiceHTML(invoice, userSettings);
+    const key = `invoices/${invoice.id}-${Date.now()}.html`;
     
     await this.s3.send(new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
-      Body: pdfBuffer,
-      ContentType: 'application/pdf'
+      Body: htmlContent,
+      ContentType: 'text/html'
     }));
 
     const url = await getSignedUrl(this.s3, new GetObjectCommand({
@@ -411,27 +383,7 @@ export class CloudStorageService {
     `;
   }
 
-  private async generateInvoicePDF(invoice: any, userSettings: any): Promise<Buffer> {
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    
-    try {
-      const page = await browser.newPage();
-      const html = this.generateInvoiceHTML(invoice, userSettings);
-      
-      await page.setContent(html);
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' }
-      });
-      
-      return pdfBuffer;
-    } finally {
-      await browser.close();
-    }
-  }
+
 
   private generateInvoiceHTML(invoice: any, userSettings: any): string {
     return `
