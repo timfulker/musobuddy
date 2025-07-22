@@ -276,8 +276,55 @@ export async function registerRoutes(app: Express) {
   app.get('/api/contracts/public/:id', async (req, res) => {
     try {
       const contract = await storage.getContract(parseInt(req.params.id));
-      if (!contract || contract.status === 'signed') {
-        return res.json({ message: 'Contract not available for signing' });
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      // If contract is already signed, show "Already Signed" page instead of signing form
+      if (contract.status === 'signed') {
+        const alreadySignedHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contract Already Signed - ${contract.contractNumber}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }
+        .success-message { background: #d4edda; color: #155724; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #c3e6cb; }
+        .contract-details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; }
+        .download-button { background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>✅ Contract Already Signed</h1>
+    <h2>${contract.contractNumber}</h2>
+    
+    <div class="success-message">
+        <h3>This contract has already been signed successfully!</h3>
+        <p><strong>Signed by:</strong> ${contract.clientSignature || contract.clientName}</p>
+        <p><strong>Signed on:</strong> ${contract.signedAt ? new Date(contract.signedAt).toLocaleString('en-GB') : 'Recently'}</p>
+    </div>
+    
+    <div class="contract-details">
+        <h3>Event Details</h3>
+        <p><strong>Client:</strong> ${contract.clientName}</p>
+        <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+        <p><strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}</p>
+        <p><strong>Venue:</strong> ${contract.venue}</p>
+        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+    </div>
+    
+    <div style="margin: 30px 0;">
+        <a href="/api/contracts/${contract.id}/download" class="download-button">📄 Download Signed Contract</a>
+    </div>
+    
+    <p style="color: #6c757d; font-size: 14px; margin-top: 40px;">
+        If you need any assistance, please contact us directly.
+    </p>
+</body>
+</html>`;
+        
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(alreadySignedHtml);
       }
       
       // Return contract signing page HTML
