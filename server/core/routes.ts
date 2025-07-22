@@ -273,6 +273,211 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Contract signing page route (user-friendly URL)
+  app.get('/contracts/sign/:id', async (req, res) => {
+    console.log('🎯 CONTRACT SIGNING ROUTE HIT:', req.params.id);
+    try {
+      const contract = await storage.getContract(parseInt(req.params.id));
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      // If contract is already signed, show "Already Signed" page instead of signing form
+      if (contract.status === 'signed') {
+        const alreadySignedHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contract Already Signed - ${contract.contractNumber}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }
+        .success-message { background: #d4edda; color: #155724; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #c3e6cb; }
+        .contract-details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; }
+        .download-button { background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>✅ Contract Already Signed</h1>
+    <h2>${contract.contractNumber}</h2>
+    
+    <div class="success-message">
+        <h3>This contract has already been signed successfully!</h3>
+        <p><strong>Signed by:</strong> ${contract.clientSignature || contract.clientName}</p>
+        <p><strong>Signed on:</strong> ${contract.signedAt ? new Date(contract.signedAt).toLocaleString('en-GB') : 'Recently'}</p>
+    </div>
+    
+    <div class="contract-details">
+        <h3>Event Details</h3>
+        <p><strong>Client:</strong> ${contract.clientName}</p>
+        <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+        <p><strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}</p>
+        <p><strong>Venue:</strong> ${contract.venue}</p>
+        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+    </div>
+    
+    <div style="margin: 30px 0;">
+        <a href="/api/contracts/${contract.id}/download" class="download-button">📄 Download Signed Contract</a>
+    </div>
+    
+    <p style="color: #6c757d; font-size: 14px; margin-top: 40px;">
+        If you need any assistance, please contact us directly.
+    </p>
+</body>
+</html>`;
+        
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(alreadySignedHtml);
+      }
+      
+      // Return contract signing page HTML
+      const userSettings = await storage.getSettings(contract.userId);
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contract Signing - ${contract.contractNumber}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .contract-details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .sign-button { background: #6366f1; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Performance Contract</h1>
+    <h2>${contract.contractNumber}</h2>
+    
+    <div class="contract-details">
+        <h3>Event Details</h3>
+        <p><strong>Client:</strong> ${contract.clientName}</p>
+        <p><strong>Date:</strong> ${new Date(contract.eventDate).toDateString()}</p>
+        <p><strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}</p>
+        <p><strong>Venue:</strong> ${contract.venue}</p>
+        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+    </div>
+    
+    <div class="terms-section" style="margin: 30px 0; padding: 20px; background: #f9f9f9; border-radius: 6px;">
+        <h3>Terms & Conditions</h3>
+        <ol style="margin: 15px 0; padding-left: 25px;">
+            <li>Payment is due on the date of performance unless otherwise agreed.</li>
+            <li>All equipment is provided by the performer unless specified otherwise.</li>
+            <li>The venue must provide safe access to electricity and ensure security.</li>
+            <li>No recording or transmission without written consent from the performer.</li>
+        </ol>
+    </div>
+    
+    <form id="signingForm" style="margin: 30px 0; padding: 20px; background: #fff; border: 2px solid #e5e5e5; border-radius: 8px;">
+        <h3>Complete Contract Details & Sign</h3>
+        <div style="margin: 15px 0;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Full Name (for signature):</label>
+            <input type="text" id="signatureName" value="${contract.clientName}" required 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>
+        <div style="margin: 15px 0;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Phone Number:</label>
+            <input type="tel" id="clientPhone" value="${contract.clientPhone || ''}" placeholder="07123 456789" 
+                   ${contract.clientPhone ? 'readonly style="background-color: #f9f9f9; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"' : 'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"'} />
+        </div>
+        <div style="margin: 15px 0;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Address:</label>
+            <textarea id="clientAddress" rows="3" placeholder="Full address including postcode"
+                      ${contract.clientAddress ? 'readonly style="background-color: #f9f9f9; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"' : 'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"'}>${contract.clientAddress || ''}</textarea>
+        </div>
+        <div style="margin: 20px 0;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="agreeTerms" required style="margin-right: 10px;" />
+                <span>I agree to all terms and conditions stated in this contract</span>
+            </label>
+        </div>
+        <div style="text-align: center;">
+            <button type="submit" class="sign-button">Sign Contract</button>
+        </div>
+    </form>
+    
+    <script>
+        document.getElementById('signingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const signatureName = document.getElementById('signatureName').value.trim();
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+            
+            if (!signatureName) {
+                alert('Please enter your full name for signature');
+                return;
+            }
+            
+            if (!agreeTerms) {
+                alert('Please agree to the terms and conditions');
+                return;
+            }
+            
+            // Collect optional fields
+            const clientPhone = document.getElementById('clientPhone') ? document.getElementById('clientPhone').value.trim() : '';
+            const clientAddress = document.getElementById('clientAddress') ? document.getElementById('clientAddress').value.trim() : '';
+            
+            const signatureData = {
+                signature: signatureName,
+                clientPhone: clientPhone || null,
+                clientAddress: clientAddress || null,
+                agreedToTerms: true,
+                signedAt: new Date().toISOString(),
+                ipAddress: 'Contract Signing Page'
+            };
+            
+            // Disable form during submission
+            const form = document.getElementById('signingForm');
+            form.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Processing signature...</h3></div>';
+            
+            fetch('https://musobuddy.replit.app/api/contracts/sign/${contract.id}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(signatureData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.body.innerHTML = \`
+                        <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
+                            <h1 style="color:#28a745;">✅ Contract Signed Successfully</h1>
+                            <h2>${contract.contractNumber}</h2>
+                            <p style="font-size:18px;margin:30px 0;">Thank you, \${signatureName}!</p>
+                            <p>Your contract has been successfully signed and saved.</p>
+                            <p>You will receive a confirmation email shortly.</p>
+                            <div style="margin:40px 0;padding:20px;background:#f8f9fa;border-radius:8px;">
+                                <h3>Event Summary</h3>
+                                <p><strong>Date:</strong> ${new Date(contract.eventDate).toDateString()}</p>
+                                <p><strong>Time:</strong> ${contract.eventTime}</p>
+                                <p><strong>Venue:</strong> ${contract.venue}</p>
+                                <p><strong>Fee:</strong> £${contract.fee}</p>
+                            </div>
+                        </div>
+                    \`;
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                console.error('Signing error:', error);
+                document.body.innerHTML = \`
+                    <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
+                        <h2 style="color:#dc3545;">❌ Signing Failed</h2>
+                        <p>There was an issue processing your signature.</p>
+                        <p>Please try again or contact support.</p>
+                        <button onclick="location.reload()" style="background:#6366f1;color:white;padding:12px 24px;border:none;border-radius:6px;cursor:pointer;">Try Again</button>
+                    </div>
+                \`;
+            });
+        });
+    </script>
+</body>
+</html>`;
+      
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to load contract' });
+    }
+  });
+
   app.get('/api/contracts/public/:id', async (req, res) => {
     try {
       const contract = await storage.getContract(parseInt(req.params.id));
