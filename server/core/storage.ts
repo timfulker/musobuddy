@@ -108,10 +108,7 @@ export class Storage {
       .orderBy(desc(contracts.createdAt));
   }
 
-  async getContract(id: number) {
-    const result = await db.select().from(contracts).where(eq(contracts.id, id));
-    return result[0] || null;
-  }
+
 
   async createContract(contractData: any) {
     // Convert date strings to Date objects for timestamp fields
