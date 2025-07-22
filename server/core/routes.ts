@@ -774,5 +774,35 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Test original contract PDF generation
+  app.post('/api/test-original-pdf', async (req, res) => {
+    try {
+      console.log('🧪 Testing original PDF generation...');
+      const { generateContractPDF } = await import('./pdf-generator-original');
+      
+      const testContract = {
+        contractNumber: '(10/08/2025 - Andy Urquahart)',
+        clientName: 'Andy Urquahart',
+        clientEmail: 'timfulker@gmail.com',
+        clientAddress: '59, Gloucester Rd',
+        clientPhone: '07764190034',
+        eventDate: '2025-08-10',
+        eventTime: '20:00',
+        venue: 'home',
+        fee: '50.00'
+      };
+      
+      const pdfBuffer = await generateContractPDF(testContract, null);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="test-contract.pdf"');
+      res.send(pdfBuffer);
+      
+    } catch (error: any) {
+      console.error('❌ PDF test failed:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return server;
 }
