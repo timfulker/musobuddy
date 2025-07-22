@@ -75,8 +75,32 @@ export async function registerRoutes(app: Express) {
 
   app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
-      const contractData = { ...req.body, userId: req.user.id };
-      const contract = await storage.createContract(contractData);
+      // Sanitize numeric fields - convert empty strings to null
+      const sanitizedData = { ...req.body, userId: req.user.id };
+      
+      // Handle numeric fields properly
+      if (sanitizedData.fee === '' || sanitizedData.fee === undefined) {
+        sanitizedData.fee = '0.00';
+      }
+      if (sanitizedData.deposit === '' || sanitizedData.deposit === undefined) {
+        sanitizedData.deposit = '0.00';
+      }
+      
+      // Handle optional fields - set empty strings to null
+      ['venue', 'eventTime', 'eventEndTime', 'clientAddress', 'clientPhone', 'venueAddress'].forEach(field => {
+        if (sanitizedData[field] === '') {
+          sanitizedData[field] = null;
+        }
+      });
+      
+      // Auto-generate contract number if not provided
+      if (!sanitizedData.contractNumber || sanitizedData.contractNumber === '') {
+        const eventDate = new Date(sanitizedData.eventDate);
+        const dateStr = eventDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        sanitizedData.contractNumber = `(${dateStr} - ${sanitizedData.clientName})`;
+      }
+      
+      const contract = await storage.createContract(sanitizedData);
       
       // Generate signing page and upload to cloud storage
       try {

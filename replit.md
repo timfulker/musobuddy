@@ -132,17 +132,20 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-07-22 - Contract System Perfected with Andy Urquahart Template Design
+### 2025-07-22 - Contract System Perfected with Andy Urquahart Template Design + Testing Mode
 - **PDF Download Route Fixed**: ✅ Added missing `/api/contracts/:id/download` route that properly generates and serves PDF content instead of HTML
 - **Andy Urquahart Template Match**: ✅ Updated PDF generation to exactly match user's professional contract template format
 - **Professional Contract Layout**: ✅ Centered header with "(DD/MM/YYYY - Client Name)" format, DRAFT status, and exact section formatting
 - **Comprehensive Terms**: ✅ Complete terms matching template: Payment Terms, Cancellation Policy, Force Majeure, Performance Standards
 - **Proper Legal Footer**: ✅ Exact legal information format with contract number, generation timestamp, and governing terms
+- **Data Sanitization Fixed**: ✅ Resolved numeric field errors by properly handling empty strings and auto-generating contract numbers
+- **Required Fields Restored**: ✅ All Musicians' Union minimum fields restored as required (venue, event times, etc.)
+- **Auto-Generated Contract Numbers**: ✅ System automatically creates contract numbers in "(DD/MM/YYYY - Client Name)" format
 - **Contract Email System**: ✅ FULLY OPERATIONAL - Clients receive professional PDF contracts via email with signing links
 - **R2 Signing Pages**: ✅ Contract signing URLs use Cloudflare R2 storage with CORS headers for cross-origin compatibility
 - **Professional Signatures**: ✅ Performer signature with Tim Fulker details, client signature section with status tracking
 - **Chrome-Free Generation**: ✅ PDFKit-based generation works on all environments without browser dependencies
-- **Status**: Complete contract system operational with professional Andy Urquahart template design - PDF downloads working correctly
+- **Status**: Complete contract system operational with professional Andy Urquahart template design and streamlined testing mode
 
 ### 2025-07-21 - Architecture Consolidation with System Breaks 
 - **Architecture Rebuild**: Consolidated 30 server files into 8 total files (3 main + 5 core) for maintainability
