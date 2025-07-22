@@ -75,87 +75,171 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
-  // CHROME-FREE PDF GENERATION using PDFKit
+  // PROFESSIONAL CONTRACT PDF GENERATION using PDFKit
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
-        console.log('📄 Creating PDF with PDFKit...');
+        console.log('📄 Creating professional PDF contract...');
         
-        const doc = new PDFDocument({ margin: 50 });
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
         const chunks: Buffer[] = [];
 
         doc.on('data', chunks.push.bind(chunks));
         doc.on('end', () => {
           const pdfBuffer = Buffer.concat(chunks);
-          console.log('✅ PDFKit generation complete, size:', pdfBuffer.length, 'bytes');
+          console.log('✅ Professional PDF contract generated, size:', pdfBuffer.length, 'bytes');
           resolve(pdfBuffer);
         });
 
-        // Header
-        doc.fontSize(20).text('MUSIC PERFORMANCE CONTRACT', { align: 'center' });
-        doc.fontSize(12).text(`Contract #${contract.contractNumber || contract.id}`, { align: 'center' });
+        // Title - centered and professional
+        doc.fontSize(18).text('Performance Contract', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(14).text(`(${new Date(contract.eventDate).toLocaleDateString('en-GB')} - ${contract.clientName})`, { align: 'center' });
+        doc.moveDown(2);
+        doc.fontSize(16).text('DRAFT', { align: 'center' });
+        doc.moveDown(3);
+
+        // Performer Details Section
+        doc.fontSize(14).text('Performer Details', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(11);
+        doc.text('Tim Fulker');
+        doc.text('59, Gloucester Rd Bournemouth Dorset BH7 6JA');
+        doc.text('Phone: 07765190034');
+        doc.text('Email: timfulkermusic@gmail.com');
         doc.moveDown(2);
 
-        // Performance Details
-        doc.fontSize(14).text('PERFORMANCE DETAILS', { underline: true });
-        doc.moveDown(0.5);
-        doc.fontSize(11);
-        doc.text(`Event Date: ${new Date(contract.eventDate).toDateString()}`);
-        doc.text(`Performance Time: ${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}`);
-        doc.text(`Venue: ${contract.venue || 'Not specified'}`);
-        doc.text(`Venue Address: ${contract.venueAddress || 'Not specified'}`);
-        doc.text(`Performance Fee: £${contract.fee || '0.00'}`);
+        // Event Details Section - formatted as table
+        doc.fontSize(14).text('Event Details', { underline: true });
         doc.moveDown(1);
-
-        // Client Information
-        doc.fontSize(14).text('CLIENT INFORMATION', { underline: true });
-        doc.moveDown(0.5);
+        
+        const leftCol = 80;
+        const rightCol = 300;
+        let yPos = doc.y;
+        
         doc.fontSize(11);
-        doc.text(`Client Name: ${contract.clientName || 'Not specified'}`);
-        doc.text(`Email: ${contract.clientEmail || 'Not specified'}`);
-        doc.text(`Phone: ${contract.clientPhone || 'Not specified'}`);
-        doc.text(`Address: ${contract.clientAddress || 'Not specified'}`);
-        doc.moveDown(1);
+        doc.text('Client Name', leftCol, yPos);
+        doc.text(contract.clientName, rightCol, yPos);
+        yPos += 25;
+        
+        doc.text('Client Email', leftCol, yPos);
+        doc.text(contract.clientEmail, rightCol, yPos);
+        yPos += 25;
+        
+        if (contract.clientAddress) {
+          doc.text('Client Address', leftCol, yPos);
+          doc.text(contract.clientAddress, rightCol, yPos);
+          yPos += 25;
+        }
+        
+        if (contract.clientPhone) {
+          doc.text('Client Phone', leftCol, yPos);
+          doc.text(contract.clientPhone, rightCol, yPos);
+          yPos += 25;
+        }
+        
+        doc.text('Event Date', leftCol, yPos);
+        doc.text(new Date(contract.eventDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), rightCol, yPos);
+        yPos += 25;
+        
+        doc.text('Event Time', leftCol, yPos);
+        doc.text(`${contract.eventTime}${contract.eventEndTime ? ' - ' + contract.eventEndTime : ''}`, rightCol, yPos);
+        yPos += 25;
+        
+        doc.text('Venue', leftCol, yPos);
+        doc.text(contract.venue, rightCol, yPos);
+        yPos += 25;
+        
+        doc.text('Performance Fee', leftCol, yPos);
+        doc.text(`£${parseFloat(contract.fee).toFixed(2)}`, rightCol, yPos);
+        
+        doc.y = yPos + 40;
 
-        // Terms and Conditions
-        doc.fontSize(14).text('TERMS AND CONDITIONS', { underline: true });
+        // Comprehensive Terms and Conditions
+        doc.fontSize(14).text('Terms and Conditions', { underline: true });
         doc.moveDown(0.5);
+        
+        doc.fontSize(12).text('Payment Terms & Conditions', { underline: true });
+        doc.moveDown(0.3);
         doc.fontSize(10);
-        doc.text(`1. This agreement is between ${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'} (the "Performer") and ${contract.clientName || 'the Client'} for musical entertainment services.`);
-        doc.text('2. The Performer agrees to provide live musical entertainment at the specified venue, date, and time.');
-        doc.text('3. Payment is due as specified above. Late payments may incur additional charges.');
-        doc.text('4. Cancellation by the Client within 7 days of the event date will result in full payment being due.');
-        doc.text('5. The Performer reserves the right to use a suitable substitute in case of illness or emergency.');
-        doc.text('6. This contract represents the entire agreement between parties and supersedes all prior negotiations.');
-        doc.moveDown(2);
+        doc.text(`Payment Due Date: Full payment of £${parseFloat(contract.fee).toFixed(2)} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.`);
+        doc.moveDown(0.5);
+        doc.text('Payment Methods: Cash or bank transfer to the performer\'s designated account (details provided separately).');
+        doc.moveDown(0.5);
+        doc.text('Deposit: £0.00 deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.');
+        doc.moveDown(0.5);
+        doc.text('Late Payment: Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.');
+        doc.moveDown(1);
 
-        // Signature Section
-        doc.fontSize(12);
-        doc.text('SIGNATURES', { underline: true });
+        doc.fontSize(12).text('Cancellation & Refund Policy', { underline: true });
+        doc.moveDown(0.3);
+        doc.fontSize(10);
+        doc.text('Client Cancellation:');
+        doc.moveDown(0.3);
+        doc.text('     • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee');
+        doc.text('     • 30 days or less before event: Full performance fee becomes due regardless of cancellation');
+        doc.text('     • Same day cancellation: Full fee due plus any additional costs incurred');
+        doc.moveDown(0.5);
+        doc.text('Performer Cancellation: In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.');
+        doc.moveDown(0.5);
+        doc.text('Rescheduling: Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.');
+        doc.moveDown(1);
+
+        // Continue on next page for remaining terms
+        doc.addPage();
+        
+        doc.fontSize(12).text('Professional Performance Standards', { underline: true });
+        doc.moveDown(0.3);
+        doc.fontSize(10);
+        doc.text('Equipment & Instrument Protection: The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.');
+        doc.moveDown(0.5);
+        doc.text('Venue Safety Requirements: The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.');
+        doc.moveDown(0.5);
+        doc.text('Recording & Transmission Policy: The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer\'s performance without the prior written consent of the performer.');
+        doc.moveDown(0.5);
+        doc.text('Safe Space Principle: The client and performer agree to a \'Safe Space\' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.');
+        doc.moveDown(1);
+
+        // Signatures Section
+        doc.fontSize(14).text('Signatures', { underline: true });
         doc.moveDown(1);
         
-        // Two columns for signatures
-        const leftX = 50;
-        const rightX = 300;
-        const signatureY = doc.y;
+        doc.fontSize(12).text('Performer');
+        doc.moveDown(2);
+        doc.fontSize(10);
+        doc.text('Signed by: Tim Fulker');
+        doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`);
+        doc.text('Status: Agreed by sending contract');
+        doc.moveDown(2);
         
-        doc.text('Performer:', leftX, signatureY);
-        doc.text('Client:', rightX, signatureY);
+        doc.fontSize(12).text('Client');
+        doc.moveDown(2);
+        doc.fontSize(10);
+        doc.text('Status: Awaiting Signature');
+        doc.text(`This contract has been sent to ${contract.clientEmail} for digital signature.`);
+        doc.moveDown(3);
+
+        // Legal Footer
+        doc.fontSize(8);
+        doc.text('Legal Information & Governing Terms:', { underline: true });
+        doc.moveDown(0.3);
+        doc.text(`Contract Number: ${contract.contractNumber || contract.id}`);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB', { hour12: false })}`);
+        doc.moveDown(0.5);
+        doc.text('Binding Agreement: This is a legally binding agreement between the parties named above. Both parties acknowledge they have read, understood, and agree to be bound by all terms and conditions set forth herein.');
+        doc.moveDown(0.3);
+        doc.text('Governing Law & Jurisdiction: This contract shall be governed by and construed in accordance with the laws of England and Wales. Any disputes, claims, or legal proceedings arising from or relating to this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.');
+        doc.moveDown(0.3);
+        doc.text('Digital Signatures: Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation. Electronic acceptance constitutes agreement to all terms.');
+        doc.moveDown(1);
         
-        doc.text(`${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'}`, leftX, signatureY + 20);
-        doc.text(`${contract.clientName || 'Client Name'}`, rightX, signatureY + 20);
-        
-        doc.text('Signature: ________________', leftX, signatureY + 50);
-        doc.text('Signature: ________________', rightX, signatureY + 50);
-        
-        doc.text('Date: ________________', leftX, signatureY + 80);
-        doc.text('Date: ________________', rightX, signatureY + 80);
+        doc.fontSize(9).text('Powered by MusoBuddy – less admin, more music.', { align: 'center' });
 
         doc.end();
         
       } catch (error) {
-        console.error('❌ PDFKit error:', error);
-        reject(new Error('Failed to generate contract PDF with PDFKit'));
+        console.error('❌ Professional PDF generation error:', error);
+        reject(new Error('Failed to generate professional contract PDF'));
       }
     });
   }
