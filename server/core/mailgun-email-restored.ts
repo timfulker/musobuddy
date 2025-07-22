@@ -463,6 +463,263 @@ function generateInvoiceEmailHtml(
   `;
 }
 
+/**
+ * CRITICAL FIX: Send confirmation emails after contract is signed
+ * This function was missing and causing the email system to fail
+ */
+export async function sendContractConfirmationEmails(
+  contract: Contract,
+  userSettings: UserSettings | null
+): Promise<boolean> {
+  try {
+    console.log('📧 CONFIRMATION: Sending confirmation emails for signed contract:', contract.contractNumber);
+    
+    // Generate signed contract PDF with signature details
+    const signatureDetails = {
+      signedAt: contract.signedAt ? new Date(contract.signedAt) : new Date(),
+      signatureName: contract.clientName,
+      clientIpAddress: 'contract-signing-page'
+    };
+    
+    const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+    
+    // Upload signed contract to cloud storage for permanent access
+    let cloudDownloadUrl: string | null = null;
+    if (isCloudStorageConfigured()) {
+      console.log('☁️ CONFIRMATION: Uploading signed contract to cloud storage...');
+      const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
+      
+      if (cloudResult.success && cloudResult.url) {
+        cloudDownloadUrl = cloudResult.url;
+        console.log('✅ CONFIRMATION: Signed contract uploaded to cloud storage:', cloudDownloadUrl);
+        
+        // Update contract with cloud storage URL
+        await storage.updateContract(contract.id, {
+          cloudStorageUrl: cloudResult.url,
+          cloudStorageKey: cloudResult.key,
+          signingUrlCreatedAt: new Date()
+        }, contract.userId);
+      } else {
+        console.warn('⚠️ CONFIRMATION: Cloud storage upload failed:', cloudResult.error);
+      }
+    }
+    
+    // Prepare email settings
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    const fromName = userSettings?.emailFromName || businessName;
+    const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
+    const replyToEmail = userSettings?.businessEmail || 'noreply@mg.musobuddy.com';
+    
+    // Generate app-based download URL as fallback
+    const appDownloadUrl = `https://musobuddy.replit.app/api/contracts/${contract.id}/download`;
+    const finalDownloadUrl = cloudDownloadUrl || appDownloadUrl;
+    
+    console.log('🔗 CONFIRMATION: Download URL for emails:', finalDownloadUrl);
+    
+    // EMAIL 1: Send confirmation to CLIENT
+    const clientEmailHtml = generateClientConfirmationHtml(
+      contract,
+      userSettings,
+      finalDownloadUrl,
+      signatureDetails
+    );
+    
+    const clientEmailData: EmailData = {
+      to: contract.clientEmail,
+      from: fromEmail,
+      subject: `Contract Signed Successfully - ${contract.contractNumber}`,
+      html: clientEmailHtml,
+      replyTo: replyToEmail,
+      attachments: [
+        {
+          content: pdfBuffer.toString('base64'),
+          filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }
+      ]
+    };
+    
+    console.log('📧 CONFIRMATION: Sending email to client:', contract.clientEmail);
+    const clientEmailSuccess = await sendEmail(clientEmailData);
+    
+    if (!clientEmailSuccess) {
+      console.error('❌ CONFIRMATION: Failed to send client confirmation email');
+    } else {
+      console.log('✅ CONFIRMATION: Client confirmation email sent successfully');
+    }
+    
+    // EMAIL 2: Send notification to PERFORMER
+    const performerEmail = userSettings?.businessEmail || replyToEmail;
+    
+    if (performerEmail && performerEmail !== 'noreply@mg.musobuddy.com') {
+      const performerEmailHtml = generatePerformerConfirmationHtml(
+        contract,
+        userSettings,
+        finalDownloadUrl,
+        signatureDetails
+      );
+      
+      const performerEmailData: EmailData = {
+        to: performerEmail,
+        from: fromEmail,
+        subject: `Contract Signed by Client - ${contract.contractNumber}`,
+        html: performerEmailHtml,
+        replyTo: replyToEmail,
+        attachments: [
+          {
+            content: pdfBuffer.toString('base64'),
+            filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+            type: 'application/pdf',
+            disposition: 'attachment'
+          }
+        ]
+      };
+      
+      console.log('📧 CONFIRMATION: Sending email to performer:', performerEmail);
+      const performerEmailSuccess = await sendEmail(performerEmailData);
+      
+      if (!performerEmailSuccess) {
+        console.error('❌ CONFIRMATION: Failed to send performer confirmation email');
+      } else {
+        console.log('✅ CONFIRMATION: Performer confirmation email sent successfully');
+      }
+      
+      return clientEmailSuccess && performerEmailSuccess;
+    } else {
+      console.warn('⚠️ CONFIRMATION: No performer email configured, only sending client confirmation');
+      return clientEmailSuccess;
+    }
+    
+  } catch (error) {
+    console.error('❌ CONFIRMATION: Error sending confirmation emails:', error);
+    return false;
+  }
+}
+
+/**
+ * Generate HTML for client confirmation email
+ */
+function generateClientConfirmationHtml(
+  contract: Contract,
+  userSettings: UserSettings | null,
+  downloadUrl: string,
+  signatureDetails: any
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  
+  return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <h2 style="color: #065f46; margin-top: 0;">✅ Contract Signed Successfully!</h2>
+          <p style="color: #047857; font-size: 18px; margin: 0;">Thank you for signing your performance contract.</p>
+        </div>
+        
+        <p>Dear ${contract.clientName},</p>
+        
+        <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed and is now legally binding.</p>
+        
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #374151; margin-top: 0;">📋 Event Details Confirmed</h3>
+          <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+          <p><strong>Time:</strong> ${contract.eventTime}</p>
+          <p><strong>Venue:</strong> ${contract.venue}</p>
+          <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+          <p><strong>Signed on:</strong> ${signatureDetails.signedAt.toLocaleString('en-GB')}</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${downloadUrl}" 
+             style="background-color: #059669; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px;">
+            📄 Download Signed Contract
+          </a>
+        </div>
+        
+        <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #92400e;">
+            <strong>Important:</strong> Please save a copy of your signed contract for your records. 
+            This document contains all the terms and conditions for your event.
+          </p>
+        </div>
+        
+        <p>A copy of the signed contract is also attached to this email.</p>
+        
+        <p>We look forward to performing at your event! If you have any questions, please don't hesitate to contact us.</p>
+        
+        <p>Best regards,<br>
+        <strong>${businessName}</strong></p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        <p style="font-size: 12px; color: #6b7280; text-align: center;">
+          Powered by MusoBuddy – less admin, more music
+        </p>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Generate HTML for performer confirmation email
+ */
+function generatePerformerConfirmationHtml(
+  contract: Contract,
+  userSettings: UserSettings | null,
+  downloadUrl: string,
+  signatureDetails: any
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  
+  return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <h2 style="color: #065f46; margin-top: 0;">🎉 Great News!</h2>
+          <p style="color: #047857; font-size: 18px; margin: 0;">Contract ${contract.contractNumber} has been signed by your client.</p>
+        </div>
+        
+        <p>Hello,</p>
+        
+        <p>Excellent news! Your client <strong>${contract.clientName}</strong> has just signed the performance contract.</p>
+        
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #374151; margin-top: 0;">📋 Confirmed Booking Details</h3>
+          <p><strong>Client:</strong> ${contract.clientName}</p>
+          <p><strong>Email:</strong> ${contract.clientEmail}</p>
+          <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+          <p><strong>Time:</strong> ${contract.eventTime}</p>
+          <p><strong>Venue:</strong> ${contract.venue}</p>
+          <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+          <p><strong>Signed on:</strong> ${signatureDetails.signedAt.toLocaleString('en-GB')}</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${downloadUrl}" 
+             style="background-color: #059669; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px;">
+            📄 Download Signed Contract
+          </a>
+        </div>
+        
+        <div style="background-color: #e0f2fe; border: 1px solid #0284c7; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #0c4a6e;">
+            <strong>Next Steps:</strong> The booking is now confirmed. You may want to create an invoice for this performance and add the event to your calendar.
+          </p>
+        </div>
+        
+        <p>The signed contract is attached to this email for your records.</p>
+        
+        <p>Best regards,<br>
+        <strong>MusoBuddy Notification System</strong></p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        <p style="font-size: 12px; color: #6b7280; text-align: center;">
+          Powered by MusoBuddy – less admin, more music
+        </p>
+      </body>
+    </html>
+  `;
+}
+
 // Test function for sandbox testing
 export async function testEmailSending(): Promise<void> {
   console.log('🧪 Testing Mailgun email sending...');
@@ -482,4 +739,259 @@ export async function testEmailSending(): Promise<void> {
   } else {
     console.log('❌ Email test failed!');
   }
+}
+
+/**
+ * CRITICAL FIX: Send confirmation emails after contract is signed
+ * This function was missing and causing the email system to fail
+ */
+export async function sendContractConfirmationEmails(
+  contract: Contract,
+  userSettings: UserSettings | null
+): Promise<boolean> {
+  try {
+    console.log('📧 CONFIRMATION: Sending confirmation emails for signed contract:', contract.contractNumber);
+    
+    // Generate signed contract PDF with signature details
+    const signatureDetails = {
+      signedAt: contract.signedAt ? new Date(contract.signedAt) : new Date(),
+      signatureName: contract.clientName,
+      clientIpAddress: 'contract-signing-page'
+    };
+    
+    const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+    
+    // Upload signed contract to cloud storage for permanent access
+    let cloudDownloadUrl: string | null = null;
+    if (isCloudStorageConfigured()) {
+      console.log('☁️ CONFIRMATION: Uploading signed contract to cloud storage...');
+      const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
+      
+      if (cloudResult.success && cloudResult.url) {
+        cloudDownloadUrl = cloudResult.url;
+        console.log('✅ CONFIRMATION: Signed contract uploaded to cloud storage:', cloudDownloadUrl);
+        
+        // Update contract with cloud storage URL
+        await storage.updateContract(contract.id, {
+          cloudStorageUrl: cloudResult.url,
+          cloudStorageKey: cloudResult.key,
+          signingUrlCreatedAt: new Date()
+        }, contract.userId);
+      } else {
+        console.warn('⚠️ CONFIRMATION: Cloud storage upload failed:', cloudResult.error);
+      }
+    }
+    
+    // Prepare email settings
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    const fromName = userSettings?.emailFromName || businessName;
+    const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
+    const replyToEmail = userSettings?.businessEmail || 'noreply@mg.musobuddy.com';
+    
+    // Generate app-based download URL as fallback
+    const appDownloadUrl = `https://musobuddy.replit.app/api/contracts/${contract.id}/download`;
+    const finalDownloadUrl = cloudDownloadUrl || appDownloadUrl;
+    
+    console.log('🔗 CONFIRMATION: Download URL for emails:', finalDownloadUrl);
+    
+    // EMAIL 1: Send confirmation to CLIENT
+    const clientEmailHtml = generateClientConfirmationHtml(
+      contract,
+      userSettings,
+      finalDownloadUrl,
+      signatureDetails
+    );
+    
+    const clientEmailData: EmailData = {
+      to: contract.clientEmail,
+      from: fromEmail,
+      subject: `Contract Signed Successfully - ${contract.contractNumber}`,
+      html: clientEmailHtml,
+      replyTo: replyToEmail,
+      attachments: [
+        {
+          content: pdfBuffer.toString('base64'),
+          filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }
+      ]
+    };
+    
+    console.log('📧 CONFIRMATION: Sending email to client:', contract.clientEmail);
+    const clientEmailSuccess = await sendEmail(clientEmailData);
+    
+    if (!clientEmailSuccess) {
+      console.error('❌ CONFIRMATION: Failed to send client confirmation email');
+    } else {
+      console.log('✅ CONFIRMATION: Client confirmation email sent successfully');
+    }
+    
+    // EMAIL 2: Send notification to PERFORMER
+    const performerEmail = userSettings?.businessEmail || replyToEmail;
+    
+    if (performerEmail && performerEmail !== 'noreply@mg.musobuddy.com') {
+      const performerEmailHtml = generatePerformerConfirmationHtml(
+        contract,
+        userSettings,
+        finalDownloadUrl,
+        signatureDetails
+      );
+      
+      const performerEmailData: EmailData = {
+        to: performerEmail,
+        from: fromEmail,
+        subject: `Contract Signed by Client - ${contract.contractNumber}`,
+        html: performerEmailHtml,
+        replyTo: replyToEmail,
+        attachments: [
+          {
+            content: pdfBuffer.toString('base64'),
+            filename: `Contract-${contract.contractNumber}-Signed.pdf`,
+            type: 'application/pdf',
+            disposition: 'attachment'
+        }
+      ]
+      };
+      
+      console.log('📧 CONFIRMATION: Sending email to performer:', performerEmail);
+      const performerEmailSuccess = await sendEmail(performerEmailData);
+      
+      if (!performerEmailSuccess) {
+        console.error('❌ CONFIRMATION: Failed to send performer confirmation email');
+      } else {
+        console.log('✅ CONFIRMATION: Performer confirmation email sent successfully');
+      }
+      
+      return clientEmailSuccess && performerEmailSuccess;
+    } else {
+      console.warn('⚠️ CONFIRMATION: No performer email configured, only sending client confirmation');
+      return clientEmailSuccess;
+    }
+    
+  } catch (error) {
+    console.error('❌ CONFIRMATION: Error sending confirmation emails:', error);
+    return false;
+  }
+}
+
+/**
+ * Generate HTML for client confirmation email
+ */
+function generateClientConfirmationHtml(
+  contract: Contract,
+  userSettings: UserSettings | null,
+  downloadUrl: string,
+  signatureDetails: any
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  
+  return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <h2 style="color: #065f46; margin-top: 0;">✅ Contract Signed Successfully!</h2>
+          <p style="color: #047857; font-size: 18px; margin: 0;">Thank you for signing your performance contract.</p>
+        </div>
+        
+        <p>Dear ${contract.clientName},</p>
+        
+        <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed and is now legally binding.</p>
+        
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #374151; margin-top: 0;">📋 Event Details Confirmed</h3>
+          <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+          <p><strong>Time:</strong> ${contract.eventTime}</p>
+          <p><strong>Venue:</strong> ${contract.venue}</p>
+          <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+          <p><strong>Signed on:</strong> ${signatureDetails.signedAt.toLocaleString('en-GB')}</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${downloadUrl}" 
+             style="background-color: #059669; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px;">
+            📄 Download Signed Contract
+          </a>
+        </div>
+        
+        <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #92400e;">
+            <strong>Important:</strong> Please save a copy of your signed contract for your records. 
+            This document contains all the terms and conditions for your event.
+          </p>
+        </div>
+        
+        <p>A copy of the signed contract is also attached to this email.</p>
+        
+        <p>We look forward to performing at your event! If you have any questions, please don't hesitate to contact us.</p>
+        
+        <p>Best regards,<br>
+        <strong>${businessName}</strong></p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        <p style="font-size: 12px; color: #6b7280; text-align: center;">
+          Powered by MusoBuddy – less admin, more music
+        </p>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Generate HTML for performer confirmation email
+ */
+function generatePerformerConfirmationHtml(
+  contract: Contract,
+  userSettings: UserSettings | null,
+  downloadUrl: string,
+  signatureDetails: any
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  
+  return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <h2 style="color: #065f46; margin-top: 0;">🎉 Great News!</h2>
+          <p style="color: #047857; font-size: 18px; margin: 0;">Contract ${contract.contractNumber} has been signed by your client.</p>
+        </div>
+        
+        <p>Hello,</p>
+        
+        <p>Your client <strong>${contract.clientName}</strong> has successfully signed the performance contract.</p>
+        
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #374151; margin-top: 0;">📋 Event Details</h3>
+          <p><strong>Client:</strong> ${contract.clientName} (${contract.clientEmail})</p>
+          <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+          <p><strong>Time:</strong> ${contract.eventTime}</p>
+          <p><strong>Venue:</strong> ${contract.venue}</p>
+          <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+          <p><strong>Signed on:</strong> ${signatureDetails.signedAt.toLocaleString('en-GB')}</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${downloadUrl}" 
+             style="background-color: #6366f1; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px;">
+            📄 Download Signed Contract
+          </a>
+        </div>
+        
+        <div style="background-color: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; color: #1e40af;">
+            <strong>Next Steps:</strong> You can now create and send an invoice for this performance. 
+            The signed contract is attached and also available for download using the link above.
+          </p>
+        </div>
+        
+        <p>Best regards,<br>
+        <strong>MusoBuddy</strong></p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        <p style="font-size: 12px; color: #6b7280; text-align: center;">
+          Powered by MusoBuddy – less admin, more music
+        </p>
+      </body>
+    </html>
+  `;
 }

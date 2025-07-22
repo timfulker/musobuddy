@@ -246,21 +246,27 @@ export class Storage {
       // Verify the contract exists and can be signed
       const existingContract = await this.getContractById(contractId);
       if (!existingContract) {
+        console.log('❌ STORAGE: Contract not found:', contractId);
         throw new Error('Contract not found');
       }
       
+      console.log('🔍 STORAGE: Current contract status:', existingContract.status);
+      
+      // CRITICAL: Check if already signed (prevent double signing)
       if (existingContract.status === 'signed') {
+        console.log('❌ STORAGE: Contract already signed, preventing duplicate');
         throw new Error('Contract has already been signed');
       }
       
       if (existingContract.status !== 'sent') {
+        console.log('❌ STORAGE: Contract not available for signing, status:', existingContract.status);
         throw new Error('Contract is not available for signing');
       }
       
-      // Prepare update data
+      // Prepare update data with comprehensive field mapping
       const updateData = {
         status: 'signed' as const,
-        signedAt: signatureData.signedAt,
+        signedAt: signatureData.signedAt || new Date(),
         clientSignature: signatureData.signatureName,
         clientPhone: signatureData.clientPhone || existingContract.clientPhone,
         clientAddress: signatureData.clientAddress || existingContract.clientAddress,
@@ -268,7 +274,9 @@ export class Storage {
         updatedAt: new Date()
       };
       
-      // Perform the database update
+      console.log('📝 STORAGE: Updating contract with data:', updateData);
+      
+      // Perform the database update with proper error handling
       const result = await db.update(contracts)
         .set(updateData)
         .where(eq(contracts.id, contractId))
