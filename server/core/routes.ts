@@ -437,7 +437,7 @@ export async function registerRoutes(app: Express) {
             const form = document.getElementById('signingForm');
             form.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Processing signature...</h3></div>';
             
-            fetch('https://musobuddy.replit.app/api/contracts/sign/${contract.id}', {
+            fetch('/api/contracts/sign/${contract.id}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(signatureData)
@@ -640,7 +640,7 @@ export async function registerRoutes(app: Express) {
             const form = document.getElementById('signingForm');
             form.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Processing signature...</h3></div>';
             
-            fetch('https://musobuddy.replit.app/api/contracts/sign/${contract.id}', {
+            fetch('/api/contracts/sign/${contract.id}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(signatureData)
