@@ -153,10 +153,11 @@ Extract in JSON format:
 
 async function startServer() {
   try {
-    // Setup authentication
+    // CRITICAL: Setup authentication FIRST, before any other routes
     await setupAuthentication(app);
+    console.log('✅ Authentication system initialized');
     
-    // Register all routes
+    // Register all routes AFTER authentication
     const server = await registerRoutes(app);
     
     // Setup Vite middleware (with error handling)
