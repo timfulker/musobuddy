@@ -1009,6 +1009,27 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Contract status check route for signing pages
+  app.get('/api/contracts/:id/status', async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContractById(contractId);
+      
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      res.json({ 
+        status: contract.status,
+        signed: contract.status === 'signed',
+        signedAt: contract.signedAt 
+      });
+    } catch (error) {
+      console.error('Error checking contract status:', error);
+      res.status(500).json({ error: 'Failed to check contract status' });
+    }
+  });
+
   // Contract import and parsing routes
   app.post('/api/contracts/import-pdf', isAuthenticated, upload.single('contract'), async (req: any, res) => {
     try {

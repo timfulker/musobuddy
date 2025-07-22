@@ -298,6 +298,19 @@ function generateContractSigningPageHTML(
           const agreeTerms = document.getElementById('agreeTerms').checked;
           const submitBtn = document.getElementById('submitBtn');
           
+          // First check if contract is still available for signing
+          try {
+            const statusResponse = await fetch('/api/contracts/${contract.id}/status');
+            const statusData = await statusResponse.json();
+            if (statusData.status === 'signed') {
+              alert('This contract has already been signed!');
+              document.getElementById('signingForm').innerHTML = '<div style="text-align: center; padding: 20px;"><h3>✅ Contract Already Signed</h3><p>This contract has already been completed.</p></div>';
+              return;
+            }
+          } catch (error) {
+            console.error('Error checking contract status:', error);
+          }
+          
           // Validation
           if (!typedSignature) {
             alert('Please type your signature before submitting.');
