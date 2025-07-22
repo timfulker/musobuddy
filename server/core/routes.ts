@@ -425,7 +425,7 @@ export async function registerRoutes(app: Express) {
             const clientAddress = document.getElementById('clientAddress') ? document.getElementById('clientAddress').value.trim() : '';
             
             const signatureData = {
-                signature: signatureName,
+                signatureName: signatureName,
                 clientPhone: clientPhone || null,
                 clientAddress: clientAddress || null,
                 agreedToTerms: true,
@@ -642,7 +642,7 @@ export async function registerRoutes(app: Express) {
             const clientAddress = document.getElementById('clientAddress') ? document.getElementById('clientAddress').value.trim() : '';
             
             const signatureData = {
-                signature: signatureName,
+                signatureName: signatureName,
                 clientPhone: clientPhone || null,
                 clientAddress: clientAddress || null,
                 agreedToTerms: true,
