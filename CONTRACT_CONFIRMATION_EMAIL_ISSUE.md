@@ -72,5 +72,59 @@ When a client signs a contract:
 - Mailgun API for email delivery
 - Authentication via branded login system
 
+## Key Files for External Analysis
+
+### Primary Files to Review:
+1. **server/core/mailgun-email-restored.ts** - Main email sending logic (509 lines)
+2. **server/core/routes.ts** - Contract signing endpoint (lines 487-700+) 
+3. **server/core/storage.ts** - Database operations (lines 220-264 contain signContract method)
+4. **server/core/auth.ts** - Authentication middleware (lines 230-244)
+5. **shared/schema.ts** - Database schema definitions
+6. **CONTRACT_CONFIRMATION_EMAIL_ISSUE.md** - This problem synopsis
+
+### Contract Signing Flow (Current Implementation):
+```
+1. Client accesses contract signing page ✅ WORKING
+2. POST /api/contracts/sign/:id called ✅ WORKING  
+3. Contract status checked (must be 'sent') ✅ WORKING
+4. storage.signContract() updates status to 'signed' ✅ WORKING
+5. storage.getUserSettings() called ❌ SUSPECTED FAILURE POINT
+6. sendEmail() function imported ✅ WORKING
+7. Confirmation emails generated and sent ❌ NOT HAPPENING
+```
+
+### Critical Code Sections:
+
+**Contract Signing Route (routes.ts lines 571-625):**
+```typescript
+// This is where confirmation emails should trigger
+const userSettings = await storage.getUserSettings(contract.userId);
+const { sendEmail } = await import('./mailgun-email-restored');
+// Email generation and sending logic follows
+```
+
+**Storage Sign Contract Method (storage.ts lines 230-264):**
+```typescript
+async signContract(contractId: number, signatureData: any) {
+  const updateData = { status: 'signed', signedAt: signatureData.signedAt, ... };
+  const result = await db.update(contracts).set(updateData).where(eq(contracts.id, contractId)).returning();
+  return result[0];
+}
+```
+
+**Email Sending Function (mailgun-email-restored.ts lines 29-102):**
+```typescript
+export async function sendEmail(emailData: EmailData): Promise<boolean> {
+  // Mailgun API integration with mg.musobuddy.com domain
+  // Should return true on success, false on failure
+}
+```
+
 ## Request for External Analysis
 Need systematic debugging of the confirmation email pipeline to identify why emails aren't triggering after successful contract signing, despite all technical fixes being applied.
+
+**Focus Areas:**
+1. Is getUserSettings() failing silently during contract signing?
+2. Are the Mailgun API calls actually being made?
+3. Is there an authentication issue preventing email access during signing?
+4. Are there any unhandled errors in the email generation process?
