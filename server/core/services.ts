@@ -3,6 +3,7 @@ import Mailgun from 'mailgun.js';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import puppeteer from 'puppeteer';
+import htmlPdf from 'html-pdf-node';
 import Anthropic from '@anthropic-ai/sdk';
 
 // Restored original working Mailgun configuration from before rebuild
@@ -22,23 +23,34 @@ export class MailgunService {
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
     const domain = 'mg.musobuddy.com';
     
+    // Generate PDF attachment - this was working last week
+    const pdfBuffer = await this.generateContractPDF(contract, userSettings);
+    
     console.log('📧 Sending contract email with config:', {
       domain,
       to: contract.clientEmail,
       apiKeyExists: !!process.env.MAILGUN_API_KEY,
-      apiKeyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 10) + '...'
+      apiKeyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 10) + '...',
+      hasPdfAttachment: !!pdfBuffer
     });
     
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
       to: contract.clientEmail,
       subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
-      html: this.generateContractEmailHTML(contract, userSettings, signingUrl)
+      html: this.generateContractEmailHTML(contract, userSettings, signingUrl),
+      attachment: [
+        {
+          data: pdfBuffer,
+          filename: `Contract-${contract.contractNumber || contract.id}.pdf`,
+          contentType: 'application/pdf'
+        }
+      ]
     };
 
     try {
       const result = await this.mailgun.messages.create(domain, emailData);
-      console.log('✅ Contract email sent successfully:', result.id);
+      console.log('✅ Email sent successfully with PDF attachment:', result.id);
       return result;
     } catch (error: any) {
       console.error('❌ Mailgun error details:', {
@@ -63,6 +75,66 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
+  async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
+    try {
+      const html = this.generateContractHTML(contract, userSettings);
+      
+      // Use html-pdf-node (more reliable than Puppeteer for user environments)
+      const options = { 
+        format: 'A4',
+        margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+        printBackground: true
+      };
+      
+      console.log('🔧 Generating PDF with html-pdf-node...');
+      const pdfBuffer = await htmlPdf.generatePdf({ content: html }, options);
+      
+      console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+      return pdfBuffer;
+    } catch (htmlPdfError) {
+      console.log('html-pdf-node failed, trying Puppeteer fallback:', htmlPdfError);
+      
+      // Fallback to Puppeteer with stable configuration
+      let browser;
+      try {
+        browser = await puppeteer.launch({
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+          ]
+        });
+        
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1200, height: 1600 });
+        
+        const html = this.generateContractHTML(contract, userSettings);
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+          printBackground: true
+        });
+        
+        console.log('✅ PDF generated with Puppeteer fallback, size:', pdfBuffer.length, 'bytes');
+        return pdfBuffer;
+      } catch (puppeteerError) {
+        console.error('❌ Both PDF generation methods failed:', puppeteerError);
+        throw new Error('Failed to generate contract PDF - no working PDF engine available');
+      } finally {
+        if (browser) {
+          await browser.close();
+        }
+      }
+    }
+  }
 
 
   generateContractHTML(contract: any, userSettings: any): string {
