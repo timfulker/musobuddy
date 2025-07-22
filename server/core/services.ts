@@ -90,13 +90,13 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
-  // PROFESSIONAL CONTRACT PDF GENERATION using PDFKit
+  // AUTOMATIC PROFESSIONAL CONTRACT PDF GENERATION
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
         console.log('📄 Creating professional PDF contract...');
         
-        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const doc = new PDFDocument({ margin: 60, size: 'A4' });
         const chunks: Buffer[] = [];
 
         doc.on('data', (chunk) => chunks.push(chunk));
@@ -110,18 +110,20 @@ export class MailgunService {
           reject(error);
         });
 
-        // Header - exact Andy Urquahart format with colors
-        doc.fillColor('#2563eb').fontSize(18).font('Helvetica-Bold')
-           .text('Performance Contract', { align: 'center' });
-        doc.moveDown(0.8);
+        // Professional Header with elegant styling
+        doc.fillColor('#1e3a8a').fontSize(20).font('Helvetica-Bold')
+           .text('PERFORMANCE CONTRACT', { align: 'center' });
+        doc.moveDown(0.5);
         
-        doc.fillColor('#1e40af').fontSize(14).font('Helvetica')
-           .text(`(${new Date(contract.eventDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/')} - ${contract.clientName})`, { align: 'center' });
+        doc.fillColor('#64748b').fontSize(12).font('Helvetica')
+           .text(`Contract #${contract.contractNumber || new Date(contract.eventDate).toLocaleDateString('en-GB').replace(/\//g, '') + '-' + contract.clientName.replace(/\s+/g, '')}`, { align: 'center' });
+        doc.moveDown(1);
+        
+        if (contract.status === 'draft') {
+          doc.fillColor('#dc2626').fontSize(12).font('Helvetica-Bold')
+             .text('DRAFT - PENDING APPROVAL', { align: 'center' });
+        }
         doc.moveDown(2);
-        
-        doc.fillColor('#dc2626').fontSize(14).font('Helvetica-Bold')
-           .text('DRAFT', { align: 'center' });
-        doc.moveDown(3);
 
         // Performer Details Section
         doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
