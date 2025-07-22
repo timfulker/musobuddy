@@ -485,62 +485,77 @@ export async function registerRoutes(app: Express) {
   });
 
   app.post('/api/contracts/sign/:id', async (req, res) => {
-    // Add CORS headers for R2 signing pages
+    // Add CORS headers for cloud-hosted signing pages
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     
-    console.log('🚨 CONTRACT SIGNING ENDPOINT CALLED! ID:', req.params.id);
-    console.log('🚨 Request body:', JSON.stringify(req.body, null, 2));
-    
     try {
-      const contractId = parseInt(req.params.id);
-      const { signature, clientPhone, clientAddress, agreedToTerms, signedAt, ipAddress } = req.body;
+      console.log('🔥 CONTRACT SIGNING: Starting contract signing process');
+      console.log('🔥 CONTRACT SIGNING: Request params:', req.params);
+      console.log('🔥 CONTRACT SIGNING: Request body:', req.body);
       
-      console.log('📝 Contract signing request:', {
-        contractId,
-        signature,
-        clientPhone: clientPhone || 'Not provided',
-        clientAddress: clientAddress || 'Not provided',
-        agreedToTerms
+      const contractId = parseInt(req.params.id);
+      const { signatureName, clientName, signature, clientPhone, clientAddress, venueAddress } = req.body;
+      
+      // Support both formats: old format (signatureName) and new format (clientName from cloud page)
+      const finalSignatureName = signatureName || clientName;
+      
+      console.log('🔥 CONTRACT SIGNING: Final signature name:', finalSignatureName);
+      
+      if (!finalSignatureName || !finalSignatureName.trim()) {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Signature name is required');
+        return res.status(400).json({ message: "Signature name is required" });
+      }
+      
+      // Get contract
+      console.log('🔥 CONTRACT SIGNING: Retrieving contract with ID:', contractId);
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Contract not found');
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      console.log('🔥 CONTRACT SIGNING: Contract retrieved:', contract.contractNumber, 'status:', contract.status);
+      
+      if (contract.status !== 'sent') {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Contract is not available for signing, status:', contract.status);
+        return res.status(400).json({ message: "Contract is not available for signing" });
+      }
+      
+      // Get client IP for audit trail
+      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      
+      // Update contract with signature and client-fillable fields
+      const signedContract = await storage.signContract(contractId, {
+        signatureName: finalSignatureName.trim(),
+        clientIP,
+        signedAt: new Date(),
+        clientPhone: clientPhone?.trim(),
+        clientAddress: clientAddress?.trim(),
+        venueAddress: venueAddress?.trim()
       });
       
-      // Prepare update data
-      const updateData: any = {
-        status: 'signed',
-        signedAt: new Date(signedAt || new Date()),
-        clientSignature: signature
-      };
-      
-      // Include optional client details if provided
-      if (clientPhone && clientPhone.trim()) {
-        updateData.clientPhone = clientPhone.trim();
-      }
-      if (clientAddress && clientAddress.trim()) {
-        updateData.clientAddress = clientAddress.trim();
+      if (!signedContract) {
+        return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      console.log('📝 Updating contract with data:', updateData);
-      
-      // Update contract status to signed
-      const updatedContract = await storage.updateContract(contractId, updateData);
-      
-      // WEBHOOK: Automatically update related booking status
-      if (updatedContract) {
-        try {
-          const webhookResult = await webhookService.handleContractSigned(contractId, updatedContract);
-          console.log('🎯 Contract signing webhook result:', webhookResult);
-        } catch (webhookError) {
-          console.error('❌ Webhook notification failed:', webhookError);
-          // Don't fail the contract signing if webhook fails
-        }
+      // Update booking to reflect contract being signed
+      if (contract.enquiryId) {
+        await storage.updateBooking(contract.enquiryId, { 
+          contractSigned: true,
+          status: 'confirmed'
+        }, contract.userId);
       }
       
       // RESTORED ORIGINAL WORKING CONFIRMATION EMAIL SYSTEM
       console.log('🔥 CONTRACT SIGNING: Sending confirmation emails to both parties...');
+      console.log('🔥 CONTRACT SIGNING: Contract ID:', contractId, 'Updated contract:', !!updatedContract);
       try {
         // Import the working sendEmail function from the original system
+        console.log('🔥 CONTRACT SIGNING: Importing sendEmail function...');
         const { sendEmail } = await import('./mailgun-email-restored');
+        console.log('🔥 CONTRACT SIGNING: sendEmail function imported successfully');
         const userSettings = await storage.getSettings(updatedContract.userId);
         
         // Get email settings
