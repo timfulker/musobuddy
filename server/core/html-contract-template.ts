@@ -439,20 +439,42 @@ export async function generateHTMLContractPDF(contract: any, userSettings: any):
     });
     
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    // Set a reasonable timeout and wait for content to load
+    await page.setContent(html, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 30000 
+    });
+    
+    // Wait a moment for any CSS to apply
+    await page.waitForTimeout(1000);
     
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
+      preferCSSPageSize: false,
       margin: {
         top: '20px',
         right: '20px',
         bottom: '20px',
         left: '20px'
-      }
+      },
+      timeout: 30000
     });
     
     await browser.close();
+    
+    // Validate the PDF buffer
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      throw new Error('Generated PDF buffer is empty');
+    }
+    
+    // Check if it starts with PDF header
+    const pdfHeader = pdfBuffer.subarray(0, 4).toString();
+    if (pdfHeader !== '%PDF') {
+      console.error('❌ Generated buffer is not a valid PDF. First 50 bytes:', pdfBuffer.subarray(0, 50).toString());
+      throw new Error('Generated content is not a valid PDF');
+    }
     
     console.log('✅ HTML contract PDF generated, size:', pdfBuffer.length, 'bytes');
     return pdfBuffer;
