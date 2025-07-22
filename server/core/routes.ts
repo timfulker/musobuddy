@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { isAuthenticated, isAdmin } from "./auth";
 import { mailgunService, cloudStorageService, contractParserService } from "./services";
 import { webhookService } from "./webhook-service";
+import { generateHTMLContractPDF } from "./html-contract-template.js";
 import multer from "multer";
 import path from "path";
 
@@ -531,13 +532,14 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Contract PDF download route
+  // Contract PDF download route with HTML option
   app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       const userId = req.user.id;
+      const useHTML = req.query.html === 'true'; // Use ?html=true for HTML generation
       
-      console.log('📄 Contract PDF download request:', { contractId, userId });
+      console.log('📄 Contract PDF download request:', { contractId, userId, useHTML });
       
       // Get contract and verify ownership
       const contract = await storage.getContract(contractId, userId);
@@ -548,10 +550,19 @@ export async function registerRoutes(app: Express) {
       // Get user settings for PDF generation
       const userSettings = await storage.getSettings(userId);
       
-      // Generate PDF using MailgunService
-      console.log('📄 Generating PDF for download...');
-      const pdfBuffer = await mailgunService.generateContractPDF(contract, userSettings);
-      console.log('✅ PDF generated for download, size:', pdfBuffer.length, 'bytes');
+      let pdfBuffer: Buffer;
+      
+      if (useHTML) {
+        // Use NEW HTML-to-PDF generation (with full colors and formatting)
+        console.log('📄 Generating HTML contract PDF with Puppeteer...');
+        pdfBuffer = await generateHTMLContractPDF(contract, userSettings);
+        console.log('✅ HTML contract PDF generated, size:', pdfBuffer.length, 'bytes');
+      } else {
+        // Use existing PDFKit generation
+        console.log('📄 Generating PDF for download...');
+        pdfBuffer = await mailgunService.generateContractPDF(contract, userSettings);
+        console.log('✅ PDF generated for download, size:', pdfBuffer.length, 'bytes');
+      }
       
       // Set proper headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
