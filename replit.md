@@ -7,6 +7,7 @@ MusoBuddy is a comprehensive music business management platform designed to help
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Response priority: Immediate responsiveness - user must be able to interrupt at any moment without queue delays.
 
 ## System Architecture
 
