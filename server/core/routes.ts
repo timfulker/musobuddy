@@ -788,26 +788,10 @@ export async function registerRoutes(app: Express) {
         }, contract.userId);
       }
       
-      res.json({ 
-        success: true,
-        message: "Contract signed successfully",
-        contract: signedContract,
-        signedAt: signatureDetails.signedAt,
-        signedBy: finalSignatureName.trim()
-      });
-      
       // **DEBUG: Re-fetch the contract to verify status update**
       const updatedContract = await storage.getContractById(contractId);
       console.log('🔥 CONTRACT SIGNING: DEBUG - Contract status after signing:', updatedContract?.status);
       console.log('🔥 CONTRACT SIGNING: DEBUG - Contract signedAt after signing:', updatedContract?.signedAt);
-      
-      // Update booking to reflect contract being signed
-      if (contract.enquiryId) {
-        await storage.updateBooking(contract.enquiryId, { 
-          contractSigned: true,
-          status: 'confirmed'
-        }, contract.userId);
-      }
       
       // **CRITICAL FIX: Enhanced email confirmation with better error handling**
       try {
@@ -1018,10 +1002,13 @@ export async function registerRoutes(app: Express) {
         // Don't fail the signing process if email fails
       }
       
+      // Send final response after all processing is complete
       res.json({ 
         success: true,
         message: "Contract signed successfully",
-        contract: signedContract 
+        contract: signedContract,
+        signedAt: signatureDetails.signedAt,
+        signedBy: finalSignatureName.trim()
       });
       
     } catch (error) {
