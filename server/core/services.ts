@@ -110,21 +110,21 @@ export class MailgunService {
           reject(error);
         });
 
-        // Header - exact Andy Urquahart format
-        doc.fillColor('#000000').fontSize(18).font('Helvetica-Bold')
+        // Header - exact Andy Urquahart format with colors
+        doc.fillColor('#2563eb').fontSize(18).font('Helvetica-Bold')
            .text('Performance Contract', { align: 'center' });
         doc.moveDown(0.8);
         
-        doc.fontSize(14).font('Helvetica')
+        doc.fillColor('#1e40af').fontSize(14).font('Helvetica')
            .text(`(${new Date(contract.eventDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/')} - ${contract.clientName})`, { align: 'center' });
         doc.moveDown(2);
         
-        doc.fontSize(14).font('Helvetica-Bold')
+        doc.fillColor('#dc2626').fontSize(14).font('Helvetica-Bold')
            .text('DRAFT', { align: 'center' });
         doc.moveDown(3);
 
         // Performer Details Section
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
            .text('Performer Details');
         doc.moveDown(0.8);
         
@@ -139,7 +139,7 @@ export class MailgunService {
         doc.moveDown(2);
 
         // Event Details Section
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
            .text('Event Details');
         doc.moveDown(1);
         
@@ -149,11 +149,12 @@ export class MailgunService {
         const rightCol = 320;
         let currentY = startY;
         
-        // Helper function for table rows with exact spacing
+        // Helper function for table rows with exact spacing and colors
         const addDetailRow = (label: string, value: string) => {
-          doc.fontSize(11).font('Helvetica').fillColor('#000000')
+          doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
              .text(label, leftCol, currentY);
-          doc.text(value, rightCol, currentY);
+          doc.fontSize(11).font('Helvetica').fillColor('#111827')
+             .text(value, rightCol, currentY);
           currentY += 20;
         };
         
@@ -168,12 +169,12 @@ export class MailgunService {
         
         doc.y = currentY + 20;
 
-        // Terms and Conditions - exact Andy Urquahart format
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000')
+        // Terms and Conditions - exact Andy Urquahart format with colors
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
            .text('Terms and Conditions');
         doc.moveDown(0.5);
         
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Payment Terms & Conditions');
         doc.moveDown(0.5);
         
@@ -190,7 +191,7 @@ export class MailgunService {
         doc.text('Late Payment: Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.');
         doc.moveDown(1);
 
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Cancellation & Refund Policy');
         doc.moveDown(0.5);
         
@@ -209,7 +210,7 @@ export class MailgunService {
         doc.text('Rescheduling: Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.');
         doc.moveDown(1);
 
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Force Majeure');
         doc.moveDown(0.5);
         
@@ -217,7 +218,7 @@ export class MailgunService {
         doc.text('Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.');
         doc.moveDown(1);
 
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Performance Contingencies');
         doc.moveDown(0.5);
         
@@ -225,7 +226,7 @@ export class MailgunService {
         doc.text('The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.');
         doc.moveDown(1);
 
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Professional Performance Standards');
         doc.moveDown(0.5);
         
@@ -255,11 +256,11 @@ export class MailgunService {
         doc.moveDown(2);
 
         // Signatures Section
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1f2937')
            .text('Signatures');
         doc.moveDown(1);
         
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Performer');
         doc.moveDown(2);
         
@@ -271,7 +272,7 @@ export class MailgunService {
         doc.text('Status: Agreed by sending contract');
         doc.moveDown(2);
         
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#374151')
            .text('Client');
         doc.moveDown(2);
         
