@@ -2,8 +2,7 @@ import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import puppeteer from 'puppeteer';
-import htmlPdf from 'html-pdf-node';
+import * as pdf from 'html-pdf';
 import Anthropic from '@anthropic-ai/sdk';
 
 // Restored original working Mailgun configuration from before rebuild
@@ -75,65 +74,28 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
+  // CHROME-FREE PDF GENERATION using html-pdf
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
-    try {
-      const html = this.generateContractHTML(contract, userSettings);
-      
-      // Use html-pdf-node (more reliable than Puppeteer for user environments)
-      const options = { 
-        format: 'A4',
-        margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
-        printBackground: true
-      };
-      
-      console.log('🔧 Generating PDF with html-pdf-node...');
-      const pdfBuffer = await htmlPdf.generatePdf({ content: html }, options);
-      
-      console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
-      return pdfBuffer;
-    } catch (htmlPdfError) {
-      console.log('html-pdf-node failed, trying Puppeteer fallback:', htmlPdfError);
-      
-      // Fallback to Puppeteer with stable configuration
-      let browser;
-      try {
-        browser = await puppeteer.launch({
-          headless: true,
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu'
-          ]
-        });
-        
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1200, height: 1600 });
-        
-        const html = this.generateContractHTML(contract, userSettings);
-        await page.setContent(html, { waitUntil: 'networkidle0' });
-        
-        const pdfBuffer = await page.pdf({
-          format: 'A4',
-          margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
-          printBackground: true
-        });
-        
-        console.log('✅ PDF generated with Puppeteer fallback, size:', pdfBuffer.length, 'bytes');
-        return pdfBuffer;
-      } catch (puppeteerError) {
-        console.error('❌ Both PDF generation methods failed:', puppeteerError);
-        throw new Error('Failed to generate contract PDF - no working PDF engine available');
-      } finally {
-        if (browser) {
-          await browser.close();
+    const html = this.generateContractHTML(contract, userSettings);
+    
+    const options = {
+      format: 'A4',
+      margin: '20mm',
+      printBackground: true,
+      quality: '75'
+    };
+
+    return new Promise((resolve, reject) => {
+      pdf.create(html, options).toBuffer((err: any, buffer: Buffer) => {
+        if (err) {
+          console.error('❌ PDF generation error:', err);
+          reject(new Error('Failed to generate contract PDF'));
+        } else {
+          console.log('✅ PDF generated successfully');
+          resolve(buffer);
         }
-      }
-    }
+      });
+    });
   }
 
 
