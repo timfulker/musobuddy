@@ -222,6 +222,18 @@ export class Storage {
     return result[0] || null;
   }
 
+  // Add overloaded getContract method that routes.ts expects
+  async getContract(id: number, userId?: string) {
+    if (userId) {
+      const result = await db.select().from(contracts)
+        .where(and(eq(contracts.id, id), eq(contracts.userId, userId)));
+      return result[0] || null;
+    } else {
+      const result = await db.select().from(contracts).where(eq(contracts.id, id));
+      return result[0] || null;
+    }
+  }
+
   async getUserSettings(userId: string) {
     const result = await db.select().from(userSettings).where(eq(userSettings.userId, userId));
     return result[0] || null;
