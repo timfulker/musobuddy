@@ -552,23 +552,10 @@ export async function registerRoutes(app: Express) {
       
       let pdfBuffer: Buffer;
       
-      if (useHTML) {
-        // Try HTML-to-PDF generation first (DEFAULT - professional formatting)
-        console.log('📄 Attempting professional HTML contract PDF...');
-        try {
-          pdfBuffer = await generateHTMLContractPDF(contract, userSettings);
-          console.log('✅ Professional contract PDF generated, size:', pdfBuffer.length, 'bytes');
-        } catch (htmlError) {
-          console.log('⚠️ HTML generation failed, falling back to PDFKit...');
-          pdfBuffer = await mailgunService.generateContractPDF(contract, userSettings);
-          console.log('✅ Fallback PDFKit contract generated, size:', pdfBuffer.length, 'bytes');
-        }
-      } else {
-        // Use legacy PDFKit generation (only when ?pdfkit=true)
-        console.log('📄 Generating legacy PDFKit contract...');
-        pdfBuffer = await mailgunService.generateContractPDF(contract, userSettings);
-        console.log('✅ Legacy contract PDF generated, size:', pdfBuffer.length, 'bytes');
-      }
+      // Use the original working PDFKit system (Andy Urquhart template)
+      console.log('📄 Generating professional contract with original working system...');
+      pdfBuffer = await mailgunService.generateContractPDF(contract, userSettings);
+      console.log('✅ Professional contract PDF generated, size:', pdfBuffer.length, 'bytes');
       
       // Set proper headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');

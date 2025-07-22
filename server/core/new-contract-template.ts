@@ -20,59 +20,34 @@ export async function generateProfessionalContract(contract: any, userSettings: 
       });
       doc.on('error', (error) => reject(error));
 
-      console.log('📄 Creating professional contract with enhanced styling...');
+      console.log('📄 Creating Andy Urquahart contract format...');
 
-      // Colors
-      const purple = '#7C3AED';
-      const blue = '#2563EB';
-      const yellowBg = '#FFF7E0';
-      const yellowText = '#E6B800';
-      const grayRow = '#F5F5F5';
-      const textMain = '#222222';
-      const textSecondary = '#666666';
-
-      // Header: Purple Bar
-      doc
-        .rect(0, 0, doc.page.width, 60)
-        .fill(purple);
-
-      // Title
-      doc
-        .fillColor('white')
-        .fontSize(22)
+      // HEADER - Simple centered text like original
+      doc.fillColor('#000000')
+        .fontSize(18)
         .font('Helvetica-Bold')
-        .text('Performance Contract', 0, 18, { align: 'center' });
+        .text('Performance Contract', 50, 80, { align: 'center' });
 
-      // Subtitle (date + client)
-      const eventDateStr = formatDate(contract.eventDate);
-      doc
-        .fontSize(12)
+      // Date and client name line 
+      const eventDate = new Date(contract.eventDate);
+      const dateStr = eventDate.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+      
+      doc.fontSize(14)
+        .font('Helvetica')
+        .fillColor('#000000')
+        .text(`(${dateStr} - ${contract.clientName || 'Client'})`, 50, 110, { align: 'center' });
+
+      // DRAFT status
+      doc.fillColor('#000000')
+        .fontSize(14)
         .font('Helvetica-Bold')
-        .text(
-          `(${eventDateStr} - ${contract.clientName || 'Client'})`,
-          0,
-          44,
-          { align: 'center' }
-        );
+        .text('DRAFT', 50, 140, { align: 'center' });
 
-      // Status Badge - DRAFT
-      doc
-        .roundedRect(doc.page.width / 2 - 30, 70, 60, 22, 8)
-        .fillAndStroke(yellowBg, yellowBg)
-        .fillColor(yellowText)
-        .font('Helvetica-Bold')
-        .fontSize(12)
-        .text('DRAFT', doc.page.width / 2 - 15, 75, { align: 'center', width: 30 });
-
-      // Divider
-      doc
-        .moveTo(50, 105)
-        .lineTo(doc.page.width - 50, 105)
-        .strokeColor(purple)
-        .lineWidth(2)
-        .stroke();
-
-      let currentY = 125;
+      let currentY = 180;
 
       // Section: Performer Details
       doc
