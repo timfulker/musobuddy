@@ -106,24 +106,124 @@ export async function registerRoutes(app: Express) {
 
   app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
     try {
-      const { contractId, subject } = req.body;
+      console.log('📧 Contract email route called with body:', req.body);
+      
+      // FIXED: Frontend sends 'customMessage', not 'subject'
+      const { contractId, customMessage } = req.body;
+      
+      if (!contractId) {
+        return res.status(400).json({ error: 'Contract ID is required' });
+      }
+      
       const contract = await storage.getContract(contractId);
       
       if (!contract) {
+        console.log('❌ Contract not found:', contractId);
         return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      if (!contract.clientEmail) {
+        console.log('❌ No client email for contract:', contractId);
+        return res.status(400).json({ error: 'Contract has no client email address' });
       }
       
       const userSettings = await storage.getSettings(req.user.id);
       
       // Use the cloud storage URL if available, otherwise fallback to local signing
-      const signingUrl = contract.cloudStorageUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
+      const signingUrl = contract.cloudStorageUrl || 
+        `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
       
-      await mailgunService.sendContractEmail(contract, userSettings, subject, signingUrl);
+      console.log('📧 Sending contract email:', {
+        contractId,
+        clientEmail: contract.clientEmail,
+        signingUrl,
+        hasCustomMessage: !!customMessage
+      });
       
+      // FIXED: Pass customMessage as subject parameter
+      const emailSubject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
+      
+      await mailgunService.sendContractEmail(contract, userSettings, emailSubject, signingUrl);
+      
+      // Update contract status to 'sent' when email is successfully sent
+      await storage.updateContract(contractId, {
+        status: 'sent',
+        sentAt: new Date()
+      });
+      
+      console.log('✅ Contract email sent successfully for contract:', contractId);
       res.json({ success: true });
-    } catch (error) {
-      console.error('Contract email error:', error);
-      res.status(500).json({ error: 'Failed to send contract email' });
+      
+    } catch (error: any) {
+      console.error('❌ Contract email error:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        contractId: req.body?.contractId
+      });
+      
+      res.status(500).json({ 
+        error: 'Failed to send contract email',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Debug route to test Mailgun configuration
+  app.post('/api/debug/mailgun-test', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log('🔧 Testing Mailgun configuration...');
+      
+      // Check environment variables
+      const config = {
+        hasApiKey: !!process.env.MAILGUN_API_KEY,
+        apiKeyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 10) + '...',
+        hasPublicKey: !!process.env.MAILGUN_PUBLIC_KEY,
+        domain: 'mg.musobuddy.com'
+      };
+      
+      console.log('🔧 Mailgun config:', config);
+      
+      if (!process.env.MAILGUN_API_KEY) {
+        return res.status(500).json({ 
+          error: 'Mailgun API key not configured',
+          config 
+        });
+      }
+      
+      // Try to send a simple test email
+      const testEmail = {
+        from: 'MusoBuddy <noreply@mg.musobuddy.com>',
+        to: req.user.email || 'test@example.com', // Send to current user
+        subject: 'MusoBuddy Email Test',
+        html: '<h1>Test Email</h1><p>If you receive this, Mailgun is working correctly!</p>'
+      };
+      
+      console.log('📧 Sending test email to:', testEmail.to);
+      
+      const result = await mailgunService.mailgun.messages.create('mg.musobuddy.com', testEmail);
+      
+      console.log('✅ Test email sent successfully:', result.id);
+      
+      res.json({ 
+        success: true, 
+        messageId: result.id,
+        config,
+        testEmail: testEmail.to
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Mailgun test failed:', error);
+      
+      res.status(500).json({ 
+        error: 'Mailgun test failed',
+        details: error.message,
+        status: error.status,
+        config: {
+          hasApiKey: !!process.env.MAILGUN_API_KEY,
+          domain: 'mg.musobuddy.com'
+        }
+      });
     }
   });
 
