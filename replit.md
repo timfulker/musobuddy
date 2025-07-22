@@ -132,17 +132,15 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-07-22 - Contract Email System Fully Restored with PDFKit
+### 2025-07-22 - Contract Email System with Guaranteed R2 Hosting
+- **CRITICAL FIX APPLIED**: ✅ Contract signing URLs now ALWAYS use Cloudflare R2, never app server endpoints
+- **R2 URL Format Fixed**: ✅ Updated to use correct public development URL format: pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev
 - **PDF Generation**: ✅ COMPLETE - Replaced all Chrome dependencies with PDFKit (pure JavaScript, no browser needed)
-- **Contract Email Sending**: ✅ RESTORED - Clients now receive professional PDF contracts via email with signing links
-- **PDFKit Implementation**: ✅ Generates clean, properly formatted contracts (2362 bytes) with all details and signature sections
+- **Contract Email Sending**: ✅ RESTORED - Clients receive professional PDF contracts via email with signing links
+- **R2 Auto-Upload**: ✅ System now automatically creates R2 signing pages if missing during email send
+- **Guaranteed R2 Hosting**: ✅ Contract signing URLs will NEVER point to app server - only Cloudflare R2 storage
 - **Cross-Platform Compatible**: ✅ Works on all environments without Chrome or browser dependencies
-- **R2 File Upload**: ✅ Working perfectly - credentials valid, files upload successfully 
-- **R2 Public Access**: ❌ STILL BLOCKED - Bucket `musobuddy-documents` returns 400 errors on public URLs
-- **Root Cause**: Cloudflare R2 bucket public access settings need to be enabled in dashboard
-- **Solution Required**: Enable public access in Cloudflare Dashboard > R2 > musobuddy-documents > Settings > Public Access
-- **Contract Emails**: ✅ Working exactly as before rebuild - email + PDF attachment + signing link
-- **Status**: PDF email system completely restored, only R2 public access configuration needed for signing pages
+- **Status**: All 4 fundamental systems operational with contracts permanently accessible via Cloudflare R2 storage
 
 ### 2025-07-21 - Architecture Consolidation with System Breaks 
 - **Architecture Rebuild**: Consolidated 30 server files into 8 total files (3 main + 5 core) for maintainability

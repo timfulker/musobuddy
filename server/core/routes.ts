@@ -129,9 +129,24 @@ export async function registerRoutes(app: Express) {
       
       const userSettings = await storage.getSettings(req.user.id);
       
-      // Use the cloud storage URL if available, otherwise fallback to local signing
-      const signingUrl = contract.cloudStorageUrl || 
-        `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
+      // CRITICAL: Always use R2 cloud storage URL, never app server
+      let signingUrl = contract.cloudStorageUrl;
+      
+      // If no cloud storage URL exists, create one NOW
+      if (!signingUrl) {
+        console.log('🔗 No cloud storage URL found, creating one now...');
+        const { url, key } = await cloudStorageService.uploadContractSigningPage(contract, userSettings);
+        
+        // Update contract with cloud storage info
+        await storage.updateContract(contract.id, {
+          cloudStorageUrl: url,
+          cloudStorageKey: key,
+          signingUrlCreatedAt: new Date()
+        });
+        
+        signingUrl = url;
+        console.log('✅ Created R2 signing URL:', url);
+      }
       
       console.log('📧 Sending contract email:', {
         contractId,
