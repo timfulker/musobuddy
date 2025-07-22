@@ -537,7 +537,7 @@ export async function registerRoutes(app: Express) {
     try {
       const contractId = parseInt(req.params.id);
       const userId = req.user.id;
-      const useHTML = req.query.html === 'true'; // Use ?html=true for HTML generation
+      const useHTML = req.query.pdfkit !== 'true'; // Use HTML by default, ?pdfkit=true for old system
       
       console.log('📄 Contract PDF download request:', { contractId, userId, useHTML });
       
@@ -553,15 +553,15 @@ export async function registerRoutes(app: Express) {
       let pdfBuffer: Buffer;
       
       if (useHTML) {
-        // Use NEW HTML-to-PDF generation (with full colors and formatting)
-        console.log('📄 Generating HTML contract PDF with Puppeteer...');
+        // Use HTML-to-PDF generation (DEFAULT - professional formatting)
+        console.log('📄 Generating professional HTML contract PDF...');
         pdfBuffer = await generateHTMLContractPDF(contract, userSettings);
-        console.log('✅ HTML contract PDF generated, size:', pdfBuffer.length, 'bytes');
+        console.log('✅ Professional contract PDF generated, size:', pdfBuffer.length, 'bytes');
       } else {
-        // Use existing PDFKit generation
-        console.log('📄 Generating PDF for download...');
+        // Use legacy PDFKit generation (only when ?pdfkit=true)
+        console.log('📄 Generating legacy PDFKit contract...');
         pdfBuffer = await mailgunService.generateContractPDF(contract, userSettings);
-        console.log('✅ PDF generated for download, size:', pdfBuffer.length, 'bytes');
+        console.log('✅ Legacy contract PDF generated, size:', pdfBuffer.length, 'bytes');
       }
       
       // Set proper headers for PDF download
