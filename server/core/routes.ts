@@ -691,7 +691,7 @@ export async function registerRoutes(app: Express) {
                             </div>
                             <a href="/api/contracts/${contract.id}/download" style="background:#28a745;color:white;padding:12px 24px;border:none;border-radius:6px;text-decoration:none;display:inline-block;">📄 Download Signed Contract</a>
                         </div>
-                    `;
+                    \`;
                 } else {
                     throw new Error(data.message || 'Unknown error');
                 }
