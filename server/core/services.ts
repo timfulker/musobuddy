@@ -2,7 +2,7 @@ import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import * as pdf from 'html-pdf';
+import PDFDocument from 'pdfkit';
 import Anthropic from '@anthropic-ai/sdk';
 
 // Restored original working Mailgun configuration from before rebuild
@@ -22,24 +22,33 @@ export class MailgunService {
   async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
     const domain = 'mg.musobuddy.com';
     
-    console.log('📧 Sending contract email with config:', {
+    console.log('📧 Sending contract email with PDF attachment:', {
       domain,
       to: contract.clientEmail,
       apiKeyExists: !!process.env.MAILGUN_API_KEY,
       apiKeyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 10) + '...',
       signingUrl
     });
+
+    // Generate PDF attachment using jsPDF (Chrome-free)
+    const pdfBuffer = await this.generateContractPDF(contract, userSettings);
     
-    const emailData = {
-      from: `MusoBuddy <noreply@${domain}>`,
-      to: contract.clientEmail,
-      subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
-      html: this.generateContractEmailHTML(contract, userSettings, signingUrl)
-    };
+    // Create form data for email with PDF attachment
+    const form = new formData();
+    form.append('from', `MusoBuddy <noreply@${domain}>`);
+    form.append('to', contract.clientEmail);
+    form.append('subject', subject || `Contract ready for signing - ${contract.contractNumber}`);
+    form.append('html', this.generateContractEmailHTML(contract, userSettings, signingUrl));
+    
+    // Add PDF as attachment
+    form.append('attachment', pdfBuffer, {
+      filename: `Contract-${contract.contractNumber || contract.id}.pdf`,
+      contentType: 'application/pdf'
+    });
 
     try {
-      const result = await this.mailgun.messages.create(domain, emailData);
-      console.log('✅ Email sent successfully with signing link:', result.id);
+      const result = await this.mailgun.messages.create(domain, form);
+      console.log('✅ Email sent successfully with PDF attachment:', result.id);
       return result;
     } catch (error: any) {
       console.error('❌ Mailgun error details:', {
@@ -64,27 +73,88 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
-  // CHROME-FREE PDF GENERATION using html-pdf
+  // CHROME-FREE PDF GENERATION using PDFKit
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
-    const html = this.generateContractHTML(contract, userSettings);
-    
-    const options = {
-      format: 'A4',
-      margin: '20mm',
-      printBackground: true,
-      quality: '75'
-    };
-
     return new Promise((resolve, reject) => {
-      pdf.create(html, options).toBuffer((err: any, buffer: Buffer) => {
-        if (err) {
-          console.error('❌ PDF generation error:', err);
-          reject(new Error('Failed to generate contract PDF'));
-        } else {
-          console.log('✅ PDF generated successfully');
-          resolve(buffer);
-        }
-      });
+      try {
+        console.log('📄 Creating PDF with PDFKit...');
+        
+        const doc = new PDFDocument({ margin: 50 });
+        const chunks: Buffer[] = [];
+
+        doc.on('data', chunks.push.bind(chunks));
+        doc.on('end', () => {
+          const pdfBuffer = Buffer.concat(chunks);
+          console.log('✅ PDFKit generation complete, size:', pdfBuffer.length, 'bytes');
+          resolve(pdfBuffer);
+        });
+
+        // Header
+        doc.fontSize(20).text('MUSIC PERFORMANCE CONTRACT', { align: 'center' });
+        doc.fontSize(12).text(`Contract #${contract.contractNumber || contract.id}`, { align: 'center' });
+        doc.moveDown(2);
+
+        // Performance Details
+        doc.fontSize(14).text('PERFORMANCE DETAILS', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(11);
+        doc.text(`Event Date: ${new Date(contract.eventDate).toDateString()}`);
+        doc.text(`Performance Time: ${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}`);
+        doc.text(`Venue: ${contract.venue || 'Not specified'}`);
+        doc.text(`Venue Address: ${contract.venueAddress || 'Not specified'}`);
+        doc.text(`Performance Fee: £${contract.fee || '0.00'}`);
+        doc.moveDown(1);
+
+        // Client Information
+        doc.fontSize(14).text('CLIENT INFORMATION', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(11);
+        doc.text(`Client Name: ${contract.clientName || 'Not specified'}`);
+        doc.text(`Email: ${contract.clientEmail || 'Not specified'}`);
+        doc.text(`Phone: ${contract.clientPhone || 'Not specified'}`);
+        doc.text(`Address: ${contract.clientAddress || 'Not specified'}`);
+        doc.moveDown(1);
+
+        // Terms and Conditions
+        doc.fontSize(14).text('TERMS AND CONDITIONS', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10);
+        doc.text(`1. This agreement is between ${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'} (the "Performer") and ${contract.clientName || 'the Client'} for musical entertainment services.`);
+        doc.text('2. The Performer agrees to provide live musical entertainment at the specified venue, date, and time.');
+        doc.text('3. Payment is due as specified above. Late payments may incur additional charges.');
+        doc.text('4. Cancellation by the Client within 7 days of the event date will result in full payment being due.');
+        doc.text('5. The Performer reserves the right to use a suitable substitute in case of illness or emergency.');
+        doc.text('6. This contract represents the entire agreement between parties and supersedes all prior negotiations.');
+        doc.moveDown(2);
+
+        // Signature Section
+        doc.fontSize(12);
+        doc.text('SIGNATURES', { underline: true });
+        doc.moveDown(1);
+        
+        // Two columns for signatures
+        const leftX = 50;
+        const rightX = 300;
+        const signatureY = doc.y;
+        
+        doc.text('Performer:', leftX, signatureY);
+        doc.text('Client:', rightX, signatureY);
+        
+        doc.text(`${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'}`, leftX, signatureY + 20);
+        doc.text(`${contract.clientName || 'Client Name'}`, rightX, signatureY + 20);
+        
+        doc.text('Signature: ________________', leftX, signatureY + 50);
+        doc.text('Signature: ________________', rightX, signatureY + 50);
+        
+        doc.text('Date: ________________', leftX, signatureY + 80);
+        doc.text('Date: ________________', rightX, signatureY + 80);
+
+        doc.end();
+        
+      } catch (error) {
+        console.error('❌ PDFKit error:', error);
+        reject(new Error('Failed to generate contract PDF with PDFKit'));
+      }
     });
   }
 
@@ -241,6 +311,8 @@ export class MailgunService {
             Review and Sign Contract
           </a>
         </div>
+        
+        <p><strong>Note:</strong> A PDF copy of the contract is attached to this email for your records.</p>
         
         <p>Best regards,<br>
         ${userSettings?.businessName || 'MusoBuddy'}</p>
