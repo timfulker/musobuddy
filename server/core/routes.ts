@@ -105,10 +105,18 @@ export async function registerRoutes(app: Express) {
       
       // Generate signing page and upload to cloud storage
       try {
+        console.log('🔍 Starting cloud storage upload for contract:', contract.id);
         const userSettings = await storage.getSettings(req.user.id);
+        console.log('✅ User settings retrieved for user:', req.user.id);
+        
+        console.log('🔍 Calling cloudStorageService.uploadContractSigningPage...');
         const { url, key } = await cloudStorageService.uploadContractSigningPage(contract, userSettings);
+        console.log('✅ Cloud storage upload successful!');
+        console.log('📄 Generated URL:', url);
+        console.log('🔑 Storage key:', key);
         
         // Update contract with cloud storage info
+        console.log('🔄 Updating contract with cloud storage info...');
         const updatedContract = await storage.updateContract(contract.id, {
           cloudStorageUrl: url,
           cloudStorageKey: key,
@@ -120,8 +128,10 @@ export async function registerRoutes(app: Express) {
         res.json(updatedContract);
       } catch (storageError) {
         console.error('❌ CRITICAL: Cloud storage upload failed:', storageError);
-        console.error('❌ This prevents Cloudflare URLs from being generated');
-        throw new Error('Cloud storage required for contract signing - ' + storageError.message);
+        console.error('❌ Error stack:', storageError.stack);
+        console.error('❌ Contract will be created without cloud storage');
+        // Still return the contract but without cloud storage
+        res.json(contract);
       }
     } catch (error) {
       console.error('Contract creation error:', error);

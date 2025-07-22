@@ -225,18 +225,35 @@ export class CloudStorageService {
     this.bucketName = process.env.R2_BUCKET_NAME || 'musobuddy';
     
     const accountId = process.env.R2_ACCOUNT_ID;
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+    
+    console.log('🔍 CloudStorageService environment check:');
+    console.log('R2_ACCOUNT_ID:', accountId ? 'Present' : 'Missing');
+    console.log('R2_ACCESS_KEY_ID:', accessKeyId ? 'Present' : 'Missing');
+    console.log('R2_SECRET_ACCESS_KEY:', secretAccessKey ? 'Present' : 'Missing');
+    console.log('R2_BUCKET_NAME:', this.bucketName);
+    
     if (!accountId) {
       throw new Error('R2_ACCOUNT_ID is required for Cloudflare R2');
+    }
+    if (!accessKeyId) {
+      throw new Error('R2_ACCESS_KEY_ID is required for Cloudflare R2');
+    }
+    if (!secretAccessKey) {
+      throw new Error('R2_SECRET_ACCESS_KEY is required for Cloudflare R2');
     }
     
     this.s3 = new S3Client({
       region: 'auto',
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || ''
+        accessKeyId,
+        secretAccessKey
       }
     });
+    
+    console.log('✅ CloudStorageService initialized with endpoint:', `https://${accountId}.r2.cloudflarestorage.com`);
   }
 
   async uploadContractSigningPage(contract: any, userSettings: any): Promise<{url: string, key: string}> {
