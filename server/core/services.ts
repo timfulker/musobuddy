@@ -74,7 +74,167 @@ export class MailgunService {
     return await this.mailgun.messages.create(domain, emailData);
   }
 
-  private generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
+  async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      });
+      
+      const page = await browser.newPage();
+      await page.setViewport({ width: 1200, height: 1600 });
+      
+      const html = this.generateContractHTML(contract, userSettings);
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+        printBackground: true
+      });
+      
+      return pdfBuffer;
+    } catch (error) {
+      console.error('❌ PDF generation error:', error);
+      throw new Error('Failed to generate contract PDF');
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  }
+
+  generateContractHTML(contract: any, userSettings: any): string {
+    const formatDate = (date: any) => {
+      if (!date) return 'Not specified';
+      const d = new Date(date);
+      return d.toLocaleDateString('en-GB', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+    };
+
+    const formatTime = (time: any) => {
+      if (!time) return 'Not specified';
+      return time;
+    };
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Times New Roman', serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 40px; }
+    .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+    .section { margin: 30px 0; }
+    .section-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; text-decoration: underline; }
+    .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+    .detail-box { border: 1px solid #ccc; padding: 15px; background: #f9f9f9; }
+    .signature-section { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+    .signature-box { border-top: 2px solid #333; padding-top: 10px; text-align: center; }
+    .terms { font-size: 12px; line-height: 1.4; }
+    .contract-number { color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>MUSIC PERFORMANCE CONTRACT</h1>
+    <p class="contract-number">Contract #${contract.contractNumber || contract.id}</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">PERFORMANCE DETAILS</div>
+    <div class="details-grid">
+      <div class="detail-box">
+        <strong>Event Date:</strong><br>
+        ${formatDate(contract.eventDate)}
+      </div>
+      <div class="detail-box">
+        <strong>Performance Time:</strong><br>
+        ${formatTime(contract.eventTime)} - ${formatTime(contract.eventEndTime)}
+      </div>
+      <div class="detail-box">
+        <strong>Venue:</strong><br>
+        ${contract.venue || 'Not specified'}
+      </div>
+      <div class="detail-box">
+        <strong>Venue Address:</strong><br>
+        ${contract.venueAddress || 'Not specified'}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">CLIENT INFORMATION</div>
+    <div class="details-grid">
+      <div class="detail-box">
+        <strong>Client Name:</strong><br>
+        ${contract.clientName || 'Not specified'}
+      </div>
+      <div class="detail-box">
+        <strong>Email:</strong><br>
+        ${contract.clientEmail || 'Not specified'}
+      </div>
+      <div class="detail-box">
+        <strong>Phone:</strong><br>
+        ${contract.clientPhone || 'Not specified'}
+      </div>
+      <div class="detail-box">
+        <strong>Address:</strong><br>
+        ${contract.clientAddress || 'Not specified'}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">FINANCIAL TERMS</div>
+    <div class="detail-box">
+      <strong>Performance Fee:</strong> £${contract.fee || '0.00'}<br>
+      <strong>Payment Terms:</strong> ${contract.paymentTerms || 'Due on performance date'}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">TECHNICAL REQUIREMENTS</div>
+    <div class="detail-box">
+      <strong>Equipment Requirements:</strong><br>
+      ${contract.equipmentRequirements || 'Standard setup - microphone and suitable power supply'}
+    </div>
+    <div class="detail-box">
+      <strong>Special Requirements:</strong><br>
+      ${contract.specialRequirements || 'None specified'}
+    </div>
+  </div>
+
+  <div class="section terms">
+    <div class="section-title">TERMS AND CONDITIONS</div>
+    <p>1. This agreement is between ${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'} (the "Performer") and ${contract.clientName || 'the Client'} for musical entertainment services.</p>
+    <p>2. The Performer agrees to provide live musical entertainment at the specified venue, date, and time.</p>
+    <p>3. Payment is due as specified above. Late payments may incur additional charges.</p>
+    <p>4. Cancellation by the Client within 7 days of the event date will result in full payment being due.</p>
+    <p>5. The Performer reserves the right to use a suitable substitute in case of illness or emergency.</p>
+    <p>6. This contract represents the entire agreement between parties and supersedes all prior negotiations.</p>
+  </div>
+
+  <div class="signature-section">
+    <div class="signature-box">
+      <strong>Performer</strong><br>
+      ${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'}<br>
+      Date: _________________
+    </div>
+    <div class="signature-box">
+      <strong>Client</strong><br>
+      ${contract.clientName || 'Client Name'}<br>
+      Date: _________________
+    </div>
+  </div>
+</body>
+</html>`;
+  }
+
+  generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
     // Use the R2 URL that was uploaded - contracts must be permanently accessible
     const finalSigningUrl = signingUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
     
@@ -104,7 +264,7 @@ export class MailgunService {
     `;
   }
 
-  private generateInvoiceEmailHTML(invoice: any, userSettings: any, pdfUrl: string) {
+  generateInvoiceEmailHTML(invoice: any, userSettings: any, pdfUrl: string) {
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
         <h2>Invoice ${invoice.invoiceNumber}</h2>
