@@ -132,18 +132,17 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-07-22 - Contract Email System FULLY RESTORED 
-- **CRITICAL EMAIL FIX APPLIED**: ✅ Contract email attachment format fixed - now uses FormData with proper PDF buffer attachment
-- **Working Implementation Restored**: ✅ Analyzed pre-rebuild working files and restored exact working email format
-- **R2 URL Format Fixed**: ✅ Updated to use correct public development URL format: pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev
-- **Professional PDF Restoration**: ✅ Completely rebuilt PDF generation to match comprehensive first contract format
-- **PDF Generation Enhanced**: ✅ Two-page professional contracts with full terms, conditions, cancellation policy, and legal footer
-- **Contract Email Sending**: ✅ FULLY OPERATIONAL - Clients receive professional PDF contracts via email with signing links
-- **R2 Auto-Upload**: ✅ System automatically creates R2 signing pages if missing during email send
-- **Guaranteed R2 Hosting**: ✅ Contract signing URLs use ONLY Cloudflare R2 storage, never app server endpoints
-- **Cross-Platform Compatible**: ✅ Works on all environments without Chrome or browser dependencies
-- **FormData Email Format**: ✅ Email attachments now use form.append() format matching working pre-rebuild implementation
-- **Status**: All 4 fundamental systems fully operational - contract email sending confirmed working with delivery to recipient
+### 2025-07-22 - Contract System Perfected with Andy Urquahart Template Design
+- **PDF Download Route Fixed**: ✅ Added missing `/api/contracts/:id/download` route that properly generates and serves PDF content instead of HTML
+- **Andy Urquahart Template Match**: ✅ Updated PDF generation to exactly match user's professional contract template format
+- **Professional Contract Layout**: ✅ Centered header with "(DD/MM/YYYY - Client Name)" format, DRAFT status, and exact section formatting
+- **Comprehensive Terms**: ✅ Complete terms matching template: Payment Terms, Cancellation Policy, Force Majeure, Performance Standards
+- **Proper Legal Footer**: ✅ Exact legal information format with contract number, generation timestamp, and governing terms
+- **Contract Email System**: ✅ FULLY OPERATIONAL - Clients receive professional PDF contracts via email with signing links
+- **R2 Signing Pages**: ✅ Contract signing URLs use Cloudflare R2 storage with CORS headers for cross-origin compatibility
+- **Professional Signatures**: ✅ Performer signature with Tim Fulker details, client signature section with status tracking
+- **Chrome-Free Generation**: ✅ PDFKit-based generation works on all environments without browser dependencies
+- **Status**: Complete contract system operational with professional Andy Urquahart template design - PDF downloads working correctly
 
 ### 2025-07-21 - Architecture Consolidation with System Breaks 
 - **Architecture Rebuild**: Consolidated 30 server files into 8 total files (3 main + 5 core) for maintainability

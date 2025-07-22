@@ -110,149 +110,208 @@ export class MailgunService {
           reject(error);
         });
 
-        // Professional header with branding
-        doc.fontSize(24).fillColor('#2563eb').text('PERFORMANCE CONTRACT', { align: 'center' });
-        doc.fontSize(12).fillColor('#666666').text(`Contract Number: ${contract.contractNumber}`, { align: 'center' });
-        doc.moveDown(0.3);
-        doc.fontSize(11).fillColor('#666666').text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, { align: 'center' });
+        // Header - exact Andy Urquahart format
+        doc.fillColor('#000000').fontSize(18).font('Helvetica-Bold')
+           .text('Performance Contract', { align: 'center' });
+        doc.moveDown(0.8);
+        
+        doc.fontSize(14).font('Helvetica')
+           .text(`(${new Date(contract.eventDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/')} - ${contract.clientName})`, { align: 'center' });
         doc.moveDown(2);
         
-        // Professional divider line
-        doc.strokeColor('#2563eb').lineWidth(2)
-           .moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-        doc.moveDown(1.5);
+        doc.fontSize(14).font('Helvetica-Bold')
+           .text('DRAFT', { align: 'center' });
+        doc.moveDown(3);
 
         // Performer Details Section
-        doc.fontSize(14).text('Performer Details', { underline: true });
-        doc.moveDown(0.5);
-        doc.fontSize(11);
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000')
+           .text('Performer Details');
+        doc.moveDown(0.8);
+        
+        doc.fontSize(11).font('Helvetica').fillColor('#000000');
         doc.text('Tim Fulker');
+        doc.moveDown(0.3);
         doc.text('59, Gloucester Rd Bournemouth Dorset BH7 6JA');
+        doc.moveDown(0.3);
         doc.text('Phone: 07765190034');
+        doc.moveDown(0.3);
         doc.text('Email: timfulkermusic@gmail.com');
         doc.moveDown(2);
 
-        // Event Details Section with professional styling
-        doc.fillColor('#333333').fontSize(16).text('EVENT DETAILS', { underline: true });
+        // Event Details Section
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000')
+           .text('Event Details');
         doc.moveDown(1);
         
-        // Professional table-style layout
-        const leftCol = 60;
-        const rightCol = 280;
-        let yPos = doc.y;
+        // Table layout matching Andy Urquahart format
+        const startY = doc.y;
+        const leftCol = 80;
+        const rightCol = 320;
+        let currentY = startY;
         
-        // Helper function for table rows
-        const addTableRow = (label: string, value: string, yPosition: number) => {
-          // Light background for alternating rows
-          if (Math.floor((yPosition - doc.y + 150) / 25) % 2 === 0) {
-            doc.rect(50, yPosition - 3, 495, 22).fill('#f8f9fa');
-          }
-          doc.fillColor('#666666').fontSize(11).font('Helvetica-Bold').text(label, leftCol, yPosition);
-          doc.fillColor('#333333').fontSize(11).font('Helvetica').text(value, rightCol, yPosition);
-          return yPosition + 25;
+        // Helper function for table rows with exact spacing
+        const addDetailRow = (label: string, value: string) => {
+          doc.fontSize(11).font('Helvetica').fillColor('#000000')
+             .text(label, leftCol, currentY);
+          doc.text(value, rightCol, currentY);
+          currentY += 20;
         };
         
-        yPos = addTableRow('Client Name', contract.clientName, yPos);
-        yPos = addTableRow('Client Email', contract.clientEmail, yPos);
+        addDetailRow('Client Name', contract.clientName || '');
+        addDetailRow('Client Email', contract.clientEmail || '');
+        addDetailRow('Client Address', contract.clientAddress || '');
+        addDetailRow('Client Phone', contract.clientPhone || '');
+        addDetailRow('Event Date', new Date(contract.eventDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+        addDetailRow('Event Time', contract.eventTime || '');
+        addDetailRow('Venue', contract.venue || '');
+        addDetailRow('Performance Fee', `£${parseFloat(contract.fee || 0).toFixed(2)}`);
         
-        if (contract.clientAddress) {
-          yPos = addTableRow('Client Address', contract.clientAddress, yPos);
-        }
-        
-        if (contract.clientPhone) {
-          yPos = addTableRow('Client Phone', contract.clientPhone, yPos);
-        }
-        
-        yPos = addTableRow('Event Date', new Date(contract.eventDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), yPos);
-        yPos = addTableRow('Event Time', `${contract.eventTime}${contract.eventEndTime ? ' - ' + contract.eventEndTime : ''}`, yPos);
-        yPos = addTableRow('Venue', contract.venue || 'To be confirmed', yPos);
-        yPos = addTableRow('Performance Fee', `£${parseFloat(contract.fee).toFixed(2)}`, yPos);
-        
-        // Professional section divider
-        doc.y = yPos + 20;
-        doc.strokeColor('#e5e5e5').lineWidth(1)
-           .moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-        doc.moveDown(1.5);
+        doc.y = currentY + 20;
 
-        // Comprehensive Terms and Conditions
-        doc.fontSize(14).text('Terms and Conditions', { underline: true });
+        // Terms and Conditions - exact Andy Urquahart format
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000')
+           .text('Terms and Conditions');
         doc.moveDown(0.5);
         
-        doc.fontSize(12).text('Payment Terms & Conditions', { underline: true });
-        doc.moveDown(0.3);
-        doc.fontSize(10);
-        doc.text(`Payment Due Date: Full payment of £${parseFloat(contract.fee).toFixed(2)} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.`);
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+           .text('Payment Terms & Conditions');
         doc.moveDown(0.5);
+        
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.text(`Payment Due Date: Full payment of £${parseFloat(contract.fee || 0).toFixed(2)} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.`);
+        doc.moveDown(0.5);
+        
         doc.text('Payment Methods: Cash or bank transfer to the performer\'s designated account (details provided separately).');
         doc.moveDown(0.5);
+        
         doc.text('Deposit: £0.00 deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.');
         doc.moveDown(0.5);
+        
         doc.text('Late Payment: Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.');
         doc.moveDown(1);
 
-        doc.fontSize(12).text('Cancellation & Refund Policy', { underline: true });
-        doc.moveDown(0.3);
-        doc.fontSize(10);
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+           .text('Cancellation & Refund Policy');
+        doc.moveDown(0.5);
+        
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
         doc.text('Client Cancellation:');
         doc.moveDown(0.3);
-        doc.text('     • More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee');
-        doc.text('     • 30 days or less before event: Full performance fee becomes due regardless of cancellation');
-        doc.text('     • Same day cancellation: Full fee due plus any additional costs incurred');
+        doc.text('        More than 30 days before event: Any deposit paid will be refunded minus a £50');
+        doc.text('        administration fee');
+        doc.text('        30 days or less before event: Full performance fee becomes due regardless of cancellation');
+        doc.text('        Same day cancellation: Full fee due plus any additional costs incurred');
         doc.moveDown(0.5);
+        
         doc.text('Performer Cancellation: In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.');
         doc.moveDown(0.5);
+        
         doc.text('Rescheduling: Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.');
         doc.moveDown(1);
 
-        // Continue on next page for remaining terms
-        doc.addPage();
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+           .text('Force Majeure');
+        doc.moveDown(0.5);
         
-        doc.fontSize(12).text('Professional Performance Standards', { underline: true });
-        doc.moveDown(0.3);
-        doc.fontSize(10);
-        doc.text('Equipment & Instrument Protection: The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.');
-        doc.moveDown(0.5);
-        doc.text('Venue Safety Requirements: The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.');
-        doc.moveDown(0.5);
-        doc.text('Recording & Transmission Policy: The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer\'s performance without the prior written consent of the performer.');
-        doc.moveDown(0.5);
-        doc.text('Safe Space Principle: The client and performer agree to a \'Safe Space\' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.');
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.text('Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.');
         doc.moveDown(1);
 
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+           .text('Performance Contingencies');
+        doc.moveDown(0.5);
+        
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.text('The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.');
+        doc.moveDown(1);
+
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+           .text('Professional Performance Standards');
+        doc.moveDown(0.5);
+        
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.text('Payment Schedule: The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.');
+        doc.moveDown(0.5);
+        
+        doc.text('Equipment & Instrument Protection: The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.');
+        doc.moveDown(0.5);
+        
+        doc.text('Venue Safety Requirements: The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.');
+        doc.moveDown(0.5);
+        
+        doc.text('Recording & Transmission Policy: The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer\'s performance without the prior written consent of the performer.');
+        doc.moveDown(0.5);
+        
+        doc.text('Contract Modifications: This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.');
+        doc.moveDown(0.5);
+        
+        doc.text('Performance Rider: Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.');
+        doc.moveDown(0.5);
+        
+        doc.text('Safe Space Principle: The client and performer agree to a \'Safe Space\' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.');
+        doc.moveDown(0.5);
+        
+        doc.text('Professional Insurance: The performer maintains professional liability insurance as required for musical performance engagements.');
+        doc.moveDown(2);
+
         // Signatures Section
-        doc.fontSize(14).text('Signatures', { underline: true });
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000')
+           .text('Signatures');
         doc.moveDown(1);
         
-        doc.fontSize(12).text('Performer');
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+           .text('Performer');
         doc.moveDown(2);
-        doc.fontSize(10);
+        
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
         doc.text('Signed by: Tim Fulker');
+        doc.moveDown(0.3);
         doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`);
+        doc.moveDown(0.3);
         doc.text('Status: Agreed by sending contract');
         doc.moveDown(2);
         
-        doc.fontSize(12).text('Client');
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+           .text('Client');
         doc.moveDown(2);
-        doc.fontSize(10);
+        
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
         doc.text('Status: Awaiting Signature');
+        doc.moveDown(0.3);
         doc.text(`This contract has been sent to ${contract.clientEmail} for digital signature.`);
         doc.moveDown(3);
 
-        // Legal Footer
-        doc.fontSize(8);
-        doc.text('Legal Information & Governing Terms:', { underline: true });
-        doc.moveDown(0.3);
-        doc.text(`Contract Number: ${contract.contractNumber || contract.id}`);
-        doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB', { hour12: false })}`);
+        // Legal Footer - exact Andy Urquahart format
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.text('Legal Information & Governing Terms:');
         doc.moveDown(0.5);
+        
+        doc.fontSize(9).font('Helvetica').fillColor('#000000');
+        doc.text(`Contract Number: (${new Date(contract.eventDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/')} - ${contract.clientName})`);
+        doc.moveDown(0.3);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB', { hour12: false })}`);
+        doc.moveDown(0.3);
+        
         doc.text('Binding Agreement: This is a legally binding agreement between the parties named above. Both parties acknowledge they have read, understood, and agree to be bound by all terms and conditions set forth herein.');
         doc.moveDown(0.3);
+        
         doc.text('Governing Law & Jurisdiction: This contract shall be governed by and construed in accordance with the laws of England and Wales. Any disputes, claims, or legal proceedings arising from or relating to this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.');
         doc.moveDown(0.3);
-        doc.text('Digital Signatures: Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation. Electronic acceptance constitutes agreement to all terms.');
-        doc.moveDown(1);
         
-        doc.fontSize(9).text('Powered by MusoBuddy – less admin, more music.', { align: 'center' });
+        doc.text('Digital Signatures: Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation. Electronic acceptance constitutes agreement to all terms.');
+        doc.moveDown(0.3);
+        
+        doc.text('Entire Agreement: This contract represents the entire agreement between the parties and supersedes all prior negotiations, representations, or agreements. No modification shall be valid unless in writing and signed by both parties.');
+        doc.moveDown(0.3);
+        
+        doc.text('Severability: If any provision of this contract is found to be unenforceable, the remaining provisions shall continue in full force and effect.');
+        doc.moveDown(0.3);
+        
+        doc.text('Contract Validity: This contract remains valid and enforceable regardless of changes in circumstances, location, or contact information of either party.');
+        doc.moveDown(2);
+        
+        doc.fontSize(10).font('Helvetica').fillColor('#000000')
+           .text('Powered by MusoBuddy – less admin, more music.', { align: 'center' });
 
         doc.end();
         
