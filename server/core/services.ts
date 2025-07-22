@@ -92,9 +92,32 @@ export class MailgunService {
 
   // AUTOMATIC PROFESSIONAL CONTRACT PDF GENERATION
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
-    // Use the exact Andy Urquahart format
-    const { generateAndyUrquhartContract } = await import('./contract-template');
-    return generateAndyUrquhartContract(contract, userSettings);
+    try {
+      console.log('🚀 STARTING PDF GENERATION WITH NEW TEMPLATE...');
+      console.log('📊 Contract data:', JSON.stringify({
+        id: contract.id,
+        clientName: contract.clientName,
+        eventDate: contract.eventDate,
+        fee: contract.fee
+      }, null, 2));
+      
+      console.log('📥 Importing NEW contract template...');
+      const { generateAndyUrquhartContract } = await import('./contract-template.js');
+      console.log('✅ NEW Template imported successfully');
+      
+      console.log('🎯 Calling NEW generateAndyUrquhartContract...');
+      const result = await generateAndyUrquhartContract(contract, userSettings);
+      console.log('✅ NEW generateAndyUrquhartContract completed, buffer size:', result.length);
+      
+      return result;
+    } catch (error: any) {
+      console.error('💥 CRITICAL ERROR in generateContractPDF:', error);
+      console.error('💥 Error message:', error.message);
+      console.error('💥 Error stack:', error.stack);
+      
+      // Don't let it fall back silently - throw the error
+      throw new Error(`PDF generation failed: ${error.message}`);
+    }
   }
 
 
