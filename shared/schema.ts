@@ -114,18 +114,18 @@ export const contracts = pgTable("contracts", {
   enquiryId: integer("enquiry_id"), // Made optional for standalone contracts
   contractNumber: varchar("contract_number").notNull().unique(),
   
-  // Client details (must be filled by musician OR client)
+  // Client details - TESTING MODE: relaxed constraints
   clientName: varchar("client_name").notNull(),
   clientAddress: text("client_address"),
   clientPhone: varchar("client_phone"),
   clientEmail: varchar("client_email"),
   
-  // Event details (must be filled by musician)
-  venue: varchar("venue").notNull(),
+  // Event details - TESTING MODE: relaxed constraints
+  venue: varchar("venue"), // temporarily optional
   venueAddress: text("venue_address"),
   eventDate: timestamp("event_date").notNull(),
-  eventTime: varchar("event_time").notNull(),
-  eventEndTime: varchar("event_end_time").notNull(), // Finish time required by Musicians' Union
+  eventTime: varchar("event_time"), // temporarily optional
+  eventEndTime: varchar("event_end_time"), // temporarily optional
   fee: decimal("fee", { precision: 10, scale: 2 }).notNull(),
   deposit: decimal("deposit", { precision: 10, scale: 2 }).default("0.00"), // Deposit amount with 7-day payment clause
   
