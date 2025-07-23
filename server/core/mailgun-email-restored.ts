@@ -811,8 +811,10 @@ ${userSettings?.website || ''}
     .replace(/\[Performance Duration\]/g, formatDuration(booking.performanceDuration))
     .replace(/\[performance duration\]/g, formatDuration(booking.performanceDuration))
     
-    .replace(/\[Repertoire\]/g, booking.repertoire || '[Repertoire]')
-    .replace(/\[repertoire\]/g, booking.repertoire || '[Repertoire]')
+    .replace(/\[Repertoire\]/g, booking.styles || '[Styles]')
+    .replace(/\[repertoire\]/g, booking.styles || '[Styles]')
+    .replace(/\[Styles\]/g, booking.styles || '[Styles]')
+    .replace(/\[styles\]/g, booking.styles || '[Styles]')
     
     .replace(/\[Equipment Provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
     .replace(/\[equipment provided\]/g, booking.equipmentProvided || '[Equipment Provided]')

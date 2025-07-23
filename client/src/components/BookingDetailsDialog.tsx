@@ -54,7 +54,7 @@ const bookingDetailsSchema = z.object({
   contactPhone: z.string().optional(),
   venueContactInfo: z.string().optional(),
   dressCode: z.string().optional(),
-  repertoire: z.string().optional(),
+  styles: z.string().optional(),
   performanceDuration: z.string().optional(),
   equipmentProvided: z.string().optional(),
   whatsIncluded: z.string().optional(),
@@ -146,7 +146,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       equipmentRequirements: "",
       specialRequirements: "",
       performanceDuration: "",
-      repertoire: "",
+      styles: "",
       equipmentProvided: "",
       whatsIncluded: "",
       setupTime: "",
@@ -843,12 +843,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                   
                   <FormField
                     control={form.control}
-                    name="repertoire"
+                    name="styles"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Repertoire/Song Requests</FormLabel>
+                        <FormLabel>Styles <span className="text-blue-600">[Styles]</span></FormLabel>
                         <FormControl>
-                          <Textarea {...field}  rows={3} placeholder="Special songs, style requests, etc." />
+                          <Textarea {...field}  rows={3} placeholder="Musical styles for this specific booking: jazz, classical, pop, etc." />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
