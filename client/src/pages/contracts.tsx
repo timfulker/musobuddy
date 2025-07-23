@@ -247,8 +247,16 @@ export default function Contracts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      handleDialogClose(false);
+      // Force dialog to close immediately
+      setIsDialogOpen(false);
+      setEditingContract(null);
+      setDataLoaded(false);
       form.reset();
+      // Clean up URL
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
       toast({
         title: "Success",
         description: "Contract generated successfully!",
@@ -273,9 +281,16 @@ export default function Contracts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-      handleDialogClose(false);
-      form.reset();
+      // Force dialog to close immediately for updates too
+      setIsDialogOpen(false);
       setEditingContract(null);
+      setDataLoaded(false);
+      form.reset();
+      // Clean up URL
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
       toast({
         title: "Success",
         description: "Contract updated successfully!",
