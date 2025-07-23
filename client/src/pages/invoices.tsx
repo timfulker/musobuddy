@@ -272,22 +272,12 @@ export default function Invoices() {
       setIsDialogOpen(false);
       setEditingInvoice(null);
       
-      // If in edit & resend mode, automatically send the invoice
-      if (editAndResendMode && editingInvoice) {
-        setEditAndResendMode(false);
-        setTimeout(() => {
-          sendInvoiceMutation.mutate(editingInvoice);
-        }, 500);
-        toast({
-          title: "Success",
-          description: "Invoice updated and being sent...",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Invoice updated successfully!",
-        });
-      }
+      // Always show simple success message - no automatic sending
+      setEditAndResendMode(false);
+      toast({
+        title: "Success",
+        description: "Invoice updated successfully!",
+      });
     },
     onError: (error: any) => {
       console.error("Update invoice error:", error);
@@ -324,25 +314,7 @@ export default function Invoices() {
     setIsDialogOpen(true);
   };
 
-  const handleEditAndResend = (invoice: Invoice) => {
-    setEditingInvoice(invoice);
-    setEditAndResendMode(true);
-    // Pre-fill form with invoice data - fix field mappings
-    form.reset({
-      contractId: invoice.contractId || undefined,
-      clientName: invoice.clientName,
-      clientEmail: invoice.clientEmail || "",
-      ccEmail: invoice.ccEmail || "",
-      clientAddress: invoice.clientAddress || "",
-      venueAddress: invoice.venueAddress || "",
-      amount: invoice.amount.toString(),
-      dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
-      performanceDate: invoice.eventDate ? new Date(invoice.eventDate).toISOString().split('T')[0] : "",
-      performanceFee: invoice.fee ? invoice.fee.toString() : "",
-      depositPaid: invoice.depositPaid ? invoice.depositPaid.toString() : "",
-    });
-    setIsDialogOpen(true);
-  };
+
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
     console.log("Form submission data:", JSON.stringify(data, null, 2));
@@ -1438,11 +1410,11 @@ export default function Invoices() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[100px]" 
-                        onClick={() => handleEditAndResend(invoice)}
+                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[60px]" 
+                        onClick={() => handleEditInvoice(invoice)}
                       >
                         <Edit className="w-3 h-3 mr-1" />
-                        Edit & Resend
+                        Edit
                       </Button>
                       <Button 
                         size="sm" 
@@ -1481,11 +1453,11 @@ export default function Invoices() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[100px]" 
-                        onClick={() => handleEditAndResend(invoice)}
+                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[60px]" 
+                        onClick={() => handleEditInvoice(invoice)}
                       >
                         <Edit className="w-3 h-3 mr-1" />
-                        Edit & Resend
+                        Edit
                       </Button>
                       <Button 
                         size="sm" 
@@ -1524,11 +1496,11 @@ export default function Invoices() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[100px]" 
-                        onClick={() => handleEditAndResend(invoice)}
+                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[60px]" 
+                        onClick={() => handleEditInvoice(invoice)}
                       >
                         <Edit className="w-3 h-3 mr-1" />
-                        Edit & Resend
+                        Edit
                       </Button>
                       <Button 
                         size="sm" 
@@ -1653,10 +1625,10 @@ export default function Invoices() {
                     size="sm" 
                     variant="outline" 
                     className="text-xs text-purple-600 hover:text-purple-700" 
-                    onClick={() => handleEditAndResend(invoice)}
+                    onClick={() => handleEditInvoice(invoice)}
                   >
                     <Edit className="w-3 h-3 mr-1" />
-                    Edit & Resend
+                    Edit
                   </Button>
                   <Button 
                     size="sm" 
@@ -1696,10 +1668,10 @@ export default function Invoices() {
                     size="sm" 
                     variant="outline" 
                     className="text-xs text-purple-600 hover:text-purple-700" 
-                    onClick={() => handleEditAndResend(invoice)}
+                    onClick={() => handleEditInvoice(invoice)}
                   >
                     <Edit className="w-3 h-3 mr-1" />
-                    Edit & Resend
+                    Edit
                   </Button>
                   <Button 
                     size="sm" 
@@ -1739,10 +1711,10 @@ export default function Invoices() {
                     size="sm" 
                     variant="outline" 
                     className="text-xs text-purple-600 hover:text-purple-700" 
-                    onClick={() => handleEditAndResend(invoice)}
+                    onClick={() => handleEditInvoice(invoice)}
                   >
                     <Edit className="w-3 h-3 mr-1" />
-                    Edit & Resend
+                    Edit
                   </Button>
                   <Button 
                     size="sm" 

@@ -185,7 +185,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **24/7 Availability**: ✅ Invoice PDFs accessible via R2 URLs even when app server is offline
 - **Status**: COMPLETE INVOICE SYSTEM OPERATIONAL - Professional PDFs with proper bank details and addresses from settings
 
-### 2025-07-23 - Complete Invoice System OPERATIONAL - Creation, View, Edit All Fixed
+### 2025-07-23 - Complete Invoice System OPERATIONAL - Creation, View, Edit All Fixed + UI Button Separation
 - **Invoice Creation 500 Error FIXED**: ✅ Resolved undefined `now` variables causing server crashes during invoice creation
 - **Invoice View Button Working**: ✅ Opens invoices in new tab using public /view/invoices/:id route that redirects to Cloudflare R2 storage
 - **Invoice Update PATCH Endpoint FIXED**: ✅ Enhanced field mapping, numeric parsing, and date handling for successful invoice editing
@@ -195,7 +195,11 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Performance Date Field Mapping Fixed**: ✅ Frontend forms properly map between performanceDate and eventDate database fields
 - **Cloud Storage URLs Working**: ✅ Invoice viewing correctly redirects to Cloudflare R2 storage with proper PDF display
 - **Error Handling Enhanced**: ✅ Comprehensive logging and error responses for debugging invoice operations
-- **Status**: Complete invoice system fully operational - create, view, edit, and cloud storage all working without errors
+- **UI Button Separation COMPLETE**: ✅ Removed automatic email sending after invoice edits, changed "Edit & Resend" to "Edit" buttons
+- **Workflow Improvement**: ✅ Users now have full control - edit invoices without automatic email sending, use separate "Resend" button for email
+- **Code Cleanup**: ✅ Removed duplicate handleEditInvoice function, eliminated handleEditAndResend references throughout UI
+- **Better User Experience**: ✅ Editing invoices no longer triggers automatic emails, preventing unintended client communications
+- **Status**: Complete invoice system fully operational with improved UI separation - create, view, edit, and cloud storage all working without errors
 
 ### 2025-07-23 - JavaScript API URL Fix - Complete Contract Signing System Fixed
 - **Critical JavaScript Fix**: ✅ Fixed JavaScript in R2 signing pages to use correct app server URL instead of trying to POST to R2 server
