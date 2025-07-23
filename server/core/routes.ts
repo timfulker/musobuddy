@@ -359,20 +359,19 @@ export async function registerRoutes(app: Express) {
         }
       }
 
-      // ISSUE 2 FIX: Check if contract is already signed and regenerate signing page
-      if (contract.status === 'signed') {
-        console.log('⚠️ Contract already signed - regenerating already-signed page');
-        const { uploadContractSigningPage } = await import('./cloud-storage');
-        const pageResult = await uploadContractSigningPage(contract, userSettings);
-        
-        if (pageResult.success && pageResult.url) {
-          await storage.updateContract(contract.id, {
-            signingPageUrl: pageResult.url,
-            signingPageKey: pageResult.storageKey,
-            signingUrlCreatedAt: new Date()
-          }, req.user.id);
-          signingUrl = pageResult.url;
-        }
+      // ISSUE 1 FIX: ALWAYS regenerate signing page to ensure correct status
+      console.log('🔄 Regenerating signing page to ensure correct status for contract:', contract.contractNumber);
+      const { uploadContractSigningPage } = await import('./cloud-storage');
+      const pageResult = await uploadContractSigningPage(contract, userSettings);
+      
+      if (pageResult.success && pageResult.url) {
+        await storage.updateContract(contract.id, {
+          signingPageUrl: pageResult.url,
+          signingPageKey: pageResult.storageKey,
+          signingUrlCreatedAt: new Date()
+        }, req.user.id);
+        signingUrl = pageResult.url;
+        console.log('✅ Signing page regenerated with current contract status');
       }
 
       console.log('📧 Sending contract SIGNING email with cloud-hosted signing page:', signingUrl);
@@ -728,28 +727,34 @@ export async function registerRoutes(app: Express) {
       console.log('☁️ No cloud URL found, generating and uploading to cloud storage...');
 
       try {
-        const userSettings = await storage.getSettings(contract.userId);
+        // ISSUE 2 FIX: Get fresh contract data from database to include recent edits
+        const freshContract = await storage.getContract(contractId, req.user.id);
+        if (!freshContract) {
+          return res.status(404).json({ error: 'Contract not found' });
+        }
+        
+        const userSettings = await storage.getSettings(freshContract.userId);
         const { uploadContractToCloud } = await import('./cloud-storage');
 
         // Determine if this is a signed contract
-        const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
-          signedAt: new Date(contract.signedAt),
-          signatureName: contract.clientName,
+        const signatureDetails = freshContract.status === 'signed' && freshContract.signedAt ? {
+          signedAt: new Date(freshContract.signedAt),
+          signatureName: freshContract.clientName,
           clientIpAddress: 'contract-download'
         } : undefined;
 
-        const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
+        const cloudResult = await uploadContractToCloud(freshContract, userSettings, signatureDetails);
 
         if (cloudResult.success && cloudResult.url) {
           // Update contract with cloud storage URL
-          await storage.updateContract(contract.id, {
+          await storage.updateContract(freshContract.id, {
             cloudStorageUrl: cloudResult.url,
             cloudStorageKey: cloudResult.key
           });
 
           console.log('✅ Contract uploaded to cloud');
           
-          // Authenticated user - continue to fallback generation
+          // Authenticated user - continue to fallback generation with fresh data
           console.log('👤 Authenticated user: Serving generated PDF directly');
         } else {
           console.log('⚠️ Cloud upload failed, generating directly');
@@ -760,20 +765,20 @@ export async function registerRoutes(app: Express) {
 
       // FALLBACK: Generate PDF directly (should rarely be needed)
       console.log('📄 Generating PDF directly as fallback...');
-      const userSettings = await storage.getSettings(contract.userId);
+      const userSettings = await storage.getSettings(freshContract.userId);
       const { generateContractPDF } = await import('./pdf-generator');
 
-      const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
-        signedAt: new Date(contract.signedAt),
-        signatureName: contract.clientName,
+      const signatureDetails = freshContract.status === 'signed' && freshContract.signedAt ? {
+        signedAt: new Date(freshContract.signedAt),
+        signatureName: freshContract.clientName,
         clientIpAddress: 'contract-download'
       } : undefined;
 
-      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      const pdfBuffer = await generateContractPDF(freshContract, userSettings, signatureDetails);
 
       // Set proper headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="Contract-${freshContract.contractNumber || freshContract.id}.pdf"`);
       res.setHeader('Content-Length', pdfBuffer.length.toString());
 
       // Send the PDF buffer
