@@ -558,23 +558,13 @@ export async function registerRoutes(app: Express) {
   });
 
   // INVOICE PDF DOWNLOAD ROUTE - COPIED FROM CONTRACT PATTERN
-  app.get('/api/invoices/:id/download', async (req, res) => {
+  app.get('/api/invoices/:id/download', isAuthenticated, async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       console.log('📄 Invoice PDF download request for ID:', invoiceId);
 
-      // Get invoice (try both authenticated and public access)
-      let invoice = null;
-
-      // Try authenticated access first
-      if (req.user?.id) {
-        invoice = await storage.getInvoice(invoiceId, req.user.id);
-      }
-
-      // If not found or not authenticated, try public access
-      if (!invoice) {
-        invoice = await storage.getInvoice(invoiceId);
-      }
+      // Get invoice for authenticated user
+      const invoice = await storage.getInvoice(invoiceId, req.user.id);
 
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
@@ -583,25 +573,19 @@ export async function registerRoutes(app: Express) {
       // PRIORITY 1: For authenticated users, fetch from R2 and serve directly (no CORS)
       // For unauthenticated access (email links), redirect to R2
       if (invoice.cloudStorageUrl) {
-        if (req.user) {
-          // Authenticated user - fetch from R2 and serve directly to avoid CORS
-          console.log('👤 Authenticated user: Fetching invoice PDF from R2 and serving directly');
-          try {
-            const response = await fetch(invoice.cloudStorageUrl);
-            if (response.ok) {
-              const pdfBuffer = await response.arrayBuffer();
-              res.setHeader('Content-Type', 'application/pdf');
-              res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
-              res.setHeader('Content-Length', pdfBuffer.byteLength.toString());
-              return res.send(Buffer.from(pdfBuffer));
-            }
-          } catch (fetchError) {
-            console.log('⚠️ Failed to fetch invoice from R2, falling back to generation');
+        // Always serve directly for authenticated users (no CORS issues)
+        console.log('👤 Authenticated user: Fetching invoice PDF from R2 and serving directly');
+        try {
+          const response = await fetch(invoice.cloudStorageUrl);
+          if (response.ok) {
+            const pdfBuffer = await response.arrayBuffer();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+            res.setHeader('Content-Length', pdfBuffer.byteLength.toString());
+            return res.send(Buffer.from(pdfBuffer));
           }
-        } else {
-          // Unauthenticated access (email links) - redirect to R2
-          console.log('🔗 Email link access: Redirecting to cloud storage URL:', invoice.cloudStorageUrl);
-          return res.redirect(invoice.cloudStorageUrl);
+        } catch (fetchError) {
+          console.log('⚠️ Failed to fetch invoice from R2, falling back to generation');
         }
       }
 
@@ -621,8 +605,8 @@ export async function registerRoutes(app: Express) {
             cloudStorageKey: cloudResult.key
           });
 
-          console.log('✅ Invoice uploaded to cloud, redirecting to:', cloudResult.url);
-          return res.redirect(cloudResult.url);
+          console.log('✅ Invoice uploaded to cloud');
+          // Continue to fallback generation for authenticated users
         }
       } catch (cloudError) {
         console.error('❌ Cloud storage failed, falling back to direct generation');
@@ -644,6 +628,45 @@ export async function registerRoutes(app: Express) {
         error: 'Failed to download invoice',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
+    }
+  });
+
+  // Public invoice download route for email links (NO AUTHENTICATION)
+  app.get('/download/invoices/:id', async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      console.log('🔗 Public invoice access for ID:', invoiceId);
+      
+      const invoice = await storage.getInvoiceById(invoiceId);
+      
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+
+      // For public access, always redirect to R2 cloud storage
+      if (invoice.cloudStorageUrl) {
+        console.log('🔗 Redirecting to cloud storage:', invoice.cloudStorageUrl);
+        return res.redirect(invoice.cloudStorageUrl);
+      }
+
+      // If no cloud URL, generate and redirect
+      const userSettings = await storage.getSettings(invoice.userId);
+      const { uploadInvoiceToCloud } = await import('./cloud-storage');
+
+      const cloudResult = await uploadInvoiceToCloud(invoice, userSettings);
+
+      if (cloudResult.success && cloudResult.url) {
+        await storage.updateInvoice(invoice.id, {
+          cloudStorageUrl: cloudResult.url,
+          cloudStorageKey: cloudResult.key
+        });
+        return res.redirect(cloudResult.url);
+      }
+
+      return res.status(500).json({ error: 'Could not generate invoice PDF' });
+    } catch (error) {
+      console.error('❌ Public invoice download error:', error);
+      res.status(500).json({ error: 'Failed to access invoice' });
     }
   });
 

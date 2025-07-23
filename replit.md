@@ -221,6 +221,8 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Smart Download Routing**: ✅ Authenticated users get PDFs served through app server (no CORS), email links redirect to R2 URLs
 - **Dual Access Pattern**: ✅ App server fetches from R2 and serves directly to authenticated users, unauthenticated access redirects to R2
 - **Email Links Preserved**: ✅ Confirmation emails continue using direct R2 URLs for optimal client experience
+- **Invoice CORS Fix Applied**: ✅ Applied same CORS fix to invoice downloads - authenticated route serves directly, public route redirects to R2
+- **Public Routes Added**: ✅ Added /download/invoices/:id and /download/contracts/:id for email confirmation links
 - **Future Enhancement Noted**: ✅ User suggestion to open contract PDFs in new tabs for better UX (deferred until more testing)
 - **Root Cause**: ✅ R2-hosted signing pages making API calls to app server require explicit CORS allowance; R2 PDFs need app server proxy for browser downloads
 - **Status**: COMPLETE CORS FIXES IMPLEMENTED - Contract signing and PDF downloads working properly without CORS errors
