@@ -142,39 +142,7 @@ export async function uploadInvoiceToCloud(
   }
 }
 
-// Upload invoice PDF to cloud storage
-export async function uploadInvoiceToCloud(
-  invoice: Invoice,
-  contract: Contract | null,
-  userSettings: UserSettings | null
-): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
-  try {
-    console.log('📤 Uploading invoice PDF to cloud storage:', invoice.invoiceNumber);
 
-    // Generate PDF
-    const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
-
-    // Create storage key
-    const timestamp = new Date().toISOString().split('T')[0];
-    const key = `invoices/${timestamp}/${invoice.invoiceNumber}.pdf`;
-
-    // Upload to cloud
-    const result = await uploadFileToCloudflare(key, pdfBuffer, 'application/pdf');
-
-    if (result.success) {
-      console.log('✅ Invoice PDF uploaded successfully to cloud storage');
-      return { success: true, url: result.url, key };
-    } else {
-      return { success: false, error: result.error };
-    }
-  } catch (error) {
-    console.error('❌ Error uploading invoice PDF to cloud:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
-  }
-}
 
 // Generate HTML for contract signing page - FIXED with proper URL handling
 function generateContractSigningPageHTML(
