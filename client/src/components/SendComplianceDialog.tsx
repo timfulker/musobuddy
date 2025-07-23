@@ -38,9 +38,12 @@ interface Booking {
 }
 
 interface SendComplianceDialogProps {
-  booking: Booking;
+  booking?: Booking; // Made optional for compliance page usage
+  bookingId?: string; // For compliance page usage
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
 }
 
 const getDocumentTypeLabel = (type: string): string => {
@@ -81,14 +84,20 @@ const getStatusIcon = (status: string) => {
   }
 };
 
-export function SendComplianceDialog({ booking, isOpen, onClose }: SendComplianceDialogProps) {
+export function SendComplianceDialog({ booking, bookingId, isOpen, onClose, onOpenChange, trigger }: SendComplianceDialogProps) {
   const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
   const [customMessage, setCustomMessage] = useState('');
-  const [recipientEmail, setRecipientEmail] = useState(booking.clientEmail || '');
+  const [recipientEmail, setRecipientEmail] = useState(booking?.clientEmail || '');
   const { toast } = useToast();
+  
+  // Handle dialog close for different usage patterns
+  const handleClose = () => {
+    if (onClose) onClose();
+    if (onOpenChange) onOpenChange(false);
+  };
 
   // Fetch compliance documents
-  const { data: documents = [], isLoading } = useQuery({
+  const { data: documents = [], isLoading } = useQuery<ComplianceDocument[]>({
     queryKey: ['/api/compliance'],
     enabled: isOpen,
   });
@@ -115,7 +124,7 @@ export function SendComplianceDialog({ booking, isOpen, onClose }: SendComplianc
         title: "Documents sent successfully",
         description: `Compliance documents have been sent to ${recipientEmail}`,
       });
-      onClose();
+      handleClose();
       // Reset form
       setSelectedDocuments([]);
       setCustomMessage('');
@@ -166,7 +175,7 @@ export function SendComplianceDialog({ booking, isOpen, onClose }: SendComplianc
     }
 
     await sendDocumentsMutation.mutateAsync({
-      bookingId: booking.id,
+      bookingId: booking?.id || parseInt(bookingId || '0'),
       documentIds: selectedDocuments,
       recipientEmail,
       customMessage,
@@ -177,7 +186,7 @@ export function SendComplianceDialog({ booking, isOpen, onClose }: SendComplianc
   const expiredDocuments = documents.filter((doc: ComplianceDocument) => doc.status !== 'valid');
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -187,40 +196,42 @@ export function SendComplianceDialog({ booking, isOpen, onClose }: SendComplianc
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Booking Information */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <span className="font-medium">Booking Details</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Event:</span>
-                  <p className="font-medium">{booking.title}</p>
+          {/* Booking Information - Only show if booking data is available */}
+          {booking && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <span className="font-medium">Booking Details</span>
                 </div>
-                <div>
-                  <span className="text-gray-500">Client:</span>
-                  <p className="font-medium">{booking.clientName}</p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Event:</span>
+                    <p className="font-medium">{booking.title}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Client:</span>
+                    <p className="font-medium">{booking.clientName}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Date:</span>
+                    <p className="font-medium">
+                      {new Date(booking.eventDate).toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Venue:</span>
+                    <p className="font-medium">{booking.venue}</p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-gray-500">Date:</span>
-                  <p className="font-medium">
-                    {new Date(booking.eventDate).toLocaleDateString('en-GB', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Venue:</span>
-                  <p className="font-medium">{booking.venue}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Recipient Email */}
           <div className="space-y-2">

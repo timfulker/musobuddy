@@ -627,7 +627,7 @@ export default function Compliance() {
                 <SendComplianceDialog 
                   isOpen={isSendDialogOpen} 
                   onOpenChange={setIsSendDialogOpen}
-                  bookingId={bookingId}
+                  bookingId={bookingId || undefined}
                   trigger={
                     <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
                       <Send className="w-4 h-4 mr-2" />
