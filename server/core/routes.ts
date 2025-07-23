@@ -1218,6 +1218,33 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Admin users endpoint - MISSING FUNCTIONALITY RESTORED
+  app.get('/api/admin/users', isAdmin, async (req, res) => {
+    try {
+      console.log('👥 Admin fetching all users...');
+      const users = await storage.getAllUsers();
+      
+      // Transform to match frontend expectations
+      const adminUsers = users.map(user => ({
+        id: user.id.toString(),
+        firstName: user.firstName || 'Unknown',
+        lastName: user.lastName || 'User',
+        email: user.email,
+        tier: user.tier || 'free',
+        isAdmin: user.isAdmin || false,
+        createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
+        bookingCount: 0, // Could be enhanced with actual count
+        lastLogin: user.updatedAt?.toISOString() || user.createdAt?.toISOString() || new Date().toISOString()
+      }));
+      
+      console.log('✅ Admin users loaded:', adminUsers.length, 'users');
+      res.json(adminUsers);
+    } catch (error) {
+      console.error('❌ Admin users fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
 
 
   // ===== TEMPLATE ROUTES =====
