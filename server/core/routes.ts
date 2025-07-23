@@ -580,7 +580,7 @@ export async function registerRoutes(app: Express) {
       console.log('📄 Invoice PDF download request for ID:', invoiceId);
 
       // Get invoice for authenticated user
-      const invoice = await storage.getInvoice(invoiceId, req.user.id);
+      const invoice = await storage.getInvoice(invoiceId);
 
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
@@ -981,8 +981,8 @@ export async function registerRoutes(app: Express) {
         dueDate: new Date(dueDate),
         eventDate: performanceDate ? new Date(performanceDate) : null,
         status: 'draft',
-        createdAt: now,
-        updatedAt: now
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       console.log('📝 Processed invoice data:', invoiceData);
