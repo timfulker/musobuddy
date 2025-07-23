@@ -1208,6 +1208,63 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== COMPLIANCE ROUTES =====
+  app.get('/api/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const documents = await storage.getCompliance(req.user.id);
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch compliance documents' });
+    }
+  });
+
+  app.post('/api/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const documentData = {
+        ...req.body,
+        userId: req.user.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const document = await storage.createCompliance(documentData);
+      res.json(document);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create compliance document' });
+    }
+  });
+
+  app.post('/api/compliance/upload', isAuthenticated, upload.single('documentFile'), async (req: any, res) => {
+    try {
+      console.log('📎 Uploading compliance document:', req.file?.originalname);
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Convert file to base64 for storage
+      const documentData = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      
+      const complianceDoc = {
+        userId: req.user.id,
+        type: req.body.type,
+        name: req.body.name || req.file.originalname,
+        expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : null,
+        status: 'valid',
+        documentUrl: documentData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const document = await storage.createCompliance(complianceDoc);
+      console.log('✅ Compliance document uploaded successfully');
+      
+      res.json(document);
+    } catch (error: any) {
+      console.error('❌ Compliance upload error:', error);
+      res.status(500).json({ error: error.message || 'Failed to upload document' });
+    }
+  });
+
   // ===== ADMIN ROUTES =====
   app.get('/api/admin/stats', isAdmin, async (req, res) => {
     try {
