@@ -48,7 +48,7 @@ export default function Templates() {
   const [userSettings, setUserSettings] = useState<any>(null);
   
   useEffect(() => {
-    if (bookingId && action === 'respond') {
+    if (bookingId && (action === 'respond' || action === 'thankyou')) {
       fetchBookingData();
     }
     fetchUserSettings();
@@ -423,13 +423,31 @@ export default function Templates() {
 
       if (response.ok) {
         const result = await response.json();
+        
+        // Check if this was a thank you template
+        const isThankYouTemplate = previewData.template.name?.toLowerCase().includes('thank you') || 
+                                 previewData.template.subject?.toLowerCase().includes('thank you') ||
+                                 previewData.template.emailBody?.toLowerCase().includes('thank you for');
+        
+        const message = isThankYouTemplate 
+          ? `Thank you email sent to ${bookingData.clientName}. Booking marked as completed.`
+          : `Your message has been sent to ${bookingData.clientName}. Replies will go to your business email.`;
+          
         toast({
           title: "Email Sent Successfully",
-          description: `Your message has been sent to ${bookingData.clientName}. Replies will go to your business email.`,
+          description: message,
         });
         console.log('✅ Template email sent:', result);
         setShowPreview(false);
         setPreviewData(null);
+        
+        // If this was accessed from booking respond menu, refresh parent page
+        if (bookingId && action === 'thankyou') {
+          setTimeout(() => {
+            window.close(); // Close if opened in new tab
+            window.location.href = '/bookings'; // Or redirect to bookings
+          }, 2000);
+        }
       } else {
         const error = await response.json();
         toast({
@@ -484,17 +502,18 @@ export default function Templates() {
             </Button>
           </div>
 
-          {/* Booking Response Context */}
-          {bookingId && action === 'respond' && (
+          {/* Booking Context */}
+          {bookingId && (action === 'respond' || action === 'thankyou') && (
             <Card className="mb-6 border-blue-200 bg-blue-50">
               <CardContent className="pt-6">
                 <div className="text-center">
                   <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                    Responding to Booking #{bookingId}
+                    {action === 'thankyou' ? `Sending Thank You for Booking #${bookingId}` : `Responding to Booking #${bookingId}`}
                   </h3>
                   <p className="text-blue-600 mb-4">
-                    Select an email template below to send a response to your client. 
-                    The template will be automatically customized with booking details.
+                    {action === 'thankyou' 
+                      ? 'Select a thank you template below to send to your client after the event. The template will be automatically customized with booking details.'
+                      : 'Select an email template below to send a response to your client. The template will be automatically customized with booking details.'}
                   </p>
                   {bookingData && (
                     <div className="text-left bg-white p-4 rounded-lg mb-4">
@@ -550,7 +569,7 @@ export default function Templates() {
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
-                    {bookingId && action === 'respond' && (
+                    {bookingId && (action === 'respond' || action === 'thankyou') && (
                       <Button
                         variant="default"
                         size="sm"

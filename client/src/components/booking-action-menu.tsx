@@ -62,11 +62,9 @@ export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
         navigate(`/invoices?bookingId=${booking.id}&action=create`);
         return; // Don't update status immediately, let invoice creation handle it
       case 'send_thankyou':
-        if (booking.status !== 'completed') {
-          newStatus = 'completed';
-          message = "Thank you sent - booking marked as completed";
-        }
-        break;
+        // Navigate to templates page with booking context for thank you message
+        navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
+        return; // Don't update status immediately, let template sending handle it
       case 'reject':
         newStatus = 'rejected';
         message = "Booking rejected";

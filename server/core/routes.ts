@@ -1299,6 +1299,21 @@ export async function registerRoutes(app: Express) {
 
       if (result.success) {
         console.log('✅ Template email sent successfully:', result.messageId);
+        
+        // Check if this is a thank you template and update booking status to completed
+        const isThankYouTemplate = template.name?.toLowerCase().includes('thank you') || 
+                                 template.subject?.toLowerCase().includes('thank you') ||
+                                 template.emailBody?.toLowerCase().includes('thank you for');
+        
+        if (isThankYouTemplate && booking.status !== 'completed') {
+          try {
+            await storage.updateBooking(parseInt(bookingId), { status: 'completed' });
+            console.log('✅ Booking status updated to completed after thank you email');
+          } catch (updateError) {
+            console.error('⚠️ Failed to update booking status after thank you email:', updateError);
+          }
+        }
+        
         res.json({ 
           success: true, 
           messageId: result.messageId,

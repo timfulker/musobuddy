@@ -429,6 +429,27 @@ MusoBuddy Professional`,
         smsBody: "Hi [Client Name], just a reminder that your contract for [Event Date] is awaiting signature. Any questions just ask! Tim",
         isDefault: false,
         isAutoRespond: false
+      },
+      {
+        userId,
+        name: "Thank You After Event",
+        subject: "Thank you for a wonderful event!",
+        emailBody: `Dear [Client Name],
+
+Thank you so much for having me perform at your event on [Event Date] at [Venue]. I thoroughly enjoyed playing for you and your guests, and I hope the music added to making your occasion truly special.
+
+It was a pleasure working with you, and I would be delighted to perform for any future events you may have. Please keep me in mind for anniversaries, celebrations, or any other occasions where live music would enhance the atmosphere.
+
+If you were happy with my performance, I would be incredibly grateful if you could leave a review or recommendation, as word-of-mouth referrals are invaluable to musicians like myself.
+
+Thank you once again for choosing me to be part of your special day.
+
+Warm regards and best wishes,
+
+[Business Signature]`,
+        smsBody: "Hi [Client Name], thank you for having me perform at your event on [Event Date]. It was wonderful and I'd love to play for any future occasions you have! Best regards, Tim",
+        isDefault: false,
+        isAutoRespond: false
       }
     ];
 
