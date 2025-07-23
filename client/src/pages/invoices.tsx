@@ -94,17 +94,62 @@ export default function Invoices() {
     form.setValue("dueDate", dueDate.toISOString().split('T')[0]);
   }, []);
 
-  // Check for URL parameters to auto-open dialog and pre-fill with enquiry data
+  // Check for URL parameters to auto-open dialog and pre-fill with booking/enquiry data
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const createNew = params.get('create');
+    const action = params.get('action');
+    const bookingId = params.get('bookingId');
     const enquiryId = params.get('enquiryId');
     
-    if (createNew === 'true') {
+    if (createNew === 'true' || action === 'create') {
       setIsDialogOpen(true);
       
-      // Pre-fill with enquiry data if enquiryId is provided and enquiries are loaded
-      if (enquiryId && enquiries && enquiries.length > 0) {
+      // Pre-fill with booking data if bookingId is provided
+      if (bookingId) {
+        // Fetch booking data and auto-fill form
+        fetch(`/api/bookings/${bookingId}`, { credentials: 'include' })
+          .then(response => response.json())
+          .then(booking => {
+            if (booking) {
+              // Calculate due date (30 days from now)
+              const dueDate = new Date();
+              dueDate.setDate(dueDate.getDate() + 30);
+              
+              // Calculate performance date from event date
+              const performanceDate = booking.eventDate 
+                ? new Date(booking.eventDate).toISOString().split('T')[0]
+                : "";
+              
+              form.reset({
+                contractId: undefined,
+                clientName: booking.clientName || "",
+                clientEmail: booking.clientEmail || "",
+                ccEmail: "",
+                clientAddress: booking.clientAddress || "",
+                venueAddress: booking.venueAddress || booking.venue || "",
+                amount: booking.fee || "",
+                dueDate: dueDate.toISOString().split('T')[0],
+                performanceDate: performanceDate,
+                performanceFee: booking.fee || "",
+                depositPaid: "",
+              });
+              
+              toast({
+                title: "Booking Data Loaded",
+                description: "Invoice form pre-filled with booking information",
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching booking data:', error);
+            toast({
+              title: "Error",
+              description: "Could not load booking data for auto-fill",
+              variant: "destructive",
+            });
+          });
+      } else if (enquiryId && enquiries && enquiries.length > 0) {
         const selectedEnquiry = enquiries.find(e => e.id === parseInt(enquiryId));
         if (selectedEnquiry) {
           // Calculate due date (30 days from now)

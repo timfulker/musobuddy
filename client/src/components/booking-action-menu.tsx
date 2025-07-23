@@ -58,9 +58,9 @@ export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
         navigate(`/contracts?bookingId=${booking.id}&action=create`);
         return; // Don't update status immediately, let contract creation handle it
       case 'issue_invoice':
-        // Status stays the same, but we could add invoice tracking
-        message = "Invoice issued";
-        break;
+        // Navigate to invoices page with booking data pre-filled
+        navigate(`/invoices?bookingId=${booking.id}&action=create`);
+        return; // Don't update status immediately, let invoice creation handle it
       case 'send_thankyou':
         if (booking.status !== 'completed') {
           newStatus = 'completed';
