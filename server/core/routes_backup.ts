@@ -862,6 +862,324 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    
+    try {
+      console.log('🔥 CONTRACT SIGNING: Starting contract signing process');
+      const contractId = parseInt(req.params.id);
+      const { signatureName, clientName, signature, clientPhone, clientAddress, venueAddress } = req.body;
+      
+      const finalSignatureName = signatureName || clientName;
+      
+      if (!finalSignatureName || !finalSignatureName.trim()) {
+        return res.status(400).json({ message: "Signature name is required" });
+      }
+      
+      // Get contract and verify it can be signed
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      // CRITICAL FIX: Check if already signed
+      if (contract.status === 'signed') {
+        console.log('🔥 CONTRACT SIGNING: ERROR - Contract already signed');
+        return res.status(400).json({ 
+          message: "Contract has already been signed",
+          alreadySigned: true,
+          signedAt: contract.signedAt,
+          signedBy: contract.clientName
+        });
+      }
+      
+      if (contract.status !== 'sent') {
+        return res.status(400).json({ message: "Contract is not available for signing" });
+      }
+      
+      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      
+      // Prepare signature details
+      const signatureDetails = {
+        signedAt: new Date(),
+        signatureName: finalSignatureName.trim(),
+        clientIpAddress: clientIP
+      };
+      
+      // CRITICAL FIX: Update contract with signature first
+      const signedContract = await storage.signContract(contractId, {
+        signatureName: finalSignatureName.trim(),
+        clientIP,
+        signedAt: signatureDetails.signedAt,
+        clientPhone: clientPhone?.trim(),
+        clientAddress: clientAddress?.trim(),
+        venueAddress: venueAddress?.trim()
+      });
+      
+      if (!signedContract) {
+        return res.status(500).json({ message: "Failed to sign contract" });
+      }
+      
+      // CRITICAL FIX: Generate signed contract PDF and upload to cloud storage
+      try {
+        console.log('🔥 CONTRACT SIGNING: Uploading signed contract to cloud storage...');
+        const userSettings = await storage.getSettings(contract.userId);
+        
+        const { uploadContractToCloud } = await import('./cloud-storage');
+        const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
+        
+        if (cloudResult.success && cloudResult.url) {
+          await storage.updateContract(contractId, {
+            cloudStorageUrl: cloudResult.url,
+            cloudStorageKey: cloudResult.key,
+            signingUrlCreatedAt: new Date()
+          }, contract.userId);
+          
+          console.log('✅ CONTRACT SIGNING: Signed contract uploaded to cloud storage:', cloudResult.url);
+        }
+      } catch (cloudError) {
+        console.error('❌ CONTRACT SIGNING: Cloud storage upload failed:', cloudError);
+      }
+      
+      // Update booking status
+      if (contract.enquiryId) {
+        await storage.updateBooking(contract.enquiryId, { 
+          contractSigned: true,
+          status: 'confirmed'
+        }, contract.userId);
+      }
+      
+      // **DEBUG: Re-fetch the contract to verify status update**
+      const updatedContract = await storage.getContractById(contractId);
+      console.log('🔥 CONTRACT SIGNING: DEBUG - Contract status after signing:', updatedContract?.status);
+      console.log('🔥 CONTRACT SIGNING: DEBUG - Contract signedAt after signing:', updatedContract?.signedAt);
+      
+      // **CRITICAL FIX: Enhanced email confirmation with better error handling**
+      try {
+        console.log('🔥 CONTRACT SIGNING: Attempting to retrieve user settings for userId:', contract.userId);
+        
+        // **FIX: Use the correct function name**
+        const userSettings = await storage.getSettings(contract.userId);
+        console.log('🔥 CONTRACT SIGNING: User settings retrieved successfully:', !!userSettings);
+        
+        console.log('🔥 CONTRACT SIGNING: Importing sendEmail function...');
+        const { sendEmail } = await import('./mailgun-email-restored');
+        console.log('🔥 CONTRACT SIGNING: sendEmail function imported successfully');
+        
+        console.log('🔥 CONTRACT SIGNING: Starting confirmation email process');
+        console.log('🔥 CONTRACT SIGNING: User settings:', userSettings);
+        console.log('🔥 CONTRACT SIGNING: Contract data:', {
+          id: contract.id,
+          contractNumber: contract.contractNumber,
+          clientName: contract.clientName,
+          clientEmail: contract.clientEmail,
+          eventDate: contract.eventDate,
+          eventTime: contract.eventTime,
+          venue: contract.venue,
+          fee: contract.fee,
+          userId: contract.userId
+        });
+        
+        // Generate contract URLs - prioritize CloudFlare for signed contracts
+        const currentDomain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
+        const contractDownloadUrl = `https://${currentDomain}/api/contracts/${signedContract.id}/download`;
+        
+        // CRITICAL FIX: Use CloudFlare URL for viewing signed contracts, not app server
+        const contractViewUrl = signedContract.cloudStorageUrl || `https://${currentDomain}/view-contract/${signedContract.id}`;
+        
+        console.log('🔥 CONTRACT SIGNING: Domain configuration:', {
+          REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
+          currentDomain,
+          contractDownloadUrl,
+          contractViewUrl
+        });
+        
+        // Smart email handling - use authenticated domain for sending, Gmail for replies
+        const userBusinessEmail = userSettings?.businessEmail;
+        const fromName = userSettings?.emailFromName || userSettings?.businessName || 'MusoBuddy User';
+        
+        // Always use authenticated domain for FROM to avoid SPF issues
+        const fromEmail = 'noreply@mg.musobuddy.com';
+        
+        // If user has Gmail (or other non-authenticated domain), use it as reply-to
+        const replyToEmail = userBusinessEmail && !userBusinessEmail.includes('@musobuddy.com') ? userBusinessEmail : null;
+        
+        console.log('=== CONTRACT SIGNING CONFIRMATION EMAIL ===');
+        console.log('To:', contract.clientEmail);
+        console.log('From:', `${fromName} <${fromEmail}>`);
+        console.log('Reply-To:', replyToEmail);
+        console.log('Contract download URL:', contractDownloadUrl);
+        console.log('Contract view URL:', contractViewUrl);
+        console.log('User settings:', userSettings);
+        console.log('Performer email:', userSettings?.businessEmail);
+        
+        // Email to client with download link
+        const clientEmailData: any = {
+          to: contract.clientEmail,
+          from: `${fromName} <${fromEmail}>`,
+          subject: `Contract ${contract.contractNumber} Successfully Signed ✓`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #4CAF50; margin-bottom: 20px;">Contract Signed Successfully ✓</h2>
+              
+              <p>Dear ${contract.clientName},</p>
+              <p>Your performance contract <strong>${contract.contractNumber}</strong> has been successfully signed!</p>
+              
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #333;">Event Details</h3>
+                <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+                <p><strong>Time:</strong> ${contract.eventTime}</p>
+                <p><strong>Venue:</strong> ${contract.venue}</p>
+                <p><strong>Fee:</strong> £${contract.fee}</p>
+                <p><strong>Signed by:</strong> ${finalSignatureName.trim()}</p>
+                <p><strong>Signed on:</strong> ${new Date().toLocaleString('en-GB')}</p>
+              </div>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${contractViewUrl}" style="background: #1e40af; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px; border: none; box-shadow: 0 3px 6px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">📄 View Contract Online</a>
+              </div>
+              
+              <p style="color: #6B7280; font-size: 14px;">
+                Your signed contract is ready for download at any time. We look forward to performing at your event!
+              </p>
+              
+              <p>Best regards,<br><strong>${userSettings?.businessName || fromName}</strong></p>
+              
+              <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
+                <small>Powered by MusoBuddy – less admin, more music</small>
+              </p>
+            </div>
+          `,
+          text: `Contract ${contract.contractNumber} successfully signed by ${finalSignatureName.trim()}. Event: ${new Date(contract.eventDate).toLocaleDateString('en-GB')} at ${contract.venue}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
+        };
+        
+        // Add reply-to if user has Gmail or other external email
+        if (replyToEmail) {
+          clientEmailData.replyTo = replyToEmail;
+        }
+        
+        console.log('🔥 CONTRACT SIGNING: Sending client confirmation email...');
+        console.log('🔥 CONTRACT SIGNING: Client email data:', {
+          to: clientEmailData.to,
+          from: clientEmailData.from,
+          subject: clientEmailData.subject,
+          hasReplyTo: !!clientEmailData.replyTo
+        });
+        const clientEmailResult = await sendEmail(clientEmailData);
+        console.log('🔥 CONTRACT SIGNING: Client email result:', clientEmailResult);
+        
+        // Enhanced logging for debugging confirmation email issues
+        if (!clientEmailResult) {
+          console.error('❌ CLIENT CONFIRMATION EMAIL FAILED TO SEND');
+          console.error('Email data that failed:', JSON.stringify(clientEmailData, null, 2));
+        } else {
+          console.log('✅ CLIENT CONFIRMATION EMAIL SENT SUCCESSFULLY');
+        }
+        
+        // Email to performer (business owner) with download link
+        // Try multiple email sources for performer notification
+        const performerEmail = userSettings?.businessEmail || 
+                             userSettings?.email || 
+                             (req.user?.claims?.email);
+        
+        if (performerEmail) {
+          const performerEmailData: any = {
+            to: performerEmail,
+            from: `${fromName} <${fromEmail}>`,
+            subject: `Contract ${contract.contractNumber} Signed by Client ✓`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #4CAF50; margin-bottom: 20px;">Contract Signed! ✓</h2>
+                
+                <p>Great news! Contract <strong>${contract.contractNumber}</strong> has been signed by ${contract.clientName}.</p>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #333;">Event Details</h3>
+                  <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+                  <p><strong>Time:</strong> ${contract.eventTime}</p>
+                  <p><strong>Venue:</strong> ${contract.venue}</p>
+                  <p><strong>Fee:</strong> £${contract.fee}</p>
+                </div>
+                
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3; margin: 20px 0;">
+                  <p style="margin: 0;"><strong>Signature Details:</strong></p>
+                  <p style="margin: 5px 0;">Signed by: ${finalSignatureName.trim()}</p>
+                  <p style="margin: 5px 0;">Time: ${new Date().toLocaleString('en-GB')}</p>
+                  <p style="margin: 5px 0;">IP: ${clientIP}</p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${contractViewUrl}" style="background: #1e40af; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px; border: none; box-shadow: 0 3px 6px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">📄 View Contract Online</a>
+                </div>
+                
+                <p style="background: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                  📋 <strong>The signed contract is ready for download when needed.</strong>
+                </p>
+                
+                <p style="text-align: center; color: #6B7280; font-size: 12px; margin-top: 30px;">
+                  <small>Powered by MusoBuddy – less admin, more music</small>
+                </p>
+              </div>
+            `,
+            text: `Contract ${contract.contractNumber} signed by ${finalSignatureName.trim()} on ${new Date().toLocaleString('en-GB')}. View: ${contractViewUrl} Download: ${contractDownloadUrl}`
+          };
+          
+          // Add reply-to for performer email too
+          if (replyToEmail) {
+            performerEmailData.replyTo = replyToEmail;
+          }
+          
+          console.log('🔥 CONTRACT SIGNING: Sending performer confirmation email...');
+          console.log('🔥 CONTRACT SIGNING: Performer email data:', {
+            to: performerEmailData.to,
+            from: performerEmailData.from,
+            subject: performerEmailData.subject,
+            hasReplyTo: !!performerEmailData.replyTo
+          });
+          const performerEmailResult = await sendEmail(performerEmailData);
+          console.log('🔥 CONTRACT SIGNING: Performer email result:', performerEmailResult);
+          
+          // Enhanced logging for debugging performer confirmation email issues
+          if (!performerEmailResult) {
+            console.error('❌ PERFORMER CONFIRMATION EMAIL FAILED TO SEND');
+            console.error('Email data that failed:', JSON.stringify(performerEmailData, null, 2));
+          } else {
+            console.log('✅ PERFORMER CONFIRMATION EMAIL SENT SUCCESSFULLY');
+          }
+        } else {
+          console.warn('⚠️ No performer email available - checked businessEmail, email, and user claims');
+          console.warn('UserSettings:', userSettings);
+          console.warn('User claims:', req.user?.claims);
+        }
+      } catch (emailError) {
+        console.error("❌ CRITICAL ERROR: Failed to send confirmation emails:", emailError);
+        console.error("Email error details:", {
+          message: emailError.message,
+          stack: emailError.stack,
+          name: emailError.name,
+          status: emailError.status,
+          type: emailError.type
+        });
+        // Don't fail the signing process if email fails
+      }
+      
+      // Send final response after all processing is complete
+      res.json({ 
+        success: true,
+        message: "Contract signed successfully",
+        contract: signedContract,
+        signedAt: signatureDetails.signedAt,
+        signedBy: finalSignatureName.trim()
+      });
+      
+    } catch (error) {
+      console.error("Error signing contract:", error);
+      res.status(500).json({ message: "Failed to sign contract" });
+    }
+  });
+
   // Contract status check route for signing pages
   app.get('/api/contracts/:id/status', async (req, res) => {
     try {
