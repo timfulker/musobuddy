@@ -207,6 +207,16 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Production Testing**: ✅ Verified R2 signing pages load correctly with professional styling and contract details
 - **Status**: R2 CLOUD DOCUMENT SYSTEM FULLY OPERATIONAL - All documents hosted on R2 server with correct public URLs
 
+### 2025-07-23 - Contract Signing CORS Error IDENTIFIED and FIXED
+- **CORS Issue Identified**: ✅ Cross-origin requests from Cloudflare R2 signing pages to localhost server blocked by browser CORS policy
+- **Error Pattern**: ✅ Contract signing works directly but fails when accessed from R2-hosted signing pages due to origin mismatch
+- **CORS Headers Configured**: ✅ Added proper Access-Control-Allow-Origin headers for contract signing endpoints
+- **Browser Error Resolved**: ✅ Fixed "Response to preflight request doesn't pass access control check" errors
+- **User Experience Fix**: ✅ Contract signing now functional from cloud-hosted signing pages 
+- **Future Enhancement Noted**: ✅ User suggestion to open contract PDFs in new tabs for better UX (deferred until more testing)
+- **Root Cause**: ✅ R2-hosted signing pages making API calls to app server require explicit CORS allowance
+- **Status**: CORS CONFIGURATION FIXED - Contract signing operational from cloud-hosted pages
+
 ### 2025-07-23 - Contract Signing 401 Unauthorized Error FIXED
 - **Root Cause Identified**: ✅ Duplicate POST route handlers for /api/contracts/sign/:id at lines 75 and 873 causing authentication conflicts
 - **Duplicate Handler Removed**: ✅ Eliminated second contract signing handler (lines 865-1189) that was overriding the public signing route
