@@ -492,22 +492,15 @@ export default function Compliance() {
                               <div>
                                 <p className="text-sm text-gray-600">
                                   Drag and drop your document here, or{' '}
-                                  <Button
-                                    type="button"
-                                    variant="link"
-                                    className="p-0 h-auto text-purple-600"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      console.log('Browse files clicked', fileInputRef.current);
-                                      if (fileInputRef.current) {
-                                        fileInputRef.current.click();
-                                      } else {
-                                        console.error('File input ref is null');
-                                      }
-                                    }}
-                                  >
+                                  <label className="text-purple-600 hover:text-purple-700 underline cursor-pointer">
                                     browse files
-                                  </Button>
+                                    <input
+                                      type="file"
+                                      style={{ display: 'none' }}
+                                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                                      onChange={handleFileInputChange}
+                                    />
+                                  </label>
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
                                   PDF, Word, images, or text files (max 10MB)
@@ -517,11 +510,11 @@ export default function Compliance() {
                           )}
                         </div>
 
-                        {/* Hidden File Input */}
+                        {/* Hidden File Input - MUST be inside dialog content for ref to work */}
                         <input
                           ref={fileInputRef}
                           type="file"
-                          className="hidden"
+                          style={{ display: 'none' }}
                           accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
                           onChange={handleFileInputChange}
                           onClick={(e) => console.log('File input clicked directly')}
