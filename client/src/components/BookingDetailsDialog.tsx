@@ -142,6 +142,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       gigType: "",
       equipmentRequirements: "",
       specialRequirements: "",
+      performanceDuration: "",
+      repertoire: "",
+      equipmentProvided: "",
+      whatsIncluded: "",
       setupTime: "",
       soundCheckTime: "",
       packupTime: "",
@@ -152,7 +156,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       venueAddress: "",
       venueContactInfo: "",
       dressCode: "",
-      repertoire: "",
       notes: "",
     },
   });
@@ -174,6 +177,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         gigType: booking.gigType || "",
         equipmentRequirements: booking.equipmentRequirements || "",
         specialRequirements: booking.specialRequirements || "",
+        performanceDuration: booking.performanceDuration || "",
+        repertoire: booking.repertoire || "",
+        equipmentProvided: booking.equipmentProvided || "",
+        whatsIncluded: booking.whatsIncluded || "",
         setupTime: "",
         soundCheckTime: "",
         packupTime: "",
@@ -184,7 +191,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         venueAddress: booking.venueAddress || "",
         venueContactInfo: "",
         dressCode: "",
-        repertoire: "",
         notes: booking.notes || "",
       };
       
@@ -1027,6 +1033,60 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                         <FormLabel>Special Requests</FormLabel>
                         <FormControl>
                           <Textarea {...field}  rows={3} placeholder="Special songs, timing requests, etc." />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Performance Details - TEMPLATE VARIABLES */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Music className="h-5 w-5" />
+                    Performance Details
+                    <span className="text-sm font-normal text-blue-600 ml-2">📧 Template Variables</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <FormField
+                    control={form.control}
+                    name="performanceDuration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Performance Duration <span className="text-blue-600">[Performance Duration]</span></FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="e.g., 2 hours, 3 x 45 minute sets" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="equipmentProvided"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Equipment Provided <span className="text-blue-600">[Equipment Provided]</span></FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={2} placeholder="What equipment/instruments you'll bring" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="whatsIncluded"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>What's Included <span className="text-blue-600">[What's Included]</span></FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} placeholder="What's included in your service/package" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

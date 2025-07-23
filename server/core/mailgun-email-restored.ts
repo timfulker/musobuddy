@@ -756,6 +756,78 @@ function generateInvoiceEmailHTML(invoice: any, userSettings: any, viewUrl: stri
   `;
 }
 
+// Replace template variables with booking data
+function replaceTemplateVariables(content: string, booking: Booking, userSettings: UserSettings): string {
+  // Format performance duration from minutes to readable text
+  const formatDuration = (minutes: number | null) => {
+    if (!minutes) return '[Performance Duration]';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours === 0) return `${mins} minutes`;
+    if (mins === 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+    return `${hours} hour${hours > 1 ? 's' : ''} ${mins} minutes`;
+  };
+
+  // Format fee with proper currency
+  const formatFee = (fee: any) => {
+    if (!fee) return '[Fee]';
+    const numericFee = typeof fee === 'string' ? parseFloat(fee) : fee;
+    return `£${numericFee.toFixed(2)}`;
+  };
+
+  // Business signature from settings
+  const businessSignature = `
+${userSettings?.businessName || 'MusoBuddy'}
+${userSettings?.businessEmail || ''}
+${userSettings?.phone || ''}
+${userSettings?.addressLine1 || ''}${userSettings?.city ? ', ' + userSettings.city : ''}${userSettings?.postcode ? ' ' + userSettings.postcode : ''}
+${userSettings?.website || ''}
+  `.trim();
+
+  return content
+    // Client details
+    .replace(/\[Client Name\]/g, booking.clientName || '[Client Name]')
+    .replace(/\[client name\]/g, booking.clientName || '[Client Name]')
+    .replace(/\[CLIENT NAME\]/g, (booking.clientName || '[Client Name]').toUpperCase())
+    
+    // Event details
+    .replace(/\[Event Date\]/g, booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : '[Event Date]')
+    .replace(/\[event date\]/g, booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : '[Event Date]')
+    .replace(/\[date\]/g, booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : '[Date]')
+    .replace(/\[Date\]/g, booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : '[Date]')
+    
+    .replace(/\[Venue\]/g, booking.venue || '[Venue]')
+    .replace(/\[venue\]/g, booking.venue || '[Venue]')
+    
+    .replace(/\[Event Time\]/g, booking.eventTime || '[Event Time]')
+    .replace(/\[event time\]/g, booking.eventTime || '[Event Time]')
+    
+    // Financial details
+    .replace(/\[Fee\]/g, formatFee(booking.fee))
+    .replace(/\[fee\]/g, formatFee(booking.fee))
+    .replace(/\[FEE\]/g, formatFee(booking.fee))
+    
+    // Performance details
+    .replace(/\[Performance Duration\]/g, formatDuration(booking.performanceDuration))
+    .replace(/\[performance duration\]/g, formatDuration(booking.performanceDuration))
+    
+    .replace(/\[Repertoire\]/g, booking.repertoire || '[Repertoire]')
+    .replace(/\[repertoire\]/g, booking.repertoire || '[Repertoire]')
+    
+    .replace(/\[Equipment Provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
+    .replace(/\[equipment provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
+    .replace(/\{Equipment provided\}/g, booking.equipmentProvided || '[Equipment Provided]')
+    
+    .replace(/\[What's Included\]/g, booking.whatsIncluded || '[What\'s Included]')
+    .replace(/\[whats included\]/g, booking.whatsIncluded || '[What\'s Included]')
+    .replace(/\[What\'s Included\]/g, booking.whatsIncluded || '[What\'s Included]')
+    
+    // Business signature (at end of email)
+    .replace(/\[Business Signature\]/g, businessSignature)
+    .replace(/\[business signature\]/g, businessSignature)
+    .replace(/\[BUSINESS SIGNATURE\]/g, businessSignature);
+}
+
 // TEMPLATE EMAIL SENDING FUNCTION - Business Email Ghosting Implementation
 export async function sendTemplateEmail(
   template: { subject: string; emailBody: string; smsBody?: string },
@@ -822,8 +894,11 @@ function generateTemplateEmailHTML(
   const businessName = userSettings?.businessName || 'MusoBuddy';
   const businessEmail = userSettings?.businessEmail;
   
+  // Replace template variables with booking data before converting to HTML
+  const processedEmailBody = replaceTemplateVariables(template.emailBody, booking, userSettings);
+  
   // Convert plain text email body to HTML with line breaks
-  const htmlBody = template.emailBody
+  const htmlBody = processedEmailBody
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>');
 

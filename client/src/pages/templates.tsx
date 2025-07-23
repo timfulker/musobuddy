@@ -250,14 +250,55 @@ export default function Templates() {
     const eventEndTime = booking.eventEndTime || '';
     const timeRange = eventEndTime ? `${eventTime} - ${eventEndTime}` : eventTime;
     
+    // Format performance duration from minutes to readable text
+    const formatDuration = (minutes: number | null) => {
+      if (!minutes) return '[Performance Duration]';
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      if (hours === 0) return `${mins} minutes`;
+      if (mins === 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+      return `${hours} hour${hours > 1 ? 's' : ''} ${mins} minutes`;
+    };
+
+    // Format fee with proper currency
+    const formatFee = (fee: any) => {
+      if (!fee) return '[Fee]';
+      const numericFee = typeof fee === 'string' ? parseFloat(fee) : fee;
+      return `£${numericFee.toFixed(2)}`;
+    };
+    
     return text
+      // Basic fields
       .replace(/\[Client Name\]/g, booking.clientName || '[Client Name]')
+      .replace(/\[client name\]/g, booking.clientName || '[Client Name]')
+      .replace(/\[CLIENT NAME\]/g, (booking.clientName || '[Client Name]').toUpperCase())
       .replace(/\[Event Date\]/g, eventDate)
+      .replace(/\[event date\]/g, eventDate)
+      .replace(/\[date\]/g, eventDate)
+      .replace(/\[Date\]/g, eventDate)
       .replace(/\[Event Time\]/g, timeRange)
+      .replace(/\[event time\]/g, timeRange)
       .replace(/\[Venue\]/g, booking.venue || '[Venue]')
-      .replace(/\[Fee\]/g, booking.fee ? booking.fee.toString() : '[Fee]')
+      .replace(/\[venue\]/g, booking.venue || '[Venue]')
       .replace(/\[Client Email\]/g, booking.clientEmail || '[Client Email]')
-      .replace(/\[Venue Address\]/g, booking.venueAddress || '[Venue Address]');
+      .replace(/\[Venue Address\]/g, booking.venueAddress || '[Venue Address]')
+      
+      // Financial fields
+      .replace(/\[Fee\]/g, formatFee(booking.fee))
+      .replace(/\[fee\]/g, formatFee(booking.fee))
+      .replace(/\[FEE\]/g, formatFee(booking.fee))
+      
+      // NEW Performance fields
+      .replace(/\[Performance Duration\]/g, formatDuration(booking.performanceDuration))
+      .replace(/\[performance duration\]/g, formatDuration(booking.performanceDuration))
+      .replace(/\[Repertoire\]/g, booking.repertoire || '[Repertoire]')
+      .replace(/\[repertoire\]/g, booking.repertoire || '[Repertoire]')
+      .replace(/\[Equipment Provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
+      .replace(/\[equipment provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
+      .replace(/\{Equipment provided\}/g, booking.equipmentProvided || '[Equipment Provided]')
+      .replace(/\[What's Included\]/g, booking.whatsIncluded || '[What\'s Included]')
+      .replace(/\[whats included\]/g, booking.whatsIncluded || '[What\'s Included]')
+      .replace(/\[What\'s Included\]/g, booking.whatsIncluded || '[What\'s Included]');
   };
 
   const handleUseTemplate = async (template: EmailTemplate) => {
