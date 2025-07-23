@@ -46,8 +46,9 @@ const contractFormSchema = z.object({
   clientFillableFields: z.array(z.string()).optional(),
   enquiryId: z.number().optional(),
   status: z.string().default("draft"),
-  reminderEnabled: z.boolean().default(false),
-  reminderDays: z.number().min(1).max(30).default(3),
+  // PHASE 2: Automated reminders (removed for manual-only phase 1)
+  // reminderEnabled: z.boolean().default(false),
+  // reminderDays: z.number().min(1).max(30).default(3),
 });
 
 export default function Contracts() {
@@ -103,8 +104,9 @@ export default function Contracts() {
       equipmentRequirements: "",
       specialRequirements: "",
       status: "draft",
-      reminderEnabled: false,
-      reminderDays: 3,
+      // PHASE 2: Automated reminders (removed for manual-only phase 1)
+      // reminderEnabled: false,
+      // reminderDays: 3,
     },
   });
 
@@ -136,10 +138,10 @@ export default function Contracts() {
         const contractNumber = `(${formattedDate} - )`;
         form.setValue('contractNumber', contractNumber);
 
-        // Set default terms from settings if available
-        if (settings?.defaultTerms) {
-          form.setValue('terms', settings.defaultTerms);
-        }
+        // Set default terms from settings if available (future feature)
+        // if (settings?.defaultTerms) {
+        //   form.setValue('terms', settings.defaultTerms);
+        // }
 
         // Auto-fill with enquiry data if enquiryId is provided
         const enquiryId = urlParams.get('enquiryId');
@@ -184,7 +186,7 @@ export default function Contracts() {
             };
             
             form.setValue('eventTime', convertToTimeFormat(enquiry.eventTime || ''));
-            form.setValue('fee', enquiry.estimatedValue || '');
+            form.setValue('fee', enquiry.fee || '');
             
             // Auto-generate contract number with event date and client name
             if (enquiry.eventDate && enquiry.clientName) {
