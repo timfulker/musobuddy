@@ -455,7 +455,22 @@ export default function Compliance() {
                           type="button"
                           variant={uploadMethod === 'file' ? 'default' : 'outline'}
                           size="sm"
-                          onClick={() => setUploadMethod('file')}
+                          onClick={() => {
+                            console.log('🔥 Upload File button clicked!');
+                            setUploadMethod('file');
+                            // Create a temporary file input and trigger it
+                            const tempInput = document.createElement('input');
+                            tempInput.type = 'file';
+                            tempInput.accept = '.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif';
+                            tempInput.onchange = (e) => {
+                              const target = e.target as HTMLInputElement;
+                              if (target.files && target.files[0]) {
+                                console.log('📁 File selected via Upload File button:', target.files[0]);
+                                handleFileSelect(target.files[0]);
+                              }
+                            };
+                            tempInput.click();
+                          }}
                         >
                           <Upload className="w-4 h-4 mr-2" />
                           Upload File
