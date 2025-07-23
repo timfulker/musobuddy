@@ -928,10 +928,18 @@ export async function registerRoutes(app: Express) {
 
   app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const booking = await storage.updateBooking(parseInt(req.params.id), req.body);
+      const bookingId = parseInt(req.params.id);
+      console.log('📝 Updating booking:', bookingId, 'with data:', req.body);
+      
+      const booking = await storage.updateBooking(bookingId, req.body);
+      console.log('✅ Booking updated successfully:', booking);
       res.json(booking);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to update booking' });
+    } catch (error: any) {
+      console.error('❌ Booking update error:', error);
+      res.status(500).json({ 
+        error: 'Failed to update booking',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 

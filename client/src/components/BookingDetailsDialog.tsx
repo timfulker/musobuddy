@@ -55,6 +55,9 @@ const bookingDetailsSchema = z.object({
   venueContactInfo: z.string().optional(),
   dressCode: z.string().optional(),
   repertoire: z.string().optional(),
+  performanceDuration: z.string().optional(),
+  equipmentProvided: z.string().optional(),
+  whatsIncluded: z.string().optional(),
   notes: z.string().optional(),
 });
 
