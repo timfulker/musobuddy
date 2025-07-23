@@ -561,7 +561,7 @@ export async function registerRoutes(app: Express) {
       // Otherwise, generate and serve PDF
       const userSettings = await storage.getSettings(invoice.userId);
       const { generateInvoicePDF } = await import('./pdf-generator');
-      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      const pdfBuffer = await generateInvoicePDF(invoice, null, userSettings);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
@@ -632,7 +632,7 @@ export async function registerRoutes(app: Express) {
       console.log('📄 Generating invoice PDF directly as fallback...');
       const userSettings = await storage.getSettings(invoice.userId);
       const { generateInvoicePDF } = await import('./pdf-generator');
-      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      const pdfBuffer = await generateInvoicePDF(invoice, null, userSettings);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
@@ -653,7 +653,7 @@ export async function registerRoutes(app: Express) {
       const invoiceId = parseInt(req.params.id);
       console.log('🔗 Public invoice access for ID:', invoiceId);
       
-      const invoice = await storage.getInvoiceById(invoiceId);
+      const invoice = await storage.getInvoice(invoiceId);
       
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });

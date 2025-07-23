@@ -117,7 +117,7 @@ export async function uploadInvoiceToCloud(
     console.log('📤 Uploading invoice PDF to cloud storage:', invoice.invoiceNumber);
 
     // Generate PDF
-    const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+    const pdfBuffer = await generateInvoicePDF(invoice, null, userSettings);
 
     // Create storage key for PDF
     const timestamp = new Date().toISOString().split('T')[0];
