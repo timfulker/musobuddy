@@ -19,7 +19,9 @@ import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 
-const complianceFormSchema = insertComplianceDocumentSchema.extend({
+const complianceFormSchema = insertComplianceDocumentSchema.omit({
+  userId: true, // Exclude userId - set automatically by backend
+}).extend({
   expiryDate: z.string().optional(),
 });
 
