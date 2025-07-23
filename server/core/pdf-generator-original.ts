@@ -211,6 +211,17 @@ function generateInvoiceHTML(
           color: #333;
           margin-bottom: 15px;
         }
+        .bank-details {
+          margin-top: 20px;
+          padding: 15px;
+          background-color: #e8f5e8;
+          border-radius: 5px;
+          border-left: 4px solid #059669;
+        }
+        .bank-details h4 {
+          color: #059669;
+          margin-bottom: 10px;
+        }
         .payment-info p {
           margin: 5px 0;
           color: #666;
@@ -328,7 +339,22 @@ function generateInvoiceHTML(
       <div class="payment-info">
         <h3>Payment Information</h3>
         <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</p>
-        ${userSettings?.bankDetails ? `<p><strong>Bank Details:</strong><br>${userSettings.bankDetails.replace(/\n/g, '<br>')}</p>` : ''}
+        
+        <div class="bank-details">
+          <h4>Bank Details for Payment</h4>
+          ${userSettings?.bankDetails ? 
+            `<p style="margin: 0; white-space: pre-line;">${userSettings.bankDetails}</p>` : 
+            `<p style="margin: 0;">
+              <strong>Account Name:</strong> ${businessName}<br>
+              <strong>Sort Code:</strong> [To be provided]<br>
+              <strong>Account Number:</strong> [To be provided]<br>
+              <strong>Bank:</strong> [To be provided]
+            </p>`
+          }
+          <p style="margin-top: 10px; font-style: italic; color: #059669;">
+            Please use invoice number ${invoice.invoiceNumber} as payment reference
+          </p>
+        </div>
       </div>
 
       <div class="terms">

@@ -521,7 +521,7 @@ export async function registerRoutes(app: Express) {
       const invoiceId = parseInt(req.params.id);
       console.log('👁️ Public invoice view request for ID:', invoiceId);
 
-      const invoice = await storage.getInvoiceById(invoiceId);
+      const invoice = await storage.getInvoice(invoiceId);
       if (!invoice) {
         return res.status(404).send(`
           <!DOCTYPE html>
@@ -554,6 +554,77 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error('❌ Invoice view error:', error);
       res.status(500).send('Error loading invoice');
+    }
+  });
+
+  // INVOICE PDF DOWNLOAD ROUTE - COPIED FROM CONTRACT PATTERN
+  app.get('/api/invoices/:id/download', async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      console.log('📄 Invoice PDF download request for ID:', invoiceId);
+
+      // Get invoice (try both authenticated and public access)
+      let invoice = null;
+
+      // Try authenticated access first
+      if (req.user?.id) {
+        invoice = await storage.getInvoice(invoiceId, req.user.id);
+      }
+
+      // If not found or not authenticated, try public access
+      if (!invoice) {
+        invoice = await storage.getInvoice(invoiceId);
+      }
+
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+
+      // PRIORITY 1: Use cloud storage URL if available
+      if (invoice.cloudStorageUrl) {
+        console.log('🔗 Redirecting to cloud storage URL:', invoice.cloudStorageUrl);
+        return res.redirect(invoice.cloudStorageUrl);
+      }
+
+      // PRIORITY 2: Generate and upload to cloud storage
+      console.log('☁️ No cloud URL found, generating and uploading to cloud storage...');
+
+      try {
+        const userSettings = await storage.getSettings(invoice.userId);
+        const { uploadInvoiceToCloud } = await import('./cloud-storage');
+
+        const cloudResult = await uploadInvoiceToCloud(invoice, userSettings);
+
+        if (cloudResult.success && cloudResult.url) {
+          // Update invoice with cloud storage URL
+          await storage.updateInvoice(invoice.id, {
+            cloudStorageUrl: cloudResult.url,
+            cloudStorageKey: cloudResult.key
+          });
+
+          console.log('✅ Invoice uploaded to cloud, redirecting to:', cloudResult.url);
+          return res.redirect(cloudResult.url);
+        }
+      } catch (cloudError) {
+        console.error('❌ Cloud storage failed, falling back to direct generation');
+      }
+
+      // FALLBACK: Generate PDF directly (should rarely be needed)
+      console.log('📄 Generating invoice PDF directly as fallback...');
+      const userSettings = await storage.getSettings(invoice.userId);
+      const { generateInvoicePDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error: any) {
+      console.error('❌ Invoice download error:', error);
+      res.status(500).json({ 
+        error: 'Failed to download invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
