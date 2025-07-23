@@ -144,6 +144,231 @@ export async function uploadInvoiceToCloud(
 
 
 
+// Generate HTML for already signed contract page
+function generateAlreadySignedPageHTML(
+  contract: Contract,
+  userSettings: UserSettings | null
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+
+  const formatDate = (date: any) => {
+    if (!date) return 'Date TBC';
+    return new Date(date).toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
+  };
+
+  const formatDateTime = (date: any) => {
+    if (!date) return 'Not specified';
+    return new Date(date).toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Dynamic URL based on environment
+  const APP_SERVER_URL = process.env.NODE_ENV === 'production' 
+    ? 'https://musobuddy.replit.app' 
+    : 'http://localhost:5000';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract Already Signed - ${contract.contractNumber}</title>
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      line-height: 1.6; 
+      color: #333; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 20px; 
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .header { 
+      text-align: center; 
+      margin-bottom: 30px; 
+      padding: 20px; 
+      background: #d1fae5; 
+      border-radius: 8px; 
+      border: 2px solid #10b981;
+    }
+    .title { 
+      color: #059669; 
+      font-size: 28px; 
+      margin-bottom: 10px; 
+      font-weight: bold;
+    }
+    .signed-badge {
+      display: inline-block;
+      background: #10b981;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .contract-details { 
+      background: #f8fafc; 
+      padding: 20px; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 8px; 
+      margin: 20px 0; 
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    @media (max-width: 600px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+    .detail-item {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .detail-label {
+      font-weight: bold;
+      color: #64748b;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+    }
+    .detail-value {
+      margin-top: 5px;
+      font-size: 16px;
+      color: #1e293b;
+    }
+    .signature-section {
+      background: #d1fae5;
+      border: 2px solid #10b981;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .download-button { 
+      background: #2563eb; 
+      color: white; 
+      padding: 15px 30px; 
+      border: none; 
+      border-radius: 8px; 
+      font-size: 16px; 
+      cursor: pointer; 
+      text-decoration: none; 
+      display: inline-block; 
+      margin: 20px 10px; 
+      transition: all 0.3s;
+    }
+    .download-button:hover { 
+      background: #1d4ed8; 
+      transform: translateY(-2px);
+    }
+    .footer { 
+      text-align: center; 
+      margin-top: 40px; 
+      padding-top: 20px; 
+      border-top: 1px solid #e2e8f0; 
+      color: #64748b; 
+      font-size: 14px; 
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">✅ Contract Already Signed</div>
+      <div class="signed-badge">COMPLETED</div>
+      <div style="font-size: 18px; color: #059669; margin-top: 10px;">${contract.contractNumber}</div>
+      <div style="font-size: 16px; color: #64748b; margin-top: 5px;">From ${businessName}</div>
+    </div>
+
+    <div class="contract-details">
+      <h3 style="color: #1e293b; margin-top: 0;">Event Details</h3>
+      
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Client Name</span>
+          <div class="detail-value">${contract.clientName}</div>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Performance Date</span>
+          <div class="detail-value">${formatDate(contract.eventDate)}</div>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Time</span>
+          <div class="detail-value">${contract.eventTime || 'TBC'}</div>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Venue</span>
+          <div class="detail-value">${contract.venue}</div>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Performance Fee</span>
+          <div class="detail-value">£${contract.fee}</div>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Contract Status</span>
+          <div class="detail-value" style="color: #059669; font-weight: bold;">SIGNED & CONFIRMED</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="signature-section">
+      <h3 style="color: #059669; margin-top: 0;">📝 Signature Details</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+        <div>
+          <strong>Signed by:</strong><br>
+          <span style="font-size: 18px; color: #1e293b;">${contract.clientSignature || contract.clientName}</span>
+        </div>
+        <div>
+          <strong>Signed on:</strong><br>
+          <span style="color: #64748b;">${formatDateTime(contract.signedAt)}</span>
+        </div>
+      </div>
+      <p style="margin-top: 20px; color: #059669; font-weight: 500;">
+        ✅ This contract has been digitally signed and is legally binding. Both parties have been notified.
+      </p>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${APP_SERVER_URL}/api/contracts/${contract.id}/download" class="download-button" target="_blank">
+        📄 Download Signed Contract PDF
+      </a>
+    </div>
+
+    <div class="footer">
+      <p>This contract was signed on ${formatDateTime(contract.signedAt)}</p>
+      <p>Powered by MusoBuddy – less admin, more music</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 // Generate HTML for contract signing page - FIXED with proper URL handling
 function generateContractSigningPageHTML(
   contract: Contract,
@@ -615,7 +840,10 @@ export async function uploadContractSigningPage(
     console.log('📤 Creating cloud-hosted contract signing page for:', contract.contractNumber);
 
     // Generate HTML content with proper URL interpolation
-    const htmlContent = generateContractSigningPageHTML(contract, userSettings);
+    // Check if contract is already signed and generate appropriate page
+    const htmlContent = contract.status === 'signed' 
+      ? generateAlreadySignedPageHTML(contract, userSettings)
+      : generateContractSigningPageHTML(contract, userSettings);
     const htmlBuffer = Buffer.from(htmlContent, 'utf-8');
 
     // Create storage key for HTML signing page
