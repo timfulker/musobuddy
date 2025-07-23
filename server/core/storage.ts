@@ -125,7 +125,8 @@ export class Storage {
     return result[0];
   }
 
-  async updateContract(id: number, updates: any) {
+  // FIXED: updateContract method with flexible signature to handle both authenticated and public calls
+  async updateContract(id: number, updates: any, userId?: string) {
     // Convert date strings to Date objects for timestamp fields
     const processedUpdates = {
       ...updates,
@@ -135,9 +136,19 @@ export class Storage {
       updatedAt: new Date()
     };
     
+    // Build query conditions based on whether userId is provided
+    let whereCondition;
+    if (userId) {
+      // Authenticated update - verify ownership
+      whereCondition = and(eq(contracts.id, id), eq(contracts.userId, userId));
+    } else {
+      // Public update (e.g., contract signing) - no ownership check
+      whereCondition = eq(contracts.id, id);
+    }
+    
     const result = await db.update(contracts)
       .set(processedUpdates)
-      .where(eq(contracts.id, id))
+      .where(whereCondition)
       .returning();
     return result[0];
   }
@@ -168,6 +179,19 @@ export class Storage {
     const result = await db.update(invoices)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(invoices.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // ADDED: Missing updateInvoiceCloudStorage method that mailgun-email-restored.ts calls
+  async updateInvoiceCloudStorage(id: number, cloudStorageUrl: string, cloudStorageKey: string, userId: string) {
+    const result = await db.update(invoices)
+      .set({ 
+        cloudStorageUrl, 
+        cloudStorageKey, 
+        updatedAt: new Date() 
+      })
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
       .returning();
     return result[0];
   }
