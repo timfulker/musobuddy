@@ -657,6 +657,39 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log('📧 Sending invoice email:', req.body);
+      
+      const { invoiceId, customMessage } = req.body;
+      
+      if (!invoiceId) {
+        return res.status(400).json({ error: 'Invoice ID is required' });
+      }
+
+      // Get invoice details
+      const invoices = await storage.getInvoices(req.user.id);
+      const invoice = invoices.find(inv => inv.id === parseInt(invoiceId));
+      
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+
+      // Update invoice status to 'sent'
+      await storage.updateInvoice(parseInt(invoiceId), {
+        status: 'sent',
+        sentAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      console.log('✅ Invoice email sent successfully');
+      res.json({ success: true, message: 'Invoice sent successfully' });
+    } catch (error) {
+      console.error('❌ Error sending invoice email:', error);
+      res.status(500).json({ error: 'Failed to send invoice email' });
+    }
+  });
+
   app.delete('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
     try {
       await storage.deleteInvoice(parseInt(req.params.id));
