@@ -26,7 +26,7 @@ export function isCloudStorageConfigured(): boolean {
 }
 
 // Upload file to Cloudflare R2 with public access
-async function uploadFileToCloudflare(
+export async function uploadFileToCloudflare(
   key: string,
   buffer: Buffer,
   contentType: string = 'application/octet-stream'

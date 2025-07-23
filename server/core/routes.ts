@@ -1235,21 +1235,34 @@ export async function registerRoutes(app: Express) {
 
   app.post('/api/compliance/upload', isAuthenticated, upload.single('documentFile'), async (req: any, res) => {
     try {
-      console.log('📎 Uploading compliance document:', req.file?.originalname);
+      console.log('📎 Starting compliance document upload...');
+      console.log('📎 File info:', req.file?.originalname, req.file?.size, 'bytes');
+      console.log('📎 User ID:', req.user?.id);
+      console.log('📎 Body data:', req.body);
       
       if (!req.file) {
+        console.error('❌ No file in request');
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
       // Upload to Cloudflare R2
+      console.log('☁️ Attempting cloud storage upload...');
       const fileName = `compliance/${req.user.id}/${Date.now()}-${req.file.originalname}`;
+      console.log('☁️ File name for R2:', fileName);
+      
       const { uploadFileToCloudflare } = await import('./cloud-storage');
+      console.log('☁️ Cloud storage function imported successfully');
+      
       const uploadResult = await uploadFileToCloudflare(fileName, req.file.buffer, req.file.mimetype);
+      console.log('☁️ Upload result:', uploadResult);
       
       if (!uploadResult.success) {
+        console.error('❌ Cloud upload failed:', uploadResult.error);
         throw new Error(uploadResult.error || 'Failed to upload to cloud storage');
       }
 
+      console.log('✅ Cloud upload successful, creating database record...');
+      
       // Create compliance document record with R2 URL
       const complianceDoc = {
         userId: req.user.id,
@@ -1262,12 +1275,14 @@ export async function registerRoutes(app: Express) {
         updatedAt: new Date()
       };
 
+      console.log('💾 Creating compliance record:', complianceDoc);
       const document = await storage.createCompliance(complianceDoc);
-      console.log('✅ Compliance document uploaded to R2 successfully');
+      console.log('✅ Compliance document created in database:', document);
       
       res.json(document);
     } catch (error: any) {
-      console.error('❌ Compliance upload error:', error);
+      console.error('❌ Compliance upload error details:', error);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ error: error.message || 'Failed to upload document' });
     }
   });
