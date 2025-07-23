@@ -147,10 +147,16 @@ export const contracts = pgTable("contracts", {
   lastReminderSent: timestamp("last_reminder_sent"),
   reminderCount: integer("reminder_count").default(0),
   
-  // Cloud storage for signing pages
-  cloudStorageUrl: text("cloud_storage_url"),
-  cloudStorageKey: text("cloud_storage_key"),
+  // Cloud storage for documents and signing pages
+  cloudStorageUrl: text("cloud_storage_url"), // URL for contract PDF
+  cloudStorageKey: text("cloud_storage_key"), // Storage key for contract PDF
+  signingPageUrl: text("signing_page_url"), // URL for cloud-hosted signing page
+  signingPageKey: text("signing_page_key"), // Storage key for signing page
   signingUrlCreatedAt: timestamp("signing_url_created_at"), // Track when URL was generated
+  
+  // Signature tracking fields
+  clientSignature: text("client_signature"), // Client's actual signature data
+  clientIpAddress: varchar("client_ip_address"), // IP address when client signed
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
