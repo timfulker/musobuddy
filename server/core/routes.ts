@@ -1158,6 +1158,54 @@ export async function registerRoutes(app: Express) {
 
 
 
+  // ===== TEMPLATE ROUTES =====
+  app.get('/api/templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const templates = await storage.getEmailTemplates(req.user.id);
+      res.json(templates);
+    } catch (error) {
+      console.error('❌ Templates fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch templates' });
+    }
+  });
+
+  app.post('/api/templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const template = await storage.createEmailTemplate({
+        ...req.body,
+        userId: req.user.id
+      });
+      res.json(template);
+    } catch (error) {
+      console.error('❌ Template creation error:', error);
+      res.status(500).json({ error: 'Failed to create template' });
+    }
+  });
+
+  app.patch('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const template = await storage.updateEmailTemplate(
+        parseInt(req.params.id),
+        req.body,
+        req.user.id
+      );
+      res.json(template);
+    } catch (error) {
+      console.error('❌ Template update error:', error);
+      res.status(500).json({ error: 'Failed to update template' });
+    }
+  });
+
+  app.delete('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteEmailTemplate(parseInt(req.params.id), req.user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Template deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete template' });
+    }
+  });
+
   return server;
 }
 

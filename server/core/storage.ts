@@ -310,6 +310,35 @@ export class Storage {
     }
   }
 
+  // Email Template functions
+  async getEmailTemplates(userId: string) {
+    // For now, return empty array until we implement the email templates table
+    return [];
+  }
+
+  async createEmailTemplate(templateData: any) {
+    // For now, return a mock template until we implement the email templates table
+    return {
+      id: Date.now(),
+      ...templateData,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  async updateEmailTemplate(id: number, updates: any, userId: string) {
+    // For now, return the updated template until we implement the email templates table
+    return {
+      id,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  async deleteEmailTemplate(id: number, userId: string) {
+    // For now, just return success until we implement the email templates table
+    return true;
+  }
+
   // Admin functions
   async getAllUsers() {
     return await db.select().from(users).orderBy(desc(users.createdAt));

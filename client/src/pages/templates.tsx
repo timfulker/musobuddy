@@ -31,6 +31,11 @@ export default function Templates() {
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { toast } = useToast();
+  
+  // Check if we're responding to a specific booking
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookingId = urlParams.get('bookingId');
+  const action = urlParams.get('action');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -228,7 +233,10 @@ export default function Templates() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white ml-12 md:ml-0">Email Templates</h1>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                Manage your automated response templates for enquiries
+                {bookingId && action === 'respond' 
+                  ? `Select a template to respond to booking #${bookingId}`
+                  : 'Manage your automated response templates for enquiries'
+                }
               </p>
             </div>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -236,6 +244,30 @@ export default function Templates() {
               New Template
             </Button>
           </div>
+
+          {/* Booking Response Context */}
+          {bookingId && action === 'respond' && (
+            <Card className="mb-6 border-blue-200 bg-blue-50">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                    Responding to Booking #{bookingId}
+                  </h3>
+                  <p className="text-blue-600 mb-4">
+                    Select an email template below to send a response to your client. 
+                    The template will be customized with the booking details.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.history.back()}
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  >
+                    ← Back to Bookings
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {loading ? (

@@ -10,6 +10,7 @@ import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle 
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface BookingActionMenuProps {
   booking: any;
@@ -17,6 +18,7 @@ interface BookingActionMenuProps {
 
 export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   
   const statusUpdateMutation = useMutation({
     mutationFn: async ({ bookingId, newStatus }: { bookingId: number; newStatus: string }) => {
@@ -48,12 +50,9 @@ export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
 
     switch (action) {
       case 'respond_to_client':
-        if (booking.status === 'new') {
-          newStatus = 'in_progress';
-          message = "Status updated to In Progress";
-        }
-        // Here you would typically open an email compose dialog
-        break;
+        // Navigate to templates page with booking context
+        navigate(`/templates?bookingId=${booking.id}&action=respond`);
+        return; // Don't update status immediately, let templates page handle it
       case 'issue_contract':
         newStatus = 'client_confirms'; // Assume client will confirm after seeing contract
         message = "Contract issued - status updated to Client Confirms";
