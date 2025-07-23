@@ -260,12 +260,10 @@ export default function Invoices() {
   const updateInvoiceMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       console.log("Updating invoice with data:", JSON.stringify(data, null, 2));
-      const response = await apiRequest('PATCH', `/api/invoices/${id}`, data);
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API Error Response:", errorData);
-        throw new Error(errorData.message || 'Failed to update invoice');
-      }
+      const response = await apiRequest(`/api/invoices/${id}`, {
+        method: 'PATCH',
+        body: data
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -554,7 +552,10 @@ export default function Invoices() {
   // Mark invoice as paid mutation
   const markPaidMutation = useMutation({
     mutationFn: async (invoice: Invoice) => {
-      const response = await apiRequest('POST', `/api/invoices/${invoice.id}/mark-paid`, {});
+      const response = await apiRequest(`/api/invoices/${invoice.id}/mark-paid`, {
+        method: 'POST',
+        body: {}
+      });
       return response.json();
     },
     onSuccess: () => {
