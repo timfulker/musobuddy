@@ -779,12 +779,10 @@ function replaceTemplateVariables(content: string, booking: Booking, userSetting
   };
 
   // Business signature from settings - proper format requested by user
-  const businessSignature = `Best regards,
-${userSettings?.businessName || 'MusoBuddy'}
-${userSettings?.businessEmail || ''}
-${userSettings?.phone || ''}`.trim();
+  const businessSignature = `Best regards,\n${userSettings?.businessName || 'MusoBuddy'}\n${userSettings?.businessEmail || ''}\n${userSettings?.phone || ''}`.trim();
 
-  return content
+  // Process content and check for multiple business name occurrences
+  let processedContent = content
     // Client details
     .replace(/\[Client Name\]/g, booking.clientName || '[Client Name]')
     .replace(/\[client name\]/g, booking.clientName || '[Client Name]')
@@ -836,16 +834,30 @@ ${userSettings?.phone || ''}`.trim();
     .replace(/\[Amount\]/g, formatFee(booking.fee))
     .replace(/\[amount\]/g, formatFee(booking.fee))
     
-    // Business signature and individual business details
+    // Business signature first (complete signature block)
     .replace(/\[Business Signature\]/g, businessSignature)
     .replace(/\[business signature\]/g, businessSignature)
     .replace(/\[BUSINESS SIGNATURE\]/g, businessSignature)
+    
+    // Individual business details (only if not already part of signature)
     .replace(/\[Your Name\]/g, userSettings?.businessName || 'MusoBuddy')
     .replace(/\[Your Business Name\]/g, userSettings?.businessName || 'MusoBuddy')
     .replace(/\[Contact Details\]/g, `${userSettings?.businessEmail || ''}\n${userSettings?.phone || ''}`)
+    
+    // Individual business detail variables
     .replace(/\[Business Name\]/g, userSettings?.businessName || 'MusoBuddy')
     .replace(/\[Business Email\]/g, userSettings?.businessEmail || '')
     .replace(/\[Business Phone\]/g, userSettings?.phone || '');
+
+  // Clean up any duplicate business names that might appear close together
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  if (businessName && businessName !== 'MusoBuddy') {
+    // Remove duplicate business names that appear within 50 characters of each other
+    const duplicatePattern = new RegExp(`(${businessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})([\\s\\n]{0,50}${businessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+    processedContent = processedContent.replace(duplicatePattern, '$1');
+  }
+  
+  return processedContent;
 }
 
 // TEMPLATE EMAIL SENDING FUNCTION - Business Email Ghosting Implementation
