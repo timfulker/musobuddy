@@ -659,24 +659,26 @@ function generateContractSigningPageHTML(
         </div>
 
         <div class="form-group">
-          <label for="clientAddress">Your Address (Optional)</label>
+          <label for="clientAddress">Your Address *</label>
           <input 
             type="text" 
             id="clientAddress" 
             name="clientAddress"
             value="${contract.clientAddress || ''}"
-            placeholder="Your full address"
+            required
+            placeholder="Your full address (Required for contract)"
           />
         </div>
 
         <div class="form-group">
-          <label for="venueAddress">Event Venue Address (Optional)</label>
+          <label for="venueAddress">Event Venue Address *</label>
           <input 
             type="text" 
             id="venueAddress" 
             name="venueAddress"
             value="${contract.venueAddress || ''}"
-            placeholder="Full address of the event venue"
+            required
+            placeholder="Full address of the event venue (Required)"
           />
         </div>
 
@@ -737,9 +739,23 @@ function generateContractSigningPageHTML(
       errorMessage.style.display = 'none';
       successMessage.style.display = 'none';
 
-      // Validation
+      // Validation - Check all required fields
       if (!signatureName) {
         alert('Please enter your full name to sign the contract.');
+        return;
+      }
+
+      const clientAddress = document.getElementById('clientAddress').value.trim();
+      if (!clientAddress) {
+        alert('Please enter your address - this is required for the contract.');
+        document.getElementById('clientAddress').focus();
+        return;
+      }
+
+      const venueAddress = document.getElementById('venueAddress').value.trim();
+      if (!venueAddress) {
+        alert('Please enter the event venue address - this is required for the contract.');
+        document.getElementById('venueAddress').focus();
         return;
       }
 
