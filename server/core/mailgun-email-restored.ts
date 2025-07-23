@@ -775,7 +775,7 @@ function replaceTemplateVariables(content: string, booking: Booking, userSetting
   const formatFee = (fee: any) => {
     if (!fee) return '[Fee]';
     const numericFee = typeof fee === 'string' ? parseFloat(fee) : fee;
-    return `£${numericFee.toFixed(2)}`;
+    return numericFee.toFixed(2); // Return just the number, £ sign added in template
   };
 
   // Business signature from settings - proper format requested by user
@@ -833,6 +833,9 @@ function replaceTemplateVariables(content: string, booking: Booking, userSetting
     // Financial details - additional patterns
     .replace(/\[Amount\]/g, formatFee(booking.fee))
     .replace(/\[amount\]/g, formatFee(booking.fee))
+    .replace(/\[What's included\]/g, booking.whatsIncluded || '[What\'s included]')
+    .replace(/\[what's included\]/g, booking.whatsIncluded || '[What\'s included]')
+    .replace(/\[WHAT'S INCLUDED\]/g, booking.whatsIncluded || '[What\'s included]')
     
     // Business signature and individual business details
     .replace(/\[Business Signature\]/g, businessSignature)
