@@ -308,6 +308,8 @@ export default function Contracts() {
     },
   });
 
+  // PHASE 2: Automated reminder system (commented out for manual-only phase 1)
+  /*
   const sendReminderMutation = useMutation({
     mutationFn: async (contractId: number) => {
       return apiRequest(`/api/contracts/${contractId}/send-reminder`, {
@@ -329,6 +331,7 @@ export default function Contracts() {
       });
     },
   });
+  */
 
   const deleteContractMutation = useMutation({
     mutationFn: async (contractId: number) => {
@@ -372,8 +375,9 @@ export default function Contracts() {
     form.setValue('paymentInstructions', contract.paymentInstructions || '');
     form.setValue('equipmentRequirements', contract.equipmentRequirements || '');
     form.setValue('specialRequirements', contract.specialRequirements || '');
-    form.setValue('reminderEnabled', contract.reminderEnabled || false);
-    form.setValue('reminderDays', contract.reminderDays || 3);
+    // PHASE 2: Reminder system fields (commented out for manual-only phase 1)
+    // form.setValue('reminderEnabled', contract.reminderEnabled || false);
+    // form.setValue('reminderDays', contract.reminderDays || 3);
     setIsDialogOpen(true);
   };
 
@@ -1160,6 +1164,7 @@ export default function Contracts() {
                                 >
                                   Resend
                                 </Button>
+                                {/* PHASE 2: Send Reminder button (commented out for manual-only phase 1)
                                 {isContractUnsigned(contract) && (
                                   <Button 
                                     size="sm" 
@@ -1173,6 +1178,7 @@ export default function Contracts() {
                                     {sendReminderMutation.isPending ? "Sending..." : "Send Reminder"}
                                   </Button>
                                 )}
+                                */}
                               </>
                             )}
 

@@ -141,11 +141,11 @@ export const contracts = pgTable("contracts", {
   status: varchar("status").notNull().default("draft"), // draft, sent, signed, completed
   signedAt: timestamp("signed_at"),
   
-  // Automatic reminder system
-  reminderEnabled: boolean("reminder_enabled").default(false),
-  reminderDays: integer("reminder_days").default(3), // Days between reminders
-  lastReminderSent: timestamp("last_reminder_sent"),
-  reminderCount: integer("reminder_count").default(0),
+  // PHASE 2: Automatic reminder system (commented out for manual-only phase 1)
+  // reminderEnabled: boolean("reminder_enabled").default(false),
+  // reminderDays: integer("reminder_days").default(3), // Days between reminders
+  // lastReminderSent: timestamp("last_reminder_sent"),
+  // reminderCount: integer("reminder_count").default(0),
   
   // Cloud storage for documents and signing pages
   cloudStorageUrl: text("cloud_storage_url"), // URL for contract PDF
@@ -451,8 +451,9 @@ export const insertContractSchema = createInsertSchema(contracts).omit({
   cloudStorageKey: true,
   signingUrlCreatedAt: true,
   signedAt: true,
-  lastReminderSent: true,
-  reminderCount: true,
+  // PHASE 2: Reminder fields (commented out for manual-only phase 1)
+  // lastReminderSent: true,
+  // reminderCount: true,
 }).partial({
   // Make certain fields optional for creation
   enquiryId: true,
@@ -464,8 +465,9 @@ export const insertContractSchema = createInsertSchema(contracts).omit({
   equipmentRequirements: true,
   specialRequirements: true,
   clientFillableFields: true,
-  reminderEnabled: true,
-  reminderDays: true,
+  // PHASE 2: Reminder fields (commented out for manual-only phase 1)
+  // reminderEnabled: true,
+  // reminderDays: true,
 });
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({

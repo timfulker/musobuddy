@@ -12,7 +12,7 @@ interface ContractNotification {
   contractId: number;
   contractNumber: string;
   clientName: string;
-  type: 'signed' | 'sent' | 'reminder_due';
+  type: 'signed' | 'sent'; // PHASE 2: | 'reminder_due' (commented out for manual-only phase 1)
   timestamp: Date;
   read: boolean;
 }
@@ -120,9 +120,11 @@ export function ContractNotifications() {
                 {notification.type === 'sent' && (
                   <FileText className="h-5 w-5 text-blue-600" />
                 )}
+                {/* PHASE 2: Reminder due icon (commented out for manual-only phase 1)
                 {notification.type === 'reminder_due' && (
                   <Clock className="h-5 w-5 text-orange-600" />
                 )}
+                */}
               </div>
               
               <div className="flex-1 min-w-0">
@@ -132,7 +134,7 @@ export function ContractNotifications() {
                   }`}>
                     {notification.type === 'signed' && '✅ Contract Signed'}
                     {notification.type === 'sent' && '📧 Contract Sent'}
-                    {notification.type === 'reminder_due' && '⏰ Reminder Due'}
+                    {/* PHASE 2: {notification.type === 'reminder_due' && '⏰ Reminder Due'} */}
                   </p>
                   {!notification.read && (
                     <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
