@@ -108,6 +108,40 @@ export async function uploadContractToCloud(
   }
 }
 
+// Upload invoice PDF to cloud storage (COPIED FROM CONTRACT ARCHITECTURE)
+export async function uploadInvoiceToCloud(
+  invoice: Invoice,
+  userSettings: UserSettings | null
+): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
+  try {
+    console.log('📤 Uploading invoice PDF to cloud storage:', invoice.invoiceNumber);
+
+    // Generate PDF
+    const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+
+    // Create storage key for PDF
+    const timestamp = new Date().toISOString().split('T')[0];
+    const sanitizedInvoiceNumber = invoice.invoiceNumber.replace(/[^a-zA-Z0-9-_]/g, '-');
+    const key = `invoices/${timestamp}/${sanitizedInvoiceNumber}.pdf`;
+
+    // Upload to cloud
+    const result = await uploadFileToCloudflare(key, pdfBuffer, 'application/pdf');
+
+    if (result.success) {
+      console.log('✅ Invoice PDF uploaded successfully to cloud storage');
+      return { success: true, url: result.url, key };
+    } else {
+      return { success: false, error: result.error };
+    }
+  } catch (error) {
+    console.error('❌ Error uploading invoice PDF to cloud:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+}
+
 // Upload invoice PDF to cloud storage
 export async function uploadInvoiceToCloud(
   invoice: Invoice,

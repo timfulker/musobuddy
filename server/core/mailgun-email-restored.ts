@@ -613,6 +613,149 @@ function generatePerformerConfirmationHtml(contract: Contract, userSettings: Use
   `;
 }
 
+// INVOICE EMAIL SENDING - COPIED FROM CONTRACT PATTERN  
+export async function sendInvoiceEmail(
+  invoice: any,
+  userSettings: any,
+  subject: string,
+  viewUrl: string
+): Promise<{ success: boolean; messageId?: string; diagnostics?: any }> {
+  try {
+    console.log('📧 INVOICE EMAIL: Starting invoice email send');
+    console.log('📧 INVOICE EMAIL: Invoice ID:', invoice.id);
+    console.log('📧 INVOICE EMAIL: Client email:', invoice.clientEmail);
+    console.log('📧 INVOICE EMAIL: View URL:', viewUrl);
+
+    if (!process.env.MAILGUN_API_KEY) {
+      console.error('❌ MAILGUN_API_KEY not configured');
+      return { success: false, diagnostics: { error: 'Mailgun not configured' } };
+    }
+
+    const domain = 'mg.musobuddy.com';
+    
+    // Determine sender email (use authenticated domain for delivery)
+    const senderEmail = `noreply@${domain}`;
+    
+    // Determine reply-to email (use business email if available)
+    const replyToEmail = userSettings?.email || userSettings?.businessEmail || senderEmail;
+    
+    console.log('📧 INVOICE EMAIL: Sender config:', {
+      from: senderEmail,
+      replyTo: replyToEmail,
+      to: invoice.clientEmail
+    });
+
+    const emailData: EmailData = {
+      from: `${userSettings?.businessName || 'MusoBuddy'} <${senderEmail}>`,
+      to: invoice.clientEmail,
+      subject: subject || `Invoice ${invoice.invoiceNumber} - View and Download`,
+      html: generateInvoiceEmailHTML(invoice, userSettings, viewUrl),
+      replyTo: replyToEmail
+    };
+
+    // Add CC email if provided
+    if (invoice.ccEmail) {
+      emailData.cc = invoice.ccEmail;
+      console.log('📧 INVOICE EMAIL: CC recipient:', invoice.ccEmail);
+    }
+
+    console.log('📧 INVOICE EMAIL: Calling Mailgun API...');
+    
+    const result = await sendEmail(emailData);
+    
+    console.log('✅ INVOICE EMAIL: Send result:', result.success);
+    if (result.messageId) {
+      console.log('✅ INVOICE EMAIL: Message ID:', result.messageId);
+    }
+    
+    return result;
+    
+  } catch (error: any) {
+    console.error('❌ INVOICE EMAIL: Send failed:', error);
+    return {
+      success: false,
+      diagnostics: {
+        error: error.message,
+        details: error
+      }
+    };
+  }
+}
+
+// Generate HTML content for invoice emails - COPIED FROM CONTRACT PATTERN
+function generateInvoiceEmailHTML(invoice: any, userSettings: any, viewUrl: string): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  const businessEmail = userSettings?.email || userSettings?.businessEmail;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice ${invoice.invoiceNumber}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+        .invoice-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .detail-row { margin: 10px 0; padding: 5px 0; }
+        .detail-row strong { color: #374151; }
+        .view-button { display: inline-block; background: #059669; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+        .view-button:hover { background: #047857; }
+        .footer { margin-top: 30px; font-size: 14px; color: #6b7280; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📄 Invoice Ready</h1>
+        <p>Invoice ${invoice.invoiceNumber}</p>
+    </div>
+    
+    <div class="content">
+        <p>Dear ${invoice.clientName},</p>
+        
+        <p>Your invoice is ready for viewing and payment. You can access your invoice using the link below:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${viewUrl}" class="view-button">📄 View Invoice</a>
+        </div>
+        
+        <div class="invoice-details">
+            <h3>Invoice Details</h3>
+            <div class="detail-row">
+                <strong>Invoice Number:</strong> ${invoice.invoiceNumber}
+            </div>
+            <div class="detail-row">
+                <strong>Amount:</strong> £${invoice.amount}
+            </div>
+            <div class="detail-row">
+                <strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}
+            </div>
+            ${invoice.eventDate ? `
+            <div class="detail-row">
+                <strong>Event Date:</strong> ${new Date(invoice.eventDate).toLocaleDateString('en-GB')}
+            </div>
+            ` : ''}
+        </div>
+        
+        <p>The invoice can be viewed and downloaded directly from the link above. No account or login is required.</p>
+        
+        <p>If you have any questions about this invoice, please don't hesitate to contact us.</p>
+        
+        <p>Best regards,<br>
+        ${businessName}${businessEmail ? `<br><a href="mailto:${businessEmail}">${businessEmail}</a>` : ''}</p>
+    </div>
+    
+    <div class="footer">
+        <p>This email was sent by ${businessName} via MusoBuddy</p>
+        <p>Invoice viewing link expires in 30 days</p>
+    </div>
+</body>
+</html>
+  `;
+}
+
 // Enhanced test function with comprehensive diagnostics
 export async function testEmailSending(testEmail?: string): Promise<void> {
   console.log('🧪 === ENHANCED EMAIL TEST START ===');

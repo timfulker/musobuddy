@@ -402,6 +402,161 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // INVOICE EMAIL SENDING - COPIED FROM CONTRACT PATTERN
+  app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log('📧 Invoice email route called with body:', req.body);
+
+      const { invoiceId, customMessage } = req.body;
+
+      if (!invoiceId) {
+        return res.status(400).json({ error: 'Invoice ID is required' });
+      }
+
+      const invoice = await storage.getInvoice(invoiceId);
+
+      if (!invoice) {
+        console.log('❌ Invoice not found:', invoiceId);
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+
+      if (!invoice.clientEmail) {
+        console.log('❌ No client email for invoice:', invoiceId);
+        return res.status(400).json({ error: 'Invoice has no client email address' });
+      }
+
+      const userSettings = await storage.getSettings(req.user.id);
+
+      // Upload invoice PDF to cloud storage
+      const { uploadInvoiceToCloud } = await import('./cloud-storage');
+      const result = await uploadInvoiceToCloud(invoice, userSettings);
+
+      if (!result.success || !result.url) {
+        return res.status(500).json({ error: 'Failed to upload invoice to cloud storage' });
+      }
+
+      // Update invoice with cloud storage URL
+      const updatedInvoice = await storage.updateInvoice(invoice.id, {
+        cloudStorageUrl: result.url,
+        cloudStorageKey: result.key,
+        uploadedAt: new Date()
+      });
+
+      console.log('📧 Sending invoice email with cloud-hosted PDF:', result.url);
+
+      // Send email with R2 PDF link (same pattern as contracts)
+      const { sendInvoiceEmail } = await import('./mailgun-email-restored');
+      const emailSubject = customMessage || `Invoice ${invoice.invoiceNumber} - View and Download`;
+
+      const emailResult = await sendInvoiceEmail(invoice, userSettings, emailSubject, result.url);
+
+      // Update invoice status to 'sent' when email is successfully sent
+      if (emailResult.success) {
+        await storage.updateInvoice(invoiceId, {
+          status: 'sent',
+          sentAt: new Date()
+        });
+
+        console.log('✅ Invoice email sent successfully for invoice:', invoiceId);
+        console.log('✅ Invoice status updated to: sent');
+        res.json({ 
+          success: true,
+          message: 'Invoice email sent successfully with view link',
+          recipient: invoice.clientEmail,
+          messageId: emailResult?.messageId || 'No ID returned',
+          viewUrl: result.url
+        });
+      } else {
+        console.error('❌ Invoice email failed:', emailResult.diagnostics);
+        res.status(500).json({ 
+          error: 'Failed to send invoice email',
+          details: emailResult.diagnostics?.error
+        });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Invoice email error:', error);
+      res.status(500).json({ 
+        error: 'Failed to send invoice email',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // INVOICE MARK AS PAID - SIMPLE STATUS UPDATE
+  app.post('/api/invoices/:id/mark-paid', isAuthenticated, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      console.log('💰 Mark invoice as paid:', invoiceId);
+
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+
+      const updatedInvoice = await storage.updateInvoice(invoiceId, {
+        status: 'paid',
+        paidAt: new Date()
+      });
+
+      console.log('✅ Invoice marked as paid:', invoiceId);
+      res.json({ 
+        success: true,
+        message: 'Invoice marked as paid successfully',
+        invoice: updatedInvoice
+      });
+
+    } catch (error: any) {
+      console.error('❌ Mark paid error:', error);
+      res.status(500).json({ 
+        error: 'Failed to mark invoice as paid',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // PUBLIC INVOICE VIEWING - COPIED FROM CONTRACT PATTERN
+  app.get('/view/invoices/:id', async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      console.log('👁️ Public invoice view request for ID:', invoiceId);
+
+      const invoice = await storage.getInvoiceById(invoiceId);
+      if (!invoice) {
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html>
+          <head><title>Invoice Not Found</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1 style="color: #dc2626;">Invoice Not Found</h1>
+            <p>The invoice you're looking for could not be found.</p>
+            <a href="/" style="color: #2563eb;">← Back to Invoices</a>
+          </body>
+          </html>
+        `);
+      }
+
+      // If invoice has cloud storage URL, redirect to it
+      if (invoice.cloudStorageUrl) {
+        console.log('🔗 Redirecting to cloud storage URL:', invoice.cloudStorageUrl);
+        return res.redirect(invoice.cloudStorageUrl);
+      }
+
+      // Otherwise, generate and serve PDF
+      const userSettings = await storage.getSettings(invoice.userId);
+      const { generateInvoicePDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error: any) {
+      console.error('❌ Invoice view error:', error);
+      res.status(500).send('Error loading invoice');
+    }
+  });
+
   // Contract PDF download route - UPDATED to use cloud storage
   app.get('/api/contracts/:id/download', async (req, res) => {
     try {
