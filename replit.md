@@ -185,17 +185,18 @@ The application is designed to be user-friendly while maintaining professional-g
 - **24/7 Availability**: ✅ Invoice PDFs accessible via R2 URLs even when app server is offline
 - **Status**: COMPLETE INVOICE SYSTEM OPERATIONAL - Professional PDFs with proper bank details and addresses from settings
 
-### 2025-07-23 - Template Variable System Enhancement + Booking Update Fix
+### 2025-07-23 - Template Variable System Enhancement + Text Field Migration Complete
 - **Field Name Change Complete**: ✅ Updated "repertoire" to "styles requested" field for booking-specific musical styles
 - **Database Schema Updated**: ✅ Renamed repertoire column to styles in bookings table with proper field mapping
 - **Form Enhancement**: ✅ Updated form label to "Styles Requested" with [Styles] template variable indicator
 - **Template Variable Support**: ✅ Added server-side replacement for both [Styles] and legacy [Repertoire] variables
-- **Critical Database Fix**: ✅ Fixed "invalid input syntax for type integer" error when updating bookings with empty string values
-- **Data Sanitization**: ✅ Added comprehensive data sanitization for numeric and decimal fields before database operations
-- **Empty String Handling**: ✅ Properly converts empty strings to null for performanceDuration, setupTime, soundCheckTime, packupTime, travelTime fields
-- **Decimal Field Processing**: ✅ Enhanced handling of fee and deposit fields with proper parsing and null conversion
-- **Error Prevention**: ✅ Eliminated database type conversion errors when saving booking forms with empty numeric fields
-- **Status**: Template variable system fully operational with "styles requested" field, booking updates working without database errors
+- **Critical Text Field Migration**: ✅ Converted performanceDuration database field from integer to text type to preserve user input like "2 hours"
+- **Frontend Form Fix**: ✅ Fixed form default values to use "styles" field instead of legacy "repertoire" field
+- **Server Processing Updated**: ✅ Removed integer parsing for all time-related fields (performanceDuration, setupTime, soundCheckTime, packupTime, travelTime)
+- **Template Variable Processing Enhanced**: ✅ Updated both frontend and backend template replacement to handle text-based duration fields
+- **Data Preservation**: ✅ Users can now enter natural text like "2 hours" or "Jazz, Ibiza" and it saves exactly as entered
+- **Database Error Resolution**: ✅ Eliminated "invalid input syntax for type integer" errors by treating time fields as text
+- **Status**: Complete text field migration successful - both "Styles Requested" and "Performance Duration" now save user text exactly as entered
 
 ### 2025-07-23 - Complete Invoice System OPERATIONAL - Creation, View, Edit All Fixed + UI Button Separation
 - **Invoice Creation 500 Error FIXED**: ✅ Resolved undefined `now` variables causing server crashes during invoice creation

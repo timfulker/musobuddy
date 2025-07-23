@@ -919,19 +919,10 @@ export async function registerRoutes(app: Express) {
 
   app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
-      // Sanitize data before creating - convert empty strings to null for numeric fields
+      // Sanitize data before creating - convert empty strings to null for decimal fields only
       const sanitizedData = { ...req.body, userId: req.user.id };
       
-      // Handle numeric fields that could be empty strings (excluding performanceDuration which is now text)
-      const numericFields = ['setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
-      numericFields.forEach(field => {
-        if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
-          sanitizedData[field] = null;
-        } else if (sanitizedData[field] && typeof sanitizedData[field] === 'string') {
-          const parsed = parseInt(sanitizedData[field]);
-          sanitizedData[field] = isNaN(parsed) ? null : parsed;
-        }
-      });
+      // All time fields (setupTime, soundCheckTime, packupTime, travelTime, performanceDuration) are now text fields
       
       // Handle decimal fields
       const decimalFields = ['fee', 'deposit'];
@@ -956,22 +947,11 @@ export async function registerRoutes(app: Express) {
     try {
       const bookingId = parseInt(req.params.id);
       console.log('📝 Updating booking:', bookingId, 'with data:', req.body);
-      console.log('🔍 DEBUG - styles field:', req.body.styles);
-      console.log('🔍 DEBUG - performanceDuration field:', req.body.performanceDuration);
       
-      // Sanitize data before updating - convert empty strings to null for numeric fields
+      // Sanitize data before updating - convert empty strings to null for decimal fields only
       const sanitizedData = { ...req.body };
       
-      // Handle numeric fields that could be empty strings (excluding performanceDuration which is now text)
-      const numericFields = ['setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
-      numericFields.forEach(field => {
-        if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
-          sanitizedData[field] = null;
-        } else if (sanitizedData[field] && typeof sanitizedData[field] === 'string') {
-          const parsed = parseInt(sanitizedData[field]);
-          sanitizedData[field] = isNaN(parsed) ? null : parsed;
-        }
-      });
+      // All time fields (setupTime, soundCheckTime, packupTime, travelTime, performanceDuration) are now text fields
       
       // Handle decimal fields
       const decimalFields = ['fee', 'deposit'];
