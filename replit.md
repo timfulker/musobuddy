@@ -214,6 +214,9 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Smart Page Detection**: ✅ System detects contract status and shows appropriate page (signing form vs already-signed confirmation)
 - **Professional Client Experience**: ✅ Clients see proper already-signed page instead of active signing form after contract completion
 
+### Known System Quirks (Not to be Fixed)
+- **Email Link Behavior**: Contract signing email links remain active after signing and still show signing form initially. If client clicks sign again, they receive "already signed" message. This is acceptable behavior as clients rarely re-visit signing links after completion. Previous fix attempts caused more problems than benefits, so this quirk is documented but not addressed.
+
 ### 2025-07-23 - Contract Signing CORS Error FIXED + Already-Signed Page Enhancement + PDF Download CORS Fix
 - **CORS Issue Identified**: ✅ Cross-origin requests from Cloudflare R2 signing pages to localhost server blocked by browser CORS policy
 - **Error Pattern**: ✅ Contract signing works directly but fails when accessed from R2-hosted signing pages due to origin mismatch
