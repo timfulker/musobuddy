@@ -1,5 +1,5 @@
 import { db } from "./database";
-import { bookings, contracts, invoices, users, sessions, userSettings } from "../../shared/schema";
+import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates } from "../../shared/schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
@@ -312,30 +312,144 @@ export class Storage {
 
   // Email Template functions
   async getEmailTemplates(userId: string) {
-    // For now, return empty array until we implement the email templates table
-    return [];
+    // First check if user has any templates
+    const userTemplates = await db.select().from(emailTemplates)
+      .where(eq(emailTemplates.userId, userId))
+      .orderBy(desc(emailTemplates.createdAt));
+    
+    // If no user templates, create default stock templates
+    if (userTemplates.length === 0) {
+      console.log('🔧 Creating default templates for user:', userId);
+      await this.createDefaultTemplates(userId);
+      
+      // Fetch templates again after creating defaults
+      return await db.select().from(emailTemplates)
+        .where(eq(emailTemplates.userId, userId))
+        .orderBy(desc(emailTemplates.createdAt));
+    }
+    
+    return userTemplates;
+  }
+
+  async createDefaultTemplates(userId: string) {
+    const defaultTemplates = [
+      {
+        userId,
+        name: "Enquiry Response - Available",
+        subject: "Re: Your Music Enquiry",
+        emailBody: `Dear [Client Name],
+
+Thank you for your enquiry about live music for your event.
+
+I'm delighted to confirm that I'm available on [Event Date] and would love to perform at [Venue]. 
+
+Event Details:
+• Date: [Event Date]
+• Time: [Event Time]
+• Venue: [Venue]
+• Performance Fee: £[Fee]
+
+I'll send over a contract shortly for your review and signature. If you have any questions or need to discuss any details, please don't hesitate to get in touch.
+
+Looking forward to performing for you!
+
+Best regards,
+Tim Fulker
+MusoBuddy Professional`,
+        smsBody: "Hi [Client Name], thanks for your enquiry. I'm available on [Event Date] and would love to perform. Fee: £[Fee]. Contract to follow. Tim",
+        isDefault: true,
+        isAutoRespond: false
+      },
+      {
+        userId,
+        name: "Enquiry Response - Not Available", 
+        subject: "Re: Your Music Enquiry",
+        emailBody: `Dear [Client Name],
+
+Thank you for thinking of me for your event on [Event Date].
+
+Unfortunately, I'm not available on that date as I already have a booking. 
+
+However, I'd be happy to recommend some excellent musicians who might be able to help, or if you have any flexibility with dates, please let me know and I'll check my availability.
+
+Thank you again for considering me.
+
+Best regards,
+Tim Fulker
+MusoBuddy Professional`,
+        smsBody: "Hi [Client Name], thanks for your enquiry. Unfortunately I'm not available on [Event Date]. Happy to recommend others or check alternative dates. Tim",
+        isDefault: false,
+        isAutoRespond: false
+      },
+      {
+        userId,
+        name: "Quote Follow-up",
+        subject: "Following up on your music enquiry", 
+        emailBody: `Dear [Client Name],
+
+I hope this email finds you well. I wanted to follow up on the music enquiry for your event on [Event Date] at [Venue].
+
+I'm still very interested in performing for you and wanted to confirm if you're still looking for live music. The quoted fee remains £[Fee] for the performance.
+
+If you need any additional information or would like to discuss the booking further, please don't hesitate to reach out.
+
+I look forward to hearing from you.
+
+Best regards,
+Tim Fulker
+MusoBuddy Professional`,
+        smsBody: "Hi [Client Name], following up on your music enquiry for [Event Date]. Still interested in performing - fee £[Fee]. Let me know if you'd like to proceed. Tim",
+        isDefault: false,
+        isAutoRespond: false
+      },
+      {
+        userId,
+        name: "Contract Reminder",
+        subject: "Contract awaiting signature",
+        emailBody: `Dear [Client Name],
+
+I hope you're well. I wanted to follow up on the performance contract I sent for your event on [Event Date] at [Venue].
+
+The contract is still awaiting your signature, and I'd like to get this confirmed so I can reserve the date in my diary.
+
+If you have any questions about the contract terms or need any clarification, please don't hesitate to get in touch.
+
+Looking forward to hearing from you soon.
+
+Best regards,
+Tim Fulker
+MusoBuddy Professional`,
+        smsBody: "Hi [Client Name], just a reminder that your contract for [Event Date] is awaiting signature. Any questions just ask! Tim",
+        isDefault: false,
+        isAutoRespond: false
+      }
+    ];
+
+    for (const template of defaultTemplates) {
+      await db.insert(emailTemplates).values(template);
+    }
+    
+    console.log(`✅ Created ${defaultTemplates.length} default templates for user`);
   }
 
   async createEmailTemplate(templateData: any) {
-    // For now, return a mock template until we implement the email templates table
-    return {
-      id: Date.now(),
-      ...templateData,
-      createdAt: new Date().toISOString()
-    };
+    const [template] = await db.insert(emailTemplates)
+      .values(templateData)
+      .returning();
+    return template;
   }
 
   async updateEmailTemplate(id: number, updates: any, userId: string) {
-    // For now, return the updated template until we implement the email templates table
-    return {
-      id,
-      ...updates,
-      updatedAt: new Date().toISOString()
-    };
+    const [template] = await db.update(emailTemplates)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(emailTemplates.id, id), eq(emailTemplates.userId, userId)))
+      .returning();
+    return template;
   }
 
   async deleteEmailTemplate(id: number, userId: string) {
-    // For now, just return success until we implement the email templates table
+    await db.delete(emailTemplates)
+      .where(and(eq(emailTemplates.id, id), eq(emailTemplates.userId, userId)));
     return true;
   }
 
