@@ -1024,15 +1024,26 @@ export async function registerRoutes(app: Express) {
       }
       
       // Ensure numeric fields are properly formatted
-      if (updateData.amount) {
-        updateData.amount = parseFloat(updateData.amount).toString();
+      if (updateData.amount !== undefined && updateData.amount !== '') {
+        updateData.amount = parseFloat(updateData.amount);
       }
-      if (updateData.fee) {
-        updateData.fee = parseFloat(updateData.fee).toString();
+      if (updateData.fee !== undefined && updateData.fee !== '') {
+        updateData.fee = parseFloat(updateData.fee);
       }
-      if (updateData.depositPaid) {
-        updateData.depositPaid = parseFloat(updateData.depositPaid).toString();
+      if (updateData.depositPaid !== undefined && updateData.depositPaid !== '') {
+        updateData.depositPaid = parseFloat(updateData.depositPaid);
       }
+      
+      // Handle date fields
+      if (updateData.dueDate) {
+        updateData.dueDate = new Date(updateData.dueDate);
+      }
+      if (updateData.eventDate) {
+        updateData.eventDate = new Date(updateData.eventDate);
+      }
+      
+      // Add updatedAt timestamp
+      updateData.updatedAt = new Date();
       
       console.log('📝 Mapped update data:', updateData);
       
