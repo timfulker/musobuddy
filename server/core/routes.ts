@@ -1245,6 +1245,54 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Admin user update endpoint - MISSING PASSWORD UPDATE FUNCTIONALITY
+  app.patch('/api/admin/users/:id', isAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const updateData = req.body;
+      
+      console.log('👤 Admin updating user:', userId, 'with data:', Object.keys(updateData));
+      
+      // Handle password change with proper hashing
+      if (updateData.password && updateData.password.trim()) {
+        const bcrypt = await import('bcrypt');
+        updateData.password = await bcrypt.hash(updateData.password.trim(), 10);
+        console.log('🔐 Password hashed for user:', userId);
+      } else if (updateData.password === '') {
+        // If empty password sent, remove it from update (keep current)
+        delete updateData.password;
+        console.log('📝 Keeping existing password for user:', userId);
+      }
+      
+      // Update user in database
+      const updatedUser = await storage.updateUserInfo(userId, updateData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Return updated user in frontend format
+      const responseUser = {
+        id: updatedUser.id.toString(),
+        firstName: updatedUser.firstName || 'Unknown',
+        lastName: updatedUser.lastName || 'User', 
+        email: updatedUser.email,
+        tier: updatedUser.tier || 'free',
+        isAdmin: updatedUser.isAdmin || false,
+        createdAt: updatedUser.createdAt?.toISOString() || new Date().toISOString(),
+        bookingCount: 0,
+        lastLogin: updatedUser.updatedAt?.toISOString() || updatedUser.createdAt?.toISOString() || new Date().toISOString()
+      };
+      
+      console.log('✅ Admin user updated successfully:', userId);
+      res.json(responseUser);
+      
+    } catch (error) {
+      console.error('❌ Admin user update error:', error);
+      res.status(500).json({ error: 'Failed to update user' });
+    }
+  });
+
 
 
   // ===== TEMPLATE ROUTES =====
