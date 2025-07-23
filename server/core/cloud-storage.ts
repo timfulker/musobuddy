@@ -648,37 +648,38 @@ function generateContractSigningPageHTML(
         </div>
 
         <div class="form-group">
-          <label for="clientPhone">Phone Number (Optional)</label>
+          <label for="clientPhone">Phone Number ${(contract.clientPhone && contract.clientPhone.trim()) ? '(Optional - you can edit)' : '*'}</label>
           <input 
             type="tel" 
             id="clientPhone" 
             name="clientPhone"
             value="${contract.clientPhone || ''}"
-            placeholder="Your contact phone number"
+            ${(contract.clientPhone && contract.clientPhone.trim()) ? '' : 'required'}
+            placeholder="${(contract.clientPhone && contract.clientPhone.trim()) ? 'Your contact phone number' : 'Your contact phone number (Required)'}"
           />
         </div>
 
         <div class="form-group">
-          <label for="clientAddress">Your Address *</label>
+          <label for="clientAddress">Your Address ${(contract.clientAddress && contract.clientAddress.trim()) ? '(Optional - you can edit)' : '*'}</label>
           <input 
             type="text" 
             id="clientAddress" 
             name="clientAddress"
             value="${contract.clientAddress || ''}"
-            required
-            placeholder="Your full address (Required for contract)"
+            ${(contract.clientAddress && contract.clientAddress.trim()) ? '' : 'required'}
+            placeholder="${(contract.clientAddress && contract.clientAddress.trim()) ? 'Your full address' : 'Your full address (Required for contract)'}"
           />
         </div>
 
         <div class="form-group">
-          <label for="venueAddress">Event Venue Address *</label>
+          <label for="venueAddress">Event Venue Address ${(contract.venueAddress && contract.venueAddress.trim()) ? '(Optional - you can edit)' : '*'}</label>
           <input 
             type="text" 
             id="venueAddress" 
             name="venueAddress"
             value="${contract.venueAddress || ''}"
-            required
-            placeholder="Full address of the event venue (Required)"
+            ${(contract.venueAddress && contract.venueAddress.trim()) ? '' : 'required'}
+            placeholder="${(contract.venueAddress && contract.venueAddress.trim()) ? 'Full address of the event venue' : 'Full address of the event venue (Required)'}"
           />
         </div>
 
@@ -745,17 +746,27 @@ function generateContractSigningPageHTML(
         return;
       }
 
-      const clientAddress = document.getElementById('clientAddress').value.trim();
-      if (!clientAddress) {
-        alert('Please enter your address - this is required for the contract.');
-        document.getElementById('clientAddress').focus();
+      // Conditional validation - only check if field was originally empty (making it required)
+      const clientPhoneField = document.getElementById('clientPhone');
+      const clientAddressField = document.getElementById('clientAddress'); 
+      const venueAddressField = document.getElementById('venueAddress');
+
+      // Check if field is required (has required attribute)
+      if (clientPhoneField.hasAttribute('required') && !clientPhoneField.value.trim()) {
+        alert('Please enter your phone number - this field is required.');
+        clientPhoneField.focus();
         return;
       }
 
-      const venueAddress = document.getElementById('venueAddress').value.trim();
-      if (!venueAddress) {
-        alert('Please enter the event venue address - this is required for the contract.');
-        document.getElementById('venueAddress').focus();
+      if (clientAddressField.hasAttribute('required') && !clientAddressField.value.trim()) {
+        alert('Please enter your address - this field is required.');
+        clientAddressField.focus();
+        return;
+      }
+
+      if (venueAddressField.hasAttribute('required') && !venueAddressField.value.trim()) {
+        alert('Please enter the event venue address - this field is required.');
+        venueAddressField.focus();
         return;
       }
 
