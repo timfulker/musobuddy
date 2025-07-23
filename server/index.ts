@@ -183,7 +183,7 @@ async function startServer() {
         await setupVite(app, server);
         serveStatic(app);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log('⚠️ Static serving setup failed:', error.message);
       
       // Minimal fallback for broken deployments
@@ -209,13 +209,13 @@ async function startServer() {
     // Use environment PORT with fallback
     const port = process.env.PORT || 5000;
     
-    server.listen(port, "0.0.0.0", () => {
+    server.listen(Number(port), "0.0.0.0", () => {
       console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
       console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
       console.log(`📁 Serving from: ${process.env.NODE_ENV === 'production' ? 'dist/public' : 'development'}`);
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Server startup failed:', error);
     console.error('Stack:', error.stack);
     process.exit(1);
