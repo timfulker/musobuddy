@@ -80,6 +80,10 @@ export default function BookingCTAButtons() {
     return actions.some(action => action.id === 'create-invoice' || action.id === 'send-invoice');
   });
 
+  // Define contracts and invoices arrays for the template
+  const contracts = needsContract;
+  const invoices = needsInvoice;
+
   console.log("🔍 CTA Counts:", {
     needsResponse: needsResponse.length,
     needsContract: needsContract.length,
