@@ -307,7 +307,7 @@ export default function Invoices() {
   const handleEditInvoice = (invoice: Invoice) => {
     setEditingInvoice(invoice);
     setEditAndResendMode(false);
-    // Pre-fill form with invoice data
+    // Pre-fill form with invoice data - fix field mappings
     form.reset({
       contractId: invoice.contractId || undefined,
       clientName: invoice.clientName,
@@ -317,9 +317,9 @@ export default function Invoices() {
       venueAddress: invoice.venueAddress || "",
       amount: invoice.amount.toString(),
       dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
-      performanceDate: invoice.performanceDate ? new Date(invoice.performanceDate).toISOString().split('T')[0] : "",
-      performanceFee: invoice.performanceFee || "",
-      depositPaid: invoice.depositPaid || "",
+      performanceDate: invoice.eventDate ? new Date(invoice.eventDate).toISOString().split('T')[0] : "",
+      performanceFee: invoice.fee ? invoice.fee.toString() : "",
+      depositPaid: invoice.depositPaid ? invoice.depositPaid.toString() : "",
     });
     setIsDialogOpen(true);
   };
@@ -327,7 +327,7 @@ export default function Invoices() {
   const handleEditAndResend = (invoice: Invoice) => {
     setEditingInvoice(invoice);
     setEditAndResendMode(true);
-    // Pre-fill form with invoice data
+    // Pre-fill form with invoice data - fix field mappings
     form.reset({
       contractId: invoice.contractId || undefined,
       clientName: invoice.clientName,
@@ -337,9 +337,9 @@ export default function Invoices() {
       venueAddress: invoice.venueAddress || "",
       amount: invoice.amount.toString(),
       dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
-      performanceDate: invoice.performanceDate ? new Date(invoice.performanceDate).toISOString().split('T')[0] : "",
-      performanceFee: invoice.performanceFee || "",
-      depositPaid: invoice.depositPaid || "",
+      performanceDate: invoice.eventDate ? new Date(invoice.eventDate).toISOString().split('T')[0] : "",
+      performanceFee: invoice.fee ? invoice.fee.toString() : "",
+      depositPaid: invoice.depositPaid ? invoice.depositPaid.toString() : "",
     });
     setIsDialogOpen(true);
   };
@@ -821,8 +821,8 @@ export default function Invoices() {
   };
 
   const handleViewInvoice = (invoice: Invoice) => {
-    // Navigate to view invoice page in same window
-    setLocation(`/view-invoice/${invoice.id}`);
+    // Open invoice in new tab using the public view route that redirects to cloud storage
+    window.open(`/view/invoices/${invoice.id}`, '_blank');
   };
 
   const filteredInvoices = invoices.filter((invoice: Invoice) => {

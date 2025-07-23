@@ -956,9 +956,14 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: 'Missing required fields: clientName, amount, dueDate' });
       }
 
-      // Generate invoice number
-      const now = new Date();
-      const invoiceNumber = `INV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+      // Get user settings for auto-incrementing invoice number
+      const userSettings = await storage.getSettings(req.user.id);
+      const nextNumber = userSettings?.nextInvoiceNumber || 1;
+      
+      // Generate HMRC-compliant sequential invoice number
+      const invoiceNumber = String(nextNumber).padStart(5, '0');
+      
+      console.log('📄 Generated invoice number:', invoiceNumber, 'for user:', req.user.id);
 
       // Prepare invoice data matching database schema
       const invoiceData = {
@@ -985,6 +990,13 @@ export async function registerRoutes(app: Express) {
       const invoice = await storage.createInvoice(invoiceData);
       console.log('✅ Invoice created successfully:', invoice.id);
       
+      // Update user settings with next invoice number
+      await storage.updateSettings(req.user.id, {
+        nextInvoiceNumber: nextNumber + 1
+      });
+      
+      console.log('📄 Updated next invoice number to:', nextNumber + 1);
+      
       res.json(invoice);
     } catch (error) {
       console.error('❌ Invoice creation error:', error);
@@ -994,10 +1006,47 @@ export async function registerRoutes(app: Express) {
 
   app.patch('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const invoice = await storage.updateInvoice(parseInt(req.params.id), req.body);
+      console.log('📝 Updating invoice ID:', req.params.id);
+      console.log('📝 Update data received:', req.body);
+      
+      const invoiceId = parseInt(req.params.id);
+      const updateData = { ...req.body };
+      
+      // Handle field name mapping for dates and amounts
+      if (updateData.performanceDate) {
+        updateData.eventDate = updateData.performanceDate;
+        delete updateData.performanceDate;
+      }
+      
+      if (updateData.performanceFee) {
+        updateData.fee = updateData.performanceFee;
+        delete updateData.performanceFee;
+      }
+      
+      // Ensure numeric fields are properly formatted
+      if (updateData.amount) {
+        updateData.amount = parseFloat(updateData.amount).toString();
+      }
+      if (updateData.fee) {
+        updateData.fee = parseFloat(updateData.fee).toString();
+      }
+      if (updateData.depositPaid) {
+        updateData.depositPaid = parseFloat(updateData.depositPaid).toString();
+      }
+      
+      console.log('📝 Mapped update data:', updateData);
+      
+      const invoice = await storage.updateInvoice(invoiceId, updateData);
+      
+      console.log('✅ Invoice updated successfully:', invoice.invoiceNumber);
       res.json(invoice);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to update invoice' });
+      
+    } catch (error: any) {
+      console.error('❌ Invoice update error:', error);
+      res.status(500).json({ 
+        error: 'Failed to update invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
