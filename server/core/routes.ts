@@ -636,6 +636,27 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  app.post('/api/invoices/:id/mark-paid', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log(`💰 Marking invoice ${req.params.id} as paid`);
+      
+      const invoiceId = parseInt(req.params.id);
+      const updateData = {
+        status: 'paid',
+        paidAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const invoice = await storage.updateInvoice(invoiceId, updateData);
+      console.log('✅ Invoice marked as paid successfully');
+      
+      res.json({ success: true, invoice });
+    } catch (error) {
+      console.error('❌ Error marking invoice as paid:', error);
+      res.status(500).json({ error: 'Failed to mark invoice as paid' });
+    }
+  });
+
   app.delete('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
     try {
       await storage.deleteInvoice(parseInt(req.params.id));
