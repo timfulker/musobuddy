@@ -486,9 +486,10 @@ function generateContractHTML(
       <div class="business-details">
         <h3>Performer Details</h3>
         <p><strong>${businessName}</strong></p>
-        ${businessAddress ? `<p>${businessAddress}</p>` : ''}
-        ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
-        ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
+        ${userSettings?.businessAddress ? `<p>${userSettings.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
+        ${userSettings?.phone ? `<p>Phone: ${userSettings.phone}</p>` : ''}
+        ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
+        ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
       </div>
 
       <div class="contract-details">
@@ -569,6 +570,28 @@ function generateContractHTML(
           <p><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</p>
           <p><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</p>
           <p><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</p>
+        </div>
+      </div>
+
+      <div class="payment-info" style="margin-bottom: 30px;">
+        <h3>Payment Information</h3>
+        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
+        <p><strong>Payment Due:</strong> On completion of performance</p>
+        
+        <div class="bank-details">
+          <h4>Bank Details for Payment</h4>
+          ${userSettings?.bankDetails ? 
+            `<p style="margin: 0; white-space: pre-line;">${userSettings.bankDetails}</p>` : 
+            `<p style="margin: 0;">
+              <strong>Account Name:</strong> ${businessName}<br>
+              <strong>Sort Code:</strong> [To be provided in settings]<br>
+              <strong>Account Number:</strong> [To be provided in settings]<br>
+              <strong>Bank:</strong> [To be provided in settings]
+            </p>`
+          }
+          <p style="margin-top: 10px; font-style: italic; color: #059669;">
+            Please use contract number ${contract.contractNumber} as payment reference
+          </p>
         </div>
       </div>
 
