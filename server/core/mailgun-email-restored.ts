@@ -40,7 +40,7 @@ export async function sendEmail(emailData: EmailData): Promise<{ success: boolea
     console.log('📧 Email attempt at:', diagnostics.timestamp);
     console.log('📧 Recipient:', emailData.to);
     console.log('📧 Subject:', emailData.subject);
-    
+
     // Enhanced environment variable checking
     diagnostics.config = {
       hasApiKey: !!process.env.MAILGUN_API_KEY,
@@ -70,7 +70,7 @@ export async function sendEmail(emailData: EmailData): Promise<{ success: boolea
     // CRITICAL: Use EU endpoint for mg.musobuddy.com
     const domain = 'mg.musobuddy.com';
     const mgEndpoint = 'https://api.eu.mailgun.net'; // EU endpoint is critical for mg.musobuddy.com
-    
+
     console.log('🌐 Using Mailgun endpoint:', mgEndpoint);
     console.log('🌐 Using domain:', domain);
 
@@ -145,7 +145,7 @@ export async function sendEmail(emailData: EmailData): Promise<{ success: boolea
     console.log('✅ From:', emailData.from);
     console.log('✅ To:', emailData.to);
     console.log('✅ Subject:', emailData.subject);
-    
+
     // CRITICAL: Add delivery expectation warning
     console.log('⏰ DELIVERY EXPECTATION: Email should arrive within 1-5 minutes');
     console.log('🔍 TROUBLESHOOTING: If email doesn\'t arrive:');
@@ -153,7 +153,7 @@ export async function sendEmail(emailData: EmailData): Promise<{ success: boolea
     console.log('   2. Verify recipient email address');
     console.log('   3. Check Mailgun logs at https://app.mailgun.com/app/logs');
     console.log('   4. Verify domain DNS settings (SPF, DKIM)');
-    
+
     return { 
       success: true, 
       messageId: result.id,
@@ -174,7 +174,7 @@ export async function sendEmail(emailData: EmailData): Promise<{ success: boolea
     console.error('❌ Error status:', error.status);
     console.error('❌ Error type:', error.type);
     console.error('❌ Full error:', error);
-    
+
     if (error.status === 401) {
       console.error('🔑 AUTH ERROR: Invalid API key or domain not verified');
       diagnostics.errors.push('Authentication failed - check API key and domain verification');
@@ -193,89 +193,42 @@ export async function sendEmail(emailData: EmailData): Promise<{ success: boolea
   }
 }
 
-// ENHANCED: Contract email sending with comprehensive diagnostics
+// CRITICAL: Contract SIGNING email (sends "please sign this contract" with link)
 export async function sendContractEmail(
   contract: Contract,
   userSettings: UserSettings | null,
   customMessage?: string,
-  signatureDetails?: {
-    signedAt: Date;
-    signatureName?: string;
-    clientIpAddress?: string;
-  }
+  signingUrl?: string
 ): Promise<{ success: boolean; messageId?: string; diagnostics?: any }> {
   try {
-    console.log('📧 === CONTRACT EMAIL SENDING START ===');
+    console.log('📧 === CONTRACT SIGNING EMAIL START ===');
     console.log('📧 Contract:', contract.contractNumber);
     console.log('📧 Client:', contract.clientName);
     console.log('📧 Email:', contract.clientEmail);
-    console.log('📧 Signed:', !!signatureDetails);
+    console.log('📧 Signing URL:', signingUrl);
+    console.log('📧 Contract Status:', contract.status);
 
-    // Generate PDF buffer
-    console.log('📄 Generating contract PDF...');
-    const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
-    console.log('📄 PDF generated, size:', pdfBuffer.length, 'bytes');
+    // CRITICAL: This function sends "PLEASE SIGN" emails, NOT confirmation emails
+    const isSignedContract = contract.status === 'signed';
 
-    const isSignedContract = !!signatureDetails;
-    let cloudSigningUrl = '';
-
-    // For unsigned contracts, create or regenerate cloud storage signing page
-    if (!isSignedContract) {
-      try {
-        console.log('☁️ Handling cloud storage signing page...');
-        const { uploadContractSigningPage, regenerateContractSigningUrl, isCloudStorageConfigured } = await import('./cloud-storage');
-
-        if (!isCloudStorageConfigured()) {
-          throw new Error('Cloud storage not configured - missing environment variables');
-        }
-
-        // Check if we need to regenerate URL (for reminders sent > 7 days after initial send)
-        const shouldRegenerateUrl = contract.cloudStorageKey && 
-                                  contract.signingUrlCreatedAt &&
-                                  (Date.now() - contract.signingUrlCreatedAt.getTime()) > (6 * 24 * 60 * 60 * 1000);
-
-        if (shouldRegenerateUrl) {
-          console.log('🔄 Regenerating fresh signing URL for reminder...');
-          cloudSigningUrl = await regenerateContractSigningUrl(contract.cloudStorageKey!);
-          if (cloudSigningUrl) {
-            console.log('✅ Fresh signing URL generated');
-          } else {
-            throw new Error('Failed to regenerate signing URL');
-          }
-        } else {
-          console.log('☁️ Uploading new signing page...');
-          const uploadResult = await uploadContractSigningPage(contract, userSettings);
-          cloudSigningUrl = uploadResult.url!;
-          console.log('✅ Contract signing page uploaded');
-
-          // Update contract with cloud storage metadata
-          if (uploadResult.storageKey) {
-            await storage.updateContract(contract.id, {
-              cloudStorageUrl: cloudSigningUrl,
-              cloudStorageKey: uploadResult.storageKey,
-              signingUrlCreatedAt: new Date()
-            }, contract.userId);
-            console.log('✅ Contract updated with cloud storage metadata');
-          }
-        }
-
-      } catch (error) {
-        console.error('❌ Cloud storage failed:', error);
-        // Fallback to app-based signing page
-        cloudSigningUrl = `https://musobuddy.replit.app/contracts/sign/${contract.id}`;
-        console.log('🔄 Using app-based signing page as fallback');
-      }
+    if (isSignedContract) {
+      console.log('❌ ERROR: Contract already signed, should not send signing email');
+      return { success: false, diagnostics: { error: 'Contract already signed' } };
     }
 
-    // Prepare email content
+    // Generate PDF buffer for attachment
+    console.log('📄 Generating contract PDF for email attachment...');
+    const pdfBuffer = await generateContractPDF(contract, userSettings);
+    console.log('📄 PDF generated, size:', pdfBuffer.length, 'bytes');
+
+    // Prepare email settings
     const businessName = userSettings?.businessName || 'MusoBuddy';
     const fromName = userSettings?.emailFromName || businessName;
     const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
     const replyToEmail = userSettings?.businessEmail || 'noreply@mg.musobuddy.com';
 
-    const subject = isSignedContract 
-      ? `Contract Signed - ${contract.contractNumber}`
-      : `Contract for ${contract.clientName} - ${contract.contractNumber}`;
+    // CORRECT subject for signing email
+    const subject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
 
     console.log('📧 Email configuration:');
     console.log('   From:', fromEmail);
@@ -283,13 +236,12 @@ export async function sendContractEmail(
     console.log('   Reply-to:', replyToEmail);
     console.log('   Subject:', subject);
 
-    // Generate email HTML
-    const emailHtml = generateContractEmailHtml(
+    // CRITICAL: Generate SIGNING email HTML (not confirmation)
+    const emailHtml = generateContractSigningEmailHtml(
       contract,
       userSettings,
       customMessage,
-      isSignedContract,
-      cloudSigningUrl
+      signingUrl
     );
 
     // Create email with PDF attachment
@@ -309,29 +261,29 @@ export async function sendContractEmail(
       ]
     };
 
-    console.log('📧 Sending email with diagnostic tracking...');
-    
+    console.log('📧 Sending CONTRACT SIGNING email...');
+
     // Send email with enhanced diagnostics
     const result = await sendEmail(emailData);
-    
+
     if (result.success) {
-      console.log('✅ === CONTRACT EMAIL SUCCESS ===');
+      console.log('✅ === CONTRACT SIGNING EMAIL SUCCESS ===');
       console.log('✅ Message ID:', result.messageId);
       console.log('📎 PDF attached to email');
-      console.log('☁️ Cloud signing page:', cloudSigningUrl);
-      
+      console.log('🔗 Signing URL included:', signingUrl);
+
       // ENHANCED: Add expected delivery time
       const expectedDelivery = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
       console.log('⏰ Expected delivery by:', expectedDelivery.toLocaleTimeString());
     } else {
-      console.error('❌ === CONTRACT EMAIL FAILURE ===');
+      console.error('❌ === CONTRACT SIGNING EMAIL FAILURE ===');
       console.error('❌ Diagnostics:', result.diagnostics);
     }
 
     return result;
 
   } catch (error) {
-    console.error('❌ Contract email error:', error);
+    console.error('❌ Contract signing email error:', error);
     return { 
       success: false, 
       diagnostics: { error: error.message } 
@@ -339,37 +291,38 @@ export async function sendContractEmail(
   }
 }
 
-// ENHANCED: Generate HTML for contract email with better debugging
-function generateContractEmailHtml(
+// CRITICAL: Generate HTML for CONTRACT SIGNING email (not confirmation)
+function generateContractSigningEmailHtml(
   contract: Contract,
   userSettings: UserSettings | null,
   customMessage?: string,
-  isSignedContract: boolean = false,
-  cloudSigningUrl?: string
+  signingUrl?: string
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-  
+
   // ENHANCED: Add debugging info to email for troubleshooting
   const debugInfo = process.env.NODE_ENV === 'development' ? `
     <!-- DEBUG INFO -->
     <!-- Generated: ${new Date().toISOString()} -->
     <!-- Contract: ${contract.contractNumber} -->
-    <!-- Cloud URL: ${cloudSigningUrl || 'none'} -->
-    <!-- Signed: ${isSignedContract} -->
+    <!-- Signing URL: ${signingUrl || 'none'} -->
+    <!-- Status: ${contract.status} -->
+    <!-- Template: CONTRACT SIGNING EMAIL -->
   ` : '';
 
-  const signInstructions = isSignedContract ? '' : `
+  // CRITICAL: This is the SIGNING email, not confirmation
+  const signInstructions = `
     <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
       <h3 style="color: #1e40af; margin-top: 0;">📝 Action Required</h3>
-      <p style="margin: 10px 0;">Please review and sign this contract to confirm your booking.</p>
-      <div style="text-align: center; margin: 20px 0;">
-        <a href="${cloudSigningUrl || `https://musobuddy.replit.app/contracts/sign/${contract.id}`}" 
-           style="background-color: #1e40af; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px; border: none; box-shadow: 0 3px 6px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">
-          📝 Sign Contract Online
+      <p style="margin: 10px 0; font-size: 16px; font-weight: 500;">Please review and sign this contract to confirm your booking.</p>
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${signingUrl || `https://musobuddy.replit.app/contracts/sign/${contract.id}`}" 
+           style="background-color: #1e40af; color: #ffffff; padding: 18px 36px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s;">
+          📝 SIGN CONTRACT NOW
         </a>
       </div>
-      <p style="margin: 10px 0; font-size: 12px; color: #6b7280; text-align: center;">
-        ${cloudSigningUrl ? '☁️ Signing page hosted independently - works even if app is offline' : '🔗 Signing page hosted on app'}
+      <p style="margin: 15px 0; font-size: 14px; color: #6b7280; text-align: center;">
+        ${signingUrl ? '☁️ Signing page hosted on secure cloud storage' : '🔗 Signing page hosted on our secure servers'}
       </p>
     </div>
   `;
@@ -391,14 +344,11 @@ function generateContractEmailHtml(
         ${debugInfo}
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">Contract from ${businessName}</h2>
+        <h2 style="color: #2563eb;">Contract Ready for Signing</h2>
 
         <p>Dear ${contract.clientName},</p>
 
-        ${isSignedContract ? 
-          `<p>Thank you for signing the contract! Your booking is now confirmed.</p>` : 
-          `<p>Please find attached your contract for the performance on ${new Date(contract.eventDate).toLocaleDateString('en-GB')}.</p>`
-        }
+        <p>Please find attached your performance contract for the event on ${new Date(contract.eventDate).toLocaleDateString('en-GB')}.</p>
 
         ${customMessageHtml}
         ${signInstructions}
@@ -408,11 +358,17 @@ function generateContractEmailHtml(
           <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
           <p><strong>Time:</strong> ${contract.eventTime}</p>
           <p><strong>Venue:</strong> ${contract.venue}</p>
-          <p><strong>Fee:</strong> £${contract.fee}</p>
+          <p><strong>Performance Fee:</strong> £${contract.fee}</p>
         </div>
 
         <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
-          <p style="margin: 0; color: #64748b;">📎 Your contract is attached as a PDF to this email.</p>
+          <p style="margin: 0; color: #64748b;">📎 Your contract is attached as a PDF to this email for your records.</p>
+        </div>
+
+        <div style="background-color: #ecfdf5; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #10b981;">
+          <p style="margin: 0; color: #065f46; font-weight: 500;">
+            ✅ <strong>Next Step:</strong> Click the "Sign Contract Now" button above to digitally sign your contract and confirm your booking.
+          </p>
         </div>
 
         <p>If you have any questions, please don't hesitate to contact me.</p>
@@ -423,14 +379,14 @@ function generateContractEmailHtml(
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
         <p style="font-size: 12px; color: #6b7280; text-align: center;">
           Powered by MusoBuddy – less admin, more music<br>
-          Email ID: msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}
+          Email ID: sign-${Date.now()}-${Math.random().toString(36).substr(2, 9)}
         </p>
       </body>
     </html>
   `;
 }
 
-// ENHANCED: Send confirmation emails with better error handling
+// SEPARATE: Send confirmation emails AFTER contract is signed
 export async function sendContractConfirmationEmails(
   contract: Contract,
   userSettings: UserSettings | null
@@ -438,6 +394,13 @@ export async function sendContractConfirmationEmails(
   try {
     console.log('📧 === CONFIRMATION EMAILS START ===');
     console.log('📧 Contract:', contract.contractNumber);
+    console.log('📧 Status:', contract.status);
+
+    // CRITICAL: Only send confirmation emails for signed contracts
+    if (contract.status !== 'signed') {
+      console.log('❌ ERROR: Contract not signed, cannot send confirmation emails');
+      return { success: false, diagnostics: { error: 'Contract not signed' } };
+    }
 
     // Generate signed contract PDF
     const signatureDetails = {
@@ -561,10 +524,10 @@ export async function sendContractConfirmationEmails(
   }
 }
 
-// Helper functions for confirmation emails (same as before but with enhanced logging)
+// Helper functions for confirmation emails
 function generateClientConfirmationHtml(contract: Contract, userSettings: UserSettings | null, downloadUrl: string, signatureDetails: any): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -653,9 +616,9 @@ function generatePerformerConfirmationHtml(contract: Contract, userSettings: Use
 // Enhanced test function with comprehensive diagnostics
 export async function testEmailSending(testEmail?: string): Promise<void> {
   console.log('🧪 === ENHANCED EMAIL TEST START ===');
-  
+
   const recipient = testEmail || 'test@example.com';
-  
+
   const testEmailData: EmailData = {
     to: recipient,
     from: 'MusoBuddy Test <noreply@mg.musobuddy.com>',

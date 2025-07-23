@@ -310,7 +310,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Send contract email - UPDATED to use cloud storage URLs
+  // Send contract email - FIXED to use correct email function
   app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
     try {
       console.log('📧 Contract email route called with body:', req.body);
@@ -359,27 +359,39 @@ export async function registerRoutes(app: Express) {
         }
       }
       
-      console.log('📧 Sending contract email with cloud-hosted signing page:', signingUrl);
+      console.log('📧 Sending contract SIGNING email with cloud-hosted signing page:', signingUrl);
       
+      // CRITICAL FIX: Import and call the correct function for SIGNING emails
       const { sendContractEmail } = await import('./mailgun-email-restored');
       const emailSubject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
       
+      // FIXED: This should send "please sign" email, not "signed" confirmation
+      console.log('📧 CALLING sendContractEmail for SIGNING (not confirmation)');
       const emailResult = await sendContractEmail(contract, userSettings, emailSubject, signingUrl);
       
       // Update contract status to 'sent' when email is successfully sent
-      await storage.updateContract(contractId, {
-        status: 'sent',
-        sentAt: new Date()
-      }, req.user.id);
-      
-      console.log('✅ Contract email sent successfully for contract:', contractId);
-      res.json({ 
-        success: true,
-        message: 'Contract email sent successfully via Mailgun',
-        recipient: contract.clientEmail,
-        messageId: emailResult?.id || 'No ID returned',
-        signingUrl: signingUrl
-      });
+      if (emailResult.success) {
+        await storage.updateContract(contractId, {
+          status: 'sent',
+          sentAt: new Date()
+        }, req.user.id);
+        
+        console.log('✅ Contract SIGNING email sent successfully for contract:', contractId);
+        console.log('✅ Contract status updated to: sent');
+        res.json({ 
+          success: true,
+          message: 'Contract signing email sent successfully via Mailgun',
+          recipient: contract.clientEmail,
+          messageId: emailResult?.messageId || 'No ID returned',
+          signingUrl: signingUrl
+        });
+      } else {
+        console.error('❌ Contract SIGNING email failed:', emailResult.diagnostics);
+        res.status(500).json({ 
+          error: 'Failed to send contract signing email',
+          details: emailResult.diagnostics?.error
+        });
+      }
       
     } catch (error: any) {
       console.error('❌ Contract email error:', error);
