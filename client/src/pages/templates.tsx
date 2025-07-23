@@ -30,6 +30,12 @@ export default function Templates() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    subject: string;
+    emailBody: string;
+    template: EmailTemplate;
+  } | null>(null);
   const { toast } = useToast();
   
   // Check if we're responding to a specific booking
@@ -341,12 +347,23 @@ export default function Templates() {
     // Replace template variables with actual booking data
     const customizedSubject = replaceTemplateVariables(template.subject, bookingData);
     const customizedEmailBody = replaceTemplateVariables(template.emailBody, bookingData);
-    const customizedSmsBody = template.smsBody ? replaceTemplateVariables(template.smsBody, bookingData) : '';
 
-    const customizedTemplate = {
+    // Show preview dialog first
+    setPreviewData({
       subject: customizedSubject,
       emailBody: customizedEmailBody,
-      smsBody: customizedSmsBody
+      template: template
+    });
+    setShowPreview(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!previewData || !bookingData) return;
+
+    const customizedTemplate = {
+      subject: previewData.subject,
+      emailBody: previewData.emailBody,
+      smsBody: previewData.template.smsBody ? replaceTemplateVariables(previewData.template.smsBody, bookingData) : ''
     };
 
     try {
@@ -370,6 +387,8 @@ export default function Templates() {
           description: `Your message has been sent to ${bookingData.clientName}. Replies will go to your business email.`,
         });
         console.log('✅ Template email sent:', result);
+        setShowPreview(false);
+        setPreviewData(null);
       } else {
         const error = await response.json();
         toast({
@@ -682,6 +701,55 @@ export default function Templates() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Email Preview</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Review your email before sending to {bookingData?.clientName}
+            </p>
+          </DialogHeader>
+          
+          {previewData && (
+            <div className="space-y-4 overflow-y-auto">
+              {/* Email Header Info */}
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <div><strong>To:</strong> {bookingData?.clientEmail}</div>
+                <div><strong>Subject:</strong> {previewData.subject}</div>
+                <div><strong>From:</strong> Your Business Email (via MusoBuddy)</div>
+              </div>
+              
+              {/* Email Body Preview */}
+              <div className="border rounded-lg p-4 bg-white min-h-[300px]">
+                <div className="whitespace-pre-wrap font-sans leading-relaxed">
+                  {previewData.emailBody}
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowPreview(false);
+                    setPreviewData(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSendEmail}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Send Email
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
         </div>
