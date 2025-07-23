@@ -44,7 +44,21 @@ export default function Compliance() {
     if (bookingId && action === 'send') {
       setIsSendDialogOpen(true);
     }
+    console.log('Compliance page loaded, fileInputRef:', fileInputRef.current);
   }, [bookingId, action]);
+
+  // Debug effect to check ref after component mount
+  useEffect(() => {
+    console.log('File input ref after mount:', fileInputRef.current);
+    if (fileInputRef.current) {
+      console.log('File input properties:', {
+        type: fileInputRef.current.type,
+        accept: fileInputRef.current.accept,
+        hidden: fileInputRef.current.hidden,
+        disabled: fileInputRef.current.disabled
+      });
+    }
+  }, [isDialogOpen]);
 
   const { data: documents = [], isLoading } = useQuery<ComplianceDocument[]>({
     queryKey: ["/api/compliance"],
@@ -180,14 +194,18 @@ export default function Compliance() {
     e.preventDefault();
     setIsDragging(false);
     
+    console.log('File dropped', e.dataTransfer.files);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
+      console.log('Dropped file:', files[0]);
       handleFileSelect(files[0]);
     }
   }, [handleFileSelect]);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input changed', e.target.files);
     if (e.target.files && e.target.files.length > 0) {
+      console.log('Selected file:', e.target.files[0]);
       handleFileSelect(e.target.files[0]);
     }
   }, [handleFileSelect]);
@@ -478,7 +496,15 @@ export default function Compliance() {
                                     type="button"
                                     variant="link"
                                     className="p-0 h-auto text-purple-600"
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      console.log('Browse files clicked', fileInputRef.current);
+                                      if (fileInputRef.current) {
+                                        fileInputRef.current.click();
+                                      } else {
+                                        console.error('File input ref is null');
+                                      }
+                                    }}
                                   >
                                     browse files
                                   </Button>
@@ -498,6 +524,7 @@ export default function Compliance() {
                           className="hidden"
                           accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
                           onChange={handleFileInputChange}
+                          onClick={(e) => console.log('File input clicked directly')}
                         />
                       </div>
                     )}
@@ -542,7 +569,7 @@ export default function Compliance() {
               {documents.length > 0 && (
                 <SendComplianceDialog 
                   isOpen={isSendDialogOpen} 
-                  onOpenChange={setIsSendDialogOpen}
+                  setIsOpen={setIsSendDialogOpen}
                   bookingId={bookingId}
                   trigger={
                     <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
