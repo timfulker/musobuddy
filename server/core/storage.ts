@@ -1,5 +1,5 @@
 import { db } from "./database";
-import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates } from "../../shared/schema";
+import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments } from "../../shared/schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
@@ -231,11 +231,49 @@ export class Storage {
 
   // Compliance - simplified for now
   async getCompliance(userId: string) {
-    return [];
+    try {
+      const documents = await this.db
+        .select()
+        .from(complianceDocuments)
+        .where(eq(complianceDocuments.userId, userId))
+        .orderBy(desc(complianceDocuments.createdAt));
+      
+      return documents;
+    } catch (error) {
+      console.error('Error fetching compliance documents:', error);
+      return [];
+    }
   }
 
   async createCompliance(complianceData: any) {
-    return complianceData;
+    try {
+      const [document] = await this.db
+        .insert(complianceDocuments)
+        .values(complianceData)
+        .returning();
+      
+      return document;
+    } catch (error) {
+      console.error('Error creating compliance document:', error);
+      throw new Error('Failed to create compliance document');
+    }
+  }
+
+  async deleteCompliance(documentId: number, userId: string) {
+    try {
+      const [deleted] = await this.db
+        .delete(complianceDocuments)
+        .where(and(
+          eq(complianceDocuments.id, documentId),
+          eq(complianceDocuments.userId, userId)
+        ))
+        .returning();
+      
+      return deleted;
+    } catch (error) {
+      console.error('Error deleting compliance document:', error);
+      throw new Error('Failed to delete compliance document');
+    }
   }
 
   async updateCompliance(id: number, updates: any) {

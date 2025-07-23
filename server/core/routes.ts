@@ -1241,27 +1241,62 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // Convert file to base64 for storage
-      const documentData = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      // Upload to Cloudflare R2
+      const fileName = `compliance/${req.user.id}/${Date.now()}-${req.file.originalname}`;
+      const uploadResult = await cloudStorageService.uploadFile(fileName, req.file.buffer, req.file.mimetype);
       
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Failed to upload to cloud storage');
+      }
+
+      // Create compliance document record with R2 URL
       const complianceDoc = {
         userId: req.user.id,
         type: req.body.type,
         name: req.body.name || req.file.originalname,
         expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : null,
         status: 'valid',
-        documentUrl: documentData,
+        documentUrl: uploadResult.url, // R2 public URL
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
       const document = await storage.createCompliance(complianceDoc);
-      console.log('✅ Compliance document uploaded successfully');
+      console.log('✅ Compliance document uploaded to R2 successfully');
       
       res.json(document);
     } catch (error: any) {
       console.error('❌ Compliance upload error:', error);
       res.status(500).json({ error: error.message || 'Failed to upload document' });
+    }
+  });
+
+  app.delete('/api/compliance/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const documentId = parseInt(req.params.id);
+      
+      // Get document to find file URL before deletion
+      const documents = await storage.getCompliance(req.user.id);
+      const document = documents.find(d => d.id === documentId);
+      
+      if (!document) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      // Delete from cloud storage if it's an R2 URL
+      if (document.documentUrl && document.documentUrl.includes('r2.dev')) {
+        const fileName = document.documentUrl.split('/').slice(-2).join('/'); // Extract file path
+        await cloudStorageService.deleteFile(fileName);
+      }
+
+      // Delete from database
+      await storage.deleteCompliance(documentId, req.user.id);
+      console.log('✅ Compliance document deleted successfully');
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('❌ Compliance deletion error:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete document' });
     }
   });
 
