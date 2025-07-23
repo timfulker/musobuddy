@@ -246,7 +246,7 @@ export async function sendContractEmail(
 
     // Create email with PDF attachment
     const emailData: EmailData = {
-      to: contract.clientEmail,
+      to: contract.clientEmail || '',
       from: fromEmail,
       subject: subject,
       html: emailHtml,
@@ -282,11 +282,11 @@ export async function sendContractEmail(
 
     return result;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Contract signing email error:', error);
     return { 
       success: false, 
-      diagnostics: { error: error.message } 
+      diagnostics: { error: error?.message || 'Unknown error' } 
     };
   }
 }
@@ -451,7 +451,7 @@ export async function sendContractConfirmationEmails(
     const clientEmailHtml = generateClientConfirmationHtml(contract, userSettings, finalDownloadUrl, signatureDetails);
 
     const clientEmailData: EmailData = {
-      to: contract.clientEmail,
+      to: contract.clientEmail || '',
       from: fromEmail,
       subject: `Contract Signed Successfully - ${contract.contractNumber}`,
       html: clientEmailHtml,
@@ -515,11 +515,11 @@ export async function sendContractConfirmationEmails(
       diagnostics
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Confirmation emails error:', error);
     return { 
       success: false, 
-      diagnostics: { error: error.message } 
+      diagnostics: { error: error?.message || 'Unknown error' } 
     };
   }
 }
