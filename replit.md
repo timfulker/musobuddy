@@ -185,6 +185,17 @@ The application is designed to be user-friendly while maintaining professional-g
 - **24/7 Availability**: ✅ Invoice PDFs accessible via R2 URLs even when app server is offline
 - **Status**: COMPLETE INVOICE SYSTEM OPERATIONAL - Professional PDFs with proper bank details and addresses from settings
 
+### 2025-07-23 - Invoice Workflow Issues FIXED - View, Edit & Auto-Incrementing Numbers
+- **Invoice View Button Fixed**: ✅ Changed handleViewInvoice to open invoices in new tab using public /view/invoices/:id route that redirects to Cloudflare R2 storage
+- **Invoice Update PATCH Endpoint Enhanced**: ✅ Added comprehensive field mapping, validation, and logging to handle performanceDate→eventDate and performanceFee→fee conversions
+- **Auto-Incrementing Invoice Numbers Restored**: ✅ Invoice creation now pulls nextInvoiceNumber from user settings for HMRC-compliant sequential numbering (5-digit padded)
+- **Performance Date Field Mapping Fixed**: ✅ Corrected frontend form population to use invoice.eventDate instead of non-existent invoice.performanceDate field
+- **Form Field Corrections**: ✅ Fixed handleEditInvoice and handleEditAndResend to properly map database fields (eventDate, fee, depositPaid) to frontend form fields
+- **Numeric Field Handling**: ✅ Enhanced PATCH endpoint to properly format and validate numeric fields (amount, fee, depositPaid) before database updates
+- **Settings Integration**: ✅ Invoice creation automatically increments nextInvoiceNumber in user settings after successful invoice creation
+- **Error Handling Enhanced**: ✅ Added detailed logging and error responses for invoice update operations to aid in debugging
+- **Status**: Invoice workflow fully operational - view opens cloud storage, edit saves properly, auto-incrementing numbers from settings working
+
 ### 2025-07-23 - JavaScript API URL Fix - Complete Contract Signing System Fixed
 - **Critical JavaScript Fix**: ✅ Fixed JavaScript in R2 signing pages to use correct app server URL instead of trying to POST to R2 server
 - **Dynamic URL Generation**: ✅ Updated cloud-storage.ts to use environment-based URLs (localhost:5000 for development, production URL for production)
