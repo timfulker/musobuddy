@@ -896,6 +896,27 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  app.get('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      
+      // Verify the booking belongs to the authenticated user
+      if (booking.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to access this booking' });
+      }
+      
+      res.json(booking);
+    } catch (error) {
+      console.error('❌ Individual booking fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch booking' });
+    }
+  });
+
   app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const booking = await storage.createBooking({ ...req.body, userId: req.user.id });

@@ -49,14 +49,23 @@ export default function Templates() {
   const fetchBookingData = async () => {
     try {
       const response = await fetch(`/api/bookings/${bookingId}`, {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+      
       if (response.ok) {
         const booking = await response.json();
         setBookingData(booking);
+        console.log('✅ Booking data loaded:', booking);
+      } else {
+        console.error('❌ Failed to fetch booking:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
       }
     } catch (error) {
-      console.error('Failed to fetch booking data:', error);
+      console.error('❌ Failed to fetch booking data:', error);
     }
   };
 
