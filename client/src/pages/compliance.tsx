@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertComplianceDocumentSchema, type ComplianceDocument } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Shield, Zap, Music, Upload, Download, AlertTriangle, CheckCircle, Clock, ArrowLeft, FileUp, X, Menu } from "lucide-react";
-import { Link } from "wouter";
+import { Plus, Search, Shield, Zap, Music, Upload, Download, AlertTriangle, CheckCircle, Clock, ArrowLeft, FileUp, X, Menu, Send } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
+import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 
 const complianceFormSchema = insertComplianceDocumentSchema.extend({
   expiryDate: z.string().optional(),
@@ -24,12 +25,26 @@ const complianceFormSchema = insertComplianceDocumentSchema.extend({
 
 export default function Compliance() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('file');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [location] = useLocation();
+  
+  // Check for booking context from URL parameters
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const bookingId = urlParams.get('bookingId');
+  const action = urlParams.get('action');
+  
+  // Auto-open send dialog if coming from booking response
+  useEffect(() => {
+    if (bookingId && action === 'send') {
+      setIsSendDialogOpen(true);
+    }
+  }, [bookingId, action]);
 
   const { data: documents = [], isLoading } = useQuery<ComplianceDocument[]>({
     queryKey: ["/api/compliance"],
@@ -327,14 +342,15 @@ export default function Compliance() {
                 <p className="text-gray-600">Manage your insurance, licenses, and certifications</p>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-              <DialogTrigger asChild>
-                <Button className="bg-purple-600 hover:bg-purple-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Document
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
+            <div className="flex space-x-3">
+              <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+                <DialogTrigger asChild>
+                  <Button className="bg-purple-600 hover:bg-purple-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Document
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Compliance Document</DialogTitle>
                 </DialogHeader>
@@ -520,8 +536,23 @@ export default function Compliance() {
                     </div>
                   </form>
                 </Form>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+              
+              {documents.length > 0 && (
+                <SendComplianceDialog 
+                  isOpen={isSendDialogOpen} 
+                  onOpenChange={setIsSendDialogOpen}
+                  bookingId={bookingId}
+                  trigger={
+                    <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
+                      <Send className="w-4 h-4 mr-2" />
+                      Send to Client
+                    </Button>
+                  }
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -602,7 +633,7 @@ export default function Compliance() {
               </Card>
             ) : (
               documents.map((document: ComplianceDocument) => {
-                const daysUntilExpiry = getDaysUntilExpiry(document.expiryDate!);
+                const daysUntilExpiry = document.expiryDate ? getDaysUntilExpiry(document.expiryDate.toString()) : null;
                 return (
                   <Card key={document.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">

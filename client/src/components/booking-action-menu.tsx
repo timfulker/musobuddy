@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle } from "lucide-react";
+import { MoreHorizontal, MessageSquare, FileText, DollarSign, ThumbsUp, XCircle, Shield } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +65,10 @@ export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
         // Navigate to templates page with booking context for thank you message
         navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
         return; // Don't update status immediately, let template sending handle it
+      case 'send_compliance':
+        // Navigate to compliance page with booking context for document sending
+        navigate(`/compliance?bookingId=${booking.id}&action=send`);
+        return; // Don't update status immediately, let compliance sending handle it
       case 'reject':
         newStatus = 'rejected';
         message = "Booking rejected";
@@ -121,6 +125,13 @@ export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
         >
           <ThumbsUp className="w-4 h-4 mr-2" />
           Send Thank You
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => handleAction('send_compliance')}
+          disabled={statusUpdateMutation.isPending}
+        >
+          <Shield className="w-4 h-4 mr-2" />
+          Send Compliance Documents
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => handleAction('reject')}
