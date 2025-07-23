@@ -653,10 +653,9 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      // PRIORITY 1: For authenticated users, serve directly to avoid CORS
-      // For unauthenticated users (clients), redirect to cloud storage
-      if (contract.cloudStorageUrl && !req.user?.id) {
-        console.log('🔗 Client access: Redirecting to cloud storage URL:', contract.cloudStorageUrl);
+      // PRIORITY 1: Use cloud storage URL if available
+      if (contract.cloudStorageUrl) {
+        console.log('🔗 Redirecting to cloud storage URL:', contract.cloudStorageUrl);
         return res.redirect(contract.cloudStorageUrl);
       }
 
@@ -683,16 +682,8 @@ export async function registerRoutes(app: Express) {
             cloudStorageKey: cloudResult.key
           });
 
-          console.log('✅ Contract uploaded to cloud');
-          
-          // For clients, redirect to cloud URL; for authenticated users, serve directly
-          if (!req.user?.id) {
-            console.log('🔗 Client access: Redirecting to cloud URL:', cloudResult.url);
-            return res.redirect(cloudResult.url);
-          }
-          
-          // For authenticated users, continue to serve directly to avoid CORS
-          console.log('👤 Authenticated user: Serving PDF directly to avoid CORS');
+          console.log('✅ Contract uploaded to cloud, redirecting to:', cloudResult.url);
+          return res.redirect(cloudResult.url);
         }
       } catch (cloudError) {
         console.error('❌ Cloud storage failed, falling back to direct generation');

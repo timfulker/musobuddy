@@ -392,11 +392,16 @@ export default function Contracts() {
     console.log('🎯 Contract status:', contract.status);
     console.log('🎯 Cloud storage URL:', contract.cloudStorageUrl);
     
-    // For signed contracts, use app server route (which handles authenticated vs client access)
-    if (contract.status === 'signed') {
-      console.log('✅ Opening signed contract via app server');
-      const viewUrl = `/api/contracts/${contract.id}/download`;
-      window.open(viewUrl, '_blank');
+    // For signed contracts, prioritize cloud storage URL
+    if (contract.status === 'signed' && contract.cloudStorageUrl) {
+      console.log('✅ Opening signed contract from cloud storage');
+      window.open(contract.cloudStorageUrl, '_blank');
+    } 
+    // For signed contracts without cloud URL, use download endpoint
+    else if (contract.status === 'signed') {
+      console.log('⚠️ Using download endpoint for signed contract');
+      const downloadUrl = `/api/contracts/${contract.id}/download`;
+      window.open(downloadUrl, '_blank');
     }
     // For draft/unsigned contracts, use local view
     else {
@@ -476,30 +481,12 @@ export default function Contracts() {
 
   const handleDownloadContract = async (contract: Contract) => {
     try {
-      console.log('📄 Downloading contract PDF via app server to avoid CORS issues');
-      
-      // Always use app server download route to avoid CORS issues with R2 storage
-      const response = await fetch(`/api/contracts/${contract.id}/download`, {
-        method: 'GET',
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
-
-      // Get the PDF blob
-      const blob = await response.blob();
-      
-      // Create download URL and trigger download
-      const url = window.URL.createObjectURL(blob);
+      // Simple download approach
+      const downloadLink = `/api/contracts/${contract.id}/download`;
       const a = document.createElement('a');
-      a.href = url;
+      a.href = downloadLink;
       a.download = `Contract-${contract.contractNumber}.pdf`;
-      document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
 
       toast({
         title: "Success",
