@@ -29,37 +29,7 @@ export async function registerRoutes(app: Express) {
 
   // ===== PUBLIC CONTRACT SIGNING ROUTES (MUST BE FIRST - NO AUTHENTICATION) =====
 
-  // Dynamic contract signing page route (PUBLIC ACCESS - serves appropriate page based on status)
-  app.get('/sign/contracts/:id', async (req: any, res) => {
-    try {
-      const contractId = parseInt(req.params.id);
-      console.log('📄 Dynamic signing page request for contract:', contractId);
-      
-      const contract = await storage.getContractById(contractId);
-      if (!contract) {
-        return res.status(404).send('<h1>Contract Not Found</h1><p>This contract does not exist or has been removed.</p>');
-      }
 
-      const userSettings = await storage.getSettings(contract.userId);
-      const { generateContractSigningPageHTML, generateAlreadySignedPageHTML } = await import('./cloud-storage');
-
-      // Dynamically serve appropriate page based on current contract status
-      if (contract.status === 'signed') {
-        console.log('✅ Contract already signed - serving already-signed page');
-        const alreadySignedPage = generateAlreadySignedPageHTML(contract, userSettings);
-        res.setHeader('Content-Type', 'text/html');
-        return res.send(alreadySignedPage);
-      } else {
-        console.log('📝 Contract not signed - serving signing form');
-        const signingPage = generateContractSigningPageHTML(contract, userSettings);
-        res.setHeader('Content-Type', 'text/html');
-        return res.send(signingPage);
-      }
-    } catch (error) {
-      console.error('❌ Dynamic signing page error:', error);
-      res.status(500).send('<h1>Error</h1><p>Unable to load contract signing page.</p>');
-    }
-  });
 
   // Contract signing OPTIONS (PUBLIC - for CORS)
   app.options('/api/contracts/sign/:id', (req, res) => {
@@ -391,19 +361,23 @@ export async function registerRoutes(app: Express) {
         }
       }
 
-      // NEW APPROACH: Use dynamic signing URL that checks contract status in real-time
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://musobuddy.replit.app' 
-        : 'http://localhost:5000';
-      signingUrl = `${baseUrl}/sign/contracts/${contract.id}`;
+      // ALWAYS regenerate R2 signing page to reflect current contract status
+      console.log('🔄 Regenerating R2 signing page with current status for contract:', contract.contractNumber);
+      const { uploadContractSigningPage } = await import('./cloud-storage');
+      const pageResult = await uploadContractSigningPage(contract, userSettings);
       
-      // Update contract with dynamic signing URL
-      await storage.updateContract(contract.id, {
-        signingPageUrl: signingUrl,
-        signingUrlCreatedAt: new Date()
-      }, req.user.id);
-      
-      console.log('✅ Using dynamic signing URL:', signingUrl);
+      if (pageResult.success && pageResult.url) {
+        await storage.updateContract(contract.id, {
+          signingPageUrl: pageResult.url,
+          signingPageKey: pageResult.storageKey,
+          signingUrlCreatedAt: new Date()
+        }, req.user.id);
+        signingUrl = pageResult.url;
+        console.log('✅ R2 signing page regenerated:', signingUrl);
+      } else {
+        console.error('❌ Failed to regenerate R2 signing page');
+        return res.status(500).json({ error: 'Failed to create signing page' });
+      }
 
       console.log('📧 Sending contract SIGNING email with cloud-hosted signing page:', signingUrl);
 
@@ -735,30 +709,11 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      // PRIORITY 1: For authenticated users, fetch from R2 and serve directly (no CORS)
-      // For unauthenticated access (email links), redirect to R2
-      if (contract.cloudStorageUrl) {
-        // Always serve directly for authenticated users (no CORS issues)
-        console.log('👤 Authenticated user: Fetching PDF from R2 and serving directly');
-        try {
-          const response = await fetch(contract.cloudStorageUrl);
-          if (response.ok) {
-            const pdfBuffer = await response.arrayBuffer();
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
-            res.setHeader('Content-Length', pdfBuffer.byteLength.toString());
-            return res.send(Buffer.from(pdfBuffer));
-          }
-        } catch (fetchError) {
-          console.log('⚠️ Failed to fetch from R2, falling back to generation');
-        }
-      }
-
-      // PRIORITY 2: Generate and upload to cloud storage
-      console.log('☁️ No cloud URL found, generating and uploading to cloud storage...');
+      // ALWAYS generate fresh PDF with latest contract data (don't use cached R2 version)
+      console.log('📄 Generating fresh PDF with latest contract edits...');
 
       try {
-        // ISSUE 2 FIX: Get fresh contract data from database to include recent edits
+        // Get fresh contract data from database to include recent edits
         const freshContract = await storage.getContract(contractId, req.user.id);
         if (!freshContract) {
           return res.status(404).json({ error: 'Contract not found' });

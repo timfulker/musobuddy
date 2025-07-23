@@ -234,6 +234,16 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Root Cause**: ✅ R2-hosted signing pages making API calls to app server require explicit CORS allowance; R2 PDFs need app server proxy for browser downloads
 - **Status**: COMPLETE CORS FIXES IMPLEMENTED - Contract signing and PDF downloads working properly without CORS errors
 
+### 2025-07-23 - Contract PDF Generation and Already-Signed Detection DEFINITIVELY FIXED
+- **Contract Edit PDF Issue RESOLVED**: ✅ Contract downloads now ALWAYS generate fresh PDFs using latest database values instead of cached R2 versions
+- **Fresh Data Guarantee**: ✅ All contract downloads fetch fresh contract data with `storage.getContract()` before PDF generation, ensuring edits appear immediately
+- **Already-Signed R2 Pages**: ✅ Contract email sending ALWAYS regenerates R2 signing pages to reflect current contract status (signed vs unsigned)
+- **R2 System Restored**: ✅ Reverted from broken dynamic URLs back to proven R2 cloud storage system for signing pages
+- **Status-Aware Page Generation**: ✅ R2 signing pages now dynamically generated based on contract.status to show appropriate content
+- **PDF Cache Bypass**: ✅ Removed R2 PDF caching for downloads to ensure all contract edits (deposit changes, time changes) appear immediately
+- **Email Link Reliability**: ✅ Contract signing links in emails use R2 URLs that check contract status and show correct page type
+- **Status**: BOTH CRITICAL ISSUES RESOLVED - Contract edits appear in PDFs immediately, email links show correct already-signed pages
+
 ### 2025-07-23 - Contract Signing 401 Unauthorized Error FIXED
 - **Root Cause Identified**: ✅ Duplicate POST route handlers for /api/contracts/sign/:id at lines 75 and 873 causing authentication conflicts
 - **Duplicate Handler Removed**: ✅ Eliminated second contract signing handler (lines 865-1189) that was overriding the public signing route
