@@ -207,7 +207,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Production Testing**: ✅ Verified R2 signing pages load correctly with professional styling and contract details
 - **Status**: R2 CLOUD DOCUMENT SYSTEM FULLY OPERATIONAL - All documents hosted on R2 server with correct public URLs
 
-### 2025-07-23 - Contract Signing CORS Error FIXED + Already-Signed Page Enhancement
+### 2025-07-23 - Contract Signing CORS Error FIXED + Already-Signed Page Enhancement + PDF Download CORS Fix
 - **CORS Issue Identified**: ✅ Cross-origin requests from Cloudflare R2 signing pages to localhost server blocked by browser CORS policy
 - **Error Pattern**: ✅ Contract signing works directly but fails when accessed from R2-hosted signing pages due to origin mismatch
 - **CORS Headers Configured**: ✅ Added proper Access-Control-Allow-Origin headers for contract signing endpoints
@@ -217,9 +217,12 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Smart Page Generation**: ✅ uploadContractSigningPage now detects contract status and generates appropriate page
 - **Enhanced Client Experience**: ✅ Clients accessing signed contract links see professional "already signed" confirmation page
 - **Signature Details Display**: ✅ Shows who signed, when signed, and contract completion status
+- **PDF Download CORS Fix**: ✅ Fixed contract PDF download CORS errors by routing all downloads through app server instead of direct R2 access
+- **Download Method Updated**: ✅ Changed frontend to use blob download via app server to avoid "No Access-Control-Allow-Origin header" errors
+- **View Contract Fix**: ✅ Updated handleViewSignedContract to use app server routes instead of direct R2 URLs for signed contracts
 - **Future Enhancement Noted**: ✅ User suggestion to open contract PDFs in new tabs for better UX (deferred until more testing)
-- **Root Cause**: ✅ R2-hosted signing pages making API calls to app server require explicit CORS allowance
-- **Status**: CORS FIXED + ALREADY-SIGNED PAGE ENHANCEMENT IMPLEMENTED - Professional UX for all contract states
+- **Root Cause**: ✅ R2-hosted signing pages making API calls to app server require explicit CORS allowance; R2 PDFs need app server proxy for browser downloads
+- **Status**: COMPLETE CORS FIXES IMPLEMENTED - Contract signing and PDF downloads working properly without CORS errors
 
 ### 2025-07-23 - Contract Signing 401 Unauthorized Error FIXED
 - **Root Cause Identified**: ✅ Duplicate POST route handlers for /api/contracts/sign/:id at lines 75 and 873 causing authentication conflicts
