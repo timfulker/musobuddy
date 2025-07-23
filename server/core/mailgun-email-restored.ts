@@ -778,14 +778,11 @@ function replaceTemplateVariables(content: string, booking: Booking, userSetting
     return `£${numericFee.toFixed(2)}`;
   };
 
-  // Business signature from settings
-  const businessSignature = `
+  // Business signature from settings - proper format requested by user
+  const businessSignature = `Best regards,
 ${userSettings?.businessName || 'MusoBuddy'}
 ${userSettings?.businessEmail || ''}
-${userSettings?.phone || ''}
-${userSettings?.addressLine1 || ''}${userSettings?.city ? ', ' + userSettings.city : ''}${userSettings?.postcode ? ' ' + userSettings.postcode : ''}
-${userSettings?.website || ''}
-  `.trim();
+${userSettings?.phone || ''}`.trim();
 
   return content
     // Client details
@@ -832,15 +829,23 @@ ${userSettings?.website || ''}
     .replace(/\[What's Included\]/g, booking.whatsIncluded || '[What\'s Included]')
     .replace(/\[whats included\]/g, booking.whatsIncluded || '[What\'s Included]')
     .replace(/\[What\'s Included\]/g, booking.whatsIncluded || '[What\'s Included]')
+    .replace(/\[What's included\?\]/g, booking.whatsIncluded || '[What\'s Included]')
+    .replace(/\{What's included\?\}/g, booking.whatsIncluded || '[What\'s Included]')
     
     // Financial details - additional patterns
     .replace(/\[Amount\]/g, formatFee(booking.fee))
     .replace(/\[amount\]/g, formatFee(booking.fee))
     
-    // Business signature (at end of email)
+    // Business signature and individual business details
     .replace(/\[Business Signature\]/g, businessSignature)
     .replace(/\[business signature\]/g, businessSignature)
-    .replace(/\[BUSINESS SIGNATURE\]/g, businessSignature);
+    .replace(/\[BUSINESS SIGNATURE\]/g, businessSignature)
+    .replace(/\[Your Name\]/g, userSettings?.businessName || 'MusoBuddy')
+    .replace(/\[Your Business Name\]/g, userSettings?.businessName || 'MusoBuddy')
+    .replace(/\[Contact Details\]/g, `${userSettings?.businessEmail || ''}\n${userSettings?.phone || ''}`)
+    .replace(/\[Business Name\]/g, userSettings?.businessName || 'MusoBuddy')
+    .replace(/\[Business Email\]/g, userSettings?.businessEmail || '')
+    .replace(/\[Business Phone\]/g, userSettings?.phone || '');
 }
 
 // TEMPLATE EMAIL SENDING FUNCTION - Business Email Ghosting Implementation

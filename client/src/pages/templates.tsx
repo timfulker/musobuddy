@@ -306,6 +306,8 @@ export default function Templates() {
       .replace(/\[What's Included\]/g, booking.whatsIncluded || '[What\'s Included]')
       .replace(/\[whats included\]/g, booking.whatsIncluded || '[What\'s Included]')
       .replace(/\[What\'s Included\]/g, booking.whatsIncluded || '[What\'s Included]')
+      .replace(/\[What's included\?\]/g, booking.whatsIncluded || '[What\'s Included]')
+      .replace(/\{What's included\?\}/g, booking.whatsIncluded || '[What\'s Included]')
       
       // Additional patterns
       .replace(/\[Duration\]/g, formatDuration(booking.performanceDuration))
@@ -313,7 +315,17 @@ export default function Templates() {
       .replace(/\[Style\/Genre\]/g, booking.styles || '[Styles]')
       .replace(/\[style\/genre\]/g, booking.styles || '[Styles]')
       .replace(/\[Amount\]/g, formatFee(booking.fee))
-      .replace(/\[amount\]/g, formatFee(booking.fee));
+      .replace(/\[amount\]/g, formatFee(booking.fee))
+      
+      // Business signature and details (placeholders for frontend preview)
+      .replace(/\[Business Signature\]/g, 'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
+      .replace(/\[business signature\]/g, 'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
+      .replace(/\[Your Name\]/g, '[Business Name]')
+      .replace(/\[Your Business Name\]/g, '[Business Name]')
+      .replace(/\[Contact Details\]/g, '[Business Email]\n[Business Phone]')
+      .replace(/\[Business Name\]/g, '[Business Name]')
+      .replace(/\[Business Email\]/g, '[Business Email]')
+      .replace(/\[Business Phone\]/g, '[Business Phone]');
   };
 
   const handleUseTemplate = async (template: EmailTemplate) => {
