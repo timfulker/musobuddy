@@ -31,7 +31,7 @@ export default function Compliance() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const { data: documents = [], isLoading } = useQuery({
+  const { data: documents = [], isLoading } = useQuery<ComplianceDocument[]>({
     queryKey: ["/api/compliance"],
   });
 
@@ -199,12 +199,12 @@ export default function Compliance() {
     if (document.documentUrl) {
       if (document.documentUrl.startsWith('data:')) {
         // Handle base64 data URLs
-        const link = document.createElement('a');
+        const link = window.document.createElement('a');
         link.href = document.documentUrl;
         link.download = document.name || 'document';
-        document.body.appendChild(link);
+        window.document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        window.document.body.removeChild(link);
       } else {
         // Handle regular URLs
         window.open(document.documentUrl, '_blank');
@@ -495,7 +495,7 @@ export default function Compliance() {
                           <FormItem>
                             <FormLabel>Document URL</FormLabel>
                             <FormControl>
-                              <Input placeholder="https://..." {...field} />
+                              <Input placeholder="https://..." {...field} value={field.value || ''} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -628,7 +628,7 @@ export default function Compliance() {
                             <p className="text-gray-600 mb-2">{document.name}</p>
                             
                             <div className="flex items-center space-x-6 text-sm text-gray-500">
-                              <span>Expires: {formatDate(document.expiryDate!)}</span>
+                              <span>Expires: {document.expiryDate ? formatDate(document.expiryDate.toString()) : 'No expiry date'}</span>
                               {daysUntilExpiry !== null && (
                                 <span className={
                                   daysUntilExpiry < 0 ? "text-red-600 font-medium" :

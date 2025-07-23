@@ -4,6 +4,7 @@ import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export class Storage {
+  private db = db;
   // Users
   async getUser(id: string) {
     const result = await db.select().from(users).where(eq(users.id, id));
@@ -232,7 +233,7 @@ export class Storage {
   // Compliance - simplified for now
   async getCompliance(userId: string) {
     try {
-      const documents = await db
+      const documents = await this.db
         .select()
         .from(complianceDocuments)
         .where(eq(complianceDocuments.userId, userId))
@@ -247,7 +248,7 @@ export class Storage {
 
   async createCompliance(complianceData: any) {
     try {
-      const [document] = await db
+      const [document] = await this.db
         .insert(complianceDocuments)
         .values(complianceData)
         .returning();
@@ -261,7 +262,7 @@ export class Storage {
 
   async deleteCompliance(documentId: number, userId: string) {
     try {
-      const [deleted] = await db
+      const [deleted] = await this.db
         .delete(complianceDocuments)
         .where(and(
           eq(complianceDocuments.id, documentId),
