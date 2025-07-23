@@ -250,11 +250,14 @@ export default function Templates() {
     const eventEndTime = booking.eventEndTime || '';
     const timeRange = eventEndTime ? `${eventTime} - ${eventEndTime}` : eventTime;
     
-    // Format performance duration from minutes to readable text
-    const formatDuration = (minutes: number | null) => {
-      if (!minutes) return '[Performance Duration]';
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
+    // Format performance duration - now stored as text
+    const formatDuration = (duration: string | number | null) => {
+      if (!duration) return '[Performance Duration]';
+      // If it's already text, return as-is
+      if (typeof duration === 'string') return duration;
+      // If it's a number (legacy data), convert to readable format
+      const hours = Math.floor(duration / 60);
+      const mins = duration % 60;
       if (hours === 0) return `${mins} minutes`;
       if (mins === 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
       return `${hours} hour${hours > 1 ? 's' : ''} ${mins} minutes`;

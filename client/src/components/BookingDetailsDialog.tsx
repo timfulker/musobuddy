@@ -181,7 +181,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         equipmentRequirements: booking.equipmentRequirements || "",
         specialRequirements: booking.specialRequirements || "",
         performanceDuration: booking.performanceDuration || "",
-        repertoire: booking.repertoire || "",
+        styles: booking.styles || "",
         equipmentProvided: booking.equipmentProvided || "",
         whatsIncluded: booking.whatsIncluded || "",
         setupTime: "",

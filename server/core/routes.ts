@@ -922,8 +922,8 @@ export async function registerRoutes(app: Express) {
       // Sanitize data before creating - convert empty strings to null for numeric fields
       const sanitizedData = { ...req.body, userId: req.user.id };
       
-      // Handle numeric fields that could be empty strings
-      const numericFields = ['performanceDuration', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
+      // Handle numeric fields that could be empty strings (excluding performanceDuration which is now text)
+      const numericFields = ['setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
       numericFields.forEach(field => {
         if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
           sanitizedData[field] = null;
@@ -960,8 +960,8 @@ export async function registerRoutes(app: Express) {
       // Sanitize data before updating - convert empty strings to null for numeric fields
       const sanitizedData = { ...req.body };
       
-      // Handle numeric fields that could be empty strings
-      const numericFields = ['performanceDuration', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
+      // Handle numeric fields that could be empty strings (excluding performanceDuration which is now text)
+      const numericFields = ['setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
       numericFields.forEach(field => {
         if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
           sanitizedData[field] = null;
