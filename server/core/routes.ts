@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express) {
         clientIpAddress: clientIP
       };
       
-      // Sign contract in database
+      // Sign contract
       const signedContract = await storage.signContract(contractId, {
         signatureName: finalSignatureName.trim(),
         clientIP,
@@ -98,16 +98,14 @@ export async function registerRoutes(app: Express) {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
       
-      // CRITICAL: Upload signed contract to cloud storage and send emails
+      // CRITICAL: Upload signed contract to cloud storage and send confirmation emails
       try {
         const userSettings = await storage.getSettings(contract.userId);
         
-        // Upload signed contract PDF to cloud storage
         const { uploadContractToCloud } = await import('./cloud-storage');
         const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
         
         if (cloudResult.success && cloudResult.url) {
-          // Update contract with cloud storage URL for signed PDF
           await storage.updateContract(contractId, {
             cloudStorageUrl: cloudResult.url,
             cloudStorageKey: cloudResult.key,
@@ -139,98 +137,195 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ===== CONTRACT ROUTES (AUTHENTICATED) =====
-
-  // Get contracts
-  app.get('/api/contracts', isAuthenticated, async (req: any, res) => {
+  // Contract signing page (PUBLIC)
+  app.get('/contracts/sign/:id', async (req, res) => {
     try {
-      const contracts = await storage.getContracts(req.user.id);
-      res.json(contracts);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch contracts' });
+      console.log('🎯 CONTRACT SIGNING ROUTE HIT:', req.params.id);
+      const contractId = parseInt(req.params.id);
+      
+      if (isNaN(contractId)) {
+        return res.status(400).send('<h1>Invalid Contract ID</h1>');
+      }
+      
+      // Check if contract exists
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).send('<h1>Contract Not Found</h1>');
+      }
+      
+      // CRITICAL: If already signed, show "already signed" page
+      if (contract.status === 'signed') {
+        const alreadySignedHtml = generateAlreadySignedPage(contract);
+        return res.send(alreadySignedHtml);
+      }
+      
+      // Get user settings for branding
+      const userSettings = await storage.getSettings(contract.userId);
+      
+      // Generate contract signing page
+      const signingPageHTML = generateContractSigningPage(contract, userSettings);
+      res.send(signingPageHTML);
+      
+    } catch (error: any) {
+      console.error('❌ Contract signing page error:', error);
+      res.status(500).send('<h1>Server Error</h1><p>Unable to load contract signing page.</p>');
     }
   });
 
-  // Create contract - UPDATED to always use cloud storage
-  app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
+  // Contract status check route for signing pages (PUBLIC)
+  app.get('/api/contracts/:id/status', async (req, res) => {
     try {
-      // Sanitize and prepare contract data
-      const sanitizedData = { ...req.body, userId: req.user.id };
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContractById(contractId);
       
-      // Handle numeric fields properly
-      if (sanitizedData.fee === '' || sanitizedData.fee === undefined) {
-        sanitizedData.fee = '0.00';
-      }
-      if (sanitizedData.deposit === '' || sanitizedData.deposit === undefined) {
-        sanitizedData.deposit = '0.00';
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
       }
       
-      // Handle optional fields - set empty strings to null
-      ['venue', 'eventTime', 'eventEndTime', 'clientAddress', 'clientPhone', 'venueAddress'].forEach(field => {
-        if (sanitizedData[field] === '') {
-          sanitizedData[field] = null;
-        }
+      res.json({
+        id: contract.id,
+        status: contract.status,
+        signedAt: contract.signedAt,
+        clientName: contract.clientName
       });
-      
-      // Auto-generate contract number if not provided
-      if (!sanitizedData.contractNumber || sanitizedData.contractNumber === '') {
-        const eventDate = new Date(sanitizedData.eventDate);
-        const dateStr = eventDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        sanitizedData.contractNumber = `(${dateStr} - ${sanitizedData.clientName})`;
-      }
-      
-      // Create contract in database
-      const contract = await storage.createContract(sanitizedData);
-      console.log('✅ Contract created in database:', contract.id);
-      
-      // CRITICAL: Always upload to cloud storage for client access
-      try {
-        const userSettings = await storage.getSettings(req.user.id);
-        const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
-        
-        // Upload draft contract PDF to cloud storage
-        console.log('☁️ Uploading draft contract PDF to cloud storage...');
-        const contractPdfResult = await uploadContractToCloud(contract, userSettings);
-        
-        // Upload contract signing page to cloud storage
-        console.log('☁️ Uploading contract signing page to cloud storage...');
-        const signingPageResult = await uploadContractSigningPage(contract, userSettings);
-        
-        // Update contract with cloud storage URLs
-        const updateData: any = {};
-        
-        if (contractPdfResult.success && contractPdfResult.url) {
-          updateData.cloudStorageUrl = contractPdfResult.url;
-          updateData.cloudStorageKey = contractPdfResult.key;
-          console.log('📄 Contract PDF uploaded to cloud:', contractPdfResult.url);
-        }
-        
-        if (signingPageResult.success && signingPageResult.url) {
-          updateData.signingPageUrl = signingPageResult.url;
-          updateData.signingPageKey = signingPageResult.storageKey;
-          updateData.signingUrlCreatedAt = new Date();
-          console.log('📝 Signing page uploaded to cloud:', signingPageResult.url);
-        }
-        
-        if (Object.keys(updateData).length > 0) {
-          const updatedContract = await storage.updateContract(contract.id, updateData, req.user.id);
-          console.log('✅ Contract updated with cloud storage URLs');
-          res.json(updatedContract);
-        } else {
-          console.warn('⚠️ No cloud storage URLs to update');
-          res.json(contract);
-        }
-        
-      } catch (storageError: any) {
-        console.error('❌ CRITICAL: Cloud storage upload failed:', storageError);
-        console.error('❌ Contract will be created without cloud storage');
-        res.json(contract); // Still return the contract
-      }
     } catch (error) {
-      console.error('Contract creation error:', error);
-      res.status(500).json({ error: 'Failed to create contract' });
+      res.status(500).json({ error: 'Failed to check contract status' });
     }
   });
 
   return server;
+}
+
+// Helper function to generate "already signed" page
+function generateAlreadySignedPage(contract: any): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract Already Signed</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 600px; 
+      margin: 50px auto; 
+      padding: 20px; 
+      text-align: center; 
+      background: #f8f9fa;
+    }
+    .container { 
+      background: white; 
+      padding: 40px; 
+      border-radius: 10px; 
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+    }
+    .success { color: #28a745; font-size: 48px; margin-bottom: 20px; }
+    h1 { color: #333; margin-bottom: 20px; }
+    p { color: #666; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="success">✅</div>
+    <h1>Contract Already Signed</h1>
+    <p>This contract has already been signed by <strong>${contract.clientName}</strong>.</p>
+    <p>Signed on: ${new Date(contract.signedAt).toLocaleString()}</p>
+    <p>Contract: ${contract.contractNumber}</p>
+  </div>
+</body>
+</html>`;
+}
+
+// Helper function to generate contract signing page
+function generateContractSigningPage(contract: any, userSettings: any): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Contract - ${contract.contractNumber}</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 20px; 
+      background: #f8f9fa;
+    }
+    .container { 
+      background: white; 
+      padding: 40px; 
+      border-radius: 10px; 
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+    }
+    h1 { color: #333; text-align: center; }
+    .form-group { margin: 20px 0; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    button { 
+      background: #007bff; 
+      color: white; 
+      padding: 12px 30px; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      font-size: 16px;
+    }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Sign Contract: ${contract.contractNumber}</h1>
+    <p><strong>Client:</strong> ${contract.clientName}</p>
+    <p><strong>Event Date:</strong> ${new Date(contract.eventDate).toLocaleDateString()}</p>
+    <p><strong>Venue:</strong> ${contract.venue}</p>
+    <p><strong>Fee:</strong> £${contract.fee}</p>
+    
+    <form id="signingForm">
+      <div class="form-group">
+        <label for="signatureName">Full Name (Digital Signature) *</label>
+        <input type="text" id="signatureName" name="signatureName" value="${contract.clientName}" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="clientPhone">Phone Number</label>
+        <input type="tel" id="clientPhone" name="clientPhone" value="${contract.clientPhone || ''}">
+      </div>
+      
+      <button type="submit">Sign Contract</button>
+    </form>
+  </div>
+  
+  <script>
+    document.getElementById('signingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      
+      try {
+        const response = await fetch('/api/contracts/sign/${contract.id}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Contract signed successfully! Both parties have been notified.');
+          location.reload();
+        } else {
+          alert(result.message || 'Error signing contract');
+        }
+      } catch (error) {
+        alert('Error signing contract. Please try again.');
+      }
+    });
+  </script>
+</body>
+</html>`;
 }
