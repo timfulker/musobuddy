@@ -706,8 +706,8 @@ export default function Templates() {
 
       {/* Email Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Email Preview</DialogTitle>
             <p className="text-sm text-muted-foreground">
               Review your email before sending to {bookingData?.clientName}
@@ -715,23 +715,26 @@ export default function Templates() {
           </DialogHeader>
           
           {previewData && (
-            <div className="space-y-4 overflow-y-auto">
-              {/* Email Header Info */}
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div><strong>To:</strong> {bookingData?.clientEmail}</div>
-                <div><strong>Subject:</strong> {previewData.subject}</div>
-                <div><strong>From:</strong> Your Business Email (via MusoBuddy)</div>
-              </div>
-              
-              {/* Email Body Preview */}
-              <div className="border rounded-lg p-4 bg-white min-h-[300px]">
-                <div className="whitespace-pre-wrap font-sans leading-relaxed">
-                  {previewData.emailBody}
+            <>
+              {/* Scrollable Content Area */}
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                {/* Email Header Info */}
+                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                  <div><strong>To:</strong> {bookingData?.clientEmail}</div>
+                  <div><strong>Subject:</strong> {previewData.subject}</div>
+                  <div><strong>From:</strong> Your Business Email (via MusoBuddy)</div>
+                </div>
+                
+                {/* Email Body Preview */}
+                <div className="border rounded-lg p-4 bg-white">
+                  <div className="whitespace-pre-wrap font-sans leading-relaxed text-sm">
+                    {previewData.emailBody}
+                  </div>
                 </div>
               </div>
               
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              {/* Fixed Action Buttons */}
+              <div className="flex-shrink-0 flex justify-end space-x-3 pt-4 border-t mt-4">
                 <Button 
                   variant="outline" 
                   onClick={() => {
@@ -748,7 +751,7 @@ export default function Templates() {
                   Send Email
                 </Button>
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
