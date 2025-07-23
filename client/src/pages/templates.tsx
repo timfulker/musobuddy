@@ -36,6 +36,29 @@ export default function Templates() {
   const urlParams = new URLSearchParams(window.location.search);
   const bookingId = urlParams.get('bookingId');
   const action = urlParams.get('action');
+  
+  // Fetch booking data if responding to a specific booking
+  const [bookingData, setBookingData] = useState<any>(null);
+  
+  useEffect(() => {
+    if (bookingId && action === 'respond') {
+      fetchBookingData();
+    }
+  }, [bookingId, action]);
+  
+  const fetchBookingData = async () => {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const booking = await response.json();
+        setBookingData(booking);
+      }
+    } catch (error) {
+      console.error('Failed to fetch booking data:', error);
+    }
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -210,6 +233,57 @@ export default function Templates() {
     });
   };
 
+  const replaceTemplateVariables = (text: string, booking: any) => {
+    if (!booking) return text;
+    
+    const eventDate = booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : 'TBD';
+    const eventTime = booking.eventTime || 'TBD';
+    const eventEndTime = booking.eventEndTime || '';
+    const timeRange = eventEndTime ? `${eventTime} - ${eventEndTime}` : eventTime;
+    
+    return text
+      .replace(/\[Client Name\]/g, booking.clientName || '[Client Name]')
+      .replace(/\[Event Date\]/g, eventDate)
+      .replace(/\[Event Time\]/g, timeRange)
+      .replace(/\[Venue\]/g, booking.venue || '[Venue]')
+      .replace(/\[Fee\]/g, booking.fee ? booking.fee.toString() : '[Fee]')
+      .replace(/\[Client Email\]/g, booking.clientEmail || '[Client Email]')
+      .replace(/\[Venue Address\]/g, booking.venueAddress || '[Venue Address]');
+  };
+
+  const handleUseTemplate = (template: EmailTemplate) => {
+    if (!bookingData) {
+      toast({
+        title: "Error",
+        description: "Booking data not loaded yet. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Replace template variables with actual booking data
+    const customizedSubject = replaceTemplateVariables(template.subject, bookingData);
+    const customizedEmailBody = replaceTemplateVariables(template.emailBody, bookingData);
+    const customizedSmsBody = template.smsBody ? replaceTemplateVariables(template.smsBody, bookingData) : '';
+
+    // Create a composed email (in a real implementation, this would open an email composer)
+    // For now, we'll show a preview dialog
+    const emailPreview = {
+      to: bookingData.clientEmail,
+      subject: customizedSubject,
+      body: customizedEmailBody,
+      sms: customizedSmsBody
+    };
+
+    // Show preview modal or navigate to email composer
+    toast({
+      title: "Template Customized",
+      description: `Email template prepared for ${bookingData.clientName}. In a full implementation, this would open your email composer.`,
+    });
+
+    console.log('Customized Email Preview:', emailPreview);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile menu toggle */}
@@ -255,8 +329,21 @@ export default function Templates() {
                   </h3>
                   <p className="text-blue-600 mb-4">
                     Select an email template below to send a response to your client. 
-                    The template will be customized with the booking details.
+                    The template will be automatically customized with booking details.
                   </p>
+                  {bookingData && (
+                    <div className="text-left bg-white p-4 rounded-lg mb-4">
+                      <h4 className="font-semibold text-blue-800 mb-2">Booking Details:</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <span><strong>Client:</strong> {bookingData.clientName}</span>
+                        <span><strong>Email:</strong> {bookingData.clientEmail}</span>
+                        <span><strong>Date:</strong> {bookingData.eventDate ? new Date(bookingData.eventDate).toLocaleDateString('en-GB') : 'TBD'}</span>
+                        <span><strong>Time:</strong> {bookingData.eventTime || 'TBD'}</span>
+                        <span><strong>Venue:</strong> {bookingData.venue || 'TBD'}</span>
+                        <span><strong>Fee:</strong> £{bookingData.fee || 'TBD'}</span>
+                      </div>
+                    </div>
+                  )}
                   <Button 
                     variant="outline" 
                     onClick={() => window.history.back()}
@@ -298,6 +385,16 @@ export default function Templates() {
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
+                    {bookingId && action === 'respond' && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleUseTemplate(template)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        Use Template
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
