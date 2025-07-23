@@ -692,95 +692,61 @@ export async function registerRoutes(app: Express) {
 
   // Contract PDF download route - handles both authenticated and unauthenticated access
   app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
-    // This route will now always have authenticated users due to middleware
-    console.log('👤 Authenticated download request - user ID:', req.user.id);
     try {
       const contractId = parseInt(req.params.id);
       console.log('📄 Contract PDF download request for ID:', contractId);
-      console.log('🔍 Authentication status - req.user:', !!req.user, req.user ? 'authenticated' : 'not authenticated');
 
-      // Get contract (try both authenticated and public access)
-      let contract = null;
-      let userId = null;
-
-      contract = await storage.getContract(contractId, req.user.id);
+      const contract = await storage.getContract(contractId, req.user.id);
 
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      // ALWAYS generate fresh PDF with latest contract data (don't use cached R2 version)
-      console.log('📄 Generating fresh PDF with latest contract edits...');
-
-      try {
-        // Get fresh contract data from database to include recent edits
-        const freshContract = await storage.getContract(contractId, req.user.id);
-        if (!freshContract) {
-          return res.status(404).json({ error: 'Contract not found' });
+      // For authenticated users, fetch from R2 and serve directly (no CORS)
+      if (contract.cloudStorageUrl) {
+        console.log('👤 Authenticated user: Fetching PDF from R2 and serving directly');
+        try {
+          const response = await fetch(contract.cloudStorageUrl);
+          if (response.ok) {
+            const pdfBuffer = await response.arrayBuffer();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
+            res.setHeader('Content-Length', pdfBuffer.byteLength.toString());
+            return res.send(Buffer.from(pdfBuffer));
+          }
+        } catch (fetchError) {
+          console.log('⚠️ Failed to fetch from R2, falling back to generation');
         }
-        
-        const userSettings = await storage.getSettings(freshContract.userId);
-        const { uploadContractToCloud } = await import('./cloud-storage');
-
-        // Determine if this is a signed contract
-        const signatureDetails = freshContract.status === 'signed' && freshContract.signedAt ? {
-          signedAt: new Date(freshContract.signedAt),
-          signatureName: freshContract.clientName,
-          clientIpAddress: 'contract-download'
-        } : undefined;
-
-        const cloudResult = await uploadContractToCloud(freshContract, userSettings, signatureDetails);
-
-        if (cloudResult.success && cloudResult.url) {
-          // Update contract with cloud storage URL
-          await storage.updateContract(freshContract.id, {
-            cloudStorageUrl: cloudResult.url,
-            cloudStorageKey: cloudResult.key
-          });
-
-          console.log('✅ Contract uploaded to cloud');
-          
-          // Authenticated user - continue to fallback generation with fresh data
-          console.log('👤 Authenticated user: Serving generated PDF directly');
-        } else {
-          console.log('⚠️ Cloud upload failed, generating directly');
-        }
-        // Generate PDF directly with fresh contract data
-        const { generateContractPDF } = await import('./pdf-generator');
-        const pdfBuffer = await generateContractPDF(freshContract, userSettings, signatureDetails);
-
-        // Set proper headers for PDF download  
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="Contract-${freshContract.contractNumber || freshContract.id}.pdf"`);
-        res.setHeader('Content-Length', pdfBuffer.length.toString());
-
-        // Send the PDF buffer
-        res.send(pdfBuffer);
-        
-      } catch (cloudError) {
-        console.error('❌ Cloud storage failed, falling back to direct generation');
-        
-        // FALLBACK: Generate PDF directly with original contract data
-        console.log('📄 Generating PDF directly as fallback...');
-        const userSettings = await storage.getSettings(contract.userId);
-        const { generateContractPDF } = await import('./pdf-generator');
-
-        const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
-          signedAt: new Date(contract.signedAt),
-          signatureName: contract.clientName,
-          clientIpAddress: 'contract-download'
-        } : undefined;
-
-        const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
-
-        // Set proper headers for PDF download
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
-        res.setHeader('Content-Length', pdfBuffer.length.toString());
-
-        // Send the PDF buffer
-        res.send(pdfBuffer);
       }
+
+      // Generate and upload to cloud storage
+      console.log('☁️ Generating and uploading to cloud storage...');
+      const userSettings = await storage.getSettings(contract.userId);
+      const { uploadContractToCloud } = await import('./cloud-storage');
+
+      const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+        signedAt: new Date(contract.signedAt),
+        signatureName: contract.clientName,
+        clientIpAddress: 'contract-download'
+      } : undefined;
+
+      const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
+
+      if (cloudResult.success && cloudResult.url) {
+        await storage.updateContract(contract.id, {
+          cloudStorageUrl: cloudResult.url,
+          cloudStorageKey: cloudResult.key
+        });
+        console.log('✅ Contract uploaded to cloud');
+      }
+
+      // Generate PDF directly as fallback
+      const { generateContractPDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
+      res.send(pdfBuffer);
 
     } catch (error) {
       console.error('❌ Contract PDF download error:', error);
