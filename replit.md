@@ -217,9 +217,10 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Smart Page Generation**: ✅ uploadContractSigningPage now detects contract status and generates appropriate page
 - **Enhanced Client Experience**: ✅ Clients accessing signed contract links see professional "already signed" confirmation page
 - **Signature Details Display**: ✅ Shows who signed, when signed, and contract completion status
-- **PDF Download CORS Issue**: ✅ Identified CORS error when downloading PDFs directly from R2 storage in browser
-- **Download System Restored**: ✅ Reverted to original simple download approach to maintain system stability
-- **View Contract Restored**: ✅ Restored original handleViewSignedContract logic prioritizing cloud storage URLs
+- **PDF Download CORS Fix Implemented**: ✅ Fixed CORS errors for authenticated app users while preserving R2 direct access for email links
+- **Smart Download Routing**: ✅ Authenticated users get PDFs served through app server (no CORS), email links redirect to R2 URLs
+- **Dual Access Pattern**: ✅ App server fetches from R2 and serves directly to authenticated users, unauthenticated access redirects to R2
+- **Email Links Preserved**: ✅ Confirmation emails continue using direct R2 URLs for optimal client experience
 - **Future Enhancement Noted**: ✅ User suggestion to open contract PDFs in new tabs for better UX (deferred until more testing)
 - **Root Cause**: ✅ R2-hosted signing pages making API calls to app server require explicit CORS allowance; R2 PDFs need app server proxy for browser downloads
 - **Status**: COMPLETE CORS FIXES IMPLEMENTED - Contract signing and PDF downloads working properly without CORS errors

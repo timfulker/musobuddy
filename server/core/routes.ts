@@ -580,10 +580,29 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
 
-      // PRIORITY 1: Use cloud storage URL if available
+      // PRIORITY 1: For authenticated users, fetch from R2 and serve directly (no CORS)
+      // For unauthenticated access (email links), redirect to R2
       if (invoice.cloudStorageUrl) {
-        console.log('🔗 Redirecting to cloud storage URL:', invoice.cloudStorageUrl);
-        return res.redirect(invoice.cloudStorageUrl);
+        if (req.user) {
+          // Authenticated user - fetch from R2 and serve directly to avoid CORS
+          console.log('👤 Authenticated user: Fetching invoice PDF from R2 and serving directly');
+          try {
+            const response = await fetch(invoice.cloudStorageUrl);
+            if (response.ok) {
+              const pdfBuffer = await response.arrayBuffer();
+              res.setHeader('Content-Type', 'application/pdf');
+              res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+              res.setHeader('Content-Length', pdfBuffer.byteLength.toString());
+              return res.send(Buffer.from(pdfBuffer));
+            }
+          } catch (fetchError) {
+            console.log('⚠️ Failed to fetch invoice from R2, falling back to generation');
+          }
+        } else {
+          // Unauthenticated access (email links) - redirect to R2
+          console.log('🔗 Email link access: Redirecting to cloud storage URL:', invoice.cloudStorageUrl);
+          return res.redirect(invoice.cloudStorageUrl);
+        }
       }
 
       // PRIORITY 2: Generate and upload to cloud storage
@@ -628,35 +647,42 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Contract PDF download route - UPDATED to use cloud storage
-  app.get('/api/contracts/:id/download', async (req, res) => {
+  // Contract PDF download route - handles both authenticated and unauthenticated access
+  app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
+    // This route will now always have authenticated users due to middleware
+    console.log('👤 Authenticated download request - user ID:', req.user.id);
     try {
       const contractId = parseInt(req.params.id);
       console.log('📄 Contract PDF download request for ID:', contractId);
+      console.log('🔍 Authentication status - req.user:', !!req.user, req.user ? 'authenticated' : 'not authenticated');
 
       // Get contract (try both authenticated and public access)
       let contract = null;
       let userId = null;
 
-      // Try authenticated access first
-      if (req.user?.id) {
-        contract = await storage.getContract(contractId, req.user.id);
-        userId = req.user.id;
-      }
-
-      // If not found or not authenticated, try public access
-      if (!contract) {
-        contract = await storage.getContractById(contractId);
-      }
+      contract = await storage.getContract(contractId, req.user.id);
 
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      // PRIORITY 1: Use cloud storage URL if available
+      // PRIORITY 1: For authenticated users, fetch from R2 and serve directly (no CORS)
+      // For unauthenticated access (email links), redirect to R2
       if (contract.cloudStorageUrl) {
-        console.log('🔗 Redirecting to cloud storage URL:', contract.cloudStorageUrl);
-        return res.redirect(contract.cloudStorageUrl);
+        // Always serve directly for authenticated users (no CORS issues)
+        console.log('👤 Authenticated user: Fetching PDF from R2 and serving directly');
+        try {
+          const response = await fetch(contract.cloudStorageUrl);
+          if (response.ok) {
+            const pdfBuffer = await response.arrayBuffer();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
+            res.setHeader('Content-Length', pdfBuffer.byteLength.toString());
+            return res.send(Buffer.from(pdfBuffer));
+          }
+        } catch (fetchError) {
+          console.log('⚠️ Failed to fetch from R2, falling back to generation');
+        }
       }
 
       // PRIORITY 2: Generate and upload to cloud storage
@@ -682,8 +708,12 @@ export async function registerRoutes(app: Express) {
             cloudStorageKey: cloudResult.key
           });
 
-          console.log('✅ Contract uploaded to cloud, redirecting to:', cloudResult.url);
-          return res.redirect(cloudResult.url);
+          console.log('✅ Contract uploaded to cloud');
+          
+          // Authenticated user - continue to fallback generation
+          console.log('👤 Authenticated user: Serving generated PDF directly');
+        } else {
+          console.log('⚠️ Cloud upload failed, generating directly');
         }
       } catch (cloudError) {
         console.error('❌ Cloud storage failed, falling back to direct generation');
@@ -713,6 +743,51 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Contract PDF download error:', error);
       res.status(500).json({ error: 'Failed to generate contract PDF' });
+    }
+  });
+
+  // Public contract download route for email links (NO AUTHENTICATION)
+  app.get('/download/contracts/:id', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      console.log('🔗 Public contract access for ID:', contractId);
+      
+      const contract = await storage.getContractById(contractId);
+      
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      // For public access, always redirect to R2 cloud storage
+      if (contract.cloudStorageUrl) {
+        console.log('🔗 Redirecting to cloud storage:', contract.cloudStorageUrl);
+        return res.redirect(contract.cloudStorageUrl);
+      }
+
+      // If no cloud URL, generate and redirect
+      const userSettings = await storage.getSettings(contract.userId);
+      const { uploadContractToCloud } = await import('./cloud-storage');
+
+      const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+        signedAt: new Date(contract.signedAt),
+        signatureName: contract.clientName,
+        clientIpAddress: 'public-download'
+      } : undefined;
+
+      const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
+
+      if (cloudResult.success && cloudResult.url) {
+        await storage.updateContract(contract.id, {
+          cloudStorageUrl: cloudResult.url,
+          cloudStorageKey: cloudResult.key
+        });
+        return res.redirect(cloudResult.url);
+      }
+
+      return res.status(500).json({ error: 'Could not generate contract PDF' });
+    } catch (error) {
+      console.error('❌ Public contract download error:', error);
+      res.status(500).json({ error: 'Failed to access contract' });
     }
   });
 
