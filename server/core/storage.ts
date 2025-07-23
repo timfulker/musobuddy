@@ -232,7 +232,7 @@ export class Storage {
   // Compliance - simplified for now
   async getCompliance(userId: string) {
     try {
-      const documents = await this.db
+      const documents = await db
         .select()
         .from(complianceDocuments)
         .where(eq(complianceDocuments.userId, userId))
@@ -247,7 +247,7 @@ export class Storage {
 
   async createCompliance(complianceData: any) {
     try {
-      const [document] = await this.db
+      const [document] = await db
         .insert(complianceDocuments)
         .values(complianceData)
         .returning();
@@ -261,7 +261,7 @@ export class Storage {
 
   async deleteCompliance(documentId: number, userId: string) {
     try {
-      const [deleted] = await this.db
+      const [deleted] = await db
         .delete(complianceDocuments)
         .where(and(
           eq(complianceDocuments.id, documentId),
