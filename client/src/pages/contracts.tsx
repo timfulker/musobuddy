@@ -927,61 +927,7 @@ export default function Contracts() {
                         </div>
                       </div>
 
-                      {/* Reminder Settings */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                          Reminder Settings (Optional)
-                        </h3>
-                        
-                        <FormField
-                          control={form.control}
-                          name="reminderEnabled"
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-x-3">
-                              <FormControl>
-                                <input
-                                  type="checkbox"
-                                  checked={field.value || false}
-                                  onChange={(e) => field.onChange(e.target.checked)}
-                                  className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
-                                />
-                              </FormControl>
-                              <FormLabel className="text-sm font-medium text-gray-700">
-                                Enable automatic reminders if contract is not signed
-                              </FormLabel>
-                            </FormItem>
-                          )}
-                        />
 
-                        {form.watch('reminderEnabled') && (
-                          <FormField
-                            control={form.control}
-                            name="reminderDays"
-                            render={({ field }) => (
-                              <FormItem className="space-y-2">
-                                <FormLabel className="text-purple-600 font-medium">Send reminder every</FormLabel>
-                                <div className="flex items-center space-x-2">
-                                  <FormControl>
-                                    <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(parseInt(value))}>
-                                      <SelectTrigger className="w-32">
-                                        <SelectValue placeholder="3" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="1">1 day</SelectItem>
-                                        <SelectItem value="3">3 days</SelectItem>
-                                        <SelectItem value="5">5 days</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </FormControl>
-                                  <span className="text-sm text-gray-600">until contract is signed</span>
-                                </div>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                      </div>
 
                       <div className="flex justify-end space-x-3 pt-4 border-t">
                         <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
