@@ -1227,6 +1227,52 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // TEMPLATE EMAIL SENDING ENDPOINT - Business Email Ghosting
+  app.post('/api/templates/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const { template, bookingId } = req.body;
+      
+      if (!template || !bookingId) {
+        return res.status(400).json({ error: 'Template and booking ID are required' });
+      }
+
+      // Get booking data
+      const booking = await storage.getBooking(parseInt(bookingId));
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      if (booking.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to access this booking' });
+      }
+
+      // Get user settings for business email
+      const userSettings = await storage.getSettings(req.user.id);
+      if (!userSettings?.businessEmail) {
+        return res.status(400).json({ error: 'Business email not configured in settings. Please add your business email address.' });
+      }
+
+      // Send template email using existing email infrastructure
+      const { sendTemplateEmail } = await import('./mailgun-email-restored');
+      const result = await sendTemplateEmail(template, booking, userSettings);
+
+      if (result.success) {
+        console.log('✅ Template email sent successfully:', result.messageId);
+        res.json({ 
+          success: true, 
+          messageId: result.messageId,
+          message: 'Email sent successfully. Replies will go to your business email.' 
+        });
+      } else {
+        console.error('❌ Template email failed:', result.error);
+        res.status(500).json({ error: result.error || 'Failed to send email' });
+      }
+    } catch (error: any) {
+      console.error('❌ Template email endpoint error:', error);
+      res.status(500).json({ error: 'Failed to send template email' });
+    }
+  });
+
   return server;
 }
 

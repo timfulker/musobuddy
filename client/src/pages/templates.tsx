@@ -260,7 +260,7 @@ export default function Templates() {
       .replace(/\[Venue Address\]/g, booking.venueAddress || '[Venue Address]');
   };
 
-  const handleUseTemplate = (template: EmailTemplate) => {
+  const handleUseTemplate = async (template: EmailTemplate) => {
     if (!bookingData) {
       toast({
         title: "Error",
@@ -275,22 +275,50 @@ export default function Templates() {
     const customizedEmailBody = replaceTemplateVariables(template.emailBody, bookingData);
     const customizedSmsBody = template.smsBody ? replaceTemplateVariables(template.smsBody, bookingData) : '';
 
-    // Create a composed email (in a real implementation, this would open an email composer)
-    // For now, we'll show a preview dialog
-    const emailPreview = {
-      to: bookingData.clientEmail,
+    const customizedTemplate = {
       subject: customizedSubject,
-      body: customizedEmailBody,
-      sms: customizedSmsBody
+      emailBody: customizedEmailBody,
+      smsBody: customizedSmsBody
     };
 
-    // Show preview modal or navigate to email composer
-    toast({
-      title: "Template Customized",
-      description: `Email template prepared for ${bookingData.clientName}. In a full implementation, this would open your email composer.`,
-    });
+    try {
+      // Send the email using the template
+      const response = await fetch('/api/templates/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          template: customizedTemplate,
+          bookingId: bookingId
+        })
+      });
 
-    console.log('Customized Email Preview:', emailPreview);
+      if (response.ok) {
+        const result = await response.json();
+        toast({
+          title: "Email Sent Successfully",
+          description: `Your message has been sent to ${bookingData.clientName}. Replies will go to your business email.`,
+        });
+        console.log('✅ Template email sent:', result);
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Email Failed",
+          description: error.error || "Failed to send email. Please try again.",
+          variant: "destructive",
+        });
+        console.error('❌ Template email failed:', error);
+      }
+    } catch (error) {
+      console.error('❌ Template email error:', error);
+      toast({
+        title: "Email Error",
+        description: "Failed to send email. Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

@@ -1,6 +1,6 @@
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
-import type { Contract, Invoice, UserSettings } from '@shared/schema';
+import type { Contract, Invoice, UserSettings, Booking } from '@shared/schema';
 import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
 import { uploadContractToCloud, uploadInvoiceToCloud, isCloudStorageConfigured } from './cloud-storage';
 import { storage } from './storage';
@@ -750,6 +750,139 @@ function generateInvoiceEmailHTML(invoice: any, userSettings: any, viewUrl: stri
     <div class="footer">
         <p>This email was sent by ${businessName} via MusoBuddy</p>
         <p>Invoice viewing link expires in 30 days</p>
+    </div>
+</body>
+</html>
+  `;
+}
+
+// TEMPLATE EMAIL SENDING FUNCTION - Business Email Ghosting Implementation
+export async function sendTemplateEmail(
+  template: { subject: string; emailBody: string; smsBody?: string },
+  booking: Booking,
+  userSettings: UserSettings
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    console.log('📧 === TEMPLATE EMAIL SENDING START ===');
+    console.log('📧 Recipient:', booking.clientEmail);
+    console.log('📧 Template:', template.subject);
+    
+    if (!booking.clientEmail) {
+      throw new Error('Client email is required');
+    }
+
+    // Get business email for reply-to (Option 2: Business Email Ghosting)
+    const businessEmail = userSettings?.businessEmail;
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    
+    if (!businessEmail) {
+      throw new Error('Business email not configured in user settings');
+    }
+
+    // Generate professional HTML email with template content
+    const emailHTML = generateTemplateEmailHTML(template, booking, userSettings);
+
+    const emailData: EmailData = {
+      to: booking.clientEmail,
+      from: `${businessName} <noreply@mg.musobuddy.com>`, // MusoBuddy sends
+      replyTo: businessEmail, // Replies go to business email
+      subject: template.subject,
+      html: emailHTML,
+      text: template.emailBody // Plain text fallback
+    };
+
+    console.log('📧 Email configuration:', {
+      from: emailData.from,
+      replyTo: emailData.replyTo,
+      to: emailData.to,
+      subject: emailData.subject
+    });
+
+    const result = await sendEmail(emailData);
+    
+    if (result.success) {
+      console.log('✅ Template email sent successfully:', result.messageId);
+      return { success: true, messageId: result.messageId };
+    } else {
+      console.error('❌ Template email failed:', result.diagnostics);
+      return { success: false, error: 'Failed to send email' };
+    }
+  } catch (error: any) {
+    console.error('❌ Template email error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Generate professional HTML for template emails
+function generateTemplateEmailHTML(
+  template: { subject: string; emailBody: string },
+  booking: Booking,
+  userSettings: UserSettings
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  const businessEmail = userSettings?.businessEmail;
+  
+  // Convert plain text email body to HTML with line breaks
+  const htmlBody = template.emailBody
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${template.subject}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+        .booking-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .detail-row { margin: 10px 0; padding: 5px 0; }
+        .detail-row strong { color: #374151; }
+        .footer { margin-top: 30px; font-size: 14px; color: #6b7280; text-align: center; }
+        .message-content { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📧 Message from ${businessName}</h1>
+        <p>Regarding: ${booking.venue || 'Your Booking'}</p>
+    </div>
+    
+    <div class="content">
+        ${booking.eventDate ? `
+        <div class="booking-details">
+            <h3>Booking Reference</h3>
+            <div class="detail-row">
+                <strong>Event Date:</strong> ${new Date(booking.eventDate).toLocaleDateString('en-GB')}
+            </div>
+            ${booking.eventTime ? `
+            <div class="detail-row">
+                <strong>Event Time:</strong> ${booking.eventTime}
+            </div>` : ''}
+            ${booking.venue ? `
+            <div class="detail-row">
+                <strong>Venue:</strong> ${booking.venue}
+            </div>` : ''}
+            ${booking.fee ? `
+            <div class="detail-row">
+                <strong>Fee:</strong> £${booking.fee}
+            </div>` : ''}
+        </div>` : ''}
+        
+        <div class="message-content">
+            <p>${htmlBody}</p>
+        </div>
+        
+        <p>Best regards,<br>
+        ${businessName}${businessEmail ? `<br><a href="mailto:${businessEmail}">${businessEmail}</a>` : ''}</p>
+    </div>
+    
+    <div class="footer">
+        <p>This email was sent by ${businessName} via MusoBuddy</p>
+        <p>Reply to this email to respond directly to ${businessName}</p>
     </div>
 </body>
 </html>
