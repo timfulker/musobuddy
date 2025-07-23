@@ -54,9 +54,9 @@ export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
         navigate(`/templates?bookingId=${booking.id}&action=respond`);
         return; // Don't update status immediately, let templates page handle it
       case 'issue_contract':
-        newStatus = 'client_confirms'; // Assume client will confirm after seeing contract
-        message = "Contract issued - status updated to Client Confirms";
-        break;
+        // Navigate to contracts page with booking data pre-filled
+        navigate(`/contracts?bookingId=${booking.id}&action=create`);
+        return; // Don't update status immediately, let contract creation handle it
       case 'issue_invoice':
         // Status stays the same, but we could add invoice tracking
         message = "Invoice issued";

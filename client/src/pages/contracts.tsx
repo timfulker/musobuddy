@@ -124,11 +124,11 @@ export default function Contracts() {
     }
   }, [watchEventDate, watchClientName, editingContract, form]);
 
-  // Check URL params to auto-open form dialog and auto-fill with enquiry data
+  // Check URL params to auto-open form dialog and auto-fill with booking/enquiry data
   React.useEffect(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('action') === 'new' && !isLoading && contracts.length >= 0) {
+      if ((urlParams.get('action') === 'new' || urlParams.get('action') === 'create') && !isLoading && contracts.length >= 0) {
         setIsDialogOpen(true);
 
         // Auto-generate contract number in format (dd/mm/yyyy - Client Name)
@@ -143,57 +143,103 @@ export default function Contracts() {
         //   form.setValue('terms', settings.defaultTerms);
         // }
 
-        // Auto-fill with enquiry data if enquiryId is provided
-        const enquiryId = urlParams.get('enquiryId');
-        if (enquiryId && enquiries.length > 0) {
-          const enquiry = enquiries.find(e => e.id === parseInt(enquiryId));
-          if (enquiry) {
-            // Auto-fill form with enquiry data
-            form.setValue('enquiryId', enquiry.id);
-            form.setValue('clientName', enquiry.clientName || '');
-            form.setValue('clientEmail', enquiry.clientEmail || '');
-            form.setValue('clientPhone', enquiry.clientPhone || '');
-            form.setValue('venue', enquiry.venue || '');
-            form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
-            
-            // Convert enquiry time to 24-hour format if needed
-            const convertToTimeFormat = (timeStr: string) => {
-              if (!timeStr) return '';
-              
-              // If already in HH:MM format, return as is
-              if (/^\d{2}:\d{2}$/.test(timeStr)) {
-                return timeStr;
-              }
-              
-              // Convert from formats like "7:00 PM" or "19:00" to HH:MM
-              const time = timeStr.toLowerCase().replace(/\s+/g, '');
-              
-              if (time.includes('pm') || time.includes('am')) {
-                const [timePart, meridian] = time.split(/(am|pm)/);
-                const [hours, minutes = '00'] = timePart.split(':');
-                let hour24 = parseInt(hours);
+        // Auto-fill with booking data if bookingId is provided
+        const bookingId = urlParams.get('bookingId');
+        if (bookingId) {
+          // Fetch booking data and auto-fill form
+          fetch(`/api/bookings/${bookingId}`, { credentials: 'include' })
+            .then(response => response.json())
+            .then(booking => {
+              if (booking) {
+                // Auto-fill form with booking data
+                form.setValue('clientName', booking.clientName || '');
+                form.setValue('clientEmail', booking.clientEmail || '');
+                form.setValue('clientPhone', booking.clientPhone || '');
+                form.setValue('clientAddress', booking.clientAddress || '');
+                form.setValue('venue', booking.venue || '');
+                form.setValue('venueAddress', booking.venueAddress || '');
+                form.setValue('eventDate', booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '');
+                form.setValue('eventTime', booking.eventTime || '');
+                form.setValue('eventEndTime', booking.eventEndTime || '');
+                form.setValue('fee', booking.fee || '');
+                form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
+                form.setValue('specialRequirements', booking.specialRequirements || '');
                 
-                if (meridian === 'pm' && hour24 !== 12) {
-                  hour24 += 12;
-                } else if (meridian === 'am' && hour24 === 12) {
-                  hour24 = 0;
+                // Auto-generate contract number with event date and client name
+                if (booking.eventDate && booking.clientName) {
+                  const eventDate = new Date(booking.eventDate);
+                  const formattedDate = eventDate.toLocaleDateString('en-GB');
+                  const contractNumber = `(${formattedDate} - ${booking.clientName})`;
+                  form.setValue('contractNumber', contractNumber);
                 }
                 
-                return `${hour24.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+                toast({
+                  title: "Booking Data Loaded",
+                  description: "Contract form pre-filled with booking information",
+                });
               }
+            })
+            .catch(error => {
+              console.error('Error fetching booking data:', error);
+              toast({
+                title: "Error",
+                description: "Could not load booking data for auto-fill",
+                variant: "destructive",
+              });
+            });
+        } else {
+          // Auto-fill with enquiry data if enquiryId is provided (fallback)
+          const enquiryId = urlParams.get('enquiryId');
+          if (enquiryId && enquiries.length > 0) {
+            const enquiry = enquiries.find(e => e.id === parseInt(enquiryId));
+            if (enquiry) {
+              // Auto-fill form with enquiry data
+              form.setValue('enquiryId', enquiry.id);
+              form.setValue('clientName', enquiry.clientName || '');
+              form.setValue('clientEmail', enquiry.clientEmail || '');
+              form.setValue('clientPhone', enquiry.clientPhone || '');
+              form.setValue('venue', enquiry.venue || '');
+              form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
               
-              return timeStr;
-            };
-            
-            form.setValue('eventTime', convertToTimeFormat(enquiry.eventTime || ''));
-            form.setValue('fee', enquiry.fee || '');
-            
-            // Auto-generate contract number with event date and client name
-            if (enquiry.eventDate && enquiry.clientName) {
-              const eventDate = new Date(enquiry.eventDate);
-              const formattedDate = eventDate.toLocaleDateString('en-GB');
-              const contractNumber = `(${formattedDate} - ${enquiry.clientName})`;
-              form.setValue('contractNumber', contractNumber);
+              // Convert enquiry time to 24-hour format if needed
+              const convertToTimeFormat = (timeStr: string) => {
+                if (!timeStr) return '';
+                
+                // If already in HH:MM format, return as is
+                if (/^\d{2}:\d{2}$/.test(timeStr)) {
+                  return timeStr;
+                }
+                
+                // Convert from formats like "7:00 PM" or "19:00" to HH:MM
+                const time = timeStr.toLowerCase().replace(/\s+/g, '');
+                
+                if (time.includes('pm') || time.includes('am')) {
+                  const [timePart, meridian] = time.split(/(am|pm)/);
+                  const [hours, minutes = '00'] = timePart.split(':');
+                  let hour24 = parseInt(hours);
+                  
+                  if (meridian === 'pm' && hour24 !== 12) {
+                    hour24 += 12;
+                  } else if (meridian === 'am' && hour24 === 12) {
+                    hour24 = 0;
+                  }
+                  
+                  return `${hour24.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+                }
+                
+                return timeStr;
+              };
+              
+              form.setValue('eventTime', convertToTimeFormat(enquiry.eventTime || ''));
+              form.setValue('fee', enquiry.fee || '');
+              
+              // Auto-generate contract number with event date and client name
+              if (enquiry.eventDate && enquiry.clientName) {
+                const eventDate = new Date(enquiry.eventDate);
+                const formattedDate = eventDate.toLocaleDateString('en-GB');
+                const contractNumber = `(${formattedDate} - ${enquiry.clientName})`;
+                form.setValue('contractNumber', contractNumber);
+              }
             }
           }
         }
