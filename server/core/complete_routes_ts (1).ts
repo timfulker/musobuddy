@@ -15,7 +15,7 @@ const upload = multer({
     const allowedTypes = /pdf|doc|docx/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-
+    
     if (mimetype && extname) {
       return cb(null, true);
     } else {
@@ -28,7 +28,7 @@ export async function registerRoutes(app: Express) {
   const server = createServer(app);
 
   // ===== PUBLIC CONTRACT SIGNING ROUTES (MUST BE FIRST - NO AUTHENTICATION) =====
-
+  
   // Contract signing OPTIONS (PUBLIC - for CORS)
   app.options('/api/contracts/sign/:id', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -42,24 +42,24 @@ export async function registerRoutes(app: Express) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
-
+    
     try {
       console.log('🔥 CONTRACT SIGNING: Starting contract signing process');
       const contractId = parseInt(req.params.id);
       const { signatureName, clientName, signature, clientPhone, clientAddress, venueAddress } = req.body;
-
+      
       const finalSignatureName = signatureName || clientName;
-
+      
       if (!finalSignatureName || !finalSignatureName.trim()) {
         return res.status(400).json({ message: "Signature name is required" });
       }
-
+      
       // Get contract and verify it can be signed
       const contract = await storage.getContractById(contractId);
       if (!contract) {
         return res.status(404).json({ message: "Contract not found" });
       }
-
+      
       // CRITICAL FIX: Check if already signed
       if (contract.status === 'signed') {
         console.log('🔥 CONTRACT SIGNING: ERROR - Contract already signed');
@@ -70,20 +70,20 @@ export async function registerRoutes(app: Express) {
           signedBy: contract.clientName
         });
       }
-
+      
       if (contract.status !== 'sent') {
         return res.status(400).json({ message: "Contract is not available for signing" });
       }
-
+      
       const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-
+      
       // Prepare signature details
       const signatureDetails = {
         signedAt: new Date(),
         signatureName: finalSignatureName.trim(),
         clientIpAddress: clientIP
       };
-
+      
       // Sign contract in database
       const signedContract = await storage.signContract(contractId, {
         signatureName: finalSignatureName.trim(),
@@ -93,19 +93,19 @@ export async function registerRoutes(app: Express) {
         clientAddress: clientAddress?.trim(),
         venueAddress: venueAddress?.trim()
       });
-
+      
       if (!signedContract) {
         return res.status(500).json({ message: "Failed to sign contract" });
       }
-
+      
       // CRITICAL: Upload signed contract to cloud storage and send emails
       try {
         const userSettings = await storage.getSettings(contract.userId);
-
+        
         // Upload signed contract PDF to cloud storage
         const { uploadContractToCloud } = await import('./cloud-storage');
         const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
-
+        
         if (cloudResult.success && cloudResult.url) {
           // Update contract with cloud storage URL for signed PDF
           await storage.updateContract(contractId, {
@@ -115,22 +115,22 @@ export async function registerRoutes(app: Express) {
           });
           console.log('✅ Signed contract uploaded to cloud storage:', cloudResult.url);
         }
-
+        
         // Send confirmation emails
         const { sendContractConfirmationEmails } = await import('./mailgun-email-restored');
         await sendContractConfirmationEmails(signedContract, userSettings);
-
+        
       } catch (emailError: any) {
         console.error('❌ Email/cloud error (contract still signed):', emailError);
       }
-
+      
       return res.json({
         success: true,
         message: "Contract signed successfully! Both parties have been notified.",
         signedAt: signatureDetails.signedAt,
         signedBy: finalSignatureName.trim()
       });
-
+      
     } catch (error: any) {
       console.error('❌ Contract signing error:', error);
       return res.status(500).json({ 
@@ -144,30 +144,30 @@ export async function registerRoutes(app: Express) {
     try {
       console.log('🎯 CONTRACT SIGNING ROUTE HIT:', req.params.id);
       const contractId = parseInt(req.params.id);
-
+      
       if (isNaN(contractId)) {
         return res.status(400).send('<h1>Invalid Contract ID</h1>');
       }
-
+      
       // Check if contract exists
       const contract = await storage.getContractById(contractId);
       if (!contract) {
         return res.status(404).send('<h1>Contract Not Found</h1>');
       }
-
+      
       // CRITICAL: If already signed, show "already signed" page
       if (contract.status === 'signed') {
         const alreadySignedHtml = generateAlreadySignedPage(contract);
         return res.send(alreadySignedHtml);
       }
-
+      
       // Get user settings for branding
       const userSettings = await storage.getSettings(contract.userId);
-
+      
       // Generate contract signing page
       const signingPageHTML = generateContractSigningPage(contract, userSettings);
       res.send(signingPageHTML);
-
+      
     } catch (error: any) {
       console.error('❌ Contract signing page error:', error);
       res.status(500).send('<h1>Server Error</h1><p>Unable to load contract signing page.</p>');
@@ -179,11 +179,11 @@ export async function registerRoutes(app: Express) {
     try {
       const contractId = parseInt(req.params.id);
       const contract = await storage.getContractById(contractId);
-
+      
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
-
+      
       res.json({ 
         status: contract.status,
         signed: contract.status === 'signed',
@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express) {
       if (!contract) {
         return res.status(404).json({ message: 'Contract not found' });
       }
-
+      
       // Return contract data for public viewing (exclude sensitive fields)
       const publicContract = {
         ...contract,
@@ -210,7 +210,7 @@ export async function registerRoutes(app: Express) {
         cloudStorageUrl: contract.cloudStorageUrl,
         signingPageUrl: contract.signingPageUrl
       };
-
+      
       res.json(publicContract);
     } catch (error) {
       res.status(500).json({ error: 'Failed to load contract' });
@@ -234,7 +234,7 @@ export async function registerRoutes(app: Express) {
     try {
       // Sanitize and prepare contract data
       const sanitizedData = { ...req.body, userId: req.user.id };
-
+      
       // Handle numeric fields properly
       if (sanitizedData.fee === '' || sanitizedData.fee === undefined) {
         sanitizedData.fee = '0.00';
@@ -242,54 +242,54 @@ export async function registerRoutes(app: Express) {
       if (sanitizedData.deposit === '' || sanitizedData.deposit === undefined) {
         sanitizedData.deposit = '0.00';
       }
-
+      
       // Handle optional fields - set empty strings to null
       ['venue', 'eventTime', 'eventEndTime', 'clientAddress', 'clientPhone', 'venueAddress'].forEach(field => {
         if (sanitizedData[field] === '') {
           sanitizedData[field] = null;
         }
       });
-
+      
       // Auto-generate contract number if not provided
       if (!sanitizedData.contractNumber || sanitizedData.contractNumber === '') {
         const eventDate = new Date(sanitizedData.eventDate);
         const dateStr = eventDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
         sanitizedData.contractNumber = `(${dateStr} - ${sanitizedData.clientName})`;
       }
-
+      
       // Create contract in database
       const contract = await storage.createContract(sanitizedData);
       console.log('✅ Contract created in database:', contract.id);
-
+      
       // CRITICAL: Always upload to cloud storage for client access
       try {
         const userSettings = await storage.getSettings(req.user.id);
         const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
-
+        
         // Upload draft contract PDF to cloud storage
         console.log('☁️ Uploading draft contract PDF to cloud storage...');
         const contractPdfResult = await uploadContractToCloud(contract, userSettings);
-
+        
         // Upload contract signing page to cloud storage
         console.log('☁️ Uploading contract signing page to cloud storage...');
         const signingPageResult = await uploadContractSigningPage(contract, userSettings);
-
+        
         // Update contract with cloud storage URLs
         const updateData: any = {};
-
+        
         if (contractPdfResult.success && contractPdfResult.url) {
           updateData.cloudStorageUrl = contractPdfResult.url;
           updateData.cloudStorageKey = contractPdfResult.key;
           console.log('📄 Contract PDF uploaded to cloud:', contractPdfResult.url);
         }
-
+        
         if (signingPageResult.success && signingPageResult.url) {
           updateData.signingPageUrl = signingPageResult.url;
           updateData.signingPageKey = signingPageResult.storageKey;
           updateData.signingUrlCreatedAt = new Date();
           console.log('📝 Signing page uploaded to cloud:', signingPageResult.url);
         }
-
+        
         if (Object.keys(updateData).length > 0) {
           const updatedContract = await storage.updateContract(contract.id, updateData, req.user.id);
           console.log('✅ Contract updated with cloud storage URLs');
@@ -298,7 +298,7 @@ export async function registerRoutes(app: Express) {
           console.warn('⚠️ No cloud storage URLs to update');
           res.json(contract);
         }
-
+        
       } catch (storageError: any) {
         console.error('❌ CRITICAL: Cloud storage upload failed:', storageError);
         console.error('❌ Contract will be created without cloud storage');
@@ -314,36 +314,36 @@ export async function registerRoutes(app: Express) {
   app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
     try {
       console.log('📧 Contract email route called with body:', req.body);
-
+      
       const { contractId, customMessage } = req.body;
-
+      
       if (!contractId) {
         return res.status(400).json({ error: 'Contract ID is required' });
       }
-
+      
       const contract = await storage.getContract(contractId);
-
+      
       if (!contract) {
         console.log('❌ Contract not found:', contractId);
         return res.status(404).json({ error: 'Contract not found' });
       }
-
+      
       if (!contract.clientEmail) {
         console.log('❌ No client email for contract:', contractId);
         return res.status(400).json({ error: 'Contract has no client email address' });
       }
-
+      
       const userSettings = await storage.getSettings(req.user.id);
-
+      
       // CRITICAL: Use cloud storage signing page URL
       let signingUrl = contract.signingPageUrl || contract.cloudStorageUrl;
-
+      
       // If no cloud storage URL exists, create one NOW
       if (!signingUrl) {
         console.log('🔗 No cloud storage URL found, creating one now...');
         const { uploadContractSigningPage } = await import('./cloud-storage');
         const result = await uploadContractSigningPage(contract, userSettings);
-
+        
         if (result.success && result.url) {
           // Update contract with cloud storage info
           await storage.updateContract(contract.id, {
@@ -351,27 +351,27 @@ export async function registerRoutes(app: Express) {
             signingPageKey: result.storageKey,
             signingUrlCreatedAt: new Date()
           }, req.user.id);
-
+          
           signingUrl = result.url;
           console.log('✅ Created cloud-hosted signing URL:', signingUrl);
         } else {
           return res.status(500).json({ error: 'Failed to create signing page' });
         }
       }
-
+      
       console.log('📧 Sending contract email with cloud-hosted signing page:', signingUrl);
-
+      
       const { sendContractEmail } = await import('./mailgun-email-restored');
       const emailSubject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
-
+      
       const emailResult = await sendContractEmail(contract, userSettings, emailSubject, signingUrl);
-
+      
       // Update contract status to 'sent' when email is successfully sent
       await storage.updateContract(contractId, {
         status: 'sent',
         sentAt: new Date()
       }, req.user.id);
-
+      
       console.log('✅ Contract email sent successfully for contract:', contractId);
       res.json({ 
         success: true,
@@ -380,7 +380,7 @@ export async function registerRoutes(app: Express) {
         messageId: emailResult?.id || 'No ID returned',
         signingUrl: signingUrl
       });
-
+      
     } catch (error: any) {
       console.error('❌ Contract email error:', error);
       res.status(500).json({ 
@@ -395,83 +395,83 @@ export async function registerRoutes(app: Express) {
     try {
       const contractId = parseInt(req.params.id);
       console.log('📄 Contract PDF download request for ID:', contractId);
-
+      
       // Get contract (try both authenticated and public access)
       let contract = null;
       let userId = null;
-
+      
       // Try authenticated access first
       if (req.user?.id) {
         contract = await storage.getContract(contractId, req.user.id);
         userId = req.user.id;
       }
-
+      
       // If not found or not authenticated, try public access
       if (!contract) {
         contract = await storage.getContractById(contractId);
       }
-
+      
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
-
+      
       // PRIORITY 1: Use cloud storage URL if available
       if (contract.cloudStorageUrl) {
         console.log('🔗 Redirecting to cloud storage URL:', contract.cloudStorageUrl);
         return res.redirect(contract.cloudStorageUrl);
       }
-
+      
       // PRIORITY 2: Generate and upload to cloud storage
       console.log('☁️ No cloud URL found, generating and uploading to cloud storage...');
-
+      
       try {
         const userSettings = await storage.getSettings(contract.userId);
         const { uploadContractToCloud } = await import('./cloud-storage');
-
+        
         // Determine if this is a signed contract
         const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
           signedAt: new Date(contract.signedAt),
           signatureName: contract.clientName,
           clientIpAddress: 'contract-download'
         } : undefined;
-
+        
         const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
-
+        
         if (cloudResult.success && cloudResult.url) {
           // Update contract with cloud storage URL
           await storage.updateContract(contract.id, {
             cloudStorageUrl: cloudResult.url,
             cloudStorageKey: cloudResult.key
           });
-
+          
           console.log('✅ Contract uploaded to cloud, redirecting to:', cloudResult.url);
           return res.redirect(cloudResult.url);
         }
       } catch (cloudError) {
         console.error('❌ Cloud storage failed, falling back to direct generation');
       }
-
+      
       // FALLBACK: Generate PDF directly (should rarely be needed)
       console.log('📄 Generating PDF directly as fallback...');
       const userSettings = await storage.getSettings(contract.userId);
       const { generateContractPDF } = await import('./pdf-generator');
-
+      
       const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
         signedAt: new Date(contract.signedAt),
         signatureName: contract.clientName,
         clientIpAddress: 'contract-download'
       } : undefined;
-
+      
       const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
-
+      
       // Set proper headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
       res.setHeader('Content-Length', pdfBuffer.length.toString());
-
+      
       // Send the PDF buffer
       res.send(pdfBuffer);
-
+      
     } catch (error) {
       console.error('❌ Contract PDF download error:', error);
       res.status(500).json({ error: 'Failed to generate contract PDF' });
@@ -492,7 +492,7 @@ export async function registerRoutes(app: Express) {
   app.post('/api/contracts/bulk-delete', isAuthenticated, async (req: any, res) => {
     try {
       const { contractIds } = req.body;
-
+      
       if (!Array.isArray(contractIds) || contractIds.length === 0) {
         return res.status(400).json({ error: 'Contract IDs array is required' });
       }
@@ -501,7 +501,7 @@ export async function registerRoutes(app: Express) {
       for (const id of contractIds) {
         await storage.deleteContract(parseInt(id));
       }
-
+      
       res.json({ success: true, deletedCount: contractIds.length });
     } catch (error) {
       console.error('Bulk contract deletion error:', error);
@@ -704,13 +704,13 @@ function generateAlreadySignedPage(contract: any): string {
             <div class="success-icon">✅</div>
             <h1>Contract Already Signed</h1>
             <h2>${contract.contractNumber}</h2>
-
+            
             <div class="success-message">
                 <h3>This contract has already been signed successfully!</h3>
                 <p><strong>Signed by:</strong> ${contract.clientSignature || contract.clientName}</p>
                 <p><strong>Signed on:</strong> ${contract.signedAt ? new Date(contract.signedAt).toLocaleString('en-GB') : 'Recently'}</p>
             </div>
-
+            
             <div class="contract-info">
                 <h3>Event Details</h3>
                 <div class="info-row">
@@ -729,11 +729,11 @@ function generateAlreadySignedPage(contract: any): string {
                     <strong>Performance Fee:</strong> £${contract.fee}
                 </div>
             </div>
-
+            
             <div style="margin: 30px 0;">
                 <a href="/api/contracts/${contract.id}/download" class="download-btn">📄 Download Signed Contract</a>
             </div>
-
+            
             <div class="footer">
                 <p>If you need any assistance, please contact us directly.</p>
                 <p>Powered by MusoBuddy – less admin, more music</p>
@@ -749,7 +749,7 @@ function generateAlreadySignedPage(contract: any): string {
  */
 function generateContractSigningPage(contract: any, userSettings: any): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-
+  
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -796,11 +796,11 @@ function generateContractSigningPage(contract: any, userSettings: any): string {
                 <h1>📝 Performance Contract</h1>
                 <p>Please review and sign the contract below</p>
             </div>
-
+            
             <div class="notice">
                 <p><strong>Note:</strong> This is a fallback signing page. For the best experience, please use the cloud-hosted signing page.</p>
             </div>
-
+            
             <div style="text-align: center; margin: 40px 0;">
                 <h2>Contract: ${contract.contractNumber}</h2>
                 <p><strong>Client:</strong> ${contract.clientName}</p>
@@ -808,7 +808,7 @@ function generateContractSigningPage(contract: any, userSettings: any): string {
                 <p><strong>Venue:</strong> ${contract.venue}</p>
                 <p><strong>Fee:</strong> £${contract.fee}</p>
             </div>
-
+            
             <div style="text-align: center;">
                 <p>Please contact ${businessName} directly to complete the contract signing process.</p>
             </div>
