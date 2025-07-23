@@ -133,7 +133,7 @@ export async function uploadInvoiceToCloud(
   }
 }
 
-// Generate HTML for contract signing page
+// Generate HTML for contract signing page - FIXED VERSION
 function generateContractSigningPageHTML(
   contract: Contract,
   userSettings: UserSettings | null
@@ -155,224 +155,406 @@ function generateContractSigningPageHTML(
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Contract Signing - ${contract.contractNumber}</title>
+      <title>Sign Contract - ${contract.contractNumber}</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; }
-        .title { color: #2563eb; font-size: 28px; margin-bottom: 10px; }
-        .contract-details { background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; margin: 20px 0; }
-        .detail-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-        .detail-label { font-weight: bold; color: #64748b; }
-        .detail-value { color: #1e293b; }
-        .fee-highlight { background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6; }
-        .signing-section { background: #f9fafb; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center; }
-        .sign-button { background: #2563eb; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; text-decoration: none; display: inline-block; margin: 20px 10px; }
-        .sign-button:hover { background: #1d4ed8; }
-        .download-button { background: #059669; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; text-decoration: none; display: inline-block; margin: 20px 10px; }
-        .download-button:hover { background: #047857; }
-        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; }
+        body { 
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          line-height: 1.6; 
+          color: #333; 
+          max-width: 800px; 
+          margin: 0 auto; 
+          padding: 20px; 
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+        }
+        .container {
+          background: white;
+          padding: 40px;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header { 
+          text-align: center; 
+          margin-bottom: 30px; 
+          padding: 20px; 
+          background: #f8fafc; 
+          border-radius: 8px; 
+        }
+        .title { 
+          color: #2563eb; 
+          font-size: 28px; 
+          margin-bottom: 10px; 
+          font-weight: bold;
+        }
+        .contract-details { 
+          background: #fff; 
+          padding: 20px; 
+          border: 1px solid #e2e8f0; 
+          border-radius: 8px; 
+          margin: 20px 0; 
+        }
+        .detail-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          margin: 20px 0;
+        }
         @media (max-width: 600px) {
-          .detail-row { flex-direction: column; }
-          .sign-button, .download-button { display: block; margin: 10px 0; }
+          .detail-grid { grid-template-columns: 1fr; }
+        }
+        .detail-item {
+          background: #f8fafc;
+          padding: 15px;
+          border-radius: 6px;
+          border-left: 4px solid #3b82f6;
+        }
+        .detail-label { 
+          font-weight: bold; 
+          color: #64748b; 
+          display: block;
+          margin-bottom: 5px;
+          font-size: 14px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .detail-value { 
+          color: #1e293b; 
+          font-size: 16px;
+          font-weight: 500;
+        }
+        .fee-highlight { 
+          background: #f0f9ff; 
+          padding: 20px; 
+          border-radius: 8px; 
+          margin: 20px 0; 
+          border-left: 4px solid #3b82f6; 
+          text-align: center;
+        }
+        .signing-section { 
+          background: #f9fafb; 
+          padding: 30px; 
+          border-radius: 8px; 
+          margin: 30px 0; 
+          text-align: center; 
+        }
+        .form-group {
+          margin: 15px 0;
+          text-align: left;
+        }
+        .form-group label {
+          display: block;
+          margin-bottom: 8px;
+          color: #374151;
+          font-weight: 500;
+          font-size: 16px;
+        }
+        .form-group input {
+          width: 100%;
+          padding: 12px;
+          border: 2px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 16px;
+          box-sizing: border-box;
+          transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .sign-button { 
+          background: #2563eb; 
+          color: white; 
+          padding: 16px 32px; 
+          border: none; 
+          border-radius: 8px; 
+          font-size: 18px; 
+          font-weight: bold;
+          cursor: pointer; 
+          text-decoration: none; 
+          display: inline-block; 
+          margin: 20px 10px; 
+          transition: all 0.3s;
+        }
+        .sign-button:hover:not(:disabled) { 
+          background: #1d4ed8; 
+          transform: translateY(-2px);
+        }
+        .sign-button:disabled {
+          background: #9ca3af;
+          cursor: not-allowed;
+          transform: none;
+        }
+        .download-button { 
+          background: #059669; 
+          color: white; 
+          padding: 15px 30px; 
+          border: none; 
+          border-radius: 8px; 
+          font-size: 16px; 
+          cursor: pointer; 
+          text-decoration: none; 
+          display: inline-block; 
+          margin: 20px 10px; 
+          transition: all 0.3s;
+        }
+        .download-button:hover { 
+          background: #047857; 
+          transform: translateY(-2px);
+        }
+        .footer { 
+          text-align: center; 
+          margin-top: 40px; 
+          padding-top: 20px; 
+          border-top: 1px solid #e2e8f0; 
+          color: #64748b; 
+          font-size: 14px; 
+        }
+        .success-message {
+          display: none;
+          background: #d1fae5;
+          color: #065f46;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+          border: 1px solid #10b981;
+        }
+        .error-message {
+          display: none;
+          background: #fee2e2;
+          color: #dc2626;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+          border: 1px solid #f87171;
+        }
+        .loading {
+          display: none;
+          text-align: center;
+          color: #6b7280;
+          margin: 20px 0;
         }
       </style>
     </head>
     <body>
-      <div class="header">
-        <div class="title">Performance Contract</div>
-        <div style="font-size: 18px; color: #64748b;">${contract.contractNumber}</div>
-        <div style="font-size: 16px; color: #64748b; margin-top: 10px;">From ${businessName}</div>
-      </div>
+      <div class="container">
+        <div class="header">
+          <div class="title">📝 Performance Contract</div>
+          <div style="font-size: 18px; color: #64748b;">${contract.contractNumber}</div>
+          <div style="font-size: 16px; color: #64748b; margin-top: 10px;">From ${businessName}</div>
+        </div>
 
-      <div class="contract-details">
-        <h3 style="color: #1e293b; margin-top: 0;">Contract Details</h3>
-        
-        <div class="detail-row">
-          <span class="detail-label">Client Name:</span>
-          <span class="detail-value">${contract.clientName}</span>
+        <div class="contract-details">
+          <h3 style="color: #1e293b; margin-top: 0;">Event Details</h3>
+          
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Client Name</span>
+              <div class="detail-value">${contract.clientName}</div>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Performance Date</span>
+              <div class="detail-value">${formatDate(contract.eventDate)}</div>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Time</span>
+              <div class="detail-value">${contract.eventTime || 'TBC'}</div>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Venue</span>
+              <div class="detail-value">${contract.venue}</div>
+            </div>
+          </div>
         </div>
-        
-        <div class="detail-row">
-          <span class="detail-label">Performance Date:</span>
-          <span class="detail-value">${formatDate(contract.eventDate)}</span>
-        </div>
-        
-        <div class="detail-row">
-          <span class="detail-label">Time:</span>
-          <span class="detail-value">${contract.eventTime || 'TBC'}</span>
-        </div>
-        
-        <div class="detail-row">
-          <span class="detail-label">Venue:</span>
-          <span class="detail-value">${contract.venue}</span>
-        </div>
-        
-        <div class="detail-row">
-          <span class="detail-label">Event Type:</span>
-          <span class="detail-value">${contract.eventType || 'Performance'}</span>
-        </div>
-      </div>
 
-      <div class="fee-highlight">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 18px; font-weight: bold;">Performance Fee:</span>
-          <span style="font-size: 24px; font-weight: bold; color: #2563eb;">£${contract.fee}</span>
+        <div class="fee-highlight">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 18px; font-weight: bold;">Performance Fee:</span>
+            <span style="font-size: 24px; font-weight: bold; color: #2563eb;">£${contract.fee}</span>
+          </div>
         </div>
-      </div>
 
-      <div class="signing-section">
-        <h3 style="color: #1e293b; margin-top: 0;">Ready to Confirm Your Booking?</h3>
-        <p>Please review the contract details above and click below to sign digitally.</p>
-        
-        <div style="margin: 30px 0;">
-          <button onclick="openSigningForm()" class="sign-button">
-            📝 Sign Contract Online
-          </button>
+        <div class="signing-section">
+          <h3 style="color: #1e293b; margin-top: 0;">Ready to Confirm Your Booking?</h3>
+          <p>Please review the contract details above and complete the form below to sign digitally.</p>
           
-          <a href="https://musobuddy.replit.app/api/contracts/${contract.id}/download" class="download-button">
-            📄 Download PDF
-          </a>
-        </div>
-        
-        <div id="signingForm" style="display: none; margin-top: 30px; text-align: left; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <h4>Digital Signature</h4>
-          <div style="margin: 15px 0;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Full Name (as it appears on the contract):</label>
-            <input type="text" id="clientName" value="${contract.clientName}" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px;">
+          <form id="signingForm" style="margin-top: 30px;">
+            <div class="form-group">
+              <label for="signatureName">Full Name (Digital Signature) *</label>
+              <input 
+                type="text" 
+                id="signatureName" 
+                name="signatureName"
+                value="${contract.clientName}" 
+                required
+                placeholder="Enter your full name as it appears on the contract"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="clientPhone">Phone Number (Optional)</label>
+              <input 
+                type="tel" 
+                id="clientPhone" 
+                name="clientPhone"
+                value="${contract.clientPhone || ''}"
+                placeholder="Your contact phone number"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="clientAddress">Your Address (Optional)</label>
+              <input 
+                type="text" 
+                id="clientAddress" 
+                name="clientAddress"
+                value="${contract.clientAddress || ''}"
+                placeholder="Your full address"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="venueAddress">Event Venue Address (Optional)</label>
+              <input 
+                type="text" 
+                id="venueAddress" 
+                name="venueAddress"
+                value="${contract.venueAddress || ''}"
+                placeholder="Full address of the event venue"
+              />
+            </div>
+            
+            <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: left;">
+              <p style="margin: 0; color: #92400e; font-size: 0.95rem;">
+                <strong>Legal Notice:</strong> By clicking "Sign Contract" below, you agree to all terms and conditions outlined in this performance contract. This constitutes a legally binding digital signature.
+              </p>
+            </div>
+            
+            <button type="submit" class="sign-button" id="signButton">
+              ✍️ Sign Contract
+            </button>
+          </form>
+          
+          <div style="margin-top: 20px;">
+            <a href="https://musobuddy.replit.app/api/contracts/${contract.id}/download" class="download-button">
+              📄 Download PDF Copy
+            </a>
           </div>
           
-          <div style="margin: 15px 0;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Type your signature:</label>
-            <input type="text" id="typedSignature" placeholder="Type your full name as your signature" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px; font-family: 'Brush Script MT', cursive, serif; font-size: 18px;">
+          <div class="loading" id="loadingMessage">
+            <p>⏳ Processing your signature...</p>
           </div>
           
-          <div style="margin: 15px 0;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Phone (optional):</label>
-            <input type="tel" id="clientPhone" placeholder="Your contact number" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px;">
-          </div>
-          
-          <div style="margin: 20px 0;">
-            <label style="display: flex; align-items: center;">
-              <input type="checkbox" id="agreeTerms" style="margin-right: 10px;">
-              <span>I agree to the terms and conditions of this contract</span>
-            </label>
-          </div>
-          
-          <button onclick="submitSignature()" id="submitBtn" class="sign-button" style="width: 100%;">
-            ✅ Submit Digital Signature
-          </button>
-          
-          <div id="loading" style="display: none; text-align: center; margin-top: 20px;">
-            <p>Processing signature...</p>
-          </div>
-          
-          <div id="successMessage" style="display: none; background: #dcfce7; border: 1px solid #16a34a; color: #166534; padding: 15px; border-radius: 8px; margin-top: 20px;">
-            <h4>✅ Contract Signed Successfully!</h4>
-            <p>Thank you! Your signature has been recorded and both parties will receive confirmation emails.</p>
-          </div>
-          
-          <div id="errorMessage" style="display: none; background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 15px; border-radius: 8px; margin-top: 20px;">
-            <h4>❌ Signature Error</h4>
+          <div class="error-message" id="errorMessage">
+            <h4 style="margin-top: 0;">❌ Signature Error</h4>
             <p id="errorText">There was an error processing your signature. Please try again.</p>
           </div>
+          
+          <div class="success-message" id="successMessage">
+            <h4 style="margin-top: 0;">✅ Contract Signed Successfully!</h4>
+            <p>Thank you! Your signature has been recorded and both parties will receive confirmation emails.</p>
+          </div>
         </div>
-        
-        <p style="font-size: 14px; color: #64748b; margin-top: 20px;">
-          By signing, you agree to the terms and conditions outlined in the full contract.
-        </p>
-      </div>
 
-      <div class="footer">
-        <p>This contract signing page is hosted independently for your convenience.</p>
-        <p>Powered by MusoBuddy – less admin, more music</p>
+        <div class="footer">
+          <p>This contract signing page is hosted independently for your convenience.</p>
+          <p>Powered by MusoBuddy – less admin, more music</p>
+        </div>
       </div>
       
       <script>
-        function openSigningForm() {
-          document.getElementById('signingForm').style.display = 'block';
-          document.querySelector('.sign-button').style.display = 'none';
-        }
-        
-        async function submitSignature() {
-          const typedSignature = document.getElementById('typedSignature').value.trim();
-          const agreeTerms = document.getElementById('agreeTerms').checked;
-          const submitBtn = document.getElementById('submitBtn');
+        document.getElementById('signingForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
           
-          // First check if contract is still available for signing
-          try {
-            const statusResponse = await fetch('/api/contracts/${contract.id}/status');
-            const statusData = await statusResponse.json();
-            if (statusData.status === 'signed') {
-              alert('This contract has already been signed!');
-              document.getElementById('signingForm').innerHTML = '<div style="text-align: center; padding: 20px;"><h3>✅ Contract Already Signed</h3><p>This contract has already been completed.</p></div>';
-              return;
-            }
-          } catch (error) {
-            console.error('Error checking contract status:', error);
-          }
+          const signatureName = document.getElementById('signatureName').value.trim();
+          const signButton = document.getElementById('signButton');
+          const loadingMessage = document.getElementById('loadingMessage');
+          const errorMessage = document.getElementById('errorMessage');
+          const successMessage = document.getElementById('successMessage');
+          
+          // Reset messages
+          errorMessage.style.display = 'none';
+          successMessage.style.display = 'none';
           
           // Validation
-          if (!typedSignature) {
-            alert('Please type your signature before submitting.');
+          if (!signatureName) {
+            alert('Please enter your full name to sign the contract.');
             return;
           }
-          
-          if (!agreeTerms) {
-            alert('Please agree to the terms and conditions.');
-            return;
-          }
-          
-          // Create typed signature canvas
-          const typeCanvas = document.createElement('canvas');
-          typeCanvas.width = 350;
-          typeCanvas.height = 150;
-          const typeCtx = typeCanvas.getContext('2d');
-          
-          // Style the typed signature
-          typeCtx.fillStyle = '#1e293b';
-          typeCtx.font = '2rem "Brush Script MT", cursive, serif';
-          typeCtx.textAlign = 'center';
-          typeCtx.textBaseline = 'middle';
-          typeCtx.fillText(typedSignature, typeCanvas.width / 2, typeCanvas.height / 2);
-          
-          const signatureData = typeCanvas.toDataURL();
           
           // Show loading
-          document.getElementById('loading').style.display = 'block';
-          submitBtn.disabled = true;
+          signButton.disabled = true;
+          loadingMessage.style.display = 'block';
+          
+          // Collect form data
+          const formData = {
+            signatureName: signatureName,
+            clientPhone: document.getElementById('clientPhone').value.trim() || null,
+            clientAddress: document.getElementById('clientAddress').value.trim() || null,
+            venueAddress: document.getElementById('venueAddress').value.trim() || null
+          };
           
           try {
-            const response = await fetch('/api/contracts/sign/${contract.id}', {
+            // CRITICAL: Use absolute URL to avoid CORS issues
+            const response = await fetch('https://musobuddy.replit.app/api/contracts/sign/${contract.id}', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                clientName: document.getElementById('clientName').value,
-                signature: signatureData,
-                contractId: '${contract.id}',
-                clientPhone: document.getElementById('clientPhone').value || null
-              })
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify(formData)
             });
             
-            if (response.ok) {
-              document.getElementById('successMessage').style.display = 'block';
+            const result = await response.json();
+            
+            loadingMessage.style.display = 'none';
+            
+            if (response.ok && result.success) {
+              successMessage.style.display = 'block';
               document.getElementById('signingForm').style.display = 'none';
+              
+              // Show download option after successful signing
+              setTimeout(() => {
+                const downloadBtn = document.createElement('a');
+                downloadBtn.href = 'https://musobuddy.replit.app/api/contracts/${contract.id}/download';
+                downloadBtn.className = 'download-button';
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.style.textDecoration = 'none';
+                downloadBtn.innerHTML = '📄 Download Signed Contract';
+                successMessage.appendChild(document.createElement('br'));
+                successMessage.appendChild(downloadBtn);
+              }, 2000);
+              
+            } else if (result.alreadySigned) {
+              // Handle case where contract is already signed
+              errorMessage.style.display = 'block';
+              document.getElementById('errorText').innerHTML = 
+                '<strong>This contract has already been signed.</strong><br>' + 
+                'Signed on: ' + new Date(result.signedAt).toLocaleString('en-GB') + '<br>' +
+                'Signed by: ' + result.signedBy;
+              document.getElementById('signingForm').style.display = 'none';
+              
             } else {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Failed to sign contract');
+              throw new Error(result.message || 'Failed to sign contract');
             }
+            
           } catch (error) {
-            console.error('Error signing contract:', error);
-            document.getElementById('errorMessage').style.display = 'block';
-            document.getElementById('errorText').textContent = error.message || 'There was an error processing your signature. Please try again or contact support.';
-            submitBtn.disabled = false;
+            console.error('Signing error:', error);
+            loadingMessage.style.display = 'none';
+            errorMessage.style.display = 'block';
+            document.getElementById('errorText').textContent = 
+              error.message || 'Network error. Please check your connection and try again.';
           } finally {
-            document.getElementById('loading').style.display = 'none';
+            signButton.disabled = false;
           }
-        }
+        });
         
         // Analytics for signing page access
         if (typeof fetch !== 'undefined') {
-          fetch('/api/analytics/signing-page-view', {
+          fetch('https://musobuddy.replit.app/api/analytics/signing-page-view', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contractId: '${contract.id}', timestamp: Date.now() })
@@ -398,13 +580,15 @@ export async function uploadContractSigningPage(
     
     // Create storage key for HTML signing page
     const timestamp = new Date().toISOString().split('T')[0];
-    const key = `signing-pages/${timestamp}/${contract.contractNumber}.html`;
+    const sanitizedContractNumber = contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-');
+    const key = `signing-pages/${timestamp}/${sanitizedContractNumber}-${contract.id}.html`;
 
     // Upload HTML to cloud
     const result = await uploadFileToCloudflare(key, htmlBuffer, 'text/html');
     
     if (result.success) {
       console.log('✅ Contract signing page uploaded successfully');
+      console.log('🔗 Signing page URL:', result.url);
       return { success: true, url: result.url, storageKey: key };
     } else {
       return { success: false, error: result.error };

@@ -28,41 +28,7 @@ export async function registerRoutes(app: Express) {
   const server = createServer(app);
 
   // ===== PUBLIC CONTRACT SIGNING ROUTES (MUST BE FIRST - NO AUTHENTICATION) =====
-  // Contract signing page (PUBLIC)
-  app.get('/contracts/sign/:id', async (req, res) => {
-    try {
-      console.log('🎯 CONTRACT SIGNING ROUTE HIT:', req.params.id);
-      const contractId = parseInt(req.params.id);
-      
-      if (isNaN(contractId)) {
-        return res.status(400).send('<h1>Invalid Contract ID</h1>');
-      }
-      
-      // Check if contract exists
-      const contract = await storage.getContractById(contractId);
-      if (!contract) {
-        return res.status(404).send('<h1>Contract Not Found</h1>');
-      }
-      
-      // CRITICAL: If already signed, show "already signed" page
-      if (contract.status === 'signed') {
-        const alreadySignedHtml = generateAlreadySignedPage(contract);
-        return res.send(alreadySignedHtml);
-      }
-      
-      // Get user settings for branding
-      const userSettings = await storage.getSettings(contract.userId);
-      
-      // Generate contract signing page
-      const signingPageHTML = generateContractSigningPage(contract, userSettings);
-      res.send(signingPageHTML);
-      
-    } catch (error: any) {
-      console.error('❌ Contract signing page error:', error);
-      res.status(500).send('<h1>Server Error</h1><p>Unable to load contract signing page.</p>');
-    }
-  });
-
+  
   // Contract signing OPTIONS (PUBLIC - for CORS)
   app.options('/api/contracts/sign/:id', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -170,6 +136,77 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Contract signing page (PUBLIC)
+  app.get('/contracts/sign/:id', async (req, res) => {
+    try {
+      console.log('🎯 CONTRACT SIGNING ROUTE HIT:', req.params.id);
+      const contractId = parseInt(req.params.id);
+      
+      if (isNaN(contractId)) {
+        return res.status(400).send('<h1>Invalid Contract ID</h1>');
+      }
+      
+      // Check if contract exists
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).send('<h1>Contract Not Found</h1>');
+      }
+      
+      // CRITICAL: If already signed, show "already signed" page
+      if (contract.status === 'signed') {
+        const alreadySignedHtml = generateAlreadySignedPage(contract);
+        return res.send(alreadySignedHtml);
+      }
+      
+      // Get user settings for branding
+      const userSettings = await storage.getSettings(contract.userId);
+      
+      // Generate contract signing page
+      const signingPageHTML = generateContractSigningPage(contract, userSettings);
+      res.send(signingPageHTML);
+      
+    } catch (error: any) {
+      console.error('❌ Contract signing page error:', error);
+      res.status(500).send('<h1>Server Error</h1><p>Unable to load contract signing page.</p>');
+    }
+  });
+
+  // Contract status check route for signing pages (PUBLIC)
+  app.get('/api/contracts/:id/status', async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContractById(contractId);
+      
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      res.json({ 
+        status: contract.status,
+        signed: contract.status === 'signed',
+        signedAt: contract.signedAt 
+      });
+    } catch (error) {
+      console.error('Error checking contract status:', error);
+      res.status(500).json({ error: 'Failed to check contract status' });
+    }
+  });
+
+  // Public contract view route (PUBLIC)
+  app.get('/api/contracts/public/:id', async (req, res) => {
+    try {
+      const contract = await storage.getContract(parseInt(req.params.id));
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' });
+      }
+      
+      // Return contract data for public viewing
+      res.json(contract);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to load contract' });
+    }
+  });
+
   // ===== BOOKING ROUTES =====
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
@@ -269,7 +306,7 @@ export async function registerRoutes(app: Express) {
         console.log('✅ Contract created with cloud storage:', contract.id);
         console.log('🔗 Cloudflare signing URL:', url);
         res.json(updatedContract);
-      } catch (storageError) {
+      } catch (storageError: any) {
         console.error('❌ CRITICAL: Cloud storage upload failed:', storageError);
         console.error('❌ Error stack:', storageError.stack);
         console.error('❌ Contract will be created without cloud storage');
@@ -400,7 +437,7 @@ export async function registerRoutes(app: Express) {
       
       console.log('📧 Sending test email to:', testEmail.to);
       
-      const result = await mailgunService.mailgun.messages.create('mg.musobuddy.com', testEmail);
+      const result = await mailgunService.sendEmail(testEmail);
       
       console.log('✅ Test email sent successfully:', result.id);
       
@@ -423,463 +460,6 @@ export async function registerRoutes(app: Express) {
           domain: 'mg.musobuddy.com'
         }
       });
-    }
-  });
-
-  // Contract signing page route (user-friendly URL)
-  app.get('/contracts/sign/:id', async (req, res) => {
-    console.log('🎯 CONTRACT SIGNING ROUTE HIT:', req.params.id);
-    try {
-      const contract = await storage.getContract(parseInt(req.params.id));
-      if (!contract) {
-        return res.status(404).json({ message: 'Contract not found' });
-      }
-      
-      // If contract is already signed, show "Already Signed" page instead of signing form
-      if (contract.status === 'signed') {
-        const alreadySignedHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Contract Already Signed - ${contract.contractNumber}</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }
-        .success-message { background: #d4edda; color: #155724; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #c3e6cb; }
-        .contract-details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; }
-        .download-button { background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; margin: 10px; }
-    </style>
-</head>
-<body>
-    <h1>✅ Contract Already Signed</h1>
-    <h2>${contract.contractNumber}</h2>
-    
-    <div class="success-message">
-        <h3>This contract has already been signed successfully!</h3>
-        <p><strong>Signed by:</strong> ${contract.clientSignature || contract.clientName}</p>
-        <p><strong>Signed on:</strong> ${contract.signedAt ? new Date(contract.signedAt).toLocaleString('en-GB') : 'Recently'}</p>
-    </div>
-    
-    <div class="contract-details">
-        <h3>Event Details</h3>
-        <p><strong>Client:</strong> ${contract.clientName}</p>
-        <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
-        <p><strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}</p>
-        <p><strong>Venue:</strong> ${contract.venue}</p>
-        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
-    </div>
-    
-    <div style="margin: 30px 0;">
-        <a href="/api/contracts/${contract.id}/download" class="download-button">📄 Download Signed Contract</a>
-    </div>
-    
-    <p style="color: #6c757d; font-size: 14px; margin-top: 40px;">
-        If you need any assistance, please contact us directly.
-    </p>
-</body>
-</html>`;
-        
-        res.setHeader('Content-Type', 'text/html');
-        return res.send(alreadySignedHtml);
-      }
-      
-      // Return contract signing page HTML
-      const userSettings = await storage.getSettings(contract.userId);
-      const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Contract Signing - ${contract.contractNumber}</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .contract-details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .sign-button { background: #6366f1; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h1>Performance Contract</h1>
-    <h2>${contract.contractNumber}</h2>
-    
-    <div class="contract-details">
-        <h3>Event Details</h3>
-        <p><strong>Client:</strong> ${contract.clientName}</p>
-        <p><strong>Date:</strong> ${new Date(contract.eventDate).toDateString()}</p>
-        <p><strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}</p>
-        <p><strong>Venue:</strong> ${contract.venue}</p>
-        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
-    </div>
-    
-    <div class="terms-section" style="margin: 30px 0; padding: 20px; background: #f9f9f9; border-radius: 6px;">
-        <h3>Terms & Conditions</h3>
-        <ol style="margin: 15px 0; padding-left: 25px;">
-            <li>Payment is due on the date of performance unless otherwise agreed.</li>
-            <li>All equipment is provided by the performer unless specified otherwise.</li>
-            <li>The venue must provide safe access to electricity and ensure security.</li>
-            <li>No recording or transmission without written consent from the performer.</li>
-        </ol>
-    </div>
-    
-    <form id="signingForm" style="margin: 30px 0; padding: 20px; background: #fff; border: 2px solid #e5e5e5; border-radius: 8px;">
-        <h3>Complete Contract Details & Sign</h3>
-        <div style="margin: 15px 0;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Full Name (for signature):</label>
-            <input type="text" id="signatureName" value="${contract.clientName}" required 
-                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
-        </div>
-        <div style="margin: 15px 0;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Phone Number:</label>
-            <input type="tel" id="clientPhone" value="${contract.clientPhone || ''}" placeholder="07123 456789" 
-                   ${contract.clientPhone ? 'readonly style="background-color: #f9f9f9; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"' : 'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"'} />
-        </div>
-        <div style="margin: 15px 0;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Address:</label>
-            <textarea id="clientAddress" rows="3" placeholder="Full address including postcode"
-                      ${contract.clientAddress ? 'readonly style="background-color: #f9f9f9; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"' : 'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"'}>${contract.clientAddress || ''}</textarea>
-        </div>
-        <div style="margin: 20px 0;">
-            <label style="display: flex; align-items: center; cursor: pointer;">
-                <input type="checkbox" id="agreeTerms" required style="margin-right: 10px;" />
-                <span>I agree to all terms and conditions stated in this contract</span>
-            </label>
-        </div>
-        <div style="text-align: center;">
-            <button type="submit" class="sign-button">Sign Contract</button>
-        </div>
-    </form>
-    
-    <script>
-        document.getElementById('signingForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const signatureName = document.getElementById('signatureName').value.trim();
-            const agreeTerms = document.getElementById('agreeTerms').checked;
-            
-            if (!signatureName) {
-                alert('Please enter your full name for signature');
-                return;
-            }
-            
-            if (!agreeTerms) {
-                alert('Please agree to the terms and conditions');
-                return;
-            }
-            
-            // Collect optional fields
-            const clientPhone = document.getElementById('clientPhone') ? document.getElementById('clientPhone').value.trim() : '';
-            const clientAddress = document.getElementById('clientAddress') ? document.getElementById('clientAddress').value.trim() : '';
-            
-            const signatureData = {
-                signatureName: signatureName,
-                clientPhone: clientPhone || null,
-                clientAddress: clientAddress || null,
-                agreedToTerms: true,
-                signedAt: new Date().toISOString(),
-                ipAddress: 'Contract Signing Page'
-            };
-            
-            // Disable form during submission
-            const form = document.getElementById('signingForm');
-            form.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Processing signature...</h3></div>';
-            
-            fetch('/api/contracts/sign/${contract.id}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(signatureData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.body.innerHTML = \`
-                        <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
-                            <h1 style="color:#28a745;">✅ Contract Signed Successfully</h1>
-                            <h2>${contract.contractNumber}</h2>
-                            <p style="font-size:18px;margin:30px 0;">Thank you, \${signatureName}!</p>
-                            <p>Your contract has been successfully signed and saved.</p>
-                            <p>You will receive a confirmation email shortly.</p>
-                            <div style="margin:40px 0;padding:20px;background:#f8f9fa;border-radius:8px;">
-                                <h3>Event Summary</h3>
-                                <p><strong>Date:</strong> ${new Date(contract.eventDate).toDateString()}</p>
-                                <p><strong>Time:</strong> ${contract.eventTime}</p>
-                                <p><strong>Venue:</strong> ${contract.venue}</p>
-                                <p><strong>Fee:</strong> £${contract.fee}</p>
-                            </div>
-                        </div>
-                    \`;
-                } else if (data.alreadySigned) {
-                    // CRITICAL FIX: Handle already signed contracts properly
-                    document.body.innerHTML = \`
-                        <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
-                            <h1 style="color:#ffc107;">✅ Contract Already Signed</h1>
-                            <h2>${contract.contractNumber}</h2>
-                            <div style="background:#fff3cd;color:#856404;padding:20px;border-radius:8px;margin:30px auto;max-width:500px;border:1px solid #ffeeba;">
-                                <h3>This contract has already been signed</h3>
-                                <p><strong>Signed by:</strong> \${data.signedBy}</p>
-                                <p><strong>Signed on:</strong> \${new Date(data.signedAt).toLocaleString('en-GB')}</p>
-                            </div>
-                            <a href="/api/contracts/${contract.id}/download" style="background:#28a745;color:white;padding:12px 24px;border:none;border-radius:6px;text-decoration:none;display:inline-block;">📄 Download Signed Contract</a>
-                        </div>
-                    \`;
-                } else {
-                    throw new Error(data.message || 'Unknown error');
-                }
-            })
-            .catch(error => {
-                console.error('Signing error:', error);
-                document.body.innerHTML = \`
-                    <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
-                        <h2 style="color:#dc3545;">❌ Signing Failed</h2>
-                        <p>There was an issue processing your signature.</p>
-                        <p>Please try again or contact support.</p>
-                        <button onclick="location.reload()" style="background:#6366f1;color:white;padding:12px 24px;border:none;border-radius:6px;cursor:pointer;">Try Again</button>
-                    </div>
-                \`;
-            });
-        });
-    </script>
-</body>
-</html>`;
-      
-      res.setHeader('Content-Type', 'text/html');
-      res.send(html);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to load contract' });
-    }
-  });
-
-  app.get('/api/contracts/public/:id', async (req, res) => {
-    try {
-      const contract = await storage.getContract(parseInt(req.params.id));
-      if (!contract) {
-        return res.status(404).json({ message: 'Contract not found' });
-      }
-      
-      // If contract is already signed, show "Already Signed" page instead of signing form
-      if (contract.status === 'signed') {
-        const alreadySignedHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Contract Already Signed - ${contract.contractNumber}</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }
-        .success-message { background: #d4edda; color: #155724; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #c3e6cb; }
-        .contract-details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; }
-        .download-button { background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; margin: 10px; }
-    </style>
-</head>
-<body>
-    <h1>✅ Contract Already Signed</h1>
-    <h2>${contract.contractNumber}</h2>
-    
-    <div class="success-message">
-        <h3>This contract has already been signed successfully!</h3>
-        <p><strong>Signed by:</strong> ${contract.clientSignature || contract.clientName}</p>
-        <p><strong>Signed on:</strong> ${contract.signedAt ? new Date(contract.signedAt).toLocaleString('en-GB') : 'Recently'}</p>
-    </div>
-    
-    <div class="contract-details">
-        <h3>Event Details</h3>
-        <p><strong>Client:</strong> ${contract.clientName}</p>
-        <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
-        <p><strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}</p>
-        <p><strong>Venue:</strong> ${contract.venue}</p>
-        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
-    </div>
-    
-    <div style="margin: 30px 0;">
-        <a href="/api/contracts/${contract.id}/download" class="download-button">📄 Download Signed Contract</a>
-    </div>
-    
-    <p style="color: #6c757d; font-size: 14px; margin-top: 40px;">
-        If you need any assistance, please contact us directly.
-    </p>
-</body>
-</html>`;
-        
-        res.setHeader('Content-Type', 'text/html');
-        return res.send(alreadySignedHtml);
-      }
-      
-      // Return contract signing page HTML
-      const userSettings = await storage.getSettings(contract.userId);
-      const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Contract Signing - ${contract.contractNumber}</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .contract-details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .sign-button { background: #6366f1; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h1>Performance Contract</h1>
-    <h2>${contract.contractNumber}</h2>
-    
-    <div class="contract-details">
-        <h3>Event Details</h3>
-        <p><strong>Client:</strong> ${contract.clientName}</p>
-        <p><strong>Date:</strong> ${new Date(contract.eventDate).toDateString()}</p>
-        <p><strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}</p>
-        <p><strong>Venue:</strong> ${contract.venue}</p>
-        <p><strong>Performance Fee:</strong> £${contract.fee}</p>
-    </div>
-    
-    <div class="terms-section" style="margin: 30px 0; padding: 20px; background: #f9f9f9; border-radius: 6px;">
-        <h3>Terms & Conditions</h3>
-        <ol style="margin: 15px 0; padding-left: 25px;">
-            <li>Payment is due on the date of performance unless otherwise agreed.</li>
-            <li>All equipment is provided by the performer unless specified otherwise.</li>
-            <li>The venue must provide safe access to electricity and ensure security.</li>
-            <li>No recording or transmission without written consent from the performer.</li>
-        </ol>
-    </div>
-    
-    <form id="signingForm" style="margin: 30px 0; padding: 20px; background: #fff; border: 2px solid #e5e5e5; border-radius: 8px;">
-        <h3>Complete Contract Details & Sign</h3>
-        <div style="margin: 15px 0;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Full Name (for signature):</label>
-            <input type="text" id="signatureName" value="${contract.clientName}" required 
-                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" />
-        </div>
-        <div style="margin: 15px 0;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Phone Number:</label>
-            <input type="tel" id="clientPhone" value="${contract.clientPhone || ''}" placeholder="07123 456789" 
-                   ${contract.clientPhone ? 'readonly style="background-color: #f9f9f9; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"' : 'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"'} />
-        </div>
-        <div style="margin: 15px 0;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">Address:</label>
-            <textarea id="clientAddress" rows="3" placeholder="Full address including postcode"
-                      ${contract.clientAddress ? 'readonly style="background-color: #f9f9f9; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"' : 'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"'}>${contract.clientAddress || ''}</textarea>
-        </div>
-        <div style="margin: 20px 0;">
-            <label style="display: flex; align-items: center; cursor: pointer;">
-                <input type="checkbox" id="agreeTerms" required style="margin-right: 10px;" />
-                <span>I agree to all terms and conditions stated in this contract</span>
-            </label>
-        </div>
-        <div style="text-align: center;">
-            <button type="submit" class="sign-button">Sign Contract</button>
-        </div>
-    </form>
-    
-    <script>
-        document.getElementById('signingForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const signatureName = document.getElementById('signatureName').value.trim();
-            const agreeTerms = document.getElementById('agreeTerms').checked;
-            
-            if (!signatureName) {
-                alert('Please enter your full name for signature');
-                return;
-            }
-            
-            if (!agreeTerms) {
-                alert('Please agree to the terms and conditions');
-                return;
-            }
-            
-            // Collect optional fields
-            const clientPhone = document.getElementById('clientPhone') ? document.getElementById('clientPhone').value.trim() : '';
-            const clientAddress = document.getElementById('clientAddress') ? document.getElementById('clientAddress').value.trim() : '';
-            
-            const signatureData = {
-                signatureName: signatureName,
-                clientPhone: clientPhone || null,
-                clientAddress: clientAddress || null,
-                agreedToTerms: true,
-                signedAt: new Date().toISOString(),
-                ipAddress: 'Contract Signing Page'
-            };
-            
-            // Disable form during submission
-            const form = document.getElementById('signingForm');
-            form.innerHTML = '<div style="text-align:center;padding:30px;"><h3>Processing signature...</h3></div>';
-            
-            fetch('/api/contracts/sign/${contract.id}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(signatureData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.body.innerHTML = \`
-                        <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
-                            <h1 style="color:#28a745;">✅ Contract Signed Successfully</h1>
-                            <h2>${contract.contractNumber}</h2>
-                            <p style="font-size:18px;margin:30px 0;">Thank you, \${signatureName}!</p>
-                            <p>Your contract has been successfully signed and saved.</p>
-                            <p>You will receive a confirmation email shortly.</p>
-                            <div style="margin:40px 0;padding:20px;background:#f8f9fa;border-radius:8px;">
-                                <h3>Event Summary</h3>
-                                <p><strong>Date:</strong> ${new Date(contract.eventDate).toDateString()}</p>
-                                <p><strong>Time:</strong> ${contract.eventTime}</p>
-                                <p><strong>Venue:</strong> ${contract.venue}</p>
-                                <p><strong>Fee:</strong> £${contract.fee}</p>
-                            </div>
-                        </div>
-                    \`;
-                } else if (data.alreadySigned) {
-                    // CRITICAL FIX: Handle already signed contracts properly
-                    document.body.innerHTML = \`
-                        <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
-                            <h1 style="color:#ffc107;">✅ Contract Already Signed</h1>
-                            <h2>${contract.contractNumber}</h2>
-                            <div style="background:#fff3cd;color:#856404;padding:20px;border-radius:8px;margin:30px auto;max-width:500px;border:1px solid #ffeeba;">
-                                <h3>This contract has already been signed</h3>
-                                <p><strong>Signed by:</strong> \${data.signedBy}</p>
-                                <p><strong>Signed on:</strong> \${new Date(data.signedAt).toLocaleString('en-GB')}</p>
-                            </div>
-                            <a href="/api/contracts/${contract.id}/download" style="background:#28a745;color:white;padding:12px 24px;border:none;border-radius:6px;text-decoration:none;display:inline-block;">📄 Download Signed Contract</a>
-                        </div>
-                    \`;
-                } else {
-                    throw new Error(data.message || 'Unknown error');
-                }
-            })
-            .catch(error => {
-                console.error('Signing error:', error);
-                document.body.innerHTML = \`
-                    <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;">
-                        <h2 style="color:#dc3545;">❌ Signing Failed</h2>
-                        <p>There was an issue processing your signature.</p>
-                        <p>Please try again or contact support.</p>
-                        <button onclick="location.reload()" style="background:#6366f1;color:white;padding:12px 24px;border:none;border-radius:6px;cursor:pointer;">Try Again</button>
-                    </div>
-                \`;
-            });
-        });
-    </script>
-</body>
-</html>`;
-      
-      res.setHeader('Content-Type', 'text/html');
-      res.send(html);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to load contract' });
-    }
-  });
-
-  // Contract status check route for signing pages
-  app.get('/api/contracts/:id/status', async (req, res) => {
-    try {
-      const contractId = parseInt(req.params.id);
-      const contract = await storage.getContractById(contractId);
-      
-      if (!contract) {
-        return res.status(404).json({ error: 'Contract not found' });
-      }
-      
-      res.json({ 
-        status: contract.status,
-        signed: contract.status === 'signed',
-        signedAt: contract.signedAt 
-      });
-    } catch (error) {
-      console.error('Error checking contract status:', error);
-      res.status(500).json({ error: 'Failed to check contract status' });
     }
   });
 
@@ -1377,33 +957,39 @@ function generateAlreadySignedPage(contract: any): string {
         <div class="container">
             <div class="success-icon">✅</div>
             <h1>Contract Already Signed</h1>
-            <p>This performance contract has already been signed and is now legally binding.</p>
+            <h2>${contract.contractNumber}</h2>
+            
+            <div class="success-message">
+                <h3>This contract has already been signed successfully!</h3>
+                <p><strong>Signed by:</strong> ${contract.clientSignature || contract.clientName}</p>
+                <p><strong>Signed on:</strong> ${contract.signedAt ? new Date(contract.signedAt).toLocaleString('en-GB') : 'Recently'}</p>
+            </div>
             
             <div class="contract-info">
-                <div class="info-row">
-                    <strong>Contract:</strong> ${contract.contractNumber}
-                </div>
+                <h3>Event Details</h3>
                 <div class="info-row">
                     <strong>Client:</strong> ${contract.clientName}
                 </div>
                 <div class="info-row">
-                    <strong>Event Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}
+                    <strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}
+                </div>
+                <div class="info-row">
+                    <strong>Time:</strong> ${contract.eventTime} ${contract.eventEndTime ? '- ' + contract.eventEndTime : ''}
                 </div>
                 <div class="info-row">
                     <strong>Venue:</strong> ${contract.venue}
                 </div>
                 <div class="info-row">
-                    <strong>Signed On:</strong> ${contract.signedAt ? new Date(contract.signedAt).toLocaleString('en-GB') : 'Recently'}
+                    <strong>Performance Fee:</strong> £${contract.fee}
                 </div>
             </div>
             
-            ${contract.cloudStorageUrl ? 
-                `<a href="${contract.cloudStorageUrl}" class="download-btn">📄 Download Signed Contract</a>` :
-                `<a href="/api/contracts/${contract.id}/download" class="download-btn">📄 Download Signed Contract</a>`
-            }
+            <div style="margin: 30px 0;">
+                <a href="/api/contracts/${contract.id}/download" class="download-btn">📄 Download Signed Contract</a>
+            </div>
             
             <div class="footer">
-                <p>If you need assistance, please contact the performer directly.</p>
+                <p>If you need any assistance, please contact us directly.</p>
                 <p>Powered by MusoBuddy – less admin, more music</p>
             </div>
         </div>
@@ -1742,438 +1328,6 @@ function generateContractSigningPage(contract: any, userSettings: any): string {
                     loadingMessage.style.display = 'none';
                     errorMessage.style.display = 'block';
                     document.getElementById('errorText').textContent = 'Network error. Please check your connection and try again.';
-                    signButton.disabled = false;
-                }
-            });
-        </script>
-    </body>
-    </html>
-  `;
-}
-
-// DUPLICATE FUNCTION REMOVAL - These functions already exist above
-// Remove duplicate generateAlreadySignedPage function
-function generateAlreadySignedPage_DUPLICATE(contract: any): string {
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Contract Already Signed</title>
-        <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                line-height: 1.6;
-                margin: 0;
-                padding: 20px;
-                background-color: #f8fafc;
-                color: #1f2937;
-            }
-            .container {
-                max-width: 600px;
-                margin: 0 auto;
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                overflow: hidden;
-            }
-            .header {
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                color: white;
-                padding: 40px 30px;
-                text-align: center;
-            }
-            .content {
-                padding: 40px 30px;
-            }
-            .success-icon {
-                font-size: 4rem;
-                margin-bottom: 20px;
-            }
-            .title {
-                font-size: 2rem;
-                font-weight: 700;
-                margin: 0 0 10px 0;
-            }
-            .subtitle {
-                font-size: 1.1rem;
-                opacity: 0.9;
-                margin: 0;
-            }
-            .info-box {
-                background-color: #f0fdf4;
-                border: 1px solid #bbf7d0;
-                border-radius: 8px;
-                padding: 20px;
-                margin: 20px 0;
-            }
-            .download-btn {
-                display: inline-block;
-                background: linear-gradient(135deg, #059669 0%, #047857 100%);
-                color: white;
-                padding: 16px 32px;
-                text-decoration: none;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 1.1rem;
-                text-align: center;
-                transition: transform 0.2s;
-                margin: 20px 0;
-            }
-            .download-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
-            }
-            .footer {
-                text-align: center;
-                color: #6b7280;
-                font-size: 0.9rem;
-                border-top: 1px solid #e5e7eb;
-                padding: 20px 30px;
-                background-color: #f9fafb;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <div class="success-icon">✅</div>
-                <h1 class="title">Already Signed!</h1>
-                <p class="subtitle">This contract has been successfully signed</p>
-            </div>
-            
-            <div class="content">
-                <div class="info-box">
-                    <h3 style="margin-top: 0; color: #065f46;">Contract Details:</h3>
-                    <p><strong>Contract:</strong> ${contract.contractNumber}</p>
-                    <p><strong>Client:</strong> ${contract.clientName}</p>
-                    <p><strong>Event Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
-                    <p><strong>Venue:</strong> ${contract.venue}</p>
-                    ${contract.signedAt ? `<p><strong>Signed:</strong> ${new Date(contract.signedAt).toLocaleString('en-GB')}</p>` : ''}
-                </div>
-                
-                <p>This performance contract has already been signed and is legally binding. Both parties have been notified via email.</p>
-                
-                <div style="text-align: center;">
-                    <a href="/api/contracts/${contract.id}/download" class="download-btn">
-                        📄 Download Signed Contract
-                    </a>
-                </div>
-                
-                <p style="margin-top: 30px; font-size: 0.9rem; color: #6b7280;">
-                    If you need a copy of the signed contract, use the download button above or check your email for the confirmation message sent when the contract was signed.
-                </p>
-            </div>
-            
-            <div class="footer">
-                <p>Powered by MusoBuddy – less admin, more music</p>
-            </div>
-        </div>
-    </body>
-    </html>
-  `;
-}
-
-// Remove duplicate generateContractSigningPage function
-function generateContractSigningPage_DUPLICATE(contract: any, userSettings: any): string {
-  const businessName = userSettings?.businessName || 'MusoBuddy';
-  const today = new Date().toLocaleDateString('en-GB');
-  
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign Contract - ${contract.contractNumber}</title>
-        <style>
-            * {
-                box-sizing: border-box;
-            }
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                line-height: 1.6;
-                margin: 0;
-                padding: 20px;
-                background-color: #f8fafc;
-                color: #1f2937;
-            }
-            .container {
-                max-width: 800px;
-                margin: 0 auto;
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                overflow: hidden;
-            }
-            .header {
-                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-                color: white;
-                padding: 30px;
-                text-align: center;
-            }
-            .content {
-                padding: 30px;
-            }
-            .contract-details {
-                background-color: #f8fafc;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 20px;
-                margin: 20px 0;
-            }
-            .form-group {
-                margin: 20px 0;
-            }
-            label {
-                display: block;
-                font-weight: 600;
-                margin-bottom: 8px;
-                color: #374151;
-            }
-            input, textarea {
-                width: 100%;
-                padding: 12px 16px;
-                border: 1px solid #d1d5db;
-                border-radius: 8px;
-                font-size: 16px;
-                transition: border-color 0.2s;
-            }
-            input:focus, textarea:focus {
-                outline: none;
-                border-color: #6366f1;
-                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            }
-            .sign-btn {
-                background: linear-gradient(135deg, #059669 0%, #047857 100%);
-                color: white;
-                padding: 16px 32px;
-                border: none;
-                border-radius: 8px;
-                font-size: 18px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s;
-                width: 100%;
-                margin-top: 20px;
-            }
-            .sign-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
-            }
-            .sign-btn:disabled {
-                background: #9ca3af;
-                cursor: not-allowed;
-                transform: none;
-                box-shadow: none;
-            }
-            .loading {
-                display: none;
-                text-align: center;
-                color: #6b7280;
-                margin: 20px 0;
-            }
-            .error {
-                background-color: #fef2f2;
-                border: 1px solid #fecaca;
-                color: #dc2626;
-                padding: 12px 16px;
-                border-radius: 8px;
-                margin: 20px 0;
-                display: none;
-            }
-            .success {
-                background-color: #f0fdf4;
-                border: 1px solid #bbf7d0;
-                color: #059669;
-                padding: 12px 16px;
-                border-radius: 8px;
-                margin: 20px 0;
-                display: none;
-            }
-            .footer {
-                text-align: center;
-                color: #6b7280;
-                font-size: 0.9rem;
-                border-top: 1px solid #e5e7eb;
-                padding: 20px 30px;
-                background-color: #f9fafb;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1 style="margin: 0 0 10px 0; font-size: 2rem;">📄 Contract Signature</h1>
-                <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">Please review and sign your performance contract</p>
-            </div>
-            
-            <div class="content">
-                <div class="contract-details">
-                    <h3 style="margin-top: 0; color: #374151;">Contract Details:</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div>
-                            <p><strong>Contract:</strong> ${contract.contractNumber}</p>
-                            <p><strong>Event Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
-                            <p><strong>Event Time:</strong> ${contract.eventTime}</p>
-                        </div>
-                        <div>
-                            <p><strong>Venue:</strong> ${contract.venue}</p>
-                            <p><strong>Performance Fee:</strong> £${contract.fee}</p>
-                            <p><strong>Today's Date:</strong> ${today}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <form id="signatureForm">
-                    <div class="form-group">
-                        <label for="signatureName">Your Full Name (Digital Signature) *</label>
-                        <input 
-                            type="text" 
-                            id="signatureName" 
-                            name="signatureName" 
-                            placeholder="Enter your full name as it appears on the contract"
-                            value="${contract.clientName || ''}"
-                            required
-                        />
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="clientPhone">Phone Number (Optional)</label>
-                        <input 
-                            type="tel" 
-                            id="clientPhone" 
-                            name="clientPhone" 
-                            placeholder="Your contact phone number"
-                            value="${contract.clientPhone || ''}"
-                        />
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="clientAddress">Your Address (Optional)</label>
-                        <textarea 
-                            id="clientAddress" 
-                            name="clientAddress" 
-                            rows="2" 
-                            placeholder="Your full address"
-                        >${contract.clientAddress || ''}</textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="venueAddress">Event Venue Address (Optional)</label>
-                        <textarea 
-                            id="venueAddress" 
-                            name="venueAddress" 
-                            rows="2" 
-                            placeholder="Full address of the event venue"
-                        >${contract.venueAddress || ''}</textarea>
-                    </div>
-                    
-                    <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 20px 0;">
-                        <p style="margin: 0; color: #92400e; font-size: 0.95rem;">
-                            <strong>Legal Notice:</strong> By clicking "Sign Contract" below, you agree to all terms and conditions outlined in this performance contract. This constitutes a legally binding digital signature.
-                        </p>
-                    </div>
-                    
-                    <button type="submit" class="sign-btn" id="signButton">
-                        ✍️ Sign Contract
-                    </button>
-                </form>
-                
-                <div class="loading" id="loadingMessage">
-                    <p>⏳ Processing your signature...</p>
-                </div>
-                
-                <div class="error" id="errorMessage"></div>
-                <div class="success" id="successMessage"></div>
-            </div>
-            
-            <div class="footer">
-                <p>Secured by ${businessName} • Powered by MusoBuddy</p>
-            </div>
-        </div>
-
-        <script>
-            document.getElementById('signatureForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const signButton = document.getElementById('signButton');
-                const loadingMessage = document.getElementById('loadingMessage');
-                const errorMessage = document.getElementById('errorMessage');
-                const successMessage = document.getElementById('successMessage');
-                
-                // Reset states
-                errorMessage.style.display = 'none';
-                successMessage.style.display = 'none';
-                signButton.disabled = true;
-                loadingMessage.style.display = 'block';
-                
-                const formData = new FormData(e.target);
-                const signatureData = {
-                    signatureName: formData.get('signatureName'),
-                    clientPhone: formData.get('clientPhone'),
-                    clientAddress: formData.get('clientAddress'),
-                    venueAddress: formData.get('venueAddress')
-                };
-                
-                try {
-                    const response = await fetch('/api/contracts/sign/${contract.id}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(signatureData)
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (response.ok && result.success) {
-                        successMessage.textContent = result.message || 'Contract signed successfully!';
-                        successMessage.style.display = 'block';
-                        
-                        // Hide form after successful signing
-                        document.getElementById('signatureForm').style.display = 'none';
-                        
-                        // Show download option
-                        setTimeout(() => {
-                            const downloadBtn = document.createElement('a');
-                            downloadBtn.href = '/api/contracts/${contract.id}/download';
-                            downloadBtn.className = 'sign-btn';
-                            downloadBtn.style.display = 'inline-block';
-                            downloadBtn.style.textDecoration = 'none';
-                            downloadBtn.innerHTML = '📄 Download Signed Contract';
-                            successMessage.appendChild(document.createElement('br'));
-                            successMessage.appendChild(downloadBtn);
-                        }, 2000);
-                        
-                    } else if (result.alreadySigned) {
-                        // Handle case where contract is already signed
-                        errorMessage.textContent = 'This contract has already been signed. Please check your email for the signed copy.';
-                        errorMessage.style.display = 'block';
-                        document.getElementById('signatureForm').style.display = 'none';
-                        
-                        // Show download button for already signed contract
-                        const downloadBtn = document.createElement('a');
-                        downloadBtn.href = '/api/contracts/${contract.id}/download';
-                        downloadBtn.className = 'sign-btn';
-                        downloadBtn.style.display = 'inline-block';
-                        downloadBtn.style.textDecoration = 'none';
-                        downloadBtn.style.background = '#6b7280';
-                        downloadBtn.innerHTML = '📄 Download Signed Contract';
-                        errorMessage.appendChild(document.createElement('br'));
-                        errorMessage.appendChild(downloadBtn);
-                        
-                    } else {
-                        throw new Error(result.message || 'Failed to sign contract');
-                    }
-                    
-                } catch (error) {
-                    console.error('Signing error:', error);
-                    errorMessage.textContent = error.message || 'An error occurred while signing the contract. Please try again.';
-                    errorMessage.style.display = 'block';
-                } finally {
-                    loadingMessage.style.display = 'none';
                     signButton.disabled = false;
                 }
             });

@@ -16,7 +16,7 @@ interface EmailData {
   text?: string;
   html?: string;
   replyTo?: string;
-  cc?: string; // Add CC support
+  cc?: string;
   attachments?: Array<{
     content: string;
     filename: string;
@@ -25,40 +25,73 @@ interface EmailData {
   }>;
 }
 
-// Send email function
-export async function sendEmail(emailData: EmailData): Promise<boolean> {
-  try {
-    // Debug environment variables
-    console.log('🔍 Checking Mailgun environment variables...');
-    console.log('MAILGUN_API_KEY exists:', !!process.env.MAILGUN_API_KEY);
-    console.log('MAILGUN_DOMAIN:', process.env.MAILGUN_DOMAIN);
+// ENHANCED: Diagnostic email sending function with detailed logging
+export async function sendEmail(emailData: EmailData): Promise<{ success: boolean; messageId?: string; diagnostics?: any }> {
+  const diagnostics: any = {
+    timestamp: new Date().toISOString(),
+    attempt: 1,
+    config: {},
+    apiResponse: null,
+    errors: []
+  };
 
-    // Check for required environment variables
+  try {
+    console.log('🔍 === MAILGUN DIAGNOSTIC START ===');
+    console.log('📧 Email attempt at:', diagnostics.timestamp);
+    console.log('📧 Recipient:', emailData.to);
+    console.log('📧 Subject:', emailData.subject);
+    
+    // Enhanced environment variable checking
+    diagnostics.config = {
+      hasApiKey: !!process.env.MAILGUN_API_KEY,
+      apiKeyLength: process.env.MAILGUN_API_KEY?.length || 0,
+      apiKeyPrefix: process.env.MAILGUN_API_KEY?.substring(0, 8) + '...',
+      hasPublicKey: !!process.env.MAILGUN_PUBLIC_KEY,
+      domain: 'mg.musobuddy.com',
+      nodeEnv: process.env.NODE_ENV
+    };
+
+    console.log('🔧 Mailgun configuration check:');
+    console.log('   API Key present:', diagnostics.config.hasApiKey);
+    console.log('   API Key length:', diagnostics.config.apiKeyLength);
+    console.log('   API Key prefix:', diagnostics.config.apiKeyPrefix);
+    console.log('   Domain:', diagnostics.config.domain);
+    console.log('   Environment:', diagnostics.config.nodeEnv);
+
     if (!process.env.MAILGUN_API_KEY) {
-      console.error('❌ MAILGUN_API_KEY environment variable is required');
-      return false;
+      throw new Error('MAILGUN_API_KEY environment variable is required');
     }
 
-    // Use custom domain for production email sending
-    const domain = 'mg.musobuddy.com'; // Force custom domain instead of sandbox
+    if (diagnostics.config.apiKeyLength < 30) {
+      console.warn('⚠️ WARNING: API key seems short, might be invalid');
+      diagnostics.errors.push('API key length suspicious');
+    }
+
+    // CRITICAL: Use EU endpoint for mg.musobuddy.com
+    const domain = 'mg.musobuddy.com';
+    const mgEndpoint = 'https://api.eu.mailgun.net'; // EU endpoint is critical for mg.musobuddy.com
+    
+    console.log('🌐 Using Mailgun endpoint:', mgEndpoint);
     console.log('🌐 Using domain:', domain);
 
-    // Create Mailgun client with EU endpoint (mg.musobuddy.com is on EU)
+    // Create Mailgun client with EU endpoint
     const mg = mailgun.client({
       username: 'api',
       key: process.env.MAILGUN_API_KEY,
-      url: 'https://api.eu.mailgun.net' // EU endpoint for mg.musobuddy.com
+      url: mgEndpoint
     });
 
-    console.log('🔑 Mailgun client initialized with key:', process.env.MAILGUN_API_KEY ? 'Present' : 'Missing');
-
-    // Prepare message data
+    // Enhanced message data preparation
     const messageData: any = {
       from: emailData.from,
       to: emailData.to,
       subject: emailData.subject,
       text: emailData.text || '',
-      html: emailData.html || ''
+      html: emailData.html || '',
+      // ENHANCED: Add tracking parameters
+      'o:tracking': 'yes',
+      'o:tracking-clicks': 'yes',
+      'o:tracking-opens': 'yes'
     };
 
     // Add reply-to if specified
@@ -78,35 +111,89 @@ export async function sendEmail(emailData: EmailData): Promise<boolean> {
         filename: att.filename,
         contentType: att.type
       }));
+      console.log('📎 Attachments added:', emailData.attachments.length);
     }
 
-    // Send email
+    console.log('📤 Sending email via Mailgun...');
+    console.log('📤 Message data structure:', {
+      from: messageData.from,
+      to: messageData.to,
+      subject: messageData.subject,
+      hasHtml: !!messageData.html,
+      hasText: !!messageData.text,
+      hasAttachments: !!messageData.attachment,
+      tracking: messageData['o:tracking']
+    });
+
+    // Send email with enhanced error handling
+    const startTime = Date.now();
     const result = await mg.messages.create(domain, messageData);
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
 
-    console.log('✅ Email sent successfully:', result.id);
-    console.log('📧 From:', emailData.from);
-    console.log('📧 To:', emailData.to);
-    console.log('📧 CC:', emailData.cc || 'None');
-    console.log('📧 Subject:', emailData.subject);
+    diagnostics.apiResponse = {
+      messageId: result.id,
+      message: result.message,
+      responseTime: responseTime + 'ms',
+      status: 'success'
+    };
 
-    return true;
+    console.log('✅ === MAILGUN API SUCCESS ===');
+    console.log('✅ Message ID:', result.id);
+    console.log('✅ API Response:', result.message);
+    console.log('✅ Response time:', responseTime + 'ms');
+    console.log('✅ From:', emailData.from);
+    console.log('✅ To:', emailData.to);
+    console.log('✅ Subject:', emailData.subject);
+    
+    // CRITICAL: Add delivery expectation warning
+    console.log('⏰ DELIVERY EXPECTATION: Email should arrive within 1-5 minutes');
+    console.log('🔍 TROUBLESHOOTING: If email doesn\'t arrive:');
+    console.log('   1. Check spam/junk folders');
+    console.log('   2. Verify recipient email address');
+    console.log('   3. Check Mailgun logs at https://app.mailgun.com/app/logs');
+    console.log('   4. Verify domain DNS settings (SPF, DKIM)');
+    
+    return { 
+      success: true, 
+      messageId: result.id,
+      diagnostics 
+    };
 
   } catch (error: any) {
-    console.error('❌ Failed to send email:', error.message);
-    console.error('Error details:', error);
-    console.error('Error status:', error.status);
-    console.error('Error type:', error.type);
-    console.error('Full error object:', JSON.stringify(error, null, 2));
-    return false;
+    const errorTime = Date.now();
+    diagnostics.apiResponse = {
+      error: error.message,
+      status: error.status || 'unknown',
+      type: error.type || 'unknown',
+      responseTime: 'failed'
+    };
+
+    console.error('❌ === MAILGUN API FAILURE ===');
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error status:', error.status);
+    console.error('❌ Error type:', error.type);
+    console.error('❌ Full error:', error);
+    
+    if (error.status === 401) {
+      console.error('🔑 AUTH ERROR: Invalid API key or domain not verified');
+      diagnostics.errors.push('Authentication failed - check API key and domain verification');
+    } else if (error.status === 400) {
+      console.error('📧 VALIDATION ERROR: Email data invalid');
+      diagnostics.errors.push('Email validation failed - check recipient address and content');
+    } else if (error.status >= 500) {
+      console.error('🔥 MAILGUN SERVER ERROR: Service may be down');
+      diagnostics.errors.push('Mailgun server error - service may be temporarily unavailable');
+    }
+
+    return { 
+      success: false, 
+      diagnostics 
+    };
   }
 }
 
-/**
- * Enhanced contract email sending with hybrid approach
- * - Generates PDF and uploads to cloud storage for permanent access
- * - Attaches PDF to email for immediate access
- * - Includes both attachment and static backup link
- */
+// ENHANCED: Contract email sending with comprehensive diagnostics
 export async function sendContractEmail(
   contract: Contract,
   userSettings: UserSettings | null,
@@ -116,12 +203,18 @@ export async function sendContractEmail(
     signatureName?: string;
     clientIpAddress?: string;
   }
-): Promise<boolean> {
+): Promise<{ success: boolean; messageId?: string; diagnostics?: any }> {
   try {
-    console.log('📧 Sending contract email with cloud storage signing page:', contract.contractNumber);
+    console.log('📧 === CONTRACT EMAIL SENDING START ===');
+    console.log('📧 Contract:', contract.contractNumber);
+    console.log('📧 Client:', contract.clientName);
+    console.log('📧 Email:', contract.clientEmail);
+    console.log('📧 Signed:', !!signatureDetails);
 
     // Generate PDF buffer
+    console.log('📄 Generating contract PDF...');
     const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+    console.log('📄 PDF generated, size:', pdfBuffer.length, 'bytes');
 
     const isSignedContract = !!signatureDetails;
     let cloudSigningUrl = '';
@@ -129,7 +222,7 @@ export async function sendContractEmail(
     // For unsigned contracts, create or regenerate cloud storage signing page
     if (!isSignedContract) {
       try {
-        console.log('🔍 Attempting to handle cloud storage signing page...');
+        console.log('☁️ Handling cloud storage signing page...');
         const { uploadContractSigningPage, regenerateContractSigningUrl, isCloudStorageConfigured } = await import('./cloud-storage');
 
         if (!isCloudStorageConfigured()) {
@@ -139,27 +232,24 @@ export async function sendContractEmail(
         // Check if we need to regenerate URL (for reminders sent > 7 days after initial send)
         const shouldRegenerateUrl = contract.cloudStorageKey && 
                                   contract.signingUrlCreatedAt &&
-                                  (Date.now() - contract.signingUrlCreatedAt.getTime()) > (6 * 24 * 60 * 60 * 1000); // 6 days for safety
+                                  (Date.now() - contract.signingUrlCreatedAt.getTime()) > (6 * 24 * 60 * 60 * 1000);
 
         if (shouldRegenerateUrl) {
-          console.log('🔄 Regenerating fresh signing URL for reminder (>6 days old)...');
+          console.log('🔄 Regenerating fresh signing URL for reminder...');
           cloudSigningUrl = await regenerateContractSigningUrl(contract.cloudStorageKey!);
           if (cloudSigningUrl) {
-            console.log('✅ SUCCESS: Fresh signing URL generated for reminder');
-            console.log('🔗 Regenerated URL:', cloudSigningUrl);
+            console.log('✅ Fresh signing URL generated');
           } else {
             throw new Error('Failed to regenerate signing URL');
           }
         } else {
-          console.log('🔧 Cloud storage configured, uploading new signing page...');
+          console.log('☁️ Uploading new signing page...');
           const uploadResult = await uploadContractSigningPage(contract, userSettings);
-          cloudSigningUrl = uploadResult.url;
-          console.log('✅ SUCCESS: Contract signing page uploaded to cloud storage');
-          console.log('🔗 Cloud signing URL:', cloudSigningUrl);
+          cloudSigningUrl = uploadResult.url!;
+          console.log('✅ Contract signing page uploaded');
 
           // Update contract with cloud storage metadata
           if (uploadResult.storageKey) {
-            const { storage } = await import('./storage');
             await storage.updateContract(contract.id, {
               cloudStorageUrl: cloudSigningUrl,
               cloudStorageKey: uploadResult.storageKey,
@@ -169,17 +259,11 @@ export async function sendContractEmail(
           }
         }
 
-        // Verify the URL starts with expected cloud storage domain
-        if (!cloudSigningUrl.includes('r2.cloudflarestorage.com')) {
-          console.log('⚠️ WARNING: Cloud URL does not appear to be from cloud storage:', cloudSigningUrl);
-        }
-
       } catch (error) {
-        console.error('❌ FAILED to handle contract signing page:', error);
-        console.error('🔧 Error details:', error.message);
+        console.error('❌ Cloud storage failed:', error);
         // Fallback to app-based signing page
-        cloudSigningUrl = `https://musobuddy.replit.app/sign-contract/${contract.id}`;
-        console.log('🔄 Using app-based signing page as fallback:', cloudSigningUrl);
+        cloudSigningUrl = `https://musobuddy.replit.app/contracts/sign/${contract.id}`;
+        console.log('🔄 Using app-based signing page as fallback');
       }
     }
 
@@ -187,13 +271,19 @@ export async function sendContractEmail(
     const businessName = userSettings?.businessName || 'MusoBuddy';
     const fromName = userSettings?.emailFromName || businessName;
     const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
-    const replyToEmail = userSettings?.emailAddress || 'noreply@mg.musobuddy.com';
+    const replyToEmail = userSettings?.businessEmail || 'noreply@mg.musobuddy.com';
 
     const subject = isSignedContract 
       ? `Contract Signed - ${contract.contractNumber}`
       : `Contract for ${contract.clientName} - ${contract.contractNumber}`;
 
-    // Generate email HTML with cloud storage signing URL
+    console.log('📧 Email configuration:');
+    console.log('   From:', fromEmail);
+    console.log('   To:', contract.clientEmail);
+    console.log('   Reply-to:', replyToEmail);
+    console.log('   Subject:', subject);
+
+    // Generate email HTML
     const emailHtml = generateContractEmailHtml(
       contract,
       userSettings,
@@ -219,116 +309,37 @@ export async function sendContractEmail(
       ]
     };
 
-    // Send email
-    const success = await sendEmail(emailData);
-
-    if (success) {
-      console.log('✅ Contract email sent successfully with attachment');
-      console.log('📎 PDF attached to email for client access');
-      console.log('☁️ Cloud signing page available at:', cloudSigningUrl);
-    }
-
-    return success;
-
-  } catch (error) {
-    console.error('❌ Error sending contract email:', error);
-    return false;
-  }
-}
-
-/**
- * Enhanced invoice email sending with hybrid approach
- */
-export async function sendInvoiceEmail(
-  invoice: Invoice,
-  contract: Contract | null,
-  userSettings: UserSettings | null,
-  customMessage?: string
-): Promise<boolean> {
-  try {
-    console.log('📧 Sending invoice email with hybrid approach:', invoice.invoiceNumber);
-
-    // Generate PDF buffer
-    const pdfBuffer = await generateInvoicePDF(invoice, contract, userSettings);
-
-    // Upload to cloud storage first (if configured) for hybrid reliability
-    let cloudStorageUrl: string | null = null;
-    if (isCloudStorageConfigured()) {
-      console.log('☁️ Uploading invoice to cloud storage...');
-      const cloudResult = await uploadInvoiceToCloud(invoice, contract, userSettings);
-
-      if (cloudResult.success) {
-        cloudStorageUrl = cloudResult.url!;
-
-        // Update invoice with cloud storage URL
-        await storage.updateInvoiceCloudStorage(
-          invoice.id,
-          cloudResult.url!,
-          cloudResult.key!,
-          invoice.userId
-        );
-        console.log('✅ Invoice uploaded to cloud storage successfully');
-      } else {
-        console.warn('⚠️ Cloud storage upload failed:', cloudResult.error);
-      }
+    console.log('📧 Sending email with diagnostic tracking...');
+    
+    // Send email with enhanced diagnostics
+    const result = await sendEmail(emailData);
+    
+    if (result.success) {
+      console.log('✅ === CONTRACT EMAIL SUCCESS ===');
+      console.log('✅ Message ID:', result.messageId);
+      console.log('📎 PDF attached to email');
+      console.log('☁️ Cloud signing page:', cloudSigningUrl);
+      
+      // ENHANCED: Add expected delivery time
+      const expectedDelivery = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+      console.log('⏰ Expected delivery by:', expectedDelivery.toLocaleTimeString());
     } else {
-      console.log('📎 Cloud storage not configured, using attachment-only approach');
+      console.error('❌ === CONTRACT EMAIL FAILURE ===');
+      console.error('❌ Diagnostics:', result.diagnostics);
     }
 
-    // Prepare email content
-    const businessName = userSettings?.businessName || 'MusoBuddy';
-    const fromName = userSettings?.emailFromName || businessName;
-    const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
-    const replyToEmail = userSettings?.emailAddress || 'noreply@mg.musobuddy.com';
-
-    const subject = `Invoice ${invoice.invoiceNumber} - Payment Due`;
-
-    // Generate email HTML with hybrid approach
-    const emailHtml = generateInvoiceEmailHtml(
-      invoice,
-      contract,
-      userSettings,
-      cloudStorageUrl,
-      customMessage
-    );
-
-    // Create email with PDF attachment
-    const emailData: EmailData = {
-      to: invoice.clientEmail,
-      from: fromEmail,
-      subject: subject,
-      html: emailHtml,
-      replyTo: replyToEmail,
-      cc: invoice.ccEmail || undefined, // Add CC support
-      attachments: [
-        {
-          content: pdfBuffer.toString('base64'),
-          filename: `${invoice.invoiceNumber}.pdf`,
-          type: 'application/pdf',
-          disposition: 'attachment'
-        }
-      ]
-    };
-
-    // Send email
-    const success = await sendEmail(emailData);
-
-    if (success) {
-      console.log('✅ Invoice email sent successfully with attachment');
-      console.log('📎 PDF attached to email for client access');
-    }
-
-    return success;
+    return result;
 
   } catch (error) {
-    console.error('❌ Error sending invoice email:', error);
-    return false;
+    console.error('❌ Contract email error:', error);
+    return { 
+      success: false, 
+      diagnostics: { error: error.message } 
+    };
   }
 }
 
-/**
- * Generate HTML for contract email with hybrid approach
- */
+// ENHANCED: Generate HTML for contract email with better debugging
 function generateContractEmailHtml(
   contract: Contract,
   userSettings: UserSettings | null,
@@ -337,12 +348,22 @@ function generateContractEmailHtml(
   cloudSigningUrl?: string
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
+  
+  // ENHANCED: Add debugging info to email for troubleshooting
+  const debugInfo = process.env.NODE_ENV === 'development' ? `
+    <!-- DEBUG INFO -->
+    <!-- Generated: ${new Date().toISOString()} -->
+    <!-- Contract: ${contract.contractNumber} -->
+    <!-- Cloud URL: ${cloudSigningUrl || 'none'} -->
+    <!-- Signed: ${isSignedContract} -->
+  ` : '';
+
   const signInstructions = isSignedContract ? '' : `
     <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
       <h3 style="color: #1e40af; margin-top: 0;">📝 Action Required</h3>
       <p style="margin: 10px 0;">Please review and sign this contract to confirm your booking.</p>
       <div style="text-align: center; margin: 20px 0;">
-        <a href="${cloudSigningUrl || `https://musobuddy.replit.app/sign-contract/${contract.id}`}" 
+        <a href="${cloudSigningUrl || `https://musobuddy.replit.app/contracts/sign/${contract.id}`}" 
            style="background-color: #1e40af; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 18px; border: none; box-shadow: 0 3px 6px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">
           📝 Sign Contract Online
         </a>
@@ -360,14 +381,15 @@ function generateContractEmailHtml(
     </div>
   ` : '';
 
-  const attachmentHtml = `
-    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
-      <p style="margin: 0; color: #64748b;">📎 Your contract is attached as a PDF to this email.</p>
-    </div>
-  `;
-
   return `
+    <!DOCTYPE html>
     <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Contract from ${businessName}</title>
+        ${debugInfo}
+      </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #2563eb;">Contract from ${businessName}</h2>
 
@@ -389,7 +411,9 @@ function generateContractEmailHtml(
           <p><strong>Fee:</strong> £${contract.fee}</p>
         </div>
 
-        ${attachmentHtml}
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
+          <p style="margin: 0; color: #64748b;">📎 Your contract is attached as a PDF to this email.</p>
+        </div>
 
         <p>If you have any questions, please don't hesitate to contact me.</p>
 
@@ -398,83 +422,24 @@ function generateContractEmailHtml(
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
         <p style="font-size: 12px; color: #6b7280; text-align: center;">
-          Powered by MusoBuddy – less admin, more music
+          Powered by MusoBuddy – less admin, more music<br>
+          Email ID: msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}
         </p>
       </body>
     </html>
   `;
 }
 
-/**
- * Generate HTML for invoice email with hybrid approach
- */
-function generateInvoiceEmailHtml(
-  invoice: Invoice,
-  contract: Contract | null,
-  userSettings: UserSettings | null,
-  cloudStorageUrl?: string | null,
-  customMessage?: string
-): string {
-  const businessName = userSettings?.businessName || 'MusoBuddy';
-
-  // Invoice emails: attachment-only approach (no cloud link needed)
-  const attachmentHtml = `
-    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
-      <p style="margin: 0; color: #64748b;">📎 Your invoice is attached as a PDF to this email.</p>
-    </div>
-  `;
-
-  return `
-    <html>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">Invoice from ${businessName}</h2>
-
-        <p>Dear ${invoice.clientName},</p>
-
-        ${customMessage ? `<div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-          <p style="margin: 0; color: #92400e; font-style: italic;">${customMessage.replace(/\n/g, '<br>')}</p>
-        </div>` : ''}
-
-        <p>Please find attached your invoice for the performance services.</p>
-
-        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #374151; margin-top: 0;">💰 Payment Details</h3>
-          <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
-          <p><strong>Amount Due:</strong> £${invoice.amount}</p>
-          <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</p>
-          ${invoice.performanceDate ? `<p><strong>Performance Date:</strong> ${new Date(invoice.performanceDate).toLocaleDateString('en-GB')}</p>` : ''}
-        </div>
-
-        ${attachmentHtml}
-
-        <p>Payment can be made via bank transfer to the account details shown on the invoice.</p>
-
-        <p>Thank you for your business!</p>
-
-        <p>Best regards,<br>
-        ${businessName}</p>
-
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-        <p style="font-size: 12px; color: #6b7280; text-align: center;">
-          Powered by MusoBuddy – less admin, more music
-        </p>
-      </body>
-    </html>
-  `;
-}
-
-/**
- * CRITICAL FIX: Send confirmation emails after contract is signed
- * This function was missing and causing the email system to fail
- */
+// ENHANCED: Send confirmation emails with better error handling
 export async function sendContractConfirmationEmails(
   contract: Contract,
   userSettings: UserSettings | null
-): Promise<boolean> {
+): Promise<{ success: boolean; clientSuccess?: boolean; performerSuccess?: boolean; diagnostics?: any }> {
   try {
-    console.log('📧 CONFIRMATION: Sending confirmation emails for signed contract:', contract.contractNumber);
+    console.log('📧 === CONFIRMATION EMAILS START ===');
+    console.log('📧 Contract:', contract.contractNumber);
 
-    // Generate signed contract PDF with signature details
+    // Generate signed contract PDF
     const signatureDetails = {
       signedAt: contract.signedAt ? new Date(contract.signedAt) : new Date(),
       signatureName: contract.clientName,
@@ -483,15 +448,15 @@ export async function sendContractConfirmationEmails(
 
     const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
 
-    // Upload signed contract to cloud storage for permanent access
+    // Upload signed contract to cloud storage
     let cloudDownloadUrl: string | null = null;
     if (isCloudStorageConfigured()) {
-      console.log('☁️ CONFIRMATION: Uploading signed contract to cloud storage...');
+      console.log('☁️ Uploading signed contract to cloud storage...');
       const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
 
       if (cloudResult.success && cloudResult.url) {
         cloudDownloadUrl = cloudResult.url;
-        console.log('✅ CONFIRMATION: Signed contract uploaded to cloud storage:', cloudDownloadUrl);
+        console.log('✅ Signed contract uploaded to cloud storage');
 
         // Update contract with cloud storage URL
         await storage.updateContract(contract.id, {
@@ -499,8 +464,6 @@ export async function sendContractConfirmationEmails(
           cloudStorageKey: cloudResult.key,
           signingUrlCreatedAt: new Date()
         }, contract.userId);
-      } else {
-        console.warn('⚠️ CONFIRMATION: Cloud storage upload failed:', cloudResult.error);
       }
     }
 
@@ -510,19 +473,19 @@ export async function sendContractConfirmationEmails(
     const fromEmail = `${fromName} <noreply@mg.musobuddy.com>`;
     const replyToEmail = userSettings?.businessEmail || 'noreply@mg.musobuddy.com';
 
-    // Generate app-based download URL as fallback
     const appDownloadUrl = `https://musobuddy.replit.app/api/contracts/${contract.id}/download`;
     const finalDownloadUrl = cloudDownloadUrl || appDownloadUrl;
 
-    console.log('🔗 CONFIRMATION: Download URL for emails:', finalDownloadUrl);
+    let clientSuccess = false;
+    let performerSuccess = false;
+    const diagnostics: any = {
+      clientEmail: null,
+      performerEmail: null
+    };
 
     // EMAIL 1: Send confirmation to CLIENT
-    const clientEmailHtml = generateClientConfirmationHtml(
-      contract,
-      userSettings,
-      finalDownloadUrl,
-      signatureDetails
-    );
+    console.log('📧 Sending client confirmation email...');
+    const clientEmailHtml = generateClientConfirmationHtml(contract, userSettings, finalDownloadUrl, signatureDetails);
 
     const clientEmailData: EmailData = {
       to: contract.clientEmail,
@@ -540,25 +503,16 @@ export async function sendContractConfirmationEmails(
       ]
     };
 
-    console.log('📧 CONFIRMATION: Sending email to client:', contract.clientEmail);
-    const clientEmailSuccess = await sendEmail(clientEmailData);
-
-    if (!clientEmailSuccess) {
-      console.error('❌ CONFIRMATION: Failed to send client confirmation email');
-    } else {
-      console.log('✅ CONFIRMATION: Client confirmation email sent successfully');
-    }
+    const clientResult = await sendEmail(clientEmailData);
+    clientSuccess = clientResult.success;
+    diagnostics.clientEmail = clientResult.diagnostics;
 
     // EMAIL 2: Send notification to PERFORMER
     const performerEmail = userSettings?.businessEmail || replyToEmail;
 
     if (performerEmail && performerEmail !== 'noreply@mg.musobuddy.com') {
-      const performerEmailHtml = generatePerformerConfirmationHtml(
-        contract,
-        userSettings,
-        finalDownloadUrl,
-        signatureDetails
-      );
+      console.log('📧 Sending performer notification email...');
+      const performerEmailHtml = generatePerformerConfirmationHtml(contract, userSettings, finalDownloadUrl, signatureDetails);
 
       const performerEmailData: EmailData = {
         to: performerEmail,
@@ -576,39 +530,43 @@ export async function sendContractConfirmationEmails(
         ]
       };
 
-      console.log('📧 CONFIRMATION: Sending email to performer:', performerEmail);
-      const performerEmailSuccess = await sendEmail(performerEmailData);
-
-      if (!performerEmailSuccess) {
-        console.error('❌ CONFIRMATION: Failed to send performer confirmation email');
-      } else {
-        console.log('✅ CONFIRMATION: Performer confirmation email sent successfully');
-      }
-
-      return clientEmailSuccess && performerEmailSuccess;
+      const performerResult = await sendEmail(performerEmailData);
+      performerSuccess = performerResult.success;
+      diagnostics.performerEmail = performerResult.diagnostics;
     } else {
-      console.warn('⚠️ CONFIRMATION: No performer email configured, only sending client confirmation');
-      return clientEmailSuccess;
+      console.warn('⚠️ No performer email configured, skipping performer notification');
+      performerSuccess = true; // Don't fail if no performer email
     }
 
+    const overallSuccess = clientSuccess && performerSuccess;
+
+    console.log('📧 === CONFIRMATION EMAILS COMPLETE ===');
+    console.log('✅ Client email success:', clientSuccess);
+    console.log('✅ Performer email success:', performerSuccess);
+    console.log('✅ Overall success:', overallSuccess);
+
+    return {
+      success: overallSuccess,
+      clientSuccess,
+      performerSuccess,
+      diagnostics
+    };
+
   } catch (error) {
-    console.error('❌ CONFIRMATION: Error sending confirmation emails:', error);
-    return false;
+    console.error('❌ Confirmation emails error:', error);
+    return { 
+      success: false, 
+      diagnostics: { error: error.message } 
+    };
   }
 }
 
-/**
- * Generate HTML for client confirmation email
- */
-function generateClientConfirmationHtml(
-  contract: Contract,
-  userSettings: UserSettings | null,
-  downloadUrl: string,
-  signatureDetails: any
-): string {
+// Helper functions for confirmation emails (same as before but with enhanced logging)
+function generateClientConfirmationHtml(contract: Contract, userSettings: UserSettings | null, downloadUrl: string, signatureDetails: any): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-
+  
   return `
+    <!DOCTYPE html>
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background-color: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
@@ -636,16 +594,9 @@ function generateClientConfirmationHtml(
           </a>
         </div>
 
-        <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #92400e;">
-            <strong>Important:</strong> Please save a copy of your signed contract for your records. 
-            This document contains all the terms and conditions for your event.
-          </p>
-        </div>
-
         <p>A copy of the signed contract is also attached to this email.</p>
 
-        <p>We look forward to performing at your event! If you have any questions, please don't hesitate to contact us.</p>
+        <p>We look forward to performing at your event!</p>
 
         <p>Best regards,<br>
         <strong>${businessName}</strong></p>
@@ -659,18 +610,9 @@ function generateClientConfirmationHtml(
   `;
 }
 
-/**
- * Generate HTML for performer confirmation email
- */
-function generatePerformerConfirmationHtml(
-  contract: Contract,
-  userSettings: UserSettings | null,
-  downloadUrl: string,
-  signatureDetails: any
-): string {
-  const businessName = userSettings?.businessName || 'MusoBuddy';
-
+function generatePerformerConfirmationHtml(contract: Contract, userSettings: UserSettings | null, downloadUrl: string, signatureDetails: any): string {
   return `
+    <!DOCTYPE html>
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background-color: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;">
@@ -699,42 +641,51 @@ function generatePerformerConfirmationHtml(
           </a>
         </div>
 
-        <div style="background-color: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; color: #1e40af;">
-            <strong>Next Steps:</strong> You can now create and send an invoice for this performance. 
-            The signed contract is attached and also available for download using the link above.
-          </p>
-        </div>
+        <p>The signed contract is attached and also available for download using the link above.</p>
 
         <p>Best regards,<br>
         <strong>MusoBuddy</strong></p>
-
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-        <p style="font-size: 12px; color: #6b7280; text-align: center;">
-          Powered by MusoBuddy – less admin, more music
-        </p>
       </body>
     </html>
   `;
 }
 
-// Test function for sandbox testing
-export async function testEmailSending(): Promise<void> {
-  console.log('🧪 Testing Mailgun email sending...');
-
-  const testEmail: EmailData = {
-    to: 'test@example.com',
-    from: 'MusoBuddy <noreply@sandbox-123.mailgun.org>',
-    subject: 'Test Email from MusoBuddy',
+// Enhanced test function with comprehensive diagnostics
+export async function testEmailSending(testEmail?: string): Promise<void> {
+  console.log('🧪 === ENHANCED EMAIL TEST START ===');
+  
+  const recipient = testEmail || 'test@example.com';
+  
+  const testEmailData: EmailData = {
+    to: recipient,
+    from: 'MusoBuddy Test <noreply@mg.musobuddy.com>',
+    subject: `MusoBuddy Email Test - ${new Date().toLocaleTimeString()}`,
     text: 'This is a test email to verify Mailgun integration.',
-    html: '<h1>Test Email</h1><p>This is a test email to verify Mailgun integration.</p>'
+    html: `
+      <h1>📧 MusoBuddy Email Test</h1>
+      <p>This is a test email to verify Mailgun integration.</p>
+      <p><strong>Sent at:</strong> ${new Date().toLocaleString()}</p>
+      <p><strong>Test ID:</strong> test-${Date.now()}</p>
+      <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <p><strong>If you receive this email:</strong></p>
+        <ul>
+          <li>✅ Mailgun API integration is working</li>
+          <li>✅ Authentication is successful</li>
+          <li>✅ Email delivery is functional</li>
+        </ul>
+      </div>
+    `
   };
 
-  const success = await sendEmail(testEmail);
+  const result = await sendEmail(testEmailData);
 
-  if (success) {
-    console.log('✅ Email test passed!');
+  console.log('🧪 === EMAIL TEST COMPLETE ===');
+  if (result.success) {
+    console.log('✅ Test email sent successfully!');
+    console.log('✅ Message ID:', result.messageId);
+    console.log('⏰ Check your inbox within 1-5 minutes');
   } else {
-    console.log('❌ Email test failed!');
+    console.log('❌ Test email failed!');
+    console.log('❌ Diagnostics:', result.diagnostics);
   }
 }

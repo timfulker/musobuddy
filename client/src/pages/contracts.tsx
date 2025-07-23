@@ -22,6 +22,7 @@ import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
+import { ContractNotifications, useContractStatusMonitor } from "@/components/contract-notifications";
 
 const contractFormSchema = z.object({
   // TESTING: Only 4 required fields as requested
@@ -65,6 +66,9 @@ export default function Contracts() {
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
+  
+  // Monitor contract signings for real-time notifications
+  useContractStatusMonitor();
 
   const { data: contracts = [], isLoading, error } = useQuery<Contract[]>({
     queryKey: ["/api/contracts"],
@@ -236,29 +240,12 @@ export default function Contracts() {
       });
     },
     onError: (error) => {
-      // Check if it's an authentication error and provide helpful guidance
-      if (error.message && error.message.includes("session has expired")) {
-        toast({
-          title: "Session Expired",
-          description: "Your session has expired. Please log out and log back in to continue.",
-          variant: "destructive",
-          action: (
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.href = "/api/logout"}
-              className="ml-2 text-sm"
-            >
-              Log Out
-            </Button>
-          ),
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: `Failed to generate contract: ${error.message}`,
-          variant: "destructive",
-        });
-      }
+      console.error('Create contract error:', error);
+      toast({
+        title: "Error",
+        description: `Failed to generate contract: ${error.message}`,
+        variant: "destructive",
+      });
     },
   });
 
@@ -280,29 +267,12 @@ export default function Contracts() {
       });
     },
     onError: (error) => {
-      // Check if it's an authentication error and provide helpful guidance
-      if (error.message && error.message.includes("session has expired")) {
-        toast({
-          title: "Session Expired",
-          description: "Your session has expired. Please log out and log back in to continue.",
-          variant: "destructive",
-          action: (
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.href = "/api/logout"}
-              className="ml-2 text-sm"
-            >
-              Log Out
-            </Button>
-          ),
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: `Failed to update contract: ${error.message}`,
-          variant: "destructive",
-        });
-      }
+      console.error('Update contract error:', error);
+      toast({
+        title: "Error",
+        description: `Failed to update contract: ${error.message}`,
+        variant: "destructive",
+      });
     },
   });
 
@@ -414,7 +384,7 @@ export default function Contracts() {
     console.log('🔥 FRONTEND: handleSendEmail called with contract:', contract.id);
     console.log('🔥 FRONTEND: Contract details:', contract);
     console.log('🔥 FRONTEND: sendEmailMutation.isPending:', sendEmailMutation.isPending);
-    sendEmailMutation.mutate(contract);
+    sendEmailMutation.mutate({ contractId: contract.id });
   };
 
   const handleViewSignedContract = (contract: Contract) => {
@@ -471,44 +441,18 @@ export default function Contracts() {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       setSelectedContracts([]);
 
-      // Check if result has the expected structure
-      if (result && result.summary) {
-        if (result.summary.failed > 0) {
-          toast({
-            title: "Partial deletion success",
-            description: `${result.summary.successful} deleted, ${result.summary.failed} failed`,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Contracts deleted",
-            description: `${result.summary.successful} contract${result.summary.successful !== 1 ? 's' : ''} deleted successfully`,
-          });
-        }
-      } else {
-        // Fallback for unexpected response format
-        console.warn('🔥 Unexpected response format:', result);
-        toast({
-          title: "Contracts deleted",
-          description: "Selected contracts were deleted successfully",
-        });
-      }
-    } catch (error) {
+      toast({
+        title: "Contracts deleted",
+        description: `${selectedContracts.length} contract${selectedContracts.length !== 1 ? 's' : ''} deleted successfully`,
+      });
+    } catch (error: any) {
       console.error('🔥 Bulk delete error:', error);
       
-      // Check if this is a network error or parsing issue
-      if (error.message && error.message.includes('JSON')) {
-        toast({
-          title: "Contracts deleted",
-          description: "Contracts were deleted successfully (response format issue)",
-        });
-      } else {
-        toast({
-          title: "Error deleting contracts",
-          description: `Failed to delete selected contracts: ${error.message || 'Unknown error'}`,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error deleting contracts",
+        description: `Failed to delete selected contracts: ${error.message || 'Unknown error'}`,
+        variant: "destructive",
+      });
     } finally {
       setBulkActionLoading(false);
     }
@@ -659,6 +603,9 @@ export default function Contracts() {
       <div className={`min-h-screen ${isDesktop ? 'ml-64' : ''}`}>
         <div className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">
+            {/* Real-time contract notifications */}
+            <ContractNotifications />
+
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
@@ -1302,212 +1249,6 @@ export default function Contracts() {
                 </>
               )}
             </div>
-
-            {/* Contract Preview Dialog */}
-            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Contract Preview</DialogTitle>
-                </DialogHeader>
-                {previewContract && (
-                  <div className="space-y-6 p-4">
-                    {/* Contract Header */}
-                    <div className="text-center border-b-2 border-gray-200 pb-6">
-                      <h1 className="text-3xl font-bold text-gray-900 mb-1">LIVE ENGAGEMENT CONTRACT</h1>
-                      <p className="text-lg text-gray-600">Solo Musician Performance Agreement</p>
-                      <p className="text-sm text-gray-500 mt-2">Contract #{previewContract.contractNumber}</p>
-                    </div>
-
-                    {/* Agreement Statement */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-gray-800 leading-relaxed">
-                        An agreement made on <strong>{formatDate(new Date().toISOString())}</strong> between the Hirer and the Musician 
-                        for the performance engagement detailed below.
-                      </p>
-                    </div>
-
-                    {/* Party Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                          THE HIRER
-                        </h3>
-                        <div className="space-y-2">
-                          <p className="font-medium text-gray-900">{previewContract.clientName}</p>
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <p><strong>Address:</strong> [To be completed]</p>
-                            <p><strong>Phone:</strong> [To be completed]</p>
-                            <p><strong>Email:</strong> [To be completed]</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                          THE MUSICIAN
-                        </h3>
-                        <div className="space-y-2">
-                          <p className="font-medium text-gray-900">{settings?.businessName || '[Business Name]'}</p>
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <p><strong>Address:</strong> {settings?.businessAddress || '[Business Address]'}</p>
-                            <p><strong>Phone:</strong> {settings?.phone || '[Business Phone]'}</p>
-                            <p><strong>Email:</strong> {settings?.businessEmail || '[Business Email]'}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Engagement Details */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                        ENGAGEMENT DETAILS
-                      </h3>
-
-                      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                        <table className="w-full">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Date</th>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Start Time</th>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Venue</th>
-                              <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Fee</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="border-t border-gray-200">
-                              <td className="px-4 py-3 text-sm text-gray-900">{formatDate(previewContract.eventDate)}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900">{previewContract.eventTime}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900">{previewContract.venue}</td>
-                              <td className="px-4 py-3 text-sm font-semibold text-green-600">£{previewContract.fee}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {previewContract.deposit && (
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                          <p className="text-sm text-blue-800">
-                            <strong>Deposit Required:</strong> £{previewContract.deposit} (payable upon signing)
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Terms and Conditions */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                        TERMS & CONDITIONS
-                      </h3>
-
-                      <div className="space-y-3 text-sm text-gray-700">
-                        <div className="flex items-start space-x-2">
-                          <span className="text-gray-400 mt-1">•</span>
-                          <p>The fee listed above is payable on the date of performance.</p>
-                        </div>
-                        <div className="flex items-start space-x-2">
-                          <span className="text-gray-400 mt-1">•</span>
-                          <p>The Hirer and Musician agree that equipment and instruments are not available for use by others without specific permission.</p>
-                        </div>
-                        <div className="flex items-start space-x-2">
-                          <span className="text-gray-400 mt-1">•</span>
-                          <p>The Hirer shall ensure safe electricity supply and security of the Musician and property at the venue.</p>
-                        </div>
-                        <div className="flex items-start space-x-2">
-                          <span className="text-gray-400 mt-1">•</span>
-                          <p>No audio/visual recording or transmission permitted without prior written consent.</p>
-                        </div>
-                        <div className="flex items-start space-x-2">
-                          <span className="text-gray-400 mt-1">•</span>
-                          <p>This agreement may only be modified or cancelled by mutual written consent.</p>
-                        </div>
-                      </div>
-
-                      {previewContract.terms && (
-                        <div className="mt-4">
-                          <h4 className="font-medium text-gray-900 mb-2">Additional Terms:</h4>
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{previewContract.terms}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Signature Section */}
-                    <div className="space-y-6 border-t-2 border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900">SIGNATURES</h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                          <h4 className="font-medium text-gray-900">HIRER SIGNATURE</h4>
-                          <div className="space-y-3">
-                            <div className="border-b border-gray-300 pb-1">
-                              <p className="text-xs text-gray-500 mb-1">Signature</p>
-                              <div className="h-8"></div>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Print Name</p>
-                              <p className="text-sm text-gray-700">{previewContract.clientName}</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Phone</p>
-                                <p className="text-sm text-gray-700">[To be completed]</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Email</p>
-                                <p className="text-sm text-gray-700">[To be completed]</p>
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Date</p>
-                              <div className="border-b border-gray-300 h-6"></div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="font-medium text-gray-900">MUSICIAN SIGNATURE</h4>
-                          <div className="space-y-3">
-                            <div className="border-b border-gray-300 pb-1">
-                              <p className="text-xs text-gray-500 mb-1">Signature</p>
-                              <div className="h-8"></div>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Print Name</p>
-                              <p className="text-sm text-gray-700">{settings?.businessName || '[Business Name]'}</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Phone</p>
-                                <p className="text-sm text-gray-700">{settings?.phone || '[Business Phone]'}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">Email</p>
-                                <p className="text-sm text-gray-700">{settings?.businessEmail || '[Business Email]'}</p>
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Date</p>
-                              <div className="border-b border-gray-300 h-6"></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="text-center text-xs text-gray-500 border-t border-gray-200 pt-4">
-                      <p className="mb-2">Contract Status: <Badge className={getStatusColor(previewContract.status)}>{previewContract.status.toUpperCase()}</Badge></p>
-                      <p>Created: {formatDate(previewContract.createdAt!)}</p>
-                      {previewContract.signedAt && (
-                        <p className="text-green-600 font-medium">Signed: {formatDate(previewContract.signedAt)}</p>
-                      )}
-                      <p className="mt-2 italic">One copy to be retained by the Hirer and one copy by the Musician.</p>
-                    </div>
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
 
             {/* Custom Message Dialog */}
             <Dialog open={customMessageDialog} onOpenChange={setCustomMessageDialog}>

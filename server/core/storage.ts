@@ -108,8 +108,6 @@ export class Storage {
       .orderBy(desc(contracts.createdAt));
   }
 
-
-
   async createContract(contractData: any) {
     // Convert date strings to Date objects for timestamp fields
     const processedData = {
@@ -297,15 +295,12 @@ export class Storage {
       
       console.log('📝 STORAGE: Updating contract with data:', updateData);
       
-      // Perform the database update with proper error handling
-      const result = await db.update(contracts)
-        .set(updateData)
-        .where(eq(contracts.id, contractId))
-        .returning();
+      // FIXED: Use the flexible updateContract method without userId for public signing
+      const result = await this.updateContract(contractId, updateData);
       
-      if (result.length > 0) {
+      if (result) {
         console.log('✅ STORAGE: Contract successfully signed');
-        return result[0];
+        return result;
       } else {
         throw new Error('Failed to update contract');
       }
