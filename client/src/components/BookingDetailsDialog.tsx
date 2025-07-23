@@ -846,9 +846,9 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                     name="styles"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Styles <span className="text-blue-600">[Styles]</span></FormLabel>
+                        <FormLabel>Styles Requested <span className="text-blue-600">[Styles]</span></FormLabel>
                         <FormControl>
-                          <Textarea {...field}  rows={3} placeholder="Musical styles for this specific booking: jazz, classical, pop, etc." />
+                          <Textarea {...field}  rows={3} placeholder="Musical styles requested for this booking: jazz, classical, pop, etc." />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

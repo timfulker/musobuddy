@@ -207,7 +207,7 @@ export const bookings = pgTable("bookings", {
   fee: decimal("fee", { precision: 10, scale: 2 }),
   equipmentRequirements: text("equipment_requirements"),
   specialRequirements: text("special_requirements"),
-  repertoire: text("repertoire"), // Musical style/repertoire description
+  styles: text("styles"), // Musical styles requested for this booking
   equipmentProvided: text("equipment_provided"), // What equipment musician provides
   whatsIncluded: text("whats_included"), // What's included in the service
   status: varchar("status").notNull().default("new"), // New 6-stage workflow: new, awaiting_response, client_confirms, contract_sent, confirmed, cancelled, completed
