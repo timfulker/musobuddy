@@ -6,7 +6,7 @@ import {
   Home, 
   Inbox, 
   FileText, 
-  DollarSign, 
+  PoundSterling, 
   Calendar, 
   Shield, 
   BarChart3, 
@@ -130,7 +130,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               ? "bg-purple-600 text-white font-medium" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>
-            <DollarSign className="w-5 h-5" />
+            <PoundSterling className="w-5 h-5" />
             <span>Invoices</span>
           </Link>
 

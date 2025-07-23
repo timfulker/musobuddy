@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, FileText, Send, DollarSign, CreditCard } from "lucide-react";
+import { CheckCircle, FileText, Send, PoundSterling, CreditCard } from "lucide-react";
 
 interface BookingProgressTagsProps {
   booking: {
@@ -60,7 +60,7 @@ export default function BookingProgressTags({ booking, size = "sm" }: BookingPro
   if (booking.paidInFull) {
     tags.push({
       label: "Paid in Full",
-      icon: DollarSign,
+      icon: PoundSterling,
       color: "bg-emerald-100 text-emerald-800 border-emerald-200",
       emoji: "💰"
     });
