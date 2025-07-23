@@ -282,8 +282,16 @@ function generateInvoiceHTML(
           <h3>From:</h3>
           <p><strong>${businessName}</strong></p>
           <p style="font-style: italic; color: #666;">Sole trader trading as ${businessName}</p>
-          ${userSettings?.businessAddress ? `<p>${userSettings?.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
-          ${userSettings?.phone ? `<p>Phone: ${userSettings?.phone}</p>` : ''}
+          ${userSettings ? `
+            <p>
+              ${userSettings.addressLine1 || ''}${userSettings.addressLine1 ? '<br>' : ''}
+              ${userSettings.addressLine2 || ''}${userSettings.addressLine2 ? '<br>' : ''}
+              ${userSettings.city || ''}${userSettings.city ? '<br>' : ''}
+              ${userSettings.county || ''}${userSettings.county ? '<br>' : ''}
+              ${userSettings.postcode || ''}
+            </p>
+          ` : userSettings?.businessAddress ? `<p>${userSettings.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
+          ${userSettings?.phone ? `<p>Phone: ${userSettings.phone}</p>` : ''}
           ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
           ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
         </div>
@@ -344,11 +352,9 @@ function generateInvoiceHTML(
           <h4>Bank Details for Payment</h4>
           ${userSettings?.bankDetails ? 
             `<p style="margin: 0; white-space: pre-line;">${userSettings.bankDetails}</p>` : 
-            `<p style="margin: 0;">
-              <strong>Account Name:</strong> ${businessName}<br>
-              <strong>Sort Code:</strong> [To be provided]<br>
-              <strong>Account Number:</strong> [To be provided]<br>
-              <strong>Bank:</strong> [To be provided]
+            `<p style="margin: 0; color: #dc2626; font-weight: bold;">
+              Bank details not configured. Please update settings to include:
+              Account Name, Sort Code, Account Number, and Bank Name.
             </p>`
           }
           <p style="margin-top: 10px; font-style: italic; color: #059669;">

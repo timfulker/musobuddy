@@ -166,7 +166,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **System Architecture**: ✅ Perfect separation - documents on Cloudflare R2, API processing on app server
 - **Status**: FULLY OPERATIONAL - Complete cloud-first contract signing system with document independence
 
-### 2025-07-23 - COMPLETE INVOICE SYSTEM OPERATIONAL - Cloud-First Architecture Implemented
+### 2025-07-23 - COMPLETE INVOICE SYSTEM OPERATIONAL - Professional PDFs with Bank Details & Addresses
 - **Cloud-First Invoice System**: ✅ Complete architecture copied from working contract system for invoices
 - **R2 Storage Integration**: ✅ Added uploadInvoiceToCloud function for automatic PDF upload to Cloudflare R2
 - **Email Delivery System**: ✅ Invoice emails now use R2 view links (not attachments) for better deliverability
@@ -174,10 +174,16 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Professional Email Templates**: ✅ Invoice emails with clean HTML design and R2 direct download links
 - **Mark as Paid Function**: ✅ Added POST /api/invoices/:id/mark-paid endpoint with proper status updates
 - **Build System Fixed**: ✅ Resolved duplicate function declarations causing esbuild compilation failures
+- **Bank Details Integration**: ✅ Invoice PDFs now pull bank details from user settings with proper formatting
+- **Musician Address Display**: ✅ Invoice PDFs show complete musician address from settings (addressLine1, city, county, postcode)
+- **Client Address Support**: ✅ Invoice PDFs display client address when available for compliance
+- **Internal Viewing Fixed**: ✅ Corrected storage method call from getInvoiceById to getInvoice for view buttons
+- **Download Route Added**: ✅ Complete invoice download endpoint matching contract system pattern
+- **Professional PDF Layout**: ✅ Enhanced invoice with business addresses, bank details, and compliance information
 - **Architecture Pattern**: ✅ Invoice workflow now mirrors contracts: Generate PDF → Upload to R2 → Send email with R2 URL
 - **Client Experience**: ✅ Clients receive professional emails with direct view/download links hosted on Cloudflare R2
 - **24/7 Availability**: ✅ Invoice PDFs accessible via R2 URLs even when app server is offline
-- **Status**: COMPLETE INVOICE SYSTEM OPERATIONAL - Full cloud-first architecture with R2 storage and email delivery
+- **Status**: COMPLETE INVOICE SYSTEM OPERATIONAL - Professional PDFs with proper bank details and addresses from settings
 
 ### 2025-07-23 - JavaScript API URL Fix - Complete Contract Signing System Fixed
 - **Critical JavaScript Fix**: ✅ Fixed JavaScript in R2 signing pages to use correct app server URL instead of trying to POST to R2 server
