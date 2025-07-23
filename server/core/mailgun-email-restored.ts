@@ -834,10 +834,23 @@ function replaceTemplateVariables(content: string, booking: Booking, userSetting
     .replace(/\[Amount\]/g, formatFee(booking.fee))
     .replace(/\[amount\]/g, formatFee(booking.fee))
     
-    // Complete business signature (the only sign-off needed)
+    // Business signature and individual business details
     .replace(/\[Business Signature\]/g, businessSignature)
     .replace(/\[business signature\]/g, businessSignature)
-    .replace(/\[BUSINESS SIGNATURE\]/g, businessSignature);
+    .replace(/\[BUSINESS SIGNATURE\]/g, businessSignature)
+    .replace(/\[Your Name\]/g, userSettings?.businessName || 'MusoBuddy')
+    .replace(/\[Your Business Name\]/g, userSettings?.businessName || 'MusoBuddy')
+    .replace(/\[Business Name\]/g, userSettings?.businessName || 'MusoBuddy')
+    .replace(/\[Business Email\]/g, userSettings?.businessEmail || '')
+    .replace(/\[Business Phone\]/g, userSettings?.phone || '')
+    .replace(/\[Contact Details\]/g, `${userSettings?.businessEmail || ''}\n${userSettings?.phone || ''}`);
+
+  // Clean up any duplicate business names that might appear close together
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  if (businessName && businessName !== 'MusoBuddy') {
+    const duplicatePattern = new RegExp(`(${businessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})([\\s\\n]{0,50}${businessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+    processedContent = processedContent.replace(duplicatePattern, '$1');
+  }
   
   return processedContent;
 }

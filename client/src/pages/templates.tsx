@@ -346,13 +346,28 @@ export default function Templates() {
       .replace(/\[Amount\]/g, formatFee(booking.fee))
       .replace(/\[amount\]/g, formatFee(booking.fee))
       
-      // Complete business signature (the only sign-off needed)
+      // Business signature and individual business details
       .replace(/\[Business Signature\]/g, userSettings ? 
         `Best regards,\n${userSettings.businessName || 'MusoBuddy'}\n${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
         'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
       .replace(/\[business signature\]/g, userSettings ? 
         `Best regards,\n${userSettings.businessName || 'MusoBuddy'}\n${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
-        'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]');
+        'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
+      .replace(/\[Your Name\]/g, userSettings?.businessName || '[Business Name]')
+      .replace(/\[Your Business Name\]/g, userSettings?.businessName || '[Business Name]')
+      .replace(/\[Business Name\]/g, userSettings?.businessName || '[Business Name]')
+      .replace(/\[Business Email\]/g, userSettings?.businessEmail || '[Business Email]')
+      .replace(/\[Business Phone\]/g, userSettings?.phone || '[Business Phone]')
+      .replace(/\[Contact Details\]/g, userSettings ? 
+        `${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
+        '[Business Email]\n[Business Phone]');
+
+    // Clean up any duplicate business names that might appear close together
+    const businessName = userSettings?.businessName;
+    if (businessName && businessName !== 'MusoBuddy') {
+      const duplicatePattern = new RegExp(`(${businessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})([\\s\\n]{0,50}${businessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+      processedText = processedText.replace(duplicatePattern, '$1');
+    }
     
     return processedText;
   };
