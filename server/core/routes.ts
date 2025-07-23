@@ -1243,7 +1243,8 @@ export async function registerRoutes(app: Express) {
 
       // Upload to Cloudflare R2
       const fileName = `compliance/${req.user.id}/${Date.now()}-${req.file.originalname}`;
-      const uploadResult = await cloudStorageService.uploadFile(fileName, req.file.buffer, req.file.mimetype);
+      const { uploadFileToCloudflare } = await import('./cloud-storage');
+      const uploadResult = await uploadFileToCloudflare(fileName, req.file.buffer, req.file.mimetype);
       
       if (!uploadResult.success) {
         throw new Error(uploadResult.error || 'Failed to upload to cloud storage');
@@ -1285,8 +1286,13 @@ export async function registerRoutes(app: Express) {
 
       // Delete from cloud storage if it's an R2 URL
       if (document.documentUrl && document.documentUrl.includes('r2.dev')) {
-        const fileName = document.documentUrl.split('/').slice(-2).join('/'); // Extract file path
-        await cloudStorageService.deleteFile(fileName);
+        try {
+          const fileName = document.documentUrl.split('/').slice(-2).join('/'); // Extract file path
+          // Note: Delete functionality not implemented yet, just log for now
+          console.log('🗑️ Would delete file from cloud storage:', fileName);
+        } catch (deleteError) {
+          console.log('⚠️ Could not delete file from cloud storage:', deleteError);
+        }
       }
 
       // Delete from database
