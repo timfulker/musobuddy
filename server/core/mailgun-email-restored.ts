@@ -810,19 +810,29 @@ ${userSettings?.website || ''}
     // Performance details
     .replace(/\[Performance Duration\]/g, formatDuration(booking.performanceDuration))
     .replace(/\[performance duration\]/g, formatDuration(booking.performanceDuration))
+    .replace(/\[Duration\]/g, formatDuration(booking.performanceDuration))
+    .replace(/\[duration\]/g, formatDuration(booking.performanceDuration))
     
     .replace(/\[Repertoire\]/g, booking.styles || '[Styles]')
     .replace(/\[repertoire\]/g, booking.styles || '[Styles]')
     .replace(/\[Styles\]/g, booking.styles || '[Styles]')
     .replace(/\[styles\]/g, booking.styles || '[Styles]')
+    .replace(/\[Style\/Genre\]/g, booking.styles || '[Styles]')
+    .replace(/\[style\/genre\]/g, booking.styles || '[Styles]')
     
     .replace(/\[Equipment Provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
     .replace(/\[equipment provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
     .replace(/\{Equipment provided\}/g, booking.equipmentProvided || '[Equipment Provided]')
+    .replace(/\[Equipment details\]/g, booking.equipmentProvided || '[Equipment Provided]')
+    .replace(/\[equipment details\]/g, booking.equipmentProvided || '[Equipment Provided]')
     
     .replace(/\[What's Included\]/g, booking.whatsIncluded || '[What\'s Included]')
     .replace(/\[whats included\]/g, booking.whatsIncluded || '[What\'s Included]')
     .replace(/\[What\'s Included\]/g, booking.whatsIncluded || '[What\'s Included]')
+    
+    // Financial details - additional patterns
+    .replace(/\[Amount\]/g, formatFee(booking.fee))
+    .replace(/\[amount\]/g, formatFee(booking.fee))
     
     // Business signature (at end of email)
     .replace(/\[Business Signature\]/g, businessSignature)
@@ -862,7 +872,7 @@ export async function sendTemplateEmail(
       replyTo: businessEmail, // Replies go to business email
       subject: template.subject,
       html: emailHTML,
-      text: template.emailBody // Plain text fallback
+      text: replaceTemplateVariables(template.emailBody, booking, userSettings) // Plain text fallback with variables replaced
     };
 
     console.log('📧 Email configuration:', {
@@ -897,7 +907,17 @@ function generateTemplateEmailHTML(
   const businessEmail = userSettings?.businessEmail;
   
   // Replace template variables with booking data before converting to HTML
+  console.log('🔄 Template replacement - Original body:', template.emailBody.substring(0, 200) + '...');
+  console.log('🔄 Booking data for replacement:', {
+    styles: booking.styles,
+    performanceDuration: booking.performanceDuration,
+    equipmentProvided: booking.equipmentProvided,
+    whatsIncluded: booking.whatsIncluded,
+    fee: booking.fee
+  });
+  
   const processedEmailBody = replaceTemplateVariables(template.emailBody, booking, userSettings);
+  console.log('🔄 Template replacement - Processed body:', processedEmailBody.substring(0, 200) + '...');
   
   // Convert plain text email body to HTML with line breaks
   const htmlBody = processedEmailBody

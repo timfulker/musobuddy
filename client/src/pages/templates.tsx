@@ -291,14 +291,26 @@ export default function Templates() {
       // NEW Performance fields
       .replace(/\[Performance Duration\]/g, formatDuration(booking.performanceDuration))
       .replace(/\[performance duration\]/g, formatDuration(booking.performanceDuration))
-      .replace(/\[Repertoire\]/g, booking.repertoire || '[Repertoire]')
-      .replace(/\[repertoire\]/g, booking.repertoire || '[Repertoire]')
+      .replace(/\[Repertoire\]/g, booking.styles || '[Styles]')
+      .replace(/\[repertoire\]/g, booking.styles || '[Styles]')
+      .replace(/\[Styles\]/g, booking.styles || '[Styles]')
+      .replace(/\[styles\]/g, booking.styles || '[Styles]')
       .replace(/\[Equipment Provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
       .replace(/\[equipment provided\]/g, booking.equipmentProvided || '[Equipment Provided]')
       .replace(/\{Equipment provided\}/g, booking.equipmentProvided || '[Equipment Provided]')
+      .replace(/\[Equipment details\]/g, booking.equipmentProvided || '[Equipment Provided]')
+      .replace(/\[equipment details\]/g, booking.equipmentProvided || '[Equipment Provided]')
       .replace(/\[What's Included\]/g, booking.whatsIncluded || '[What\'s Included]')
       .replace(/\[whats included\]/g, booking.whatsIncluded || '[What\'s Included]')
-      .replace(/\[What\'s Included\]/g, booking.whatsIncluded || '[What\'s Included]');
+      .replace(/\[What\'s Included\]/g, booking.whatsIncluded || '[What\'s Included]')
+      
+      // Additional patterns
+      .replace(/\[Duration\]/g, formatDuration(booking.performanceDuration))
+      .replace(/\[duration\]/g, formatDuration(booking.performanceDuration))
+      .replace(/\[Style\/Genre\]/g, booking.styles || '[Styles]')
+      .replace(/\[style\/genre\]/g, booking.styles || '[Styles]')
+      .replace(/\[Amount\]/g, formatFee(booking.fee))
+      .replace(/\[amount\]/g, formatFee(booking.fee));
   };
 
   const handleUseTemplate = async (template: EmailTemplate) => {
