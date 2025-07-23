@@ -956,6 +956,8 @@ export async function registerRoutes(app: Express) {
     try {
       const bookingId = parseInt(req.params.id);
       console.log('📝 Updating booking:', bookingId, 'with data:', req.body);
+      console.log('🔍 DEBUG - styles field:', req.body.styles);
+      console.log('🔍 DEBUG - performanceDuration field:', req.body.performanceDuration);
       
       // Sanitize data before updating - convert empty strings to null for numeric fields
       const sanitizedData = { ...req.body };
