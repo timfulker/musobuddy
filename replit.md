@@ -199,7 +199,9 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Workflow Improvement**: ✅ Users now have full control - edit invoices without automatic email sending, use separate "Resend" button for email
 - **Code Cleanup**: ✅ Removed duplicate handleEditInvoice function, eliminated handleEditAndResend references throughout UI
 - **Better User Experience**: ✅ Editing invoices no longer triggers automatic emails, preventing unintended client communications
-- **Status**: Complete invoice system fully operational with improved UI separation - create, view, edit, and cloud storage all working without errors
+- **Download Button Repositioning**: ✅ Moved download buttons to left side of all button groups for better UI flow and easier access
+- **Consistent Layout**: ✅ Applied download button positioning to both desktop and mobile layouts across all invoice statuses
+- **Status**: Complete invoice system fully operational with improved UI separation and better button layout - create, view, edit, and cloud storage all working without errors
 
 ### 2025-07-23 - JavaScript API URL Fix - Complete Contract Signing System Fixed
 - **Critical JavaScript Fix**: ✅ Fixed JavaScript in R2 signing pages to use correct app server URL instead of trying to POST to R2 server

@@ -1390,6 +1390,15 @@ export default function Invoices() {
                       <Button 
                         size="sm" 
                         variant="outline" 
+                        className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap min-w-[85px]" 
+                        onClick={() => handleDownloadInvoice(invoice)}
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        Download
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
                         className="text-xs text-green-600 hover:text-green-700 whitespace-nowrap min-w-[85px]" 
                         onClick={() => handleMarkAsPaid(invoice)}
                         disabled={markPaidMutation.isPending}
@@ -1416,6 +1425,11 @@ export default function Invoices() {
                         <Edit className="w-3 h-3 mr-1" />
                         Edit
                       </Button>
+                    </>
+                  )}
+                  
+                  {invoice.status === "overdue" && (
+                    <>
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -1425,11 +1439,6 @@ export default function Invoices() {
                         <Download className="w-3 h-3 mr-1" />
                         Download
                       </Button>
-                    </>
-                  )}
-                  
-                  {invoice.status === "overdue" && (
-                    <>
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -1469,6 +1478,11 @@ export default function Invoices() {
                         <AlertTriangle className="w-3 h-3 mr-1" />
                         Overdue Notice
                       </Button>
+                    </>
+                  )}
+                  
+                  {invoice.status === "paid" && (
+                    <>
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -1478,11 +1492,6 @@ export default function Invoices() {
                         <Download className="w-3 h-3 mr-1" />
                         Download
                       </Button>
-                    </>
-                  )}
-                  
-                  {invoice.status === "paid" && (
-                    <>
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -1502,6 +1511,11 @@ export default function Invoices() {
                         <Edit className="w-3 h-3 mr-1" />
                         Edit
                       </Button>
+                    </>
+                  )}
+
+                  {invoice.status === "archived" && (
+                    <>
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -1511,11 +1525,6 @@ export default function Invoices() {
                         <Download className="w-3 h-3 mr-1" />
                         Download
                       </Button>
-                    </>
-                  )}
-
-                  {invoice.status === "archived" && (
-                    <>
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -1525,15 +1534,6 @@ export default function Invoices() {
                       >
                         <RefreshCw className="w-3 h-3 mr-1" />
                         Restore
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-xs text-gray-600 hover:text-gray-700 whitespace-nowrap min-w-[85px]" 
-                        onClick={() => handleDownloadInvoice(invoice)}
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        Download
                       </Button>
                     </>
                   )}
@@ -1604,6 +1604,15 @@ export default function Invoices() {
                   <Button 
                     size="sm" 
                     variant="outline" 
+                    className="text-xs text-gray-600 hover:text-gray-700" 
+                    onClick={() => handleDownloadInvoice(invoice)}
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
                     className="text-xs text-green-600 hover:text-green-700" 
                     onClick={() => handleMarkAsPaid(invoice)}
                     disabled={markPaidMutation.isPending}
@@ -1630,6 +1639,11 @@ export default function Invoices() {
                     <Edit className="w-3 h-3 mr-1" />
                     Edit
                   </Button>
+                </>
+              )}
+              
+              {invoice.status === "overdue" && (
+                <>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -1639,11 +1653,6 @@ export default function Invoices() {
                     <Download className="w-3 h-3 mr-1" />
                     Download
                   </Button>
-                </>
-              )}
-              
-              {invoice.status === "overdue" && (
-                <>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -1683,6 +1692,11 @@ export default function Invoices() {
                     <AlertTriangle className="w-3 h-3 mr-1" />
                     Overdue Notice
                   </Button>
+                </>
+              )}
+              
+              {invoice.status === "paid" && (
+                <>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -1692,11 +1706,6 @@ export default function Invoices() {
                     <Download className="w-3 h-3 mr-1" />
                     Download
                   </Button>
-                </>
-              )}
-              
-              {invoice.status === "paid" && (
-                <>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -1716,6 +1725,11 @@ export default function Invoices() {
                     <Edit className="w-3 h-3 mr-1" />
                     Edit
                   </Button>
+                </>
+              )}
+
+              {invoice.status === "archived" && (
+                <>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -1725,11 +1739,6 @@ export default function Invoices() {
                     <Download className="w-3 h-3 mr-1" />
                     Download
                   </Button>
-                </>
-              )}
-
-              {invoice.status === "archived" && (
-                <>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -1739,15 +1748,6 @@ export default function Invoices() {
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Restore
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-xs text-gray-600 hover:text-gray-700" 
-                    onClick={() => handleDownloadInvoice(invoice)}
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
                   </Button>
                 </>
               )}
