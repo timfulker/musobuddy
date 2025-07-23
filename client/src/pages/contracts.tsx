@@ -392,9 +392,9 @@ export default function Contracts() {
     console.log('🎯 Contract status:', contract.status);
     console.log('🎯 Cloud storage URL:', contract.cloudStorageUrl);
     
-    // For signed contracts, always use app server route to avoid CORS issues
+    // For signed contracts, use app server route (which handles authenticated vs client access)
     if (contract.status === 'signed') {
-      console.log('✅ Opening signed contract via app server (avoids CORS)');
+      console.log('✅ Opening signed contract via app server');
       const viewUrl = `/api/contracts/${contract.id}/download`;
       window.open(viewUrl, '_blank');
     }
