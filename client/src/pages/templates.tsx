@@ -45,11 +45,13 @@ export default function Templates() {
   
   // Fetch booking data if responding to a specific booking
   const [bookingData, setBookingData] = useState<any>(null);
+  const [userSettings, setUserSettings] = useState<any>(null);
   
   useEffect(() => {
     if (bookingId && action === 'respond') {
       fetchBookingData();
     }
+    fetchUserSettings();
   }, [bookingId, action]);
   
   const fetchBookingData = async () => {
@@ -72,6 +74,27 @@ export default function Templates() {
       }
     } catch (error) {
       console.error('❌ Failed to fetch booking data:', error);
+    }
+  };
+
+  const fetchUserSettings = async () => {
+    try {
+      const response = await fetch('/api/settings', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const settings = await response.json();
+        setUserSettings(settings);
+        console.log('✅ User settings loaded:', settings);
+      } else {
+        console.error('❌ Failed to fetch user settings');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching user settings:', error);
     }
   };
 
@@ -248,7 +271,7 @@ export default function Templates() {
     });
   };
 
-  const replaceTemplateVariables = (text: string, booking: any) => {
+  const replaceTemplateVariables = (text: string, booking: any, userSettings?: any) => {
     if (!booking) return text;
     
     const eventDate = booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : 'TBD';
@@ -323,15 +346,21 @@ export default function Templates() {
       .replace(/\[Amount\]/g, formatFee(booking.fee))
       .replace(/\[amount\]/g, formatFee(booking.fee))
       
-      // Business signature and details (placeholders for frontend preview)
-      .replace(/\[Business Signature\]/g, 'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
-      .replace(/\[business signature\]/g, 'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
-      .replace(/\[Your Name\]/g, '[Business Name]')
-      .replace(/\[Your Business Name\]/g, '[Business Name]')
-      .replace(/\[Contact Details\]/g, '[Business Email]\n[Business Phone]')
-      .replace(/\[Business Name\]/g, '[Business Name]')
-      .replace(/\[Business Email\]/g, '[Business Email]')
-      .replace(/\[Business Phone\]/g, '[Business Phone]');
+      // Business signature and details using actual user settings
+      .replace(/\[Business Signature\]/g, userSettings ? 
+        `Best regards,\n${userSettings.businessName || 'MusoBuddy'}\n${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
+        'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
+      .replace(/\[business signature\]/g, userSettings ? 
+        `Best regards,\n${userSettings.businessName || 'MusoBuddy'}\n${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
+        'Best regards,\n[Business Name]\n[Business Email]\n[Business Phone]')
+      .replace(/\[Your Name\]/g, userSettings?.businessName || '[Business Name]')
+      .replace(/\[Your Business Name\]/g, userSettings?.businessName || '[Business Name]')
+      .replace(/\[Contact Details\]/g, userSettings ? 
+        `${userSettings.businessEmail || ''}\n${userSettings.phone || ''}`.trim() : 
+        '[Business Email]\n[Business Phone]')
+      .replace(/\[Business Name\]/g, userSettings?.businessName || '[Business Name]')
+      .replace(/\[Business Email\]/g, userSettings?.businessEmail || '[Business Email]')
+      .replace(/\[Business Phone\]/g, userSettings?.phone || '[Business Phone]');
   };
 
   const handleUseTemplate = async (template: EmailTemplate) => {
@@ -345,8 +374,8 @@ export default function Templates() {
     }
 
     // Replace template variables with actual booking data
-    const customizedSubject = replaceTemplateVariables(template.subject, bookingData);
-    const customizedEmailBody = replaceTemplateVariables(template.emailBody, bookingData);
+    const customizedSubject = replaceTemplateVariables(template.subject, bookingData, userSettings);
+    const customizedEmailBody = replaceTemplateVariables(template.emailBody, bookingData, userSettings);
 
     // Show preview dialog first
     setPreviewData({
