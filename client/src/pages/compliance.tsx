@@ -240,6 +240,11 @@ export default function Compliance() {
     }
   }, [form]);
 
+  // Debug dialog state changes
+  useEffect(() => {
+    console.log('Dialog state changed:', { isDialogOpen });
+  }, [isDialogOpen]);
+
   const downloadDocument = useCallback((document: ComplianceDocument) => {
     if (document.documentUrl) {
       if (document.documentUrl.startsWith('data:')) {
@@ -391,19 +396,18 @@ export default function Compliance() {
               </div>
             </div>
             <div className="flex space-x-3">
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700"
+                onClick={() => {
+                  console.log('Add Document button clicked - opening dialog');
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Document
+              </Button>
+              
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="bg-purple-600 hover:bg-purple-700"
-                    onClick={() => {
-                      console.log('Add Document button clicked, opening dialog');
-                      setIsDialogOpen(true);
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Document
-                  </Button>
-                </DialogTrigger>
                 <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Compliance Document</DialogTitle>
