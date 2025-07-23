@@ -89,6 +89,13 @@ export class Storage {
       updatedAt: new Date()
     };
     
+    // Remove undefined values to prevent database errors
+    Object.keys(processedUpdates).forEach(key => {
+      if (processedUpdates[key] === undefined) {
+        delete processedUpdates[key];
+      }
+    });
+    
     const result = await db.update(bookings)
       .set(processedUpdates)
       .where(eq(bookings.id, id))

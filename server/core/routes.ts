@@ -919,9 +919,35 @@ export async function registerRoutes(app: Express) {
 
   app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
-      const booking = await storage.createBooking({ ...req.body, userId: req.user.id });
+      // Sanitize data before creating - convert empty strings to null for numeric fields
+      const sanitizedData = { ...req.body, userId: req.user.id };
+      
+      // Handle numeric fields that could be empty strings
+      const numericFields = ['performanceDuration', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
+      numericFields.forEach(field => {
+        if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
+          sanitizedData[field] = null;
+        } else if (sanitizedData[field] && typeof sanitizedData[field] === 'string') {
+          const parsed = parseInt(sanitizedData[field]);
+          sanitizedData[field] = isNaN(parsed) ? null : parsed;
+        }
+      });
+      
+      // Handle decimal fields
+      const decimalFields = ['fee', 'deposit'];
+      decimalFields.forEach(field => {
+        if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
+          sanitizedData[field] = null;
+        } else if (sanitizedData[field] && typeof sanitizedData[field] === 'string') {
+          const parsed = parseFloat(sanitizedData[field]);
+          sanitizedData[field] = isNaN(parsed) ? null : parsed.toString();
+        }
+      });
+      
+      const booking = await storage.createBooking(sanitizedData);
       res.json(booking);
     } catch (error) {
+      console.error('❌ Booking creation error:', error);
       res.status(500).json({ error: 'Failed to create booking' });
     }
   });
@@ -931,7 +957,32 @@ export async function registerRoutes(app: Express) {
       const bookingId = parseInt(req.params.id);
       console.log('📝 Updating booking:', bookingId, 'with data:', req.body);
       
-      const booking = await storage.updateBooking(bookingId, req.body);
+      // Sanitize data before updating - convert empty strings to null for numeric fields
+      const sanitizedData = { ...req.body };
+      
+      // Handle numeric fields that could be empty strings
+      const numericFields = ['performanceDuration', 'setupTime', 'soundCheckTime', 'packupTime', 'travelTime'];
+      numericFields.forEach(field => {
+        if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
+          sanitizedData[field] = null;
+        } else if (sanitizedData[field] && typeof sanitizedData[field] === 'string') {
+          const parsed = parseInt(sanitizedData[field]);
+          sanitizedData[field] = isNaN(parsed) ? null : parsed;
+        }
+      });
+      
+      // Handle decimal fields
+      const decimalFields = ['fee', 'deposit'];
+      decimalFields.forEach(field => {
+        if (sanitizedData[field] === '' || sanitizedData[field] === undefined) {
+          sanitizedData[field] = null;
+        } else if (sanitizedData[field] && typeof sanitizedData[field] === 'string') {
+          const parsed = parseFloat(sanitizedData[field]);
+          sanitizedData[field] = isNaN(parsed) ? null : parsed.toString();
+        }
+      });
+      
+      const booking = await storage.updateBooking(bookingId, sanitizedData);
       console.log('✅ Booking updated successfully:', booking);
       res.json(booking);
     } catch (error: any) {
