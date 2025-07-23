@@ -29,6 +29,38 @@ export async function registerRoutes(app: Express) {
 
   // ===== PUBLIC CONTRACT SIGNING ROUTES (MUST BE FIRST - NO AUTHENTICATION) =====
 
+  // Dynamic contract signing page route (PUBLIC ACCESS - serves appropriate page based on status)
+  app.get('/sign/contracts/:id', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      console.log('📄 Dynamic signing page request for contract:', contractId);
+      
+      const contract = await storage.getContractById(contractId);
+      if (!contract) {
+        return res.status(404).send('<h1>Contract Not Found</h1><p>This contract does not exist or has been removed.</p>');
+      }
+
+      const userSettings = await storage.getSettings(contract.userId);
+      const { generateContractSigningPageHTML, generateAlreadySignedPageHTML } = await import('./cloud-storage');
+
+      // Dynamically serve appropriate page based on current contract status
+      if (contract.status === 'signed') {
+        console.log('✅ Contract already signed - serving already-signed page');
+        const alreadySignedPage = generateAlreadySignedPageHTML(contract, userSettings);
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(alreadySignedPage);
+      } else {
+        console.log('📝 Contract not signed - serving signing form');
+        const signingPage = generateContractSigningPageHTML(contract, userSettings);
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(signingPage);
+      }
+    } catch (error) {
+      console.error('❌ Dynamic signing page error:', error);
+      res.status(500).send('<h1>Error</h1><p>Unable to load contract signing page.</p>');
+    }
+  });
+
   // Contract signing OPTIONS (PUBLIC - for CORS)
   app.options('/api/contracts/sign/:id', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -359,20 +391,19 @@ export async function registerRoutes(app: Express) {
         }
       }
 
-      // ISSUE 1 FIX: ALWAYS regenerate signing page to ensure correct status
-      console.log('🔄 Regenerating signing page to ensure correct status for contract:', contract.contractNumber);
-      const { uploadContractSigningPage } = await import('./cloud-storage');
-      const pageResult = await uploadContractSigningPage(contract, userSettings);
+      // NEW APPROACH: Use dynamic signing URL that checks contract status in real-time
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://musobuddy.replit.app' 
+        : 'http://localhost:5000';
+      signingUrl = `${baseUrl}/sign/contracts/${contract.id}`;
       
-      if (pageResult.success && pageResult.url) {
-        await storage.updateContract(contract.id, {
-          signingPageUrl: pageResult.url,
-          signingPageKey: pageResult.storageKey,
-          signingUrlCreatedAt: new Date()
-        }, req.user.id);
-        signingUrl = pageResult.url;
-        console.log('✅ Signing page regenerated with current contract status');
-      }
+      // Update contract with dynamic signing URL
+      await storage.updateContract(contract.id, {
+        signingPageUrl: signingUrl,
+        signingUrlCreatedAt: new Date()
+      }, req.user.id);
+      
+      console.log('✅ Using dynamic signing URL:', signingUrl);
 
       console.log('📧 Sending contract SIGNING email with cloud-hosted signing page:', signingUrl);
 
