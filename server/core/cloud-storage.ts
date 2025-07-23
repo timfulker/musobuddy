@@ -159,7 +159,10 @@ function generateContractSigningPageHTML(
   };
 
   // CRITICAL: Use app server for API calls, cloud storage for documents
-  const APP_SERVER_URL = 'https://musobuddy.replit.app';
+  // Dynamic URL based on environment
+  const APP_SERVER_URL = process.env.NODE_ENV === 'production' 
+    ? 'https://musobuddy.replit.app' 
+    : 'http://localhost:5000';
   const contractId = contract.id;
 
   return `<!DOCTYPE html>
