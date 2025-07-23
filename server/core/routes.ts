@@ -1023,15 +1023,15 @@ export async function registerRoutes(app: Express) {
         delete updateData.performanceFee;
       }
       
-      // Ensure numeric fields are properly formatted
+      // Ensure numeric fields are properly formatted as strings for decimal columns
       if (updateData.amount !== undefined && updateData.amount !== '') {
-        updateData.amount = parseFloat(updateData.amount);
+        updateData.amount = parseFloat(updateData.amount).toString();
       }
       if (updateData.fee !== undefined && updateData.fee !== '') {
-        updateData.fee = parseFloat(updateData.fee);
+        updateData.fee = parseFloat(updateData.fee).toString();
       }
       if (updateData.depositPaid !== undefined && updateData.depositPaid !== '') {
-        updateData.depositPaid = parseFloat(updateData.depositPaid);
+        updateData.depositPaid = parseFloat(updateData.depositPaid).toString();
       }
       
       // Handle date fields
@@ -1054,9 +1054,11 @@ export async function registerRoutes(app: Express) {
       
     } catch (error: any) {
       console.error('❌ Invoice update error:', error);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ 
         error: 'Failed to update invoice',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   });
