@@ -359,6 +359,22 @@ export async function registerRoutes(app: Express) {
         }
       }
 
+      // ISSUE 2 FIX: Check if contract is already signed and regenerate signing page
+      if (contract.status === 'signed') {
+        console.log('⚠️ Contract already signed - regenerating already-signed page');
+        const { uploadContractSigningPage } = await import('./cloud-storage');
+        const pageResult = await uploadContractSigningPage(contract, userSettings);
+        
+        if (pageResult.success && pageResult.url) {
+          await storage.updateContract(contract.id, {
+            signingPageUrl: pageResult.url,
+            signingPageKey: pageResult.storageKey,
+            signingUrlCreatedAt: new Date()
+          }, req.user.id);
+          signingUrl = pageResult.url;
+        }
+      }
+
       console.log('📧 Sending contract SIGNING email with cloud-hosted signing page:', signingUrl);
 
       // CRITICAL FIX: Import and call the correct function for SIGNING emails
@@ -811,6 +827,31 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Public contract download error:', error);
       res.status(500).json({ error: 'Failed to access contract' });
+    }
+  });
+
+  // Contract update/edit route - MISSING FUNCTIONALITY ADDED
+  app.patch('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      console.log('📝 Contract update request for ID:', contractId, 'Updates:', updates);
+      
+      const updatedContract = await storage.updateContract(contractId, updates, req.user.id);
+      
+      if (!updatedContract) {
+        return res.status(404).json({ error: 'Contract not found or not authorized' });
+      }
+      
+      console.log('✅ Contract updated successfully');
+      res.json(updatedContract);
+    } catch (error: any) {
+      console.error('❌ Contract update error:', error);
+      res.status(500).json({ 
+        error: 'Failed to update contract', 
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 

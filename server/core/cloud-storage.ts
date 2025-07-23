@@ -790,6 +790,12 @@ function generateContractSigningPageHTML(
           console.log('✅ Contract signed successfully!');
           successMessage.style.display = 'block';
           document.getElementById('signingForm').style.display = 'none';
+          
+          // ISSUE 3 FIX: Hide the original download button to avoid duplicates
+          const originalDownloadBtn = document.querySelector('.download-button');
+          if (originalDownloadBtn) {
+            originalDownloadBtn.style.display = 'none';
+          }
 
           // Show download option after successful signing
           setTimeout(() => {
