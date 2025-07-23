@@ -29,8 +29,6 @@ export async function registerRoutes(app: Express) {
 
   // ===== PUBLIC CONTRACT SIGNING ROUTES (MUST BE FIRST - NO AUTHENTICATION) =====
 
-
-
   // Contract signing OPTIONS (PUBLIC - for CORS)
   app.options('/api/contracts/sign/:id', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -361,22 +359,20 @@ export async function registerRoutes(app: Express) {
         }
       }
 
-      // ALWAYS regenerate R2 signing page to reflect current contract status
-      console.log('🔄 Regenerating R2 signing page with current status for contract:', contract.contractNumber);
-      const { uploadContractSigningPage } = await import('./cloud-storage');
-      const pageResult = await uploadContractSigningPage(contract, userSettings);
-      
-      if (pageResult.success && pageResult.url) {
-        await storage.updateContract(contract.id, {
-          signingPageUrl: pageResult.url,
-          signingPageKey: pageResult.storageKey,
-          signingUrlCreatedAt: new Date()
-        }, req.user.id);
-        signingUrl = pageResult.url;
-        console.log('✅ R2 signing page regenerated:', signingUrl);
-      } else {
-        console.error('❌ Failed to regenerate R2 signing page');
-        return res.status(500).json({ error: 'Failed to create signing page' });
+      // ISSUE 2 FIX: Check if contract is already signed and regenerate signing page
+      if (contract.status === 'signed') {
+        console.log('⚠️ Contract already signed - regenerating already-signed page');
+        const { uploadContractSigningPage } = await import('./cloud-storage');
+        const pageResult = await uploadContractSigningPage(contract, userSettings);
+        
+        if (pageResult.success && pageResult.url) {
+          await storage.updateContract(contract.id, {
+            signingPageUrl: pageResult.url,
+            signingPageKey: pageResult.storageKey,
+            signingUrlCreatedAt: new Date()
+          }, req.user.id);
+          signingUrl = pageResult.url;
+        }
       }
 
       console.log('📧 Sending contract SIGNING email with cloud-hosted signing page:', signingUrl);
@@ -565,7 +561,7 @@ export async function registerRoutes(app: Express) {
       // Otherwise, generate and serve PDF
       const userSettings = await storage.getSettings(invoice.userId);
       const { generateInvoicePDF } = await import('./pdf-generator');
-      const pdfBuffer = await generateInvoicePDF(invoice, userSettings, undefined);
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
@@ -584,7 +580,7 @@ export async function registerRoutes(app: Express) {
       console.log('📄 Invoice PDF download request for ID:', invoiceId);
 
       // Get invoice for authenticated user
-      const invoice = await storage.getInvoice(invoiceId);
+      const invoice = await storage.getInvoice(invoiceId, req.user.id);
 
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
@@ -636,7 +632,7 @@ export async function registerRoutes(app: Express) {
       console.log('📄 Generating invoice PDF directly as fallback...');
       const userSettings = await storage.getSettings(invoice.userId);
       const { generateInvoicePDF } = await import('./pdf-generator');
-      const pdfBuffer = await generateInvoicePDF(invoice, userSettings, undefined);
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
@@ -657,7 +653,7 @@ export async function registerRoutes(app: Express) {
       const invoiceId = parseInt(req.params.id);
       console.log('🔗 Public invoice access for ID:', invoiceId);
       
-      const invoice = await storage.getInvoice(invoiceId);
+      const invoice = await storage.getInvoiceById(invoiceId);
       
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
@@ -692,18 +688,27 @@ export async function registerRoutes(app: Express) {
 
   // Contract PDF download route - handles both authenticated and unauthenticated access
   app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
+    // This route will now always have authenticated users due to middleware
+    console.log('👤 Authenticated download request - user ID:', req.user.id);
     try {
       const contractId = parseInt(req.params.id);
       console.log('📄 Contract PDF download request for ID:', contractId);
+      console.log('🔍 Authentication status - req.user:', !!req.user, req.user ? 'authenticated' : 'not authenticated');
 
-      const contract = await storage.getContract(contractId, req.user.id);
+      // Get contract (try both authenticated and public access)
+      let contract = null;
+      let userId = null;
+
+      contract = await storage.getContract(contractId, req.user.id);
 
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
 
-      // For authenticated users, fetch from R2 and serve directly (no CORS)
+      // PRIORITY 1: For authenticated users, fetch from R2 and serve directly (no CORS)
+      // For unauthenticated access (email links), redirect to R2
       if (contract.cloudStorageUrl) {
+        // Always serve directly for authenticated users (no CORS issues)
         console.log('👤 Authenticated user: Fetching PDF from R2 and serving directly');
         try {
           const response = await fetch(contract.cloudStorageUrl);
@@ -719,10 +724,44 @@ export async function registerRoutes(app: Express) {
         }
       }
 
-      // Generate and upload to cloud storage
-      console.log('☁️ Generating and uploading to cloud storage...');
+      // PRIORITY 2: Generate and upload to cloud storage
+      console.log('☁️ No cloud URL found, generating and uploading to cloud storage...');
+
+      try {
+        const userSettings = await storage.getSettings(contract.userId);
+        const { uploadContractToCloud } = await import('./cloud-storage');
+
+        // Determine if this is a signed contract
+        const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+          signedAt: new Date(contract.signedAt),
+          signatureName: contract.clientName,
+          clientIpAddress: 'contract-download'
+        } : undefined;
+
+        const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
+
+        if (cloudResult.success && cloudResult.url) {
+          // Update contract with cloud storage URL
+          await storage.updateContract(contract.id, {
+            cloudStorageUrl: cloudResult.url,
+            cloudStorageKey: cloudResult.key
+          });
+
+          console.log('✅ Contract uploaded to cloud');
+          
+          // Authenticated user - continue to fallback generation
+          console.log('👤 Authenticated user: Serving generated PDF directly');
+        } else {
+          console.log('⚠️ Cloud upload failed, generating directly');
+        }
+      } catch (cloudError) {
+        console.error('❌ Cloud storage failed, falling back to direct generation');
+      }
+
+      // FALLBACK: Generate PDF directly (should rarely be needed)
+      console.log('📄 Generating PDF directly as fallback...');
       const userSettings = await storage.getSettings(contract.userId);
-      const { uploadContractToCloud } = await import('./cloud-storage');
+      const { generateContractPDF } = await import('./pdf-generator');
 
       const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
         signedAt: new Date(contract.signedAt),
@@ -730,22 +769,14 @@ export async function registerRoutes(app: Express) {
         clientIpAddress: 'contract-download'
       } : undefined;
 
-      const cloudResult = await uploadContractToCloud(contract, userSettings, signatureDetails);
-
-      if (cloudResult.success && cloudResult.url) {
-        await storage.updateContract(contract.id, {
-          cloudStorageUrl: cloudResult.url,
-          cloudStorageKey: cloudResult.key
-        });
-        console.log('✅ Contract uploaded to cloud');
-      }
-
-      // Generate PDF directly as fallback
-      const { generateContractPDF } = await import('./pdf-generator');
       const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
 
+      // Set proper headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+
+      // Send the PDF buffer
       res.send(pdfBuffer);
 
     } catch (error) {
