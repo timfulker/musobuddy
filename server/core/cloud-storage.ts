@@ -48,22 +48,15 @@ async function uploadFileToCloudflare(
 
     await r2Client.send(command);
 
-    // For signing pages, generate a pre-signed URL that works for 7 days
+    // Now that public access is enabled, use direct public URLs for all files
     let publicUrl;
     if (contentType === 'text/html') {
-      // Generate pre-signed URL for HTML signing pages (7 days expiry)
-      const getCommand = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-      });
-      
-      publicUrl = await getSignedUrl(r2Client, getCommand, { 
-        expiresIn: 7 * 24 * 60 * 60 // 7 days in seconds
-      });
-      console.log(`✅ Pre-signed URL generated for signing page (7 days): ${key}`);
+      // Use direct public URL for HTML signing pages since public access is enabled
+      publicUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${key}`;
+      console.log(`✅ Public URL generated for signing page: ${key}`);
     } else {
-      // For PDFs, try public URL first (if bucket has public access enabled)
-      publicUrl = `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${key}`;
+      // For PDFs, use the correct public URL format
+      publicUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${key}`;
       console.log(`✅ File uploaded to cloud storage: ${key}`);
     }
 
