@@ -570,10 +570,59 @@ export async function registerRoutes(app: Express) {
 
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
-      const invoiceData = { ...req.body, userId: req.user.id };
+      console.log('📝 Creating invoice with data:', req.body);
+      
+      const {
+        contractId,
+        clientName,
+        clientEmail,
+        ccEmail,
+        clientAddress,
+        venueAddress,
+        amount,
+        dueDate,
+        performanceDate,
+        performanceFee,
+        depositPaid
+      } = req.body;
+
+      // Validate required fields
+      if (!clientName || !amount || !dueDate) {
+        return res.status(400).json({ error: 'Missing required fields: clientName, amount, dueDate' });
+      }
+
+      // Generate invoice number
+      const now = new Date();
+      const invoiceNumber = `INV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+
+      // Prepare invoice data matching database schema
+      const invoiceData = {
+        userId: req.user.id,
+        contractId: contractId ? parseInt(contractId) : null,
+        invoiceNumber,
+        clientName: clientName.trim(),
+        clientEmail: clientEmail?.trim() || null,
+        ccEmail: ccEmail?.trim() || null,
+        clientAddress: clientAddress?.trim() || null,
+        venueAddress: venueAddress?.trim() || null,
+        amount: parseFloat(amount),
+        fee: performanceFee ? parseFloat(performanceFee) : parseFloat(amount),
+        depositPaid: depositPaid ? parseFloat(depositPaid) : 0,
+        dueDate: new Date(dueDate),
+        eventDate: performanceDate ? new Date(performanceDate) : null,
+        status: 'draft',
+        createdAt: now,
+        updatedAt: now
+      };
+
+      console.log('📝 Processed invoice data:', invoiceData);
+
       const invoice = await storage.createInvoice(invoiceData);
+      console.log('✅ Invoice created successfully:', invoice.id);
+      
       res.json(invoice);
     } catch (error) {
+      console.error('❌ Invoice creation error:', error);
       res.status(500).json({ error: 'Failed to create invoice' });
     }
   });
