@@ -565,7 +565,7 @@ export async function registerRoutes(app: Express) {
       // Otherwise, generate and serve PDF
       const userSettings = await storage.getSettings(invoice.userId);
       const { generateInvoicePDF } = await import('./pdf-generator');
-      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings, undefined);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
@@ -584,7 +584,7 @@ export async function registerRoutes(app: Express) {
       console.log('📄 Invoice PDF download request for ID:', invoiceId);
 
       // Get invoice for authenticated user
-      const invoice = await storage.getInvoice(invoiceId, req.user.id);
+      const invoice = await storage.getInvoice(invoiceId);
 
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
@@ -636,7 +636,7 @@ export async function registerRoutes(app: Express) {
       console.log('📄 Generating invoice PDF directly as fallback...');
       const userSettings = await storage.getSettings(invoice.userId);
       const { generateInvoicePDF } = await import('./pdf-generator');
-      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings, undefined);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
@@ -657,7 +657,7 @@ export async function registerRoutes(app: Express) {
       const invoiceId = parseInt(req.params.id);
       console.log('🔗 Public invoice access for ID:', invoiceId);
       
-      const invoice = await storage.getInvoiceById(invoiceId);
+      const invoice = await storage.getInvoice(invoiceId);
       
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
@@ -745,30 +745,42 @@ export async function registerRoutes(app: Express) {
         } else {
           console.log('⚠️ Cloud upload failed, generating directly');
         }
+        // Generate PDF directly with fresh contract data
+        const { generateContractPDF } = await import('./pdf-generator');
+        const pdfBuffer = await generateContractPDF(freshContract, userSettings, signatureDetails);
+
+        // Set proper headers for PDF download  
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Contract-${freshContract.contractNumber || freshContract.id}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length.toString());
+
+        // Send the PDF buffer
+        res.send(pdfBuffer);
+        
       } catch (cloudError) {
         console.error('❌ Cloud storage failed, falling back to direct generation');
+        
+        // FALLBACK: Generate PDF directly with original contract data
+        console.log('📄 Generating PDF directly as fallback...');
+        const userSettings = await storage.getSettings(contract.userId);
+        const { generateContractPDF } = await import('./pdf-generator');
+
+        const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+          signedAt: new Date(contract.signedAt),
+          signatureName: contract.clientName,
+          clientIpAddress: 'contract-download'
+        } : undefined;
+
+        const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+
+        // Set proper headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber || contract.id}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length.toString());
+
+        // Send the PDF buffer
+        res.send(pdfBuffer);
       }
-
-      // FALLBACK: Generate PDF directly (should rarely be needed)
-      console.log('📄 Generating PDF directly as fallback...');
-      const userSettings = await storage.getSettings(freshContract.userId);
-      const { generateContractPDF } = await import('./pdf-generator');
-
-      const signatureDetails = freshContract.status === 'signed' && freshContract.signedAt ? {
-        signedAt: new Date(freshContract.signedAt),
-        signatureName: freshContract.clientName,
-        clientIpAddress: 'contract-download'
-      } : undefined;
-
-      const pdfBuffer = await generateContractPDF(freshContract, userSettings, signatureDetails);
-
-      // Set proper headers for PDF download
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="Contract-${freshContract.contractNumber || freshContract.id}.pdf"`);
-      res.setHeader('Content-Length', pdfBuffer.length.toString());
-
-      // Send the PDF buffer
-      res.send(pdfBuffer);
 
     } catch (error) {
       console.error('❌ Contract PDF download error:', error);
