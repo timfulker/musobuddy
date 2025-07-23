@@ -265,6 +265,14 @@ export default function Compliance() {
       hasFile: !!selectedFile
     });
     
+    console.log('📋 Detailed form data:', {
+      type: data.type,
+      name: data.name,
+      expiryDate: data.expiryDate,
+      status: data.status,
+      documentUrl: data.documentUrl
+    });
+    
     if (uploadMethod === 'file' && selectedFile) {
       console.log('📤 Uploading file:', selectedFile.name);
       // Upload file
@@ -588,7 +596,16 @@ export default function Compliance() {
                             selectedFile,
                             uploadMethod,
                             formValid: form.formState.isValid,
-                            errors: form.formState.errors
+                            errors: form.formState.errors,
+                            formValues: form.getValues(),
+                            dirtyFields: form.formState.dirtyFields,
+                            touchedFields: form.formState.touchedFields
+                          });
+                          
+                          // Force validation and show detailed results
+                          form.trigger().then(isValid => {
+                            console.log('🧪 Validation triggered:', isValid);
+                            console.log('🧪 Updated errors:', form.formState.errors);
                           });
                         }}
                       >
