@@ -62,6 +62,8 @@ export default function Compliance() {
     }
   }, [isDialogOpen]);
 
+
+
   const { data: documents = [], isLoading } = useQuery<ComplianceDocument[]>({
     queryKey: ["/api/compliance"],
   });
@@ -80,10 +82,8 @@ export default function Compliance() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/compliance"] });
+      handleDialogClose();
       setIsDialogOpen(false);
-      form.reset();
-      setSelectedFile(null);
-      setUploadMethod('file');
       toast({
         title: "Success",
         description: "Compliance document added successfully!",
@@ -115,10 +115,8 @@ export default function Compliance() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/compliance"] });
+      handleDialogClose();
       setIsDialogOpen(false);
-      form.reset();
-      setSelectedFile(null);
-      setUploadMethod('file');
       toast({
         title: "Success",
         description: "Document uploaded successfully!",
@@ -232,7 +230,7 @@ export default function Compliance() {
   }, []);
 
   const handleDialogClose = useCallback(() => {
-    setIsDialogOpen(false);
+    console.log('Dialog closing, resetting state');
     setSelectedFile(null);
     setUploadMethod('file');
     setIsDragging(false);
@@ -393,9 +391,15 @@ export default function Compliance() {
               </div>
             </div>
             <div className="flex space-x-3">
-              <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700">
+                  <Button 
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={() => {
+                      console.log('Add Document button clicked, opening dialog');
+                      setIsDialogOpen(true);
+                    }}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Document
                   </Button>
