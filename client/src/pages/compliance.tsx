@@ -144,8 +144,15 @@ export default function Compliance() {
 
   // File handling functions
   const handleFileSelect = useCallback((file: File) => {
+    console.log('📁 handleFileSelect called with:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+    
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
+      console.log('❌ File too large:', file.size);
       toast({
         title: "File too large",
         description: "Please select a file smaller than 10MB",
@@ -165,6 +172,7 @@ export default function Compliance() {
     ];
 
     if (!allowedTypes.includes(file.type)) {
+      console.log('❌ File type not allowed:', file.type);
       toast({
         title: "Invalid file type",
         description: "Please upload PDF, Word, text, or image files",
@@ -173,10 +181,14 @@ export default function Compliance() {
       return;
     }
 
+    console.log('✅ File validated, setting state');
     setSelectedFile(file);
+    console.log('📝 File state set, auto-filling name');
+    
     // Auto-fill document name if not set
     if (!form.getValues('name')) {
       form.setValue('name', file.name);
+      console.log('🏷️ Auto-filled name:', file.name);
     }
   }, [form, toast]);
 
@@ -246,7 +258,15 @@ export default function Compliance() {
   }, []);
 
   const onSubmit = (data: z.infer<typeof complianceFormSchema>) => {
+    console.log('🚀 Form submitted!', {
+      uploadMethod,
+      selectedFile,
+      formData: data,
+      hasFile: !!selectedFile
+    });
+    
     if (uploadMethod === 'file' && selectedFile) {
+      console.log('📤 Uploading file:', selectedFile.name);
       // Upload file
       const formData = new FormData();
       formData.append('documentFile', selectedFile);
@@ -255,8 +275,10 @@ export default function Compliance() {
       if (data.expiryDate) {
         formData.append('expiryDate', data.expiryDate);
       }
+      console.log('📝 FormData prepared, calling mutation');
       uploadDocumentMutation.mutate(formData);
     } else {
+      console.log('🔗 Creating document with URL');
       // Create document with URL
       createDocumentMutation.mutate(data);
     }
@@ -546,6 +568,14 @@ export default function Compliance() {
                       <Button 
                         type="submit" 
                         disabled={createDocumentMutation.isPending || uploadDocumentMutation.isPending}
+                        onClick={(e) => {
+                          console.log('🔥 Upload button clicked!', {
+                            selectedFile,
+                            uploadMethod,
+                            formValid: form.formState.isValid,
+                            errors: form.formState.errors
+                          });
+                        }}
                       >
                         {(createDocumentMutation.isPending || uploadDocumentMutation.isPending) ? (
                           uploadMethod === 'file' ? "Uploading..." : "Adding..."
