@@ -28,6 +28,10 @@ export const users = pgTable("users", {
   plan: text("plan").default("free"), // 'free', 'core', 'premium'
   isSubscribed: boolean("is_subscribed").default(false),
   isLifetime: boolean("is_lifetime").default(false),
+  isBetaTester: boolean("is_beta_tester").default(false),
+  betaStartDate: timestamp("beta_start_date"),
+  betaEndDate: timestamp("beta_end_date"),
+  betaFeedbackCount: integer("beta_feedback_count").default(0),
   stripeCustomerId: text("stripe_customer_id"),
   isActive: boolean("is_active").default(true), // Account active/suspended
   lastLoginAt: timestamp("last_login_at"),

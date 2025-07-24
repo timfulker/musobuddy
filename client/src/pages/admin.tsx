@@ -45,6 +45,10 @@ interface AdminUser {
   lastName: string;
   tier: string;
   isAdmin: boolean;
+  isBetaTester: boolean;
+  betaStartDate: string;
+  betaEndDate: string;
+  betaFeedbackCount: number;
   createdAt: string;
 }
 
@@ -56,7 +60,8 @@ export default function AdminPanel() {
     firstName: '',
     lastName: '',
     tier: 'free',
-    isAdmin: false
+    isAdmin: false,
+    isBetaTester: false
   });
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
@@ -86,7 +91,8 @@ export default function AdminPanel() {
         firstName: '',
         lastName: '',
         tier: 'free',
-        isAdmin: false
+        isAdmin: false,
+        isBetaTester: false
       });
       toast({
         title: "User created successfully",
@@ -153,9 +159,10 @@ export default function AdminPanel() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="beta">Beta Testers</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
 
@@ -325,15 +332,27 @@ export default function AdminPanel() {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="isAdmin"
-                              checked={newUserForm.isAdmin}
-                              onChange={(e) => setNewUserForm(prev => ({ ...prev, isAdmin: e.target.checked }))}
-                              className="rounded"
-                            />
-                            <Label htmlFor="isAdmin">Admin privileges</Label>
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="isAdmin"
+                                checked={newUserForm.isAdmin}
+                                onChange={(e) => setNewUserForm(prev => ({ ...prev, isAdmin: e.target.checked }))}
+                                className="rounded"
+                              />
+                              <Label htmlFor="isAdmin">Admin privileges</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="isBetaTester"
+                                checked={newUserForm.isBetaTester}
+                                onChange={(e) => setNewUserForm(prev => ({ ...prev, isBetaTester: e.target.checked }))}
+                                className="rounded"
+                              />
+                              <Label htmlFor="isBetaTester">Beta Tester (4-week trial with lifetime subscription)</Label>
+                            </div>
                           </div>
                         </div>
                         <div className="flex justify-end gap-2">
@@ -364,15 +383,21 @@ export default function AdminPanel() {
                                 <div className="font-medium">
                                   {user.firstName} {user.lastName} 
                                   {user.isAdmin && <span className="ml-2 text-xs text-yellow-600">(Admin)</span>}
+                                  {user.isBetaTester && <span className="ml-2 text-xs text-blue-600">(Beta Tester)</span>}
                                 </div>
                                 <div className="text-sm text-muted-foreground">{user.email}</div>
                               </div>
                             </div>
-                            <div className="mt-2">
+                            <div className="mt-2 flex items-center gap-2">
                               <Badge className={getTierBadge(user.tier)}>
                                 {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
                               </Badge>
-                              <span className="ml-2 text-xs text-muted-foreground">
+                              {user.isBetaTester && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  Beta: {user.betaFeedbackCount} feedback
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
                                 Joined {new Date(user.createdAt).toLocaleDateString()}
                               </span>
                             </div>
@@ -384,6 +409,97 @@ export default function AdminPanel() {
                           No users found
                         </div>
                       )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="beta" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Beta Testing Program
+                  </CardTitle>
+                  <CardDescription>
+                    Manage your 4-week beta testing program with lifetime subscription rewards
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {usersLoading ? (
+                    <div className="text-center py-8">Loading beta testers...</div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Beta Program Overview */}
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <div className="text-blue-700 font-medium">Active Beta Testers</div>
+                          <div className="text-2xl font-bold text-blue-900">
+                            {users?.filter(u => u.isBetaTester).length || 0}
+                          </div>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                          <div className="text-green-700 font-medium">Total Feedback</div>
+                          <div className="text-2xl font-bold text-green-900">
+                            {users?.filter(u => u.isBetaTester).reduce((sum, u) => sum + (u.betaFeedbackCount || 0), 0) || 0}
+                          </div>
+                        </div>
+                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                          <div className="text-purple-700 font-medium">Lifetime Subscriptions</div>
+                          <div className="text-2xl font-bold text-purple-900">
+                            {users?.filter(u => u.isBetaTester).length || 0}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Beta Testers List */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Current Beta Testers</h3>
+                        {users?.filter(user => user.isBetaTester).map((user) => (
+                          <div key={user.id} className="p-4 border rounded-lg bg-blue-50/50">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium">
+                                  {user.firstName} {user.lastName}
+                                  <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-700">
+                                    Beta Tester
+                                  </Badge>
+                                </div>
+                                <div className="text-sm text-muted-foreground">{user.email}</div>
+                                <div className="text-sm text-muted-foreground mt-1">
+                                  Started: {user.betaStartDate ? new Date(user.betaStartDate).toLocaleDateString() : 'N/A'} | 
+                                  Ends: {user.betaEndDate ? new Date(user.betaEndDate).toLocaleDateString() : 'N/A'}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-medium">
+                                  {user.betaFeedbackCount || 0} feedback submissions
+                                </div>
+                                <Badge variant="outline" className="mt-1">
+                                  Premium Access + Lifetime
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        )) || (
+                          <div className="text-center py-8 text-muted-foreground">
+                            No beta testers yet. Use the "Add User" button and check "Beta Tester" to invite your first testers.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Quick Add Beta Tester Instructions */}
+                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <h4 className="font-medium text-yellow-800 mb-2">Quick Setup for Your 4 Beta Testers:</h4>
+                        <ol className="text-sm text-yellow-700 space-y-1">
+                          <li>1. Click "Add User" button above</li>
+                          <li>2. Enter their email and name</li>
+                          <li>3. Check "Beta Tester" checkbox</li>
+                          <li>4. This automatically gives them Premium access + Lifetime subscription after 4 weeks</li>
+                          <li>5. Send them the app URL to start testing</li>
+                        </ol>
+                      </div>
                     </div>
                   )}
                 </CardContent>

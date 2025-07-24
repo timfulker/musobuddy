@@ -106,7 +106,7 @@ export async function registerRoutes(app: Express) {
   // Add new user (admin only)
   app.post('/api/admin/users', isAdmin, async (req: any, res: any) => {
     try {
-      const { email, firstName, lastName, tier = 'free', isAdmin = false } = req.body;
+      const { email, firstName, lastName, tier = 'free', isAdmin = false, isBetaTester = false } = req.body;
       
       if (!email) {
         return res.status(400).json({ error: 'Email is required' });
@@ -115,13 +115,23 @@ export async function registerRoutes(app: Express) {
       // Generate a simple user ID for admin-created users
       const userId = 'admin_' + Date.now().toString();
       
+      // Set up beta testing dates if this is a beta tester
+      const betaStartDate = isBetaTester ? new Date() : null;
+      const betaEndDate = isBetaTester ? new Date(Date.now() + (4 * 7 * 24 * 60 * 60 * 1000)) : null; // 4 weeks from now
+      
       const newUser = await storage.createUser({
         id: userId,
         email,
         firstName: firstName || null,
         lastName: lastName || null,
-        tier,
+        tier: isBetaTester ? 'premium' : tier, // Beta testers get premium access
         isAdmin,
+        isBetaTester,
+        betaStartDate,
+        betaEndDate,
+        betaFeedbackCount: 0,
+        isLifetime: isBetaTester, // Beta testers get lifetime access after successful completion
+        isSubscribed: isBetaTester, // Beta testers are considered subscribed
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
