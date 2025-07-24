@@ -49,16 +49,35 @@ export default function ConflictResolutionModal({
   const { toast } = useToast();
 
   // Fetch conflicting booking details
-  const conflictingBookingIds = conflicts.map(c => c.withBookingId);
+  const conflictingBookingIds = conflicts
+    .map(c => c.withBookingId)
+    .filter(id => id && !isNaN(Number(id)))
+    .map(id => Number(id));
+  
+  console.log('🔍 Conflict Resolution Modal - Booking IDs:', conflictingBookingIds);
+  console.log('🔍 Conflict Resolution Modal - Current Booking:', currentBooking);
+  console.log('🔍 Conflict Resolution Modal - Conflicts:', conflicts);
+  
   const { data: conflictingBookings = [] } = useQuery({
     queryKey: ['/api/bookings/batch', conflictingBookingIds],
     queryFn: async () => {
       if (conflictingBookingIds.length === 0) return [];
       // Fetch each booking individually since we don't have a batch endpoint
-      const bookingsPromises = conflictingBookingIds.map(id => 
-        apiRequest(`/api/bookings/${id}`)
-      );
-      return Promise.all(bookingsPromises);
+      const bookingsPromises = conflictingBookingIds.map(async (id) => {
+        console.log(`🔍 Fetching booking ID: ${id}`);
+        try {
+          const result = await apiRequest(`/api/bookings/${id}`);
+          console.log(`✅ Successfully fetched booking ${id}:`, result);
+          return result;
+        } catch (error) {
+          console.error(`❌ Failed to fetch booking ${id}:`, error);
+          return null;
+        }
+      });
+      const results = await Promise.all(bookingsPromises);
+      const validResults = results.filter(result => result !== null);
+      console.log('🔍 Valid conflicting bookings:', validResults);
+      return validResults;
     },
     enabled: isOpen && conflictingBookingIds.length > 0,
   });
@@ -327,13 +346,20 @@ export default function ConflictResolutionModal({
           {/* Side-by-side booking comparison */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Current booking */}
-            {renderBookingCard(currentBooking, true)}
+            {currentBooking && renderBookingCard(currentBooking, true)}
 
             {/* Conflicting bookings */}
-            {conflictingBookings.map((conflictingBooking: any, index: number) => {
-              const conflict = conflicts.find(c => c.withBookingId === conflictingBooking.id);
-              return renderBookingCard(conflictingBooking, false, conflict);
-            })}
+            {conflictingBookings.length > 0 ? (
+              conflictingBookings.map((conflictingBooking: any, index: number) => {
+                const conflict = conflicts.find(c => c.withBookingId === conflictingBooking.id);
+                return renderBookingCard(conflictingBooking, false, conflict);
+              })
+            ) : (
+              <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500">
+                <p>Loading conflicting booking details...</p>
+                <p className="text-sm mt-2">Booking IDs: {conflictingBookingIds.join(', ')}</p>
+              </div>
+            )}
           </div>
 
           {/* Action buttons */}
