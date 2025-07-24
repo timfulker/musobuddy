@@ -31,7 +31,7 @@ export default function AddressBook() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: clients = [], isLoading } = useQuery({
+  const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
 
@@ -118,10 +118,31 @@ export default function AddressBook() {
     })),
     defaultValues: {
       name: "",
-      email: null,
-      phone: null,
-      address: null,
-      notes: null,
+      email: "",
+      phone: "",
+      address: "",
+      notes: "",
+    },
+  });
+
+  const populateFromBookingsMutation = useMutation({
+    mutationFn: () => apiRequest("/api/clients/populate-from-bookings", {
+      method: "POST",
+      body: JSON.stringify({})
+    }),
+    onSuccess: (response: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      toast({
+        title: "Success",
+        description: response.message || "Address book populated from bookings",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error", 
+        description: error.message || "Failed to populate address book",
+        variant: "destructive",
+      });
     },
   });
 
@@ -142,10 +163,10 @@ export default function AddressBook() {
     setEditingClient(client);
     form.reset({
       name: client.name,
-      email: client.email || null,
-      phone: client.phone || null,
-      address: client.address || null,
-      notes: client.notes || null,
+      email: client.email || "",
+      phone: client.phone || "",
+      address: client.address || "",
+      notes: client.notes || "",
     });
   };
 
@@ -279,7 +300,7 @@ export default function AddressBook() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input {...field} type="email" placeholder="client@example.com" />
+                            <Input {...field} type="email" placeholder="client@example.com" value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -293,7 +314,7 @@ export default function AddressBook() {
                         <FormItem>
                           <FormLabel>Phone</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Phone number" />
+                            <Input {...field} placeholder="Phone number" value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -307,7 +328,7 @@ export default function AddressBook() {
                         <FormItem>
                           <FormLabel>Address</FormLabel>
                           <FormControl>
-                            <Textarea {...field} placeholder="Client address" rows={3} />
+                            <Textarea {...field} placeholder="Client address" rows={3} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -321,7 +342,7 @@ export default function AddressBook() {
                         <FormItem>
                           <FormLabel>Notes</FormLabel>
                           <FormControl>
-                            <Textarea {...field} placeholder="Additional notes..." rows={3} />
+                            <Textarea {...field} placeholder="Additional notes..." rows={3} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -370,6 +391,16 @@ export default function AddressBook() {
               
               {/* Controls */}
               <div className="flex gap-2 items-center">
+                {/* Populate from Bookings Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => populateFromBookingsMutation.mutate()}
+                  disabled={populateFromBookingsMutation.isPending}
+                  className="px-3"
+                >
+                  {populateFromBookingsMutation.isPending ? "Populating..." : "Import from Bookings"}
+                </Button>
                 {/* View Mode Toggle */}
                 <div className="flex border rounded-lg p-1">
                   <Button
