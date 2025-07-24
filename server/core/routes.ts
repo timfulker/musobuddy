@@ -7,7 +7,8 @@ import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
 import { stripeService } from "./stripe-service";
 import { db } from "./database";
-import { users, bookings, contracts, invoices } from "../../shared/schema";
+import { users, bookings, contracts, invoices, userMilestones } from "../../shared/schema";
+import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -99,6 +100,82 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Admin users error:', error);
       res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
+  // Add new user (admin only)
+  app.post('/api/admin/users', isAdmin, async (req: any, res: any) => {
+    try {
+      const { email, firstName, lastName, tier = 'free', isAdmin = false } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      // Generate a simple user ID for admin-created users
+      const userId = 'admin_' + Date.now().toString();
+      
+      const newUser = await storage.createUser({
+        id: userId,
+        email,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        tier,
+        isAdmin,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      res.json({
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        tier: newUser.tier,
+        isAdmin: newUser.isAdmin,
+        createdAt: newUser.createdAt?.toISOString()
+      });
+    } catch (error) {
+      console.error('Admin create user error:', error);
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  // Get user progress stats
+  app.get('/api/progress/stats', isAuthenticated, async (req: any, res: any) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user statistics for progress tracking
+      const [bookingStats, contractStats, invoiceStats] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(bookings).where(eq(bookings.userId, userId)),
+        db.select({ count: sql<number>`count(*)` }).from(contracts).where(eq(contracts.userId, userId)),
+        db.select({ count: sql<number>`count(*)` }).from(invoices).where(eq(invoices.userId, userId))
+      ]);
+
+      // Calculate total earnings from invoices
+      const earningsResult = await db
+        .select({ total: sql<number>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)` })
+        .from(invoices)
+        .where(eq(invoices.userId, userId));
+
+      // Calculate account age in days
+      const user = await storage.getUserById(userId);
+      const accountAge = user?.createdAt 
+        ? Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+
+      res.json({
+        totalBookings: bookingStats[0].count,
+        totalContracts: contractStats[0].count,
+        totalInvoices: invoiceStats[0].count,
+        totalEarnings: earningsResult[0].total || 0,
+        accountAge
+      });
+    } catch (error) {
+      console.error('Progress stats error:', error);
+      res.status(500).json({ error: 'Failed to fetch progress stats' });
     }
   });
 

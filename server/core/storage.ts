@@ -26,14 +26,7 @@ export class Storage {
     return result[0] || null;
   }
 
-  async createUser(userData: any) {
-    const hashedPassword = userData.password ? await bcrypt.hash(userData.password, 10) : null;
-    const result = await db.insert(users).values({
-      ...userData,
-      password: hashedPassword
-    }).returning();
-    return result[0];
-  }
+
 
   async updateUserInfo(id: string, updates: any) {
     const result = await db.update(users)
@@ -600,6 +593,16 @@ Warm regards and best wishes,
   // Admin functions
   async getAllUsers() {
     return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  // Create new user for admin panel
+  async createUser(userData: any) {
+    // Hash password if provided
+    if (userData.password) {
+      userData.password = await bcrypt.hash(userData.password, 10);
+    }
+    const result = await db.insert(users).values(userData).returning();
+    return result[0];
   }
 
   async getAllBookings() {

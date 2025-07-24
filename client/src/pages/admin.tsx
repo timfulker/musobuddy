@@ -1,8 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/sidebar";
 import DashboardHeader from "@/components/dashboard-header";
 import MobileNav from "@/components/mobile-nav";
@@ -17,7 +24,9 @@ import {
   CheckCircle,
   PoundSterling,
   TrendingUp,
-  Shield
+  Shield,
+  Plus,
+  UserPlus
 } from "lucide-react";
 
 interface AdminOverview {
@@ -41,7 +50,17 @@ interface AdminUser {
 
 export default function AdminPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [newUserOpen, setNewUserOpen] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    tier: 'free',
+    isAdmin: false
+  });
   const { isDesktop } = useResponsive();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: overview, isLoading: overviewLoading } = useQuery<AdminOverview>({
     queryKey: ["/api/admin/overview"],
@@ -51,6 +70,49 @@ export default function AdminPanel() {
   const { data: users, isLoading: usersLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
   });
+
+  const createUserMutation = useMutation({
+    mutationFn: (userData: any) => apiRequest('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] });
+      setNewUserOpen(false);
+      setNewUserForm({
+        email: '',
+        firstName: '',
+        lastName: '',
+        tier: 'free',
+        isAdmin: false
+      });
+      toast({
+        title: "User created successfully",
+        description: "The new user has been added to the system.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error creating user",
+        description: error.message || "Failed to create user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateUser = () => {
+    if (!newUserForm.email) {
+      toast({
+        title: "Email required",
+        description: "Please enter an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    createUserMutation.mutate(newUserForm);
+  };
 
   const getTierBadge = (tier: string) => {
     const colors = {
@@ -203,8 +265,91 @@ export default function AdminPanel() {
             <TabsContent value="users" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>Overview of all registered users</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>User Management</CardTitle>
+                      <CardDescription>Overview of all registered users</CardDescription>
+                    </div>
+                    <Dialog open={newUserOpen} onOpenChange={setNewUserOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="flex items-center gap-2">
+                          <UserPlus className="h-4 w-4" />
+                          Add User
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Add New User</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                              id="email"
+                              placeholder="user@example.com"
+                              value={newUserForm.email}
+                              onChange={(e) => setNewUserForm(prev => ({ ...prev, email: e.target.value }))}
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="firstName">First Name</Label>
+                              <Input
+                                id="firstName"
+                                placeholder="John"
+                                value={newUserForm.firstName}
+                                onChange={(e) => setNewUserForm(prev => ({ ...prev, firstName: e.target.value }))}
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="lastName">Last Name</Label>
+                              <Input
+                                id="lastName"
+                                placeholder="Doe"
+                                value={newUserForm.lastName}
+                                onChange={(e) => setNewUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                              />
+                            </div>
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="tier">Subscription Tier</Label>
+                            <Select value={newUserForm.tier} onValueChange={(value) => setNewUserForm(prev => ({ ...prev, tier: value }))}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select tier" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="free">Free</SelectItem>
+                                <SelectItem value="core">Core</SelectItem>
+                                <SelectItem value="premium">Premium</SelectItem>
+                                <SelectItem value="enterprise">Enterprise</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id="isAdmin"
+                              checked={newUserForm.isAdmin}
+                              onChange={(e) => setNewUserForm(prev => ({ ...prev, isAdmin: e.target.checked }))}
+                              className="rounded"
+                            />
+                            <Label htmlFor="isAdmin">Admin privileges</Label>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setNewUserOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button 
+                            onClick={handleCreateUser}
+                            disabled={createUserMutation.isPending}
+                          >
+                            {createUserMutation.isPending ? "Creating..." : "Create User"}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {usersLoading ? (
