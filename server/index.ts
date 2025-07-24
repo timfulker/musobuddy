@@ -38,6 +38,14 @@ testDatabaseConnection()
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// CORS middleware for contract signing from R2
+app.use('/api/contracts/sign', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
 // CRITICAL: Email webhook registered FIRST
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
