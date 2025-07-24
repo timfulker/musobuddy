@@ -260,11 +260,27 @@ export async function registerRoutes(app: Express) {
         }
       });
 
-      // Auto-generate contract number if not provided
+      // Auto-generate unique contract number if not provided
       if (!sanitizedData.contractNumber || sanitizedData.contractNumber === '') {
         const eventDate = new Date(sanitizedData.eventDate);
         const dateStr = eventDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        sanitizedData.contractNumber = `(${dateStr} - ${sanitizedData.clientName})`;
+        let baseContractNumber = `(${dateStr} - ${sanitizedData.clientName})`;
+        
+        // Check if contract number already exists and add suffix if needed
+        let contractNumber = baseContractNumber;
+        let suffix = 1;
+        
+        try {
+          const existingContracts = await storage.getContracts(req.user.id);
+          while (existingContracts.some(contract => contract.contractNumber === contractNumber)) {
+            contractNumber = `${baseContractNumber} - ${suffix}`;
+            suffix++;
+          }
+          sanitizedData.contractNumber = contractNumber;
+        } catch (error) {
+          // If check fails, use base number and let database handle duplicate constraint
+          sanitizedData.contractNumber = baseContractNumber;
+        }
       }
 
       // Create contract in database

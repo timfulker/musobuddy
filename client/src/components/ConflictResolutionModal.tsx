@@ -57,20 +57,13 @@ export default function ConflictResolutionModal({
     .filter(id => id && !isNaN(Number(id)))
     .map(id => Number(id));
   
-  console.log('🔍 Conflict Resolution Modal - Booking IDs:', conflictingBookingIds);
-  console.log('🔍 Conflict Resolution Modal - Passed Current Booking:', passedCurrentBooking);
-  
   // Use the passed currentBooking instead of fetching it again
   const currentBooking = passedCurrentBooking;
-  console.log('🔍 Conflict Resolution Modal - isOpen:', isOpen);
-  console.log('🔍 Conflict Resolution Modal - Conflicting Booking Query Enabled:', conflictingBookingIds.length > 0);
-  console.log('🔍 Conflict Resolution Modal - Query Key:', ['/api/bookings/batch', conflictingBookingIds]);
   
   const { data: conflictingBookings = [] } = useQuery({
     queryKey: ['/api/bookings/conflicting', ...conflictingBookingIds],
     queryFn: async () => {
       if (conflictingBookingIds.length === 0) return [];
-      console.log('🔍 Starting to fetch conflicting bookings for IDs:', conflictingBookingIds);
       
       // Fetch each booking individually since we don't have a batch endpoint
       const bookingsPromises = conflictingBookingIds.map(async (id) => {

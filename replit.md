@@ -315,17 +315,21 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Workflow Philosophy**: ✅ Automatic progression happens for convenience, user control through standard booking management interface
 - **Status**: FLEXIBLE AUTOMATION WITH EXISTING USER CONTROLS - Automatic updates occur but users can manually change any booking status through standard booking dialogs
 
-### 2025-07-24 - Enhanced Scrollable Bookings Interface with Complete Fixed Header Controls
+### 2025-07-24 - Enhanced Scrollable Bookings Interface + Critical Bug Fixes Complete
 - **Fixed Header Layout Complete**: ✅ Implemented scrollable bookings interface with comprehensive fixed header controls that remain always visible
 - **Bulk Selection Controls Fixed**: ✅ Moved bulk selection toolbar (selected count, Clear Selection, Change Status, Delete Selected) to fixed header area
 - **Select All Header Fixed**: ✅ Moved "Select All" checkbox and counter to fixed header area for consistent visibility while scrolling
 - **Height Constraint Enhanced**: ✅ Adjusted to calc(100vh - 450px) to accommodate all fixed header elements including bulk selection controls
 - **Complete Header Controls**: ✅ Fixed header now includes search bar, filters, sort options, results counter, bulk selection toolbar, and select all controls
 - **Seamless User Experience**: ✅ Users can scroll through thousands of bookings while maintaining access to all selection and action controls
+- **CRITICAL FIX: Contract Duplicate Number Issue**: ✅ Fixed database constraint violation by implementing intelligent contract number generation with automatic suffix addition
+- **CRITICAL FIX: Infinite Debug Logging**: ✅ Eliminated excessive console.log statements from ConflictResolutionModal causing browser console spam
+- **Contract Number Uniqueness**: ✅ System automatically generates unique contract numbers (e.g., "(17/02/2026 - Tim Fulker) - 1") when duplicates detected
+- **Performance Enhancement**: ✅ Removed repetitive logging improving application performance and console clarity
 - **Professional Layout**: ✅ Clean separation between fixed controls (header) and scrollable content (booking cards)
 - **Functionality Preserved**: ✅ All existing features (bulk selection, filtering, conflict detection, status updates) maintained with improved accessibility
 - **Mobile Responsive**: ✅ Enhanced scrollable layout works across desktop and mobile viewports with proper responsive behavior
-- **Status**: ENHANCED SCROLLABLE INTERFACE OPERATIONAL - Complete fixed header with all selection controls accessible during scrolling
+- **Status**: ENHANCED SCROLLABLE INTERFACE + CRITICAL FIXES OPERATIONAL - Complete system with unique contract generation and clean console logging
 
 ### 2025-07-24 - Complete Address Book System with Filtering + Auto-Population Operational
 - **Address Book Population Working**: ✅ User confirmed "Import from Bookings" functionality working automatically to populate address book from existing booking data
