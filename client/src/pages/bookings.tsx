@@ -56,6 +56,7 @@ export default function UnifiedBookings() {
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
   const [sendComplianceDialogOpen, setSendComplianceDialogOpen] = useState(false);
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
+  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
@@ -689,6 +690,12 @@ export default function UnifiedBookings() {
         open={bookingStatusDialogOpen}
         onOpenChange={setBookingStatusDialogOpen}
         booking={selectedBookingForUpdate}
+      />
+      
+      <SendComplianceDialog
+        isOpen={sendComplianceDialogOpen}
+        onOpenChange={setSendComplianceDialogOpen}
+        booking={selectedBookingForCompliance}
       />
 
       {/* Bulk Delete Confirmation Dialog */}
