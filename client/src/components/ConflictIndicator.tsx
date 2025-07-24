@@ -1,70 +1,157 @@
-import { useQuery } from "@tanstack/react-query";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+
+interface Conflict {
+  withBookingId: number;
+  severity: 'hard' | 'soft' | 'resolved';
+  clientName: string;
+  status: string;
+  time: string;
+  canEdit: boolean;
+  canReject: boolean;
+  type: string;
+  message: string;
+  overlapMinutes?: number;
+}
 
 interface ConflictIndicatorProps {
   bookingId: number;
+  conflicts: Conflict[];
+  onOpenModal?: () => void;
 }
 
-export default function ConflictIndicator({ bookingId }: ConflictIndicatorProps) {
-  const { data: conflicts = [] } = useQuery({
-    queryKey: ["/api/conflicts"],
-    staleTime: 30000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
-  });
+export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }: ConflictIndicatorProps) {
+  const [isOpen, setIsOpen] = useState(false);
 
-  // Find conflicts for this specific booking
-  const bookingConflicts = conflicts.filter((conflict: any) => 
-    conflict.enquiryId === bookingId || conflict.conflictId === bookingId
-  );
-
-  if (bookingConflicts.length === 0) {
+  if (!conflicts || conflicts.length === 0) {
     return null;
   }
 
-  // Determine conflict severity
-  const hasHighSeverity = bookingConflicts.some((c: any) => c.severity === 'high');
-  const hasMediumSeverity = bookingConflicts.some((c: any) => c.severity === 'medium');
+  // Determine the highest severity level
+  const hasHard = conflicts.some(c => c.severity === 'hard');
+  const hasSoft = conflicts.some(c => c.severity === 'soft');
+  
+  const severity = hasHard ? 'hard' : hasSoft ? 'soft' : 'resolved';
+  
+  // Get color based on severity
+  const getIndicatorColor = (severity: string) => {
+    switch (severity) {
+      case 'hard':
+        return 'bg-red-500';
+      case 'soft':
+        return 'bg-orange-500';
+      case 'resolved':
+        return 'bg-yellow-500';
+      default:
+        return 'bg-gray-400';
+    }
+  };
 
-  let conflictColor = '';
-  let conflictType = '';
-  let conflictMessage = '';
+  const getTooltipText = () => {
+    if (conflicts.length === 1) {
+      const conflict = conflicts[0];
+      if (conflict.severity === 'hard') {
+        return `⚠️ Clashes with ${conflict.clientName} ${conflict.time}`;
+      } else if (conflict.severity === 'soft') {
+        return `⚠️ Another enquiry exists`;
+      } else {
+        return `✅ Same-day, no overlap`;
+      }
+    } else {
+      return `⚠️ ${conflicts.length} conflicts detected`;
+    }
+  };
 
-  if (hasHighSeverity) {
-    conflictColor = 'bg-red-500';
-    conflictType = 'Critical Conflict';
-    conflictMessage = 'Hard time overlap detected';
-  } else if (hasMediumSeverity) {
-    conflictColor = 'bg-orange-500';
-    conflictType = 'Soft Conflict';
-    conflictMessage = 'Same-day booking exists';
-  } else {
-    conflictColor = 'bg-yellow-500';
-    conflictType = 'Time Resolved';
-    conflictMessage = 'No time clash - can coexist';
-  }
-
-  // Get conflicting booking details
-  const conflictDetails = bookingConflicts.map((c: any) => {
-    const other = c.enquiryId === bookingId ? c.conflictItem : c.enquiry;
-    return `${other?.clientName} - ${other?.eventTime}`;
-  }).join(', ');
+  const handleClick = () => {
+    if (onOpenModal) {
+      onOpenModal();
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${conflictColor} z-10 cursor-help`}></div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="text-xs">
-            <div className="font-medium">{conflictType}</div>
-            <div className="text-gray-600">{conflictMessage}</div>
-            {conflictDetails && (
-              <div className="text-gray-500 mt-1">Clashes with: {conflictDetails}</div>
-            )}
+    <>
+      {/* Conflict Indicator Dot */}
+      <div
+        className={`absolute top-2 right-2 w-3 h-3 rounded-full ${getIndicatorColor(severity)} cursor-pointer z-10`}
+        title={getTooltipText()}
+        onClick={handleClick}
+      />
+      
+      {/* Simple Modal for showing conflicts */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Booking Conflicts</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This booking conflicts with {conflicts.length} other booking{conflicts.length > 1 ? 's' : ''}:
+            </p>
+            
+            {conflicts.map((conflict, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-lg border ${
+                  conflict.severity === 'hard' ? 'border-red-200 bg-red-50' :
+                  conflict.severity === 'soft' ? 'border-orange-200 bg-orange-50' :
+                  'border-yellow-200 bg-yellow-50'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge 
+                        variant={conflict.severity === 'hard' ? 'destructive' : 'default'}
+                        className="text-xs"
+                      >
+                        {conflict.severity === 'hard' ? 'CRITICAL' : 
+                         conflict.severity === 'soft' ? 'WARNING' : 'RESOLVED'}
+                      </Badge>
+                      <span className="font-medium">{conflict.clientName}</span>
+                      <span className="text-sm text-muted-foreground">({conflict.status})</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1">{conflict.message}</p>
+                    <p className="text-xs text-gray-500">Time: {conflict.time}</p>
+                    {conflict.overlapMinutes && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Overlap: {conflict.overlapMinutes} minutes
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      View Booking
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setIsOpen(false)}>
+                Close
+              </Button>
+              <Button onClick={() => {
+                setIsOpen(false);
+                // TODO: Open full conflict resolution modal
+              }}>
+                Resolve Conflicts
+              </Button>
+            </div>
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

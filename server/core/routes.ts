@@ -1518,79 +1518,128 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Conflicts API route - detects booking time overlaps
-  app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
+  // NEW CONFLICT DETECTION SYSTEM - Get conflicts for specific booking
+  app.get('/api/conflicts/:bookingId', isAuthenticated, async (req: any, res) => {
     try {
-      const bookings = await storage.getBookings(req.user.id);
-      const conflicts: any[] = [];
+      const bookingId = parseInt(req.params.bookingId);
+      const { ConflictEngine } = await import('./conflict-engine');
       
-      console.log(`🔍 Checking conflicts for ${bookings.length} bookings`);
+      // Get all bookings for user
+      const allBookings = await storage.getBookings(req.user.id);
       
-      // Check each booking against others for conflicts
-      for (let i = 0; i < bookings.length; i++) {
-        const booking = bookings[i];
-        if (!booking.eventDate || !booking.eventTime || !booking.eventEndTime) continue;
-        
-        for (let j = i + 1; j < bookings.length; j++) {
-          const otherBooking = bookings[j];
-          if (!otherBooking.eventDate || !otherBooking.eventTime || !otherBooking.eventEndTime) continue;
-          
-          // Check if on same date
-          const bookingDate = new Date(booking.eventDate).toDateString();
-          const otherDate = new Date(otherBooking.eventDate).toDateString();
-          
-          console.log(`📅 Comparing dates: ${booking.title} (${bookingDate}) vs ${otherBooking.title} (${otherDate})`);
-          
-          if (bookingDate !== otherDate) continue;
-          
-          // Parse event date for proper ISO format
-          const eventDateStr = new Date(booking.eventDate).toISOString().split('T')[0]; // Get YYYY-MM-DD part
-          
-          // Check for time overlap with proper date construction
-          const bookingStart = new Date(`${eventDateStr}T${booking.eventTime}:00`);
-          const bookingEnd = new Date(`${eventDateStr}T${booking.eventEndTime}:00`);
-          const otherStart = new Date(`${eventDateStr}T${otherBooking.eventTime}:00`);
-          const otherEnd = new Date(`${eventDateStr}T${otherBooking.eventEndTime}:00`);
-          
-          console.log(`⏰ Time comparison: ${booking.title} (${booking.eventTime}-${booking.eventEndTime}) vs ${otherBooking.title} (${otherBooking.eventTime}-${otherBooking.eventEndTime})`);
-          console.log(`⏰ Parsed times: ${bookingStart.toISOString()} - ${bookingEnd.toISOString()} vs ${otherStart.toISOString()} - ${otherEnd.toISOString()}`);
-          
-          const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
-          
-          console.log(`🔄 Overlap check: ${hasTimeOverlap}`);
-          
-          if (hasTimeOverlap) {
-            console.log(`🚨 CONFLICT DETECTED: ${booking.title} overlaps with ${otherBooking.title}`);
-            conflicts.push({
-              id: `${booking.id}-${otherBooking.id}`,
-              enquiryId: booking.id,
-              conflictType: 'booking',
-              conflictId: otherBooking.id,
-              severity: 'high',
-              message: `Time overlap detected between "${booking.title}" and "${otherBooking.title}"`,
-              resolved: false,
-              createdAt: new Date().toISOString(),
-              enquiry: {
-                title: booking.title,
-                clientName: booking.clientName,
-                eventDate: booking.eventDate,
-                eventTime: booking.eventTime,
-                venue: booking.venue
-              },
-              conflictItem: {
-                title: otherBooking.title,
-                clientName: otherBooking.clientName,
-                eventDate: otherBooking.eventDate,
-                eventTime: otherBooking.eventTime,
-                venue: otherBooking.venue
-              }
-            });
-          }
+      // Find the target booking
+      const targetBooking = allBookings.find(b => b.id === bookingId);
+      if (!targetBooking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      
+      // Convert to conflict engine format
+      const bookingInfo = {
+        id: targetBooking.id,
+        clientName: targetBooking.clientName,
+        eventDate: targetBooking.eventDate?.toISOString() || '',
+        eventTime: targetBooking.eventTime || undefined,
+        eventEndTime: targetBooking.eventEndTime || undefined,
+        venue: targetBooking.venue || undefined,
+        status: targetBooking.status
+      };
+      
+      const otherBookings = allBookings
+        .filter(b => b.id !== bookingId)
+        .map(b => ({
+          id: b.id,
+          clientName: b.clientName,
+          eventDate: b.eventDate?.toISOString() || '',
+          eventTime: b.eventTime || undefined,
+          eventEndTime: b.eventEndTime || undefined,
+          venue: b.venue || undefined,
+          status: b.status
+        }));
+      
+      // Detect conflicts
+      const conflicts = [];
+      for (const otherBooking of otherBookings) {
+        const result = ConflictEngine.detectConflict(bookingInfo, otherBooking);
+        if (result.hasConflict) {
+          conflicts.push({
+            withBookingId: otherBooking.id,
+            severity: result.severity === 'critical' ? 'hard' : result.severity === 'warning' ? 'soft' : 'resolved',
+            clientName: otherBooking.clientName,
+            status: otherBooking.status,
+            time: otherBooking.eventTime && otherBooking.eventEndTime 
+              ? `${otherBooking.eventTime}–${otherBooking.eventEndTime}`
+              : 'Time not specified',
+            canEdit: otherBooking.status === 'enquiry' || otherBooking.status === 'new',
+            canReject: otherBooking.status === 'enquiry' || otherBooking.status === 'new',
+            type: result.type,
+            message: result.message,
+            overlapMinutes: result.details.overlapMinutes
+          });
         }
       }
       
-      console.log(`🔍 Found ${conflicts.length} conflicts for user ${req.user.id}`);
-      res.json(conflicts);
+      res.json({
+        bookingId,
+        conflicts
+      });
+      
+    } catch (error) {
+      console.error('❌ Conflict detection error:', error);
+      res.status(500).json({ error: 'Failed to detect conflicts' });
+    }
+  });
+
+  // Dashboard conflicts summary - Get all conflicts for user
+  app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
+    try {
+      const { ConflictEngine } = await import('./conflict-engine');
+      
+      // Get all bookings for user
+      const allBookings = await storage.getBookings(req.user.id);
+      
+      // Convert to conflict engine format
+      const bookings = allBookings.map(b => ({
+        id: b.id,
+        clientName: b.clientName,
+        eventDate: b.eventDate?.toISOString() || '',
+        eventTime: b.eventTime || undefined,
+        eventEndTime: b.eventEndTime || undefined,
+        venue: b.venue || undefined,
+        status: b.status
+      }));
+      
+      // Detect all conflicts
+      const allConflicts = ConflictEngine.detectAllConflicts(bookings);
+      
+      // Format for dashboard widget (legacy format for compatibility)
+      const formattedConflicts = allConflicts.map((conflict, index) => ({
+        id: index + 1,
+        enquiryId: conflict.details.booking1.id,
+        conflictType: 'booking',
+        conflictId: conflict.details.booking2.id,
+        severity: conflict.severity === 'critical' ? 'high' : conflict.severity === 'warning' ? 'medium' : 'low',
+        message: conflict.message,
+        resolved: false,
+        createdAt: new Date().toISOString(),
+        enquiry: {
+          title: `${conflict.details.booking1.clientName} Event`,
+          clientName: conflict.details.booking1.clientName,
+          eventDate: conflict.details.booking1.eventDate,
+          eventTime: conflict.details.booking1.eventTime,
+          venue: conflict.details.booking1.venue
+        },
+        conflictItem: {
+          title: `${conflict.details.booking2.clientName} Event`,
+          clientName: conflict.details.booking2.clientName,
+          eventDate: conflict.details.booking2.eventDate,
+          eventTime: conflict.details.booking2.eventTime,
+          venue: conflict.details.booking2.venue
+        }
+      }));
+      
+      console.log(`🔍 Found ${formattedConflicts.length} conflicts for user ${req.user.id}`);
+      res.json(formattedConflicts);
+      
     } catch (error) {
       console.error('❌ Conflicts detection error:', error);
       res.status(500).json({ error: 'Failed to detect conflicts' });

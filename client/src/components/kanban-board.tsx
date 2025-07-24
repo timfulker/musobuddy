@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
-import { analyzeConflictSeverity, type ConflictAnalysis } from "@/utils/conflict-ui";
+// Removed conflict-ui import - using new conflict system
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
 
@@ -17,7 +17,7 @@ export default function ActionableEnquiries() {
   const { data: conflicts = [] } = useQuery({
     queryKey: ["/api/conflicts"],
     staleTime: 30000,
-    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   // Track resolved conflicts using localStorage (same as events window)
@@ -38,15 +38,15 @@ export default function ActionableEnquiries() {
 
   // Debug logging - summary of all enquiries by status
   useEffect(() => {
-    if (enquiries.length > 0) {
-      const statusCounts = enquiries.reduce((acc: any, enquiry: any) => {
+    if (Array.isArray(enquiries) && enquiries.length > 0) {
+      const statusCounts = (enquiries as any[]).reduce((acc: any, enquiry: any) => {
         acc[enquiry.status] = (acc[enquiry.status] || 0) + 1;
         return acc;
       }, {});
       console.log('📊 Enquiries by status:', statusCounts);
       
       // Log completed enquiries to understand the issue
-      const completedEnquiries = enquiries.filter((e: any) => e.status === 'completed');
+      const completedEnquiries = (enquiries as any[]).filter((e: any) => e.status === 'completed');
       console.log('✅ Completed enquiries:', completedEnquiries.length, completedEnquiries.map((e: any) => ({
         id: e.id,
         title: e.title,
@@ -118,7 +118,7 @@ export default function ActionableEnquiries() {
            !enquiry.clientPhone && 
            !enquiry.originalEmailContent && 
            !enquiry.applyNowLink &&
-           (!enquiry.estimatedValue || enquiry.estimatedValue === "");
+           (!enquiry.fee || enquiry.fee === "");
   };
 
   const isThisWeek = (dateString: string) => {
@@ -141,7 +141,7 @@ export default function ActionableEnquiries() {
   };
 
   // Filter enquiries that need action (excluding resolved conflicts and completed gigs)
-  const actionableEnquiries = enquiries.filter((enquiry: Enquiry) => {
+  const actionableEnquiries = (enquiries as any[]).filter((enquiry: any) => {
     // Exclude completed and rejected gigs from action required
     if (enquiry.status === 'completed' || enquiry.status === 'rejected') {
       return false;
@@ -155,8 +155,8 @@ export default function ActionableEnquiries() {
   });
 
   // Filter enquiries from this week, excluding calendar imports
-  const thisWeekEnquiries = enquiries.filter((enquiry: Enquiry) => {
-    const isThisWeekEnquiry = enquiry.createdAt && isThisWeek(enquiry.createdAt);
+  const thisWeekEnquiries = (enquiries as any[]).filter((enquiry: any) => {
+    const isThisWeekEnquiry = enquiry.createdAt && isThisWeek(enquiry.createdAt.toString());
     const isImport = isCalendarImport(enquiry);
     
     // Debug logging removed to prevent console spam
@@ -164,19 +164,20 @@ export default function ActionableEnquiries() {
     return isThisWeekEnquiry && !isImport;
   });
 
-  const renderEnquiryCard = (enquiry: Enquiry, showUrgent = false) => {
-    const dateBox = formatDateBox(enquiry.eventDate!);
+  const renderEnquiryCard = (enquiry: any, showUrgent = false) => {
+    const dateBox = formatDateBox(enquiry.eventDate?.toString() || '');
     const conflicts = detectConflicts(enquiry);
     const isResolved = resolvedConflicts.has(enquiry.id);
     
     // Enhanced conflict detection with booking status awareness
-    const confirmedBookingConflicts = conflicts.filter(c => c.type === 'booking');
-    const unconfirmedEnquiryConflicts = conflicts.filter(c => c.type === 'enquiry');
+    const confirmedBookingConflicts = conflicts.filter((c: any) => c.type === 'booking');
+    const unconfirmedEnquiryConflicts = conflicts.filter((c: any) => c.type === 'enquiry');
     
     // Check if any conflicts have time overlaps
-    const hasTimeOverlap = conflicts.some(conflict => conflict.hasTimeOverlap);
+    const hasTimeOverlap = conflicts.some((conflict: any) => conflict.hasTimeOverlap);
     
-    const conflictAnalysis: ConflictAnalysis = {
+    // Simplified conflict analysis without external dependencies
+    const conflictAnalysis = {
       hasTimeOverlap,
       sameVenue: false,
       sameClient: false,
@@ -188,7 +189,9 @@ export default function ActionableEnquiries() {
         : 'No conflicts'
     };
     
-    const severity = analyzeConflictSeverity(enquiry, conflictAnalysis);
+    // Simple severity calculation
+    const severity = hasTimeOverlap && confirmedBookingConflicts.length > 0 ? 'high' : 
+                     conflicts.length > 0 ? 'medium' : 'low';
     const hasConflicts = conflicts.length > 0;
     
     // Debug logging for conflict detection (after variables are defined)
@@ -210,11 +213,11 @@ export default function ActionableEnquiries() {
     // Status-based styling with new workflow color scheme
     const getStatusOverlay = () => {
       const stage = mapOldStatusToStage(enquiry.status);
-      switch (stage) {
-        case 'new-enquiry': return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200";
-        case 'awaiting-response': return "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200";
-        case 'client-confirms': return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
-        case 'contract-sent': return "bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200";
+      switch(enquiry.status) {
+        case 'new': return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200";
+        case 'awaiting_response': return "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"; 
+        case 'client_confirms': return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
+        case 'contract_sent': return "bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200";
         case 'confirmed': return "bg-gradient-to-br from-green-50 to-green-100 border-green-200";
         case 'cancelled': return "bg-gradient-to-br from-red-50 to-red-100 border-red-200";
         case 'completed': return "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200";
@@ -224,9 +227,9 @@ export default function ActionableEnquiries() {
     
     // Conflict overlay styling
     const getConflictOverlay = () => {
-      if (severity.level === 'critical') {
+      if (severity === 'high') {
         return 'border-red-500 bg-red-50 ring-2 ring-red-200';
-      } else if (severity.level === 'warning') {
+      } else if (severity === 'medium') {
         return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
       }
       return '';
@@ -241,13 +244,13 @@ export default function ActionableEnquiries() {
           className: "text-amber-700 border-amber-500"
         };
       } else if (hasConflicts) {
-        if (severity.level === 'critical') {
+        if (severity === 'high') {
           return {
             text: "Needs immediate attention",
             variant: "destructive" as const,
             className: "text-red-700 bg-red-100 border-red-300"
           };
-        } else if (severity.level === 'warning') {
+        } else if (severity === 'medium') {
           return {
             text: "Needs immediate attention",
             variant: "outline" as const,
@@ -276,7 +279,7 @@ export default function ActionableEnquiries() {
               {/* Header with price and date */}
               <div className="flex justify-between items-start">
                 <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                  {enquiry.estimatedValue ? `£${enquiry.estimatedValue}` : "Price TBC"}
+                  {enquiry.fee ? `£${enquiry.fee}` : "Price TBC"}
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-gray-500 dark:text-gray-400">{dateBox.dayName}</div>
@@ -315,9 +318,9 @@ export default function ActionableEnquiries() {
               <div className="flex flex-wrap gap-1">
                 {badgeInfo && (
                   <Badge variant={badgeInfo.variant} className={`text-xs ${badgeInfo.className}`}>
-                    {severity.level === 'critical' ? (
+                    {severity === 'high' ? (
                       <AlertTriangle className="w-3 h-3 mr-1 text-red-700" />
-                    ) : severity.level === 'warning' ? (
+                    ) : severity === 'medium' ? (
                       <AlertCircle className="w-3 h-3 mr-1 text-amber-700" />
                     ) : (
                       <Clock className="w-3 h-3 mr-1 text-blue-700" />
