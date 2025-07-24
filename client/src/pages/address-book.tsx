@@ -114,7 +114,10 @@ export default function AddressBook() {
       updatedAt: true, 
       totalBookings: true, 
       totalRevenue: true,
-      bookingIds: true
+      bookingIds: true,
+      lastContactDate: true,
+      hasInquired: true,
+      hasBooked: true
     })),
     defaultValues: {
       name: "",
