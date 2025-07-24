@@ -52,7 +52,7 @@ function Router() {
       <Route path="/view-contract/:id" component={ViewContract} />
       <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/quick-add" component={QuickAdd} />
-      <Route path="/login" component={LoginPage} />
+      {/* Old login removed - using Replit auth only */}
       <Route path="/pricing" component={Pricing} />
       <Route path="/logout" component={() => {
         // Client-side logout handler - clears cache and redirects
@@ -72,7 +72,15 @@ function Router() {
       }} />
       
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <Route path="/" component={() => (
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">MusoBuddy</h1>
+              <p className="text-muted-foreground mb-4">Setting up your account...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            </div>
+          </div>
+        )} />
       ) : (
         <>
           <Route path="/" component={Dashboard} />
