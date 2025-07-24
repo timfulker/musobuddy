@@ -762,7 +762,7 @@ export async function registerRoutes(app: Express) {
                 </div>
                 <div class="info-item">
                   <div class="info-label">Due Date</div>
-                  <div class="info-value">${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</div>
+                  <div class="info-value">${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : 'Not set'}</div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">Amount</div>
@@ -780,7 +780,7 @@ export async function registerRoutes(app: Express) {
               </div>
               
               <div class="download-section">
-                <a href="/download/invoices/${invoice.id}" class="download-btn" target="_blank">
+                <a href="/download/invoices/${invoice.id}" class="download-btn" download>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7,10 12,15 17,10"/>
@@ -1144,7 +1144,7 @@ export async function registerRoutes(app: Express) {
               </div>
               
               <div class="download-section">
-                <a href="${compliance.documentUrl}" class="download-btn" target="_blank">
+                <a href="/download/compliance/${compliance.id}" class="download-btn" download>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7,10 12,15 17,10"/>
@@ -1186,11 +1186,49 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Public invoice download route for email links (NO AUTHENTICATION)
+  // PUBLIC COMPLIANCE DOCUMENT DOWNLOAD ROUTE - FORCES FILE DOWNLOAD
+  app.get('/download/compliance/:id', async (req: any, res) => {
+    try {
+      const complianceId = parseInt(req.params.id);
+      console.log('📄 Public compliance document download request for ID:', complianceId);
+      
+      const compliance = await storage.getComplianceDocument(complianceId);
+      
+      if (!compliance) {
+        return res.status(404).json({ error: 'Compliance document not found' });
+      }
+
+      // Always fetch from R2 and serve with download headers
+      if (compliance.documentUrl) {
+        console.log('📄 Fetching compliance document from R2 and forcing download');
+        try {
+          const response = await fetch(compliance.documentUrl);
+          if (response.ok) {
+            const fileBuffer = await response.arrayBuffer();
+            const fileName = compliance.name || `${compliance.type}-document.pdf`;
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+            res.setHeader('Content-Length', fileBuffer.byteLength.toString());
+            return res.send(Buffer.from(fileBuffer));
+          }
+        } catch (fetchError) {
+          console.log('⚠️ Failed to fetch compliance document from R2:', fetchError);
+        }
+      }
+
+      return res.status(500).json({ error: 'Could not download compliance document' });
+    } catch (error) {
+      console.error('❌ Public compliance document download error:', error);
+      res.status(500).json({ error: 'Failed to download compliance document' });
+    }
+  });
+
+  // Public invoice download route for email links (NO AUTHENTICATION) - FORCES FILE DOWNLOAD
   app.get('/download/invoices/:id', async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      console.log('🔗 Public invoice access for ID:', invoiceId);
+      console.log('📄 Public invoice download request for ID:', invoiceId);
       
       const invoice = await storage.getInvoice(invoiceId);
       
@@ -1198,30 +1236,39 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
 
-      // For public access, always redirect to R2 cloud storage
+      // Always fetch from R2 and serve with download headers (like contracts)
       if (invoice.cloudStorageUrl) {
-        console.log('🔗 Redirecting to cloud storage:', invoice.cloudStorageUrl);
-        return res.redirect(invoice.cloudStorageUrl);
+        console.log('📄 Fetching invoice from R2 and forcing download');
+        try {
+          const response = await fetch(invoice.cloudStorageUrl);
+          if (response.ok) {
+            const pdfBuffer = await response.arrayBuffer();
+            const fileName = `invoice-${invoice.invoiceNumber || invoice.id}.pdf`;
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+            res.setHeader('Content-Length', pdfBuffer.byteLength.toString());
+            return res.send(Buffer.from(pdfBuffer));
+          }
+        } catch (fetchError) {
+          console.log('⚠️ Failed to fetch invoice from R2, generating new one');
+        }
       }
 
-      // If no cloud URL, generate and redirect
+      // If no cloud URL or fetch failed, generate and serve directly
       const userSettings = await storage.getSettings(invoice.userId);
-      const { uploadInvoiceToCloud } = await import('./cloud-storage');
+      const { generateInvoicePDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, null, userSettings);
+      
+      const fileName = `invoice-${invoice.invoiceNumber || invoice.id}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.send(pdfBuffer);
 
-      const cloudResult = await uploadInvoiceToCloud(invoice, userSettings);
-
-      if (cloudResult.success && cloudResult.url) {
-        await storage.updateInvoice(invoice.id, {
-          cloudStorageUrl: cloudResult.url,
-          cloudStorageKey: cloudResult.key
-        });
-        return res.redirect(cloudResult.url);
-      }
-
-      return res.status(500).json({ error: 'Could not generate invoice PDF' });
     } catch (error) {
       console.error('❌ Public invoice download error:', error);
-      res.status(500).json({ error: 'Failed to access invoice' });
+      res.status(500).json({ error: 'Failed to download invoice' });
     }
   });
 
@@ -1571,7 +1618,7 @@ export async function registerRoutes(app: Express) {
 
       // Replace business signature
       const businessSignature = userSettings ? 
-        `${userSettings.businessName || 'MusoBuddy User'}\n${userSettings.email || ''}\n${userSettings.phone || ''}` :
+        `${userSettings.businessName || 'MusoBuddy User'}\n${userSettings.businessEmail || ''}\n${userSettings.phone || ''}` :
         'MusoBuddy User';
       personalizedMessage = personalizedMessage.replace(/\[Business Signature\]/g, businessSignature);
 
