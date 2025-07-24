@@ -38,7 +38,7 @@ interface ConflictResolutionModalProps {
 export default function ConflictResolutionModal({ 
   isOpen, 
   onClose, 
-  currentBooking, 
+  currentBooking: passedCurrentBooking, 
   conflicts 
 }: ConflictResolutionModalProps) {
   const [editingBookingId, setEditingBookingId] = useState<number | null>(null);
@@ -58,7 +58,10 @@ export default function ConflictResolutionModal({
     .map(id => Number(id));
   
   console.log('🔍 Conflict Resolution Modal - Booking IDs:', conflictingBookingIds);
-  console.log('🔍 Conflict Resolution Modal - Current Booking:', currentBooking);
+  console.log('🔍 Conflict Resolution Modal - Passed Current Booking:', passedCurrentBooking);
+  
+  // Use the passed currentBooking instead of fetching it again
+  const currentBooking = passedCurrentBooking;
   console.log('🔍 Conflict Resolution Modal - isOpen:', isOpen);
   console.log('🔍 Conflict Resolution Modal - Conflicting Booking Query Enabled:', conflictingBookingIds.length > 0);
   console.log('🔍 Conflict Resolution Modal - Query Key:', ['/api/bookings/batch', conflictingBookingIds]);
