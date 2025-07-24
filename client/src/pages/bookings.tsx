@@ -73,6 +73,7 @@ export default function UnifiedBookings() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [previousStatusFilter, setPreviousStatusFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<string>('eventDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [dateFilter, setDateFilter] = useState<string>('all');
@@ -580,9 +581,18 @@ export default function UnifiedBookings() {
                   />
                 </div>
                 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by status" />
+                <Select 
+                  value={statusFilter} 
+                  onValueChange={(value) => {
+                    setStatusFilter(value);
+                    if (!conflictFilter) {
+                      setPreviousStatusFilter(value);
+                    }
+                  }}
+                  disabled={conflictFilter}
+                >
+                  <SelectTrigger className={`w-48 ${conflictFilter ? 'opacity-50' : ''}`}>
+                    <SelectValue placeholder={conflictFilter ? "All Status (Conflict Mode)" : "Filter by status"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
@@ -614,7 +624,17 @@ export default function UnifiedBookings() {
                   <Switch
                     id="conflict-filter"
                     checked={conflictFilter}
-                    onCheckedChange={setConflictFilter}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        // Save current status filter before switching to conflicts
+                        setPreviousStatusFilter(statusFilter);
+                        setStatusFilter('all');
+                      } else {
+                        // Restore previous status filter when disabling conflicts
+                        setStatusFilter(previousStatusFilter);
+                      }
+                      setConflictFilter(checked);
+                    }}
                     className="data-[state=checked]:bg-red-500"
                   />
                   <label 
@@ -691,6 +711,7 @@ export default function UnifiedBookings() {
                     onClick={() => {
                       setSearchQuery('');
                       setStatusFilter('all');
+                      setPreviousStatusFilter('all');
                       setDateFilter('all');
                       setConflictFilter(false);
                       setSortField('eventDate');
