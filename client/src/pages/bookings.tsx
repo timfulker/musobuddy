@@ -104,17 +104,10 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
-  const { data: contracts = [], isLoading: contractsLoading } = useQuery({
+  const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
     retry: 2,
   });
-
-  // Debug: Log contracts when they load
-  React.useEffect(() => {
-    if (!contractsLoading && contracts) {
-      console.log('🔍 Contracts loaded:', contracts);
-    }
-  }, [contracts, contractsLoading]);
 
   const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices"],
@@ -922,17 +915,6 @@ export default function UnifiedBookings() {
                               const bookingContract = Array.isArray(contracts) ? contracts.find(
                                 (contract: any) => contract.enquiryId === booking.id
                               ) : null;
-
-                              // Debug: Log contract search for Tim Fulker booking
-                              if (booking.clientName?.includes('Tim Fulker')) {
-                                console.log(`🔍 Tim Fulker booking ${booking.id}:`, {
-                                  bookingId: booking.id,
-                                  contractFound: !!bookingContract,
-                                  contractId: bookingContract?.id,
-                                  totalContracts: contracts?.length || 0,
-                                  allContractEnquiryIds: Array.isArray(contracts) ? contracts.map(c => ({ id: c.id, enquiryId: c.enquiryId })) : []
-                                });
-                              }
                               
                               // Find invoice for this booking  
                               const bookingInvoice = Array.isArray(invoices) ? invoices.find(
