@@ -246,6 +246,21 @@ export class Storage {
     }
   }
 
+  async getComplianceDocument(documentId: number) {
+    try {
+      const document = await this.db
+        .select()
+        .from(complianceDocuments)
+        .where(eq(complianceDocuments.id, documentId))
+        .limit(1);
+      
+      return document[0] || null;
+    } catch (error) {
+      console.error('Error fetching compliance document:', error);
+      return null;
+    }
+  }
+
   async createCompliance(complianceData: any) {
     try {
       const [document] = await this.db

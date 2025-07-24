@@ -854,9 +854,14 @@ function generateComplianceEmailHTML(booking: any, complianceDocuments: any[], c
               ${doc.status === 'valid' ? '✅ Valid' : doc.status === 'expiring' ? '⚠️ Expiring' : '❌ Expired'}
             </span>
             <a href="${doc.documentUrl}" 
-               style="background-color: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-size: 14px; font-weight: bold;"
+               style="background-color: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-size: 14px; font-weight: bold; margin-right: 10px;"
                target="_blank">
               📄 Download
+            </a>
+            <a href="${process.env.NODE_ENV === 'production' ? 'https://musobuddy.replit.app' : 'http://localhost:5000'}/view/compliance/${doc.id}" 
+               style="background-color: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-size: 14px; font-weight: bold;"
+               target="_blank">
+              👁️ View
             </a>
           </div>
         </div>
