@@ -3,6 +3,36 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { Contract, Invoice, UserSettings } from '@shared/schema';
 import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
 
+// BULLETPROOF URL DETECTION - Production Ready
+export function getAppServerUrl(): string {
+  // 1. Check for explicit production environment variable (highest priority)
+  if (process.env.APP_SERVER_URL) {
+    console.log('🔗 Using explicit APP_SERVER_URL:', process.env.APP_SERVER_URL);
+    return process.env.APP_SERVER_URL;
+  }
+  
+  // 2. Check for Replit deployment environments
+  if (process.env.REPLIT_DEPLOYMENT) {
+    console.log('🔗 Detected REPLIT_DEPLOYMENT, using production URL');
+    return 'https://musobuddy.replit.app';
+  }
+  
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    console.log('🔗 Detected REPLIT_DEV_DOMAIN, using production URL');
+    return 'https://musobuddy.replit.app';
+  }
+  
+  // 3. Check for production indicators
+  if (process.env.NODE_ENV === 'production') {
+    console.log('🔗 Detected NODE_ENV=production, using production URL');
+    return 'https://musobuddy.replit.app';
+  }
+  
+  // 4. Default to localhost for development
+  console.log('🔗 Using localhost for development');
+  return 'http://localhost:5000';
+}
+
 // Cloudflare R2 configuration
 const r2Client = new S3Client({
   region: 'auto',
@@ -387,31 +417,6 @@ function generateContractSigningPageHTML(
   };
 
   // CRITICAL: Use app server for API calls, cloud storage for documents
-  // BULLETPROOF URL DETECTION - production ready
-  const getAppServerUrl = () => {
-    // 1. Check for explicit production environment variable
-    if (process.env.APP_SERVER_URL) {
-      return process.env.APP_SERVER_URL;
-    }
-    
-    // 2. Check for Replit environments
-    if (process.env.REPLIT_DEPLOYMENT) {
-      return 'https://musobuddy.replit.app';
-    }
-    
-    if (process.env.REPLIT_DEV_DOMAIN) {
-      return 'https://musobuddy.replit.app';
-    }
-    
-    // 3. Check for production indicators
-    if (process.env.NODE_ENV === 'production') {
-      return 'https://musobuddy.replit.app';
-    }
-    
-    // 4. Default to localhost for development
-    return 'http://localhost:5000';
-  };
-  
   const APP_SERVER_URL = getAppServerUrl();
   const contractId = contract.id;
 
