@@ -2542,11 +2542,12 @@ export async function registerRoutes(app: Express) {
       
       const userData = {
         firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        lastName: lastName.trim(), 
         email: email.trim().toLowerCase(),
         password: hashedPassword,
         tier: tier || 'free',
-        isAdmin: isAdmin || false
+        isAdmin: isAdmin || false,
+        id: crypto.randomUUID() // Generate unique ID for new user
       };
       
       const newUser = await storage.createUser(userData);
