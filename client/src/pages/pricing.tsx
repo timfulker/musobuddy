@@ -141,7 +141,7 @@ export default function PricingPage() {
               </ul>
               <Button 
                 className="w-full bg-purple-600 hover:bg-purple-700"
-                onClick={() => handleSubscribe('core_monthly')}
+                onClick={() => handleSubscribe('price_1RoX6JD9Bo26CG1DAHob4Bh1')}
                 disabled={loading || currentPlan === 'core' || hasAccess}
               >
                 {loading ? 'Processing...' : 
