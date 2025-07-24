@@ -62,12 +62,12 @@ export default function Dashboard() {
           <main className="p-6 space-y-8 max-w-7xl mx-auto">
             <StatsCards />
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-              <div className="xl:col-span-3">
+              <div className="xl:col-span-3 space-y-8">
                 <ActionableEnquiries />
+                <CalendarWidget />
               </div>
               <div className="space-y-6">
                 <BookingCTAButtons />
-                <CalendarWidget />
                 <QuickActions />
                 <ConflictsWidget />
                 <ComplianceAlerts />
@@ -106,13 +106,13 @@ export default function Dashboard() {
           <StatsCards />
           
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 md:gap-6">
-            <div className="xl:col-span-3">
+            <div className="xl:col-span-3 space-y-3 md:space-y-6">
               <ActionableEnquiries />
+              <CalendarWidget />
             </div>
             
             <div className="space-y-3 md:space-y-6">
               <BookingCTAButtons />
-              <CalendarWidget />
               <QuickActions />
               <ConflictsWidget />
               <ComplianceAlerts />

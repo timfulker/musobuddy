@@ -11,16 +11,17 @@ export default function CalendarWidget() {
     queryKey: ["/api/bookings"],
   });
 
-  // Filter for upcoming bookings within the next 30 days
-  const bookings = allBookings.filter((booking: Booking) => {
+  // Filter for upcoming bookings within the next 60 days (no limit for dynamic sizing)
+  const bookings = (allBookings as any[]).filter((booking: Booking) => {
+    if (!booking.eventDate) return false;
     const eventDate = new Date(booking.eventDate);
     const today = new Date();
-    const thirtyDaysFromNow = new Date();
+    const sixtyDaysFromNow = new Date();
     today.setHours(0, 0, 0, 0);
-    thirtyDaysFromNow.setHours(0, 0, 0, 0);
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
-    return eventDate >= today && eventDate <= thirtyDaysFromNow;
-  }).slice(0, 10); // Limit to 10 upcoming bookings
+    sixtyDaysFromNow.setHours(0, 0, 0, 0);
+    sixtyDaysFromNow.setDate(today.getDate() + 60);
+    return eventDate >= today && eventDate <= sixtyDaysFromNow;
+  }); // No limit - dynamic sizing
 
   const isLoading = bookingsLoading;
 
@@ -49,12 +50,11 @@ export default function CalendarWidget() {
   const getStatusColor = (status: string) => {
     const stage = mapOldStatusToStage(status);
     switch (stage) {
-      case 'new-enquiry': return "bg-amber-50 text-amber-900 border-amber-200";
-      case 'awaiting-response': return "bg-orange-50 text-orange-900 border-orange-200";
-      case 'client-confirms': return "bg-blue-50 text-blue-900 border-blue-200";
-      case 'contract-sent': return "bg-indigo-50 text-indigo-900 border-indigo-200";
+      case 'new': return "bg-amber-50 text-amber-900 border-amber-200";
+      case 'in_progress': return "bg-orange-50 text-orange-900 border-orange-200"; 
+      case 'client_confirms': return "bg-blue-50 text-blue-900 border-blue-200";
       case 'confirmed': return "bg-green-50 text-green-900 border-green-200";
-      case 'cancelled': return "bg-red-50 text-red-900 border-red-200";
+      case 'rejected': return "bg-red-50 text-red-900 border-red-200";
       case 'completed': return "bg-purple-50 text-purple-900 border-purple-200";
       default: return "bg-gray-50 text-gray-900 border-gray-200";
     }
@@ -63,12 +63,11 @@ export default function CalendarWidget() {
   const getStatusBadgeColor = (status: string) => {
     const stage = mapOldStatusToStage(status);
     switch (stage) {
-      case 'new-enquiry': return "text-amber-600";
-      case 'awaiting-response': return "text-orange-600";
-      case 'client-confirms': return "text-blue-600";
-      case 'contract-sent': return "text-indigo-600";
+      case 'new': return "text-amber-600";
+      case 'in_progress': return "text-orange-600";
+      case 'client_confirms': return "text-blue-600";
       case 'confirmed': return "text-green-600";
-      case 'cancelled': return "text-red-600";
+      case 'rejected': return "text-red-600";
       case 'completed': return "text-purple-600";
       default: return "text-gray-600";
     }
@@ -78,11 +77,10 @@ export default function CalendarWidget() {
   const getUpcomingGigs = () => {
     const now = new Date();
     
-    // Filter and sort upcoming bookings
+    // Filter and sort upcoming bookings (no limit for dynamic sizing)
     return bookings
-      .filter((booking: Booking) => new Date(booking.eventDate) >= now)
-      .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
-      .slice(0, 3)
+      .filter((booking: Booking) => booking.eventDate && new Date(booking.eventDate) >= now)
+      .sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
       .map((booking: Booking) => ({
         id: booking.id,
         title: booking.title,
@@ -122,49 +120,66 @@ export default function CalendarWidget() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Upcoming Gigs</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="pb-6">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl font-semibold">Upcoming Gigs</CardTitle>
+          <Link href="/calendar">
+            <Button variant="outline" size="sm" className="h-9">
+              <ArrowRight className="w-4 h-4 mr-2" />
+              View Calendar
+            </Button>
+          </Link>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {upcomingGigs.map((gig: any) => {
-          const dateInfo = formatDate(gig.eventDate);
-          return (
-            <Link key={gig.id} href={`/bookings?id=${gig.id}`}>
-              <div className={`flex items-center space-x-3 p-3 rounded-lg ${getStatusColor(gig.status)} hover:shadow-md transition-shadow cursor-pointer`}>
-                <div className="text-center">
-                  <div className={`text-xs font-medium ${getStatusBadgeColor(gig.status)}`}>
-                    {dateInfo.month}
+      <CardContent>
+        {/* Single column layout with wider, enlarged cards */}
+        <div className="space-y-4">
+          {upcomingGigs.map((gig: any) => {
+            const dateInfo = formatDate(gig.eventDate);
+            return (
+              <Link key={gig.id} href={`/bookings?id=${gig.id}`}>
+                <div className={`flex items-center space-x-6 p-6 rounded-lg ${getStatusColor(gig.status)} hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-current`}>
+                  {/* Enlarged date box */}
+                  <div className="text-center min-w-[80px]">
+                    <div className={`text-sm font-semibold ${getStatusBadgeColor(gig.status)} uppercase tracking-wide`}>
+                      {dateInfo.month}
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900">
+                      {dateInfo.day}
+                    </div>
                   </div>
-                  <div className="text-lg font-bold">
-                    {dateInfo.day}
+                  
+                  {/* Enlarged content */}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-lg font-semibold text-gray-900 truncate">{gig.title}</h4>
+                    <p className="text-base text-gray-700 mt-1">{gig.venue}</p>
+                    {gig.eventTime && (
+                      <p className="text-sm text-gray-600 mt-1">Time: {gig.eventTime}</p>
+                    )}
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className={`text-sm font-medium px-3 py-1 rounded-full bg-white/50 ${getStatusBadgeColor(gig.status)}`}>
+                        {getDisplayStatus(gig.status)}
+                      </span>
+                      {gig.fee && (
+                        <span className="text-sm font-semibold text-gray-900">
+                          £{gig.fee}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-medium">{gig.title}</h4>
-                  <p className="text-sm opacity-75">{gig.venue} • {gig.eventTime}</p>
-                  <p className="text-xs font-medium mt-1 opacity-90">{getDisplayStatus(gig.status)}</p>
-                  <p className={`text-xs ${getStatusBadgeColor(gig.status)}`}>
-                    £{gig.fee} • {gig.status === "confirmed" ? "Confirmed" : "Pending"}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })}
+        </div>
 
         {upcomingGigs.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <p>No upcoming gigs</p>
-            <p className="text-sm">New bookings will appear here</p>
+          <div className="text-center py-12 text-gray-500">
+            <p className="text-lg">No upcoming gigs</p>
+            <p className="text-base mt-2">New bookings will appear here</p>
           </div>
         )}
-
-        <Link href="/calendar">
-          <Button variant="ghost" className="w-full justify-center">
-            View Full Calendar <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </Link>
       </CardContent>
     </Card>
   );
