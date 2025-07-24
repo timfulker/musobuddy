@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { isAuthenticated, isAdmin } from "./auth";
+import { isAuthenticated, isAdmin } from "./auth-clean";
 import { mailgunService, contractParserService, cloudStorageService } from "./services";
 import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
@@ -2518,61 +2518,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Admin user creation endpoint - MISSING FUNCTIONALITY ADDED
-  app.post('/api/admin/users', isAdmin, async (req, res) => {
-    try {
-      const { firstName, lastName, email, password, tier, isAdmin } = req.body;
-      
-      console.log('👤 Admin creating new user:', { firstName, lastName, email, tier, isAdmin });
-      
-      // Validate required fields
-      if (!firstName || !lastName || !email || !password) {
-        return res.status(400).json({ error: 'All fields are required' });
-      }
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ error: 'User with this email already exists' });
-      }
-      
-      // Create new user with hashed password
-      const bcrypt = await import('bcrypt');
-      const hashedPassword = await bcrypt.hash(password.trim(), 10);
-      
-      const userData = {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(), 
-        email: email.trim().toLowerCase(),
-        password: hashedPassword,
-        tier: tier || 'free',
-        isAdmin: isAdmin || false,
-        id: crypto.randomUUID() // Generate unique ID for new user
-      };
-      
-      const newUser = await storage.createUser(userData);
-      
-      // Return user in frontend format
-      const responseUser = {
-        id: newUser.id.toString(),
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        email: newUser.email,
-        tier: newUser.tier || 'free',
-        isAdmin: newUser.isAdmin || false,
-        createdAt: newUser.createdAt?.toISOString() || new Date().toISOString(),
-        bookingCount: 0,
-        lastLogin: newUser.createdAt?.toISOString() || new Date().toISOString()
-      };
-      
-      console.log('✅ Admin user created successfully:', newUser.email);
-      res.status(201).json(responseUser);
-      
-    } catch (error) {
-      console.error('❌ Admin user creation error:', error);
-      res.status(500).json({ error: 'Failed to create user' });
-    }
-  });
+  // Admin user creation removed - Replit handles user creation automatically
 
   // ===== TEMPLATE ROUTES =====
   app.get('/api/templates', isAuthenticated, async (req: any, res) => {

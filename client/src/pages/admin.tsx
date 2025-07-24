@@ -640,17 +640,11 @@ export default function Admin() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>User Management</CardTitle>
-            <Dialog open={createUserDialogOpen} onOpenChange={setCreateUserDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-purple-600 hover:bg-purple-700">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Create User
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New User</DialogTitle>
-                </DialogHeader>
+            <div className="text-sm text-gray-500">
+              Users are automatically created when they log in with Replit
+            </div>
+          </CardHeader>
+          <CardContent>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="firstName">First Name</Label>

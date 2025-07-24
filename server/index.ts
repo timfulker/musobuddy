@@ -1,7 +1,7 @@
 import express, { type Request, Response } from "express";
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
-import { setupAuthentication } from "./core/auth";
+import { setupAuthentication } from "./core/auth-clean";
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
