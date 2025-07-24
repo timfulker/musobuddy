@@ -11,16 +11,16 @@ export default function CalendarWidget() {
     queryKey: ["/api/bookings"],
   });
 
-  // Filter for upcoming bookings within the next 60 days (no limit for dynamic sizing)
+  // Filter for upcoming bookings within the next two weeks (no limit for dynamic sizing)
   const bookings = (allBookings as any[]).filter((booking: Booking) => {
     if (!booking.eventDate) return false;
     const eventDate = new Date(booking.eventDate);
     const today = new Date();
-    const sixtyDaysFromNow = new Date();
+    const twoWeeksFromNow = new Date();
     today.setHours(0, 0, 0, 0);
-    sixtyDaysFromNow.setHours(0, 0, 0, 0);
-    sixtyDaysFromNow.setDate(today.getDate() + 60);
-    return eventDate >= today && eventDate <= sixtyDaysFromNow;
+    twoWeeksFromNow.setHours(0, 0, 0, 0);
+    twoWeeksFromNow.setDate(today.getDate() + 14);
+    return eventDate >= today && eventDate <= twoWeeksFromNow;
   }); // No limit - dynamic sizing
 
   const isLoading = bookingsLoading;

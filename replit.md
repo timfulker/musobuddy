@@ -278,6 +278,16 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Frontend Components**: ✅ ConflictsWidget, ConflictResolutionDialog, and conflict styling all operational from rebuild
 - **Status**: BOOKING STATUS UPDATES + CONFLICT DETECTION FULLY OPERATIONAL - Complete booking management system restored
 
+### 2025-07-24 - Dashboard Upcoming Gigs Widget Reorganization + Time Limit Enhancement Complete
+- **Upcoming Gigs Centralized**: ✅ Moved upcoming gigs section from sidebar to central dashboard area with enlarged text and wider single-column cards
+- **Dynamic Sizing Implementation**: ✅ Removed 3-item limit, implemented non-scrolling dynamic layout that adapts to content size
+- **Professional UI Enhancement**: ✅ Added larger text (text-lg, text-3xl for dates), enhanced spacing (p-6), and improved card styling with border-left indicators
+- **Layout Optimization**: ✅ Changed dashboard grid from xl:grid-cols-3 to xl:grid-cols-4 for better space utilization
+- **Two-Week Time Limit**: ✅ Limited upcoming gigs widget to show only bookings within next 14 days for focused immediate view
+- **TypeScript Compilation Fixed**: ✅ Resolved all workflow stage type issues and array handling errors
+- **Enhanced Navigation**: ✅ Added prominent "View Calendar" button in widget header for quick access to full calendar
+- **Status**: Complete dashboard reorganization with centralized upcoming gigs showing focused two-week view with professional enlarged styling
+
 ### 2025-07-24 - Complete Address Book System with Filtering + Auto-Population Operational
 - **Address Book Population Working**: ✅ User confirmed "Import from Bookings" functionality working automatically to populate address book from existing booking data
 - **Comprehensive Client Filtering**: ✅ Added smart filtering system with categories: All Clients, Initial Inquiries (1-2 contacts), Repeat Clients (3+ bookings), Has Contact History
