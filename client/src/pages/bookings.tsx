@@ -35,6 +35,29 @@ interface CalendarEvent {
 }
 
 export default function UnifiedBookings() {
+  // Status color helper function
+  const getStatusBorderColor = (status: string) => {
+    switch (status) {
+      case "new":
+      case "enquiry":
+        return "border-l-sky-400"; // Light blue
+      case "in_progress":
+      case "awaiting_response":
+        return "border-l-blue-700"; // Dark blue
+      case "client_confirms":
+        return "border-l-orange-500"; // Orange
+      case "confirmed":
+        return "border-l-green-500"; // Green
+      case "completed":
+        return "border-l-gray-500"; // Grey
+      case "rejected":
+      case "cancelled":
+        return "border-l-red-500"; // Red
+      default:
+        return "border-l-gray-300"; // Default light grey
+    }
+  };
+
   // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem('bookingViewMode') as ViewMode) || 'calendar';
@@ -545,7 +568,7 @@ export default function UnifiedBookings() {
                   filteredBookings.map((booking: any) => (
                     <Card 
                       key={booking.id} 
-                      className={`hover:shadow-md transition-shadow ${
+                      className={`hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
                         selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                       }`}
                     >
