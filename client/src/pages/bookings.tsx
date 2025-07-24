@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -894,6 +894,17 @@ export default function UnifiedBookings() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {/* Contract Call-to-Action for Client Confirms status */}
+                            {booking.status === 'client_confirms' && (
+                              <Button 
+                                size="sm" 
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                onClick={() => navigate(`/contracts?bookingId=${booking.id}&action=create`)}
+                              >
+                                <FileText className="w-4 h-4 mr-1" />
+                                Send Contract
+                              </Button>
+                            )}
                             <BookingActionMenu 
                               booking={booking} 
                               onSendCompliance={openComplianceDialog}

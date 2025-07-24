@@ -51,21 +51,29 @@ export default function BookingActionMenu({ booking, onSendCompliance }: Booking
 
     switch (action) {
       case 'respond_to_client':
+        // Auto-update status from 'new' to 'awaiting_response' (in progress)
+        if (booking.status === 'new') {
+          newStatus = 'awaiting_response';
+        }
         // Navigate to templates page with booking context
         navigate(`/templates?bookingId=${booking.id}&action=respond`);
-        return; // Don't update status immediately, let templates page handle it
+        break;
       case 'issue_contract':
+        // Auto-update status to 'contract_sent' when issuing contract
+        if (['awaiting_response', 'client_confirms'].includes(booking.status)) {
+          newStatus = 'contract_sent';
+        }
         // Navigate to contracts page with booking data pre-filled
         navigate(`/contracts?bookingId=${booking.id}&action=create`);
-        return; // Don't update status immediately, let contract creation handle it
+        break;
       case 'issue_invoice':
         // Navigate to invoices page with booking data pre-filled
         navigate(`/invoices?bookingId=${booking.id}&action=create`);
-        return; // Don't update status immediately, let invoice creation handle it
+        break;
       case 'send_thankyou':
         // Navigate to templates page with booking context for thank you message
         navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
-        return; // Don't update status immediately, let template sending handle it
+        break;
       case 'send_compliance':
         // Open compliance dialog directly on bookings page
         if (onSendCompliance) {
@@ -81,15 +89,15 @@ export default function BookingActionMenu({ booking, onSendCompliance }: Booking
         break;
     }
 
-    // Only update status if it changed
+    // Update status if it changed, then provide user feedback
     if (newStatus !== booking.status) {
       statusUpdateMutation.mutate({ 
         bookingId: booking.id, 
         newStatus 
       });
-    } else {
+    } else if (message) {
       toast({
-        title: "Action Completed",
+        title: "Action Completed", 
         description: message,
       });
     }

@@ -120,6 +120,16 @@ export async function registerRoutes(app: Express) {
         const { sendContractConfirmationEmails } = await import('./mailgun-email-restored');
         await sendContractConfirmationEmails(signedContract, userSettings);
 
+        // AUTOMATIC STATUS UPDATE: Update booking status to 'confirmed' when contract is signed
+        if (signedContract.enquiryId) {
+          try {
+            await storage.updateBooking(signedContract.enquiryId, { status: 'confirmed' });
+            console.log('✅ AUTO-UPDATE: Booking status changed to "confirmed" after contract signing');
+          } catch (bookingError) {
+            console.error('❌ Failed to auto-update booking status:', bookingError);
+          }
+        }
+
       } catch (emailError: any) {
         console.error('❌ Email/cloud error (contract still signed):', emailError);
       }
