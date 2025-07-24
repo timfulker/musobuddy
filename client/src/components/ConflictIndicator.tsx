@@ -36,7 +36,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
 
   // Fetch the current booking data for the resolution modal
   const { data: currentBooking } = useQuery({
-    queryKey: ['/api/bookings', bookingId],
+    queryKey: [`/api/bookings/${bookingId}`],
     enabled: showResolutionModal,
   });
 

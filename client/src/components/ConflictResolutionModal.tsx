@@ -61,6 +61,7 @@ export default function ConflictResolutionModal({
   console.log('🔍 Conflict Resolution Modal - Current Booking:', currentBooking);
   console.log('🔍 Conflict Resolution Modal - Conflicts:', conflicts);
   console.log('🔍 Conflict Resolution Modal - Conflicts Structure:', JSON.stringify(conflicts, null, 2));
+  console.log('🔍 Conflict Resolution Modal - First Conflict:', conflicts[0]);
   
   const { data: conflictingBookings = [] } = useQuery({
     queryKey: ['/api/bookings/batch', conflictingBookingIds],
