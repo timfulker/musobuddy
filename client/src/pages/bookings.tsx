@@ -926,6 +926,17 @@ export default function UnifiedBookings() {
                               const bookingContract = Array.isArray(contracts) ? contracts.find(
                                 (contract: any) => contract.enquiryId === booking.id
                               ) : null;
+
+                              // Debug: Log Tim Fulker booking specifically
+                              if (booking.clientName === 'Tim Fulker') {
+                                console.log(`🔍 Tim Fulker booking ${booking.id} contract search:`, {
+                                  bookingId: booking.id,
+                                  enquiryId: booking.id,
+                                  contractFound: !!bookingContract,
+                                  contractDetails: bookingContract ? { id: bookingContract.id, enquiryId: bookingContract.enquiryId } : null,
+                                  allContracts: contracts?.map(c => ({ id: c.id, enquiryId: c.enquiryId, clientName: c.clientName }))
+                                });
+                              }
                               
                               // Find invoice for this booking  
                               const bookingInvoice = Array.isArray(invoices) ? invoices.find(
