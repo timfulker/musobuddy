@@ -104,10 +104,21 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
-  const { data: contracts = [] } = useQuery({
+  const { data: contracts = [], isLoading: contractsLoading } = useQuery({
     queryKey: ["/api/contracts"],
     retry: 2,
   });
+
+  // Debug: Track contract loading for Tim Fulker
+  React.useEffect(() => {
+    if (!contractsLoading && Array.isArray(contracts)) {
+      const timContract = contracts.find((c: any) => c.clientName?.includes('Tim Fulker'));
+      console.log('🔍 Tim Fulker contract check:', {
+        contractsTotal: contracts.length,
+        timContract: timContract ? { id: timContract.id, enquiryId: timContract.enquiryId } : 'Not found'
+      });
+    }
+  }, [contracts, contractsLoading]);
 
   const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices"],

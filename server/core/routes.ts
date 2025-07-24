@@ -590,6 +590,60 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // PUBLIC CONTRACT VIEWING WITH DOWNLOAD BUTTON
+  app.get('/view/contracts/:id', async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      console.log('👁️ Public contract view request for ID:', contractId);
+
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html>
+          <head><title>Contract Not Found</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1 style="color: #dc2626;">Contract Not Found</h1>
+            <p>The contract you're looking for could not be found.</p>
+            <a href="/" style="color: #2563eb;">← Back to Home</a>
+          </body>
+          </html>
+        `);
+      }
+
+      // If contract has cloud storage URL, redirect to it
+      if (contract.cloudStorageUrl) {
+        console.log('📄 Redirecting to cloud storage URL:', contract.cloudStorageUrl);
+        return res.redirect(contract.cloudStorageUrl);
+      }
+
+      // Fallback: generate and serve contract PDF directly
+      console.log('📄 Generating contract PDF for viewing...');
+      const userSettings = await storage.getSettings(contract.userId);
+      const { generateContractPDF } = await import('./pdf-generator');
+      
+      const pdfBuffer = await generateContractPDF(contract, userSettings);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error: any) {
+      console.error('❌ Contract view error:', error);
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Error</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1 style="color: #dc2626;">Server Error</h1>
+          <p>Unable to load contract. Please try again later.</p>
+          <a href="/" style="color: #2563eb;">← Back to Home</a>
+        </body>
+        </html>
+      `);
+    }
+  });
+
   // PUBLIC INVOICE VIEWING WITH DOWNLOAD BUTTON
   app.get('/view/invoices/:id', async (req, res) => {
     try {
