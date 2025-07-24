@@ -8,6 +8,7 @@ import type { Enquiry } from "@shared/schema";
 // Removed conflict-ui import - using new conflict system
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
+import { getDashboardBg, getBadgeColors, getStatusIcon, getStatusDisplayName, conflictColors } from "@/utils/status-colors";
 
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading } = useQuery({
@@ -212,7 +213,6 @@ export default function ActionableEnquiries() {
     
     // Status-based styling with new workflow color scheme
     const getStatusOverlay = () => {
-      const stage = mapOldStatusToStage(enquiry.status);
       switch(enquiry.status) {
         case 'new': return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200";
         case 'awaiting_response': return "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"; 

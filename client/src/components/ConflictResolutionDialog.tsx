@@ -121,16 +121,7 @@ export function ConflictResolutionDialog({
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800';
-      case 'booking_in_progress': return 'bg-orange-100 text-orange-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'contract_sent': return 'bg-purple-100 text-purple-800';
-      case 'contract_received': return 'bg-emerald-100 text-emerald-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    return getBadgeColors(status);
   };
 
   const BookingCard = ({ booking, isConflicting = false }: { booking: any, isConflicting?: boolean }) => (
