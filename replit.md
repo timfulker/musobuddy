@@ -249,7 +249,11 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Non-Tech-Savvy Client Support**: ✅ Email links provide both instant viewing and guaranteed file download options for all technical skill levels
 - **Cloud Storage Integration**: ✅ All documents (invoices, compliance) properly stored on Cloudflare R2 with public access for email links
 - **Production Ready**: ✅ All TypeScript errors resolved, build system operational, email templates using correct R2 URLs
-- **Status**: COMPLETE DOWNLOAD SYSTEM OPERATIONAL - Files force download to hard drive, compliance emails enhanced with dual access options
+- **CRITICAL FIX: Invoice Download Button Enhanced**: ✅ Added prominent green download section with clear instructions for users with Adobe Acrobat installed
+- **User-Friendly Download Interface**: ✅ Invoice viewing pages now feature "Download Invoice to Computer" button with explanatory text about saving to Downloads folder
+- **Adobe Acrobat Compatibility**: ✅ Addressed issue where PDFs open in browser instead of downloading by adding prominent download section with proper JavaScript handling
+- **Consistent Download Experience**: ✅ Invoice and compliance document viewing pages now have matching professional download interfaces
+- **Status**: COMPLETE DOWNLOAD SYSTEM OPERATIONAL - Files force download to hard drive, both invoice and compliance documents have prominent download buttons with clear user instructions
 
 ### 2025-07-23 - Complete Invoice System OPERATIONAL - Creation, View, Edit All Fixed + UI Button Separation
 - **Invoice Creation 500 Error FIXED**: ✅ Resolved undefined `now` variables causing server crashes during invoice creation

@@ -740,6 +740,36 @@ export async function registerRoutes(app: Express) {
               .pdf-frame {
                 height: 600px;
               }
+              
+              /* Override download section for invoice page */
+              .download-section {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 15px !important;
+                align-items: center !important;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+                padding: 25px !important;
+                border-radius: 12px !important;
+                margin-bottom: 20px !important;
+                box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+              }
+              
+              .download-instruction {
+                color: white;
+                font-size: 16px;
+                font-weight: 600;
+                text-align: center;
+              }
+              
+              .download-btn {
+                background: white !important;
+                color: #059669 !important;
+                padding: 16px 32px !important;
+                border: 3px solid #059669 !important;
+                border-radius: 10px !important;
+                font-size: 18px !important;
+                font-weight: bold !important;
+              }
             }
           </style>
         </head>
@@ -780,14 +810,20 @@ export async function registerRoutes(app: Express) {
               </div>
               
               <div class="download-section">
-                <a href="/download/invoices/${invoice.id}" class="download-btn" download>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="download-instruction">
+                  💾 To save this invoice to your computer, click the download button below:
+                </div>
+                <a href="/download/invoices/${invoice.id}" class="download-btn" download onclick="window.location.href=this.href; return false;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7,10 12,15 17,10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
-                  Download PDF
+                  Download Invoice PDF
                 </a>
+                <div style="font-size: 14px; color: white; text-align: center; margin-top: 10px;">
+                  This will save the PDF file to your Downloads folder
+                </div>
               </div>
             </div>
             
