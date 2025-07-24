@@ -758,7 +758,7 @@ export async function registerRoutes(app: Express) {
                 </div>
                 <div class="info-item">
                   <div class="info-label">Date</div>
-                  <div class="info-value">${new Date(invoice.createdAt).toLocaleDateString('en-GB')}</div>
+                  <div class="info-value">${invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-GB') : 'Not set'}</div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">Due Date</div>
@@ -1127,7 +1127,7 @@ export async function registerRoutes(app: Express) {
                 </div>
                 <div class="info-item">
                   <div class="info-label">Uploaded</div>
-                  <div class="info-value">${new Date(compliance.createdAt).toLocaleDateString('en-GB')}</div>
+                  <div class="info-value">${compliance.createdAt ? new Date(compliance.createdAt).toLocaleDateString('en-GB') : 'Not set'}</div>
                 </div>
                 ${compliance.expiryDate ? `
                 <div class="info-item">
