@@ -100,7 +100,7 @@ export default function ActionableEnquiries() {
     const date = new Date(dateString);
     const dayName = date.toLocaleDateString("en-GB", { weekday: "short" }).toUpperCase();
     const dayNum = date.getDate().toString();
-    const monthYear = date.toLocaleDateString("en-GB", { month: "short", year: "2-digit" });
+    const monthYear = date.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
     return { dayName, dayNum, monthYear };
   };
 
