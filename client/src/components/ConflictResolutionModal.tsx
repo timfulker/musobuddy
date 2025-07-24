@@ -59,16 +59,15 @@ export default function ConflictResolutionModal({
   
   console.log('🔍 Conflict Resolution Modal - Booking IDs:', conflictingBookingIds);
   console.log('🔍 Conflict Resolution Modal - Current Booking:', currentBooking);
-  console.log('🔍 Conflict Resolution Modal - Conflicts:', conflicts);
-  console.log('🔍 Conflict Resolution Modal - Conflicts Structure:', JSON.stringify(conflicts, null, 2));
-  console.log('🔍 Conflict Resolution Modal - First Conflict:', conflicts[0]);
-  console.log('🔍 Conflict Resolution Modal - First Conflict withBookingId:', conflicts[0]?.withBookingId);
-  console.log('🔍 Conflict Resolution Modal - All conflict properties:', Object.keys(conflicts[0] || {}));
+  console.log('🔍 Conflict Resolution Modal - Conflicting Booking Query Enabled:', isOpen && conflictingBookingIds.length > 0);
+  console.log('🔍 Conflict Resolution Modal - Query Key:', ['/api/bookings/batch', conflictingBookingIds]);
   
   const { data: conflictingBookings = [] } = useQuery({
-    queryKey: ['/api/bookings/batch', conflictingBookingIds],
+    queryKey: ['/api/bookings/conflicting', ...conflictingBookingIds],
     queryFn: async () => {
       if (conflictingBookingIds.length === 0) return [];
+      console.log('🔍 Starting to fetch conflicting bookings for IDs:', conflictingBookingIds);
+      
       // Fetch each booking individually since we don't have a batch endpoint
       const bookingsPromises = conflictingBookingIds.map(async (id) => {
         console.log(`🔍 Fetching booking ID: ${id}`);
@@ -83,7 +82,8 @@ export default function ConflictResolutionModal({
       });
       const results = await Promise.all(bookingsPromises);
       const validResults = results.filter(result => result !== null);
-      console.log('🔍 Valid conflicting bookings:', validResults);
+      console.log('🔍 Final valid conflicting bookings count:', validResults.length);
+      console.log('🔍 Final valid conflicting bookings:', validResults);
       return validResults;
     },
     enabled: isOpen && conflictingBookingIds.length > 0,
