@@ -105,6 +105,45 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
+  // Conflict detection function (same as dashboard)
+  const detectConflicts = (booking: any) => {
+    if (!booking.eventDate || !booking.eventTime || !booking.eventEndTime) return [];
+    
+    const bookingDate = new Date(booking.eventDate).toDateString();
+    const bookingStart = new Date(`${booking.eventDate}T${booking.eventTime}`);
+    const bookingEnd = new Date(`${booking.eventDate}T${booking.eventEndTime}`);
+    
+    return bookings.filter((other: any) => {
+      if (other.id === booking.id) return false;
+      if (!other.eventDate || !other.eventTime || !other.eventEndTime) return false;
+      
+      const otherDate = new Date(other.eventDate).toDateString();
+      if (otherDate !== bookingDate) return false;
+      
+      const otherStart = new Date(`${other.eventDate}T${other.eventTime}`);
+      const otherEnd = new Date(`${other.eventDate}T${other.eventEndTime}`);
+      
+      // Check for time overlap
+      const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
+      
+      return {
+        withBookingId: other.id,
+        severity: hasTimeOverlap ? 'hard' : 'soft',
+        clientName: other.clientName || 'Unknown Client',
+        status: other.status || 'new',
+        time: `${other.eventTime} - ${other.eventEndTime}`,
+        canEdit: true,
+        canReject: true,
+        type: 'booking',
+        message: hasTimeOverlap ? 
+          `Time overlap with ${other.clientName || 'Unknown Client'}` : 
+          `Same day booking with ${other.clientName || 'Unknown Client'}`,
+        overlapMinutes: hasTimeOverlap ? 
+          Math.round((Math.min(bookingEnd.getTime(), otherEnd.getTime()) - Math.max(bookingStart.getTime(), otherStart.getTime())) / (1000 * 60)) : 0
+      };
+    }).filter(Boolean);
+  };
+
   // Function to open compliance dialog from booking action menu
   const openComplianceDialog = (booking: any) => {
     setSelectedBookingForCompliance(booking);
@@ -732,7 +771,10 @@ export default function UnifiedBookings() {
                       }`}
                     >
                       {/* Conflict Indicator - Top Right Corner */}
-                      <ConflictIndicator bookingId={booking.id} />
+                      <ConflictIndicator 
+                        bookingId={booking.id} 
+                        conflicts={detectConflicts(booking)}
+                      />
                       
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
@@ -753,6 +795,12 @@ export default function UnifiedBookings() {
                               <Badge className={getStatusColor(booking.status)}>
                                 {booking.status?.replace('_', ' ') || 'New'}
                               </Badge>
+                              {/* Conflict badge - matching dashboard style */}
+                              {detectConflicts(booking).length > 0 && (
+                                <Badge variant="outline" className="text-xs text-red-700 bg-red-50 border-red-300">
+                                  ⚠️ Conflict
+                                </Badge>
+                              )}
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
                               <div className="flex items-center gap-4">
