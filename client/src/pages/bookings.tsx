@@ -786,12 +786,35 @@ export default function UnifiedBookings() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Select All Header - Fixed in Header */}
+              {!bookingsLoading && filteredAndSortedBookings.length > 0 && viewMode === 'list' && (
+                <Card className="bg-gray-50 mt-4">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length}
+                        ref={(el) => {
+                          if (el && el.querySelector('input')) {
+                            const isIndeterminate = selectedBookings.length > 0 && selectedBookings.length < filteredAndSortedBookings.length;
+                            (el.querySelector('input') as HTMLInputElement).indeterminate = isIndeterminate;
+                          }
+                        }}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                      <span className="text-sm font-medium">
+                        {(filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length) ? 'Deselect All' : 'Select All'} ({filteredAndSortedBookings.length} bookings)
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
 
         {/* Scrollable Content Area - Force height constraint */}
-        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 380px)' }}>
+        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 450px)' }}>
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
 
@@ -799,28 +822,6 @@ export default function UnifiedBookings() {
             {viewMode === 'list' ? (
               /* List View */
               <div className="space-y-4">
-                {/* Select All Header */}
-                {!bookingsLoading && filteredAndSortedBookings.length > 0 && (
-                  <Card className="bg-gray-50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <Checkbox
-                          checked={filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length}
-                          ref={(el) => {
-                            if (el && el.querySelector('input')) {
-                              const isIndeterminate = selectedBookings.length > 0 && selectedBookings.length < filteredAndSortedBookings.length;
-                              (el.querySelector('input') as HTMLInputElement).indeterminate = isIndeterminate;
-                            }
-                          }}
-                          onCheckedChange={toggleSelectAll}
-                        />
-                        <span className="text-sm font-medium">
-                          {(filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length) ? 'Deselect All' : 'Select All'} ({filteredAndSortedBookings.length} bookings)
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
                 
                 {bookingsLoading ? (
                   <div className="text-center py-12">
