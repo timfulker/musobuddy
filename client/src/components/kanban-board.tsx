@@ -236,14 +236,9 @@ export default function ActionableEnquiries() {
       }
     };
     
-    // Conflict overlay styling
+    // No conflict overlays - conflicts shown via badges only
     const getConflictOverlay = () => {
-      if (severity === 'high') {
-        return 'border-red-500 bg-red-50 ring-2 ring-red-200';
-      } else if (severity === 'medium') {
-        return 'border-amber-500 bg-amber-50 ring-2 ring-amber-200';
-      }
-      return '';
+      return ''; // Always return empty - conflicts don't override card styling
     };
     
     // Determine the appropriate badge text and color
@@ -284,7 +279,7 @@ export default function ActionableEnquiries() {
       <Link key={enquiry.id} href={`/bookings?id=${enquiry.id}`}>
         <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer bg-white border-l-4 ${
           getCardStyling()
-        } ${hasConflicts ? getConflictOverlay() : ''}`}>
+        }`}>
           <CardContent className="p-4">
             <div className="space-y-3">
               {/* Header with price and date */}
