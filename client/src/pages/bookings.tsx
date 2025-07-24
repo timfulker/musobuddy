@@ -37,7 +37,6 @@ interface CalendarEvent {
 }
 
 export default function UnifiedBookings() {
-  const [location, navigate] = useLocation();
   
   // Status color helper function
   const getStatusBorderColor = (status: string) => {
