@@ -117,11 +117,12 @@ export default function UnifiedBookings() {
       contractsArray: Array.isArray(contracts),
       contractsLoading: contractsLoading,
       contractsError: contractsError,
-      firstThree: Array.isArray(contracts) && contracts.length > 0 ? contracts.slice(0, 3).map((c: any) => ({
+      allContracts: Array.isArray(contracts) && contracts.length > 0 ? contracts.map((c: any) => ({
         id: c.id,
         enquiryId: c.enquiryId,
         contractNumber: c.contractNumber,
-        status: c.status
+        status: c.status,
+        clientName: c.clientName
       })) : 'No contracts or not array'
     });
   }, [contracts, contractsLoading, contractsError]);
@@ -938,8 +939,8 @@ export default function UnifiedBookings() {
                                 (invoice: any) => invoice.bookingId === booking.id
                               ) : null;
                               
-                              // Debug logging for specific bookings only
-                              if (booking.id === 377 || booking.id === 382 || booking.id === 407) {
+                              // Debug logging for any booking with a contract or specific test bookings
+                              if (bookingContract || booking.id === 377 || booking.id === 382 || booking.id === 407) {
                                 console.log(`🔍 Booking ${booking.id} (${booking.clientName}):`, {
                                   bookingId: booking.id,
                                   hasContract: !!bookingContract,
