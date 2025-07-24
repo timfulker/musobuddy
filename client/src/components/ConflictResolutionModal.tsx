@@ -62,6 +62,8 @@ export default function ConflictResolutionModal({
   console.log('🔍 Conflict Resolution Modal - Conflicts:', conflicts);
   console.log('🔍 Conflict Resolution Modal - Conflicts Structure:', JSON.stringify(conflicts, null, 2));
   console.log('🔍 Conflict Resolution Modal - First Conflict:', conflicts[0]);
+  console.log('🔍 Conflict Resolution Modal - First Conflict withBookingId:', conflicts[0]?.withBookingId);
+  console.log('🔍 Conflict Resolution Modal - All conflict properties:', Object.keys(conflicts[0] || {}));
   
   const { data: conflictingBookings = [] } = useQuery({
     queryKey: ['/api/bookings/batch', conflictingBookingIds],
@@ -187,7 +189,8 @@ export default function ConflictResolutionModal({
 
   const renderBookingCard = (booking: any, isCurrentBooking = false, conflict?: Conflict) => {
     const isEditing = editingBookingId === booking.id;
-    const canReject = !isCurrentBooking && booking.status !== 'confirmed' && booking.status !== 'completed';
+    // Both bookings should show reject button if not confirmed/completed
+    const canReject = booking.status !== 'confirmed' && booking.status !== 'completed';
     const isConfirmed = booking.status === 'confirmed';
 
     return (
