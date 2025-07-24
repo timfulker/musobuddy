@@ -412,6 +412,63 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     onOpenChange(false);
   };
 
+  const handleUploadContract = async () => {
+    if (!contractFile || !booking) return;
+    
+    setIsParsingContract(true);
+    setUploadStatus(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('contract', contractFile);
+      
+      const response = await fetch(`/api/bookings/${booking.id}/upload-contract`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload contract');
+      }
+      
+      const result = await response.json();
+      
+      setUploadStatus({
+        type: 'success',
+        message: 'Contract document uploaded successfully!'
+      });
+      
+      // Clear the file input
+      setContractFile(null);
+      
+      // Refresh booking data if callback provided
+      if (onBookingUpdate) {
+        onBookingUpdate();
+      }
+      
+      toast({
+        title: "Contract Uploaded",
+        description: "Contract document has been stored successfully.",
+      });
+      
+    } catch (error: any) {
+      console.error('Contract upload error:', error);
+      setUploadStatus({
+        type: 'error',
+        message: error.message || 'Failed to upload contract document'
+      });
+      
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload contract document. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsParsingContract(false);
+    }
+  };
+
   const handleParseContract = async () => {
     if (!contractFile || !booking) return;
     
@@ -1145,66 +1202,90 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* PDF Contract Import */}
+              {/* Simple Contract Document Upload */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    Import PDF Contract
+                    Upload Contract Document
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Upload a Musicians' Union contract to automatically extract and populate booking details
+                    Upload an existing contract PDF to store with this booking for easy viewing
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="contract-upload">Upload Musicians' Union Contract</Label>
-                    <Input
-                      id="contract-upload"
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) => setContractFile(e.target.files?.[0] || null)}
-                    />
-                  </div>
-                  
-                  {contractFile && (
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        onClick={handleParseContract}
-                        disabled={isParsingContract}
-                        className="flex items-center gap-2"
-                      >
-                        {isParsingContract ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Parsing...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            Parse & Import Data
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setContractFile(null);
-                          setParseResult(null);
-                        }}
-                      >
-                        Clear
-                      </Button>
+                  {booking?.uploadedContractUrl ? (
+                    <div className="bg-green-50 p-3 rounded-md">
+                      <p className="text-sm text-green-700 mb-2">
+                        ✅ Contract document: {booking.uploadedContractFilename}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(booking.uploadedContractUrl!, '_blank')}
+                        >
+                          View Contract
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setContractFile(null)}
+                        >
+                          Replace
+                        </Button>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="contract-upload">Upload Contract PDF</Label>
+                        <Input
+                          id="contract-upload"
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => setContractFile(e.target.files?.[0] || null)}
+                        />
+                      </div>
+                      
+                      {contractFile && (
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={handleUploadContract}
+                            disabled={isParsingContract}
+                            className="flex items-center gap-2"
+                          >
+                            {isParsingContract ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4" />
+                                Upload Contract
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setContractFile(null)}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                   
-                  {parseResult && (
-                    <div className="bg-green-50 p-3 rounded-md">
-                      <p className="text-sm text-green-700">
-                        Contract parsed successfully! {parseResult.fieldsUpdated || 0} fields updated.
-                        Confidence: {parseResult.confidence || 0}%
+                  {uploadStatus && (
+                    <div className={`p-3 rounded-md ${uploadStatus.type === 'success' ? 'bg-green-50' : 'bg-red-50'}`}>
+                      <p className={`text-sm ${uploadStatus.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                        {uploadStatus.message}
                       </p>
                     </div>
                   )}

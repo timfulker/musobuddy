@@ -1535,6 +1535,60 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== BOOKING ROUTES =====
+  // Simple contract document upload for bookings
+  app.post('/api/bookings/:id/upload-contract', isAuthenticated, upload.single('contract'), async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      if (file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ error: 'Only PDF files are allowed' });
+      }
+
+      // Verify booking belongs to user
+      const booking = await storage.getBooking(bookingId);
+      if (!booking || booking.userId !== req.user.id) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Upload to R2 cloud storage
+      const timestamp = Date.now();
+      const filename = file.originalname;
+      const storageKey = `uploaded-contracts/${req.user.id}/${timestamp}-${filename}`;
+      
+      const { uploadFileToCloudflare } = await import('./cloud-storage');
+      const uploadResult = await uploadFileToCloudflare(file.buffer, storageKey, file.mimetype);
+      
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Failed to upload to cloud storage');
+      }
+      
+      const cloudUrl = uploadResult.url!;
+
+      // Update booking with contract document info
+      const updatedBooking = await storage.updateBookingContractDocument(
+        bookingId, 
+        cloudUrl, 
+        storageKey, 
+        filename
+      );
+
+      res.json({
+        success: true,
+        message: 'Contract document uploaded successfully',
+        booking: updatedBooking
+      });
+
+    } catch (error) {
+      console.error('Error uploading contract document:', error);
+      res.status(500).json({ error: 'Failed to upload contract document' });
+    }
+  });
+
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const bookings = await storage.getBookings(req.user.id);

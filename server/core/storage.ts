@@ -104,6 +104,32 @@ export class Storage {
     return result[0];
   }
 
+  async updateBookingContractDocument(id: number, cloudUrl: string, storageKey: string, filename: string) {
+    const result = await db.update(bookings)
+      .set({
+        uploadedContractUrl: cloudUrl,
+        uploadedContractKey: storageKey,
+        uploadedContractFilename: filename,
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateBookingContractDocument(id: number, contractUrl: string, contractKey: string, filename: string) {
+    const result = await db.update(bookings)
+      .set({
+        uploadedContractUrl: contractUrl,
+        uploadedContractKey: contractKey,
+        uploadedContractFilename: filename,
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, id))
+      .returning();
+    return result[0] || null;
+  }
+
   async deleteBooking(id: number) {
     await db.delete(bookings).where(eq(bookings.id, id));
     return true;
