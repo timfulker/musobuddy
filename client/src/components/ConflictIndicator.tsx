@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,6 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import ConflictResolutionModal from "./ConflictResolutionModal";
 
 interface Conflict {
   withBookingId: number;
@@ -30,6 +32,13 @@ interface ConflictIndicatorProps {
 
 export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }: ConflictIndicatorProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showResolutionModal, setShowResolutionModal] = useState(false);
+
+  // Fetch the current booking data for the resolution modal
+  const { data: currentBooking } = useQuery({
+    queryKey: ['/api/bookings', bookingId],
+    enabled: showResolutionModal,
+  });
 
   if (!conflicts || conflicts.length === 0) {
     return null;
@@ -74,7 +83,8 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
     if (onOpenModal) {
       onOpenModal();
     } else {
-      setIsOpen(true);
+      // Skip simple modal and go directly to full resolution modal
+      setShowResolutionModal(true);
     }
   };
 
@@ -144,7 +154,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
               </Button>
               <Button onClick={() => {
                 setIsOpen(false);
-                // TODO: Open full conflict resolution modal
+                setShowResolutionModal(true);
               }}>
                 Resolve Conflicts
               </Button>
@@ -152,6 +162,14 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Full Conflict Resolution Modal */}
+      <ConflictResolutionModal
+        isOpen={showResolutionModal}
+        onClose={() => setShowResolutionModal(false)}
+        currentBooking={currentBooking}
+        conflicts={conflicts || []}
+      />
     </>
   );
 }
