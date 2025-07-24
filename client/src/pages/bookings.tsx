@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText } from "lucide-react";
-import { useLocation, Link } from "wouter";
+import { useLocation, Link, navigate } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -139,7 +139,7 @@ export default function UnifiedBookings() {
         
         return {
           withBookingId: other.id,
-          severity: hasTimeOverlap ? 'hard' : 'soft',
+          severity: (hasTimeOverlap ? 'hard' : 'soft') as 'hard' | 'soft' | 'resolved',
           clientName: other.clientName || 'Unknown Client',
           status: other.status || 'new',
           time: `${other.eventTime} - ${other.eventEndTime}`,
@@ -504,15 +504,15 @@ export default function UnifiedBookings() {
   ];
 
   return (
-    <div className="min-h-screen bg-background layout-consistent">
+    <div className="h-screen bg-background layout-consistent flex flex-col">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      {/* Main Content */}
-      <div className={`transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
+      {/* Main Content - Fixed Height Container */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
         {/* Mobile Header */}
         {!isDesktop && (
-          <div className="lg:hidden border-b bg-white px-4 py-4">
+          <div className="lg:hidden border-b bg-white px-4 py-4 flex-shrink-0">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -526,153 +526,154 @@ export default function UnifiedBookings() {
           </div>
         )}
 
-        {/* Content Area */}
-        <div className="p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <h1 className={`text-3xl font-bold ${isDesktop ? "" : "hidden lg:block"}`}>
-                Bookings
-              </h1>
-              
-              {/* View Toggle */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => toggleView('list')}
-                    className="rounded-md"
-                  >
-                    <List className="w-4 h-4 mr-2" />
-                    List
-                  </Button>
-                  <Button
-                    variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => toggleView('calendar')}
-                    className="rounded-md"
-                  >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Calendar
-                  </Button>
-                </div>
+        {/* Fixed Header Area */}
+        <div className="bg-white border-b flex-shrink-0">
+          <div className="p-6">
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h1 className={`text-3xl font-bold ${isDesktop ? "" : "hidden lg:block"}`}>
+                  Bookings
+                </h1>
                 
-                <Link href="/bookings?action=new">
-                  <Button className="bg-purple-600 hover:bg-purple-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Booking
-                  </Button>
-                </Link>
+                {/* View Toggle */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => toggleView('list')}
+                      className="rounded-md"
+                    >
+                      <List className="w-4 h-4 mr-2" />
+                      List
+                    </Button>
+                    <Button
+                      variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => toggleView('calendar')}
+                      className="rounded-md"
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Calendar
+                    </Button>
+                  </div>
+                  
+                  <Link href="/bookings?action=new">
+                    <Button className="bg-purple-600 hover:bg-purple-700">
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Booking
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
 
-            {/* Enhanced Filters */}
-            <div className="space-y-4">
-              {/* Search and Main Filters Row */}
-              <div className="flex flex-wrap gap-4">
-                <div className="relative flex-1 min-w-64">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search by client, venue, event type, fee, booking ID..."
-                    className="pl-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                <Select 
-                  value={statusFilter} 
-                  onValueChange={(value) => {
-                    setStatusFilter(value);
-                    if (!conflictFilter) {
-                      setPreviousStatusFilter(value);
-                    }
-                  }}
-                  disabled={conflictFilter}
-                >
-                  <SelectTrigger className={`w-48 ${conflictFilter ? 'opacity-50' : ''}`}>
-                    <SelectValue placeholder={conflictFilter ? "All Status (Conflict Mode)" : "Filter by status"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="client_confirms">Client Confirms</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by date" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Dates</SelectItem>
-                    <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="week">Next 7 Days</SelectItem>
-                    <SelectItem value="month">Next 30 Days</SelectItem>
-                    <SelectItem value="upcoming">All Upcoming</SelectItem>
-                    <SelectItem value="past">Past Events</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Conflict Filter Toggle */}
-                <div className="flex items-center gap-3 bg-white border rounded-lg px-3 py-2">
-                  <Switch
-                    id="conflict-filter"
-                    checked={conflictFilter}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        // Save current status filter before switching to conflicts
-                        setPreviousStatusFilter(statusFilter);
-                        setStatusFilter('all');
-                      } else {
-                        // Restore previous status filter when disabling conflicts
-                        setStatusFilter(previousStatusFilter);
+              {/* Enhanced Filters */}
+              <div className="space-y-4">
+                {/* Search and Main Filters Row */}
+                <div className="flex flex-wrap gap-4">
+                  <div className="relative flex-1 min-w-64">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search by client, venue, event type, fee, booking ID..."
+                      className="pl-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  <Select 
+                    value={statusFilter} 
+                    onValueChange={(value) => {
+                      setStatusFilter(value);
+                      if (!conflictFilter) {
+                        setPreviousStatusFilter(value);
                       }
-                      setConflictFilter(checked);
                     }}
-                    className="data-[state=checked]:bg-red-500"
-                  />
-                  <label 
-                    htmlFor="conflict-filter" 
-                    className="text-sm font-medium cursor-pointer"
+                    disabled={conflictFilter}
                   >
-                    Show Conflicts Only
-                  </label>
-                  {conflictFilter && (
-                    <Badge variant="destructive" className="text-xs">
-                      Active
-                    </Badge>
-                  )}
-                </div>
-              </div>
+                    <SelectTrigger className={`w-48 ${conflictFilter ? 'opacity-50' : ''}`}>
+                      <SelectValue placeholder={conflictFilter ? "All Status (Conflict Mode)" : "Filter by status"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="client_confirms">Client Confirms</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-              {/* Sort Controls Row */}
-              <div className="flex items-center gap-4 text-sm">
-                <span className="font-medium text-gray-700">Sort by:</span>
-                <div className="flex gap-2">
-                  <Button
-                    variant={sortField === 'eventDate' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleSort('eventDate')}
-                    className="h-8"
-                  >
-                    Date {sortField === 'eventDate' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </Button>
-                  <Button
-                    variant={sortField === 'clientName' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleSort('clientName')}
-                    className="h-8"
-                  >
-                    Client {sortField === 'clientName' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </Button>
-                  <Button
-                    variant={sortField === 'fee' ? 'default' : 'outline'}
+                  <Select value={dateFilter} onValueChange={setDateFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Dates</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">Next 7 Days</SelectItem>
+                      <SelectItem value="month">Next 30 Days</SelectItem>
+                      <SelectItem value="upcoming">All Upcoming</SelectItem>
+                      <SelectItem value="past">Past Events</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Conflict Filter Toggle */}
+                  <div className="flex items-center gap-3 bg-white border rounded-lg px-3 py-2">
+                    <Switch
+                      id="conflict-filter"
+                      checked={conflictFilter}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          // Save current status filter before switching to conflicts
+                          setPreviousStatusFilter(statusFilter);
+                          setStatusFilter('all');
+                        } else {
+                          // Restore previous status filter when disabling conflicts
+                          setStatusFilter(previousStatusFilter);
+                        }
+                        setConflictFilter(checked);
+                      }}
+                      className="data-[state=checked]:bg-red-500"
+                    />
+                    <label 
+                      htmlFor="conflict-filter" 
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      Show Conflicts Only
+                    </label>
+                    {conflictFilter && (
+                      <Badge variant="destructive" className="text-xs">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sort Controls Row */}
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="font-medium text-gray-700">Sort by:</span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={sortField === 'eventDate' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSort('eventDate')}
+                      className="h-8"
+                    >
+                      Date {sortField === 'eventDate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </Button>
+                    <Button
+                      variant={sortField === 'clientName' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSort('clientName')}
+                      className="h-8"
+                    >
+                      Client {sortField === 'clientName' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </Button>
+                    <Button
+                      variant={sortField === 'fee' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handleSort('fee')}
                     className="h-8"
@@ -724,54 +725,60 @@ export default function UnifiedBookings() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Bulk Actions Toolbar */}
-            {selectedBookings.length > 0 && (
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm font-medium text-blue-700">
-                        {selectedBookings.length} booking(s) selected
-                      </span>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setSelectedBookings([])}
-                      >
-                        Clear Selection
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            Change Status
-                            <MoreHorizontal className="w-4 h-4 ml-2" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('new')}>
-                            Mark as New
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('in_progress')}>
-                            Mark as In Progress
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('client_confirms')}>
-                            Mark as Client Confirms
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('confirmed')}>
-                            Mark as Confirmed
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('completed')}>
-                            Mark as Completed
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleBulkStatusChange('rejected')}>
-                            Mark as Rejected
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <Button 
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 pt-0">
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Bulk Actions Toolbar */}
+              {selectedBookings.length > 0 && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm font-medium text-blue-700">
+                          {selectedBookings.length} booking(s) selected
+                        </span>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setSelectedBookings([])}
+                        >
+                          Clear Selection
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              Change Status
+                              <MoreHorizontal className="w-4 h-4 ml-2" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('new')}>
+                              Mark as New
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('in_progress')}>
+                              Mark as In Progress
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('client_confirms')}>
+                              Mark as Client Confirms
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('confirmed')}>
+                              Mark as Confirmed
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('completed')}>
+                              Mark as Completed
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleBulkStatusChange('rejected')}>
+                              Mark as Rejected
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button 
                         variant="destructive" 
                         size="sm"
                         onClick={handleBulkDelete}
@@ -986,9 +993,11 @@ export default function UnifiedBookings() {
                   </div>
                 </CardContent>
               </Card>
-            )}
+              )}
+            </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Dialogs */}
