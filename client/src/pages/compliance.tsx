@@ -639,18 +639,18 @@ export default function Compliance() {
               </Dialog>
               
               {documents.length > 0 && (
-                <SendComplianceDialog 
-                  isOpen={isSendDialogOpen} 
-                  onOpenChange={setIsSendDialogOpen}
-                  bookingId={bookingId || undefined}
-                  trigger={
-                    <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
-                      <Send className="w-4 h-4 mr-2" />
-                      Send to Client
-                    </Button>
-                  }
-                />
+                <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50" onClick={() => setIsSendDialogOpen(true)}>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send to Client
+                </Button>
               )}
+              
+              {/* Always render SendComplianceDialog so it can auto-open from bookings */}
+              <SendComplianceDialog 
+                isOpen={isSendDialogOpen} 
+                onOpenChange={setIsSendDialogOpen}
+                bookingId={bookingId || undefined}
+              />
             </div>
           </div>
         </div>
