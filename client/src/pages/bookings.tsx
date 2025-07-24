@@ -20,6 +20,7 @@ import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
 import BookingActionMenu from "@/components/booking-action-menu";
+import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import type { Enquiry } from "@shared/schema";
 
 type ViewMode = 'list' | 'calendar';
@@ -53,6 +54,8 @@ export default function UnifiedBookings() {
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any>(null);
   const [bookingStatusDialogOpen, setBookingStatusDialogOpen] = useState(false);
   const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState<any>(null);
+  const [sendComplianceDialogOpen, setSendComplianceDialogOpen] = useState(false);
+  const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
