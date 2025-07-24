@@ -2,11 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertTriangle, Calendar, Clock, MapPin, User, CheckCircle } from "lucide-react";
-import { useState } from "react";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { AlertTriangle, CheckCircle } from "lucide-react";
 
 interface BookingConflict {
   id: number;
@@ -33,38 +29,25 @@ interface BookingConflict {
   };
 }
 
-export default function ConflictsWidget() {
-  const [selectedConflict, setSelectedConflict] = useState<BookingConflict | null>(null);
-  const { toast } = useToast();
-
+export default function ConflictsWidget({ onFilterByConflictType }: { onFilterByConflictType?: (severity: string) => void }) {
   const { data: conflicts = [], isLoading } = useQuery({
     queryKey: ["/api/conflicts"],
     staleTime: 30000, // 30 seconds
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const unresolvedConflicts = conflicts.filter((c: BookingConflict) => !c.resolved);
+  const unresolvedConflicts = (conflicts as BookingConflict[]).filter((c: BookingConflict) => !c.resolved);
 
-  const resolveConflict = async (conflictId: number) => {
-    try {
-      await apiRequest(`/api/conflicts/${conflictId}/resolve`, {
-        method: "POST",
-        body: JSON.stringify({ resolution: "manual", notes: "Resolved by user" }),
-      });
-      
-      toast({
-        title: "Conflict resolved",
-        description: "The scheduling conflict has been marked as resolved.",
-      });
-      
-      // Refresh the conflicts list
-      window.location.reload();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to resolve conflict. Please try again.",
-        variant: "destructive",
-      });
+  // Group conflicts by severity for counter display
+  const conflictCounts = {
+    high: unresolvedConflicts.filter((c: BookingConflict) => c.severity === 'high').length,
+    medium: unresolvedConflicts.filter((c: BookingConflict) => c.severity === 'medium').length,
+    low: unresolvedConflicts.filter((c: BookingConflict) => c.severity === 'low').length,
+  };
+
+  const handleConflictTypeClick = (severity: string) => {
+    if (onFilterByConflictType) {
+      onFilterByConflictType(severity);
     }
   };
 
@@ -102,156 +85,92 @@ export default function ConflictsWidget() {
             No scheduling conflicts
           </div>
         ) : (
-          <div className="space-y-3">
-            {unresolvedConflicts.slice(0, 3).map((conflict: BookingConflict) => (
-              <div
-                key={conflict.id}
-                className={`p-3 rounded-lg border ${
-                  conflict.severity === 'high' ? 'border-red-200 bg-red-50' :
-                  conflict.severity === 'medium' ? 'border-yellow-200 bg-yellow-50' :
-                  'border-blue-200 bg-blue-50'
+          <div className="space-y-4">
+            {/* Conflict Type Counters */}
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-16 flex flex-col items-center justify-center gap-1 ${
+                  conflictCounts.high > 0 ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'opacity-50'
                 }`}
+                onClick={() => handleConflictTypeClick('high')}
+                disabled={conflictCounts.high === 0}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge 
-                        variant={conflict.severity === 'high' ? 'destructive' : 'default'}
-                        className="text-xs"
-                      >
-                        {conflict.severity.toUpperCase()}
-                      </Badge>
-                      <span className="text-sm font-medium">
-                        {conflict.enquiry?.clientName}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {conflict.message}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {conflict.enquiry?.eventDate ? 
-                          new Date(conflict.enquiry.eventDate).toLocaleDateString() : 
-                          'No date'
-                        }
-                      </div>
-                      {conflict.enquiry?.eventTime && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {conflict.enquiry.eventTime}
-                        </div>
-                      )}
-                      {conflict.enquiry?.venue && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {conflict.enquiry.venue}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setSelectedConflict(conflict)}
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <span className="text-xs font-medium">
+                  {conflictCounts.high} Critical
+                </span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-16 flex flex-col items-center justify-center gap-1 ${
+                  conflictCounts.medium > 0 ? 'border-orange-300 bg-orange-50 hover:bg-orange-100' : 'opacity-50'
+                }`}
+                onClick={() => handleConflictTypeClick('medium')}
+                disabled={conflictCounts.medium === 0}
+              >
+                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                <span className="text-xs font-medium">
+                  {conflictCounts.medium} Warning
+                </span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-16 flex flex-col items-center justify-center gap-1 ${
+                  conflictCounts.low > 0 ? 'border-yellow-300 bg-yellow-50 hover:bg-yellow-100' : 'opacity-50'
+                }`}
+                onClick={() => handleConflictTypeClick('low')}
+                disabled={conflictCounts.low === 0}
+              >
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <span className="text-xs font-medium">
+                  {conflictCounts.low} Resolved
+                </span>
+              </Button>
+            </div>
+
+            {/* Recent Conflicts List */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-600">Recent Conflicts</h4>
+              {unresolvedConflicts.slice(0, 3).map((conflict: BookingConflict) => (
+                <div
+                  key={conflict.id}
+                  className={`p-3 rounded-lg border ${
+                    conflict.severity === 'high' ? 'border-red-200 bg-red-50' :
+                    conflict.severity === 'medium' ? 'border-yellow-200 bg-yellow-50' :
+                    'border-blue-200 bg-blue-50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge 
+                          variant={conflict.severity === 'high' ? 'destructive' : 'default'}
+                          className="text-xs"
                         >
-                          View Details
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Scheduling Conflict Details</DialogTitle>
-                        </DialogHeader>
-                        {selectedConflict && (
-                          <div className="space-y-4">
-                            <div className="p-3 bg-gray-50 rounded-lg">
-                              <h4 className="font-medium mb-2">New Enquiry</h4>
-                              <div className="space-y-1 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4" />
-                                  {selectedConflict.enquiry?.clientName}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4" />
-                                  {selectedConflict.enquiry?.eventDate ? 
-                                    new Date(selectedConflict.enquiry.eventDate).toLocaleDateString() : 
-                                    'No date'
-                                  }
-                                </div>
-                                {selectedConflict.enquiry?.eventTime && (
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4" />
-                                    {selectedConflict.enquiry.eventTime}
-                                  </div>
-                                )}
-                                {selectedConflict.enquiry?.venue && (
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="h-4 w-4" />
-                                    {selectedConflict.enquiry.venue}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <div className="p-3 bg-red-50 rounded-lg">
-                              <h4 className="font-medium mb-2">Conflicts With</h4>
-                              <div className="space-y-1 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4" />
-                                  {selectedConflict.conflictItem?.clientName}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4" />
-                                  {selectedConflict.conflictItem?.eventDate ? 
-                                    new Date(selectedConflict.conflictItem.eventDate).toLocaleDateString() : 
-                                    'No date'
-                                  }
-                                </div>
-                                {selectedConflict.conflictItem?.eventTime && (
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4" />
-                                    {selectedConflict.conflictItem.eventTime}
-                                  </div>
-                                )}
-                                {selectedConflict.conflictItem?.venue && (
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="h-4 w-4" />
-                                    {selectedConflict.conflictItem.venue}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <div className="p-3 bg-yellow-50 rounded-lg">
-                              <h4 className="font-medium mb-2">Analysis</h4>
-                              <p className="text-sm">{selectedConflict.message}</p>
-                            </div>
-                            
-                            <div className="flex justify-end gap-2">
-                              <Button 
-                                variant="outline"
-                                onClick={() => setSelectedConflict(null)}
-                              >
-                                Close
-                              </Button>
-                              <Button 
-                                onClick={() => resolveConflict(selectedConflict.id)}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                Mark as Resolved
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
+                          {conflict.severity.toUpperCase()}
+                        </Badge>
+                        <span className="text-sm font-medium">
+                          {conflict.enquiry?.clientName}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-2">
+                        {conflict.message}
+                      </p>
+                      <div className="text-xs text-gray-500">
+                        {conflict.enquiry?.eventDate && new Date(conflict.enquiry.eventDate).toLocaleDateString()}
+                        {conflict.enquiry?.eventTime && ` at ${conflict.enquiry.eventTime}`}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
             
             {unresolvedConflicts.length > 3 && (
               <div className="text-center">

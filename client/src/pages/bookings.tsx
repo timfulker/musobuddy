@@ -21,6 +21,7 @@ import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
 import BookingActionMenu from "@/components/booking-action-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
+import ConflictIndicator from "@/components/ConflictIndicator";
 import type { Enquiry } from "@shared/schema";
 
 type ViewMode = 'list' | 'calendar';
@@ -726,10 +727,13 @@ export default function UnifiedBookings() {
                   filteredAndSortedBookings.map((booking: any) => (
                     <Card 
                       key={booking.id} 
-                      className={`hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
+                      className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
                         selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                       }`}
                     >
+                      {/* Conflict Indicator - Top Right Corner */}
+                      <ConflictIndicator bookingId={booking.id} />
+                      
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4 flex-1">
