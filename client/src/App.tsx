@@ -7,8 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
-import LoginPage from "@/pages/login";
+// Old login components removed - using Replit auth only
 import Dashboard from "@/pages/dashboard";
 import Bookings from "@/pages/bookings";
 import Contracts from "@/pages/contracts";
@@ -72,19 +71,16 @@ function Router() {
       }} />
       
       {!isAuthenticated ? (
-        <Route path="/" component={() => {
-          // Redirect to Replit auth if not authenticated
-          window.location.href = `/api/auth/login`;
-          return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold mb-4">MusoBuddy</h1>
-                <p className="text-muted-foreground mb-4">Redirecting to Replit authentication...</p>
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              </div>
+        <Route path="/" component={() => (
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">MusoBuddy</h1>
+              <p className="text-muted-foreground mb-4">Setting up your admin account...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-xs text-muted-foreground mt-4">Admin access for Repl owner</p>
             </div>
-          );
-        }} />
+          </div>
+        )} />
       ) : (
         <>
           <Route path="/" component={Dashboard} />
