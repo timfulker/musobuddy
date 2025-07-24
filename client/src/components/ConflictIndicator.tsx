@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -90,12 +91,19 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
 
   return (
     <>
-      {/* Conflict Indicator Dot */}
-      <div
-        className={`absolute top-2 right-2 w-3 h-3 rounded-full ${getIndicatorColor(severity)} cursor-pointer z-10`}
+      {/* Conflict Indicator Button */}
+      <Button
+        size="sm"
+        className={`absolute top-2 right-2 h-8 px-3 text-white border-0 shadow-md z-10 ${
+          severity === 'hard' ? 'bg-red-500 hover:bg-red-600' : 
+          severity === 'soft' ? 'bg-orange-500 hover:bg-orange-600' : 
+          'bg-yellow-500 hover:bg-yellow-600'
+        }`}
         title={getTooltipText()}
         onClick={handleClick}
-      />
+      >
+        <span className="text-xs font-medium">Conflict</span>
+      </Button>
       
       {/* Simple Modal for showing conflicts */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
