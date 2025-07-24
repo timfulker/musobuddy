@@ -117,6 +117,43 @@ export class Storage {
     return result[0];
   }
 
+  async updateBookingInvoiceDocument(id: number, cloudUrl: string, storageKey: string, filename: string) {
+    const result = await db.update(bookings)
+      .set({
+        uploadedInvoiceUrl: cloudUrl,
+        uploadedInvoiceKey: storageKey,
+        uploadedInvoiceFilename: filename,
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async addBookingDocument(id: number, cloudUrl: string, storageKey: string, filename: string, documentType: string) {
+    // Get current booking to access existing documents
+    const booking = await this.getBooking(id);
+    if (!booking) throw new Error('Booking not found');
+    
+    const existingDocs = Array.isArray(booking.uploadedDocuments) ? booking.uploadedDocuments : [];
+    const newDocument = {
+      url: cloudUrl,
+      key: storageKey,
+      filename: filename,
+      type: documentType,
+      uploadedAt: new Date().toISOString()
+    };
+    
+    const result = await db.update(bookings)
+      .set({
+        uploadedDocuments: [...existingDocs, newDocument],
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, id))
+      .returning();
+    return result[0];
+  }
+
   async updateBookingContractDocument(id: number, contractUrl: string, contractKey: string, filename: string) {
     const result = await db.update(bookings)
       .set({

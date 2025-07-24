@@ -1535,11 +1535,12 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== BOOKING ROUTES =====
-  // Simple contract document upload for bookings
-  app.post('/api/bookings/:id/upload-contract', isAuthenticated, upload.single('contract'), async (req: any, res) => {
+  // Comprehensive document upload for bookings (contracts, invoices, other documents)
+  app.post('/api/bookings/:id/upload-document', isAuthenticated, upload.single('document'), async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
       const file = req.file;
+      const documentType = req.body.documentType || 'other'; // contract, invoice, other
       
       if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
@@ -1558,7 +1559,7 @@ export async function registerRoutes(app: Express) {
       // Upload to R2 cloud storage
       const timestamp = Date.now();
       const filename = file.originalname;
-      const storageKey = `uploaded-contracts/${req.user.id}/${timestamp}-${filename}`;
+      const storageKey = `uploaded-documents/${documentType}/${req.user.id}/${timestamp}-${filename}`;
       
       const { uploadFileToCloudflare } = await import('./cloud-storage');
       const uploadResult = await uploadFileToCloudflare(file.buffer, storageKey, file.mimetype);
@@ -1569,23 +1570,42 @@ export async function registerRoutes(app: Express) {
       
       const cloudUrl = uploadResult.url!;
 
-      // Update booking with contract document info
-      const updatedBooking = await storage.updateBookingContractDocument(
-        bookingId, 
-        cloudUrl, 
-        storageKey, 
-        filename
-      );
+      // Update booking with appropriate document info based on type
+      let updatedBooking;
+      if (documentType === 'contract') {
+        updatedBooking = await storage.updateBookingContractDocument(
+          bookingId, 
+          cloudUrl, 
+          storageKey, 
+          filename
+        );
+      } else if (documentType === 'invoice') {
+        updatedBooking = await storage.updateBookingInvoiceDocument(
+          bookingId, 
+          cloudUrl, 
+          storageKey, 
+          filename
+        );
+      } else {
+        // For 'other' documents, add to the uploadedDocuments array
+        updatedBooking = await storage.addBookingDocument(
+          bookingId,
+          cloudUrl,
+          storageKey,
+          filename,
+          documentType
+        );
+      }
 
       res.json({
         success: true,
-        message: 'Contract document uploaded successfully',
+        message: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} document uploaded successfully`,
         booking: updatedBooking
       });
 
     } catch (error) {
-      console.error('Error uploading contract document:', error);
-      res.status(500).json({ error: 'Failed to upload contract document' });
+      console.error('Error uploading document:', error);
+      res.status(500).json({ error: 'Failed to upload document' });
     }
   });
 

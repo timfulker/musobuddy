@@ -236,10 +236,18 @@ export const bookings = pgTable("bookings", {
   depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }), // Deposit amount if required
   finalAmount: decimal("final_amount", { precision: 10, scale: 2 }), // Final agreed amount
   
-  // Document storage
+  // Document storage - comprehensive document management
   uploadedContractUrl: text("uploaded_contract_url"), // URL to uploaded external contract stored on R2
   uploadedContractKey: text("uploaded_contract_key"), // R2 storage key for the uploaded contract
   uploadedContractFilename: varchar("uploaded_contract_filename"), // Original filename of uploaded contract
+  
+  // Additional document storage for comprehensive booking documentation
+  uploadedInvoiceUrl: text("uploaded_invoice_url"), // URL to uploaded external invoice stored on R2
+  uploadedInvoiceKey: text("uploaded_invoice_key"), // R2 storage key for the uploaded invoice
+  uploadedInvoiceFilename: varchar("uploaded_invoice_filename"), // Original filename of uploaded invoice
+  
+  // General document storage for any booking-related documents
+  uploadedDocuments: jsonb("uploaded_documents").default('[]'), // Array of {url, key, filename, type, uploadedAt} objects
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -78,6 +78,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [isParsingContract, setIsParsingContract] = useState(false);
   const [parseResult, setParseResult] = useState<any>(null);
+  const [documentType, setDocumentType] = useState<'contract' | 'invoice' | 'other'>('contract');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -420,23 +421,25 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     
     try {
       const formData = new FormData();
-      formData.append('contract', contractFile);
+      formData.append('document', contractFile);
+      formData.append('documentType', documentType);
       
-      const response = await fetch(`/api/bookings/${booking.id}/upload-contract`, {
+      const endpoint = `/api/bookings/${booking.id}/upload-document`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
         credentials: 'include'
       });
       
       if (!response.ok) {
-        throw new Error('Failed to upload contract');
+        throw new Error('Failed to upload document');
       }
       
       const result = await response.json();
       
       setUploadStatus({
         type: 'success',
-        message: 'Contract document uploaded successfully!'
+        message: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} document uploaded successfully!`
       });
       
       // Clear the file input
@@ -448,20 +451,20 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       }
       
       toast({
-        title: "Contract Uploaded",
-        description: "Contract document has been stored successfully.",
+        title: "Document Uploaded",
+        description: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} document has been stored successfully.`,
       });
       
     } catch (error: any) {
-      console.error('Contract upload error:', error);
+      console.error('Document upload error:', error);
       setUploadStatus({
         type: 'error',
-        message: error.message || 'Failed to upload contract document'
+        message: error.message || 'Failed to upload document'
       });
       
       toast({
         title: "Upload Failed",
-        description: "Failed to upload contract document. Please try again.",
+        description: `Failed to upload ${documentType} document. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -1202,48 +1205,114 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Simple Contract Document Upload */}
+              {/* Comprehensive Document Management */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    Contract Document
+                    Booking Documents
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Upload an existing contract PDF or use AI parsing to extract booking details
+                    Upload contracts, invoices, and other booking-related documents. Use AI parsing to extract and populate booking details.
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {booking?.uploadedContractUrl ? (
-                    <div className="bg-green-50 p-3 rounded-md">
-                      <p className="text-sm text-green-700 mb-2">
-                        ✅ Contract document: {booking.uploadedContractFilename}
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(booking.uploadedContractUrl!, '_blank')}
-                        >
-                          View Contract
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setContractFile(null)}
-                        >
-                          Replace
-                        </Button>
+                  {/* Document Type Selection */}
+                  <div className="space-y-2">
+                    <Label>Document Type</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={documentType === 'contract' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDocumentType('contract')}
+                      >
+                        Contract
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={documentType === 'invoice' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDocumentType('invoice')}
+                      >
+                        Invoice
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={documentType === 'other' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setDocumentType('other')}
+                      >
+                        Other
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Existing Documents Display */}
+                  {(booking?.uploadedContractUrl || booking?.uploadedInvoiceUrl || (booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.length > 0)) && (
+                    <div className="space-y-2">
+                      <Label>Uploaded Documents</Label>
+                      <div className="space-y-2">
+                        {booking?.uploadedContractUrl && (
+                          <div className="bg-blue-50 p-3 rounded-md">
+                            <p className="text-sm text-blue-700 mb-2">
+                              📄 Contract: {booking.uploadedContractFilename}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(booking.uploadedContractUrl!, '_blank')}
+                            >
+                              View Contract
+                            </Button>
+                          </div>
+                        )}
+                        {booking?.uploadedInvoiceUrl && (
+                          <div className="bg-green-50 p-3 rounded-md">
+                            <p className="text-sm text-green-700 mb-2">
+                              💰 Invoice: {booking.uploadedInvoiceFilename}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(booking.uploadedInvoiceUrl!, '_blank')}
+                            >
+                              View Invoice
+                            </Button>
+                          </div>
+                        )}
+                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.map((doc: any, index: number) => (
+                          <div key={index} className="bg-gray-50 p-3 rounded-md">
+                            <p className="text-sm text-gray-700 mb-2">
+                              📎 {doc.type || 'Document'}: {doc.filename}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(doc.url!, '_blank')}
+                            >
+                              View Document
+                            </Button>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ) : (
+                  )}
+
+                  {/* Upload New Document */}
+                  {(
+                    (documentType === 'contract' && !booking?.uploadedContractUrl) ||
+                    (documentType === 'invoice' && !booking?.uploadedInvoiceUrl) ||
+                    documentType === 'other'
+                  ) ? (
                     <>
                       <div className="space-y-2">
-                        <Label htmlFor="contract-upload">Upload Contract PDF</Label>
+                        <Label htmlFor="document-upload">Upload {documentType === 'contract' ? 'Contract' : documentType === 'invoice' ? 'Invoice' : 'Document'} PDF</Label>
                         <Input
-                          id="contract-upload"
+                          id="document-upload"
                           type="file"
                           accept=".pdf"
                           onChange={(e) => setContractFile(e.target.files?.[0] || null)}
@@ -1307,12 +1376,20 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                       {parseResult && (
                         <div className="bg-green-50 p-3 rounded-md">
                           <p className="text-sm text-green-700">
-                            Contract parsed successfully! {parseResult.fieldsUpdated || 0} fields updated.
+                            Document parsed successfully! {parseResult.fieldsUpdated || 0} fields updated.
                             Confidence: {parseResult.confidence || 0}%
                           </p>
                         </div>
                       )}
                     </>
+                  ) : (
+                    <div className="bg-gray-50 p-3 rounded-md text-center">
+                      <p className="text-sm text-gray-600">
+                        {documentType === 'contract' ? 'Contract already uploaded' : 
+                         documentType === 'invoice' ? 'Invoice already uploaded' : 
+                         'Select a different document type to upload more files'}
+                      </p>
+                    </div>
                   )}
                   
                   {uploadStatus && (
