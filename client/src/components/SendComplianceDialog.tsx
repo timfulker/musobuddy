@@ -96,15 +96,15 @@ export function SendComplianceDialog({ booking, bookingId, isOpen, onClose, onOp
     
     return `Dear ${booking.clientName || 'Client'},
 
-I hope this email finds you well. Further to our upcoming event on ${booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : '[Event Date]'} at ${booking.venue || '[Venue]'}, I am pleased to attach my compliance documentation as requested.
+I hope this email finds you well. Further to our upcoming event on ${booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : '[Event Date]'} at ${booking.venue || '[Venue]'}, I am pleased to provide my compliance documentation as requested.
 
-The attached documents include my professional certifications and insurance coverage, ensuring full compliance for your event:
+The documents available for download include my professional certifications and insurance coverage, ensuring full compliance for your event:
 
 • Public Liability Insurance
 • PAT Testing Certificates  
 • Music Performance Licenses
 
-These documents confirm that all safety and legal requirements are met for the performance. Please do not hesitate to contact me if you require any additional documentation or have any questions.
+These documents confirm that all safety and legal requirements are met for the performance. Each document can be downloaded using the provided links in this email. Please do not hesitate to contact me if you require any additional documentation or have any questions.
 
 I look forward to providing an excellent musical experience for your event.
 

@@ -797,16 +797,8 @@ export async function sendComplianceEmail(
       replyTo: replyToEmail
     };
 
-    // Attach compliance documents
-    if (complianceDocuments.length > 0) {
-      emailData.attachments = complianceDocuments.map((doc: any) => ({
-        content: doc.documentUrl, // R2 URL - Mailgun will download and attach
-        filename: doc.name || `${doc.type}.pdf`,
-        type: 'application/pdf',
-        disposition: 'attachment'
-      }));
-      console.log('📋 COMPLIANCE EMAIL: Attachments prepared:', emailData.attachments.length);
-    }
+    // Note: Documents are linked in email body using R2 URLs, not attached
+    console.log('📋 COMPLIANCE EMAIL: Documents will be linked (not attached) using R2 URLs');
 
     console.log('📋 COMPLIANCE EMAIL: Calling Mailgun API...');
     
@@ -853,13 +845,20 @@ function generateComplianceEmailHTML(booking: any, complianceDocuments: any[], c
     return `
       <div style="background: white; padding: 15px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #10b981;">
         <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div>
+          <div style="flex: 1;">
             <strong style="color: #065f46;">${getDocumentTypeLabel(doc.type)}</strong>
             ${doc.expiryDate ? `<br><span style="color: #6b7280; font-size: 14px;">Expires: ${new Date(doc.expiryDate).toLocaleDateString('en-GB')}</span>` : ''}
           </div>
-          <span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
-            ${doc.status === 'valid' ? '✅ Valid' : doc.status === 'expiring' ? '⚠️ Expiring' : '❌ Expired'}
-          </span>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+              ${doc.status === 'valid' ? '✅ Valid' : doc.status === 'expiring' ? '⚠️ Expiring' : '❌ Expired'}
+            </span>
+            <a href="${doc.documentUrl}" 
+               style="background-color: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-size: 14px; font-weight: bold;"
+               target="_blank">
+              📄 Download
+            </a>
+          </div>
         </div>
       </div>
     `;
@@ -898,7 +897,7 @@ function generateComplianceEmailHTML(booking: any, complianceDocuments: any[], c
         ` : `
         <p>Dear ${booking.clientName},</p>
         
-        <p>Please find attached the compliance documentation for our upcoming event:</p>
+        <p>Please find below the compliance documentation for our upcoming event. Click the download buttons to access each document:</p>
         `}
         
         <div class="event-details">
@@ -922,11 +921,11 @@ function generateComplianceEmailHTML(booking: any, complianceDocuments: any[], c
         </div>
         
         <div class="documents-section">
-            <h3>📋 Attached Documents</h3>
+            <h3>📋 Available Documents</h3>
             ${documentsList}
         </div>
         
-        <p>All documents are current and valid. If you require any additional documentation or have questions about our compliance status, please don't hesitate to contact us.</p>
+        <p>All documents are current and valid and can be downloaded directly using the links above. If you require any additional documentation or have questions about our compliance status, please don't hesitate to contact us.</p>
         
         <p>We look forward to providing an excellent musical experience for your event.</p>
         
