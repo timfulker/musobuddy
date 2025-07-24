@@ -39,8 +39,8 @@ export default function PricingPage() {
     createCheckoutMutation.mutate(priceId);
   };
 
-  const currentPlan = subscriptionStatus?.plan || 'free';
-  const hasAccess = subscriptionStatus?.hasAccess || false;
+  const currentPlan = (subscriptionStatus as any)?.plan || 'free';
+  const hasAccess = (subscriptionStatus as any)?.hasAccess || false;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-6">
