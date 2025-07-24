@@ -67,7 +67,7 @@ export default function ActionableEnquiries() {
     const enquiryStart = new Date(`${enquiry.eventDate}T${enquiry.eventTime}`);
     const enquiryEnd = new Date(`${enquiry.eventDate}T${enquiry.eventEndTime}`);
     
-    return enquiries.filter((other: Enquiry) => {
+    return (enquiries as any[]).filter((other: Enquiry) => {
       if (other.id === enquiry.id) return false;
       if (!other.eventDate || !other.eventTime || !other.eventEndTime) return false;
       
@@ -90,7 +90,7 @@ export default function ActionableEnquiries() {
   };
 
   const getEnquiryConflict = (enquiryId: number) => {
-    return conflicts.find((conflict: any) => 
+    return (conflicts as any[]).find((conflict: any) => 
       conflict.enquiryId === enquiryId && !conflict.resolved
     );
   };
@@ -108,38 +108,9 @@ export default function ActionableEnquiries() {
     return enquiry.status === "new" || enquiry.status === "booking_in_progress";
   };
 
-  // Detect if an enquiry was likely created from calendar import
-  const isCalendarImport = (enquiry: Enquiry) => {
-    // Calendar imports typically have:
-    // - No client email or phone
-    // - No original email content
-    // - No apply now link
-    // - Often just basic title and date
-    return !enquiry.clientEmail && 
-           !enquiry.clientPhone && 
-           !enquiry.originalEmailContent && 
-           !enquiry.applyNowLink &&
-           (!enquiry.fee || enquiry.fee === "");
-  };
+  // Removed isCalendarImport function since we removed "This Week's Activity" column
 
-  const isThisWeek = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    
-    // Get start of current week (Monday)
-    const startOfWeek = new Date(today);
-    const dayOfWeek = today.getDay();
-    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday is 0, so 6 days from Monday
-    startOfWeek.setDate(today.getDate() - daysFromMonday);
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    // Get end of current week (Sunday)
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-    
-    return date >= startOfWeek && date <= endOfWeek;
-  };
+  // Removed isThisWeek function since we removed "This Week's Activity" column
 
   // Filter enquiries that need action (excluding resolved conflicts and completed gigs)
   const actionableEnquiries = (enquiries as any[]).filter((enquiry: any) => {
@@ -155,15 +126,7 @@ export default function ActionableEnquiries() {
     return needsResponse(enquiry) || hasUnresolvedConflicts;
   });
 
-  // Filter enquiries from this week, excluding calendar imports
-  const thisWeekEnquiries = (enquiries as any[]).filter((enquiry: any) => {
-    const isThisWeekEnquiry = enquiry.createdAt && isThisWeek(enquiry.createdAt.toString());
-    const isImport = isCalendarImport(enquiry);
-    
-    // Debug logging removed to prevent console spam
-    
-    return isThisWeekEnquiry && !isImport;
-  });
+  // Removed thisWeekEnquiries filtering since we removed the "This Week's Activity" column
 
   const renderEnquiryCard = (enquiry: any, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate?.toString() || '');
@@ -408,56 +371,30 @@ export default function ActionableEnquiries() {
       </CardHeader>
       
       <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Action Required Column */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                <AlertCircle className="w-5 h-5 mr-2 text-orange-500" />
-                Needs Response
-              </h4>
-              <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-200">
-                {actionableEnquiries.length}
-              </Badge>
-            </div>
-            <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
-              {actionableEnquiries.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, true)
-              )}
-              {actionableEnquiries.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-sm">No enquiries need action</p>
-                  <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
-                </div>
-              )}
-            </div>
+        {/* Single Column - Action Required Only */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2 text-orange-500" />
+              Needs Response
+            </h4>
+            <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-200">
+              {actionableEnquiries.length}
+            </Badge>
           </div>
-
-          {/* This Week Column */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                <Clock className="w-5 h-5 mr-2 text-blue-500" />
-                This Week's Activity
-              </h4>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                {thisWeekEnquiries.length}
-              </Badge>
-            </div>
-            <div className="space-y-3 min-h-[350px] max-h-[400px] overflow-y-auto">
-              {thisWeekEnquiries.map((enquiry: Enquiry) => 
-                renderEnquiryCard(enquiry, false)
-              )}
-              {thisWeekEnquiries.length === 0 && (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-sm">No enquiries this week</p>
-                  <p className="text-xs text-gray-400 mt-1">Check back for new activity</p>
-                </div>
-              )}
-            </div>
+          {/* Non-scrolling, dynamic grid layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {actionableEnquiries.map((enquiry: Enquiry) => 
+              renderEnquiryCard(enquiry, true)
+            )}
           </div>
+          {actionableEnquiries.length === 0 && (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-sm">No enquiries need action</p>
+              <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
