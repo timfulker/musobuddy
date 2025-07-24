@@ -1,11 +1,14 @@
 import { type Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { isAuthenticated } from "./auth-clean";
+import { isAuthenticated, isAdmin } from "./auth-clean";
 import { mailgunService, contractParserService, cloudStorageService } from "./services";
 import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
 import { stripeService } from "./stripe-service";
+import { db } from "./database";
+import { users, bookings, contracts, invoices } from "../../shared/schema";
+import { sql } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 
@@ -54,6 +57,51 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ error: 'Authentication error' });
     }
   });
+
+  // ===== FRESH ADMIN ROUTES =====
+  app.get('/api/admin/overview', isAdmin, async (req: any, res: any) => {
+    try {
+      const [userCount, bookingCount, contractCount, invoiceCount] = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(users),
+        db.select({ count: sql<number>`count(*)` }).from(bookings),
+        db.select({ count: sql<number>`count(*)` }).from(contracts),
+        db.select({ count: sql<number>`count(*)` }).from(invoices)
+      ]);
+
+      res.json({
+        totalUsers: userCount[0].count,
+        totalBookings: bookingCount[0].count,
+        totalContracts: contractCount[0].count,
+        totalInvoices: invoiceCount[0].count,
+        systemHealth: 'operational'
+      });
+    } catch (error) {
+      console.error('Admin overview error:', error);
+      res.status(500).json({ error: 'Failed to fetch overview' });
+    }
+  });
+
+  app.get('/api/admin/users', isAdmin, async (req: any, res: any) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      
+      const userList = allUsers.map((user: any) => ({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        tier: user.tier || 'free',
+        isAdmin: user.isAdmin || false,
+        createdAt: user.createdAt?.toISOString() || new Date().toISOString()
+      }));
+
+      res.json(userList);
+    } catch (error) {
+      console.error('Admin users error:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
   const server = createServer(app);
 
   // ===== STRIPE SUBSCRIPTION ROUTES =====
@@ -2864,49 +2912,5 @@ function generateContractSigningPage(contract: any, userSettings: any): string {
   `;
 }
 
-  // ===== ADMIN ROUTES =====
-  app.get('/api/admin/overview', isAdmin, async (req, res) => {
-    try {
-      const [userStats, bookingStats, contractStats, invoiceStats] = await Promise.all([
-        db.select({ count: sql<number>`count(*)` }).from(users),
-        db.select({ count: sql<number>`count(*)` }).from(bookings),
-        db.select({ count: sql<number>`count(*)` }).from(contracts),
-        db.select({ count: sql<number>`count(*)` }).from(invoices)
-      ]);
-
-      res.json({
-        totalUsers: userStats[0].count,
-        totalBookings: bookingStats[0].count,
-        totalContracts: contractStats[0].count,
-        totalInvoices: invoiceStats[0].count,
-        systemHealth: 'operational',
-        databaseStatus: 'connected'
-      });
-    } catch (error) {
-      console.error('Admin overview error:', error);
-      res.status(500).json({ error: 'Failed to fetch admin overview' });
-    }
-  });
-
-  app.get('/api/admin/users', isAdmin, async (req, res) => {
-    try {
-      const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
-      
-      const userList = allUsers.map(user => ({
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        tier: user.tier || 'free',
-        isAdmin: user.isAdmin || false,
-        createdAt: user.createdAt?.toISOString() || new Date().toISOString()
-      }));
-
-      res.json(userList);
-    } catch (error) {
-      console.error('Admin users error:', error);
-      res.status(500).json({ error: 'Failed to fetch users' });
-    }
-  });
 
 
