@@ -26,7 +26,10 @@ import {
   TrendingUp,
   Shield,
   Plus,
-  UserPlus
+  UserPlus,
+  Search,
+  Trash2,
+  Edit
 } from "lucide-react";
 
 interface AdminOverview {
@@ -55,11 +58,24 @@ interface AdminUser {
 export default function AdminPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newUserOpen, setNewUserOpen] = useState(false);
+  const [editUserOpen, setEditUserOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [userFilter, setUserFilter] = useState('all');
+  const [userSearch, setUserSearch] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [newUserForm, setNewUserForm] = useState({
     email: '',
     firstName: '',
     lastName: '',
     password: '',
+    tier: 'free',
+    isAdmin: false,
+    isBetaTester: false
+  });
+  const [editUserForm, setEditUserForm] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
     tier: 'free',
     isAdmin: false,
     isBetaTester: false
@@ -131,6 +147,53 @@ export default function AdminPanel() {
     },
   });
 
+  const updateUserMutation = useMutation({
+    mutationFn: ({ userId, userData }: { userId: string, userData: any }) => 
+      apiRequest(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] });
+      setEditUserOpen(false);
+      setSelectedUser(null);
+      toast({
+        title: "User updated successfully",
+        description: "The user information has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating user",
+        description: error.message || "Failed to update user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (userIds: string[]) => 
+      Promise.all(userIds.map(id => apiRequest(`/api/admin/users/${id}`, { method: 'DELETE' }))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] });
+      setSelectedUsers([]);
+      toast({
+        title: "Users deleted successfully",
+        description: `${selectedUsers.length} users have been removed from the system.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error deleting users",
+        description: error.message || "Failed to delete users",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateUser = () => {
     if (!newUserForm.email) {
       toast({
@@ -149,6 +212,72 @@ export default function AdminPanel() {
       return;
     }
     createUserMutation.mutate(newUserForm);
+  };
+
+  const handleEditUser = (user: AdminUser) => {
+    setSelectedUser(user);
+    setEditUserForm({
+      email: user.email,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      tier: user.tier,
+      isAdmin: user.isAdmin,
+      isBetaTester: user.isBetaTester || false
+    });
+    setEditUserOpen(true);
+  };
+
+  const handleUpdateUser = () => {
+    if (!selectedUser || !editUserForm.email) {
+      toast({
+        title: "Missing information",
+        description: "Email is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateUserMutation.mutate({ 
+      userId: selectedUser.id, 
+      userData: editUserForm 
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedUsers.length === 0) return;
+    
+    if (confirm(`Delete ${selectedUsers.length} selected users? This cannot be undone.`)) {
+      bulkDeleteMutation.mutate(selectedUsers);
+    }
+  };
+
+  const filteredUsers = users?.filter(user => {
+    const matchesSearch = userSearch === '' || 
+      user.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+      `${user.firstName} ${user.lastName}`.toLowerCase().includes(userSearch.toLowerCase());
+    
+    const matchesFilter = userFilter === 'all' ||
+      (userFilter === 'admin' && user.isAdmin) ||
+      (userFilter === 'beta' && user.isBetaTester) ||
+      (userFilter === 'regular' && !user.isAdmin && !user.isBetaTester) ||
+      userFilter === user.tier;
+    
+    return matchesSearch && matchesFilter;
+  }) || [];
+
+  const handleSelectAll = () => {
+    if (selectedUsers.length === filteredUsers.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(filteredUsers.map(user => user.id));
+    }
+  };
+
+  const handleSelectUser = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
   };
 
   const getTierBadge = (tier: string) => {
@@ -303,18 +432,45 @@ export default function AdminPanel() {
             <TabsContent value="users" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div>
                       <CardTitle>User Management</CardTitle>
-                      <CardDescription>Overview of all registered users</CardDescription>
+                      <CardDescription>
+                        Showing {filteredUsers.length} of {users?.length || 0} users
+                      </CardDescription>
                     </div>
-                    <Dialog open={newUserOpen} onOpenChange={setNewUserOpen}>
-                      <DialogTrigger asChild>
-                        <Button className="flex items-center gap-2">
-                          <UserPlus className="h-4 w-4" />
-                          Add User
-                        </Button>
-                      </DialogTrigger>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                      <div className="relative">
+                        <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+                        <Input
+                          placeholder="Search users..."
+                          value={userSearch}
+                          onChange={(e) => setUserSearch(e.target.value)}
+                          className="pl-10 w-full sm:w-64"
+                        />
+                      </div>
+                      <Select value={userFilter} onValueChange={setUserFilter}>
+                        <SelectTrigger className="w-full sm:w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Users</SelectItem>
+                          <SelectItem value="admin">Admins</SelectItem>
+                          <SelectItem value="beta">Beta Testers</SelectItem>
+                          <SelectItem value="regular">Regular Users</SelectItem>
+                          <SelectItem value="free">Free Tier</SelectItem>
+                          <SelectItem value="core">Core Tier</SelectItem>
+                          <SelectItem value="premium">Premium Tier</SelectItem>
+                          <SelectItem value="enterprise">Enterprise Tier</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Dialog open={newUserOpen} onOpenChange={setNewUserOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="flex items-center gap-2">
+                            <UserPlus className="h-4 w-4" />
+                            Add User
+                          </Button>
+                        </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                           <DialogTitle>Add New User</DialogTitle>
@@ -409,65 +565,211 @@ export default function AdminPanel() {
                         </div>
                       </DialogContent>
                     </Dialog>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {selectedUsers.length > 0 && (
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">
+                          {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
+                        </span>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => setSelectedUsers([])}
+                          >
+                            Clear Selection
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive" 
+                            onClick={handleBulkDelete}
+                            disabled={bulkDeleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete Selected
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {usersLoading ? (
                     <div className="text-center py-8">Loading users...</div>
                   ) : (
                     <div className="space-y-4">
-                      {users?.map((user) => (
-                        <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      {filteredUsers.length > 0 && (
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b">
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.length === filteredUsers.length}
+                            onChange={handleSelectAll}
+                            className="rounded"
+                          />
+                          <Label className="text-sm font-medium">
+                            Select All ({filteredUsers.length})
+                          </Label>
+                        </div>
+                      )}
+                      
+                      {filteredUsers.map((user) => (
+                        <div key={user.id} className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.includes(user.id)}
+                            onChange={() => handleSelectUser(user.id)}
+                            className="rounded"
+                          />
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
                               <div>
                                 <div className="font-medium">
-                                  {user.firstName} {user.lastName} 
-                                  {user.isAdmin && <span className="ml-2 text-xs text-yellow-600">(Admin)</span>}
-                                  {user.isBetaTester && <span className="ml-2 text-xs text-blue-600">(Beta Tester)</span>}
+                                  {user.firstName} {user.lastName}
                                 </div>
                                 <div className="text-sm text-muted-foreground">{user.email}</div>
                               </div>
                             </div>
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-2 flex items-center gap-2 flex-wrap">
                               <Badge className={getTierBadge(user.tier)}>
                                 {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
                               </Badge>
+                              {user.isAdmin && (
+                                <Badge variant="outline" className="text-yellow-600 border-yellow-200">
+                                  Admin
+                                </Badge>
+                              )}
                               {user.isBetaTester && (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                  Beta: {user.betaFeedbackCount} feedback
+                                <Badge variant="outline" className="text-blue-600 border-blue-200">
+                                  Beta Tester
                                 </Badge>
                               )}
                               <span className="text-xs text-muted-foreground">
-                                Joined {new Date(user.createdAt).toLocaleDateString()}
+                                ID: {user.id}
                               </span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
-                              onClick={() => {
-                                if (confirm(`Delete user ${user.firstName} ${user.lastName}? This cannot be undone.`)) {
-                                  deleteUserMutation.mutate(user.id);
-                                }
-                              }}
+                              onClick={() => handleEditUser(user)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => deleteUserMutation.mutate(user.id)}
                               disabled={deleteUserMutation.isPending}
                             >
+                              <Trash2 className="h-4 w-4 mr-1" />
                               Delete
                             </Button>
                           </div>
                         </div>
                       ))}
-                      {users && users.length === 0 && (
+                      
+                      {filteredUsers.length === 0 && !usersLoading && (
                         <div className="text-center py-8 text-muted-foreground">
-                          No users found
+                          {userSearch || userFilter !== 'all' ? 
+                            "No users match your search criteria" : 
+                            "No users found"
+                          }
                         </div>
                       )}
                     </div>
                   )}
                 </CardContent>
               </Card>
+
+              {/* Edit User Dialog */}
+              <Dialog open={editUserOpen} onOpenChange={setEditUserOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Edit User</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        value={editUserForm.email}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, email: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-firstName">First Name</Label>
+                      <Input
+                        id="edit-firstName"
+                        value={editUserForm.firstName}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, firstName: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-lastName">Last Name</Label>
+                      <Input
+                        id="edit-lastName"
+                        value={editUserForm.lastName}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-tier">Subscription Tier</Label>
+                      <Select 
+                        value={editUserForm.tier} 
+                        onValueChange={(value) => setEditUserForm(prev => ({ ...prev, tier: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Free</SelectItem>
+                          <SelectItem value="core">Core</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="edit-isAdmin"
+                          checked={editUserForm.isAdmin}
+                          onChange={(e) => setEditUserForm(prev => ({ ...prev, isAdmin: e.target.checked }))}
+                          className="rounded"
+                        />
+                        <Label htmlFor="edit-isAdmin">Admin privileges</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="edit-isBetaTester"
+                          checked={editUserForm.isBetaTester}
+                          onChange={(e) => setEditUserForm(prev => ({ ...prev, isBetaTester: e.target.checked }))}
+                          className="rounded"
+                        />
+                        <Label htmlFor="edit-isBetaTester">Beta Tester</Label>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setEditUserOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleUpdateUser}
+                      disabled={updateUserMutation.isPending}
+                    >
+                      {updateUserMutation.isPending ? "Updating..." : "Update User"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
 
             <TabsContent value="beta" className="space-y-6">
