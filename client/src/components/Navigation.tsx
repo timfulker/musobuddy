@@ -6,7 +6,8 @@ import {
   Receipt, 
   Calendar, 
   ShieldCheck,
-  Music
+  Music,
+  Crown
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -19,6 +20,7 @@ const Navigation = () => {
     { path: '/invoices', label: 'Invoices', icon: Receipt },
     { path: '/bookings', label: 'Bookings', icon: Calendar },
     { path: '/compliance', label: 'Compliance', icon: ShieldCheck },
+    { path: '/pricing', label: 'Upgrade', icon: Crown },
   ];
 
   return (

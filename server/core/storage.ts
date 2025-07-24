@@ -11,6 +11,16 @@ export class Storage {
     return result[0] || null;
   }
 
+  async getUserById(id: string) {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0] || null;
+  }
+
+  async getUserByStripeCustomerId(stripeCustomerId: string) {
+    const result = await db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId));
+    return result[0] || null;
+  }
+
   async getUserByEmail(email: string) {
     const result = await db.select().from(users).where(eq(users.email, email));
     return result[0] || null;
@@ -154,18 +164,7 @@ export class Storage {
     return result[0];
   }
 
-  async updateBookingContractDocument(id: number, contractUrl: string, contractKey: string, filename: string) {
-    const result = await db.update(bookings)
-      .set({
-        uploadedContractUrl: contractUrl,
-        uploadedContractKey: contractKey,
-        uploadedContractFilename: filename,
-        updatedAt: new Date()
-      })
-      .where(eq(bookings.id, id))
-      .returning();
-    return result[0] || null;
-  }
+
 
   async deleteBooking(id: number) {
     await db.delete(bookings).where(eq(bookings.id, id));

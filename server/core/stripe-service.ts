@@ -1,15 +1,22 @@
 import Stripe from 'stripe';
 import { storage } from './storage';
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
-});
+// Initialize Stripe with secret key (only if available)
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-06-20',
+  });
+}
 
 export class StripeService {
   private stripe = stripe;
 
   async createCheckoutSession(userId: string, priceId: string = 'core_monthly') {
+    if (!this.stripe) {
+      throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY environment variable');
+    }
+    
     try {
       const user = await storage.getUserById(userId);
       if (!user) {
@@ -58,6 +65,10 @@ export class StripeService {
   }
 
   async handleWebhook(body: Buffer, signature: string) {
+    if (!this.stripe) {
+      throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY environment variable');
+    }
+    
     try {
       const event = this.stripe.webhooks.constructEvent(
         body,

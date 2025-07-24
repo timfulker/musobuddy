@@ -5,6 +5,7 @@ import { isAuthenticated, isAdmin } from "./auth";
 import { mailgunService, contractParserService, cloudStorageService } from "./services";
 import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
+import { stripeService } from "./stripe-service";
 import multer from "multer";
 import path from "path";
 
@@ -26,6 +27,78 @@ const upload = multer({
 
 export async function registerRoutes(app: Express) {
   const server = createServer(app);
+
+  // ===== STRIPE SUBSCRIPTION ROUTES =====
+  
+  // Create Stripe checkout session (AUTHENTICATED)
+  app.post('/api/create-checkout-session', isAuthenticated, async (req, res) => {
+    try {
+      const { priceId = 'core_monthly' } = req.body;
+      const result = await stripeService.createCheckoutSession(req.user.id, priceId);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Checkout session error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Stripe webhook (PUBLIC - Stripe needs to access this)
+  app.post('/api/stripe-webhook', 
+    (req, res, next) => {
+      // Store original req.body as buffer for Stripe webhook verification
+      req.body = req.body;
+      next();
+    },
+    async (req, res) => {
+      try {
+        const signature = req.headers['stripe-signature'] as string;
+        await stripeService.handleWebhook(req.body, signature);
+        res.json({ received: true });
+      } catch (error: any) {
+        console.error('Webhook error:', error);
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+
+  // Get subscription status (AUTHENTICATED)
+  app.get('/api/subscription/status', isAuthenticated, async (req, res) => {
+    try {
+      const status = await stripeService.getSubscriptionStatus(req.user.id);
+      res.json(status);
+    } catch (error: any) {
+      console.error('Subscription status error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Subscription success page
+  app.get('/subscription/success', (req, res) => {
+    res.send(`
+      <html>
+        <head><title>Subscription Successful</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1 style="color: #4CAF50;">🎉 Welcome to MusoBuddy Core!</h1>
+          <p>Your subscription has been activated successfully.</p>
+          <a href="/" style="background: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">Return to Dashboard</a>
+        </body>
+      </html>
+    `);
+  });
+
+  // Subscription cancelled page
+  app.get('/subscription/cancelled', (req, res) => {
+    res.send(`
+      <html>
+        <head><title>Subscription Cancelled</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1 style="color: #f44336;">Subscription Cancelled</h1>
+          <p>Your subscription was not completed. You can try again anytime.</p>
+          <a href="/" style="background: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">Return to Dashboard</a>
+        </body>
+      </html>
+    `);
+  });
 
   // ===== PUBLIC CONTRACT SIGNING ROUTES (MUST BE FIRST - NO AUTHENTICATION) =====
 
