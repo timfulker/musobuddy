@@ -256,7 +256,10 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Professional Switch UI**: ✅ Clean toggle switch with red active state and "Active" badge when enabled
 - **Performance Optimized**: ✅ Conflict filtering only runs when toggle is active, preserving page performance
 - **Clear All Integration**: ✅ Conflict filter included in "Clear All Filters" functionality for complete filter reset
-- **Status**: COMPLETE CONFLICT SYSTEM + FILTER OPERATIONAL - Clean visual design with comprehensive conflict detection, resolution modal, and dedicated conflict filter toggle
+- **Smart Status Management**: ✅ Conflict filter automatically sets status to "All" and restores previous selection when disabled
+- **Enhanced Resolve Button**: ✅ Replaced small conflict dot with larger "Resolve" button for improved accessibility
+- **Status-Agnostic Logic**: ✅ Conflict detection works across all booking statuses (new, confirmed, etc.) for comprehensive visibility
+- **Status**: COMPLETE CONFLICT SYSTEM + ENHANCED FILTER OPERATIONAL - Comprehensive conflict detection, resolution modal, smart filter management, and improved accessibility
 
 ### 2025-07-24 - Booking Status Update Fix + Enhanced Search & Sorting System Complete
 - **CRITICAL FIX: Booking Status Updates**: ✅ Resolved HTTP method mismatch causing status update failures - changed PUT to PATCH to match backend API
