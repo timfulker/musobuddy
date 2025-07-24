@@ -104,22 +104,27 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
-  const { data: contracts = [] } = useQuery({
+  const { data: contracts = [], isLoading: contractsLoading, error: contractsError } = useQuery({
     queryKey: ["/api/contracts"],
     retry: 2,
   });
   
   // Debug logging to check contract data
   React.useEffect(() => {
-    if (contracts && contracts.length > 0) {
-      console.log('📄 Contracts data:', contracts.slice(0, 3).map((c: any) => ({
+    console.log('📄 Contracts query result:', {
+      contracts: contracts,
+      contractsLength: Array.isArray(contracts) ? contracts.length : 'Not an array',
+      contractsArray: Array.isArray(contracts),
+      contractsLoading: contractsLoading,
+      contractsError: contractsError,
+      firstThree: Array.isArray(contracts) && contracts.length > 0 ? contracts.slice(0, 3).map((c: any) => ({
         id: c.id,
         enquiryId: c.enquiryId,
         contractNumber: c.contractNumber,
         status: c.status
-      })));
-    }
-  }, [contracts]);
+      })) : 'No contracts or not array'
+    });
+  }, [contracts, contractsLoading, contractsError]);
 
   const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices"],
@@ -924,23 +929,25 @@ export default function UnifiedBookings() {
                             {/* Document Viewing Buttons */}
                             {(() => {
                               // Find contract for this booking
-                              const bookingContract = (contracts as any[]).find(
+                              const bookingContract = Array.isArray(contracts) ? contracts.find(
                                 (contract: any) => contract.enquiryId === booking.id
-                              );
+                              ) : null;
                               
                               // Find invoice for this booking  
-                              const bookingInvoice = (invoices as any[]).find(
+                              const bookingInvoice = Array.isArray(invoices) ? invoices.find(
                                 (invoice: any) => invoice.bookingId === booking.id
-                              );
+                              ) : null;
                               
-                              // Debug logging for first few bookings
-                              if (booking.id <= 7135) {
+                              // Debug logging for specific bookings only
+                              if (booking.id === 377 || booking.id === 382 || booking.id === 407) {
                                 console.log(`🔍 Booking ${booking.id} (${booking.clientName}):`, {
                                   bookingId: booking.id,
                                   hasContract: !!bookingContract,
                                   contractId: bookingContract?.id,
                                   hasInvoice: !!bookingInvoice,
-                                  invoiceId: bookingInvoice?.id
+                                  invoiceId: bookingInvoice?.id,
+                                  totalContracts: Array.isArray(contracts) ? contracts.length : 0,
+                                  contractsWithThisEnquiryId: Array.isArray(contracts) ? contracts.filter(c => c.enquiryId === booking.id).length : 0
                                 });
                               }
 
