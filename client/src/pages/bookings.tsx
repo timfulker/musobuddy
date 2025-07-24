@@ -93,6 +93,17 @@ export default function UnifiedBookings() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
 
+  // Fetch data for both views
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
+    queryKey: ["/api/bookings"],
+    retry: 2,
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ["/api/contracts"],
+    retry: 2,
+  });
+
   // Function to open compliance dialog from booking action menu
   const openComplianceDialog = (booking: any) => {
     setSelectedBookingForCompliance(booking);
@@ -111,7 +122,7 @@ export default function UnifiedBookings() {
 
   // Enhanced filtering and sorting
   const filteredAndSortedBookings = React.useMemo(() => {
-    if (!bookings) return [];
+    if (!bookings || !Array.isArray(bookings)) return [];
 
     let filtered = (bookings as any[]).filter((booking: any) => {
       // Enhanced search - includes more fields
@@ -615,7 +626,7 @@ export default function UnifiedBookings() {
               {/* Results Counter and Clear Filters */}
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-600">
-                  Showing {filteredAndSortedBookings.length} of {bookings?.length || 0} bookings
+                  Showing {filteredAndSortedBookings.length} of {Array.isArray(bookings) ? bookings.length : 0} bookings
                   {searchQuery && ` matching "${searchQuery}"`}
                 </div>
                 {(searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || sortField !== 'eventDate') && (
