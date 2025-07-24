@@ -387,9 +387,43 @@ function generateContractHTML(
   }
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-  const businessAddress = userSettings?.businessAddress || '';
   const businessPhone = userSettings?.phone || '';
   const businessEmail = userSettings?.businessEmail || '';
+  
+  // FIXED: Format musician address properly from user settings
+  const formatMusicianAddress = (settings: UserSettings | null): string => {
+    if (!settings) return '';
+    
+    const parts: string[] = [];
+    if (settings.addressLine1) parts.push(settings.addressLine1);
+    if (settings.city) parts.push(settings.city);
+    if (settings.county) parts.push(settings.county);
+    if (settings.postcode) parts.push(settings.postcode);
+    
+    return parts.join(', ');
+  };
+  
+  // FIXED: Format client address properly - add spaces between components
+  const formatClientAddress = (address: string): string => {
+    if (!address) return '';
+    
+    // If address is already properly formatted with commas, return as is
+    if (address.includes(', ')) return address;
+    
+    // Otherwise, try to add proper spacing between parts
+    // This handles cases like "57, Gloucester RdBournemouthBH7 6JA"
+    return address
+      .replace(/([a-z])([A-Z])/g, '$1, $2') // Add comma before capitals
+      .replace(/(\d+)([A-Z][a-z])/g, '$1, $2') // Add comma after numbers before words
+      .replace(/([a-z])(\d)/g, '$1 $2') // Add space before postcodes
+      .replace(/([A-Z]{2}\d)/g, ' $1') // Add space before postcodes like BH7
+      .replace(/,\s*,/g, ',') // Remove double commas
+      .replace(/^\s*,\s*/, '') // Remove leading comma
+      .trim();
+  };
+  
+  const businessAddress = formatMusicianAddress(userSettings);
+  const formattedClientAddress = formatClientAddress(contract.clientAddress || '');
   
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
@@ -492,7 +526,7 @@ function generateContractHTML(
       <div class="business-details">
         <h3>Performer Details</h3>
         <p><strong>${businessName}</strong></p>
-        ${businessAddress ? `<p>${businessAddress}</p>` : ''}
+        ${businessAddress ? `<p>${businessAddress}</p>` : '<p><em>Address not specified in settings</em></p>'}
         ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
         ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
       </div>
@@ -510,7 +544,7 @@ function generateContractHTML(
           </tr>
           ${contract.clientAddress ? `<tr>
             <th>Client Address</th>
-            <td>${contract.clientAddress}</td>
+            <td>${formattedClientAddress}</td>
           </tr>` : ''}
           ${contract.clientPhone ? `<tr>
             <th>Client Phone</th>
@@ -585,7 +619,7 @@ function generateContractHTML(
           <h4>Performer</h4>
           <div class="signature-box signed-box">
             <p><strong>Signed by:</strong> ${businessName}</p>
-            <p><strong>Date:</strong> ${new Date(contract.createdAt).toLocaleDateString('en-GB')}</p>
+            <p><strong>Date:</strong> ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</p>
             <p><strong>Status:</strong> Agreed by sending contract</p>
           </div>
         </div>
