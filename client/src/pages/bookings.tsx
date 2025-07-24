@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -75,6 +76,7 @@ export default function UnifiedBookings() {
   const [sortField, setSortField] = useState<string>('eventDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [conflictFilter, setConflictFilter] = useState<boolean>(false);
   
   // Dialog states
   const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
@@ -219,7 +221,14 @@ export default function UnifiedBookings() {
         }
       }
       
-      return matchesSearch && matchesStatus && matchesDate;
+      // Conflict filtering
+      let matchesConflict = true;
+      if (conflictFilter) {
+        const conflicts = detectConflicts(booking);
+        matchesConflict = conflicts.length > 0;
+      }
+      
+      return matchesSearch && matchesStatus && matchesDate && matchesConflict;
     });
 
     // Sort the filtered results
@@ -599,6 +608,27 @@ export default function UnifiedBookings() {
                     <SelectItem value="past">Past Events</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {/* Conflict Filter Toggle */}
+                <div className="flex items-center gap-3 bg-white border rounded-lg px-3 py-2">
+                  <Switch
+                    id="conflict-filter"
+                    checked={conflictFilter}
+                    onCheckedChange={setConflictFilter}
+                    className="data-[state=checked]:bg-red-500"
+                  />
+                  <label 
+                    htmlFor="conflict-filter" 
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Show Conflicts Only
+                  </label>
+                  {conflictFilter && (
+                    <Badge variant="destructive" className="text-xs">
+                      Active
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               {/* Sort Controls Row */}
@@ -654,7 +684,7 @@ export default function UnifiedBookings() {
                   Showing {filteredAndSortedBookings.length} of {Array.isArray(bookings) ? bookings.length : 0} bookings
                   {searchQuery && ` matching "${searchQuery}"`}
                 </div>
-                {(searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || sortField !== 'eventDate') && (
+                {(searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || conflictFilter || sortField !== 'eventDate') && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -662,6 +692,7 @@ export default function UnifiedBookings() {
                       setSearchQuery('');
                       setStatusFilter('all');
                       setDateFilter('all');
+                      setConflictFilter(false);
                       setSortField('eventDate');
                       setSortDirection('desc');
                     }}

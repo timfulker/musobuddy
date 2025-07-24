@@ -239,7 +239,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Database Error Resolution**: ✅ Eliminated "invalid input syntax for type integer" errors by treating time fields as text
 - **Status**: Complete text field migration successful - both "Styles Requested" and "Performance Duration" now save user text exactly as entered
 
-### 2025-07-24 - Complete Conflict Detection System + Unified Visual Design Operational
+### 2025-07-24 - Complete Conflict Detection System + Unified Visual Design + Conflict Filter Operational
 - **UNIFIED VISUAL DESIGN COMPLETE**: ✅ Eliminated all color overlays and gradients, implemented clean white cards with left border status indicators across entire application
 - **Dashboard Visual Overhaul**: ✅ Removed complex color overlays causing orange/amber backgrounds, now shows professional white cards with status border colors only
 - **Conflict Detection System Restored**: ✅ Added complete conflict detection to both dashboard and bookings page with red/orange/yellow dot indicators
@@ -251,7 +251,12 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Status Color Mapping**: ✅ Sky blue (new/enquiry), Dark blue (awaiting response/in progress), Orange (client confirms), Green (confirmed), Gray (completed), Red (cancelled)
 - **Clean Architecture**: ✅ Conflicts use separate indicator system completely independent from status colors - no overlays or background color interference
 - **User Experience Enhanced**: ✅ Professional, consistent visual language across all components with clear conflict identification
-- **Status**: COMPLETE CONFLICT SYSTEM + UNIFIED DESIGN OPERATIONAL - Clean visual design with comprehensive conflict detection across dashboard and bookings page
+- **CONFLICT FILTER TOGGLE ADDED**: ✅ Added dedicated "Show Conflicts Only" toggle filter on bookings page separate from status system
+- **Independent Filter System**: ✅ Conflict filter works alongside existing status and date filters without overriding booking status
+- **Professional Switch UI**: ✅ Clean toggle switch with red active state and "Active" badge when enabled
+- **Performance Optimized**: ✅ Conflict filtering only runs when toggle is active, preserving page performance
+- **Clear All Integration**: ✅ Conflict filter included in "Clear All Filters" functionality for complete filter reset
+- **Status**: COMPLETE CONFLICT SYSTEM + FILTER OPERATIONAL - Clean visual design with comprehensive conflict detection, resolution modal, and dedicated conflict filter toggle
 
 ### 2025-07-24 - Booking Status Update Fix + Enhanced Search & Sorting System Complete
 - **CRITICAL FIX: Booking Status Updates**: ✅ Resolved HTTP method mismatch causing status update failures - changed PUT to PATCH to match backend API
