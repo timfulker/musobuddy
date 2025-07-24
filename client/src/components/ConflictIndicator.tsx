@@ -102,7 +102,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
         title={getTooltipText()}
         onClick={handleClick}
       >
-        <span className="text-xs font-medium">Conflict</span>
+        <span className="text-xs font-medium">Resolve</span>
       </Button>
       
       {/* Simple Modal for showing conflicts */}
