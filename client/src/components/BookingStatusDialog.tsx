@@ -87,14 +87,21 @@ export default function BookingStatusDialog({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed":
+      case "new":
+        return "bg-sky-100 text-sky-800";
+      case "in_progress":
+      case "awaiting_response":
+        return "bg-blue-100 text-blue-800";
+      case "client_confirms":
+        return "bg-orange-100 text-orange-800";
+      case "contract_sent":
         return "bg-purple-100 text-purple-800";
-      case "completed":
+      case "confirmed":
         return "bg-green-100 text-green-800";
+      case "completed":
+        return "bg-emerald-100 text-emerald-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
-      case "signed":
-        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -102,16 +109,23 @@ export default function BookingStatusDialog({
 
   const getStatusLabel = (status: string) => {
     switch (status) {
+      case "new":
+        return "New Enquiry";
+      case "in_progress":
+      case "awaiting_response":
+        return "In Progress";
+      case "client_confirms":
+        return "Client Confirms";
+      case "contract_sent":
+        return "Contract Sent";
       case "confirmed":
         return "Confirmed";
       case "completed":
         return "Completed";
       case "cancelled":
         return "Cancelled";
-      case "signed":
-        return "Contract Signed";
       default:
-        return "Unknown";
+        return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
   };
 
@@ -165,6 +179,13 @@ export default function BookingStatusDialog({
             </Badge>
           </div>
 
+          {/* Manual Override Notice */}
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Manual Override:</strong> You can change this booking to any status, even if it has contracts or invoices attached. This gives you full control to revert automatic status changes if needed.
+            </p>
+          </div>
+
           {/* Status Selection */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Update Status:</label>
@@ -173,8 +194,11 @@ export default function BookingStatusDialog({
                 <SelectValue placeholder="Select new status" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="new">New Enquiry</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="client_confirms">Client Confirms</SelectItem>
+                <SelectItem value="contract_sent">Contract Sent</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="signed">Contract Signed</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>

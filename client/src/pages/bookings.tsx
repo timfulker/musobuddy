@@ -12,8 +12,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText } from "lucide-react";
-import { useLocation, Link, navigate } from "wouter";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Settings } from "lucide-react";
+import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -37,6 +37,8 @@ interface CalendarEvent {
 }
 
 export default function UnifiedBookings() {
+  const [location, navigate] = useLocation();
+  
   // Status color helper function
   const getStatusBorderColor = (status: string) => {
     switch (status) {
@@ -912,6 +914,20 @@ export default function UnifiedBookings() {
                                 Send Contract
                               </Button>
                             )}
+                            
+                            {/* Manual Status Change Button - Always Available */}
+                            <Button 
+                              variant="outline"
+                              size="sm" 
+                              onClick={() => {
+                                setSelectedBookingForUpdate(booking);
+                                setBookingStatusDialogOpen(true);
+                              }}
+                              title="Manually change booking status (overrides automatic updates)"
+                            >
+                              <Settings className="w-4 h-4" />
+                            </Button>
+                            
                             <BookingActionMenu 
                               booking={booking} 
                               onSendCompliance={openComplianceDialog}

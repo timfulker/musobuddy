@@ -2346,8 +2346,16 @@ export async function registerRoutes(app: Express) {
       if (result.success) {
         console.log('✅ Template email sent successfully:', result.messageId);
         
-        // Note: Status updates are now user-controlled actions, not automatic
-        console.log('📧 Template email sent - status updates controlled by user action, not automatic');
+        // Automatic status updates happen, but user retains full manual override control
+        // Check if this is a response email and auto-update from "new" to "in_progress"
+        if (booking.status === 'new') {
+          try {
+            await storage.updateBooking(parseInt(bookingId), { status: 'in_progress' });
+            console.log('✅ Booking auto-updated: new → in_progress (user can manually revert if needed)');
+          } catch (updateError) {
+            console.error('⚠️ Failed to auto-update booking status:', updateError);
+          }
+        }
         
         res.json({ 
           success: true, 
