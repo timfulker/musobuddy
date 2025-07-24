@@ -105,6 +105,17 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     const newBooking = await storage.createBooking(bookingData);
     console.log(`✅ [${requestId}] Created booking #${newBooking.id}`);
     
+    // Auto-create client in address book from inquiry
+    if (clientName && clientName !== 'Unknown') {
+      try {
+        await storage.upsertClientFromBooking(newBooking, "43963086");
+        console.log(`✅ [${requestId}] Client auto-created/updated in address book: ${clientName}`);
+      } catch (clientError) {
+        console.error(`⚠️ [${requestId}] Failed to auto-create client:`, clientError);
+        // Don't fail the booking creation if client creation fails
+      }
+    }
+    
     res.json({
       success: true,
       enquiryId: newBooking.id,

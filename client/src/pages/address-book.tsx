@@ -28,6 +28,7 @@ export default function AddressBook() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [clientFilter, setClientFilter] = useState<'all' | 'inquired' | 'booked' | 'both'>('all');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -181,11 +182,36 @@ export default function AddressBook() {
 
   // Filter and sort clients
   const filteredAndSortedClients = clients
-    .filter((client: Client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.phone?.includes(searchQuery)
-    )
+    .filter((client: Client) => {
+      // Search filter
+      const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.phone?.includes(searchQuery);
+      
+      if (!matchesSearch) return false;
+      
+      // Client type filter based on booking data
+      if (clientFilter !== 'all') {
+        const bookingIds = client.bookingIds ? JSON.parse(client.bookingIds) : [];
+        const hasAnyContact = bookingIds.length > 0;
+        
+        switch (clientFilter) {
+          case 'inquired':
+            // Clients who have made initial contact (1-2 bookings, likely inquiries)
+            return hasAnyContact && client.totalBookings <= 2;
+          case 'booked':
+            // Clients who have actually booked events (3+ bookings, showing repeat business)
+            return hasAnyContact && client.totalBookings >= 3;
+          case 'both':
+            // Any client with contact history
+            return hasAnyContact;
+          default:
+            return true;
+        }
+      }
+      
+      return true;
+    })
     .sort((a: Client, b: Client) => {
       let aValue: any, bValue: any;
       
@@ -394,6 +420,19 @@ export default function AddressBook() {
               
               {/* Controls */}
               <div className="flex gap-2 items-center">
+                {/* Client Filter */}
+                <Select value={clientFilter} onValueChange={(value: any) => setClientFilter(value)}>
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="Filter clients" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Clients</SelectItem>
+                    <SelectItem value="inquired">Initial Inquiries (1-2 contacts)</SelectItem>
+                    <SelectItem value="booked">Repeat Clients (3+ bookings)</SelectItem>
+                    <SelectItem value="both">Has Contact History</SelectItem>
+                  </SelectContent>
+                </Select>
+                
                 {/* Populate from Bookings Button */}
                 <Button
                   variant="outline"
@@ -519,8 +558,10 @@ export default function AddressBook() {
                 </h3>
                 <p className="text-gray-600 mb-4">
                   {searchQuery 
-                    ? "Try adjusting your search terms"
-                    : "Your address book will populate automatically as you receive enquiries, or you can add clients manually."
+                    ? `No clients found matching "${searchQuery}". Try adjusting your search or filter.`
+                    : clientFilter !== 'all' 
+                      ? `No clients found in the "${clientFilter}" category. Try changing the filter or importing from bookings.`
+                      : "Your address book will populate automatically as you receive enquiries, or you can add clients manually."
                   }
                 </p>
                 {!searchQuery && (
