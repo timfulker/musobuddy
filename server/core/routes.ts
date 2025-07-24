@@ -531,7 +531,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // PUBLIC INVOICE VIEWING - COPIED FROM CONTRACT PATTERN
+  // PUBLIC INVOICE VIEWING WITH DOWNLOAD BUTTON
   app.get('/view/invoices/:id', async (req, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
@@ -546,30 +546,279 @@ export async function registerRoutes(app: Express) {
           <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
             <h1 style="color: #dc2626;">Invoice Not Found</h1>
             <p>The invoice you're looking for could not be found.</p>
-            <a href="/" style="color: #2563eb;">← Back to Invoices</a>
+            <a href="/" style="color: #2563eb;">← Back to Home</a>
           </body>
           </html>
         `);
       }
 
-      // If invoice has cloud storage URL, redirect to it
-      if (invoice.cloudStorageUrl) {
-        console.log('🔗 Redirecting to cloud storage URL:', invoice.cloudStorageUrl);
-        return res.redirect(invoice.cloudStorageUrl);
-      }
-
-      // Otherwise, generate and serve PDF
       const userSettings = await storage.getSettings(invoice.userId);
-      const { generateInvoicePDF } = await import('./pdf-generator');
-      const pdfBuffer = await generateInvoicePDF(invoice, null, userSettings);
+      const businessName = userSettings?.businessName || 'MusoBuddy';
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
-      res.send(pdfBuffer);
+      // Generate HTML page with embedded PDF and download button
+      const invoiceViewingPage = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Invoice #${invoice.invoiceNumber} | ${businessName}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+              background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+              min-height: 100vh;
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .header {
+              background: white;
+              padding: 20px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              text-align: center;
+            }
+            
+            .header h1 {
+              color: #2563eb;
+              font-size: 28px;
+              margin-bottom: 10px;
+            }
+            
+            .header p {
+              color: #6b7280;
+              font-size: 16px;
+            }
+            
+            .container {
+              flex: 1;
+              max-width: 1200px;
+              margin: 0 auto;
+              padding: 20px;
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+            }
+            
+            .invoice-details {
+              background: white;
+              padding: 20px;
+              border-radius: 10px;
+              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 20px;
+            }
+            
+            .invoice-info {
+              display: flex;
+              gap: 40px;
+              flex-wrap: wrap;
+            }
+            
+            .info-item {
+              text-align: left;
+            }
+            
+            .info-label {
+              font-size: 12px;
+              color: #6b7280;
+              text-transform: uppercase;
+              font-weight: 600;
+              margin-bottom: 5px;
+            }
+            
+            .info-value {
+              font-size: 16px;
+              color: #111827;
+              font-weight: 500;
+            }
+            
+            .amount {
+              font-size: 24px;
+              color: #059669;
+              font-weight: bold;
+            }
+            
+            .download-section {
+              display: flex;
+              gap: 15px;
+              align-items: center;
+            }
+            
+            .download-btn {
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              padding: 12px 24px;
+              border: none;
+              border-radius: 8px;
+              font-size: 16px;
+              font-weight: 600;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              transition: all 0.3s ease;
+              text-decoration: none;
+            }
+            
+            .download-btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            }
+            
+            .pdf-container {
+              background: white;
+              border-radius: 10px;
+              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+              overflow: hidden;
+              flex: 1;
+              min-height: 800px;
+            }
+            
+            .pdf-frame {
+              width: 100%;
+              height: 800px;
+              border: none;
+            }
+            
+            .status-badge {
+              padding: 6px 12px;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: 600;
+              text-transform: uppercase;
+            }
+            
+            .status-paid {
+              background: #d1fae5;
+              color: #065f46;
+            }
+            
+            .status-sent {
+              background: #dbeafe;
+              color: #1e40af;
+            }
+            
+            .status-draft {
+              background: #f3f4f6;
+              color: #374151;
+            }
+            
+            .status-overdue {
+              background: #fee2e2;
+              color: #991b1b;
+            }
+            
+            @media (max-width: 768px) {
+              .container {
+                padding: 10px;
+              }
+              
+              .invoice-details {
+                flex-direction: column;
+                text-align: center;
+              }
+              
+              .invoice-info {
+                justify-content: center;
+                gap: 20px;
+              }
+              
+              .header h1 {
+                font-size: 24px;
+              }
+              
+              .pdf-frame {
+                height: 600px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Invoice #${invoice.invoiceNumber}</h1>
+            <p>From ${businessName}</p>
+          </div>
+          
+          <div class="container">
+            <div class="invoice-details">
+              <div class="invoice-info">
+                <div class="info-item">
+                  <div class="info-label">Client</div>
+                  <div class="info-value">${invoice.clientName}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Date</div>
+                  <div class="info-value">${new Date(invoice.createdAt).toLocaleDateString('en-GB')}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Due Date</div>
+                  <div class="info-value">${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Amount</div>
+                  <div class="info-value amount">£${Number(invoice.amount).toLocaleString()}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Status</div>
+                  <div class="status-badge status-${invoice.status}">
+                    ${invoice.status === 'paid' ? '✅ Paid' : 
+                      invoice.status === 'sent' ? '📧 Sent' : 
+                      invoice.status === 'overdue' ? '⚠️ Overdue' : 
+                      '📄 Draft'}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="download-section">
+                <a href="/download/invoices/${invoice.id}" class="download-btn" target="_blank">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download PDF
+                </a>
+              </div>
+            </div>
+            
+            <div class="pdf-container">
+              <iframe 
+                src="${invoice.cloudStorageUrl || `/download/invoices/${invoice.id}`}" 
+                class="pdf-frame"
+                title="Invoice #${invoice.invoiceNumber}">
+              </iframe>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(invoiceViewingPage);
 
     } catch (error: any) {
       console.error('❌ Invoice view error:', error);
-      res.status(500).send('Error loading invoice');
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Error Loading Invoice</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1 style="color: #dc2626;">Error Loading Invoice</h1>
+          <p>There was an error loading the invoice. Please try again later.</p>
+          <a href="/" style="color: #2563eb;">← Back to Home</a>
+        </body>
+        </html>
+      `);
     }
   });
 
@@ -644,6 +893,296 @@ export async function registerRoutes(app: Express) {
         error: 'Failed to download invoice',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
+    }
+  });
+
+  // PUBLIC COMPLIANCE DOCUMENT VIEWING WITH DOWNLOAD BUTTON
+  app.get('/view/compliance/:id', async (req, res) => {
+    try {
+      const complianceId = parseInt(req.params.id);
+      console.log('👁️ Public compliance document view request for ID:', complianceId);
+
+      const compliance = await storage.getComplianceDocument(complianceId);
+      if (!compliance) {
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html>
+          <head><title>Document Not Found</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1 style="color: #dc2626;">Document Not Found</h1>
+            <p>The compliance document you're looking for could not be found.</p>
+            <a href="/" style="color: #2563eb;">← Back to Home</a>
+          </body>
+          </html>
+        `);
+      }
+
+      const userSettings = await storage.getSettings(compliance.userId);
+      const businessName = userSettings?.businessName || 'MusoBuddy';
+
+      const getDocumentTypeLabel = (type: string): string => {
+        switch (type) {
+          case 'public_liability':
+            return 'Public Liability Insurance';
+          case 'pat_testing':
+            return 'PAT Testing Certificate';
+          case 'music_license':
+            return 'Music Performance License';
+          default:
+            return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+      };
+
+      const getStatusInfo = (status: string) => {
+        switch (status) {
+          case 'valid':
+            return { color: '#065f46', bg: '#d1fae5', icon: '✅', text: 'Valid' };
+          case 'expiring':
+            return { color: '#92400e', bg: '#fef3c7', icon: '⚠️', text: 'Expiring Soon' };
+          case 'expired':
+            return { color: '#991b1b', bg: '#fee2e2', icon: '❌', text: 'Expired' };
+          default:
+            return { color: '#374151', bg: '#f3f4f6', icon: '📄', text: 'Unknown' };
+        }
+      };
+
+      const statusInfo = getStatusInfo(compliance.status);
+
+      // Generate HTML page with embedded document and download button
+      const complianceViewingPage = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${getDocumentTypeLabel(compliance.type)} | ${businessName}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+              background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+              min-height: 100vh;
+              display: flex;
+              flex-direction: column;
+            }
+            
+            .header {
+              background: white;
+              padding: 20px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              text-align: center;
+            }
+            
+            .header h1 {
+              color: #059669;
+              font-size: 28px;
+              margin-bottom: 10px;
+            }
+            
+            .header p {
+              color: #6b7280;
+              font-size: 16px;
+            }
+            
+            .container {
+              flex: 1;
+              max-width: 1200px;
+              margin: 0 auto;
+              padding: 20px;
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+            }
+            
+            .document-details {
+              background: white;
+              padding: 20px;
+              border-radius: 10px;
+              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 20px;
+            }
+            
+            .document-info {
+              display: flex;
+              gap: 40px;
+              flex-wrap: wrap;
+            }
+            
+            .info-item {
+              text-align: left;
+            }
+            
+            .info-label {
+              font-size: 12px;
+              color: #6b7280;
+              text-transform: uppercase;
+              font-weight: 600;
+              margin-bottom: 5px;
+            }
+            
+            .info-value {
+              font-size: 16px;
+              color: #111827;
+              font-weight: 500;
+            }
+            
+            .download-section {
+              display: flex;
+              gap: 15px;
+              align-items: center;
+            }
+            
+            .download-btn {
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              padding: 12px 24px;
+              border: none;
+              border-radius: 8px;
+              font-size: 16px;
+              font-weight: 600;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              transition: all 0.3s ease;
+              text-decoration: none;
+            }
+            
+            .download-btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            }
+            
+            .document-container {
+              background: white;
+              border-radius: 10px;
+              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+              overflow: hidden;
+              flex: 1;
+              min-height: 800px;
+            }
+            
+            .document-frame {
+              width: 100%;
+              height: 800px;
+              border: none;
+            }
+            
+            .status-badge {
+              padding: 6px 12px;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: 600;
+              text-transform: uppercase;
+              background: ${statusInfo.bg};
+              color: ${statusInfo.color};
+            }
+            
+            @media (max-width: 768px) {
+              .container {
+                padding: 10px;
+              }
+              
+              .document-details {
+                flex-direction: column;
+                text-align: center;
+              }
+              
+              .document-info {
+                justify-content: center;
+                gap: 20px;
+              }
+              
+              .header h1 {
+                font-size: 24px;
+              }
+              
+              .document-frame {
+                height: 600px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${getDocumentTypeLabel(compliance.type)}</h1>
+            <p>From ${businessName}</p>
+          </div>
+          
+          <div class="container">
+            <div class="document-details">
+              <div class="document-info">
+                <div class="info-item">
+                  <div class="info-label">Document Type</div>
+                  <div class="info-value">${getDocumentTypeLabel(compliance.type)}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Uploaded</div>
+                  <div class="info-value">${new Date(compliance.createdAt).toLocaleDateString('en-GB')}</div>
+                </div>
+                ${compliance.expiryDate ? `
+                <div class="info-item">
+                  <div class="info-label">Expires</div>
+                  <div class="info-value">${new Date(compliance.expiryDate).toLocaleDateString('en-GB')}</div>
+                </div>
+                ` : ''}
+                <div class="info-item">
+                  <div class="info-label">Status</div>
+                  <div class="status-badge">
+                    ${statusInfo.icon} ${statusInfo.text}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="download-section">
+                <a href="${compliance.documentUrl}" class="download-btn" target="_blank">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download Document
+                </a>
+              </div>
+            </div>
+            
+            <div class="document-container">
+              <iframe 
+                src="${compliance.documentUrl}" 
+                class="document-frame"
+                title="${getDocumentTypeLabel(compliance.type)}">
+              </iframe>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(complianceViewingPage);
+
+    } catch (error: any) {
+      console.error('❌ Compliance document view error:', error);
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Error Loading Document</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1 style="color: #dc2626;">Error Loading Document</h1>
+          <p>There was an error loading the compliance document. Please try again later.</p>
+          <a href="/" style="color: #2563eb;">← Back to Home</a>
+        </body>
+        </html>
+      `);
     }
   });
 
