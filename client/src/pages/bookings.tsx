@@ -248,7 +248,7 @@ export default function UnifiedBookings() {
     mutationFn: async ({ bookingIds, status }: { bookingIds: number[], status: string }) => {
       const promises = bookingIds.map(id => 
         apiRequest(`/api/bookings/${id}`, { 
-          method: 'PUT',
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status })
         })

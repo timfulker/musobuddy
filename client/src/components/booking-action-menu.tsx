@@ -24,7 +24,7 @@ export default function BookingActionMenu({ booking, onSendCompliance }: Booking
   const statusUpdateMutation = useMutation({
     mutationFn: async ({ bookingId, newStatus }: { bookingId: number; newStatus: string }) => {
       return apiRequest(`/api/bookings/${bookingId}`, {
-        method: 'PUT',
+        method: 'PATCH',
         body: JSON.stringify({ status: newStatus }),
         headers: { 'Content-Type': 'application/json' }
       });
