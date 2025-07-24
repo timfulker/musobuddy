@@ -725,17 +725,10 @@ export default function UnifiedBookings() {
                   </Button>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Scrollable Content Area - Force height constraint */}
-        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 300px)' }}>
-          <div className="p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Bulk Actions Toolbar */}
+              {/* Bulk Actions Toolbar - Fixed in Header */}
               {selectedBookings.length > 0 && (
-                <Card className="bg-blue-50 border-blue-200">
+                <Card className="bg-blue-50 border-blue-200 mt-4">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -780,19 +773,27 @@ export default function UnifiedBookings() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                         <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={handleBulkDelete}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Selected
-                      </Button>
+                          variant="destructive" 
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Selected
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Scrollable Content Area - Force height constraint */}
+        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 380px)' }}>
+          <div className="p-6">
+            <div className="max-w-7xl mx-auto space-y-6">
 
             {/* Content Based on View Mode */}
             {viewMode === 'list' ? (
