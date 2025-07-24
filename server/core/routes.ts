@@ -2406,24 +2406,43 @@ export async function registerRoutes(app: Express) {
 
   app.post('/api/clients/populate-from-bookings', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('🔄 Starting address book population for user:', req.user.id);
+      
       const bookings = await storage.getBookings(req.user.id);
+      console.log(`📚 Found ${bookings.length} bookings to process`);
+      
       let createdCount = 0;
+      let skippedCount = 0;
       
       for (const booking of bookings) {
+        console.log(`Processing booking ${booking.id}: ${booking.clientName}`);
         if (booking.clientName) {
-          await storage.upsertClientFromBooking(booking, req.user.id);
-          createdCount++;
+          const result = await storage.upsertClientFromBooking(booking, req.user.id);
+          if (result) {
+            createdCount++;
+            console.log(`✅ Created/updated client: ${booking.clientName}`);
+          } else {
+            skippedCount++;
+            console.log(`⚠️ Skipped booking ${booking.id}: no client name`);
+          }
+        } else {
+          skippedCount++;
+          console.log(`⚠️ Skipped booking ${booking.id}: no client name`);
         }
       }
       
+      console.log(`✅ Population complete: ${createdCount} clients created/updated, ${skippedCount} skipped`);
+      
       res.json({ 
         success: true, 
-        message: 'Created ' + createdCount + ' new clients',
-        createdCount
+        message: `Processed ${bookings.length} bookings: ${createdCount} clients created/updated, ${skippedCount} skipped`,
+        createdCount,
+        skippedCount,
+        totalBookings: bookings.length
       });
     } catch (error) {
-      console.error('Error populating address book:', error);
-      res.status(500).json({ error: 'Failed to populate address book' });
+      console.error('❌ Error populating address book:', error);
+      res.status(500).json({ error: 'Failed to populate address book: ' + error.message });
     }
   });
 
