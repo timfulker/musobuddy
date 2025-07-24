@@ -108,6 +108,18 @@ export default function UnifiedBookings() {
     queryKey: ["/api/contracts"],
     retry: 2,
   });
+  
+  // Debug logging to check contract data
+  React.useEffect(() => {
+    if (contracts && contracts.length > 0) {
+      console.log('📄 Contracts data:', contracts.slice(0, 3).map((c: any) => ({
+        id: c.id,
+        enquiryId: c.enquiryId,
+        contractNumber: c.contractNumber,
+        status: c.status
+      })));
+    }
+  }, [contracts]);
 
   const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices"],
@@ -920,6 +932,17 @@ export default function UnifiedBookings() {
                               const bookingInvoice = (invoices as any[]).find(
                                 (invoice: any) => invoice.bookingId === booking.id
                               );
+                              
+                              // Debug logging for first few bookings
+                              if (booking.id <= 7135) {
+                                console.log(`🔍 Booking ${booking.id} (${booking.clientName}):`, {
+                                  bookingId: booking.id,
+                                  hasContract: !!bookingContract,
+                                  contractId: bookingContract?.id,
+                                  hasInvoice: !!bookingInvoice,
+                                  invoiceId: bookingInvoice?.id
+                                });
+                              }
 
                               return (
                                 <>
