@@ -96,7 +96,7 @@ export default function ConflictResolutionModal({
       console.log('🔍 Final valid conflicting bookings:', validResults);
       return validResults;
     },
-    enabled: conflictingBookingIds.length > 0, // Always enabled when we have booking IDs
+    enabled: conflictingBookingIds.length > 0 && isOpen, // Always enabled when we have booking IDs
   });
 
   // Update booking mutation
@@ -273,7 +273,7 @@ export default function ConflictResolutionModal({
             ) : (
               <div className="text-sm bg-white p-2 rounded border">
                 {booking.eventTime && booking.eventEndTime ? 
-                  `${booking.eventTime} - ${booking.eventEndTime}` : 
+                  `${booking.eventTime?.replace(/(\d{2}):(\d{2})0+$/, '$1:$2')} - ${booking.eventEndTime?.replace(/(\d{2}):(\d{2})0+$/, '$1:$2')}` : 
                   'No time specified'
                 }
                 {conflict?.overlapMinutes && (
@@ -331,15 +331,29 @@ export default function ConflictResolutionModal({
     );
   };
 
+  // Don't show "No Conflicts Found" if we're still loading data
   if (!currentBooking || conflicts.length === 0) {
+    if (!isOpen) return null; // Don't render anything if modal is closed
+    
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>No Conflicts Found</DialogTitle>
+            <DialogTitle>
+              {conflictingBookingIds.length > 0 ? "Loading Conflicts..." : "No Conflicts Found"}
+            </DialogTitle>
           </DialogHeader>
           <div className="p-8 text-center">
-            <p className="text-muted-foreground">This booking has no conflicts.</p>
+            {conflictingBookingIds.length > 0 ? (
+              <div>
+                <p className="text-muted-foreground">Loading conflict details...</p>
+                <div className="mt-4 text-sm text-muted-foreground">
+                  Fetching {conflictingBookingIds.length} conflicting booking{conflictingBookingIds.length > 1 ? 's' : ''}
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">This booking has no conflicts.</p>
+            )}
             <Button onClick={onClose} className="mt-4">Close</Button>
           </div>
         </DialogContent>
@@ -370,7 +384,11 @@ export default function ConflictResolutionModal({
             {conflictingBookings.length > 0 ? (
               conflictingBookings.map((conflictingBooking: any, index: number) => {
                 const conflict = conflicts.find(c => c.withBookingId === conflictingBooking.id);
-                return renderBookingCard(conflictingBooking, false, conflict);
+                return (
+                  <div key={conflictingBooking.id || `conflict-${index}`}>
+                    {renderBookingCard(conflictingBooking, false, conflict)}
+                  </div>
+                );
               })
             ) : (
               <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500">
