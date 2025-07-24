@@ -59,7 +59,8 @@ export default function ConflictResolutionModal({
   
   console.log('🔍 Conflict Resolution Modal - Booking IDs:', conflictingBookingIds);
   console.log('🔍 Conflict Resolution Modal - Current Booking:', currentBooking);
-  console.log('🔍 Conflict Resolution Modal - Conflicting Booking Query Enabled:', isOpen && conflictingBookingIds.length > 0);
+  console.log('🔍 Conflict Resolution Modal - isOpen:', isOpen);
+  console.log('🔍 Conflict Resolution Modal - Conflicting Booking Query Enabled:', conflictingBookingIds.length > 0);
   console.log('🔍 Conflict Resolution Modal - Query Key:', ['/api/bookings/batch', conflictingBookingIds]);
   
   const { data: conflictingBookings = [] } = useQuery({
@@ -86,7 +87,7 @@ export default function ConflictResolutionModal({
       console.log('🔍 Final valid conflicting bookings:', validResults);
       return validResults;
     },
-    enabled: isOpen && conflictingBookingIds.length > 0,
+    enabled: conflictingBookingIds.length > 0, // Always enabled when we have booking IDs
   });
 
   // Update booking mutation
