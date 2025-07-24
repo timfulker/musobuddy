@@ -286,7 +286,11 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Two-Week Time Limit**: ✅ Limited upcoming gigs widget to show only bookings within next 14 days for focused immediate view
 - **TypeScript Compilation Fixed**: ✅ Resolved all workflow stage type issues and array handling errors
 - **Enhanced Navigation**: ✅ Added prominent "View Calendar" button in widget header for quick access to full calendar
-- **Status**: Complete dashboard reorganization with centralized upcoming gigs showing focused two-week view with professional enlarged styling
+- **Action Required Cards UI Enhancement**: ✅ Reformatted cards to show booking title prominently in green at top, moved price to secondary position, changed "Price TBC" to "£TBC"
+- **Enhanced Date Display**: ✅ Added prominent date box with gray background, larger day number (text-2xl), full year format for clarity
+- **Responsive Layout Fixes**: ✅ Fixed action required cards and calendar widget responsive issues with proper gap spacing, flex-shrink-0 for dates, min-w-0 for titles
+- **Mobile Optimization**: ✅ Implemented responsive text sizing (text-xl on mobile, text-2xl on larger screens) and proper overflow handling to prevent title truncation
+- **Status**: Complete dashboard reorganization with centralized upcoming gigs showing focused two-week view with professional enlarged styling and mobile-responsive card layouts
 
 ### 2025-07-24 - Complete Address Book System with Filtering + Auto-Population Operational
 - **Address Book Population Working**: ✅ User confirmed "Import from Bookings" functionality working automatically to populate address book from existing booking data

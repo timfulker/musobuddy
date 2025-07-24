@@ -139,30 +139,30 @@ export default function CalendarWidget() {
             const dateInfo = formatDate(gig.eventDate);
             return (
               <Link key={gig.id} href={`/bookings?id=${gig.id}`}>
-                <div className={`flex items-center space-x-6 p-6 rounded-lg ${getStatusColor(gig.status)} hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-current`}>
-                  {/* Enlarged date box */}
-                  <div className="text-center min-w-[80px]">
-                    <div className={`text-sm font-semibold ${getStatusBadgeColor(gig.status)} uppercase tracking-wide`}>
+                <div className={`flex items-center gap-3 p-4 sm:p-6 rounded-lg ${getStatusColor(gig.status)} hover:shadow-lg transition-all duration-200 cursor-pointer border-l-4 border-current`}>
+                  {/* Responsive date box */}
+                  <div className="text-center flex-shrink-0 w-16 sm:w-20">
+                    <div className={`text-xs sm:text-sm font-semibold ${getStatusBadgeColor(gig.status)} uppercase tracking-wide`}>
                       {dateInfo.month}
                     </div>
-                    <div className="text-3xl font-bold text-gray-900">
+                    <div className="text-xl sm:text-3xl font-bold text-gray-900">
                       {dateInfo.day}
                     </div>
                   </div>
                   
-                  {/* Enlarged content */}
+                  {/* Content with proper overflow handling */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-lg font-semibold text-gray-900 truncate">{gig.title}</h4>
-                    <p className="text-base text-gray-700 mt-1">{gig.venue}</p>
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{gig.title}</h4>
+                    <p className="text-sm sm:text-base text-gray-700 mt-1 truncate">{gig.venue}</p>
                     {gig.eventTime && (
-                      <p className="text-sm text-gray-600 mt-1">Time: {gig.eventTime}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-1">Time: {gig.eventTime}</p>
                     )}
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className={`text-sm font-medium px-3 py-1 rounded-full bg-white/50 ${getStatusBadgeColor(gig.status)}`}>
+                    <div className="flex items-center gap-2 sm:gap-3 mt-2 flex-wrap">
+                      <span className={`text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 rounded-full bg-white/50 ${getStatusBadgeColor(gig.status)}`}>
                         {getDisplayStatus(gig.status)}
                       </span>
                       {gig.fee && (
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-xs sm:text-sm font-semibold text-gray-900">
                           £{gig.fee}
                         </span>
                       )}
