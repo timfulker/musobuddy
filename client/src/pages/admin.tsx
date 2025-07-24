@@ -423,7 +423,7 @@ export default function AdminPanel() {
                     Beta Testing Program
                   </CardTitle>
                   <CardDescription>
-                    Manage your 4-week beta testing program with lifetime subscription rewards
+                    Manage your 4-week beta testing program with 1-year free subscription rewards
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -446,7 +446,7 @@ export default function AdminPanel() {
                           </div>
                         </div>
                         <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                          <div className="text-purple-700 font-medium">Lifetime Subscriptions</div>
+                          <div className="text-purple-700 font-medium">1-Year Free Subscriptions</div>
                           <div className="text-2xl font-bold text-purple-900">
                             {users?.filter(u => u.isBetaTester).length || 0}
                           </div>
@@ -477,7 +477,7 @@ export default function AdminPanel() {
                                   {user.betaFeedbackCount || 0} feedback submissions
                                 </div>
                                 <Badge variant="outline" className="mt-1">
-                                  Premium Access + Lifetime
+                                  Premium + 1 Year Free
                                 </Badge>
                               </div>
                             </div>
@@ -496,7 +496,7 @@ export default function AdminPanel() {
                           <li>1. Click "Add User" button above</li>
                           <li>2. Enter their email and name</li>
                           <li>3. Check "Beta Tester" checkbox</li>
-                          <li>4. This automatically gives them Premium access + Lifetime subscription after 4 weeks</li>
+                          <li>4. This automatically gives them Premium access + 1 year free subscription after 4 weeks</li>
                           <li>5. Send them the app URL to start testing</li>
                         </ol>
                       </div>
