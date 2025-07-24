@@ -179,10 +179,10 @@ export default function BookingStatusDialog({
             </Badge>
           </div>
 
-          {/* Manual Override Notice */}
+          {/* Status Change Notice */}
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Manual Override:</strong> You can change this booking to any status, even if it has contracts or invoices attached. This gives you full control to revert automatic status changes if needed.
+              <strong>Full Control:</strong> You can change this booking to any status at any time, even if it has contracts or invoices attached. This allows you to override any automatic status changes when needed.
             </p>
           </div>
 

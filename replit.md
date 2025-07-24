@@ -304,16 +304,16 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Additional Enhancements Suggested**: ✅ Identified opportunities for invoice auto-creation on completion and reminder automation
 - **Status**: Complete automatic workflow system operational - bookings progress logically through status chain with minimal manual intervention
 
-### 2025-07-24 - Flexible Automatic Status Updates + Manual Override System Complete
-- **User-Controlled Automation**: ✅ Automatic status updates happen but users retain full manual override control at all times
-- **Manual Override Button**: ✅ Added Settings button on every booking card for instant manual status changes to any status
+### 2025-07-24 - Flexible Automatic Status Updates + User Control System Complete
+- **User-Controlled Automation**: ✅ Automatic status updates happen but users retain full control through existing booking status dialogs
+- **Clean Interface Design**: ✅ Removed redundant manual override button - users can change status through standard booking status dialog
 - **Complete Status Range**: ✅ Enhanced BookingStatusDialog allows users to change bookings to any status (New, In Progress, Client Confirms, Contract Sent, Confirmed, Completed, Cancelled)
 - **Scenario Flexibility**: ✅ Users can manually revert bookings with contracts attached back to earlier statuses (e.g., Confirmed → New) if circumstances change
-- **Automatic Email Detection**: ✅ Response emails auto-update "new" → "in_progress" but can be manually reverted by user
-- **Smart Event Timing**: ✅ Thank you emails only mark "completed" for past events, but users can override this logic
-- **Manual Override Notice**: ✅ Dialog clearly explains users can change any booking to any status regardless of attachments
-- **Workflow Philosophy**: ✅ Automatic progression happens for convenience, but user always has final control to change any booking to any status
-- **Status**: FLEXIBLE AUTOMATION WITH MANUAL OVERRIDE OPERATIONAL - Automatic updates occur but users can manually revert any booking to any previous status
+- **Automatic Email Detection**: ✅ Response emails auto-update "new" → "in_progress" but can be manually changed by user through booking dialog
+- **Smart Event Timing**: ✅ Thank you emails only mark "completed" for past events, but users can override this through status dialog
+- **Sensible UI Approach**: ✅ Leverages existing status change functionality instead of adding redundant interface elements
+- **Workflow Philosophy**: ✅ Automatic progression happens for convenience, user control through standard booking management interface
+- **Status**: FLEXIBLE AUTOMATION WITH EXISTING USER CONTROLS - Automatic updates occur but users can manually change any booking status through standard booking dialogs
 
 ### 2025-07-24 - Scrollable Bookings Interface with Fixed Header Controls IMPLEMENTED
 - **Fixed Header Layout Complete**: ✅ Implemented scrollable bookings interface with fixed header controls that remain always visible
