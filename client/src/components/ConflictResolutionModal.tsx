@@ -76,8 +76,14 @@ export default function ConflictResolutionModal({
       const bookingsPromises = conflictingBookingIds.map(async (id) => {
         console.log(`🔍 Fetching booking ID: ${id}`);
         try {
-          const result = await apiRequest(`/api/bookings/${id}`);
-          console.log(`✅ Successfully fetched booking ${id}:`, result);
+          const response = await fetch(`/api/bookings/${id}`, {
+            credentials: 'include'
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const result = await response.json();
+          console.log(`✅ Successfully fetched booking ${id}:`, result?.clientName || 'No client name');
           return result;
         } catch (error) {
           console.error(`❌ Failed to fetch booking ${id}:`, error);
