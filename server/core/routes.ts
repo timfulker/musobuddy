@@ -1,13 +1,13 @@
 import { type Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { isAuthenticated, isAdmin } from "./auth-clean";
+import { isAuthenticated, isAdmin, isBetaTester, isAdminOrBetaTester } from "./auth-clean";
 import { mailgunService, contractParserService, cloudStorageService } from "./services";
 import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
 import { stripeService } from "./stripe-service";
 import { db } from "./database";
-import { users, bookings, contracts, invoices } from "../../shared/schema";
+import { users, bookings, contracts, invoices, feedback } from "../../shared/schema";
 import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import multer from "multer";
@@ -153,6 +153,124 @@ export async function registerRoutes(app: Express) {
   });
 
 
+
+  // ===== FEEDBACK ROUTES (BETA TESTERS ONLY) =====
+  
+  // Get all feedback (admin only - can see all feedback)
+  app.get('/api/feedback', isAuthenticated, async (req: any, res: any) => {
+    try {
+      const userId = req.user.id;
+      
+      if (req.user.isAdmin) {
+        // Admin can see all feedback with user information
+        const allFeedback = await db
+          .select({
+            id: feedback.id,
+            userId: feedback.userId,
+            type: feedback.type,
+            title: feedback.title,
+            description: feedback.description,
+            priority: feedback.priority,
+            status: feedback.status,
+            page: feedback.page,
+            adminNotes: feedback.adminNotes,
+            resolvedAt: feedback.resolvedAt,
+            createdAt: feedback.createdAt,
+            updatedAt: feedback.updatedAt,
+            userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+            userEmail: users.email
+          })
+          .from(feedback)
+          .leftJoin(users, eq(feedback.userId, users.id))
+          .orderBy(sql`${feedback.createdAt} DESC`);
+        
+        res.json(allFeedback);
+      } else if (req.user.isBetaTester) {
+        // Beta testers can only see their own feedback
+        const userFeedback = await db
+          .select()
+          .from(feedback)
+          .where(eq(feedback.userId, userId))
+          .orderBy(sql`${feedback.createdAt} DESC`);
+        
+        res.json(userFeedback);
+      } else {
+        // Non-beta testers have no access
+        res.status(403).json({ error: 'Beta tester access required' });
+      }
+    } catch (error) {
+      console.error('❌ Feedback fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch feedback' });
+    }
+  });
+
+  // Create feedback (beta testers only)
+  app.post('/api/feedback', isAdminOrBetaTester, async (req: any, res: any) => {
+    try {
+      const { type, title, description, priority = 'medium', page } = req.body;
+      const userId = req.user.id;
+
+      if (!type || !title || !description) {
+        return res.status(400).json({ error: 'Type, title, and description are required' });
+      }
+
+      const newFeedback = await db.insert(feedback).values({
+        userId,
+        type,
+        title,
+        description,
+        priority,
+        page,
+        status: 'open',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }).returning();
+
+      // Update beta tester feedback count
+      if (req.user.isBetaTester) {
+        await db
+          .update(users)
+          .set({ 
+            betaFeedbackCount: sql`${users.betaFeedbackCount} + 1`
+          })
+          .where(eq(users.id, userId));
+      }
+
+      console.log('✅ New feedback created:', newFeedback[0]);
+      res.json(newFeedback[0]);
+    } catch (error) {
+      console.error('❌ Feedback creation error:', error);
+      res.status(500).json({ error: 'Failed to create feedback' });
+    }
+  });
+
+  // Update feedback status (admin only)
+  app.patch('/api/feedback/:id', isAdmin, async (req: any, res: any) => {
+    try {
+      const feedbackId = parseInt(req.params.id);
+      const { status, adminNotes } = req.body;
+
+      const updateData: any = { updatedAt: new Date() };
+      if (status) updateData.status = status;
+      if (adminNotes !== undefined) updateData.adminNotes = adminNotes;
+      if (status === 'resolved') updateData.resolvedAt = new Date();
+
+      const updatedFeedback = await db
+        .update(feedback)
+        .set(updateData)
+        .where(eq(feedback.id, feedbackId))
+        .returning();
+
+      if (updatedFeedback.length === 0) {
+        return res.status(404).json({ error: 'Feedback not found' });
+      }
+
+      res.json(updatedFeedback[0]);
+    } catch (error) {
+      console.error('❌ Feedback update error:', error);
+      res.status(500).json({ error: 'Failed to update feedback' });
+    }
+  });
 
   const server = createServer(app);
 

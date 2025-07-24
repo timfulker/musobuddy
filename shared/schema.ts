@@ -396,6 +396,22 @@ export const bookingConflicts = pgTable("booking_conflicts", {
   resolvedAt: timestamp("resolved_at"),
 });
 
+// Beta tester feedback table - restricted access for beta testers only
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  type: varchar("type").notNull(), // 'bug', 'feature', 'improvement', 'other'
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  priority: varchar("priority").default("medium"), // 'low', 'medium', 'high', 'critical'
+  status: varchar("status").default("open"), // 'open', 'in_progress', 'resolved', 'closed'
+  page: varchar("page"), // Page where feedback was submitted
+  adminNotes: text("admin_notes"), // Admin-only notes
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   contracts: many(contracts),
@@ -545,30 +561,13 @@ export const insertInstrumentMappingSchema = createInsertSchema(instrumentMappin
   updatedAt: true,
 });
 
-// Feedback table for beta testers
-export const feedback = pgTable('feedback', {
-  id: text('id').primaryKey(),
-  userId: text('user_id').references(() => users.id).notNull(),
-  type: text('type').notNull(), // 'bug', 'feature', 'improvement', 'other'
-  title: text('title').notNull(),
-  description: text('description').notNull(),
-  priority: text('priority').notNull(), // 'low', 'medium', 'high', 'critical'
-  status: text('status').notNull().default('open'), // 'open', 'in-progress', 'resolved', 'closed'
-  page: text('page'), // current page when feedback was submitted
-  userAgent: text('user_agent'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  adminNotes: text('admin_notes'),
-  resolvedAt: timestamp('resolved_at'),
-  resolvedBy: text('resolved_by').references(() => users.id),
-});
+
 
 export const insertFeedbackSchema = createInsertSchema(feedback).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
   resolvedAt: true,
-  resolvedBy: true,
 });
 
 export const insertUserActivitySchema = createInsertSchema(userActivity).omit({

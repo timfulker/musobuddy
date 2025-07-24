@@ -56,3 +56,23 @@ export async function isAdmin(req: any, res: any, next: any) {
   console.log('❌ Admin access required');
   res.status(403).json({ error: 'Admin access required' });
 }
+
+// Beta tester middleware
+export async function isBetaTester(req: any, res: any, next: any) {
+  if (req.user?.isBetaTester || req.user?.isAdmin) {
+    return next();
+  }
+  
+  console.log('❌ Beta tester access required');
+  res.status(403).json({ error: 'Beta tester access required' });
+}
+
+// Admin or beta tester middleware
+export async function isAdminOrBetaTester(req: any, res: any, next: any) {
+  if (req.user?.isAdmin || req.user?.isBetaTester) {
+    return next();
+  }
+  
+  console.log('❌ Beta tester or admin access required');
+  res.status(403).json({ error: 'Beta tester or admin access required' });
+}

@@ -45,6 +45,26 @@ export default function FeedbackPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Access control - only beta testers can access this page
+  if (!user?.isBetaTester && !user?.isAdmin) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Beta Tester Access Required
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 max-w-md">
+              This feedback system is currently available to beta testers only. 
+              Contact the administrator for beta testing access.
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   
   const [newFeedbackOpen, setNewFeedbackOpen] = useState(false);
   const [feedbackForm, setFeedbackForm] = useState({
@@ -179,9 +199,12 @@ export default function FeedbackPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Feedback & Support</h1>
+            <h1 className="text-3xl font-bold">Beta Feedback System</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Help us improve MusoBuddy by reporting bugs and suggesting features
+              {user?.isAdmin 
+                ? "View and manage all beta tester feedback submissions"
+                : "Help us improve MusoBuddy by reporting bugs and suggesting features during your beta testing period"
+              }
             </p>
           </div>
           
@@ -275,7 +298,9 @@ export default function FeedbackPage() {
         {/* Feedback List */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Feedback</CardTitle>
+            <CardTitle>
+              {user?.isAdmin ? "All Beta Tester Feedback" : "Your Feedback"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {feedbackLoading ? (
