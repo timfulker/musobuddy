@@ -59,6 +59,7 @@ export default function AdminPanel() {
     email: '',
     firstName: '',
     lastName: '',
+    password: '',
     tier: 'free',
     isAdmin: false,
     isBetaTester: false
@@ -90,6 +91,7 @@ export default function AdminPanel() {
         email: '',
         firstName: '',
         lastName: '',
+        password: '',
         tier: 'free',
         isAdmin: false,
         isBetaTester: false
@@ -113,6 +115,14 @@ export default function AdminPanel() {
       toast({
         title: "Email required",
         description: "Please enter an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!newUserForm.password) {
+      toast({
+        title: "Password required",
+        description: "Please enter a temporary password for the user",
         variant: "destructive",
       });
       return;
@@ -317,6 +327,16 @@ export default function AdminPanel() {
                                 onChange={(e) => setNewUserForm(prev => ({ ...prev, lastName: e.target.value }))}
                               />
                             </div>
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="password">Temporary Password</Label>
+                            <Input
+                              id="password"
+                              type="password"
+                              placeholder="Enter temporary password for user"
+                              value={newUserForm.password}
+                              onChange={(e) => setNewUserForm(prev => ({ ...prev, password: e.target.value }))}
+                            />
                           </div>
                           <div className="grid gap-2">
                             <Label htmlFor="tier">Subscription Tier</Label>
