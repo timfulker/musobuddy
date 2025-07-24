@@ -9,7 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import logoImage from "/musobuddy-logo-purple.png";
-import { Calendar, FileText, CreditCard, Shield, Zap, Users, Star, CheckCircle, Music, TrendingUp, Clock, Target, Play, ArrowRight } from "lucide-react";
+import { Calendar, FileText, CreditCard, Shield, Zap, Users, Star, CheckCircle, Music, TrendingUp, Clock, Target, Play, ArrowRight, Crown } from "lucide-react";
 
 export default function LandingPage() {
   const [showLogin, setShowLogin] = useState(false);
@@ -207,6 +207,13 @@ export default function LandingPage() {
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
+                onClick={() => setLocation("/pricing")}
+                className="text-purple-600 hover:text-purple-700"
+              >
+                Pricing
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => setShowLogin(true)}
                 className="text-purple-600 hover:text-purple-700"
               >
@@ -252,6 +259,15 @@ export default function LandingPage() {
             >
               Start Your Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button
+              onClick={() => setLocation("/pricing")}
+              variant="outline"
+              size="lg"
+              className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg"
+            >
+              <Crown className="mr-2 h-5 w-5" />
+              View Pricing
             </Button>
             <Button
               onClick={() => setShowLogin(true)}

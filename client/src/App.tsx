@@ -53,6 +53,7 @@ function Router() {
       <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/quick-add" component={QuickAdd} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/pricing" component={Pricing} />
       <Route path="/logout" component={() => {
         // Client-side logout handler - clears cache and redirects
         fetch('/api/logout', {
@@ -87,7 +88,6 @@ function Router() {
           <Route path="/user-guide" component={UserGuide} />
           <Route path="/feedback" component={Feedback} />
           <Route path="/admin" component={Admin} />
-          <Route path="/pricing" component={Pricing} />
         </>
       )}
       <Route component={NotFound} />
