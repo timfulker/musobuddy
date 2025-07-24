@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertClientSchema, type InsertClient, type Client } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight, ArrowLeft, AlertTriangle, UserPlus, Download, Edit2, Eye } from "lucide-react";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { Link } from "wouter";
@@ -109,16 +109,9 @@ export default function AddressBook() {
 
   const form = useForm<InsertClient>({
     resolver: zodResolver(insertClientSchema.omit({ 
-      userId: true, 
-      id: true, 
-      createdAt: true, 
-      updatedAt: true, 
       totalBookings: true, 
       totalRevenue: true,
-      bookingIds: true,
-      lastContactDate: true,
-      hasInquired: true,
-      hasBooked: true
+      bookingIds: true
     })),
     defaultValues: {
       name: "",
@@ -198,10 +191,10 @@ export default function AddressBook() {
         switch (clientFilter) {
           case 'inquired':
             // Clients who have made initial contact (1-2 bookings, likely inquiries)
-            return hasAnyContact && client.totalBookings <= 2;
+            return hasAnyContact && (client.totalBookings || 0) <= 2;
           case 'booked':
             // Clients who have actually booked events (3+ bookings, showing repeat business)
-            return hasAnyContact && client.totalBookings >= 3;
+            return hasAnyContact && (client.totalBookings || 0) >= 3;
           case 'both':
             // Any client with contact history
             return hasAnyContact;
