@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -106,6 +106,11 @@ export default function UnifiedBookings() {
 
   const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
+    retry: 2,
+  });
+
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["/api/invoices"],
     retry: 2,
   });
 
@@ -904,6 +909,55 @@ export default function UnifiedBookings() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {/* Document Viewing Buttons */}
+                            {(() => {
+                              // Find contract for this booking
+                              const bookingContract = (contracts as any[]).find(
+                                (contract: any) => contract.enquiryId === booking.id
+                              );
+                              
+                              // Find invoice for this booking  
+                              const bookingInvoice = (invoices as any[]).find(
+                                (invoice: any) => invoice.bookingId === booking.id
+                              );
+
+                              return (
+                                <>
+                                  {/* View Contract Button */}
+                                  {bookingContract && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(`/view/contracts/${bookingContract.id}`, '_blank');
+                                      }}
+                                    >
+                                      <FileText className="w-4 h-4 mr-1" />
+                                      View Contract
+                                    </Button>
+                                  )}
+                                  
+                                  {/* View Invoice Button */}
+                                  {bookingInvoice && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      className="text-green-600 border-green-200 hover:bg-green-50"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(`/view/invoices/${bookingInvoice.id}`, '_blank');
+                                      }}
+                                    >
+                                      <Receipt className="w-4 h-4 mr-1" />
+                                      View Invoice
+                                    </Button>
+                                  )}
+                                </>
+                              );
+                            })()}
+
                             {/* Contract Call-to-Action for Client Confirms status */}
                             {booking.status === 'client_confirms' && (
                               <Button 
