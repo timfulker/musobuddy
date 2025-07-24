@@ -1,6 +1,6 @@
 import { db } from "./database";
 import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments, clients } from "../../shared/schema";
-import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, lt } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export class Storage {
@@ -555,6 +555,69 @@ Warm regards and best wishes,
       bookings: bookingCount[0].count,
       contracts: contractCount[0].count,
       invoices: invoiceCount[0].count
+    };
+  }
+
+  async getDashboardStats(userId: string) {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // Monthly revenue calculation
+    const monthlyRevenueResult = await db.select({
+      total: sql<number>`sum(cast(${invoices.amount} as decimal))`
+    }).from(invoices)
+      .where(and(
+        eq(invoices.userId, userId),
+        eq(invoices.status, 'paid'),
+        gte(invoices.eventDate, startOfMonth),
+        lte(invoices.eventDate, endOfMonth)
+      ));
+
+    // Active bookings (confirmed status)
+    const activeBookingsResult = await db.select({
+      count: sql<number>`count(*)`
+    }).from(bookings)
+      .where(and(
+        eq(bookings.userId, userId),
+        eq(bookings.status, 'confirmed'),
+        gte(bookings.eventDate, now)
+      ));
+
+    // Enquiries requiring response (new status)
+    const enquiriesResult = await db.select({
+      count: sql<number>`count(*)`
+    }).from(bookings)
+      .where(and(
+        eq(bookings.userId, userId),
+        eq(bookings.status, 'new')
+      ));
+
+    // Pending invoices
+    const pendingInvoicesResult = await db.select({
+      total: sql<number>`sum(cast(${invoices.amount} as decimal))`
+    }).from(invoices)
+      .where(and(
+        eq(invoices.userId, userId),
+        eq(invoices.status, 'sent')
+      ));
+
+    // Overdue invoices
+    const overdueInvoicesResult = await db.select({
+      count: sql<number>`count(*)`
+    }).from(invoices)
+      .where(and(
+        eq(invoices.userId, userId),
+        eq(invoices.status, 'sent'),
+        lt(invoices.dueDate, now)
+      ));
+
+    return {
+      monthlyRevenue: Number(monthlyRevenueResult[0]?.total || 0),
+      activeBookings: Number(activeBookingsResult[0]?.count || 0),
+      enquiriesRequiringResponse: Number(enquiriesResult[0]?.count || 0),
+      pendingInvoices: Number(pendingInvoicesResult[0]?.total || 0),
+      overdueInvoices: Number(overdueInvoicesResult[0]?.count || 0)
     };
   }
 

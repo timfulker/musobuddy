@@ -2158,6 +2158,17 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== DASHBOARD ROUTES =====
+  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const stats = await storage.getDashboardStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error('Dashboard stats error:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    }
+  });
+
   // ===== ADMIN ROUTES =====
   app.get('/api/admin/stats', isAdmin, async (req, res) => {
     try {
@@ -2440,7 +2451,7 @@ export async function registerRoutes(app: Express) {
         skippedCount,
         totalBookings: bookings.length
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error populating address book:', error);
       res.status(500).json({ error: 'Failed to populate address book: ' + error.message });
     }
