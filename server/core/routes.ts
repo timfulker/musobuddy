@@ -1524,6 +1524,8 @@ export async function registerRoutes(app: Express) {
       const bookings = await storage.getBookings(req.user.id);
       const conflicts: any[] = [];
       
+      console.log(`🔍 Checking conflicts for ${bookings.length} bookings`);
+      
       // Check each booking against others for conflicts
       for (let i = 0; i < bookings.length; i++) {
         const booking = bookings[i];
@@ -1536,17 +1538,29 @@ export async function registerRoutes(app: Express) {
           // Check if on same date
           const bookingDate = new Date(booking.eventDate).toDateString();
           const otherDate = new Date(otherBooking.eventDate).toDateString();
+          
+          console.log(`📅 Comparing dates: ${booking.title} (${bookingDate}) vs ${otherBooking.title} (${otherDate})`);
+          
           if (bookingDate !== otherDate) continue;
           
-          // Check for time overlap
-          const bookingStart = new Date(`${booking.eventDate}T${booking.eventTime}`);
-          const bookingEnd = new Date(`${booking.eventDate}T${booking.eventEndTime}`);
-          const otherStart = new Date(`${otherBooking.eventDate}T${otherBooking.eventTime}`);
-          const otherEnd = new Date(`${otherBooking.eventDate}T${otherBooking.eventEndTime}`);
+          // Parse event date for proper ISO format
+          const eventDateStr = new Date(booking.eventDate).toISOString().split('T')[0]; // Get YYYY-MM-DD part
+          
+          // Check for time overlap with proper date construction
+          const bookingStart = new Date(`${eventDateStr}T${booking.eventTime}:00`);
+          const bookingEnd = new Date(`${eventDateStr}T${booking.eventEndTime}:00`);
+          const otherStart = new Date(`${eventDateStr}T${otherBooking.eventTime}:00`);
+          const otherEnd = new Date(`${eventDateStr}T${otherBooking.eventEndTime}:00`);
+          
+          console.log(`⏰ Time comparison: ${booking.title} (${booking.eventTime}-${booking.eventEndTime}) vs ${otherBooking.title} (${otherBooking.eventTime}-${otherBooking.eventEndTime})`);
+          console.log(`⏰ Parsed times: ${bookingStart.toISOString()} - ${bookingEnd.toISOString()} vs ${otherStart.toISOString()} - ${otherEnd.toISOString()}`);
           
           const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
           
+          console.log(`🔄 Overlap check: ${hasTimeOverlap}`);
+          
           if (hasTimeOverlap) {
+            console.log(`🚨 CONFLICT DETECTED: ${booking.title} overlaps with ${otherBooking.title}`);
             conflicts.push({
               id: `${booking.id}-${otherBooking.id}`,
               enquiryId: booking.id,
