@@ -387,11 +387,32 @@ function generateContractSigningPageHTML(
   };
 
   // CRITICAL: Use app server for API calls, cloud storage for documents
-  // Dynamic URL based on environment - check for Replit production
-  const isReplit = process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DEV_DOMAIN;
-  const APP_SERVER_URL = isReplit 
-    ? 'https://musobuddy.replit.app' 
-    : 'http://localhost:5000';
+  // BULLETPROOF URL DETECTION - production ready
+  const getAppServerUrl = () => {
+    // 1. Check for explicit production environment variable
+    if (process.env.APP_SERVER_URL) {
+      return process.env.APP_SERVER_URL;
+    }
+    
+    // 2. Check for Replit environments
+    if (process.env.REPLIT_DEPLOYMENT) {
+      return 'https://musobuddy.replit.app';
+    }
+    
+    if (process.env.REPLIT_DEV_DOMAIN) {
+      return 'https://musobuddy.replit.app';
+    }
+    
+    // 3. Check for production indicators
+    if (process.env.NODE_ENV === 'production') {
+      return 'https://musobuddy.replit.app';
+    }
+    
+    // 4. Default to localhost for development
+    return 'http://localhost:5000';
+  };
+  
+  const APP_SERVER_URL = getAppServerUrl();
   const contractId = contract.id;
 
   return `<!DOCTYPE html>
