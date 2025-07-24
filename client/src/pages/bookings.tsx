@@ -301,29 +301,6 @@ export default function UnifiedBookings() {
     localStorage.setItem('bookingViewMode', mode);
   };
 
-  // Fetch data for both views
-  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
-    queryKey: ["/api/bookings"],
-    retry: 2,
-  });
-
-  const { data: contracts = [] } = useQuery({
-    queryKey: ["/api/contracts"],
-    retry: 2,
-  });
-
-  // Filter bookings based on search and status  
-  const filteredBookings = (bookings as any[]).filter((booking: any) => {
-    const matchesSearch = !searchQuery || 
-      booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
   // Calendar navigation functions
   const goToPrevious = () => {
     const newDate = new Date(currentDate);
