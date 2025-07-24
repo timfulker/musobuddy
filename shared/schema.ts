@@ -110,18 +110,7 @@ export const userAuditLogs = pgTable("user_audit_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// User progress and milestones tracking
-export const userMilestones = pgTable("user_milestones", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
-  milestoneId: varchar("milestone_id").notNull(), // e.g., 'first-gig', 'rising-star'
-  achievedAt: timestamp("achieved_at").defaultNow(),
-  currentProgress: integer("current_progress").default(0), // Current value towards milestone
-  notified: boolean("notified").default(false), // Whether user has been notified of achievement
-}, (table) => [
-  index("idx_user_milestones_user").on(table.userId),
-  index("idx_user_milestones_milestone").on(table.milestoneId),
-]);
+
 
 
 
