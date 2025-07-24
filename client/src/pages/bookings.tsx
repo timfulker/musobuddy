@@ -109,16 +109,7 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
-  // Debug: Track contract loading for Tim Fulker
-  React.useEffect(() => {
-    if (!contractsLoading && Array.isArray(contracts)) {
-      const timContract = contracts.find((c: any) => c.clientName?.includes('Tim Fulker'));
-      console.log('🔍 Tim Fulker contract check:', {
-        contractsTotal: contracts.length,
-        timContract: timContract ? { id: timContract.id, enquiryId: timContract.enquiryId } : 'Not found'
-      });
-    }
-  }, [contracts, contractsLoading]);
+
 
   const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices"],
@@ -927,16 +918,7 @@ export default function UnifiedBookings() {
                                 (contract: any) => contract.enquiryId === booking.id
                               ) : null;
 
-                              // Debug: Log Tim Fulker booking specifically
-                              if (booking.clientName === 'Tim Fulker') {
-                                console.log(`🔍 Tim Fulker booking ${booking.id} contract search:`, {
-                                  bookingId: booking.id,
-                                  enquiryId: booking.id,
-                                  contractFound: !!bookingContract,
-                                  contractDetails: bookingContract ? { id: bookingContract.id, enquiryId: bookingContract.enquiryId } : null,
-                                  allContracts: contracts?.map(c => ({ id: c.id, enquiryId: c.enquiryId, clientName: c.clientName }))
-                                });
-                              }
+
                               
                               // Find invoice for this booking  
                               const bookingInvoice = Array.isArray(invoices) ? invoices.find(
