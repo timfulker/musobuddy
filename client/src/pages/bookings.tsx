@@ -104,17 +104,10 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
-  const { data: contracts = [], isLoading: contractsLoading, refetch: refetchContracts } = useQuery({
+  const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
     retry: 2,
-    staleTime: 0, // Ensure fresh data
-    cacheTime: 0  // Don't cache
   });
-
-  // Force refresh contracts when component mounts
-  React.useEffect(() => {
-    refetchContracts();
-  }, [refetchContracts]);
 
 
 
