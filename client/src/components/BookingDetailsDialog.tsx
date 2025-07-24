@@ -1207,10 +1207,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    Upload Contract Document
+                    Contract Document
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Upload an existing contract PDF to store with this booking for easy viewing
+                    Upload an existing contract PDF or use AI parsing to extract booking details
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1251,32 +1251,65 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                       </div>
                       
                       {contractFile && (
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            onClick={handleUploadContract}
-                            disabled={isParsingContract}
-                            className="flex items-center gap-2"
-                          >
-                            {isParsingContract ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Uploading...
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="h-4 w-4" />
-                                Upload Contract
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setContractFile(null)}
-                          >
-                            Clear
-                          </Button>
+                        <div className="space-y-3">
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              onClick={handleUploadContract}
+                              disabled={isParsingContract}
+                              className="flex items-center gap-2"
+                            >
+                              {isParsingContract ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="h-4 w-4" />
+                                  Store Document
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleParseContract}
+                              disabled={isParsingContract}
+                              className="flex items-center gap-2"
+                            >
+                              {isParsingContract ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Parsing...
+                                </>
+                              ) : (
+                                <>
+                                  <FileText className="h-4 w-4" />
+                                  Parse & Fill Form
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setContractFile(null)}
+                            >
+                              Clear
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Choose "Store Document" to simply save the PDF, or "Parse & Fill Form" to extract data and populate booking fields
+                          </p>
+                        </div>
+                      )}
+                      
+                      {parseResult && (
+                        <div className="bg-green-50 p-3 rounded-md">
+                          <p className="text-sm text-green-700">
+                            Contract parsed successfully! {parseResult.fieldsUpdated || 0} fields updated.
+                            Confidence: {parseResult.confidence || 0}%
+                          </p>
                         </div>
                       )}
                     </>
