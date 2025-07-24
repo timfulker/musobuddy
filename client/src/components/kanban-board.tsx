@@ -264,13 +264,13 @@ export default function ActionableEnquiries() {
           <CardContent className="p-4">
             <div className="space-y-3">
               {/* Header with title and date */}
-              <div className="flex justify-between items-start">
-                <div className="text-lg font-bold text-green-600 dark:text-green-400 line-clamp-2 flex-1 mr-3">
+              <div className="flex justify-between items-start gap-3">
+                <div className="text-lg font-bold text-green-600 dark:text-green-400 line-clamp-2 flex-1 min-w-0">
                   {enquiry.title}
                 </div>
-                <div className="text-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2 min-w-[60px]">
+                <div className="text-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2 flex-shrink-0 w-16 sm:w-20">
                   <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">{dateBox.dayName}</div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{dateBox.dayNum}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{dateBox.dayNum}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{dateBox.monthYear}</div>
                 </div>
               </div>
