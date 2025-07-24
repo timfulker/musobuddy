@@ -14,9 +14,10 @@ import { useLocation } from "wouter";
 
 interface BookingActionMenuProps {
   booking: any;
+  onSendCompliance?: (booking: any) => void;
 }
 
-export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
+export default function BookingActionMenu({ booking, onSendCompliance }: BookingActionMenuProps) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   
@@ -66,9 +67,14 @@ export default function BookingActionMenu({ booking }: BookingActionMenuProps) {
         navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
         return; // Don't update status immediately, let template sending handle it
       case 'send_compliance':
-        // Navigate to compliance page with booking context for document sending
-        navigate(`/compliance?bookingId=${booking.id}&action=send`);
-        return; // Don't update status immediately, let compliance sending handle it
+        // Open compliance dialog directly on bookings page
+        if (onSendCompliance) {
+          onSendCompliance(booking);
+        } else {
+          // Fallback to navigation if no callback provided
+          navigate(`/compliance?bookingId=${booking.id}&action=send`);
+        }
+        return;
       case 'reject':
         newStatus = 'rejected';
         message = "Booking rejected";

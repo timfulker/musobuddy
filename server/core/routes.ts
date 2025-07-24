@@ -985,6 +985,93 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Send compliance documents to booking client
+  app.post('/api/bookings/:id/send-compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const { documentIds, recipientEmail, customMessage } = req.body;
+
+      console.log('📋 Sending compliance documents for booking:', bookingId);
+      console.log('📋 Document IDs:', documentIds);
+      console.log('📋 Recipient:', recipientEmail);
+
+      // Validate input
+      if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+        return res.status(400).json({ error: 'Document IDs are required' });
+      }
+
+      if (!recipientEmail) {
+        return res.status(400).json({ error: 'Recipient email is required' });
+      }
+
+      // Get booking details for template variables
+      const booking = await storage.getBooking(bookingId);
+      if (!booking || booking.userId !== req.user.id) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Get compliance documents
+      const allDocuments = await storage.getCompliance(req.user.id);
+      const selectedDocuments = allDocuments.filter((doc: any) => documentIds.includes(doc.id));
+
+      if (selectedDocuments.length === 0) {
+        return res.status(404).json({ error: 'No valid documents found' });
+      }
+
+      // Get user settings for business signature
+      const userSettings = await storage.getSettings(req.user.id);
+
+      // Replace template variables in custom message
+      let personalizedMessage = customMessage || '';
+      
+      // Replace booking variables
+      personalizedMessage = personalizedMessage.replace(/\[Client Name\]/g, booking.clientName || 'Client');
+      personalizedMessage = personalizedMessage.replace(/\[Event Date\]/g, booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-GB') : '[Event Date]');
+      personalizedMessage = personalizedMessage.replace(/\[Venue\]/g, booking.venue || '[Venue]');
+      personalizedMessage = personalizedMessage.replace(/\[Event Time\]/g, booking.eventTime || '[Event Time]');
+
+      // Replace business signature
+      const businessSignature = userSettings ? 
+        `${userSettings.businessName || 'MusoBuddy User'}\n${userSettings.email || ''}\n${userSettings.phone || ''}` :
+        'MusoBuddy User';
+      personalizedMessage = personalizedMessage.replace(/\[Business Signature\]/g, businessSignature);
+
+      // Send email with compliance documents
+      const { sendComplianceEmail } = await import('./mailgun-email-restored');
+      const emailResult = await sendComplianceEmail(
+        recipientEmail,
+        booking,
+        selectedDocuments,
+        personalizedMessage,
+        userSettings
+      );
+
+      if (emailResult.success) {
+        console.log('✅ Compliance documents sent successfully to:', recipientEmail);
+        res.json({
+          success: true,
+          message: 'Compliance documents sent successfully',
+          recipient: recipientEmail,
+          documentsCount: selectedDocuments.length,
+          messageId: emailResult?.messageId || 'No ID returned'
+        });
+      } else {
+        console.error('❌ Compliance email failed:', emailResult.diagnostics);
+        res.status(500).json({
+          error: 'Failed to send compliance documents',
+          details: emailResult.diagnostics?.error
+        });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Send compliance error:', error);
+      res.status(500).json({
+        error: 'Failed to send compliance documents',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // ===== INVOICE ROUTES =====
   app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {

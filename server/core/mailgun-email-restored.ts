@@ -756,6 +756,193 @@ function generateInvoiceEmailHTML(invoice: any, userSettings: any, viewUrl: stri
   `;
 }
 
+// COMPLIANCE EMAIL SENDING - NEW FUNCTION FOR SENDING COMPLIANCE DOCUMENTS
+export async function sendComplianceEmail(
+  recipientEmail: string,
+  booking: any,
+  complianceDocuments: any[],
+  customMessage: string,
+  userSettings: any
+): Promise<{ success: boolean; messageId?: string; diagnostics?: any }> {
+  try {
+    console.log('📋 COMPLIANCE EMAIL: Starting compliance email send');
+    console.log('📋 COMPLIANCE EMAIL: Recipient:', recipientEmail);
+    console.log('📋 COMPLIANCE EMAIL: Documents count:', complianceDocuments.length);
+    console.log('📋 COMPLIANCE EMAIL: Booking ID:', booking.id);
+
+    if (!process.env.MAILGUN_API_KEY) {
+      console.error('❌ MAILGUN_API_KEY not configured');
+      return { success: false, diagnostics: { error: 'Mailgun not configured' } };
+    }
+
+    const domain = 'mg.musobuddy.com';
+    
+    // Determine sender email (use authenticated domain for delivery)
+    const senderEmail = `noreply@${domain}`;
+    
+    // Determine reply-to email (use business email if available)
+    const replyToEmail = userSettings?.email || userSettings?.businessEmail || senderEmail;
+    
+    console.log('📋 COMPLIANCE EMAIL: Sender config:', {
+      from: senderEmail,
+      replyTo: replyToEmail,
+      to: recipientEmail
+    });
+
+    const emailData: EmailData = {
+      from: `${userSettings?.businessName || 'MusoBuddy'} <${senderEmail}>`,
+      to: recipientEmail,
+      subject: `Compliance Documents for ${booking.venue} - ${new Date(booking.eventDate).toLocaleDateString('en-GB')}`,
+      html: generateComplianceEmailHTML(booking, complianceDocuments, customMessage, userSettings),
+      replyTo: replyToEmail
+    };
+
+    // Attach compliance documents
+    if (complianceDocuments.length > 0) {
+      emailData.attachments = complianceDocuments.map((doc: any) => ({
+        content: doc.documentUrl, // R2 URL - Mailgun will download and attach
+        filename: doc.name || `${doc.type}.pdf`,
+        type: 'application/pdf',
+        disposition: 'attachment'
+      }));
+      console.log('📋 COMPLIANCE EMAIL: Attachments prepared:', emailData.attachments.length);
+    }
+
+    console.log('📋 COMPLIANCE EMAIL: Calling Mailgun API...');
+    
+    const result = await sendEmail(emailData);
+    
+    console.log('✅ COMPLIANCE EMAIL: Send result:', result.success);
+    if (result.messageId) {
+      console.log('✅ COMPLIANCE EMAIL: Message ID:', result.messageId);
+    }
+    
+    return result;
+    
+  } catch (error: any) {
+    console.error('❌ COMPLIANCE EMAIL: Send failed:', error);
+    return {
+      success: false,
+      diagnostics: {
+        error: error.message,
+        details: error
+      }
+    };
+  }
+}
+
+// Generate HTML content for compliance emails
+function generateComplianceEmailHTML(booking: any, complianceDocuments: any[], customMessage: string, userSettings: any): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  const businessEmail = userSettings?.email || userSettings?.businessEmail;
+
+  const documentsList = complianceDocuments.map((doc: any) => {
+    const getDocumentTypeLabel = (type: string): string => {
+      switch (type) {
+        case 'public_liability':
+          return 'Public Liability Insurance';
+        case 'pat_testing':
+          return 'PAT Testing Certificate';
+        case 'music_license':
+          return 'Music Performance License';
+        default:
+          return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      }
+    };
+
+    return `
+      <div style="background: white; padding: 15px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #10b981;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <strong style="color: #065f46;">${getDocumentTypeLabel(doc.type)}</strong>
+            ${doc.expiryDate ? `<br><span style="color: #6b7280; font-size: 14px;">Expires: ${new Date(doc.expiryDate).toLocaleDateString('en-GB')}</span>` : ''}
+          </div>
+          <span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+            ${doc.status === 'valid' ? '✅ Valid' : doc.status === 'expiring' ? '⚠️ Expiring' : '❌ Expired'}
+          </span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Documents - ${booking.venue}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+        .event-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .detail-row { margin: 10px 0; padding: 5px 0; }
+        .detail-row strong { color: #374151; }
+        .documents-section { background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .footer { margin-top: 30px; font-size: 14px; color: #6b7280; text-align: center; }
+        .message-content { white-space: pre-line; background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6366f1; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ Compliance Documentation</h1>
+        <p>Professional Certifications & Insurance</p>
+    </div>
+    
+    <div class="content">
+        ${customMessage ? `
+        <div class="message-content">
+            ${customMessage}
+        </div>
+        ` : `
+        <p>Dear ${booking.clientName},</p>
+        
+        <p>Please find attached the compliance documentation for our upcoming event:</p>
+        `}
+        
+        <div class="event-details">
+            <h3>📅 Event Details</h3>
+            <div class="detail-row">
+                <strong>Event:</strong> ${booking.venue || 'Performance'}
+            </div>
+            <div class="detail-row">
+                <strong>Date:</strong> ${new Date(booking.eventDate).toLocaleDateString('en-GB')}
+            </div>
+            ${booking.eventTime ? `
+            <div class="detail-row">
+                <strong>Time:</strong> ${booking.eventTime}
+            </div>
+            ` : ''}
+            ${booking.venueAddress ? `
+            <div class="detail-row">
+                <strong>Venue:</strong> ${booking.venueAddress}
+            </div>
+            ` : ''}
+        </div>
+        
+        <div class="documents-section">
+            <h3>📋 Attached Documents</h3>
+            ${documentsList}
+        </div>
+        
+        <p>All documents are current and valid. If you require any additional documentation or have questions about our compliance status, please don't hesitate to contact us.</p>
+        
+        <p>We look forward to providing an excellent musical experience for your event.</p>
+        
+        <p>Best regards,<br>
+        ${businessName}${businessEmail ? `<br><a href="mailto:${businessEmail}">${businessEmail}</a>` : ''}</p>
+    </div>
+    
+    <div class="footer">
+        <p>This email was sent by ${businessName} via MusoBuddy</p>
+        <p>All compliance documents are professionally managed and regularly updated</p>
+    </div>
+</body>
+</html>
+  `;
+}
+
 // Replace template variables with booking data
 function replaceTemplateVariables(content: string, booking: Booking, userSettings: UserSettings): string {
   // Format performance duration - now stored as text
