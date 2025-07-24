@@ -504,12 +504,12 @@ export default function UnifiedBookings() {
   ];
 
   return (
-    <div className="h-screen bg-background layout-consistent flex flex-col">
+    <div className="min-h-screen bg-background layout-consistent">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      {/* Main Content - Fixed Height Container */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
+      {/* Main Content - Viewport Height Container */}
+      <div className={`h-screen flex flex-col transition-all duration-300 ${isDesktop ? "ml-64" : ""}`}>
         {/* Mobile Header */}
         {!isDesktop && (
           <div className="lg:hidden border-b bg-white px-4 py-4 flex-shrink-0">
@@ -728,9 +728,9 @@ export default function UnifiedBookings() {
           </div>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-6 pt-0">
+        {/* Scrollable Content Area - Force height constraint */}
+        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 300px)' }}>
+          <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Bulk Actions Toolbar */}
               {selectedBookings.length > 0 && (
