@@ -49,14 +49,18 @@ export default function ConflictResolutionModal({
   const { toast } = useToast();
 
   // Fetch conflicting booking details
+  // Handle two different conflict data structures:
+  // 1. From bookings page: array of booking objects (conflicts are the bookings themselves)
+  // 2. From API: array with withBookingId properties
   const conflictingBookingIds = conflicts
-    .map(c => c.withBookingId)
+    .map(c => c.withBookingId || c.id) // Try withBookingId first, then id
     .filter(id => id && !isNaN(Number(id)))
     .map(id => Number(id));
   
   console.log('🔍 Conflict Resolution Modal - Booking IDs:', conflictingBookingIds);
   console.log('🔍 Conflict Resolution Modal - Current Booking:', currentBooking);
   console.log('🔍 Conflict Resolution Modal - Conflicts:', conflicts);
+  console.log('🔍 Conflict Resolution Modal - Conflicts Structure:', JSON.stringify(conflicts, null, 2));
   
   const { data: conflictingBookings = [] } = useQuery({
     queryKey: ['/api/bookings/batch', conflictingBookingIds],

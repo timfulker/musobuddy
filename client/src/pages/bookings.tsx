@@ -113,35 +113,43 @@ export default function UnifiedBookings() {
     const bookingStart = new Date(`${booking.eventDate}T${booking.eventTime}`);
     const bookingEnd = new Date(`${booking.eventDate}T${booking.eventEndTime}`);
     
-    return bookings.filter((other: any) => {
-      if (other.id === booking.id) return false;
-      if (!other.eventDate || !other.eventTime || !other.eventEndTime) return false;
-      
-      const otherDate = new Date(other.eventDate).toDateString();
-      if (otherDate !== bookingDate) return false;
-      
-      const otherStart = new Date(`${other.eventDate}T${other.eventTime}`);
-      const otherEnd = new Date(`${other.eventDate}T${other.eventEndTime}`);
-      
-      // Check for time overlap
-      const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
-      
-      return {
-        withBookingId: other.id,
-        severity: hasTimeOverlap ? 'hard' : 'soft',
-        clientName: other.clientName || 'Unknown Client',
-        status: other.status || 'new',
-        time: `${other.eventTime} - ${other.eventEndTime}`,
-        canEdit: true,
-        canReject: true,
-        type: 'booking',
-        message: hasTimeOverlap ? 
-          `Time overlap with ${other.clientName || 'Unknown Client'}` : 
-          `Same day booking with ${other.clientName || 'Unknown Client'}`,
-        overlapMinutes: hasTimeOverlap ? 
-          Math.round((Math.min(bookingEnd.getTime(), otherEnd.getTime()) - Math.max(bookingStart.getTime(), otherStart.getTime())) / (1000 * 60)) : 0
-      };
-    }).filter(Boolean);
+    return bookings
+      .filter((other: any) => {
+        if (other.id === booking.id) return false;
+        if (!other.eventDate || !other.eventTime || !other.eventEndTime) return false;
+        
+        const otherDate = new Date(other.eventDate).toDateString();
+        if (otherDate !== bookingDate) return false;
+        
+        const otherStart = new Date(`${other.eventDate}T${other.eventTime}`);
+        const otherEnd = new Date(`${other.eventDate}T${other.eventEndTime}`);
+        
+        // Check for time overlap
+        const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
+        
+        return hasTimeOverlap || bookingDate === otherDate; // Return true for conflicts
+      })
+      .map((other: any) => {
+        const otherStart = new Date(`${other.eventDate}T${other.eventTime}`);
+        const otherEnd = new Date(`${other.eventDate}T${other.eventEndTime}`);
+        const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
+        
+        return {
+          withBookingId: other.id,
+          severity: hasTimeOverlap ? 'hard' : 'soft',
+          clientName: other.clientName || 'Unknown Client',
+          status: other.status || 'new',
+          time: `${other.eventTime} - ${other.eventEndTime}`,
+          canEdit: true,
+          canReject: true,
+          type: 'booking',
+          message: hasTimeOverlap ? 
+            `Time overlap with ${other.clientName || 'Unknown Client'}` : 
+            `Same day booking with ${other.clientName || 'Unknown Client'}`,
+          overlapMinutes: hasTimeOverlap ? 
+            Math.round((Math.min(bookingEnd.getTime(), otherEnd.getTime()) - Math.max(bookingStart.getTime(), otherStart.getTime())) / (1000 * 60)) : 0
+        };
+      });
   };
 
   // Function to open compliance dialog from booking action menu
