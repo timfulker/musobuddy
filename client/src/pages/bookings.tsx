@@ -71,6 +71,9 @@ export default function UnifiedBookings() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState<string>('eventDate');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [dateFilter, setDateFilter] = useState<string>('all');
   
   // Dialog states
   const [bookingDetailsDialogOpen, setBookingDetailsDialogOpen] = useState(false);
@@ -96,23 +99,102 @@ export default function UnifiedBookings() {
     setSendComplianceDialogOpen(true);
   };
   
-  const toggleSelectAll = () => {
-    const filtered = (bookings as any[]).filter((booking: any) => {
+  // Enhanced sorting function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  // Enhanced filtering and sorting
+  const filteredAndSortedBookings = React.useMemo(() => {
+    if (!bookings) return [];
+
+    let filtered = (bookings as any[]).filter((booking: any) => {
+      // Enhanced search - includes more fields
+      const searchLower = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery || 
-        booking.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.clientEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.venue?.toLowerCase().includes(searchQuery.toLowerCase());
+        booking.clientName?.toLowerCase().includes(searchLower) ||
+        booking.clientEmail?.toLowerCase().includes(searchLower) ||
+        booking.venue?.toLowerCase().includes(searchLower) ||
+        booking.eventType?.toLowerCase().includes(searchLower) ||
+        booking.equipmentRequirements?.toLowerCase().includes(searchLower) ||
+        booking.specialRequirements?.toLowerCase().includes(searchLower) ||
+        booking.fee?.toString().includes(searchLower) ||
+        booking.id?.toString().includes(searchLower);
       
       const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      // Date filtering
+      let matchesDate = true;
+      if (dateFilter !== 'all' && booking.eventDate) {
+        const eventDate = new Date(booking.eventDate);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        switch (dateFilter) {
+          case 'today':
+            const todayEnd = new Date(today);
+            todayEnd.setDate(todayEnd.getDate() + 1);
+            matchesDate = eventDate >= today && eventDate < todayEnd;
+            break;
+          case 'week':
+            const weekEnd = new Date(today);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+            matchesDate = eventDate >= today && eventDate < weekEnd;
+            break;
+          case 'month':
+            const monthEnd = new Date(today);
+            monthEnd.setMonth(monthEnd.getMonth() + 1);
+            matchesDate = eventDate >= today && eventDate < monthEnd;
+            break;
+          case 'past':
+            matchesDate = eventDate < today;
+            break;
+          case 'upcoming':
+            matchesDate = eventDate >= today;
+            break;
+        }
+      }
+      
+      return matchesSearch && matchesStatus && matchesDate;
     });
-    
-    const isAllSelected = filtered.length > 0 && selectedBookings.length === filtered.length;
+
+    // Sort the filtered results
+    filtered.sort((a: any, b: any) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
+      
+      // Handle different data types
+      if (sortField === 'eventDate') {
+        aValue = aValue ? new Date(aValue) : new Date(0);
+        bValue = bValue ? new Date(bValue) : new Date(0);
+      } else if (sortField === 'fee') {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      } else if (typeof aValue === 'string') {
+        aValue = aValue?.toLowerCase() || '';
+        bValue = bValue?.toLowerCase() || '';
+      }
+      
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [bookings, searchQuery, statusFilter, dateFilter, sortField, sortDirection]);
+
+  const toggleSelectAll = () => {
+    const isAllSelected = filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length;
     
     if (isAllSelected) {
       setSelectedBookings([]);
     } else {
-      setSelectedBookings(filtered.map((b: any) => b.id));
+      setSelectedBookings(filteredAndSortedBookings.map((b: any) => b.id));
     }
   };
   
@@ -439,32 +521,120 @@ export default function UnifiedBookings() {
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-4">
-              <div className="relative flex-1 min-w-64">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by client name, email, or venue..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+            {/* Enhanced Filters */}
+            <div className="space-y-4">
+              {/* Search and Main Filters Row */}
+              <div className="flex flex-wrap gap-4">
+                <div className="relative flex-1 min-w-64">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by client, venue, event type, fee, booking ID..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="client_confirms">Client Confirms</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Dates</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">Next 7 Days</SelectItem>
+                    <SelectItem value="month">Next 30 Days</SelectItem>
+                    <SelectItem value="upcoming">All Upcoming</SelectItem>
+                    <SelectItem value="past">Past Events</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="client_confirms">Client Confirms</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
+
+              {/* Sort Controls Row */}
+              <div className="flex items-center gap-4 text-sm">
+                <span className="font-medium text-gray-700">Sort by:</span>
+                <div className="flex gap-2">
+                  <Button
+                    variant={sortField === 'eventDate' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleSort('eventDate')}
+                    className="h-8"
+                  >
+                    Date {sortField === 'eventDate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </Button>
+                  <Button
+                    variant={sortField === 'clientName' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleSort('clientName')}
+                    className="h-8"
+                  >
+                    Client {sortField === 'clientName' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </Button>
+                  <Button
+                    variant={sortField === 'fee' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleSort('fee')}
+                    className="h-8"
+                  >
+                    Fee {sortField === 'fee' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </Button>
+                  <Button
+                    variant={sortField === 'status' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleSort('status')}
+                    className="h-8"
+                  >
+                    Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </Button>
+                  <Button
+                    variant={sortField === 'venue' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleSort('venue')}
+                    className="h-8"
+                  >
+                    Venue {sortField === 'venue' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Results Counter and Clear Filters */}
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {filteredAndSortedBookings.length} of {bookings?.length || 0} bookings
+                  {searchQuery && ` matching "${searchQuery}"`}
+                </div>
+                {(searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || sortField !== 'eventDate') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setStatusFilter('all');
+                      setDateFilter('all');
+                      setSortField('eventDate');
+                      setSortDirection('desc');
+                    }}
+                    className="h-8"
+                  >
+                    Clear All Filters
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Bulk Actions Toolbar */}
@@ -533,22 +703,22 @@ export default function UnifiedBookings() {
               /* List View */
               <div className="space-y-4">
                 {/* Select All Header */}
-                {!bookingsLoading && filteredBookings.length > 0 && (
+                {!bookingsLoading && filteredAndSortedBookings.length > 0 && (
                   <Card className="bg-gray-50">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <Checkbox
-                          checked={filteredBookings.length > 0 && selectedBookings.length === filteredBookings.length}
+                          checked={filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length}
                           ref={(el) => {
                             if (el && el.querySelector('input')) {
-                              const isIndeterminate = selectedBookings.length > 0 && selectedBookings.length < filteredBookings.length;
+                              const isIndeterminate = selectedBookings.length > 0 && selectedBookings.length < filteredAndSortedBookings.length;
                               (el.querySelector('input') as HTMLInputElement).indeterminate = isIndeterminate;
                             }
                           }}
                           onCheckedChange={toggleSelectAll}
                         />
                         <span className="text-sm font-medium">
-                          {(filteredBookings.length > 0 && selectedBookings.length === filteredBookings.length) ? 'Deselect All' : 'Select All'} ({filteredBookings.length} bookings)
+                          {(filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length) ? 'Deselect All' : 'Select All'} ({filteredAndSortedBookings.length} bookings)
                         </span>
                       </div>
                     </CardContent>
@@ -560,12 +730,12 @@ export default function UnifiedBookings() {
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-4 text-muted-foreground">Loading bookings...</p>
                   </div>
-                ) : filteredBookings.length === 0 ? (
+                ) : filteredAndSortedBookings.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
-                    {searchQuery || statusFilter !== 'all' ? 'No bookings match your filters' : 'No bookings found'}
+                    {searchQuery || statusFilter !== 'all' || dateFilter !== 'all' ? 'No bookings match your filters' : 'No bookings found'}
                   </div>
                 ) : (
-                  filteredBookings.map((booking: any) => (
+                  filteredAndSortedBookings.map((booking: any) => (
                     <Card 
                       key={booking.id} 
                       className={`hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
