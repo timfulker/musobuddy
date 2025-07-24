@@ -27,15 +27,24 @@ const upload = multer({
 
 export async function registerRoutes(app: Express) {
   // ===== AUTH ROUTES =====
+  app.get('/api/auth/login', (req, res) => {
+    // For Replit deployments, authentication is handled by the platform
+    // Redirect to root - Replit will handle auth automatically
+    res.redirect('/');
+  });
+
   app.get('/api/auth/user', async (req: any, res) => {
     try {
+      // Authentication check
+      
       if (req.user) {
         res.json({
           id: req.user.id,
           email: req.user.email,
           firstName: req.user.firstName,
           lastName: req.user.lastName,
-          tier: req.user.tier || 'free'
+          tier: req.user.tier || 'free',
+          isAdmin: req.user.isAdmin || false
         });
       } else {
         res.status(401).json({ error: 'Not authenticated' });

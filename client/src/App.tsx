@@ -72,15 +72,19 @@ function Router() {
       }} />
       
       {!isAuthenticated ? (
-        <Route path="/" component={() => (
-          <div className="min-h-screen flex items-center justify-center bg-background">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-4">MusoBuddy</h1>
-              <p className="text-muted-foreground mb-4">Setting up your account...</p>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <Route path="/" component={() => {
+          // Redirect to Replit auth if not authenticated
+          window.location.href = `/api/auth/login`;
+          return (
+            <div className="min-h-screen flex items-center justify-center bg-background">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold mb-4">MusoBuddy</h1>
+                <p className="text-muted-foreground mb-4">Redirecting to Replit authentication...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              </div>
             </div>
-          </div>
-        )} />
+          );
+        }} />
       ) : (
         <>
           <Route path="/" component={Dashboard} />
