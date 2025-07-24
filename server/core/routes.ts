@@ -1649,7 +1649,7 @@ export async function registerRoutes(app: Express) {
       const storageKey = `uploaded-documents/${documentType}/${req.user.id}/${timestamp}-${filename}`;
       
       const { uploadFileToCloudflare } = await import('./cloud-storage');
-      const uploadResult = await uploadFileToCloudflare(file.buffer, storageKey, file.mimetype);
+      const uploadResult = await uploadFileToCloudflare(storageKey, file.buffer, file.mimetype);
       
       if (!uploadResult.success) {
         throw new Error(uploadResult.error || 'Failed to upload to cloud storage');

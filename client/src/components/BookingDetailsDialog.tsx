@@ -416,7 +416,6 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   const handleUploadContract = async () => {
     if (!contractFile || !booking) return;
     
-    setIsParsingContract(true);
     setUploadStatus(null);
     
     try {
@@ -468,7 +467,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         variant: "destructive",
       });
     } finally {
-      setIsParsingContract(false);
+      // No parsing state to reset for simple document upload
     }
   };
 

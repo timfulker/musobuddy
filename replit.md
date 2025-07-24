@@ -357,7 +357,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Mobile Responsive**: ✅ Enhanced scrollable layout works across desktop and mobile viewports with proper responsive behavior
 - **Status**: ENHANCED SCROLLABLE INTERFACE + CRITICAL FIXES OPERATIONAL - Complete system with unique contract generation and clean console logging
 
-### 2025-07-24 - View Contract Button System FULLY OPERATIONAL + Missing Route Fixed
+### 2025-07-24 - Document Import System Fixed + UX Enhancement Complete
 - **CRITICAL SUCCESS: View Contract Button Working**: ✅ Added missing `/view/contracts/:id` server route that was causing 404 errors when clicking View Contract
 - **Smart Cloud Redirection**: ✅ Route automatically redirects to signed contract PDFs stored on Cloudflare R2 for instant access
 - **Contract-Booking Relationship Verified**: ✅ Contract 407 properly linked to correct booking 7139 (17/02/2026 Tim Fulker with "contract_sent" status)
@@ -366,7 +366,11 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Database Integrity Maintained**: ✅ Contract relationships preserved as originally created during booking workflow
 - **Professional Address Formatting**: ✅ Both client and musician addresses display with proper spacing in contract PDFs
 - **User Experience Enhanced**: ✅ Clicking View Contract now opens signed PDF in new tab without errors
-- **Status**: FULLY OPERATIONAL - Complete View Contract system working with signed document access and proper cloud storage integration
+- **CRITICAL FIX: Cloud Storage Upload Error**: ✅ Fixed `labelValue.split is not a function` error by correcting parameter order in uploadFileToCloudflare function call
+- **UX Enhancement: Store Document Parsing UI**: ✅ Removed confusing parsing spinner from "Store Document" button - now only shows during actual AI "Parse & Fill Form" operations
+- **Parameter Order Fixed**: ✅ Corrected uploadFileToCloudflare call from (buffer, key, type) to (key, buffer, type) matching function signature
+- **Clear User Intent**: ✅ "Store Document" now purely uploads without parsing, "Parse & Fill Form" shows parsing UI for AI extraction
+- **Status**: DOCUMENT IMPORT SYSTEM OPERATIONAL - External contract uploads work with proper cloud storage and clear UX separation between storing and parsing
 
 ### 2025-07-24 - Contract Address Formatting Fixed + Musician Address Added Complete
 - **CRITICAL FIX: Client Address Formatting**: ✅ Fixed client address display issue where addresses showed as concatenated text without spaces (e.g., "57, Gloucester RdBournemouthBH7 6JA")
