@@ -2346,36 +2346,8 @@ export async function registerRoutes(app: Express) {
       if (result.success) {
         console.log('✅ Template email sent successfully:', result.messageId);
         
-        // Automatic status updates based on email type and booking context
-        const emailContent = template.emailBody?.toLowerCase() || '';
-        const emailSubject = template.subject?.toLowerCase() || '';
-        const templateName = template.name?.toLowerCase() || '';
-        
-        // Only update status to "completed" for actual thank you emails sent AFTER the event date
-        const isPostEventThankYou = (templateName.includes('thank you') || 
-                                   emailSubject.includes('thank you') ||
-                                   emailContent.includes('thank you for')) &&
-                                   booking.eventDate && 
-                                   new Date(booking.eventDate) < new Date();
-        
-        // For response emails (not thank you), update from "new" to "in_progress"
-        const isResponseEmail = !isPostEventThankYou && booking.status === 'new';
-        
-        if (isPostEventThankYou && booking.status !== 'completed') {
-          try {
-            await storage.updateBooking(parseInt(bookingId), { status: 'completed' });
-            console.log('✅ Booking status updated to completed after post-event thank you email');
-          } catch (updateError) {
-            console.error('⚠️ Failed to update booking status after thank you email:', updateError);
-          }
-        } else if (isResponseEmail) {
-          try {
-            await storage.updateBooking(parseInt(bookingId), { status: 'in_progress' });
-            console.log('✅ Booking status updated to in_progress after client response');
-          } catch (updateError) {
-            console.error('⚠️ Failed to update booking status after response:', updateError);
-          }
-        }
+        // Note: Status updates are now user-controlled actions, not automatic
+        console.log('📧 Template email sent - status updates controlled by user action, not automatic');
         
         res.json({ 
           success: true, 
