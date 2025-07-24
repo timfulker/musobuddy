@@ -116,7 +116,7 @@ export default function UnifiedBookings() {
     const bookingStart = new Date(`${booking.eventDate}T${booking.eventTime}`);
     const bookingEnd = new Date(`${booking.eventDate}T${booking.eventEndTime}`);
     
-    return bookings
+    return (bookings as any[])
       .filter((other: any) => {
         if (other.id === booking.id) return false;
         if (!other.eventDate || !other.eventTime || !other.eventEndTime) return false;
@@ -255,7 +255,7 @@ export default function UnifiedBookings() {
     });
 
     return filtered;
-  }, [bookings, searchQuery, statusFilter, dateFilter, sortField, sortDirection]);
+  }, [bookings, searchQuery, statusFilter, dateFilter, conflictFilter, sortField, sortDirection]);
 
   const toggleSelectAll = () => {
     const isAllSelected = filteredAndSortedBookings.length > 0 && selectedBookings.length === filteredAndSortedBookings.length;
