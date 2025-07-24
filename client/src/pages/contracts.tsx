@@ -132,8 +132,9 @@ export default function Contracts() {
     const bookingId = urlParams.get('bookingId');
     
     // Only run once when component mounts and data is loaded, and not already processed
-    if ((action === 'new' || action === 'create') && !isLoading && contracts.length >= 0 && !isDialogOpen && !dataLoaded) {
+    if ((action === 'new' || action === 'create') && !isLoading && !isDialogOpen && !dataLoaded) {
       setIsDialogOpen(true);
+      setDataLoaded(true); // CRITICAL FIX: Mark as loaded to prevent infinite loop
 
       // Auto-generate contract number in format (dd/mm/yyyy - Client Name)
       // Use today's date as default, but will be updated when event date is selected
@@ -214,7 +215,7 @@ export default function Contracts() {
       }
       setDataLoaded(true); // Mark data as loaded even if no specific auto-fill occurs
     }
-  }, [enquiries, contracts, form, isLoading, isDialogOpen, dataLoaded]);
+  }, [enquiries, contracts, form, isLoading, isDialogOpen, dataLoaded, toast]);
 
   // Clean up URL when dialog closes
   const handleDialogClose = (open: boolean) => {
