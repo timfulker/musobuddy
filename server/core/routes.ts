@@ -37,6 +37,39 @@ export async function registerRoutes(app: Express) {
     res.status(200).end();
   });
 
+  // Regenerate signing page with correct URL (AUTHENTICATED)
+  app.post('/api/contracts/:id/regenerate-signing-page', isAuthenticated, async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContractById(contractId);
+      
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+
+      // Get user settings for business name
+      const userSettings = await storage.getSettings(contract.userId);
+      
+      // Upload new signing page to cloud with correct URL
+      const result = await cloudStorageService.uploadContractSigningPage(contract, userSettings);
+      
+      // Update contract with new signing page URL
+      await storage.updateContract(contractId, {
+        signingPageUrl: result.url,
+        signingPageKey: result.key
+      });
+
+      res.json({ 
+        success: true, 
+        signingPageUrl: result.url,
+        message: "Signing page regenerated with correct server URL"
+      });
+    } catch (error) {
+      console.error('Error regenerating signing page:', error);
+      res.status(500).json({ message: "Failed to regenerate signing page" });
+    }
+  });
+
   // Contract signing API (PUBLIC)
   app.post('/api/contracts/sign/:id', async (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
