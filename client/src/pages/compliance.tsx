@@ -43,11 +43,18 @@ export default function Compliance() {
   
   // Auto-open send dialog if coming from booking response
   useEffect(() => {
+    console.log('URL parameters:', { bookingId, action });
     if (bookingId && action === 'send') {
+      console.log('Opening send compliance dialog from booking response');
       setIsSendDialogOpen(true);
     }
     console.log('Compliance page loaded, fileInputRef:', fileInputRef.current);
   }, [bookingId, action]);
+
+  // Debug send dialog state
+  useEffect(() => {
+    console.log('Send dialog state changed:', { isSendDialogOpen });
+  }, [isSendDialogOpen]);
 
   // Debug effect to check ref after component mount
   useEffect(() => {

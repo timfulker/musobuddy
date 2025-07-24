@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Dialog,
@@ -101,6 +101,16 @@ export function SendComplianceDialog({ booking, bookingId, isOpen, onClose, onOp
     queryKey: ['/api/compliance'],
     enabled: isOpen,
   });
+
+  // Debug document loading
+  useEffect(() => {
+    console.log('SendComplianceDialog - Documents loaded:', { 
+      documentsCount: documents.length, 
+      documents, 
+      isLoading, 
+      isOpen 
+    });
+  }, [documents, isLoading, isOpen]);
 
   // Send compliance documents mutation
   const sendDocumentsMutation = useMutation({
