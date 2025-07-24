@@ -53,7 +53,7 @@ export default function ConflictResolutionModal({
   // 1. From bookings page: array of booking objects (conflicts are the bookings themselves)
   // 2. From API: array with withBookingId properties
   const conflictingBookingIds = conflicts
-    .map(c => c.withBookingId || c.id) // Try withBookingId first, then id
+    .map(c => c.withBookingId || (c as any).id) // Try withBookingId first, then id as fallback
     .filter(id => id && !isNaN(Number(id)))
     .map(id => Number(id));
   
@@ -214,7 +214,7 @@ export default function ConflictResolutionModal({
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
-                {booking.status?.replace('_', ' ').toUpperCase() || 'NEW'}
+                {(booking.status && typeof booking.status === 'string') ? booking.status.replace('_', ' ').toUpperCase() : 'NEW'}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
