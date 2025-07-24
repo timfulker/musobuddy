@@ -329,6 +329,7 @@ export const clients = pgTable("clients", {
   notes: text("notes"),
   totalBookings: integer("total_bookings").default(0),
   totalRevenue: decimal("total_revenue", { precision: 10, scale: 2 }).default("0.00"),
+  bookingIds: text("booking_ids"), // JSON array of associated booking IDs
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

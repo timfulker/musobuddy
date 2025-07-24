@@ -2354,79 +2354,6 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Client Management Routes
-  app.get('/api/clients', isAuthenticated, async (req: any, res) => {
-    try {
-      const clients = await storage.getClients(req.user.id);
-      res.json(clients);
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-      res.status(500).json({ error: 'Failed to fetch clients' });
-    }
-  });
-
-  app.post('/api/clients', isAuthenticated, async (req: any, res) => {
-    try {
-      const clientData = { ...req.body, userId: req.user.id };
-      const client = await storage.createClient(clientData);
-      res.json(client);
-    } catch (error) {
-      console.error('Error creating client:', error);
-      res.status(500).json({ error: 'Failed to create client' });
-    }
-  });
-
-  app.patch('/api/clients/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const clientId = parseInt(req.params.id);
-      const client = await storage.updateClient(clientId, req.body);
-      if (!client) {
-        return res.status(404).json({ error: 'Client not found' });
-      }
-      res.json(client);
-    } catch (error) {
-      console.error('Error updating client:', error);
-      res.status(500).json({ error: 'Failed to update client' });
-    }
-  });
-
-  app.delete('/api/clients/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const clientId = parseInt(req.params.id);
-      const client = await storage.deleteClient(clientId);
-      if (!client) {
-        return res.status(404).json({ error: 'Client not found' });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error deleting client:', error);
-      res.status(500).json({ error: 'Failed to delete client' });
-    }
-  });
-
-  app.post('/api/clients/populate-from-bookings', isAuthenticated, async (req: any, res) => {
-    try {
-      const bookings = await storage.getBookings(req.user.id);
-      let createdCount = 0;
-      
-      for (const booking of bookings) {
-        if (booking.clientName) {
-          await storage.upsertClientFromBooking(booking, req.user.id);
-          createdCount++;
-        }
-      }
-      
-      res.json({ 
-        success: true, 
-        message: 'Created ' + createdCount + ' new clients',
-        createdCount
-      });
-    } catch (error) {
-      console.error('Error populating address book:', error);
-      res.status(500).json({ error: 'Failed to populate address book' });
-    }
-  });
-
   return server;
 }
 
@@ -2631,4 +2558,100 @@ function generateContractSigningPage(contract: any, userSettings: any): string {
   `;
 }
 
+  // ===== CLIENT MANAGEMENT ROUTES =====
+  
+  app.get('/api/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const clients = await storage.getClients(req.user.id);
+      res.json(clients);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      res.status(500).json({ error: 'Failed to fetch clients' });
+    }
+  });
 
+  app.post('/api/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const clientData = {
+        ...req.body,
+        userId: req.user.id
+      };
+      
+      const client = await storage.createClient(clientData);
+      res.json(client);
+    } catch (error) {
+      console.error('Error creating client:', error);
+      res.status(500).json({ error: 'Failed to create client' });
+    }
+  });
+
+  app.patch('/api/clients/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const clientId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const client = await storage.updateClient(clientId, updates);
+      if (!client) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+      
+      res.json(client);
+    } catch (error) {
+      console.error('Error updating client:', error);
+      res.status(500).json({ error: 'Failed to update client' });
+    }
+  });
+
+  app.delete('/api/clients/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const clientId = parseInt(req.params.id);
+      const client = await storage.deleteClient(clientId);
+      
+      if (!client) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      res.status(500).json({ error: 'Failed to delete client' });
+    }
+  });
+
+  // Populate address book with existing bookings
+  app.post('/api/clients/populate-from-bookings', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log('🔄 Populating address book from existing bookings...');
+      
+      const bookings = await storage.getBookings(req.user.id);
+      let createdCount = 0;
+      let updatedCount = 0;
+      
+      for (const booking of bookings) {
+        if (booking.clientName) {
+          const result = await storage.upsertClientFromBooking(booking, req.user.id);
+          if (result) {
+            // Check if this was a new client or update
+            const existingClient = await storage.getClientByNameAndUserId(booking.clientName, req.user.id);
+            if (existingClient && existingClient.totalBookings === 1) {
+              createdCount++;
+            } else {
+              updatedCount++;
+            }
+          }
+        }
+      }
+      
+      console.log(`✅ Address book populated: ${createdCount} new clients, ${updatedCount} updated`);
+      res.json({ 
+        success: true, 
+        message: `Created ${createdCount} new clients and updated ${updatedCount} existing clients`,
+        createdCount,
+        updatedCount
+      });
+    } catch (error) {
+      console.error('Error populating address book:', error);
+      res.status(500).json({ error: 'Failed to populate address book' });
+    }
+  });
+}

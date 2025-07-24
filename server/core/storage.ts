@@ -1,5 +1,5 @@
 import { db } from "./database";
-import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments } from "../../shared/schema";
+import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments, clients } from "../../shared/schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
@@ -556,6 +556,94 @@ Warm regards and best wishes,
       contracts: contractCount[0].count,
       invoices: invoiceCount[0].count
     };
+  }
+
+  // ===== CLIENT MANAGEMENT METHODS =====
+  
+  async getClients(userId: string) {
+    return await db.select().from(clients)
+      .where(eq(clients.userId, userId))
+      .orderBy(desc(clients.createdAt));
+  }
+
+  async getClient(id: number) {
+    const result = await db.select().from(clients).where(eq(clients.id, id));
+    return result[0] || null;
+  }
+
+  async createClient(clientData: any) {
+    const result = await db.insert(clients).values({
+      ...clientData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async updateClient(id: number, updates: any) {
+    const result = await db.update(clients)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clients.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteClient(id: number) {
+    const result = await db.delete(clients)
+      .where(eq(clients.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getClientByNameAndUserId(name: string, userId: string) {
+    const result = await db.select().from(clients)
+      .where(and(eq(clients.name, name), eq(clients.userId, userId)));
+    return result[0] || null;
+  }
+
+  async upsertClientFromBooking(bookingData: any, userId: string) {
+    if (!bookingData.clientName) return null;
+
+    // Check if client exists
+    let client = await this.getClientByNameAndUserId(bookingData.clientName, userId);
+    
+    if (client) {
+      // Update existing client with new booking information
+      const bookingIds = client.bookingIds ? JSON.parse(client.bookingIds) : [];
+      if (!bookingIds.includes(bookingData.id)) {
+        bookingIds.push(bookingData.id);
+      }
+
+      // Update client info if we have better data
+      const updates: any = {
+        bookingIds: JSON.stringify(bookingIds),
+        totalBookings: (client.totalBookings || 0) + 1
+      };
+
+      if (bookingData.clientEmail && !client.email) {
+        updates.email = bookingData.clientEmail;
+      }
+      if (bookingData.clientPhone && !client.phone) {
+        updates.phone = bookingData.clientPhone;
+      }
+      if (bookingData.clientAddress && !client.address) {
+        updates.address = bookingData.clientAddress;
+      }
+
+      return await this.updateClient(client.id, updates);
+    } else {
+      // Create new client
+      return await this.createClient({
+        userId,
+        name: bookingData.clientName,
+        email: bookingData.clientEmail || null,
+        phone: bookingData.clientPhone || null,
+        address: bookingData.clientAddress || null,
+        bookingIds: JSON.stringify([bookingData.id]),
+        totalBookings: 1,
+        totalRevenue: "0.00"
+      });
+    }
   }
 }
 

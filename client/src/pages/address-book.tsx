@@ -113,14 +113,15 @@ export default function AddressBook() {
       createdAt: true, 
       updatedAt: true, 
       totalBookings: true, 
-      totalRevenue: true 
+      totalRevenue: true,
+      bookingIds: true
     })),
     defaultValues: {
       name: "",
-      email: "",
-      phone: "",
-      address: "",
-      notes: "",
+      email: null,
+      phone: null,
+      address: null,
+      notes: null,
     },
   });
 
@@ -141,10 +142,10 @@ export default function AddressBook() {
     setEditingClient(client);
     form.reset({
       name: client.name,
-      email: client.email || "",
-      phone: client.phone || "",
-      address: client.address || "",
-      notes: client.notes || "",
+      email: client.email || null,
+      phone: client.phone || null,
+      address: client.address || null,
+      notes: client.notes || null,
     });
   };
 
