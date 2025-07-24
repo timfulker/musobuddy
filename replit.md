@@ -357,7 +357,28 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Mobile Responsive**: ✅ Enhanced scrollable layout works across desktop and mobile viewports with proper responsive behavior
 - **Status**: ENHANCED SCROLLABLE INTERFACE + CRITICAL FIXES OPERATIONAL - Complete system with unique contract generation and clean console logging
 
-### 2025-07-24 - Document Import System Fixed + UX Enhancement Complete
+### 2025-07-24 - Complete Document Import System + View Contract Button Global Fix + Automatic Status Monitoring Fixed
+- **CRITICAL SUCCESS: View Contract Button Working**: ✅ Added missing `/view/contracts/:id` server route that was causing 404 errors when clicking View Contract
+- **Smart Cloud Redirection**: ✅ Route automatically redirects to signed contract PDFs stored on Cloudflare R2 for instant access
+- **Contract-Booking Relationship Verified**: ✅ Contract 407 properly linked to correct booking 7139 (17/02/2026 Tim Fulker with "contract_sent" status)
+- **Signed Version Display Confirmed**: ✅ View Contract button shows signed contracts with client signatures, not unsigned drafts
+- **Frontend Caching Issues Resolved**: ✅ Fixed contract loading inconsistencies that caused intermittent button display
+- **Database Integrity Maintained**: ✅ Contract relationships preserved as originally created during booking workflow
+- **Professional Address Formatting**: ✅ Both client and musician addresses display with proper spacing in contract PDFs
+- **User Experience Enhanced**: ✅ Clicking View Contract now opens signed PDF in new tab without errors
+- **CRITICAL FIX: Cloud Storage Upload Error**: ✅ Fixed `labelValue.split is not a function` error by correcting parameter order in uploadFileToCloudflare function call
+- **UX Enhancement: Store Document Parsing UI**: ✅ Removed confusing parsing spinner from "Store Document" button - now only shows during actual AI "Parse & Fill Form" operations
+- **Parameter Order Fixed**: ✅ Corrected uploadFileToCloudflare call from (buffer, key, type) to (key, buffer, type) matching function signature
+- **Clear User Intent**: ✅ "Store Document" now purely uploads without parsing, "Parse & Fill Form" shows parsing UI for AI extraction
+- **GLOBAL ARCHITECTURE FIX: Dual Contract Support**: ✅ View Contract button now supports both generated contracts (Issue Contract) and uploaded external contracts (Store Document)
+- **Dual Contract Logic Implemented**: ✅ System checks for generated contracts first, then uploaded contracts - displays single View Contract button for either type
+- **Cloud Storage Integration**: ✅ Uploaded contracts stored with proper R2 URLs for direct viewing without server dependency
+- **Buffer Handling Fixed**: ✅ Added proper Buffer type checking and conversion for multer file uploads to prevent cloud storage errors
+- **Contract Status Monitoring Enhanced**: ✅ Fixed automatic booking status updates when contracts are signed - booking status now properly changes from "contract_sent" to "confirmed"
+- **Enhanced Logging Added**: ✅ Improved error tracking and status update logging for better system monitoring and debugging
+- **Status**: COMPLETE DOCUMENT SYSTEM OPERATIONAL - External contract uploads work with proper cloud storage, View Contract buttons work globally for all contract types, automatic status monitoring fully functional
+
+### 2025-07-24 - Document Import System Fixed + UX Enhancement Complete (Previous Entry)
 - **CRITICAL SUCCESS: View Contract Button Working**: ✅ Added missing `/view/contracts/:id` server route that was causing 404 errors when clicking View Contract
 - **Smart Cloud Redirection**: ✅ Route automatically redirects to signed contract PDFs stored on Cloudflare R2 for instant access
 - **Contract-Booking Relationship Verified**: ✅ Contract 407 properly linked to correct booking 7139 (17/02/2026 Tim Fulker with "contract_sent" status)

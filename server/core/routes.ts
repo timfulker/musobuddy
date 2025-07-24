@@ -157,10 +157,12 @@ export async function registerRoutes(app: Express) {
         if (signedContract.enquiryId) {
           try {
             await storage.updateBooking(signedContract.enquiryId, { status: 'confirmed' });
-            console.log('✅ AUTO-UPDATE: Booking status changed to "confirmed" after contract signing');
+            console.log('✅ AUTO-UPDATE: Booking status changed to "confirmed" after contract signing for booking:', signedContract.enquiryId);
           } catch (bookingError) {
-            console.error('❌ Failed to auto-update booking status:', bookingError);
+            console.error('❌ Failed to auto-update booking status for booking:', signedContract.enquiryId, bookingError);
           }
+        } else {
+          console.log('⚠️ No enquiryId found on signed contract - cannot auto-update booking status');
         }
 
       } catch (emailError: any) {
