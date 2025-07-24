@@ -83,7 +83,7 @@ export default function AdminPanel() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
     }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] });
       setNewUserOpen(false);
@@ -98,13 +98,34 @@ export default function AdminPanel() {
       });
       toast({
         title: "User created successfully",
-        description: "The new user has been added to the system.",
+        description: `User can login at /login with email: ${userData.email} and the password you provided.`,
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error creating user",
         description: error.message || "Failed to create user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: string) => apiRequest(`/api/admin/users/${userId}`, {
+      method: 'DELETE',
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] });
+      toast({
+        title: "User deleted successfully",
+        description: "The user has been removed from the system.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error deleting user",
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     },
@@ -371,7 +392,7 @@ export default function AdminPanel() {
                                 onChange={(e) => setNewUserForm(prev => ({ ...prev, isBetaTester: e.target.checked }))}
                                 className="rounded"
                               />
-                              <Label htmlFor="isBetaTester">Beta Tester (4-week trial with lifetime subscription)</Label>
+                              <Label htmlFor="isBetaTester">Beta Tester (4-week trial with 1 year free subscription)</Label>
                             </div>
                           </div>
                         </div>
@@ -421,6 +442,20 @@ export default function AdminPanel() {
                                 Joined {new Date(user.createdAt).toLocaleDateString()}
                               </span>
                             </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                if (confirm(`Delete user ${user.firstName} ${user.lastName}? This cannot be undone.`)) {
+                                  deleteUserMutation.mutate(user.id);
+                                }
+                              }}
+                              disabled={deleteUserMutation.isPending}
+                            >
+                              Delete
+                            </Button>
                           </div>
                         </div>
                       ))}

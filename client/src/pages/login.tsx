@@ -2,179 +2,95 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
-import { queryClient } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
-import logoImage from "/musobuddy-logo-purple.png";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
 
-  // Redirect if already logged in
-  if (!isLoading && isAuthenticated) {
-    setLocation("/");
-    return null;
-  }
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string }) => {
-      const response = await fetch('/api/login', {
+    try {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-        credentials: 'include', // This is crucial for session cookies
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Redirect to dashboard
+        window.location.href = '/';
+      } else {
+        toast({
+          title: "Login failed",
+          description: data.message || "Invalid email or password",
+          variant: "destructive",
+        });
       }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      // Invalidate auth cache to force refetch
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      
-      toast({
-        title: "Login successful",
-        description: "Welcome to MusoBuddy!",
-      });
-      
-      // Small delay to ensure cache invalidation happens
-      setTimeout(() => {
-        setLocation("/");
-      }, 100);
-    },
-    onError: (error: Error) => {
-      setError(error.message);
+    } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Login failed",
-        description: error.message,
+        description: "Unable to connect to server",
         variant: "destructive",
       });
-    },
-  });
-
-  const passwordResetMutation = useMutation({
-    mutationFn: async (data: { email: string; newPassword: string }) => {
-      const response = await fetch('/api/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Password reset failed');
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Password updated",
-        description: "Your password has been successfully updated. Please log in with your new password.",
-      });
-      setShowPasswordReset(false);
-      setNewPassword("");
-    },
-    onError: (error: Error) => {
-      setError(error.message);
-      toast({
-        title: "Password reset failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    
-    if (!email || !password) {
-      setError("Please enter both email and password");
-      return;
+    } finally {
+      setIsLoading(false);
     }
-    
-    loginMutation.mutate({ email, password });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <img src={logoImage} alt="MusoBuddy Logo" className="w-16 h-16 rounded-xl" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Welcome to MusoBuddy</CardTitle>
-          <CardDescription>
-            Sign in to your account to access your music business management platform
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            Login to MusoBuddy
+          </CardTitle>
+          <p className="text-gray-600 mt-2">
+            Professional music business management
+          </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            
             <Button 
               type="submit" 
-              className="w-full bg-purple-600 hover:bg-purple-700"
-              disabled={loginMutation.isPending}
+              className="w-full"
+              disabled={isLoading}
             >
-              {loginMutation.isPending ? "Signing in..." : "Sign In"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-          
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account? Contact your administrator to get access.
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

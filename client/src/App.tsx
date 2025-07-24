@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
-// Old login components removed - using Replit auth only
+import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Bookings from "@/pages/bookings";
 import Contracts from "@/pages/contracts";
@@ -55,32 +55,26 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/logout" component={() => {
         // Client-side logout handler - clears cache and redirects
-        fetch('/api/logout', {
+        fetch('/api/auth/logout', {
           method: 'POST',
           credentials: 'include'
         }).then(() => {
           // Clear React Query cache to force re-authentication
           queryClient.clear();
-          window.location.href = '/';
+          window.location.href = '/login';
         }).catch(() => {
           // Even if logout fails, clear cache and redirect
           queryClient.clear();
-          window.location.href = '/';
+          window.location.href = '/login';
         });
         return <div>Logging out...</div>;
       }} />
       
       {!isAuthenticated ? (
-        <Route path="/" component={() => (
-          <div className="min-h-screen flex items-center justify-center bg-background">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-4">MusoBuddy</h1>
-              <p className="text-muted-foreground mb-4">Setting up your admin account...</p>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="text-xs text-muted-foreground mt-4">Admin access for Repl owner</p>
-            </div>
-          </div>
-        )} />
+        <>
+          <Route path="/login" component={LoginPage} />
+          <Route path="/" component={LoginPage} />
+        </>
       ) : (
         <>
           <Route path="/" component={Dashboard} />

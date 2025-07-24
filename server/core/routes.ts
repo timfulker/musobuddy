@@ -31,10 +31,63 @@ const upload = multer({
 
 export async function registerRoutes(app: Express) {
   // ===== AUTH ROUTES =====
-  app.get('/api/auth/login', (req, res) => {
-    // For Replit deployments, authentication is handled by the platform
-    // Redirect to root - Replit will handle auth automatically
-    res.redirect('/');
+  // Email/password login endpoint
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email and password are required' 
+        });
+      }
+
+      // Authenticate user
+      const user = await storage.authenticateUser(email, password);
+      
+      if (!user) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Invalid email or password' 
+        });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+      req.session.user = user;
+      
+      console.log('✅ User logged in:', user.email);
+      res.json({ 
+        success: true, 
+        message: 'Login successful',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          tier: user.tier,
+          isAdmin: user.isAdmin
+        }
+      });
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Login failed' 
+      });
+    }
+  });
+
+  // Logout endpoint
+  app.post('/api/auth/logout', (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        console.error('Logout error:', err);
+        return res.status(500).json({ error: 'Logout failed' });
+      }
+      res.json({ success: true, message: 'Logged out successfully' });
+    });
   });
 
   app.get('/api/auth/user', async (req: any, res) => {
@@ -106,10 +159,10 @@ export async function registerRoutes(app: Express) {
   // Add new user (admin only)
   app.post('/api/admin/users', isAdmin, async (req: any, res: any) => {
     try {
-      const { email, firstName, lastName, tier = 'free', isAdmin = false, isBetaTester = false } = req.body;
+      const { email, firstName, lastName, password, tier = 'free', isAdmin = false, isBetaTester = false } = req.body;
       
-      if (!email) {
-        return res.status(400).json({ error: 'Email is required' });
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
       }
 
       // Generate a simple user ID for admin-created users
@@ -124,6 +177,7 @@ export async function registerRoutes(app: Express) {
         email,
         firstName: firstName || null,
         lastName: lastName || null,
+        password,
         tier: isBetaTester ? 'premium' : tier, // Beta testers get premium access
         isAdmin,
         isBetaTester,
@@ -144,11 +198,35 @@ export async function registerRoutes(app: Express) {
         lastName: newUser.lastName,
         tier: newUser.tier,
         isAdmin: newUser.isAdmin,
-        createdAt: newUser.createdAt?.toISOString()
+        createdAt: newUser.createdAt?.toISOString(),
+        loginInstructions: `User can login at /login with email: ${email} and the password you provided.`
       });
     } catch (error) {
       console.error('Admin create user error:', error);
       res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  // Delete user (admin only)
+  app.delete('/api/admin/users/:id', isAdmin, async (req: any, res: any) => {
+    try {
+      const { id } = req.params;
+      
+      // Prevent admin from deleting themselves
+      if (id === req.user.id) {
+        return res.status(400).json({ error: 'Cannot delete your own admin account' });
+      }
+      
+      const deletedUser = await storage.deleteUser(id);
+      
+      if (!deletedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('Admin delete user error:', error);
+      res.status(500).json({ error: 'Failed to delete user' });
     }
   });
 

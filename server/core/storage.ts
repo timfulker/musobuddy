@@ -26,6 +26,22 @@ export class Storage {
     return result[0] || null;
   }
 
+  async authenticateUser(email: string, password: string) {
+    const user = await this.getUserByEmail(email);
+    if (!user || !user.password) {
+      return null;
+    }
+    
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return null;
+    }
+    
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
 
 
   async updateUserInfo(id: string, updates: any) {

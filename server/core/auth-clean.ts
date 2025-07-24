@@ -5,26 +5,34 @@ import { storage } from "./storage";
 export async function setupAuthentication(app: Express): Promise<void> {
   console.log('🔐 Setting up Replit authentication...');
 
-  // Authentication middleware for Replit deployment
+  // Authentication middleware for unified email/password system
   app.use(async (req: any, res, next) => {
     try {
-      // For owner of the Repl, authenticate automatically  
+      // Check for session-based authentication first
+      if (req.session?.userId) {
+        const user = await storage.getUserById(req.session.userId);
+        if (user) {
+          req.user = user;
+          return next();
+        }
+      }
+
+      // For owner of the Repl, auto-create admin account if needed
       if (process.env.REPL_OWNER) {
         let user = await storage.getUserByEmail('timfulker@gmail.com');
         
         if (!user) {
-          // Create admin user automatically
+          // Create admin user automatically with a default password
           user = await storage.createUser({
             email: 'timfulker@gmail.com',
             firstName: 'Tim',
             lastName: 'Fulker', 
+            password: 'admin123', // You should change this
             tier: 'premium',
             isAdmin: true
           });
-          console.log('✅ Auto-created admin user:', user.email);
+          console.log('✅ Auto-created admin user:', user.email, 'with password: admin123');
         }
-
-        req.user = user;
       }
 
       next();
