@@ -8,7 +8,7 @@ import type { Enquiry } from "@shared/schema";
 // Removed conflict-ui import - using new conflict system
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
-import { getDashboardBg, getBadgeColors, getStatusIcon, getStatusDisplayName, conflictColors } from "@/utils/status-colors";
+import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 
 export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading } = useQuery({
@@ -211,17 +211,28 @@ export default function ActionableEnquiries() {
       });
     }
     
-    // Status-based styling with new workflow color scheme
-    const getStatusOverlay = () => {
-      switch(enquiry.status) {
-        case 'new': return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200";
-        case 'awaiting_response': return "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"; 
-        case 'client_confirms': return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
-        case 'contract_sent': return "bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200";
-        case 'confirmed': return "bg-gradient-to-br from-green-50 to-green-100 border-green-200";
-        case 'cancelled': return "bg-gradient-to-br from-red-50 to-red-100 border-red-200";
-        case 'completed': return "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200";
-        default: return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200";
+    // Clean card styling - no color overlays, just left border (matching booking page)
+    const getCardStyling = () => {
+      switch(enquiry.status?.toLowerCase()) {
+        case 'new':
+        case 'enquiry':
+          return 'border-l-sky-400';
+        case 'awaiting_response':
+        case 'in_progress':
+        case 'booking_in_progress':
+          return 'border-l-blue-700';
+        case 'client_confirms':
+          return 'border-l-orange-500';
+        case 'confirmed':
+        case 'contract_signed':
+          return 'border-l-green-500';
+        case 'completed':
+          return 'border-l-gray-500';
+        case 'cancelled':
+        case 'rejected':
+          return 'border-l-red-500';
+        default:
+          return 'border-l-gray-300';
       }
     };
     
@@ -271,8 +282,8 @@ export default function ActionableEnquiries() {
     
     return (
       <Link key={enquiry.id} href={`/bookings?id=${enquiry.id}`}>
-        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer ${
-          getStatusOverlay()
+        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer bg-white border-l-4 ${
+          getCardStyling()
         } ${hasConflicts ? getConflictOverlay() : ''}`}>
           <CardContent className="p-4">
             <div className="space-y-3">

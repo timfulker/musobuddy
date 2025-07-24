@@ -116,19 +116,31 @@ export function needsAttention(booking: any): {
   };
 }
 
-// Status color mapping for display
+// Status color mapping for display - unified with booking page colors
 export function getStatusColor(status: string): string {
-  const newStatus = mapToNewStatus(status);
-  
-  const colors: Record<string, string> = {
-    'enquiry': 'bg-gray-100 text-gray-800 border-gray-200',
-    'negotiation': 'bg-orange-100 text-orange-800 border-orange-200',
-    'contract_signed': 'bg-green-100 text-green-800 border-green-200',
-    'completed': 'bg-slate-100 text-slate-800 border-slate-200',
-    'cancelled': 'bg-red-100 text-red-800 border-red-200'
-  };
-  
-  return colors[newStatus] || 'bg-gray-100 text-gray-800 border-gray-200';
+  // Direct mapping to booking page left border color scheme
+  switch(status?.toLowerCase()) {
+    case 'new':
+    case 'enquiry':
+      return 'bg-sky-100 text-sky-800 border-sky-200';
+    case 'awaiting_response':
+    case 'in_progress':
+    case 'booking_in_progress':
+    case 'negotiation':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'client_confirms':
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'confirmed':
+    case 'contract_signed':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'completed':
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'cancelled':
+    case 'rejected':
+      return 'bg-red-100 text-red-800 border-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
 }
 
 // Status icon mapping
