@@ -1,4 +1,6 @@
 import express, { type Request, Response } from "express";
+import session from 'express-session';
+import ConnectPgSimple from 'connect-pg-simple';
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
 import { setupAuthentication } from "./core/auth-clean";
@@ -37,6 +39,24 @@ testDatabaseConnection()
 // Essential middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Session configuration for authentication
+const PgSession = ConnectPgSimple(session);
+
+app.use(session({
+  store: new PgSession({
+    connectionString: process.env.DATABASE_URL,
+    tableName: 'sessions'
+  }),
+  secret: process.env.SESSION_SECRET || 'fallback-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // CORS middleware for contract signing from R2
 app.use('/api/contracts/sign', (req, res, next) => {
