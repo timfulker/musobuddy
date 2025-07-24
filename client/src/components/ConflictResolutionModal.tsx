@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Calendar, Clock, MapPin, User } from "lucide-react";
+import { Calendar, Clock, MapPin, User, AlertTriangle } from "lucide-react";
 
 interface Conflict {
   withBookingId: number;
@@ -31,36 +31,42 @@ interface Conflict {
 interface ConflictResolutionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  bookingId: number;
+  currentBooking: any;
+  conflicts: Conflict[];
 }
 
-export default function ConflictResolutionModal({ isOpen, onClose, bookingId }: ConflictResolutionModalProps) {
-  const [selectedConflict, setSelectedConflict] = useState<Conflict | null>(null);
-  const [editingBooking, setEditingBooking] = useState<any>(null);
+export default function ConflictResolutionModal({ 
+  isOpen, 
+  onClose, 
+  currentBooking, 
+  conflicts 
+}: ConflictResolutionModalProps) {
+  const [editingBookingId, setEditingBookingId] = useState<number | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    eventTime: '',
+    eventEndTime: ''
+  });
   const { toast } = useToast();
 
-  // Fetch conflict data
-  const { data: conflictData, isLoading } = useQuery({
-    queryKey: ['/api/conflicts', bookingId],
-    enabled: isOpen && !!bookingId,
-  });
-
-  // Fetch booking details
-  const { data: currentBooking } = useQuery({
-    queryKey: ['/api/bookings', bookingId],
-    enabled: isOpen && !!bookingId,
-  });
-
   // Fetch conflicting booking details
-  const { data: conflictingBooking } = useQuery({
-    queryKey: ['/api/bookings', selectedConflict?.withBookingId],
-    enabled: !!selectedConflict?.withBookingId,
+  const conflictingBookingIds = conflicts.map(c => c.withBookingId);
+  const { data: conflictingBookings = [] } = useQuery({
+    queryKey: ['/api/bookings/batch', conflictingBookingIds],
+    queryFn: async () => {
+      if (conflictingBookingIds.length === 0) return [];
+      // Fetch each booking individually since we don't have a batch endpoint
+      const bookingsPromises = conflictingBookingIds.map(id => 
+        apiRequest(`/api/bookings/${id}`)
+      );
+      return Promise.all(bookingsPromises);
+    },
+    enabled: isOpen && conflictingBookingIds.length > 0,
   });
 
   // Update booking mutation
   const updateBookingMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest(`/api/bookings/${editingBooking.id}`, {
+    mutationFn: async ({ bookingId, data }: { bookingId: number; data: any }) => {
+      return apiRequest(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
@@ -68,87 +74,227 @@ export default function ConflictResolutionModal({ isOpen, onClose, bookingId }: 
     onSuccess: () => {
       toast({
         title: "Booking updated",
-        description: "The booking has been updated successfully.",
+        description: "The booking time has been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
+      setEditingBookingId(null);
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      setEditingBooking(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
     },
     onError: () => {
       toast({
         title: "Error",
         description: "Failed to update booking. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
-    },
+    }
   });
 
   // Reject booking mutation
   const rejectBookingMutation = useMutation({
     mutationFn: async (bookingId: number) => {
       return apiRequest(`/api/bookings/${bookingId}`, {
-        method: 'DELETE',
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'rejected' }),
       });
     },
     onSuccess: () => {
       toast({
         title: "Booking rejected",
-        description: "The booking has been rejected and removed.",
+        description: "The booking has been rejected successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      setSelectedConflict(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
     },
     onError: () => {
       toast({
         title: "Error",
         description: "Failed to reject booking. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
-    },
+    }
   });
 
-  const conflicts = conflictData?.conflicts || [];
-
-  const handleEditTime = (booking: any) => {
-    setEditingBooking({
-      ...booking,
-      eventTime: booking.eventTime || '',
-      eventEndTime: booking.eventEndTime || '',
+  const handleEditTime = (bookingId: number, currentTime: string, currentEndTime: string) => {
+    setEditingBookingId(bookingId);
+    setEditFormData({
+      eventTime: currentTime || '',
+      eventEndTime: currentEndTime || ''
     });
   };
 
   const handleSaveTimeEdit = () => {
-    if (!editingBooking) return;
+    if (!editingBookingId) return;
     
     updateBookingMutation.mutate({
-      eventTime: editingBooking.eventTime,
-      eventEndTime: editingBooking.eventEndTime,
+      bookingId: editingBookingId,
+      data: editFormData
     });
   };
 
-  const handleRejectBooking = (bookingId: number) => {
+  const handleRejectBooking = (bookingId: number, bookingStatus: string) => {
+    if (bookingStatus === 'confirmed') {
+      toast({
+        title: "Cannot reject confirmed booking",
+        description: "Confirmed bookings must be edited or deleted from the full booking form.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (window.confirm('Are you sure you want to reject this booking? This cannot be undone.')) {
       rejectBookingMutation.mutate(bookingId);
     }
   };
 
-  if (isLoading) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Loading Conflicts...</DialogTitle>
-          </DialogHeader>
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const handleViewBooking = (bookingId: number) => {
+    // Close modal and navigate to booking
+    onClose();
+    window.open(`/bookings?id=${bookingId}`, '_blank');
+  };
 
-  if (conflicts.length === 0) {
+  const handleSaveAndRecheck = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
+    toast({
+      title: "Conflicts rechecked",
+      description: "The system has rechecked for conflicts.",
+    });
+  };
+
+  const renderBookingCard = (booking: any, isCurrentBooking = false, conflict?: Conflict) => {
+    const isEditing = editingBookingId === booking.id;
+    const canReject = !isCurrentBooking && booking.status !== 'confirmed' && booking.status !== 'completed';
+    const isConfirmed = booking.status === 'confirmed';
+
+    return (
+      <Card key={booking.id} className={`${isCurrentBooking ? 'border-blue-500 bg-blue-50' : 'border-orange-200 bg-orange-50'}`}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            {isCurrentBooking ? (
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-orange-600" />
+            )}
+            {isCurrentBooking ? 'Current Booking' : 'Conflicting Booking'}
+            {conflict && (
+              <Badge variant={conflict.severity === 'hard' ? 'destructive' : 'default'} className="text-xs">
+                {conflict.severity === 'hard' ? 'CRITICAL' : 'WARNING'}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-gray-500" />
+              <span className="font-medium">{booking.clientName || 'Unknown Client'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                {booking.status?.replace('_', ' ').toUpperCase() || 'NEW'}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gray-500" />
+              <span>{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-gray-500" />
+              <span>{booking.venue || 'No venue'}</span>
+            </div>
+          </div>
+
+          {/* Time editing section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-gray-500" />
+              <span className="font-medium">Time:</span>
+            </div>
+            {isEditing ? (
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Label htmlFor={`start-${booking.id}`} className="text-xs">Start Time</Label>
+                  <Input
+                    id={`start-${booking.id}`}
+                    type="time"
+                    value={editFormData.eventTime}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, eventTime: e.target.value }))}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor={`end-${booking.id}`} className="text-xs">End Time</Label>
+                  <Input
+                    id={`end-${booking.id}`}
+                    type="time"
+                    value={editFormData.eventEndTime}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, eventEndTime: e.target.value }))}
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm bg-white p-2 rounded border">
+                {booking.eventTime && booking.eventEndTime ? 
+                  `${booking.eventTime} - ${booking.eventEndTime}` : 
+                  'No time specified'
+                }
+                {conflict?.overlapMinutes && (
+                  <div className="text-red-600 text-xs mt-1">
+                    Overlap: {conflict.overlapMinutes} minutes
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-2 pt-2">
+            {isEditing ? (
+              <>
+                <Button size="sm" onClick={handleSaveTimeEdit} disabled={updateBookingMutation.isPending}>
+                  {updateBookingMutation.isPending ? 'Saving...' : 'Save Time'}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEditingBookingId(null)}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleEditTime(booking.id, booking.eventTime || '', booking.eventEndTime || '')}
+                >
+                  Edit Time
+                </Button>
+                {canReject && (
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleRejectBooking(booking.id, booking.status)}
+                    disabled={rejectBookingMutation.isPending}
+                    title={isConfirmed ? 'Confirmed bookings must be edited or deleted from the full booking form.' : ''}
+                  >
+                    {rejectBookingMutation.isPending ? 'Rejecting...' : 'Reject Booking'}
+                  </Button>
+                )}
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleViewBooking(booking.id)}
+                >
+                  View Booking
+                </Button>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  if (!currentBooking || conflicts.length === 0) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl">
@@ -168,218 +314,35 @@ export default function ConflictResolutionModal({ isOpen, onClose, bookingId }: 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            ⚠️ Conflict detected between {conflicts.length + 1} bookings on{' '}
-            {currentBooking?.eventDate ? new Date(currentBooking.eventDate).toLocaleDateString() : 'this date'}
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-orange-600" />
+            Booking Conflict Resolution
+            <Badge variant="destructive" className="text-xs">
+              {conflicts.length} conflict{conflicts.length > 1 ? 's' : ''} detected
+            </Badge>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Show first conflict in side-by-side layout */}
-          {conflicts.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Current Booking (Left Side) */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Current Booking</h3>
-                <div className="p-4 border rounded-lg bg-blue-50">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span className="font-medium">{currentBooking?.clientName}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={currentBooking?.status === 'confirmed' ? 'default' : 'secondary'}>
-                        {currentBooking?.status || 'Unknown'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {currentBooking?.eventTime && currentBooking?.eventEndTime
-                          ? `${currentBooking.eventTime} – ${currentBooking.eventEndTime}`
-                          : 'Time not specified'}
-                      </span>
-                    </div>
-                    {currentBooking?.venue && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{currentBooking.venue}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="mt-4 space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleEditTime(currentBooking)}
-                    >
-                      Edit Time
-                    </Button>
-                    {(currentBooking?.status === 'enquiry' || currentBooking?.status === 'new') && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleRejectBooking(currentBooking.id)}
-                      >
-                        Reject Booking
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm">
-                      View Full Booking
-                    </Button>
-                  </div>
-                </div>
-              </div>
+          {/* Side-by-side booking comparison */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Current booking */}
+            {renderBookingCard(currentBooking, true)}
 
-              {/* Conflicting Booking (Right Side) */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Conflicting Booking</h3>
-                <div className="p-4 border rounded-lg bg-red-50">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span className="font-medium">{conflicts[0].clientName}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={conflicts[0].status === 'confirmed' ? 'default' : 'secondary'}>
-                        {conflicts[0].status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{conflicts[0].time}</span>
-                    </div>
-                    {conflictingBooking?.venue && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{conflictingBooking.venue}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="mt-4 space-x-2">
-                    {conflicts[0].canEdit && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditTime(conflictingBooking)}
-                      >
-                        Edit Time
-                      </Button>
-                    )}
-                    {conflicts[0].canReject && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleRejectBooking(conflicts[0].withBookingId)}
-                        disabled={conflicts[0].status === 'confirmed'}
-                        title={conflicts[0].status === 'confirmed' ? 'Confirmed bookings must be edited or deleted from the full booking form.' : ''}
-                      >
-                        Reject Booking
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm">
-                      View Booking
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+            {/* Conflicting bookings */}
+            {conflictingBookings.map((conflictingBooking: any, index: number) => {
+              const conflict = conflicts.find(c => c.withBookingId === conflictingBooking.id);
+              return renderBookingCard(conflictingBooking, false, conflict);
+            })}
+          </div>
 
-          {/* Show additional conflicts if any */}
-          {conflicts.length > 1 && (
-            <div className="space-y-4">
-              <h3 className="font-semibold">Additional Conflicts ({conflicts.length - 1})</h3>
-              <div className="space-y-2">
-                {conflicts.slice(1).map((conflict, index) => (
-                  <div key={index} className="p-3 border rounded bg-orange-50 flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">{conflict.clientName}</span>
-                      <span className="text-sm text-muted-foreground ml-2">
-                        ({conflict.status}) - {conflict.time}
-                      </span>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setSelectedConflict(conflict)}
-                    >
-                      Resolve
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Time Edit Modal */}
-          {editingBooking && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-                <h3 className="font-semibold mb-4">Edit Booking Time</h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="eventTime">Start Time</Label>
-                    <Input
-                      id="eventTime"
-                      type="time"
-                      value={editingBooking.eventTime}
-                      onChange={(e) => setEditingBooking({
-                        ...editingBooking,
-                        eventTime: e.target.value
-                      })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="eventEndTime">End Time</Label>
-                    <Input
-                      id="eventEndTime"
-                      type="time"
-                      value={editingBooking.eventEndTime}
-                      onChange={(e) => setEditingBooking({
-                        ...editingBooking,
-                        eventEndTime: e.target.value
-                      })}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleSaveTimeEdit} disabled={updateBookingMutation.isPending}>
-                      Save Changes
-                    </Button>
-                    <Button variant="outline" onClick={() => setEditingBooking(null)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
+          {/* Action buttons */}
           <div className="flex justify-between pt-4 border-t">
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button 
-              onClick={() => {
-                // Refresh conflicts after changes
-                queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
-                toast({
-                  title: "Conflicts rechecked",
-                  description: "The system has rechecked for conflicts.",
-                });
-              }}
-            >
+            <Button onClick={handleSaveAndRecheck}>
               Save & Recheck Conflicts
-            </Button>
-          </div>
-
-          {/* Future Feature Placeholder */}
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <Button disabled variant="outline" className="w-full">
-              Assign Dep Musician (coming soon)
             </Button>
           </div>
         </div>
