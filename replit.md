@@ -357,6 +357,21 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Mobile Responsive**: ✅ Enhanced scrollable layout works across desktop and mobile viewports with proper responsive behavior
 - **Status**: ENHANCED SCROLLABLE INTERFACE + CRITICAL FIXES OPERATIONAL - Complete system with unique contract generation and clean console logging
 
+### 2025-07-24 - View Contract Button Fixed + Database Relationship Restored + Address Formatting Complete
+- **CRITICAL FIX: Missing View Contract Button**: ✅ Fixed database issue where contract 407 had NULL enquiry_id, preventing View Contract buttons from appearing
+- **Database Relationship Restored**: ✅ Contract 407 now properly linked to booking 7144 (Tim Fulker), enabling View Contract button functionality
+- **Smart Contract Detection**: ✅ Enhanced booking-contract relationship matching to ensure buttons appear when contracts exist
+- **Removed Debug Logging**: ✅ Cleaned up excessive console output that was flooding browser console during development
+- **CRITICAL FIX: Client Address Formatting**: ✅ Fixed client address display issue where addresses showed as concatenated text without spaces (e.g., "57, Gloucester RdBournemouthBH7 6JA")
+- **Smart Address Parsing**: ✅ Added intelligent address formatting function that handles various address formats and adds proper spacing between components
+- **Musician Address Section Added**: ✅ Enhanced contract template to include complete performer address section using user settings (addressLine1, city, county, postcode)
+- **Professional Address Display**: ✅ Contracts now show both parties' addresses as required for legal documentation completeness
+- **User Settings Integration**: ✅ Musician address automatically populated from user settings with proper comma-separated formatting
+- **Address Fallback Handling**: ✅ Added graceful handling when performer address not specified in settings with appropriate messaging
+- **Contract Legal Compliance**: ✅ Both client and performer addresses now properly displayed for complete professional contract documentation
+- **TypeScript Error Resolution**: ✅ Fixed Date constructor null handling issues preventing successful PDF generation
+- **Status**: Complete View Contract button system operational - contracts properly linked to bookings with professional address formatting
+
 ### 2025-07-24 - Contract Address Formatting Fixed + Musician Address Added Complete
 - **CRITICAL FIX: Client Address Formatting**: ✅ Fixed client address display issue where addresses showed as concatenated text without spaces (e.g., "57, Gloucester RdBournemouthBH7 6JA")
 - **Smart Address Parsing**: ✅ Added intelligent address formatting function that handles various address formats and adds proper spacing between components

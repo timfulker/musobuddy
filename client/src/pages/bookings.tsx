@@ -104,28 +104,10 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
-  const { data: contracts = [], isLoading: contractsLoading, error: contractsError } = useQuery({
+  const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
     retry: 2,
   });
-  
-  // Debug logging to check contract data
-  React.useEffect(() => {
-    console.log('📄 Contracts query result:', {
-      contracts: contracts,
-      contractsLength: Array.isArray(contracts) ? contracts.length : 'Not an array',
-      contractsArray: Array.isArray(contracts),
-      contractsLoading: contractsLoading,
-      contractsError: contractsError,
-      allContracts: Array.isArray(contracts) && contracts.length > 0 ? contracts.map((c: any) => ({
-        id: c.id,
-        enquiryId: c.enquiryId,
-        contractNumber: c.contractNumber,
-        status: c.status,
-        clientName: c.clientName
-      })) : 'No contracts or not array'
-    });
-  }, [contracts, contractsLoading, contractsError]);
 
   const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices"],
@@ -939,18 +921,7 @@ export default function UnifiedBookings() {
                                 (invoice: any) => invoice.bookingId === booking.id
                               ) : null;
                               
-                              // Debug logging for any booking with a contract or specific test bookings
-                              if (bookingContract || booking.id === 377 || booking.id === 382 || booking.id === 407) {
-                                console.log(`🔍 Booking ${booking.id} (${booking.clientName}):`, {
-                                  bookingId: booking.id,
-                                  hasContract: !!bookingContract,
-                                  contractId: bookingContract?.id,
-                                  hasInvoice: !!bookingInvoice,
-                                  invoiceId: bookingInvoice?.id,
-                                  totalContracts: Array.isArray(contracts) ? contracts.length : 0,
-                                  contractsWithThisEnquiryId: Array.isArray(contracts) ? contracts.filter(c => c.enquiryId === booking.id).length : 0
-                                });
-                              }
+
 
                               return (
                                 <>
