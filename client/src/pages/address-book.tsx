@@ -28,7 +28,7 @@ export default function AddressBook() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
-  const [clientFilter, setClientFilter] = useState<'all' | 'inquired' | 'booked' | 'both'>('all');
+  const [clientFilter, setClientFilter] = useState<'all' | 'inquired' | 'booked' | 'both' | 'needs_review'>('all');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -205,6 +205,19 @@ export default function AddressBook() {
           case 'both':
             // Any client with contact history
             return hasAnyContact;
+          case 'needs_review':
+            // Clients that might be event titles rather than proper names
+            const mightBeEventTitle = client.name.toLowerCase().includes('wedding') ||
+              client.name.toLowerCase().includes('birthday') ||
+              client.name.toLowerCase().includes('party') ||
+              client.name.toLowerCase().includes('corporate') ||
+              client.name.toLowerCase().includes('christmas') ||
+              client.name.toLowerCase().includes('anniversary') ||
+              client.name.toLowerCase().includes('celebration') ||
+              client.name.includes('&') ||
+              client.name.includes(' - ') ||
+              !client.email; // No email suggests it might be a calendar title
+            return mightBeEventTitle;
           default:
             return true;
         }
@@ -430,6 +443,7 @@ export default function AddressBook() {
                     <SelectItem value="inquired">Initial Inquiries (1-2 contacts)</SelectItem>
                     <SelectItem value="booked">Repeat Clients (3+ bookings)</SelectItem>
                     <SelectItem value="both">Has Contact History</SelectItem>
+                    <SelectItem value="needs_review">⚠️ Needs Review (Event Titles)</SelectItem>
                   </SelectContent>
                 </Select>
                 
@@ -502,7 +516,7 @@ export default function AddressBook() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -511,6 +525,32 @@ export default function AddressBook() {
                     <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
                   </div>
                   <Users className="w-8 h-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Need Review</p>
+                    <p className="text-2xl font-bold text-amber-600">
+                      {clients.filter(client => {
+                        const mightBeEventTitle = client.name.toLowerCase().includes('wedding') ||
+                          client.name.toLowerCase().includes('birthday') ||
+                          client.name.toLowerCase().includes('party') ||
+                          client.name.toLowerCase().includes('corporate') ||
+                          client.name.toLowerCase().includes('christmas') ||
+                          client.name.toLowerCase().includes('anniversary') ||
+                          client.name.toLowerCase().includes('celebration') ||
+                          client.name.includes('&') ||
+                          client.name.includes(' - ') ||
+                          !client.email;
+                        return mightBeEventTitle;
+                      }).length}
+                    </p>
+                  </div>
+                  <AlertTriangle className="w-8 h-8 text-amber-600" />
                 </div>
               </CardContent>
             </Card>
@@ -560,7 +600,7 @@ export default function AddressBook() {
                   {searchQuery 
                     ? `No clients found matching "${searchQuery}". Try adjusting your search or filter.`
                     : clientFilter !== 'all' 
-                      ? `No clients found in the "${clientFilter}" category. Try changing the filter or importing from bookings.`
+                      ? `No clients found in the "${clientFilter === 'needs_review' ? 'Needs Review' : clientFilter}" category. Try changing the filter or importing from bookings.`
                       : "Your address book will populate automatically as you receive enquiries, or you can add clients manually."
                   }
                 </p>
