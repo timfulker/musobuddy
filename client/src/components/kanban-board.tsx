@@ -243,24 +243,42 @@ export default function ActionableEnquiries() {
     
     // Determine the appropriate badge text and color
     const getBadgeInfo = () => {
+      // Debug logging to check badge generation
+      if (hasConflicts || needsResponse(enquiry)) {
+        console.log('Badge generation debug:', {
+          title: enquiry.title,
+          hasConflicts,
+          isResolved,
+          severity,
+          needsResponse: needsResponse(enquiry),
+          conflictsLength: conflicts.length
+        });
+      }
+      
       if (hasConflicts && isResolved) {
         return {
-          text: "One of two bookings on same day",
+          text: "Conflict resolved",
           variant: "outline" as const,
-          className: "text-amber-700 border-amber-500"
+          className: "text-green-700 border-green-500"
         };
       } else if (hasConflicts) {
         if (severity === 'high') {
           return {
-            text: "Needs immediate attention",
+            text: "⚠️ Time conflict",
             variant: "destructive" as const,
             className: "text-red-700 bg-red-100 border-red-300"
           };
         } else if (severity === 'medium') {
           return {
-            text: "Needs immediate attention",
+            text: "⚠️ Scheduling conflict",
             variant: "outline" as const,
             className: "text-amber-700 bg-amber-100 border-amber-300"
+          };
+        } else {
+          return {
+            text: "⚠️ Potential conflict",
+            variant: "outline" as const,
+            className: "text-yellow-700 bg-yellow-100 border-yellow-300"
           };
         }
       } else if (needsResponse(enquiry)) {
@@ -322,23 +340,26 @@ export default function ActionableEnquiries() {
               
               {/* Status indicators */}
               <div className="flex flex-wrap gap-1">
-                {badgeInfo && (
-                  <Badge variant={badgeInfo.variant} className={`text-xs ${badgeInfo.className}`}>
-                    {severity === 'high' ? (
-                      <AlertTriangle className="w-3 h-3 mr-1 text-red-700" />
-                    ) : severity === 'medium' ? (
-                      <AlertCircle className="w-3 h-3 mr-1 text-amber-700" />
-                    ) : (
-                      <Clock className="w-3 h-3 mr-1 text-blue-700" />
-                    )}
-                    {badgeInfo.text}
+                {/* Conflict badge */}
+                {hasConflicts && (
+                  <Badge variant="outline" className="text-xs text-red-700 bg-red-50 border-red-300">
+                    ⚠️ Conflict
                   </Badge>
                 )}
+                
+                {/* Response needed badge */}
+                {!hasConflicts && needsResponse(enquiry) && (
+                  <Badge variant="secondary" className="text-xs text-blue-700 bg-blue-100">
+                    Needs Response
+                  </Badge>
+                )}
+                
                 {enquiry.applyNowLink && (
                   <Badge className="bg-green-100 text-green-800 text-xs">
                     🎯 ENCORE
                   </Badge>
                 )}
+                
                 <Badge variant="outline" className="text-xs">
                   {enquiry.status.replace('_', ' ').toUpperCase()}
                 </Badge>
