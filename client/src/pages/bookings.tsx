@@ -929,7 +929,7 @@ export default function UnifiedBookings() {
 
                               return (
                                 <>
-                                  {/* View Contract Button */}
+                                  {/* View Contract Button - Generated Contract */}
                                   {bookingContract && (
                                     <Button 
                                       size="sm" 
@@ -938,6 +938,22 @@ export default function UnifiedBookings() {
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         window.open(`/view/contracts/${bookingContract.id}`, '_blank');
+                                      }}
+                                    >
+                                      <FileText className="w-4 h-4 mr-1" />
+                                      View Contract
+                                    </Button>
+                                  )}
+                                  
+                                  {/* View Contract Button - Uploaded Contract */}
+                                  {!bookingContract && booking.uploadedContractUrl && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(booking.uploadedContractUrl, '_blank');
                                       }}
                                     >
                                       <FileText className="w-4 h-4 mr-1" />
