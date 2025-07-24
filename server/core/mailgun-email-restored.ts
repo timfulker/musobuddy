@@ -853,9 +853,9 @@ function generateComplianceEmailHTML(booking: any, complianceDocuments: any[], c
             <span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
               ${doc.status === 'valid' ? '✅ Valid' : doc.status === 'expiring' ? '⚠️ Expiring' : '❌ Expired'}
             </span>
-            <a href="${process.env.NODE_ENV === 'production' ? 'https://musobuddy.replit.app' : 'http://localhost:5000'}/download/compliance/${doc.id}" 
+            <a href="${doc.documentUrl}" 
                style="background-color: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-size: 14px; font-weight: bold; margin-right: 10px;"
-               target="_blank">
+               target="_blank" download>
               📄 Download
             </a>
             <a href="${process.env.NODE_ENV === 'production' ? 'https://musobuddy.replit.app' : 'http://localhost:5000'}/view/compliance/${doc.id}" 
