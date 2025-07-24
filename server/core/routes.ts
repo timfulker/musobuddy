@@ -1518,6 +1518,71 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Conflicts API route - detects booking time overlaps
+  app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookings = await storage.getBookings(req.user.id);
+      const conflicts: any[] = [];
+      
+      // Check each booking against others for conflicts
+      for (let i = 0; i < bookings.length; i++) {
+        const booking = bookings[i];
+        if (!booking.eventDate || !booking.eventTime || !booking.eventEndTime) continue;
+        
+        for (let j = i + 1; j < bookings.length; j++) {
+          const otherBooking = bookings[j];
+          if (!otherBooking.eventDate || !otherBooking.eventTime || !otherBooking.eventEndTime) continue;
+          
+          // Check if on same date
+          const bookingDate = new Date(booking.eventDate).toDateString();
+          const otherDate = new Date(otherBooking.eventDate).toDateString();
+          if (bookingDate !== otherDate) continue;
+          
+          // Check for time overlap
+          const bookingStart = new Date(`${booking.eventDate}T${booking.eventTime}`);
+          const bookingEnd = new Date(`${booking.eventDate}T${booking.eventEndTime}`);
+          const otherStart = new Date(`${otherBooking.eventDate}T${otherBooking.eventTime}`);
+          const otherEnd = new Date(`${otherBooking.eventDate}T${otherBooking.eventEndTime}`);
+          
+          const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
+          
+          if (hasTimeOverlap) {
+            conflicts.push({
+              id: `${booking.id}-${otherBooking.id}`,
+              enquiryId: booking.id,
+              conflictType: 'booking',
+              conflictId: otherBooking.id,
+              severity: 'high',
+              message: `Time overlap detected between "${booking.title}" and "${otherBooking.title}"`,
+              resolved: false,
+              createdAt: new Date().toISOString(),
+              enquiry: {
+                title: booking.title,
+                clientName: booking.clientName,
+                eventDate: booking.eventDate,
+                eventTime: booking.eventTime,
+                venue: booking.venue
+              },
+              conflictItem: {
+                title: otherBooking.title,
+                clientName: otherBooking.clientName,
+                eventDate: otherBooking.eventDate,
+                eventTime: otherBooking.eventTime,
+                venue: otherBooking.venue
+              }
+            });
+          }
+        }
+      }
+      
+      console.log(`🔍 Found ${conflicts.length} conflicts for user ${req.user.id}`);
+      res.json(conflicts);
+    } catch (error) {
+      console.error('❌ Conflicts detection error:', error);
+      res.status(500).json({ error: 'Failed to detect conflicts' });
+    }
+  });
+
   app.get('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
