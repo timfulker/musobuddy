@@ -1,167 +1,116 @@
-// Unified Status Color System
-// This centralizes all booking status colors for consistency across the application
+// Simplified Status Color System - Based on Booking Page Left Border Colors
+// Single source of truth for all booking status colors across the application
 
 export type BookingStatus = 
-  | 'new' 
-  | 'awaiting_response' 
-  | 'client_confirms' 
-  | 'contract_sent' 
-  | 'confirmed' 
-  | 'cancelled' 
-  | 'completed'
-  | 'booking_in_progress'  // Legacy support
-  | 'enquiry'             // Legacy support
-  | 'negotiation'         // Legacy support
-  | 'contract_signed'     // Legacy support
-  | 'rejected';           // Legacy support
+  | 'new' | 'enquiry'                    // Sky blue
+  | 'awaiting_response' | 'in_progress'  // Dark blue  
+  | 'client_confirms'                    // Orange
+  | 'confirmed'                          // Green
+  | 'completed'                          // Gray
+  | 'cancelled' | 'rejected';            // Red
 
 export interface StatusColorScheme {
-  // Dashboard card backgrounds (subtle gradients)
-  dashboardBg: string;
-  
-  // Badge/pill colors (more prominent)
-  badgeBg: string;
-  badgeText: string;
-  badgeBorder: string;
-  
-  // Left border accent colors
+  // Left border accent (definitive color - matches booking page)
   borderAccent: string;
   
-  // Icon/emoji representation
-  icon: string;
+  // Dashboard backgrounds (subtle, derived from border color)
+  dashboardBg: string;
+  
+  // Badge colors (medium intensity)
+  badgeColors: string;
   
   // Display name
   displayName: string;
 }
 
 const statusColors: Record<string, StatusColorScheme> = {
-  // === PRIMARY WORKFLOW STATUSES ===
+  // === SKY BLUE GROUP (New enquiries) ===
   'new': {
-    dashboardBg: 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200',
-    badgeBg: 'bg-amber-100',
-    badgeText: 'text-amber-800',
-    badgeBorder: 'border-amber-200',
-    borderAccent: 'border-l-amber-500',
-    icon: '📧',
+    borderAccent: 'border-l-sky-400',
+    dashboardBg: 'bg-gradient-to-br from-sky-50 to-sky-100 border-sky-200',
+    badgeColors: 'bg-sky-100 text-sky-800 border-sky-200',
     displayName: 'New Enquiry'
   },
-  
-  'awaiting_response': {
-    dashboardBg: 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200',
-    badgeBg: 'bg-orange-100',
-    badgeText: 'text-orange-800',
-    badgeBorder: 'border-orange-200',
-    borderAccent: 'border-l-orange-500',
-    icon: '💬',
-    displayName: 'Awaiting Response'
-  },
-  
-  'client_confirms': {
-    dashboardBg: 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200',
-    badgeBg: 'bg-blue-100',
-    badgeText: 'text-blue-800',
-    badgeBorder: 'border-blue-200',
-    borderAccent: 'border-l-blue-500',
-    icon: '⏳',
-    displayName: 'Client Confirms'
-  },
-  
-  'contract_sent': {
-    dashboardBg: 'bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200',
-    badgeBg: 'bg-indigo-100',
-    badgeText: 'text-indigo-800',
-    badgeBorder: 'border-indigo-200',
-    borderAccent: 'border-l-indigo-500',
-    icon: '📄',
-    displayName: 'Contract Sent'
-  },
-  
-  'confirmed': {
-    dashboardBg: 'bg-gradient-to-br from-green-50 to-green-100 border-green-200',
-    badgeBg: 'bg-green-100',
-    badgeText: 'text-green-800',
-    badgeBorder: 'border-green-200',
-    borderAccent: 'border-l-green-500',
-    icon: '✅',
-    displayName: 'Confirmed'
-  },
-  
-  'completed': {
-    dashboardBg: 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200',
-    badgeBg: 'bg-purple-100',
-    badgeText: 'text-purple-800',
-    badgeBorder: 'border-purple-200',
-    borderAccent: 'border-l-purple-500',
-    icon: '🎉',
-    displayName: 'Completed'
-  },
-  
-  'cancelled': {
-    dashboardBg: 'bg-gradient-to-br from-red-50 to-red-100 border-red-200',
-    badgeBg: 'bg-red-100',
-    badgeText: 'text-red-800',
-    badgeBorder: 'border-red-200',
-    borderAccent: 'border-l-red-500',
-    icon: '❌',
-    displayName: 'Cancelled'
-  },
-  
-  // === LEGACY STATUS MAPPINGS ===
-  'booking_in_progress': {
-    dashboardBg: 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200',
-    badgeBg: 'bg-orange-100',
-    badgeText: 'text-orange-800',
-    badgeBorder: 'border-orange-200',
-    borderAccent: 'border-l-orange-500',
-    icon: '💬',
-    displayName: 'In Progress'
-  },
-  
   'enquiry': {
-    dashboardBg: 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200',
-    badgeBg: 'bg-amber-100',
-    badgeText: 'text-amber-800',
-    badgeBorder: 'border-amber-200',
-    borderAccent: 'border-l-amber-500',
-    icon: '📧',
+    borderAccent: 'border-l-sky-400',
+    dashboardBg: 'bg-gradient-to-br from-sky-50 to-sky-100 border-sky-200',
+    badgeColors: 'bg-sky-100 text-sky-800 border-sky-200',
     displayName: 'Enquiry'
   },
   
-  'negotiation': {
-    dashboardBg: 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200',
-    badgeBg: 'bg-orange-100',
-    badgeText: 'text-orange-800',
-    badgeBorder: 'border-orange-200',
-    borderAccent: 'border-l-orange-500',
-    icon: '💬',
-    displayName: 'Negotiation'
+  // === DARK BLUE GROUP (In progress) ===
+  'awaiting_response': {
+    borderAccent: 'border-l-blue-700',
+    dashboardBg: 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200',
+    badgeColors: 'bg-blue-100 text-blue-800 border-blue-200',
+    displayName: 'Awaiting Response'
+  },
+  'in_progress': {
+    borderAccent: 'border-l-blue-700',
+    dashboardBg: 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200',
+    badgeColors: 'bg-blue-100 text-blue-800 border-blue-200',
+    displayName: 'In Progress'
+  },
+  'booking_in_progress': {
+    borderAccent: 'border-l-blue-700',
+    dashboardBg: 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200',
+    badgeColors: 'bg-blue-100 text-blue-800 border-blue-200',
+    displayName: 'In Progress'
   },
   
-  'contract_signed': {
-    dashboardBg: 'bg-gradient-to-br from-green-50 to-green-100 border-green-200',
-    badgeBg: 'bg-green-100',
-    badgeText: 'text-green-800',
-    badgeBorder: 'border-green-200',
+  // === ORANGE GROUP (Client confirms) ===
+  'client_confirms': {
+    borderAccent: 'border-l-orange-500',
+    dashboardBg: 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200',
+    badgeColors: 'bg-orange-100 text-orange-800 border-orange-200',
+    displayName: 'Client Confirms'
+  },
+  
+  // === GREEN GROUP (Confirmed) ===
+  'confirmed': {
     borderAccent: 'border-l-green-500',
-    icon: '✅',
+    dashboardBg: 'bg-gradient-to-br from-green-50 to-green-100 border-green-200',
+    badgeColors: 'bg-green-100 text-green-800 border-green-200',
+    displayName: 'Confirmed'
+  },
+  'contract_signed': {
+    borderAccent: 'border-l-green-500',
+    dashboardBg: 'bg-gradient-to-br from-green-50 to-green-100 border-green-200',
+    badgeColors: 'bg-green-100 text-green-800 border-green-200',
     displayName: 'Contract Signed'
   },
   
-  'rejected': {
-    dashboardBg: 'bg-gradient-to-br from-red-50 to-red-100 border-red-200',
-    badgeBg: 'bg-red-100',
-    badgeText: 'text-red-800',
-    badgeBorder: 'border-red-200',
+  // === GRAY GROUP (Completed) ===
+  'completed': {
+    borderAccent: 'border-l-gray-500',
+    dashboardBg: 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200',
+    badgeColors: 'bg-gray-100 text-gray-800 border-gray-200',
+    displayName: 'Completed'
+  },
+  
+  // === RED GROUP (Cancelled) ===
+  'cancelled': {
     borderAccent: 'border-l-red-500',
-    icon: '❌',
+    dashboardBg: 'bg-gradient-to-br from-red-50 to-red-100 border-red-200',
+    badgeColors: 'bg-red-100 text-red-800 border-red-200',
+    displayName: 'Cancelled'
+  },
+  'rejected': {
+    borderAccent: 'border-l-red-500',
+    dashboardBg: 'bg-gradient-to-br from-red-50 to-red-100 border-red-200',
+    badgeColors: 'bg-red-100 text-red-800 border-red-200',
     displayName: 'Rejected'
   }
 };
 
-// Helper functions for consistent color usage across the app
+// Helper functions for consistent color usage
 export function getStatusColors(status: string): StatusColorScheme {
   const normalizedStatus = status?.toLowerCase() || 'new';
   return statusColors[normalizedStatus] || statusColors['new'];
+}
+
+export function getBorderAccent(status: string): string {
+  return getStatusColors(status).borderAccent;
 }
 
 export function getDashboardBg(status: string): string {
@@ -169,26 +118,29 @@ export function getDashboardBg(status: string): string {
 }
 
 export function getBadgeColors(status: string): string {
-  const colors = getStatusColors(status);
-  return `${colors.badgeBg} ${colors.badgeText} ${colors.badgeBorder}`;
+  return getStatusColors(status).badgeColors;
 }
 
-export function getBorderAccent(status: string): string {
-  return getStatusColors(status).borderAccent;
-}
-
-export function getStatusIcon(status: string): string {
-  return getStatusColors(status).icon;
-}
-
-export function getStatusDisplayName(status: string): string {
+export function getDisplayName(status: string): string {
   return getStatusColors(status).displayName;
 }
 
-// Conflict severity colors (separate from status colors)
-export const conflictColors = {
-  high: 'border-red-500 bg-red-50 ring-2 ring-red-200',
-  medium: 'border-amber-500 bg-amber-50 ring-2 ring-amber-200',
-  low: '',
-  resolved: 'border-gray-300 bg-gray-50'
+// CONFLICT SYSTEM - Simple red/yellow/amber dot system (separate from status colors)
+export const conflictSeverity = {
+  high: {
+    dot: 'bg-red-500',
+    description: 'Critical conflict - immediate attention required'
+  },
+  medium: {
+    dot: 'bg-yellow-500', 
+    description: 'Warning - potential scheduling conflict'
+  },
+  low: {
+    dot: 'bg-amber-500',
+    description: 'Minor overlap - review recommended'
+  },
+  resolved: {
+    dot: 'bg-gray-400',
+    description: 'Conflict resolved'
+  }
 };
