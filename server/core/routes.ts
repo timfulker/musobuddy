@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { isAuthenticated, isAdmin } from "./auth-clean";
+import { isAuthenticated } from "./auth-clean";
 import { mailgunService, contractParserService, cloudStorageService } from "./services";
 import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
@@ -26,6 +26,25 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express) {
+  // ===== AUTH ROUTES =====
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      if (req.user) {
+        res.json({
+          id: req.user.id,
+          email: req.user.email,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          tier: req.user.tier || 'free'
+        });
+      } else {
+        res.status(401).json({ error: 'Not authenticated' });
+      }
+    } catch (error) {
+      console.error('Auth user error:', error);
+      res.status(500).json({ error: 'Authentication error' });
+    }
+  });
   const server = createServer(app);
 
   // ===== STRIPE SUBSCRIPTION ROUTES =====
@@ -2433,92 +2452,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ===== ADMIN ROUTES =====
-  app.get('/api/admin/stats', isAdmin, async (req, res) => {
-    try {
-      const stats = await storage.getStats();
-      res.json(stats);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch stats' });
-    }
-  });
-
-  // Admin users endpoint - MISSING FUNCTIONALITY RESTORED
-  app.get('/api/admin/users', isAdmin, async (req, res) => {
-    try {
-      console.log('👥 Admin fetching all users...');
-      const users = await storage.getAllUsers();
-      
-      // Transform to match frontend expectations
-      const adminUsers = users.map(user => ({
-        id: user.id.toString(),
-        firstName: user.firstName || 'Unknown',
-        lastName: user.lastName || 'User',
-        email: user.email,
-        tier: user.tier || 'free',
-        isAdmin: user.isAdmin || false,
-        createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
-        bookingCount: 0, // Could be enhanced with actual count
-        lastLogin: user.updatedAt?.toISOString() || user.createdAt?.toISOString() || new Date().toISOString()
-      }));
-      
-      console.log('✅ Admin users loaded:', adminUsers.length, 'users');
-      res.json(adminUsers);
-    } catch (error) {
-      console.error('❌ Admin users fetch error:', error);
-      res.status(500).json({ error: 'Failed to fetch users' });
-    }
-  });
-
-  // Admin user update endpoint - MISSING PASSWORD UPDATE FUNCTIONALITY
-  app.patch('/api/admin/users/:id', isAdmin, async (req, res) => {
-    try {
-      const userId = req.params.id;
-      const updateData = req.body;
-      
-      console.log('👤 Admin updating user:', userId, 'with data:', Object.keys(updateData));
-      
-      // Handle password change with proper hashing
-      if (updateData.password && updateData.password.trim()) {
-        const bcrypt = await import('bcrypt');
-        updateData.password = await bcrypt.hash(updateData.password.trim(), 10);
-        console.log('🔐 Password hashed for user:', userId);
-      } else if (updateData.password === '') {
-        // If empty password sent, remove it from update (keep current)
-        delete updateData.password;
-        console.log('📝 Keeping existing password for user:', userId);
-      }
-      
-      // Update user in database
-      const updatedUser = await storage.updateUserInfo(userId, updateData);
-      
-      if (!updatedUser) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      
-      // Return updated user in frontend format
-      const responseUser = {
-        id: updatedUser.id.toString(),
-        firstName: updatedUser.firstName || 'Unknown',
-        lastName: updatedUser.lastName || 'User', 
-        email: updatedUser.email,
-        tier: updatedUser.tier || 'free',
-        isAdmin: updatedUser.isAdmin || false,
-        createdAt: updatedUser.createdAt?.toISOString() || new Date().toISOString(),
-        bookingCount: 0,
-        lastLogin: updatedUser.updatedAt?.toISOString() || updatedUser.createdAt?.toISOString() || new Date().toISOString()
-      };
-      
-      console.log('✅ Admin user updated successfully:', userId);
-      res.json(responseUser);
-      
-    } catch (error) {
-      console.error('❌ Admin user update error:', error);
-      res.status(500).json({ error: 'Failed to update user' });
-    }
-  });
-
-  // Admin user creation removed - Replit handles user creation automatically
+  // Admin routes completely removed for authentication system rebuild
 
   // ===== TEMPLATE ROUTES =====
   app.get('/api/templates', isAuthenticated, async (req: any, res) => {
@@ -2840,7 +2774,6 @@ function generateAlreadySignedPage(contract: any): string {
 
             <div class="footer">
                 <p>If you need any assistance, please contact us directly.</p>
-                <p>Powered by MusoBuddy – less admin, more music</p>
             </div>
         </div>
     </body>

@@ -25,7 +25,7 @@ import ViewInvoice from "@/pages/view-invoice";
 import QuickAdd from "@/pages/quick-add";
 import AddressBook from "@/pages/address-book";
 import UserGuide from "@/pages/user-guide";
-import Admin from "@/pages/admin";
+// Admin temporarily removed
 import Feedback from "@/pages/feedback";
 import Pricing from "@/pages/pricing";
 import SupportChat from "@/components/support-chat";
@@ -87,7 +87,7 @@ function Router() {
           <Route path="/templates" component={Templates} />
           <Route path="/user-guide" component={UserGuide} />
           <Route path="/feedback" component={Feedback} />
-          <Route path="/admin" component={Admin} />
+          {/* Admin temporarily removed */}
         </>
       )}
       <Route component={NotFound} />
