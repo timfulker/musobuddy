@@ -6,6 +6,7 @@ import { mailgunService, contractParserService, cloudStorageService } from "./se
 import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
 import { stripeService } from "./stripe-service";
+import { emailOnboarding } from "./email-onboarding";
 import { db } from "./database";
 import { users, bookings, contracts, invoices, feedback } from "../../shared/schema";
 import { eq } from "drizzle-orm";
@@ -30,6 +31,90 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express) {
+  // ===== EMAIL ONBOARDING ROUTES =====
+  
+  // Check email prefix availability (like Gmail signup)
+  app.post('/api/email/check-availability', isAuthenticated, async (req: any, res) => {
+    try {
+      const { prefix } = req.body;
+      
+      if (!prefix) {
+        return res.status(400).json({ error: 'Email prefix is required' });
+      }
+
+      // Validate format first
+      const validation = await emailOnboarding.validateEmailPrefix(prefix);
+      if (!validation.valid) {
+        return res.json({ 
+          available: false, 
+          error: validation.error 
+        });
+      }
+
+      // Check availability
+      const availability = await emailOnboarding.checkEmailPrefixAvailability(prefix);
+      
+      res.json({
+        available: availability.available,
+        suggestion: availability.suggestion,
+        fullEmail: availability.available ? `leads+${prefix.toLowerCase()}@mg.musobuddy.com` : null
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Email availability check error:', error);
+      res.status(500).json({ error: 'Failed to check email availability' });
+    }
+  });
+
+  // Assign email prefix to user
+  app.post('/api/email/assign-prefix', isAuthenticated, async (req: any, res) => {
+    try {
+      const { prefix } = req.body;
+      const userId = req.user.id;
+      
+      if (!prefix) {
+        return res.status(400).json({ error: 'Email prefix is required' });
+      }
+
+      const result = await emailOnboarding.assignEmailPrefixToUser(userId, prefix);
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          email: result.email,
+          message: 'Email address assigned successfully'
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          error: result.error
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Email assignment error:', error);
+      res.status(500).json({ error: 'Failed to assign email prefix' });
+    }
+  });
+
+  // Get user's current email address
+  app.get('/api/email/my-address', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const email = await emailOnboarding.getUserEmail(userId);
+      
+      if (email) {
+        res.json({ email });
+      } else {
+        res.json({ email: null, needsSetup: true });
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Get user email error:', error);
+      res.status(500).json({ error: 'Failed to get user email' });
+    }
+  });
+
   // ===== AUTH ROUTES =====
   // Email/password login endpoint
   app.post('/api/auth/login', async (req: any, res) => {

@@ -103,32 +103,27 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     
     let userId = null;
     
-    // Parse email format: username-leads@mg.musobuddy.com or leads+userid@mg.musobuddy.com
+    // Parse email format: leads+customprefix@mg.musobuddy.com (Enhanced Hybrid System)
     if (recipientField.includes('@mg.musobuddy.com')) {
-      // Method 1: prefix format (tim-leads@mg.musobuddy.com)
-      const prefixMatch = recipientField.match(/^([^-\+]+)[-\+]leads@mg\.musobuddy\.com$/);
+      // Extract custom prefix from plus addressing
+      const prefixMatch = recipientField.match(/leads\+([^@]+)@mg\.musobuddy\.com$/);
       if (prefixMatch) {
-        const emailPrefix = prefixMatch[1];
-        console.log(`📧 [${requestId}] Extracted email prefix:`, emailPrefix);
+        const customPrefix = prefixMatch[1];
+        console.log(`📧 [${requestId}] Extracted custom email prefix:`, customPrefix);
         
-        // Look up user by email prefix
+        // Look up user by their custom email prefix
         try {
           const users = await storage.getUsers();
-          const user = users.find(u => u.emailPrefix === emailPrefix);
+          const user = users.find(u => u.emailPrefix === customPrefix);
           if (user) {
             userId = user.id;
-            console.log(`📧 [${requestId}] Found user for prefix "${emailPrefix}":`, userId);
+            console.log(`📧 [${requestId}] Found user for custom prefix "${customPrefix}":`, userId);
+          } else {
+            console.log(`📧 [${requestId}] No user found for custom prefix "${customPrefix}"`);
           }
         } catch (error) {
-          console.log(`❌ [${requestId}] Error looking up user:`, error);
+          console.log(`❌ [${requestId}] Error looking up user by custom prefix:`, error);
         }
-      }
-      
-      // Method 2: direct user ID format (leads+123@mg.musobuddy.com)
-      const userIdMatch = recipientField.match(/leads\+(\d+)@mg\.musobuddy\.com$/);
-      if (userIdMatch && !userId) {
-        userId = userIdMatch[1];
-        console.log(`📧 [${requestId}] Extracted user ID from email:`, userId);
       }
     }
     
