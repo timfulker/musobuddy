@@ -50,15 +50,15 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public routes - no authentication required */}
+      {/* Public routes - always accessible */}
       <Route path="/" component={LandingPage} />
       <Route path="/signup" component={SignupPage} />
+      <Route path="/login" component={LoginPage} />
       <Route path="/trial-success" component={TrialSuccessPage} />
       <Route path="/sign-contract/:id" component={SignContract} />
       <Route path="/view-contract/:id" component={ViewContract} />
       <Route path="/view-invoice/:id" component={ViewInvoice} />
       <Route path="/quick-add" component={QuickAdd} />
-      {/* Old login removed - using Replit auth only */}
       <Route path="/pricing" component={Pricing} />
       <Route path="/logout" component={() => {
         // Client-side logout handler - clears cache and redirects
@@ -68,29 +68,23 @@ function Router() {
         }).then(() => {
           // Clear React Query cache to force re-authentication
           queryClient.clear();
-          window.location.href = '/login';
+          window.location.href = '/';
         }).catch(() => {
           // Even if logout fails, clear cache and redirect
           queryClient.clear();
-          window.location.href = '/login';
+          window.location.href = '/';
         });
         return <div>Logging out...</div>;
       }} />
       
-      {!isAuthenticated ? (
+      {/* Protected routes - require authentication */}
+      {isAuthenticated ? (
         <>
-          <Route path="/login" component={LoginPage} />
-          <Route path="/" component={LoginPage} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/bookings" component={Bookings} />
           <Route path="/address-book" component={AddressBook} />
           <Route path="/contracts" component={Contracts} />
-
           <Route path="/invoices" component={Invoices} />
-
           <Route path="/compliance" component={Compliance} />
           <Route path="/settings" component={Settings} />
           <Route path="/templates" component={Templates} />
@@ -99,7 +93,8 @@ function Router() {
           <Route path="/email-setup" component={EmailSetup} />
           <Route path="/admin" component={Admin} />
         </>
-      )}
+      ) : null}
+      
       <Route component={NotFound} />
     </Switch>
   );
