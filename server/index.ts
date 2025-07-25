@@ -45,7 +45,7 @@ const PgSession = ConnectPgSimple(session);
 
 app.use(session({
   store: new PgSession({
-    connectionString: process.env.DATABASE_URL,
+    conString: process.env.DATABASE_URL,
     tableName: 'sessions'
   }),
   secret: process.env.SESSION_SECRET || 'fallback-secret-key',
@@ -97,9 +97,50 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     // AI parsing
     const aiResult = await parseEmailWithAI(bodyField, subjectField);
     
+    // Extract user ID from recipient email address
+    const recipientField = req.body.To || req.body.recipient || '';
+    console.log(`📧 [${requestId}] Recipient field:`, recipientField);
+    
+    let userId = null;
+    
+    // Parse email format: username-leads@mg.musobuddy.com or leads+userid@mg.musobuddy.com
+    if (recipientField.includes('@mg.musobuddy.com')) {
+      // Method 1: prefix format (tim-leads@mg.musobuddy.com)
+      const prefixMatch = recipientField.match(/^([^-\+]+)[-\+]leads@mg\.musobuddy\.com$/);
+      if (prefixMatch) {
+        const emailPrefix = prefixMatch[1];
+        console.log(`📧 [${requestId}] Extracted email prefix:`, emailPrefix);
+        
+        // Look up user by email prefix
+        try {
+          const users = await storage.getUsers();
+          const user = users.find(u => u.emailPrefix === emailPrefix);
+          if (user) {
+            userId = user.id;
+            console.log(`📧 [${requestId}] Found user for prefix "${emailPrefix}":`, userId);
+          }
+        } catch (error) {
+          console.log(`❌ [${requestId}] Error looking up user:`, error);
+        }
+      }
+      
+      // Method 2: direct user ID format (leads+123@mg.musobuddy.com)
+      const userIdMatch = recipientField.match(/leads\+(\d+)@mg\.musobuddy\.com$/);
+      if (userIdMatch && !userId) {
+        userId = userIdMatch[1];
+        console.log(`📧 [${requestId}] Extracted user ID from email:`, userId);
+      }
+    }
+    
+    // Fallback to default user if no match found
+    if (!userId) {
+      userId = "43963086"; // Default admin user
+      console.log(`📧 [${requestId}] No user match found, using default user:`, userId);
+    }
+
     // Create booking
     const bookingData = {
-      userId: "43963086",
+      userId: userId,
       title: subjectField || "New Enquiry",
       clientName,
       clientEmail,

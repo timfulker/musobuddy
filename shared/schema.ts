@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   betaEndDate: timestamp("beta_end_date"),
   betaFeedbackCount: integer("beta_feedback_count").default(0),
   stripeCustomerId: text("stripe_customer_id"),
+  emailPrefix: text("email_prefix").unique(), // For personalized email addresses like tim-leads@mg.musobuddy.com
   isActive: boolean("is_active").default(true), // Account active/suspended
   lastLoginAt: timestamp("last_login_at"),
   lastLoginIP: varchar("last_login_ip"),
