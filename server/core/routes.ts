@@ -231,28 +231,27 @@ export async function registerRoutes(app: Express) {
   });
 
   // Complete onboarding
-  app.post('/api/auth/complete-onboarding', async (req: any, res) => {
+  app.post('/api/auth/complete-onboarding', isAuthenticated, async (req: any, res) => {
     try {
-      const { userId } = req.body;
+      const user = req.user;
       
-      if (!userId) {
-        return res.status(400).json({ error: 'User ID required' });
-      }
-
-      const user = await storage.getUserById(userId);
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
       // Mark onboarding as completed
-      await storage.updateUser(userId, {
+      await storage.updateUser(user.id, {
         onboardingCompleted: true,
         onboardingCompletedAt: new Date(),
       });
 
       res.json({ 
         success: true,
-        message: 'Onboarding completed successfully' 
+        message: 'Onboarding completed successfully',
+        user: {
+          ...user,
+          onboardingCompleted: true
+        } 
       });
 
     } catch (error: any) {
