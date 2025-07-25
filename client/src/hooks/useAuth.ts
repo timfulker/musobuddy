@@ -36,7 +36,7 @@ export function useAuth() {
     try {
       console.log('🚪 Initiating logout...');
 
-      const response = await fetch('/api/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -80,7 +80,7 @@ export function useAuth() {
     try {
       console.log('🔑 Attempting login for:', email);
 
-      const response = await fetch('/api/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         credentials: 'include',
         headers: {
