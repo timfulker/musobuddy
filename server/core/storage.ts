@@ -613,12 +613,20 @@ Warm regards and best wishes,
 
   // Create new user for admin panel
   async createUser(userData: any) {
-    // Hash password if provided
-    if (userData.password) {
-      userData.password = await bcrypt.hash(userData.password, 10);
+    // Generate unique ID if not provided
+    if (!userData.id) {
+      const { nanoid } = await import('nanoid');
+      userData.id = nanoid();
     }
-    const result = await db.insert(users).values(userData).returning();
-    return result[0];
+    
+    // Hash password if provided (but don't modify original object)
+    const processedData = { ...userData };
+    if (processedData.password) {
+      processedData.password = await bcrypt.hash(processedData.password, 10);
+    }
+    
+    const result = await db.insert(users).values(processedData).returning();
+    return result[0]; // Return the full user object
   }
 
   async getAllBookings() {

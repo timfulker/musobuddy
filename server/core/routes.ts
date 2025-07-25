@@ -55,14 +55,11 @@ export async function registerRoutes(app: Express) {
       const deviceFingerprint = req.headers['user-agent'] || '';
       
       // Create user account
-      const bcrypt = await import('bcrypt');
-      const hashedPassword = await bcrypt.hash(password, 10);
-      
-      const userId = await storage.createUser({
+      const newUser = await storage.createUser({
         email,
         firstName,
         lastName,
-        password: hashedPassword,
+        password, // Let storage handle hashing
         phoneNumber,
         phoneVerified: false,
         trialStatus: 'inactive',
@@ -78,6 +75,8 @@ export async function registerRoutes(app: Express) {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+      
+      const userId = newUser.id;
 
       // Generate and send phone verification code
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -145,14 +144,14 @@ export async function registerRoutes(app: Express) {
       }
 
       const record = verification[0];
-      if (record.expiresAt < new Date()) {
+      if (record.expiresAt && record.expiresAt < new Date()) {
         return res.status(400).json({ error: 'Verification code expired' });
       }
 
       if (record.verificationCode !== verificationCode) {
         // Increment attempts
         await db.update(phoneVerifications)
-          .set({ attempts: record.attempts + 1 })
+          .set({ attempts: (record.attempts || 0) + 1 })
           .where(eq(phoneVerifications.id, record.id));
           
         return res.status(400).json({ error: 'Invalid verification code' });
