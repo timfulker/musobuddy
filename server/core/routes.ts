@@ -9,8 +9,7 @@ import { stripeService } from "./stripe-service";
 import { emailOnboarding } from "./email-onboarding";
 import { db } from "./database";
 import { users, bookings, contracts, invoices, feedback, phoneVerifications, fraudPreventionLog, trialTracking } from "../../shared/schema";
-import { eq } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 
@@ -87,8 +86,8 @@ export async function registerRoutes(app: Express) {
         phoneNumber,
         verificationCode,
         expiresAt,
-        ipAddress: signupIp,
-        userAgent: deviceFingerprint,
+        ipAddress: signupIp || '',
+        userAgent: deviceFingerprint || '',
         attempts: 0,
       });
 
@@ -135,8 +134,8 @@ export async function registerRoutes(app: Express) {
       // Check verification code
       const verification = await db.select()
         .from(phoneVerifications)
-        .where(eq(phoneVerifications.phoneNumber, user.phoneNumber))
-        .orderBy(sql`created_at DESC`)
+        .where(eq(phoneVerifications.phoneNumber, user.phoneNumber || ''))
+        .orderBy(desc(phoneVerifications.createdAt))
         .limit(1);
 
       if (verification.length === 0) {
@@ -191,11 +190,11 @@ export async function registerRoutes(app: Express) {
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
       await db.insert(phoneVerifications).values({
-        phoneNumber: user.phoneNumber,
+        phoneNumber: user.phoneNumber || '',
         verificationCode,
         expiresAt,
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
+        ipAddress: req.ip || '',
+        userAgent: req.headers['user-agent'] || '',
         attempts: 0,
       });
 
