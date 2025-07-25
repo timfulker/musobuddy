@@ -5,8 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, AlertCircle, Mail, Copy, Check } from 'lucide-react';
+import { CheckCircle, AlertCircle, Mail, Copy, Check, Crown, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 
 interface EmailCheckResponse {
@@ -28,6 +30,7 @@ export default function EmailSetup() {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Get user's current email
   const { data: userEmail, isLoading } = useQuery<UserEmailResponse>({
@@ -118,6 +121,51 @@ export default function EmailSetup() {
       assignEmail.mutate(prefix);
     }
   };
+
+  // Demo limitation - block email setup for non-subscribed users
+  if (user && !user.isSubscribed && !user.isLifetime && !user.isAdmin) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Demo Limitation Notice */}
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-800">
+                <Lock className="h-5 w-5" />
+                Email Setup Requires Subscription
+              </CardTitle>
+              <CardDescription className="text-orange-700">
+                Professional email addresses are available with paid plans
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert className="border-orange-200 bg-orange-50">
+                <Crown className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-800">
+                  Email setup allows you to receive client inquiries that automatically become bookings. 
+                  This feature requires a paid subscription to ensure reliable email delivery and processing.
+                </AlertDescription>
+              </Alert>
+              
+              <div className="mt-6 space-y-4">
+                <Link href="/pricing">
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                    <Crown className="w-4 h-4 mr-2" />
+                    View Pricing Plans
+                  </Button>
+                </Link>
+                <Link href="/dashboard">
+                  <Button variant="outline" className="w-full border-orange-300 text-orange-700 hover:bg-orange-50">
+                    Continue Exploring Demo
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
