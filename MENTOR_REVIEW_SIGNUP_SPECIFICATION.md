@@ -59,12 +59,26 @@ This document outlines the complete user registration, trial management, and onb
 - **Feature Migration Timeline:** Premium features move to Core tier after 6-12 months
 - **Price Protection:** Annual price rise protection for grandfathered users, not feature access rights
 
-**Migration Strategy:**
+**Migration Strategy Options for Mentor Consideration:**
+
+**Option A: Tier-Differentiated Grandfathering (Recommended)**
 - **Existing Core users:** Remain at £9.99/month with enhanced Core tier (minor improvements)
 - **Premium features:** Available only to new £13.99/month Premium subscribers
 - **Feature evolution:** Premium features migrate to Core tier over time (6-12 months)
 - **Price grandfathering:** Protection from annual price rises only, not feature access
 - **Clear upgrade path:** Core users can upgrade to Premium for additional features
+
+**Pros:** Maintains tier value, sustainable revenue model, follows SaaS best practices
+**Cons:** Some early adopters may feel excluded from premium features
+
+**Option B: Full Feature Grandfathering (Alternative)**
+- **Existing Core users:** Remain at £9.99/month but receive ALL Premium features when Phase 2 launches
+- **New subscribers:** Choose between Core (£9.99) or Premium (£13.99) with identical features
+- **Revenue model:** Premium tier justified by customer acquisition only
+- **Long-term strategy:** Eventually sunset dual pricing, migrate all to single tier
+
+**Pros:** Maximum customer loyalty, strong word-of-mouth, simple feature management
+**Cons:** Devalues Premium tier, potentially unsustainable revenue model, complex pricing explanation
 
 ## Complete User Journey
 
@@ -900,7 +914,7 @@ const TRIAL_CONFIG = {
 
 5. **Feature Evolution Strategy:** Is the 6-12 month Premium→Core feature migration timeline appropriate for maintaining tier value?
 
-6. **Grandfathering Policy:** Should price protection extend beyond annual increases to include feature access rights?
+6. **Grandfathering Policy:** Option A (tier-differentiated) vs Option B (full feature access) - which approach better balances customer loyalty with business sustainability?
 
 7. **Release Cadence:** Are 3-month development cycles optimal for both customer satisfaction and development resources?
 
