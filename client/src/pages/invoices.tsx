@@ -583,6 +583,24 @@ export default function Invoices() {
   });
 
   const handleSendInvoice = (invoice: Invoice) => {
+    // Demo limitation - block invoice sending for non-subscribers
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Invoice sending requires a paid subscription. You can create and view invoices in demo mode.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      return;
+    }
+
     console.log('=== INVOICE SEND DEBUG ===');
     console.log('Invoice ID:', invoice.id);
     console.log('Invoice data:', invoice);
@@ -604,6 +622,25 @@ export default function Invoices() {
   };
 
   const handleConfirmSendInvoice = () => {
+    // Demo limitation - additional check for invoice sending
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Invoice sending requires a paid subscription. Please upgrade to send invoices to clients.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      setCustomMessageDialog(false);
+      return;
+    }
+
     if (invoiceToSend) {
       console.log('Sending invoice with custom message:', customMessage);
       sendInvoiceMutation.mutate({
@@ -664,10 +701,46 @@ export default function Invoices() {
   };
 
   const handleSendReminder = (invoice: Invoice) => {
+    // Demo limitation - block reminder sending for non-subscribers
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Overdue reminder sending requires a paid subscription. You can create and view invoices in demo mode.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      return;
+    }
+
     sendReminderMutation.mutate(invoice);
   };
 
   const handleResendInvoice = (invoice: Invoice) => {
+    // Demo limitation - block invoice resending for non-subscribers
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Invoice sending requires a paid subscription. You can create and view invoices in demo mode.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      return;
+    }
+
     // Check if invoice has client email
     if (!invoice.clientEmail) {
       toast({

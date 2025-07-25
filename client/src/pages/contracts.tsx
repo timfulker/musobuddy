@@ -423,6 +423,24 @@ export default function Contracts() {
   };
 
   const handleSendEmail = (contract: Contract) => {
+    // Demo limitation - block direct email sending for non-subscribers
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Contract sending requires a paid subscription. You can create and view contracts in demo mode.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      return;
+    }
+
     console.log('🔥 FRONTEND: handleSendEmail called with contract:', contract.id);
     console.log('🔥 FRONTEND: Contract details:', contract);
     console.log('🔥 FRONTEND: sendEmailMutation.isPending:', sendEmailMutation.isPending);
@@ -507,12 +525,49 @@ export default function Contracts() {
   };
 
   const handleSendContract = (contract: Contract) => {
+    // Demo limitation - block contract sending for non-subscribers
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Contract sending requires a paid subscription. You can create and view contracts in demo mode.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      return;
+    }
+
     setContractToSend(contract);
     setCustomMessage("");
     setCustomMessageDialog(true);
   };
 
   const handleConfirmSendContract = () => {
+    // Demo limitation - additional check for contract sending
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Contract sending requires a paid subscription. Please upgrade to send contracts to clients.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      setCustomMessageDialog(false);
+      return;
+    }
+
     if (contractToSend) {
       sendEmailMutation.mutate({ 
         contractId: contractToSend.id, 
