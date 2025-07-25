@@ -30,6 +30,11 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express) {
+  // ===== TEST ROUTES =====
+  app.get('/test-login', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'test-direct-login.html'));
+  });
+
   // ===== SAAS SIGNUP ROUTES =====
   
   // User signup with phone verification

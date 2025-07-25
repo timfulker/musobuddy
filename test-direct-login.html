@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Login Test</title>
+</head>
+<body>
+    <h1>Direct Login Test</h1>
+    <form id="loginForm">
+        <input type="email" id="email" value="timfulker@gmail.com" placeholder="Email">
+        <input type="password" id="password" value="MusoBuddy2025!" placeholder="Password">
+        <button type="submit">Login</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('🔍 Direct test: Form submitted');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('🔍 Direct test: Email:', email);
+            console.log('🔍 Direct test: Password length:', password.length);
+            
+            try {
+                console.log('🔍 Direct test: Making fetch request');
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                console.log('🔍 Direct test: Response status:', response.status);
+                const data = await response.json();
+                console.log('🔍 Direct test: Response data:', data);
+                
+                document.getElementById('result').innerHTML = 
+                    `<pre>Status: ${response.status}\nData: ${JSON.stringify(data, null, 2)}</pre>`;
+                    
+                if (data.success) {
+                    window.location.href = '/dashboard';
+                }
+            } catch (error) {
+                console.error('🔍 Direct test: Error:', error);
+                document.getElementById('result').innerHTML = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
