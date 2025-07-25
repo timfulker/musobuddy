@@ -39,15 +39,7 @@ export default function TrialSuccessPage() {
     },
   });
 
-  useEffect(() => {
-    if (user && sessionId) {
-      // Auto-progress to onboarding after 3 seconds
-      const timer = setTimeout(() => {
-        setStep('onboarding');
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [user, sessionId]);
+  // Removed auto-progression - users now manually continue
 
   const handleGetStarted = () => {
     completeOnboardingMutation.mutate();
