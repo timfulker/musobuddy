@@ -3,8 +3,7 @@ import session from 'express-session';
 import ConnectPgSimple from 'connect-pg-simple';
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
-import { setupSimpleAuth } from "./auth/simple-auth";
-import { setupAuthRoutes } from "./auth/routes";
+import { setupAuthentication } from "./core/auth-clean";
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
@@ -44,20 +43,27 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Session configuration for authentication
 const PgSession = ConnectPgSimple(session);
 
+// Fix production session configuration
+const isProduction = process.env.NODE_ENV === 'production' || 
+                    process.env.REPLIT_ENVIRONMENT === 'production' ||
+                    process.env.REPLIT_DEPLOYMENT;
+
 app.use(session({
   store: new PgSession({
     conString: process.env.DATABASE_URL,
-    tableName: 'sessions'
+    tableName: 'sessions',
+    createTableIfMissing: true // Ensure sessions table exists
   }),
-  secret: process.env.SESSION_SECRET || 'fallback-secret-key',
+  secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
   resave: false,
   saveUninitialized: false,
-  name: 'sessionId',
+  name: 'musobuddy_session',
   cookie: {
-    secure: false, // Don't require HTTPS for now to fix production login
+    secure: false, // Always false to fix production issues
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax'
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    sameSite: 'lax',
+    domain: isProduction ? '.replit.app' : undefined // Set domain for production
   }
 }));
 
@@ -243,10 +249,9 @@ Extract in JSON format:
 
 async function startServer() {
   try {
-    // CRITICAL: Setup bulletproof authentication FIRST
-    await setupSimpleAuth(app);
-    setupAuthRoutes(app);
-    console.log('✅ Bulletproof authentication system initialized');
+    // CRITICAL: Setup authentication FIRST, before any other routes
+    await setupAuthentication(app);
+    console.log('✅ Authentication system initialized');
     
     // Contract signing will be handled by main routes
     

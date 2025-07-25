@@ -384,7 +384,85 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // AUTH ROUTES MOVED TO /auth/routes.ts
+  // ===== AUTH ROUTES =====
+  // Email/password login endpoint
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email and password are required' 
+        });
+      }
+
+      // Authenticate user
+      const user = await storage.authenticateUser(email, password);
+      
+      if (!user) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Invalid email or password' 
+        });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+      req.session.user = user;
+      
+      console.log('✅ User logged in:', user.email);
+      res.json({ 
+        success: true, 
+        message: 'Login successful',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          tier: user.tier,
+          isAdmin: user.isAdmin
+        }
+      });
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Login failed' 
+      });
+    }
+  });
+
+  // Logout endpoint
+  app.post('/api/auth/logout', (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        console.error('Logout error:', err);
+        return res.status(500).json({ error: 'Logout failed' });
+      }
+      res.json({ success: true, message: 'Logged out successfully' });
+    });
+  });
+
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      if (req.user) {
+        res.json({
+          id: req.user.id,
+          email: req.user.email,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          tier: req.user.tier || 'free',
+          isAdmin: req.user.isAdmin || false
+        });
+      } else {
+        res.status(401).json({ error: 'Not authenticated' });
+      }
+    } catch (error) {
+      console.error('Auth user error:', error);
+      res.status(500).json({ error: 'Authentication error' });
+    }
+  });
 
   // ===== FRESH ADMIN ROUTES =====
   app.get('/api/admin/overview', isAdmin, async (req: any, res: any) => {
