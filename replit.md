@@ -421,6 +421,8 @@ The application is designed to be user-friendly while maintaining professional-g
 - **CRITICAL GAPS CLOSED**: ✅ Fixed reported issue where contracts could still be sent despite demo limitations - all sending functionality now properly restricted
 - **PRICING PAGE DEMO TIER ENHANCED**: ✅ Changed "Free" tier to "Demo" tier with accurate messaging reflecting testing environment rather than functional free features
 - **Demo Tier Features Updated**: ✅ Splash screen now shows "Explore all interfaces", "Create up to 3 test items", "Preview all features", "No sending functionality"
+- **Core Tier Features Clarified**: ✅ Updated Core tier to reflect actual implemented features: "Unlimited bookings & contracts", "Professional invoicing", "Client address book", "Email sending & templates", "Compliance documents", "Cloud document storage"
+- **Premium Tier Features Updated**: ✅ Updated Premium tier to reflect planned Phase 2 features: "Advanced booking analytics", "Calendar integrations", "Client booking portal", "Enhanced AI parsing", "Priority support"
 - **Comparison Table Enhanced**: ✅ Updated feature comparison to accurately reflect demo limitations vs paid tier functionality
 - **FAQ Section Enhanced**: ✅ Added "What can I do in the demo?" FAQ explaining demo environment capabilities and limitations
 - **Production Ready Status**: ✅ Complete SaaS platform with systematic demo restrictions and accurate pricing messaging ready for beta testing and public launch

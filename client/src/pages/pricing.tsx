@@ -120,27 +120,27 @@ export default function PricingPage() {
               <ul className="space-y-2">
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Unlimited bookings
+                  Unlimited bookings & contracts
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Professional contracts
+                  Professional invoicing
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Invoice management
+                  Client address book
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Client management
+                  Email sending & templates
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Email automation
+                  Compliance documents
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Cloud storage
+                  Cloud document storage
                 </li>
               </ul>
               <Button 
@@ -170,19 +170,23 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Advanced analytics
+                  Advanced booking analytics
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Custom branding
+                  Calendar integrations
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Client booking portal
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Enhanced AI parsing
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
                   Priority support
-                </li>
-                <li className="flex items-center">
-                  <Check className="w-4 h-4 text-green-500 mr-2" />
-                  API access
                 </li>
               </ul>
               <Button 
