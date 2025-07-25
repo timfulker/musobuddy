@@ -52,7 +52,6 @@ interface AdminUser {
   betaStartDate: string;
   betaEndDate: string;
   betaFeedbackCount: number;
-  plainTextPassword: string;
   createdAt: string;
 }
 
@@ -633,9 +632,6 @@ export default function AdminPanel() {
                                   {user.firstName} {user.lastName}
                                 </div>
                                 <div className="text-sm text-muted-foreground">{user.email}</div>
-                                <div className="text-sm font-mono bg-gray-100 p-1 rounded text-gray-700 mt-1">
-                                  Password: {user.plainTextPassword || 'Not set'}
-                                </div>
                               </div>
                             </div>
                             <div className="mt-2 flex items-center gap-2 flex-wrap">

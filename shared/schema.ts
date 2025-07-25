@@ -22,7 +22,6 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   password: varchar("password"), // Password for admin-created users
-  plainTextPassword: varchar("plain_text_password"), // Plain text password for admin viewing
   isAdmin: boolean("is_admin").default(false), // Admin role flag
   tier: varchar("tier").default("free"), // User tier (free, pro, enterprise)
   // Stripe subscription fields
