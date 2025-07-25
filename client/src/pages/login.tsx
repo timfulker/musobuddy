@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function LoginPage() {
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient(); // Proper way to access query client
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,13 +29,14 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Clear React Query cache to force re-authentication check
-        const queryClient = (window as any).queryClient;
-        if (queryClient) {
-          queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-        }
-        // Force full page reload to ensure authentication state is updated
-        window.location.reload();
+        // Invalidate auth queries to trigger refetch
+        await queryClient.invalidateQueries({ queryKey: ['auth'] });
+        
+        // Small delay to ensure query invalidation completes
+        setTimeout(() => {
+          // Navigate to dashboard directly instead of reload
+          window.location.href = '/dashboard';
+        }, 100);
       } else {
         toast({
           title: "Login failed",

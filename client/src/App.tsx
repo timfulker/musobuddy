@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,10 +11,7 @@ import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Bookings from "@/pages/bookings";
 import Contracts from "@/pages/contracts";
-
 import Invoices from "@/pages/invoices";
-
-
 import Compliance from "@/pages/compliance";
 import Settings from "@/pages/settings";
 import Templates from "@/pages/templates";
@@ -32,9 +29,16 @@ import LandingPage from "@/pages/landing";
 import SignupPage from "@/pages/signup";
 import TrialSuccessPage from "@/pages/trial-success";
 import SupportChat from "@/components/support-chat";
+import { useEffect } from "react";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Auth State:', { isAuthenticated, isLoading, user: !!user, location });
+  }, [isAuthenticated, isLoading, user, location]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -49,10 +53,12 @@ function Router() {
   }
 
   // Redirect authenticated users from landing page to dashboard
-  if (!isLoading && isAuthenticated && window.location.pathname === '/') {
-    window.location.href = '/dashboard';
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && location === '/') {
+      console.log('🔄 Redirecting authenticated user to dashboard');
+      setLocation('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, location, setLocation]);
 
   return (
     <Switch>
@@ -74,11 +80,11 @@ function Router() {
         }).then(() => {
           // Clear React Query cache to force re-authentication
           queryClient.clear();
-          window.location.href = '/';
+          setLocation('/');
         }).catch(() => {
           // Even if logout fails, clear cache and redirect
           queryClient.clear();
-          window.location.href = '/';
+          setLocation('/');
         });
         return <div>Logging out...</div>;
       }} />
