@@ -7,6 +7,7 @@ import { setupAuthentication } from "./core/auth-clean";
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
+import { validateStartup, setupGracefulShutdown } from "./core/production-safeguards";
 
 const app = express();
 
@@ -21,7 +22,7 @@ if (missingVars.length > 0) {
   console.log('✅ All required environment variables present');
 }
 
-// Database connection test
+// Production startup validation
 console.log('🔍 Testing database connection...');
 testDatabaseConnection()
   .then(success => {
@@ -35,6 +36,14 @@ testDatabaseConnection()
     console.error('❌ Database error:', error);
     console.log('⚠️ Continuing despite database issues...');
   });
+
+// Run comprehensive startup validation
+validateStartup().catch(error => {
+  console.error('⚠️ Startup validation issues detected:', error);
+});
+
+// Setup graceful shutdown
+setupGracefulShutdown();
 
 // Essential middleware
 app.use(express.json({ limit: '50mb' }));

@@ -2,6 +2,7 @@ import { type Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { isAuthenticated, isAdmin, isBetaTester, isAdminOrBetaTester } from "./auth-clean";
+import { authMonitor, validateSession, withDatabaseRetry } from "./auth-stability";
 import { mailgunService, contractParserService, cloudStorageService } from "./services";
 import { webhookService } from "./webhook-service";
 import { generateHTMLContractPDF } from "./html-contract-template.js";
@@ -30,6 +31,17 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express) {
+  // ===== SYSTEM HEALTH & MONITORING =====
+  app.get('/api/health/auth', (req, res) => {
+    authMonitor.healthCheck(req, res);
+  });
+
+  app.get('/api/health/system', async (req, res) => {
+    const { ProductionSafeguards } = await import('./production-safeguards.js');
+    const health = await ProductionSafeguards.getSystemHealth();
+    res.status(health.status === 'healthy' ? 200 : 503).json(health);
+  });
+
   // ===== TEST ROUTES =====
   app.get('/test-login', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'test-direct-login.html'));
@@ -413,6 +425,7 @@ export async function registerRoutes(app: Express) {
       
       if (!user) {
         console.log('❌ Authentication failed for user:', email);
+        authMonitor.logFailedLogin(email, 'Invalid credentials');
         return res.status(401).json({ 
           success: false, 
           message: 'Invalid email or password' 
@@ -421,9 +434,12 @@ export async function registerRoutes(app: Express) {
       
       console.log('✅ Authentication successful for user:', user.email);
 
-      // Set session
+      // Set session with monitoring
       req.session.userId = user.id;
       req.session.user = user;
+      
+      // Log successful authentication
+      authMonitor.logSuccessfulLogin(user.id);
       
       console.log('✅ User logged in:', user.email);
       console.log('✅ Session userId set to:', req.session.userId);
@@ -441,6 +457,7 @@ export async function registerRoutes(app: Express) {
       });
     } catch (error) {
       console.error('❌ Login error:', error);
+      authMonitor.logFailedLogin(req.body.email || 'unknown', error instanceof Error ? error.message : 'Server error');
       res.status(500).json({ 
         success: false, 
         message: 'Login failed' 
