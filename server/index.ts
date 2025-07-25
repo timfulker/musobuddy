@@ -251,10 +251,21 @@ async function startServer() {
     
     // Add production error handling
     try {
-      if (process.env.NODE_ENV === 'production') {
-        console.log('🏭 Production mode: serving static files');
+      // Detect production environment from multiple sources
+      const isProduction = process.env.NODE_ENV === 'production' || 
+                          process.env.REPLIT_ENVIRONMENT === 'production' ||
+                          process.env.REPLIT_DEPLOYMENT;
+      
+      if (isProduction) {
+        console.log('🏭 Production mode detected: serving static files');
+        console.log('🔍 Environment indicators:', {
+          NODE_ENV: process.env.NODE_ENV,
+          REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
+          REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT
+        });
         serveStaticFixed(app);
       } else {
+        console.log('🛠️ Development mode: using Vite dev server');
         await setupVite(app, server);
         serveStatic(app);
       }
@@ -283,6 +294,11 @@ async function startServer() {
     
     // Use environment PORT with fallback
     const port = process.env.PORT || 5000;
+    console.log('🔌 Server port configuration:', {
+      PORT: process.env.PORT,
+      finalPort: port,
+      deployment: !!process.env.REPLIT_DEPLOYMENT
+    });
     
     server.listen(Number(port), "0.0.0.0", () => {
       console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
