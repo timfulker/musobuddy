@@ -376,11 +376,11 @@ Trial Experience
 
 **Rationale:** Allows proper evaluation, demonstrates full value, industry standard
 
-### Phase 8: Trial Conversion
+### Phase 8: Trial Conversion & Edge Cases
 
-**Implementation:**
+**Auto-Conversion Process:**
 ```
-Auto-Conversion Process
+Successful Conversion
 ├── Stripe automatic subscription activation
 ├── Welcome email for converted users
 ├── Trial success metrics tracking
@@ -388,15 +388,53 @@ Auto-Conversion Process
 └── Advanced feature introduction
 ```
 
-**Cancellation Process:**
+**User-Initiated Cancellation:**
 ```
-User-Initiated Cancellation
+Cancellation Process
 ├── Easy cancellation link in account settings
 ├── Exit survey (optional)
 ├── Immediate trial termination
 ├── Data retention for 60 days
 └── Re-engagement email sequence
 ```
+
+**Critical Edge Cases & Handling:**
+
+**A) Payment Failure on Day 14: ✅ GRACEFUL FALLBACK SYSTEM**
+```
+Payment Failure Workflow
+├── Stripe charge fails → webhook triggered
+├── User account immediately locked (cannot access features)
+├── Clear in-app message: "Payment didn't go through - update details to continue"
+├── 3-day grace period before full deactivation
+├── Stripe automatic retry system (built-in)
+├── Email notifications with payment update link
+└── Reactivation upon successful payment
+```
+
+**Implementation Details:**
+- **Account Status:** Set user.accountStatus = 'payment_failed'
+- **UI Treatment:** Show payment update modal on every page load
+- **Feature Access:** Block all core features, show payment-required states
+- **Grace Period:** 72 hours before moving to 'suspended' status
+- **Stripe Retries:** Leverage built-in retry logic (no extra setup needed)
+
+**B) Session Lockout After Trial Expiration: ✅ PROFESSIONAL ERROR HANDLING**
+```
+Expired Trial Login Attempt
+├── User clicks login link after trial ended
+├── Auth middleware detects user.trialExpired = true
+├── Redirect to upgrade page (not generic error)
+├── Message: "Your free trial has ended - upgrade to regain access"
+├── One-click subscription reactivation
+└── Preserve login session for smooth upgrade flow
+```
+
+**Implementation Details:**
+- **Auth Middleware Check:** Verify trial status before session creation
+- **Custom Redirect:** /trial-expired route with upgrade options
+- **Session Preservation:** Maintain authentication for payment flow
+- **Clear Messaging:** Specific trial expiration language, not generic errors
 
 ## Technical Architecture Overview
 
@@ -457,6 +495,9 @@ phone_verified_at TIMESTAMP,
 trial_started_at TIMESTAMP,
 trial_expires_at TIMESTAMP,
 trial_status VARCHAR(20) DEFAULT 'inactive',
+account_status VARCHAR(20) DEFAULT 'active', -- active, payment_failed, suspended, cancelled
+payment_failed_at TIMESTAMP,
+grace_period_expires_at TIMESTAMP,
 signup_ip_address INET,
 device_fingerprint TEXT,
 fraud_score INTEGER DEFAULT 0,
@@ -482,6 +523,8 @@ GET  /api/trial/status               - Trial information
 POST /api/trial/cancel               - Trial cancellation
 GET  /api/trial/usage                - Usage statistics
 POST /api/trial/extend               - Admin trial extension
+POST /api/trial/reactivate           - Payment failure reactivation
+GET  /api/trial/payment-status       - Check payment failure status
 ```
 
 **Onboarding:**
@@ -614,6 +657,23 @@ const TRIAL_CONFIG = {
 - Positive, helpful reminder tone
 - Focus on trial continuation, not cancellation
 - Delay reminder to day 4-5 when investment is higher
+
+### Payment & Trial Expiration Risks
+
+**Risk:** Payment failures creating poor user experience
+**Mitigation:**
+- Clear payment failure messaging with specific next steps
+- 3-day grace period allowing users to fix payment issues
+- Stripe automatic retry system handling temporary card issues
+- Email notifications with direct payment update links
+- Preserve user data during grace period for seamless reactivation
+
+**Risk:** Confusing expired trial login experience
+**Mitigation:**
+- Custom trial-expired page instead of generic login errors
+- Clear upgrade path from expired trial state
+- Maintain authentication session during upgrade flow
+- Professional messaging explaining trial benefits and next steps
 
 ### Fraud & Abuse Risks
 
