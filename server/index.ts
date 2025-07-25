@@ -3,7 +3,8 @@ import session from 'express-session';
 import ConnectPgSimple from 'connect-pg-simple';
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
-import { setupAuthentication } from "./core/auth-clean";
+import { setupSimpleAuth } from "./auth/simple-auth";
+import { setupAuthRoutes } from "./auth/routes";
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
@@ -242,9 +243,10 @@ Extract in JSON format:
 
 async function startServer() {
   try {
-    // CRITICAL: Setup authentication FIRST, before any other routes
-    await setupAuthentication(app);
-    console.log('✅ Authentication system initialized');
+    // CRITICAL: Setup bulletproof authentication FIRST
+    await setupSimpleAuth(app);
+    setupAuthRoutes(app);
+    console.log('✅ Bulletproof authentication system initialized');
     
     // Contract signing will be handled by main routes
     
