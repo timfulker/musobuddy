@@ -388,15 +388,21 @@ export async function registerRoutes(app: Express) {
   // Email/password login endpoint
   app.post('/api/auth/login', async (req: any, res) => {
     try {
+      console.log('🔍 Login attempt received');
+      console.log('Request body:', req.body);
+      console.log('Session ID before login:', req.sessionID);
+      
       const { email, password } = req.body;
       
       if (!email || !password) {
+        console.log('❌ Missing email or password');
         return res.status(400).json({ 
           success: false, 
           message: 'Email and password are required' 
         });
       }
 
+      console.log('🔍 Attempting to authenticate user:', email);
       // Authenticate user
       const user = await storage.authenticateUser(email, password);
       
