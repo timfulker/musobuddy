@@ -52,11 +52,19 @@ This document outlines the complete user registration, trial management, and onb
 - Advanced email automation sequences
 - Priority customer support
 
+**Ongoing Development Strategy:**
+- **3-Month Release Cycles:** Both tiers receive linear incremental improvements
+- **Core Tier Enhancements:** Workflow improvements, UI refinements, performance optimizations
+- **Premium Tier Innovations:** New advanced features, integrations, AI capabilities
+- **Feature Migration Timeline:** Premium features move to Core tier after 6-12 months
+- **Price Protection:** Annual price rise protection for grandfathered users, not feature access rights
+
 **Migration Strategy:**
-- Existing Core users grandfathered at £9.99/month
-- Optional upgrade prompts for Premium features
-- A/B test pricing and feature combinations
-- Clear feature differentiation communication
+- **Existing Core users:** Remain at £9.99/month with enhanced Core tier (minor improvements)
+- **Premium features:** Available only to new £13.99/month Premium subscribers
+- **Feature evolution:** Premium features migrate to Core tier over time (6-12 months)
+- **Price grandfathering:** Protection from annual price rises only, not feature access
+- **Clear upgrade path:** Core users can upgrade to Premium for additional features
 
 ## Complete User Journey
 
@@ -888,15 +896,19 @@ const TRIAL_CONFIG = {
 
 3. **Fraud Prevention:** Is phone verification sufficient, or should we implement additional security layers?
 
-4. **Pricing Strategy:** Should we test different price points during the trial implementation?
+4. **Single-Tier Launch:** Does the simplified Core-only approach provide enough market validation before Premium tier development?
 
-5. **Feature Restrictions:** Any features that should be trial-limited vs full access?
+5. **Feature Evolution Strategy:** Is the 6-12 month Premium→Core feature migration timeline appropriate for maintaining tier value?
 
-6. **International Expansion:** How does this system accommodate different regions and currencies?
+6. **Grandfathering Policy:** Should price protection extend beyond annual increases to include feature access rights?
 
-7. **Competition Analysis:** How does our model compare to competitors in the musician tools space?
+7. **Release Cadence:** Are 3-month development cycles optimal for both customer satisfaction and development resources?
 
-8. **Brand Positioning:** Does the professional approach align with our market positioning goals?
+8. **International Expansion:** How does this system accommodate different regions and currencies?
+
+9. **Competition Analysis:** How does our model compare to competitors in the musician tools space?
+
+10. **Brand Positioning:** Does the professional approach align with our market positioning goals?
 
 ### Flexibility Points for Adjustment
 
