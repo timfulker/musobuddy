@@ -783,11 +783,16 @@ export async function registerRoutes(app: Express) {
   // Create Stripe checkout session (AUTHENTICATED)
   app.post('/api/create-checkout-session', isAuthenticated, async (req, res) => {
     try {
-      const { priceId = 'core_monthly' } = req.body;
+      console.log('🔍 Checkout session request from user:', req.user.id, req.user.email);
+      const { priceId = 'price_1RoX6JD9Bo26CG1DAHob4Bh1' } = req.body;
+      console.log('🔍 Creating checkout session with priceId:', priceId);
+      
       const result = await stripeService.createCheckoutSession(req.user.id, priceId);
+      console.log('✅ Checkout session created:', result.sessionId);
+      
       res.json(result);
     } catch (error: any) {
-      console.error('Checkout session error:', error);
+      console.error('❌ Checkout session error:', error);
       res.status(500).json({ error: error.message });
     }
   });
