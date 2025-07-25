@@ -59,8 +59,8 @@ export class StripeService {
             trial_type: 'core_monthly',
           },
         },
-        success_url: `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/trial/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/signup`,
+        success_url: `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/pricing`,
         metadata: {
           userId: userId,
           trial_type: 'core_monthly',

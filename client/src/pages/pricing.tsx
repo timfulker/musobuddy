@@ -17,15 +17,20 @@ export default function PricingPage() {
 
   // Create checkout session mutation
   const createCheckoutMutation = useMutation({
-    mutationFn: (priceId: string) => 
-      apiRequest('/api/create-checkout-session', {
+    mutationFn: async (priceId: string) => {
+      const response = await apiRequest('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceId }),
-      }),
+      });
+      return await response.json();
+    },
     onSuccess: (data) => {
+      console.log('Checkout response:', data);
       if (data.url) {
         window.location.href = data.url;
+      } else if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
       }
     },
     onError: (error) => {
