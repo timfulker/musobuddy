@@ -1,5 +1,10 @@
 import { storage } from './storage';
 
+interface User {
+  id: string;
+  emailPrefix?: string | null;
+}
+
 export class EmailOnboardingService {
   
   async validateEmailPrefix(prefix: string): Promise<{ valid: boolean; error?: string }> {
@@ -39,8 +44,8 @@ export class EmailOnboardingService {
 
   async checkEmailPrefixAvailability(prefix: string): Promise<{ available: boolean; suggestion?: string }> {
     try {
-      const users = await storage.getUsers();
-      const existingUser = users.find(u => u.emailPrefix?.toLowerCase() === prefix.toLowerCase());
+      const users = await storage.getAllUsers();
+      const existingUser = users.find((u: User) => u.emailPrefix?.toLowerCase() === prefix.toLowerCase());
       
       if (existingUser) {
         // Generate suggestions like Gmail does

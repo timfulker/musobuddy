@@ -113,8 +113,8 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
         
         // Look up user by their custom email prefix
         try {
-          const users = await storage.getUsers();
-          const user = users.find(u => u.emailPrefix === customPrefix);
+          const users = await storage.getAllUsers();
+          const user = users.find((u: any) => u.emailPrefix === customPrefix);
           if (user) {
             userId = user.id;
             console.log(`📧 [${requestId}] Found user for custom prefix "${customPrefix}":`, userId);

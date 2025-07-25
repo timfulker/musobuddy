@@ -18,7 +18,8 @@ import {
   Users,
   User,
   BookOpen,
-  Crown
+  Crown,
+  Mail
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -152,6 +153,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           )}>
             <Crown className="w-5 h-5" />
             <span>Upgrade ⭐</span>
+          </Link>
+          <Link href="/email-setup" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/email-setup") 
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+          )}>
+            <Mail className="w-5 h-5" />
+            <span>Lead Email</span>
           </Link>
           <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",

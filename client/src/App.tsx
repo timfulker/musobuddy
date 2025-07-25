@@ -27,6 +27,7 @@ import UserGuide from "@/pages/user-guide";
 import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
 import Pricing from "@/pages/pricing";
+import EmailSetup from "@/pages/email-setup";
 import SupportChat from "@/components/support-chat";
 
 function Router() {
@@ -89,6 +90,7 @@ function Router() {
           <Route path="/templates" component={Templates} />
           <Route path="/user-guide" component={UserGuide} />
           <Route path="/feedback" component={Feedback} />
+          <Route path="/email-setup" component={EmailSetup} />
           <Route path="/admin" component={Admin} />
         </>
       )}
