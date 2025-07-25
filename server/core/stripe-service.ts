@@ -117,13 +117,18 @@ export class StripeService {
     }
     
     try {
+      console.log('🔍 Received webhook with signature:', signature ? 'Present' : 'Missing');
+      console.log('🔍 Webhook body length:', body.length);
+      
       const event = this.stripe.webhooks.constructEvent(
         body,
         signature,
         process.env.STRIPE_WEBHOOK_SECRET || ''
       );
 
-      console.log('Stripe webhook event:', event.type);
+      console.log('✅ Webhook signature verified successfully');
+      console.log('🔍 Stripe webhook event:', event.type);
+      console.log('🔍 Event ID:', event.id);
 
       switch (event.type) {
         case 'checkout.session.completed':
@@ -150,25 +155,49 @@ export class StripeService {
   }
 
   private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+    console.log('🔍 Processing checkout.session.completed webhook');
+    console.log('🔍 Session object:', JSON.stringify(session, null, 2));
+    
     const userId = session.metadata?.userId;
     const customerId = session.customer as string;
 
+    console.log('🔍 Extracted userId from metadata:', userId);
+    console.log('🔍 Extracted customerId:', customerId);
+
     if (!userId) {
-      console.error('No userId in checkout session metadata');
+      console.error('❌ No userId in checkout session metadata');
+      console.error('❌ Available metadata:', session.metadata);
       return;
     }
 
     try {
       // Update user subscription status
+      console.log('🔍 Updating user with:', {
+        isSubscribed: true,
+        plan: 'core',
+        stripeCustomerId: customerId,
+      });
+      
       await storage.updateUser(userId, {
         isSubscribed: true,
-        plan: 'core', // Assuming core plan for now
+        plan: 'core',
         stripeCustomerId: customerId,
       });
 
       console.log('✅ User subscription activated:', userId);
+      
+      // Verify the update worked
+      const updatedUser = await storage.getUserById(userId);
+      console.log('✅ User after update:', {
+        id: updatedUser?.id,
+        email: updatedUser?.email,
+        plan: updatedUser?.plan,
+        isSubscribed: updatedUser?.isSubscribed,
+        stripeCustomerId: updatedUser?.stripeCustomerId
+      });
+      
     } catch (error) {
-      console.error('Error updating user after checkout:', error);
+      console.error('❌ Error updating user after checkout:', error);
     }
   }
 
