@@ -45,6 +45,8 @@ export default function QuickAddPage() {
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
   });
+  
+  const bookingsArray = Array.isArray(bookings) ? bookings : [];
 
   const form = useForm<QuickAddFormData>({
     resolver: zodResolver(quickAddFormSchema),
@@ -69,10 +71,10 @@ export default function QuickAddPage() {
         clientName: data.clientName,
         clientEmail: data.clientEmail || null,
         clientPhone: data.clientPhone || null,
-        eventDate: new Date(data.eventDate),
+        eventDate: data.eventDate ? new Date(data.eventDate) : new Date(),
         venue: data.venue || null,
         estimatedValue: data.estimatedValue ? parseFloat(data.estimatedValue) : null,
-        notes: data.notes ? `${data.notes}\n\nContact Method - ${data.contactMethod}` : `Contact Method - ${data.contactMethod}`,
+        notes: data.notes ? `${data.notes}\n\nContact Method - ${data.contactMethod || 'Not specified'}` : `Contact Method - ${data.contactMethod || 'Not specified'}`,
         status: "new" as const,
       };
       const response = await apiRequest('POST', '/api/enquiries/quick-add', enquiryData);
@@ -97,7 +99,7 @@ export default function QuickAddPage() {
 
   const onSubmit = (data: QuickAddFormData) => {
     // Demo limitation - check creation limit for non-subscribers
-    if (isDemoUser && bookings.length >= DEMO_LIMIT) {
+    if (isDemoUser && bookingsArray.length >= DEMO_LIMIT) {
       toast({
         title: "Demo Limitation",
         description: `Demo users are limited to ${DEMO_LIMIT} bookings. Please upgrade to create unlimited bookings.`,

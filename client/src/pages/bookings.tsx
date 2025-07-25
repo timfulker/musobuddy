@@ -573,7 +573,7 @@ export default function UnifiedBookings() {
                     </Button>
                   </div>
                   
-                  <Link href="/bookings?action=new">
+                  <Link href="/quick-add">
                     <Button className="bg-purple-600 hover:bg-purple-700">
                       <Plus className="w-4 h-4 mr-2" />
                       New Booking
