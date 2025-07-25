@@ -30,18 +30,8 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     console.error('🔥 ERROR BOUNDARY - Current pathname:', window.location.pathname);
     console.error('🔥 ERROR BOUNDARY - Auth status checking...');
     
-    // Check if this is an auth-related error
-    fetch('/api/auth/user')
-      .then(response => {
-        console.error('🔥 ERROR BOUNDARY - Auth response status:', response.status);
-        if (!response.ok) {
-          console.error('🔥 ERROR BOUNDARY - Auth failed, redirecting to login...');
-          window.location.href = '/api/login';
-        }
-      })
-      .catch(authError => {
-        console.error('🔥 ERROR BOUNDARY - Auth check failed:', authError);
-      });
+    // Don't redirect automatically - let user handle it
+    console.error('🔥 ERROR BOUNDARY - Error in React component tree');
   }
 
   render() {

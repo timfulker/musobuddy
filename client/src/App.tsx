@@ -32,13 +32,7 @@ import SupportChat from "@/components/support-chat";
 import { useEffect } from "react";
 
 function Router() {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const [location, setLocation] = useLocation();
-
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 Auth State:', { isAuthenticated, isLoading, user: !!user, location });
-  }, [isAuthenticated, isLoading, user, location]);
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -52,13 +46,11 @@ function Router() {
     );
   }
 
-  // Redirect authenticated users from landing page to dashboard
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && location === '/') {
-      console.log('🔄 Redirecting authenticated user to dashboard');
-      setLocation('/dashboard');
-    }
-  }, [isAuthenticated, isLoading, location, setLocation]);
+  // Simple redirect without useEffect to prevent loops
+  if (isAuthenticated && window.location.pathname === '/') {
+    window.location.href = '/dashboard';
+    return null;
+  }
 
   return (
     <Switch>
@@ -80,11 +72,11 @@ function Router() {
         }).then(() => {
           // Clear React Query cache to force re-authentication
           queryClient.clear();
-          setLocation('/');
+          window.location.href = '/';
         }).catch(() => {
           // Even if logout fails, clear cache and redirect
           queryClient.clear();
-          setLocation('/');
+          window.location.href = '/';
         });
         return <div>Logging out...</div>;
       }} />
