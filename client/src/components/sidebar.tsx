@@ -88,9 +88,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
-          <Link href="/" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
+          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors",
-            isActive("/") 
+            isActive("/dashboard") 
               ? "bg-purple-600 text-white" 
               : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
           )}>

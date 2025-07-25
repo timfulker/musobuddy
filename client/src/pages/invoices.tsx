@@ -509,8 +509,31 @@ export default function Invoices() {
       console.error('🔥 Email Send: Error message:', error.message);
       console.error('🔥 Email Send: Error stack:', error.stack);
       
-      // Check if it's an authentication error and provide helpful guidance
-      if (error.message && error.message.includes("session has expired")) {
+      // Parse error response for demo limitations
+      let errorData = null;
+      try {
+        errorData = JSON.parse(error.message);
+      } catch (e) {
+        // If not JSON, treat as plain error
+      }
+      
+      // Handle demo limitations with upgrade prompt
+      if (errorData?.demoMode || errorData?.error === 'Demo Limitation') {
+        toast({
+          title: "Demo Limitation",
+          description: errorData?.message || "Invoice sending requires a paid subscription. Please upgrade to send invoices to clients.",
+          variant: "destructive",
+          action: (
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/pricing'}
+              className="ml-2 text-sm bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Upgrade Now
+            </Button>
+          ),
+        });
+      } else if (error.message && error.message.includes("session has expired")) {
         toast({
           title: "Session Expired",
           description: "Your session has expired. Please log out and log back in to continue.",

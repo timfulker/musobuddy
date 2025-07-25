@@ -1306,6 +1306,17 @@ export async function registerRoutes(app: Express) {
   app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
     try {
       console.log('📧 Invoice email route called with body:', req.body);
+      
+      // Demo limitation check - block invoice sending for non-subscribed users
+      const user = await storage.getUserById(req.user.id);
+      if (!user.isSubscribed && !user.isLifetime && !user.isAdmin) {
+        return res.status(403).json({ 
+          error: 'Demo Limitation',
+          message: 'Invoice sending is not available in the demo version. Please upgrade to a paid plan to send invoices to clients.',
+          demoMode: true,
+          upgradeUrl: '/pricing'
+        });
+      }
 
       const { invoiceId, customMessage } = req.body;
 
@@ -3000,6 +3011,17 @@ export async function registerRoutes(app: Express) {
   app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
     try {
       console.log('📧 Sending invoice email:', req.body);
+      
+      // Demo limitation check - block invoice sending for non-subscribed users
+      const user = await storage.getUserById(req.user.id);
+      if (!user.isSubscribed && !user.isLifetime && !user.isAdmin) {
+        return res.status(403).json({ 
+          error: 'Demo Limitation',
+          message: 'Invoice sending is not available in the demo version. Please upgrade to a paid plan to send invoices to clients.',
+          demoMode: true,
+          upgradeUrl: '/pricing'
+        });
+      }
       
       const { invoiceId, customMessage } = req.body;
       
