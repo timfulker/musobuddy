@@ -421,24 +421,12 @@ export async function registerRoutes(app: Express) {
       
       console.log('✅ Authentication successful for user:', user.email);
 
-      // Set session with explicit save
+      // Set session
       req.session.userId = user.id;
       req.session.user = user;
       
-      // Force session save before responding
-      await new Promise((resolve, reject) => {
-        req.session.save((err: any) => {
-          if (err) {
-            console.error('Session save error:', err);
-            reject(err);
-          } else {
-            console.log('✅ Session saved with userId:', req.session.userId);
-            resolve(true);
-          }
-        });
-      });
-      
       console.log('✅ User logged in:', user.email);
+      console.log('✅ Session userId set to:', req.session.userId);
       res.json({ 
         success: true, 
         message: 'Login successful',

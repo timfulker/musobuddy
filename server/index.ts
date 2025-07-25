@@ -57,13 +57,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
   resave: false,
   saveUninitialized: false,
-  name: 'connect.sid',
+  name: 'sessionId',
   cookie: {
     secure: false,
     httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    sameSite: 'lax',
-    path: '/'
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax'
   }
 }));
 
