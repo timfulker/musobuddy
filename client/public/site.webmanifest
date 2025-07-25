@@ -1,0 +1,21 @@
+{
+  "name": "MusoBuddy - Music Business Management",
+  "short_name": "MusoBuddy",
+  "description": "Professional contract, invoice, and client management for musicians",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#9333ea",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/musobuddy-logo-purple.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
