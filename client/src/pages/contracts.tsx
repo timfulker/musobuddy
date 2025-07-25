@@ -15,13 +15,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square, MapPin, Edit, RefreshCw, Info } from "lucide-react";
+import { Search, Filter, MoreHorizontal, FileText, Calendar, DollarSign, User, Eye, Mail, Download, Trash2, Archive, FileDown, CheckSquare, Square, MapPin, Edit, RefreshCw, Info, Crown, Lock } from "lucide-react";
 import type { Contract, Enquiry } from "@shared/schema";
 import { insertContractSchema } from "@shared/schema";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "wouter";
 import { ContractNotifications, useContractStatusMonitor } from "@/components/contract-notifications";
 
 const contractFormSchema = z.object({
@@ -68,6 +70,11 @@ export default function Contracts() {
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
+  const { user } = useAuth();
+  
+  // Demo limitations
+  const isDemoUser = user && !user.isSubscribed && !user.isLifetime && !user.isAdmin;
+  const DEMO_LIMIT = 3;
   
   // Monitor contract signings for real-time notifications
   useContractStatusMonitor();
@@ -515,6 +522,24 @@ export default function Contracts() {
   };
 
   const handleDownloadContract = async (contract: Contract) => {
+    // Demo limitation - block downloads for non-subscribers
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Contract downloads require a paid subscription. You can view and create contracts in demo mode.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      return;
+    }
+
     try {
       // Simple download approach
       const downloadLink = `/api/contracts/${contract.id}/download`;
@@ -661,6 +686,24 @@ export default function Contracts() {
                   </DialogHeader>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit((data) => {
+                      // Demo limitation - check creation limit for non-subscribers
+                      if (isDemoUser && !editingContract && contracts.length >= DEMO_LIMIT) {
+                        toast({
+                          title: "Demo Limitation",
+                          description: `Demo users are limited to ${DEMO_LIMIT} contracts. Please upgrade to create unlimited contracts.`,
+                          variant: "destructive",
+                          action: (
+                            <Link href="/pricing">
+                              <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                                <Crown className="w-3 h-3 mr-1" />
+                                Upgrade
+                              </Button>
+                            </Link>
+                          ),
+                        });
+                        return;
+                      }
+
                       if (editingContract) {
                         const contractData = {
                           ...data,

@@ -12,11 +12,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt } from "lucide-react";
+import { Calendar, List, Search, Plus, ChevronLeft, ChevronRight, Menu, Upload, Download, Clock, User, PoundSterling, Trash2, CheckSquare, Square, MoreHorizontal, FileText, Receipt, Crown, Lock } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
+import { useAuth } from "@/hooks/useAuth";
 import { BookingDetailsDialog } from "@/components/BookingDetailsDialog";
 import BookingStatusDialog from "@/components/BookingStatusDialog";
 import CalendarImport from "@/components/calendar-import";
@@ -37,6 +38,11 @@ interface CalendarEvent {
 }
 
 export default function UnifiedBookings() {
+  const { user } = useAuth();
+  
+  // Demo limitations
+  const isDemoUser = user && !user.isSubscribed && !user.isLifetime && !user.isAdmin;
+  const DEMO_LIMIT = 3;
   
   // Status color helper function
   const getStatusBorderColor = (status: string) => {

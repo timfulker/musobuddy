@@ -10,11 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye } from "lucide-react";
+import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye, Crown, Lock } from "lucide-react";
 import { insertInvoiceSchema, type Invoice } from "@shared/schema";
 import { useLocation, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
@@ -52,6 +53,11 @@ export default function Invoices() {
   const [invoiceToSend, setInvoiceToSend] = useState<Invoice | null>(null);
   const [customMessage, setCustomMessage] = useState("");
   const { isDesktop } = useResponsive();
+  const { user } = useAuth();
+  
+  // Demo limitations
+  const isDemoUser = user && !user.isSubscribed && !user.isLifetime && !user.isAdmin;
+  const DEMO_LIMIT = 3;
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['/api/invoices'],
@@ -431,6 +437,24 @@ export default function Invoices() {
       updateInvoiceMutation.mutate({ id: editingInvoice.id, data: finalData });
     } else {
       // Create new invoice
+      // Demo limitation - check creation limit for non-subscribers
+      if (isDemoUser && invoices.length >= DEMO_LIMIT) {
+        toast({
+          title: "Demo Limitation",
+          description: `Demo users are limited to ${DEMO_LIMIT} invoices. Please upgrade to create unlimited invoices.`,
+          variant: "destructive",
+          action: (
+            <Link href="/pricing">
+              <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                <Crown className="w-3 h-3 mr-1" />
+                Upgrade
+              </Button>
+            </Link>
+          ),
+        });
+        return;
+      }
+
       createInvoiceMutation.mutate(finalData);
     }
   };
@@ -832,6 +856,24 @@ export default function Invoices() {
   };
 
   const handleDownloadInvoice = async (invoice: Invoice) => {
+    // Demo limitation - block downloads for non-subscribers
+    if (isDemoUser) {
+      toast({
+        title: "Demo Limitation",
+        description: "Invoice downloads require a paid subscription. You can view and create invoices in demo mode.",
+        variant: "destructive",
+        action: (
+          <Link href="/pricing">
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade
+            </Button>
+          </Link>
+        ),
+      });
+      return;
+    }
+
     try {
       const response = await fetch(`/api/invoices/${invoice.id}/pdf`);
       if (!response.ok) {
