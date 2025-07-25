@@ -115,7 +115,7 @@ export default function AdminPanel() {
       });
       toast({
         title: "User created successfully", 
-        description: `User can login at /login with email: ${data.email} and the password you provided.`,
+        description: `User can login at /login with the email and password you provided.`,
       });
     },
     onError: (error: any) => {
@@ -294,7 +294,10 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
+      <Sidebar 
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       <div className={`flex-1 ${isDesktop ? "lg:pl-64" : ""}`}>
         <DashboardHeader />
         
