@@ -135,9 +135,14 @@ export default function EmailSetup() {
         
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Your Lead Email Address</h1>
+          <h1 className="text-3xl font-bold">
+            {userEmail?.email ? 'Your Lead Email Address' : 'Set Up Your Lead Email'}
+          </h1>
           <p className="text-gray-600">
-            Get a professional email address for receiving client inquiries
+            {userEmail?.email 
+              ? 'Your professional email address for receiving client inquiries'
+              : 'Choose your permanent professional email address for client inquiries'
+            }
           </p>
         </div>
 
@@ -167,6 +172,12 @@ export default function EmailSetup() {
               <p className="text-sm text-green-700 mt-3">
                 Share this email address with potential clients. All inquiries will automatically create bookings in your MusoBuddy account.
               </p>
+              <Alert className="mt-4 border-blue-200 bg-blue-50">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  Your lead email address is permanent and cannot be changed. Contact support if you need assistance.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         )}
@@ -177,7 +188,7 @@ export default function EmailSetup() {
             <CardHeader>
               <CardTitle>Choose Your Email Prefix</CardTitle>
               <CardDescription>
-                Pick a custom prefix for your professional lead email address
+                Pick a custom prefix for your professional lead email address. This will be permanent and cannot be changed later.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

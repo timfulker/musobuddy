@@ -66,7 +66,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Assign email prefix to user
+  // Assign email prefix to user (one-time only)
   app.post('/api/email/assign-prefix', isAuthenticated, async (req: any, res) => {
     try {
       const { prefix } = req.body;
@@ -74,6 +74,14 @@ export async function registerRoutes(app: Express) {
       
       if (!prefix) {
         return res.status(400).json({ error: 'Email prefix is required' });
+      }
+
+      // Check if user already has an email prefix
+      const currentUser = await storage.getUserById(userId);
+      if (currentUser?.emailPrefix) {
+        return res.status(400).json({ 
+          error: 'Email address already assigned. Contact support if you need to change it.' 
+        });
       }
 
       const result = await emailOnboarding.assignEmailPrefixToUser(userId, prefix);
