@@ -159,8 +159,8 @@ export default function PricingPage() {
           <Card className="border-2">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Premium</CardTitle>
-              <div className="text-3xl font-bold">£13.99</div>
-              <p className="text-gray-500">per month</p>
+              <div className="text-2xl font-semibold text-gray-600">Coming Soon</div>
+              <p className="text-gray-500">Advanced features in development</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
