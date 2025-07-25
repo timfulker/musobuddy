@@ -690,6 +690,7 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ### Known System Quirks (Not to be Fixed)
 - **Email Link Behavior**: Contract signing email links remain active after signing and still show signing form initially. If client clicks sign again, they receive "already signed" message. This is acceptable behavior as clients rarely re-visit signing links after completion. Previous fix attempts caused more problems than benefits, so this quirk is documented but not addressed.
+- **Development Dashboard Logout**: In development environment only, clicking the Dashboard menu item occasionally logs users out due to authentication state timing issues. This does NOT occur in production environment where dashboard navigation works correctly. Development-only quirk - production authentication is stable.
 
 ### 2025-07-23 - Contract Signing CORS Error FIXED + Already-Signed Page Enhancement + PDF Download CORS Fix
 - **CORS Issue Identified**: ✅ Cross-origin requests from Cloudflare R2 signing pages to localhost server blocked by browser CORS policy
