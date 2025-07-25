@@ -446,9 +446,13 @@ export async function registerRoutes(app: Express) {
 
   app.get('/api/auth/user', async (req: any, res) => {
     try {
-      // Authentication check
+      console.log('🔍 Auth check - Session ID:', req.session?.id);
+      console.log('🔍 Auth check - User ID in session:', req.session?.userId);
+      console.log('🔍 Auth check - Has req.user:', !!req.user);
+      console.log('🔍 Auth check - Cookie header:', req.headers.cookie);
       
       if (req.user) {
+        console.log('✅ User authenticated:', req.user.email);
         res.json({
           id: req.user.id,
           email: req.user.email,
@@ -458,6 +462,7 @@ export async function registerRoutes(app: Express) {
           isAdmin: req.user.isAdmin || false
         });
       } else {
+        console.log('❌ User not authenticated - no req.user found');
         res.status(401).json({ error: 'Not authenticated' });
       }
     } catch (error) {

@@ -51,12 +51,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-key',
   resave: false,
   saveUninitialized: false,
-  name: 'sessionId', // Add explicit session name
+  name: 'sessionId',
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Only secure in production
+    secure: false, // Don't require HTTPS for now to fix production login
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Add this for better browser compatibility
+    sameSite: 'lax'
   }
 }));
 
