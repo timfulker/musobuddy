@@ -73,6 +73,130 @@ This document outlines the complete user registration, trial management, and onb
 
 **Option B: Full Feature Grandfathering (Alternative)**
 - **Existing Core users:** Remain at £9.99/month but receive ALL Premium features when Phase 2 launches
+
+---
+
+## Domain Strategy & Sales Page Architecture
+
+### Custom Domain Implementation Strategy
+
+**DECISION MADE:** Option 1 - Custom Domain with Sales Page (Subject to mentor review)
+
+**Current Configuration:**
+- **Development:** `http://localhost:5000` or Replit dev URL
+- **Production:** `https://musobuddy.replit.app`
+- **Signup Page:** `/signup` (fully operational)
+- **Landing Page:** `/` (basic implementation exists)
+
+### Domain Strategy Options for Mentor Review
+
+**Option 1: Custom Domain with Sales Page (RECOMMENDED)**
+**Setup:** Point `musobuddy.com` to Replit app
+- **Sales Page:** `musobuddy.com` (enhanced professional landing page)
+- **Signup:** `musobuddy.com/signup` (clean, branded URL)
+- **App Dashboard:** `musobuddy.com/dashboard`
+- **Implementation:** Single codebase, enhanced landing page
+
+**Benefits:**
+- Professional branding in all marketing materials
+- Clean URLs for advertising: "Visit musobuddy.com"
+- SEO benefits with owned domain authority
+- Brand trust and credibility enhancement
+- Seamless user experience from marketing to signup
+- Single codebase maintenance (cost efficient)
+
+**Considerations:**
+- Requires custom domain setup with Replit
+- Landing page needs sales optimization enhancements
+- DNS configuration and SSL certificate management
+
+**Option 2: Separate Sales Site + App Integration**
+**Setup:** Static marketing site on `musobuddy.com`, app remains on Replit
+- **Sales:** `musobuddy.com` (dedicated marketing site)
+- **Signup:** Redirects to `musobuddy.replit.app/signup`
+- **App:** `musobuddy.replit.app` (existing URL)
+
+**Benefits:**
+- Optimized sales experience with marketing-focused platform
+- Faster loading marketing site (static hosting)
+- Can use specialized platforms (Webflow, Framer) for sales
+- Independent marketing site optimization
+
+**Considerations:**
+- Dual codebase maintenance overhead
+- User experience friction at redirect points
+- Additional hosting costs for marketing site
+- More complex deployment and update processes
+
+**Option 3: Combined Approach (Hybrid)**
+**Setup:** Custom domain with enhanced landing functionality
+- **Enhanced Landing:** Marketing-optimized homepage with demo features
+- **Integrated Signup:** Seamless transition to signup flow
+- **Feature Demos:** Interactive previews before registration
+- **Progressive Enhancement:** Marketing features built into existing codebase
+
+**Benefits:**
+- Best of both worlds approach
+- Single domain with optimized experiences
+- Gradual enhancement capability
+- Unified analytics and tracking
+
+**Considerations:**
+- More complex initial development
+- Requires careful performance optimization
+- Balanced focus between marketing and application functionality
+
+### Technical Implementation Requirements
+
+**For Option 1 (Recommended):**
+1. **Custom Domain Configuration:**
+   - DNS CNAME record: `musobuddy.com` → `musobuddy.replit.app`
+   - SSL certificate configuration
+   - Replit domain linking setup
+
+2. **Landing Page Enhancement:**
+   - Sales-focused copy and messaging
+   - Feature demonstrations and previews
+   - Customer testimonials and social proof
+   - Clear pricing presentation (£9.99/month Core tier)
+   - Multiple call-to-action buttons to `/signup`
+
+3. **URL Structure:**
+   - `musobuddy.com` → Enhanced sales landing page
+   - `musobuddy.com/signup` → Registration flow
+   - `musobuddy.com/login` → Existing user login
+   - `musobuddy.com/pricing` → Detailed pricing page
+   - `musobuddy.com/dashboard` → Authenticated user dashboard
+
+### Marketing URL Benefits Analysis
+
+**Professional URLs for Marketing:**
+- **Business Cards:** "musobuddy.com" vs "musobuddy.replit.app/signup"
+- **Social Media:** Clean branded links increase click-through rates
+- **Print Advertising:** Memorable, professional domain builds trust
+- **Word of Mouth:** Easier to remember and share
+- **SEO Benefits:** Domain authority building for long-term organic growth
+
+**Brand Credibility Impact:**
+- Custom domain signals professional business operation
+- Builds user confidence in financial transactions
+- Reduces platform dependency perception
+- Enables email branding (@musobuddy.com addresses)
+
+### Implementation Timeline
+
+**Immediate (Post-Mentor Discussion):**
+1. Custom domain configuration setup
+2. Landing page sales optimization
+3. URL structure finalization
+4. Marketing material preparation
+
+**Phase 1 Launch:**
+- Professional domain-based marketing campaigns
+- Clean signup URLs for beta tester distribution
+- Brand-consistent user experience
+
+**Status:** Pending mentor review and approval of domain strategy approach
 - **New subscribers:** Choose between Core (£9.99) or Premium (£13.99) with identical features
 - **Revenue model:** Premium tier justified by customer acquisition only
 - **Long-term strategy:** Eventually sunset dual pricing, migrate all to single tier
