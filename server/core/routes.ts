@@ -416,20 +416,9 @@ export async function registerRoutes(app: Express) {
       
       console.log('✅ Authentication successful for user:', user.email);
 
-      // Set session with comprehensive debugging
+      // Set session and force synchronous save
       req.session.userId = user.id;
       req.session.user = user;
-      
-      // Force session save and debug
-      req.session.save((err: any) => {
-        if (err) {
-          console.error('❌ Session save error:', err);
-        } else {
-          console.log('✅ Session saved successfully');
-          console.log('Session ID:', req.sessionID);
-          console.log('Session data after save:', JSON.stringify(req.session, null, 2));
-        }
-      });
       
       console.log('✅ User logged in:', user.email);
       console.log('✅ Session userId set to:', req.session.userId);
