@@ -8,7 +8,7 @@ import { generateHTMLContractPDF } from "./html-contract-template.js";
 import { stripeService } from "./stripe-service";
 import { emailOnboarding } from "./email-onboarding";
 import { db } from "./database";
-import { users, bookings, contracts, invoices, feedback } from "../../shared/schema";
+import { users, bookings, contracts, invoices, feedback, phoneVerifications, fraudPreventionLog, trialTracking } from "../../shared/schema";
 import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import multer from "multer";
@@ -31,6 +31,269 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express) {
+  // ===== SAAS SIGNUP ROUTES =====
+  
+  // User signup with phone verification
+  app.post('/api/auth/signup', async (req: any, res) => {
+    try {
+      const { firstName, lastName, email, phoneNumber, password } = req.body;
+      
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email address already in use' });
+      }
+
+      // Check if phone number already exists
+      const existingPhone = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+      if (existingPhone.length > 0) {
+        return res.status(400).json({ error: 'Phone number already in use' });
+      }
+
+      // Basic fraud prevention
+      const signupIp = req.ip || req.connection.remoteAddress;
+      const deviceFingerprint = req.headers['user-agent'] || '';
+      
+      // Create user account
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const userId = await storage.createUser({
+        email,
+        firstName,
+        lastName,
+        password: hashedPassword,
+        phoneNumber,
+        phoneVerified: false,
+        trialStatus: 'inactive',
+        accountStatus: 'active',
+        signupIpAddress: signupIp,
+        deviceFingerprint,
+        fraudScore: 0,
+        onboardingCompleted: false,
+        tier: 'free',
+        plan: 'free',
+        isSubscribed: false,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Generate and send phone verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      // Store verification code (in production, use SMS service)
+      await db.insert(phoneVerifications).values({
+        phoneNumber,
+        verificationCode,
+        expiresAt,
+        ipAddress: signupIp,
+        userAgent: deviceFingerprint,
+        attempts: 0,
+      });
+
+      // Log fraud prevention
+      await db.insert(fraudPreventionLog).values({
+        phoneNumber,
+        emailAddress: email,
+        ipAddress: signupIp,
+        deviceFingerprint,
+        actionTaken: 'account_created',
+        reason: 'new_signup',
+        riskScore: 0,
+      });
+
+      console.log(`📱 Verification code for ${phoneNumber}: ${verificationCode}`);
+      
+      res.json({ 
+        userId, 
+        message: 'Account created successfully. Please verify your phone number.',
+        // In production, remove this and send via SMS
+        verificationCode 
+      });
+
+    } catch (error: any) {
+      console.error('❌ Signup error:', error);
+      res.status(500).json({ error: 'Failed to create account' });
+    }
+  });
+
+  // Verify phone number
+  app.post('/api/auth/verify-phone', async (req: any, res) => {
+    try {
+      const { userId, verificationCode } = req.body;
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      if (user.phoneVerified) {
+        return res.status(400).json({ error: 'Phone number already verified' });
+      }
+
+      // Check verification code
+      const verification = await db.select()
+        .from(phoneVerifications)
+        .where(eq(phoneVerifications.phoneNumber, user.phoneNumber))
+        .orderBy(sql`created_at DESC`)
+        .limit(1);
+
+      if (verification.length === 0) {
+        return res.status(400).json({ error: 'No verification code found' });
+      }
+
+      const record = verification[0];
+      if (record.expiresAt < new Date()) {
+        return res.status(400).json({ error: 'Verification code expired' });
+      }
+
+      if (record.verificationCode !== verificationCode) {
+        // Increment attempts
+        await db.update(phoneVerifications)
+          .set({ attempts: record.attempts + 1 })
+          .where(eq(phoneVerifications.id, record.id));
+          
+        return res.status(400).json({ error: 'Invalid verification code' });
+      }
+
+      // Mark phone as verified
+      await storage.updateUser(userId, {
+        phoneVerified: true,
+        phoneVerifiedAt: new Date(),
+      });
+
+      // Mark verification as used
+      await db.update(phoneVerifications)
+        .set({ verifiedAt: new Date() })
+        .where(eq(phoneVerifications.id, record.id));
+
+      res.json({ success: true, message: 'Phone number verified successfully' });
+
+    } catch (error: any) {
+      console.error('❌ Phone verification error:', error);
+      res.status(500).json({ error: 'Failed to verify phone number' });
+    }
+  });
+
+  // Resend verification code
+  app.post('/api/auth/resend-verification', async (req: any, res) => {
+    try {
+      const { userId } = req.body;
+      
+      const user = await storage.getUserById(userId);
+      if (!user || user.phoneVerified) {
+        return res.status(400).json({ error: 'Invalid request' });
+      }
+
+      // Generate new verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await db.insert(phoneVerifications).values({
+        phoneNumber: user.phoneNumber,
+        verificationCode,
+        expiresAt,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        attempts: 0,
+      });
+
+      console.log(`📱 New verification code for ${user.phoneNumber}: ${verificationCode}`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Verification code sent',
+        // In production, remove this
+        verificationCode 
+      });
+
+    } catch (error: any) {
+      console.error('❌ Resend verification error:', error);
+      res.status(500).json({ error: 'Failed to resend verification code' });
+    }
+  });
+
+  // Complete onboarding
+  app.post('/api/auth/complete-onboarding', async (req: any, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID required' });
+      }
+
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Mark onboarding as completed
+      await storage.updateUser(userId, {
+        onboardingCompleted: true,
+        onboardingCompletedAt: new Date(),
+      });
+
+      res.json({ 
+        success: true,
+        message: 'Onboarding completed successfully' 
+      });
+
+    } catch (error: any) {
+      console.error('❌ Complete onboarding error:', error);
+      res.status(500).json({ error: 'Failed to complete onboarding' });
+    }
+  });
+
+  // Start trial (create Stripe checkout session)
+  app.post('/api/auth/start-trial', async (req: any, res) => {
+    try {
+      const { userId } = req.body;
+      
+      const user = await storage.getUserById(userId);
+      if (!user || !user.phoneVerified) {
+        return res.status(400).json({ error: 'Phone verification required' });
+      }
+
+      if (user.trialStatus !== 'inactive') {
+        return res.status(400).json({ error: 'Trial already started' });
+      }
+
+      // Create Stripe checkout session
+      const checkoutSession = await stripeService.createTrialCheckoutSession(userId);
+      
+      // Update user trial status
+      const trialStartDate = new Date();
+      const trialEndDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
+
+      await storage.updateUser(userId, {
+        trialStatus: 'active',
+        trialStartedAt: trialStartDate,
+        trialExpiresAt: trialEndDate,
+        plan: 'core',
+      });
+
+      // Log trial start
+      await db.insert(trialTracking).values({
+        userId,
+        trialStartedAt: trialStartDate,
+        trialExpiresAt: trialEndDate,
+        trialStatus: 'active',
+      });
+
+      res.json({ 
+        success: true,
+        checkoutUrl: checkoutSession.url,
+        sessionId: checkoutSession.sessionId
+      });
+
+    } catch (error: any) {
+      console.error('❌ Start trial error:', error);
+      res.status(500).json({ error: 'Failed to start trial' });
+    }
+  });
+
   // ===== EMAIL ONBOARDING ROUTES =====
   
   // Check email prefix availability (like Gmail signup)

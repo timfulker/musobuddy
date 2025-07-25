@@ -28,6 +28,9 @@ import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
 import Pricing from "@/pages/pricing";
 import EmailSetup from "@/pages/email-setup";
+import LandingPage from "@/pages/landing";
+import SignupPage from "@/pages/signup";
+import TrialSuccessPage from "@/pages/trial-success";
 import SupportChat from "@/components/support-chat";
 
 function Router() {
@@ -48,6 +51,9 @@ function Router() {
   return (
     <Switch>
       {/* Public routes - no authentication required */}
+      <Route path="/" component={LandingPage} />
+      <Route path="/signup" component={SignupPage} />
+      <Route path="/trial-success" component={TrialSuccessPage} />
       <Route path="/sign-contract/:id" component={SignContract} />
       <Route path="/view-contract/:id" component={ViewContract} />
       <Route path="/view-invoice/:id" component={ViewInvoice} />

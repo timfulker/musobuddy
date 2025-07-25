@@ -5,14 +5,14 @@ import { storage } from './storage';
 let stripe: Stripe | null = null;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-06-20',
+    apiVersion: '2025-06-30.basil',
   });
 }
 
 export class StripeService {
   private stripe = stripe;
 
-  async createCheckoutSession(userId: string, priceId: string = 'core_monthly') {
+  async createTrialCheckoutSession(userId: string, priceId: string = 'price_1RoX6JD9Bo26CG1DAHob4Bh1') {
     if (!this.stripe) {
       throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY environment variable');
     }
@@ -29,6 +29,8 @@ export class StripeService {
       if (!customerId) {
         const customer = await this.stripe.customers.create({
           email: user.email || '',
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+          phone: user.phoneNumber || undefined,
           metadata: {
             userId: userId,
           },
@@ -39,29 +41,44 @@ export class StripeService {
         await storage.updateUser(userId, { stripeCustomerId: customerId });
       }
 
-      // Create checkout session
+      // Create checkout session with 14-day trial
       const session = await this.stripe.checkout.sessions.create({
         customer: customerId,
         payment_method_types: ['card'],
         line_items: [
           {
-            price: priceId, // This should be your actual Stripe Price ID
+            price: priceId, // Core monthly price ID
             quantity: 1,
           },
         ],
         mode: 'subscription',
-        success_url: `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/subscription/cancelled`,
+        subscription_data: {
+          trial_period_days: 14,
+          metadata: {
+            userId: userId,
+            trial_type: 'core_monthly',
+          },
+        },
+        success_url: `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/trial/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.APP_SERVER_URL || 'http://localhost:5000'}/signup`,
         metadata: {
           userId: userId,
+          trial_type: 'core_monthly',
         },
+        allow_promotion_codes: false,
+        billing_address_collection: 'required',
       });
 
       return { sessionId: session.id, url: session.url };
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      console.error('Error creating trial checkout session:', error);
       throw error;
     }
+  }
+
+  async createCheckoutSession(userId: string, priceId: string = 'price_1RoX6JD9Bo26CG1DAHob4Bh1') {
+    // Legacy method for non-trial subscriptions
+    return this.createTrialCheckoutSession(userId, priceId);
   }
 
   async handleWebhook(body: Buffer, signature: string) {

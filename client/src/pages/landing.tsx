@@ -1,446 +1,313 @@
-import { useState } from "react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
-import { queryClient } from "@/lib/queryClient";
-import logoImage from "/musobuddy-logo-purple.png";
-import { Calendar, FileText, CreditCard, Shield, Zap, Users, Star, CheckCircle, Music, TrendingUp, Clock, Target, Play, ArrowRight, Crown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Check, Music, FileText, Mail, Calendar, CreditCard, Shield, Star } from "lucide-react";
 
 export default function LandingPage() {
-  const [showLogin, setShowLogin] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
-  const { toast } = useToast();
-  const [, setLocation] = useLocation();
-
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string }) => {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Welcome to MusoBuddy!",
-        description: "Login successful",
-      });
-      setTimeout(() => setLocation("/"), 100);
-    },
-    onError: (error: Error) => {
-      setError(error.message);
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const signUpMutation = useMutation({
-    mutationFn: async (credentials: { email: string; password: string }) => {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Welcome to MusoBuddy!",
-        description: "Account created successfully",
-      });
-      setTimeout(() => setLocation("/"), 100);
-    },
-    onError: (error: Error) => {
-      setError(error.message);
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    
-    if (!email || !password) {
-      setError("Please enter both email and password");
-      return;
-    }
-
-    if (isSignUp) {
-      signUpMutation.mutate({ email, password });
-    } else {
-      loginMutation.mutate({ email, password });
-    }
-  };
-
-  if (showLogin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <img src={logoImage} alt="MusoBuddy" className="h-16 w-auto" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-purple-800 dark:text-purple-200">
-              {isSignUp ? "Join MusoBuddy" : "Welcome Back"}
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">
-              Access your music business dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <Button 
-                type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                size="lg"
-                disabled={loginMutation.isPending || signUpMutation.isPending}
-              >
-                {loginMutation.isPending || signUpMutation.isPending 
-                  ? "Please wait..." 
-                  : isSignUp ? "Create Account" : "Login to MusoBuddy"
-                }
-              </Button>
-            </form>
-            
-            <div className="text-center space-y-2">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setError("");
-                }}
-                className="text-purple-600 hover:text-purple-700"
-              >
-                {isSignUp ? "Already have an account? Login" : "Need an account? Sign up"}
-              </Button>
-              
-              <Button
-                variant="ghost"
-                onClick={() => setShowLogin(false)}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                ← Back to homepage
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header */}
-      <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
-              <img src={logoImage} alt="MusoBuddy" className="h-10 w-auto" />
-              <h1 className="text-2xl font-bold text-purple-800 dark:text-purple-200">MusoBuddy</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                onClick={() => setLocation("/pricing")}
-                className="text-purple-600 hover:text-purple-700"
-              >
-                Pricing
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setShowLogin(true)}
-                className="text-purple-600 hover:text-purple-700"
-              >
-                Login
-              </Button>
-              <Button
-                onClick={() => {
-                  setIsSignUp(true);
-                  setShowLogin(true);
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                Get Started
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+      {/* Navigation */}
+      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <Music className="h-8 w-8 text-purple-600" />
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link href="/login">
+              <Button variant="ghost">Sign In</Button>
+            </Link>
+            <Link href="/signup">
+              <Button className="bg-purple-600 hover:bg-purple-700">Start Free Trial</Button>
+            </Link>
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="mb-8">
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-              Your Complete
-              <span className="text-purple-600 block">Music Business</span>
-              Management Platform
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-12">
-              Streamline your music career with intelligent booking management, professional contracts, 
-              automated invoicing, and compliance tracking - all in one powerful platform designed for musicians.
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button
-              onClick={() => {
-                setIsSignUp(true);
-                setShowLogin(true);
-              }}
-              size="lg"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg"
-            >
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              onClick={() => setLocation("/pricing")}
-              variant="outline"
-              size="lg"
-              className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg"
-            >
-              <Crown className="mr-2 h-5 w-5" />
-              View Pricing
-            </Button>
-            <Button
-              onClick={() => setShowLogin(true)}
-              variant="outline"
-              size="lg"
-              className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg"
-            >
-              <Play className="mr-2 h-5 w-5" />
-              See Demo
+      <section className="container mx-auto px-4 py-20 text-center">
+        <div className="max-w-4xl mx-auto">
+          <Badge className="mb-4 bg-purple-100 text-purple-800 border-purple-200">
+            14-Day Free Trial
+          </Badge>
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+            Professional Music Business Management
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            Streamline your music career with automated contracts, invoicing, and client management. 
+            Trusted by professional musicians across the UK.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup">
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-4">
+                Start Your Free Trial
+              </Button>
+            </Link>
+            <Button size="lg" variant="outline" className="text-lg px-8 py-4">
+              Watch Demo
             </Button>
           </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">10,000+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Musicians</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">50K+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Bookings</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">£2M+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Revenue</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">98%</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Satisfaction</div>
-            </div>
-          </div>
+          <p className="text-sm text-gray-500 mt-4">
+            No credit card required • Full access for 14 days • Cancel anytime
+          </p>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Everything You Need to Succeed
-            </h3>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
-              Professional tools built specifically for musicians and music industry professionals
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="p-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+      {/* Features Section */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Everything You Need to Run Your Music Business
+          </h2>
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            From booking enquiries to payment collection, MusoBuddy handles the business side 
+            so you can focus on the music.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <FileText className="h-12 w-12 text-purple-600 mb-4" />
+              <CardTitle>Smart Contracts</CardTitle>
+              <CardDescription>
+                Generate professional contracts with digital signatures and automatic reminders.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CreditCard className="h-12 w-12 text-purple-600 mb-4" />
+              <CardTitle>Automated Invoicing</CardTitle>
+              <CardDescription>
+                Create and send professional invoices with payment tracking and overdue alerts.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <Mail className="h-12 w-12 text-purple-600 mb-4" />
+              <CardTitle>Email Integration</CardTitle>
+              <CardDescription>
+                Automatic booking enquiry processing from your personalized email address.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
               <Calendar className="h-12 w-12 text-purple-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Smart Booking Management</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Intelligent enquiry tracking, availability checking, and conflict detection to never miss a gig opportunity.
-              </p>
+              <CardTitle>Calendar Management</CardTitle>
+              <CardDescription>
+                Track all your gigs with conflict detection and calendar integration.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <Shield className="h-12 w-12 text-purple-600 mb-4" />
+              <CardTitle>Compliance Tracking</CardTitle>
+              <CardDescription>
+                Manage insurance, licenses, and PAT testing with expiry alerts.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <Star className="h-12 w-12 text-purple-600 mb-4" />
+              <CardTitle>Client Management</CardTitle>
+              <CardDescription>
+                Build relationships with automatic client history and repeat booking tracking.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="container mx-auto px-4 py-20 bg-gray-50 dark:bg-gray-800/50">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            Start with a 14-day free trial. No setup fees, no hidden costs.
+          </p>
+        </div>
+
+        <div className="max-w-lg mx-auto">
+          <Card className="border-2 border-purple-200 shadow-xl relative">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <Badge className="bg-purple-600 text-white px-4 py-1">Most Popular</Badge>
             </div>
-            
-            <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <FileText className="h-12 w-12 text-blue-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Professional Contracts</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Musicians' Union compliant contracts with digital signatures, automated reminders, and secure storage.
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl">Core Plan</CardTitle>
+              <div className="text-5xl font-bold text-purple-600 my-4">
+                £9.99
+                <span className="text-xl text-gray-500 font-normal">/month</span>
+              </div>
+              <CardDescription>Everything you need to manage your music business professionally</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Unlimited contracts & invoices",
+                  "Digital signature collection",
+                  "Personalized email address",
+                  "Automatic booking processing",
+                  "Calendar & conflict detection",
+                  "Client management system",
+                  "Compliance document tracking",
+                  "Cloud storage & backups",
+                  "Email support"
+                ].map((feature) => (
+                  <li key={feature} className="flex items-start space-x-3">
+                    <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup">
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-lg py-3">
+                  Start Your Free Trial
+                </Button>
+              </Link>
+              <p className="text-center text-sm text-gray-500 mt-4">
+                14-day free trial • No credit card required
               </p>
-            </div>
-            
-            <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <CreditCard className="h-12 w-12 text-green-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Automated Invoicing</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Professional invoices with payment tracking, automated reminders, and integrated financial management.
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Trusted by Professional Musicians
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <Card className="border-0 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                "MusoBuddy transformed my business. I went from spending hours on admin to having 
+                everything automated. My clients love the professional contracts and I get paid faster."
               </p>
-            </div>
-            
-            <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-              <Shield className="h-12 w-12 text-yellow-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Compliance Tracking</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Monitor insurance, licenses, PAT testing, and other requirements with automated alerts.
+              <div className="font-semibold">Sarah Johnson</div>
+              <div className="text-sm text-gray-500">Wedding & Event Pianist</div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                "The email integration is genius. Enquiries automatically become bookings, and the 
+                conflict detection has saved me from double-booking disasters multiple times."
               </p>
-            </div>
-            
-            <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-              <Zap className="h-12 w-12 text-indigo-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">AI-Powered Insights</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Intelligent email parsing, workflow optimization, and automated suggestions to boost productivity.
+              <div className="font-semibold">Mike Davies</div>
+              <div className="text-sm text-gray-500">Jazz Trio Leader</div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="flex mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                "Professional, reliable, and exactly what I needed. The compliance tracking alone 
+                has saved me thousands in potential insurance issues. Highly recommended."
               </p>
-            </div>
-            
-            <div className="p-6 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
-              <Users className="h-12 w-12 text-pink-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Client Management</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Comprehensive contact management with communication history and relationship tracking.
-              </p>
-            </div>
-          </div>
+              <div className="font-semibold">Emma Thompson</div>
+              <div className="text-sm text-gray-500">Function Band Manager</div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-purple-600 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-3xl md:text-4xl font-bold mb-6">
+      <section className="container mx-auto px-4 py-20 text-center bg-purple-600 text-white">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Ready to Transform Your Music Business?
-          </h3>
+          </h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of musicians who have streamlined their careers with MusoBuddy
+            Join hundreds of professional musicians who've streamlined their business with MusoBuddy.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              onClick={() => {
-                setIsSignUp(true);
-                setShowLogin(true);
-              }}
-              size="lg"
-              className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg"
-            >
-              Start Your Free Trial
+          <Link href="/signup">
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
+              Start Your Free Trial Today
             </Button>
-            <Button
-              onClick={() => setShowLogin(true)}
-              variant="outline"
-              size="lg"
-              className="border-white text-white hover:bg-white hover:text-purple-600 px-8 py-4 text-lg"
-            >
-              Login to Dashboard
-            </Button>
-          </div>
+          </Link>
+          <p className="text-sm mt-4 opacity-75">
+            14 days free • No commitment • Cancel anytime
+          </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="border-t bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4 py-12">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center mb-4">
-                <img src={logoImage} alt="MusoBuddy" className="h-8 w-auto" />
-                <span className="ml-2 text-xl font-bold text-purple-400">MusoBuddy</span>
+              <div className="flex items-center space-x-2 mb-4">
+                <Music className="h-6 w-6 text-purple-600" />
+                <span className="text-xl font-bold">MusoBuddy</span>
               </div>
-              <p className="text-gray-400">
-                Professional music business management platform for musicians.
+              <p className="text-gray-600 dark:text-gray-400">
+                Professional music business management for the modern musician.
               </p>
             </div>
+            
             <div>
-              <h4 className="font-semibold mb-4">Features</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>Booking Management</li>
-                <li>Contract Generation</li>
-                <li>Invoice Processing</li>
-                <li>Compliance Tracking</li>
+              <h3 className="font-semibold mb-4">Product</h3>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <li><a href="#" className="hover:text-purple-600">Features</a></li>
+                <li><a href="#" className="hover:text-purple-600">Pricing</a></li>
+                <li><a href="#" className="hover:text-purple-600">Demo</a></li>
               </ul>
             </div>
+            
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>Help Center</li>
-                <li>Documentation</li>
-                <li>Contact Us</li>
-                <li>Community</li>
+              <h3 className="font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <li><a href="#" className="hover:text-purple-600">Help Center</a></li>
+                <li><a href="#" className="hover:text-purple-600">Contact</a></li>
+                <li><a href="#" className="hover:text-purple-600">Status</a></li>
               </ul>
             </div>
+            
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>About</li>
-                <li>Privacy Policy</li>
-                <li>Terms of Service</li>
-                <li>Status</li>
+              <h3 className="font-semibold mb-4">Legal</h3>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <li><a href="#" className="hover:text-purple-600">Privacy</a></li>
+                <li><a href="#" className="hover:text-purple-600">Terms</a></li>
+                <li><a href="#" className="hover:text-purple-600">Security</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 MusoBuddy. All rights reserved.</p>
+          
+          <div className="border-t mt-8 pt-8 text-center text-gray-600 dark:text-gray-400">
+            <p>&copy; 2025 MusoBuddy. All rights reserved.</p>
           </div>
         </div>
       </footer>

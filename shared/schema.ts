@@ -34,6 +34,22 @@ export const users = pgTable("users", {
   betaFeedbackCount: integer("beta_feedback_count").default(0),
   stripeCustomerId: text("stripe_customer_id"),
   emailPrefix: text("email_prefix").unique(), // For personalized email addresses like tim-leads@mg.musobuddy.com
+  // SaaS Trial Management Fields
+  phoneNumber: varchar("phone_number", { length: 20 }).unique(),
+  phoneVerified: boolean("phone_verified").default(false),
+  phoneVerifiedAt: timestamp("phone_verified_at"),
+  trialStartedAt: timestamp("trial_started_at"),
+  trialExpiresAt: timestamp("trial_expires_at"),
+  trialStatus: varchar("trial_status", { length: 20 }).default("inactive"), // inactive, active, converted, cancelled, expired
+  accountStatus: varchar("account_status", { length: 20 }).default("active"), // active, payment_failed, suspended, cancelled
+  paymentFailedAt: timestamp("payment_failed_at"),
+  gracePeriodExpiresAt: timestamp("grace_period_expires_at"),
+  signupIpAddress: varchar("signup_ip_address"),
+  deviceFingerprint: text("device_fingerprint"),
+  fraudScore: integer("fraud_score").default(0),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  reminderSentAt: timestamp("reminder_sent_at"),
+  // Existing fields
   isActive: boolean("is_active").default(true), // Account active/suspended
   lastLoginAt: timestamp("last_login_at"),
   lastLoginIP: varchar("last_login_ip"),
@@ -112,6 +128,57 @@ export const userAuditLogs = pgTable("user_audit_logs", {
   newValues: jsonb("new_values"),
   reason: text("reason"),
   ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Phone verification tracking
+export const phoneVerifications = pgTable("phone_verifications", {
+  id: serial("id").primaryKey(),
+  phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
+  verificationCode: varchar("verification_code", { length: 6 }),
+  verifiedAt: timestamp("verified_at"),
+  attempts: integer("attempts").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+});
+
+// Trial management tracking
+export const trialTracking = pgTable("trial_tracking", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  trialStartedAt: timestamp("trial_started_at"),
+  trialExpiresAt: timestamp("trial_expires_at"),
+  trialStatus: varchar("trial_status", { length: 20 }).default("inactive"), // active, converted, cancelled, expired
+  reminderSentAt: timestamp("reminder_sent_at"),
+  conversionDate: timestamp("conversion_date"),
+  cancellationDate: timestamp("cancellation_date"),
+  cancellationReason: text("cancellation_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Fraud prevention log
+export const fraudPreventionLog = pgTable("fraud_prevention_log", {
+  id: serial("id").primaryKey(),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  emailAddress: varchar("email_address"),
+  ipAddress: varchar("ip_address"),
+  deviceFingerprint: text("device_fingerprint"),
+  actionTaken: varchar("action_taken", { length: 100 }),
+  reason: text("reason"),
+  riskScore: integer("risk_score"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Trial usage tracking
+export const trialUsageTracking = pgTable("trial_usage_tracking", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  featureUsed: varchar("feature_used", { length: 100 }),
+  usageCount: integer("usage_count").default(1),
+  lastUsed: timestamp("last_used").defaultNow(),
+  sessionId: varchar("session_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
