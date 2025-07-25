@@ -27,8 +27,13 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Force reload to trigger authentication check and redirect to dashboard
-        window.location.href = '/dashboard';
+        // Clear React Query cache to force re-authentication check
+        const queryClient = (window as any).queryClient;
+        if (queryClient) {
+          queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+        }
+        // Force full page reload to ensure authentication state is updated
+        window.location.reload();
       } else {
         toast({
           title: "Login failed",

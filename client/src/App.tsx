@@ -48,6 +48,12 @@ function Router() {
     );
   }
 
+  // Redirect authenticated users from landing page to dashboard
+  if (isAuthenticated && window.location.pathname === '/') {
+    window.location.href = '/dashboard';
+    return null;
+  }
+
   return (
     <Switch>
       {/* Public routes - always accessible */}
