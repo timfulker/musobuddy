@@ -16,6 +16,48 @@ This document outlines the complete user registration, trial management, and onb
 - One-time permanent email prefix assignment
 - Single early reminder email (day 4-5)
 
+**IMPORTANT PHASING STRATEGY:**
+- **Phase 1 (Immediate):** Core tier only (£9.99/month) - single subscription option
+- **Phase 2 (3-4 months):** Premium tier introduction (£13.99/month) with advanced features
+- **Rationale:** Simplified initial launch, validate core value proposition before feature expansion
+
+## Product Phasing Strategy
+
+### Phase 1: Core Product Launch (Immediate - 3 months)
+**Single Tier Focus:**
+- **Core Subscription:** £9.99/month only
+- **Full Feature Set:** All current MusoBuddy features included
+- **Trial Experience:** 14-day trial of complete Core tier
+- **Value Proposition:** Professional booking management with email automation
+
+**Rationale for Single Tier:**
+- Simplified decision-making for users (no choice paralysis)
+- Clear value proposition validation
+- Reduced development complexity for initial launch
+- Easier pricing optimization and A/B testing
+- Lower customer support burden
+
+### Phase 2: Premium Tier Introduction (3-4 months post-launch)
+**Dual Tier Strategy:**
+- **Core Tier:** £9.99/month (existing features)
+- **Premium Tier:** £13.99/month (enhanced features)
+- **Advanced Features:** AI insights, advanced analytics, integrations
+- **Upgrade Path:** Smooth transition from Core to Premium
+
+**Phase 2 Premium Features (Planned):**
+- Advanced booking analytics and insights
+- Enhanced AI contract parsing and suggestions
+- Third-party calendar integrations (Google, Outlook)
+- Client portal with booking requests
+- Advanced email automation sequences
+- Priority customer support
+
+**Migration Strategy:**
+- Existing Core users grandfathered at £9.99/month
+- Optional upgrade prompts for Premium features
+- A/B test pricing and feature combinations
+- Clear feature differentiation communication
+
 ## Complete User Journey
 
 ### Phase 1: Landing Page Discovery
@@ -25,7 +67,7 @@ This document outlines the complete user registration, trial management, and onb
 Public Landing Page (musobuddy.com)
 ├── Hero section: "Professional booking management for musicians"
 ├── Feature showcase: Email automation, contracts, invoices
-├── Pricing tiers: Core (£9.99/month), Premium (£13.99/month)
+├── Pricing: Single Core tier (£9.99/month) - Phase 1 simplification
 ├── Demo preview: Interactive sandbox or video walkthrough
 ├── Social proof: Testimonials and user logos
 ├── Call-to-action: "Start 14-Day Free Trial"
@@ -34,8 +76,9 @@ Public Landing Page (musobuddy.com)
 
 **Decision Points:**
 - **Demo Preview:** ✅ Include interactive demo before signup
-- **Pricing Display:** ✅ Show pricing upfront for transparency
+- **Pricing Display:** ✅ Single Core tier (£9.99/month) for Phase 1 simplicity
 - **Free Tier:** ❌ No free tier to prevent gaming system
+- **Premium Tier:** ⏳ Deferred to Phase 2 (3-4 months) for feature validation
 
 ### Phase 2: Account Registration
 
@@ -750,12 +793,12 @@ const TRIAL_CONFIG = {
 ### Phase 1: Core Infrastructure (Immediate)
 1. Database schema updates and migrations
 2. Phone verification service integration (Twilio)
-3. Enhanced Stripe trial subscription handling
+3. Single-tier Stripe subscription handling (Core £9.99/month)
 4. Basic fraud prevention logging
 5. Trial management API endpoints
 
 ### Phase 2: User Experience (Week 1)
-1. Landing page with demo preview
+1. Landing page with demo preview (single Core tier pricing)
 2. Registration flow with phone verification
 3. Onboarding wizard with email setup
 4. Trial dashboard and countdown widgets
@@ -774,6 +817,13 @@ const TRIAL_CONFIG = {
 3. Advanced analytics implementation
 4. Performance monitoring
 5. Legal compliance review
+
+### Future Phase 2 Product Development (3-4 months post-launch)
+1. Premium tier feature development
+2. Dual-tier pricing page implementation
+3. Feature upgrade and downgrade flows
+4. Advanced analytics and AI features
+5. Third-party integrations and client portal
 
 ## Alternative Approaches Considered
 
