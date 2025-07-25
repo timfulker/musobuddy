@@ -407,11 +407,14 @@ export async function registerRoutes(app: Express) {
       const user = await storage.authenticateUser(email, password);
       
       if (!user) {
+        console.log('❌ Authentication failed for user:', email);
         return res.status(401).json({ 
           success: false, 
           message: 'Invalid email or password' 
         });
       }
+      
+      console.log('✅ Authentication successful for user:', user.email);
 
       // Set session with comprehensive debugging
       req.session.userId = user.id;

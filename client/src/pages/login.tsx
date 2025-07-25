@@ -17,8 +17,13 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    console.log('🔍 Frontend: Login form submitted');
+    console.log('🔍 Frontend: Email:', email);
+    console.log('🔍 Frontend: Password length:', password.length);
 
     try {
+      console.log('🔍 Frontend: Making fetch request to /api/auth/login');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -26,7 +31,9 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('🔍 Frontend: Response status:', response.status);
       const data = await response.json();
+      console.log('🔍 Frontend: Response data:', data);
 
       if (data.success) {
         // Invalidate auth queries to trigger refetch
