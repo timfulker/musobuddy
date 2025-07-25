@@ -49,7 +49,7 @@ function Router() {
   }
 
   // Redirect authenticated users from landing page to dashboard
-  if (isAuthenticated && window.location.pathname === '/') {
+  if (!isLoading && isAuthenticated && window.location.pathname === '/') {
     window.location.href = '/dashboard';
     return null;
   }
