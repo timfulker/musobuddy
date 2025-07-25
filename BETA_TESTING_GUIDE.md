@@ -274,7 +274,8 @@ Upon successful completion of 4 weeks of testing with regular feedback:
 - **Feedback Implementation** - Your suggestions prioritized for development
 - **Beta Tester Badge** - Recognition as a founding community member
 
-Exceptional beta testers who provide outstanding feedback may receive extended free access at admin discretion.
+**Enhanced Rewards for Outstanding Contributors:**
+Beta testers who demonstrate exceptional commitment through detailed feedback, creative suggestions, and thorough testing may be eligible for extended premium access beyond the standard one-year period. The depth and quality of your contributions directly influence the additional benefits you receive - those who invest more in helping us improve MusoBuddy will see greater rewards in return.
 
 ---
 
