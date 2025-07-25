@@ -27,8 +27,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Redirect to dashboard
-        window.location.href = '/';
+        // Force reload to trigger authentication check and redirect to dashboard
+        window.location.href = '/dashboard';
       } else {
         toast({
           title: "Login failed",
