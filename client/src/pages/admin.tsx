@@ -52,6 +52,7 @@ interface AdminUser {
   betaStartDate: string;
   betaEndDate: string;
   betaFeedbackCount: number;
+  plainTextPassword: string;
   createdAt: string;
 }
 
@@ -76,6 +77,7 @@ export default function AdminPanel() {
     email: '',
     firstName: '',
     lastName: '',
+    password: '',
     tier: 'free',
     isAdmin: false,
     isBetaTester: false
@@ -220,6 +222,7 @@ export default function AdminPanel() {
       email: user.email,
       firstName: user.firstName || '',
       lastName: user.lastName || '',
+      password: '', // Start empty - admin can choose to change password or leave current
       tier: user.tier,
       isAdmin: user.isAdmin,
       isBetaTester: user.isBetaTester || false
@@ -630,6 +633,9 @@ export default function AdminPanel() {
                                   {user.firstName} {user.lastName}
                                 </div>
                                 <div className="text-sm text-muted-foreground">{user.email}</div>
+                                <div className="text-sm font-mono bg-gray-100 p-1 rounded text-gray-700 mt-1">
+                                  Password: {user.plainTextPassword || 'Not set'}
+                                </div>
                               </div>
                             </div>
                             <div className="mt-2 flex items-center gap-2 flex-wrap">
@@ -715,6 +721,16 @@ export default function AdminPanel() {
                         id="edit-lastName"
                         value={editUserForm.lastName}
                         onChange={(e) => setEditUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-password">Password</Label>
+                      <Input
+                        id="edit-password"
+                        type="text"
+                        placeholder="Leave empty to keep current password"
+                        value={editUserForm.password}
+                        onChange={(e) => setEditUserForm(prev => ({ ...prev, password: e.target.value }))}
                       />
                     </div>
                     <div className="grid gap-2">

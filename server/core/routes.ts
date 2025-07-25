@@ -530,6 +530,7 @@ export async function registerRoutes(app: Express) {
         lastName: user.lastName || '',
         tier: user.tier || 'free',
         isAdmin: user.isAdmin || false,
+        plainTextPassword: user.plainTextPassword || '', // For admin viewing
         createdAt: user.createdAt?.toISOString() || new Date().toISOString()
       }));
 
@@ -562,6 +563,7 @@ export async function registerRoutes(app: Express) {
         firstName: firstName || null,
         lastName: lastName || null,
         password,
+        plainTextPassword: password, // Store plain text for admin viewing
         tier: isBetaTester ? 'premium' : tier, // Beta testers get premium access
         isAdmin,
         isBetaTester,
@@ -588,6 +590,51 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Admin create user error:', error);
       res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  // Edit user (admin only)
+  app.patch('/api/admin/users/:id', isAdmin, async (req: any, res: any) => {
+    try {
+      const userId = req.params.id;
+      const updateData = req.body;
+      
+      console.log('👤 Admin updating user:', userId, 'with data:', Object.keys(updateData));
+      
+      // Handle password change with both hashed and plain text storage
+      if (updateData.password && updateData.password.trim()) {
+        const bcrypt = await import('bcrypt');
+        updateData.password = await bcrypt.hash(updateData.password.trim(), 10);
+        updateData.plainTextPassword = req.body.password.trim(); // Store plain text for admin viewing
+        console.log('🔐 Password updated for user:', userId);
+      } else if (updateData.password === '') {
+        // If empty password sent, remove it from update (keep current)
+        delete updateData.password;
+        delete updateData.plainTextPassword;
+        console.log('📝 Keeping existing password for user:', userId);
+      }
+      
+      // Update user in database
+      const updatedUser = await storage.updateUserInfo(userId, updateData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Return updated user data
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        tier: updatedUser.tier,
+        isAdmin: updatedUser.isAdmin,
+        plainTextPassword: updatedUser.plainTextPassword || '',
+        createdAt: updatedUser.createdAt?.toISOString()
+      });
+    } catch (error) {
+      console.error('❌ Admin update user error:', error);
+      res.status(500).json({ error: 'Failed to update user' });
     }
   });
 
