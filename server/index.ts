@@ -62,8 +62,8 @@ app.use(session({
     secure: false, // Always false to fix production issues
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    sameSite: 'lax',
-    domain: isProduction ? '.replit.app' : undefined // Set domain for production
+    sameSite: 'lax'
+    // Remove domain setting - let browser handle it automatically
   }
 }));
 
