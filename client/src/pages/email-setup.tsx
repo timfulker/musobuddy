@@ -36,12 +36,12 @@ export default function EmailSetup() {
 
   // Check availability mutation
   const checkAvailability = useMutation({
-    mutationFn: async (prefix: string) => {
+    mutationFn: async (prefix: string): Promise<EmailCheckResponse> => {
       const response = await apiRequest('/api/email/check-availability', {
         method: 'POST',
         body: JSON.stringify({ prefix }),
       });
-      return response;
+      return response as EmailCheckResponse;
     },
     onSuccess: (data: EmailCheckResponse) => {
       setCheckResult(data);
