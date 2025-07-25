@@ -1,10 +1,10 @@
 import Stripe from 'stripe';
 import { storage } from './storage';
 
-// Initialize Stripe with secret key (only if available)
+// Initialize Stripe with test key for beta testing (only if available)
 let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+if (process.env.STRIPE_TEST_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY, {
     apiVersion: '2025-06-30.basil',
   });
 }
@@ -12,9 +12,9 @@ if (process.env.STRIPE_SECRET_KEY) {
 export class StripeService {
   private stripe = stripe;
 
-  async createTrialCheckoutSession(userId: string, priceId: string = 'price_1RoX6JD9Bo26CG1DAHob4Bh1') {
+  async createTrialCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI') {
     if (!this.stripe) {
-      throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY environment variable');
+      throw new Error('Stripe not configured - please add STRIPE_TEST_SECRET_KEY environment variable');
     }
     
     try {
@@ -76,14 +76,14 @@ export class StripeService {
     }
   }
 
-  async createCheckoutSession(userId: string, priceId: string = 'price_1RoX6JD9Bo26CG1DAHob4Bh1') {
+  async createCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI') {
     // Legacy method for non-trial subscriptions
     return this.createTrialCheckoutSession(userId, priceId);
   }
 
   async handleWebhook(body: Buffer, signature: string) {
     if (!this.stripe) {
-      throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY environment variable');
+      throw new Error('Stripe not configured - please add STRIPE_TEST_SECRET_KEY environment variable');
     }
     
     try {
