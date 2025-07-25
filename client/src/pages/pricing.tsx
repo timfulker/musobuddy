@@ -82,11 +82,11 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-blue-500 mr-2" />
-                  Create up to 3 test items
+                  Test all features
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-blue-500 mr-2" />
-                  Preview all features
+                  Preview functionality
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-blue-500 mr-2" />
@@ -218,13 +218,13 @@ export default function PricingPage() {
               <tbody className="space-y-4">
                 <tr className="border-b">
                   <td className="py-4">Bookings Created</td>
-                  <td className="text-center py-4">3 test items</td>
+                  <td className="text-center py-4">Testing only</td>
                   <td className="text-center py-4">Unlimited</td>
                   <td className="text-center py-4">Unlimited</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-4">Contract Creation</td>
-                  <td className="text-center py-4">3 test items</td>
+                  <td className="text-center py-4">Testing only</td>
                   <td className="text-center py-4">Unlimited</td>
                   <td className="text-center py-4">Unlimited</td>
                 </tr>

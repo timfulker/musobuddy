@@ -420,7 +420,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Professional Upgrade Flow**: ✅ All demo limitations direct to /pricing page with clear subscription benefits messaging
 - **CRITICAL GAPS CLOSED**: ✅ Fixed reported issue where contracts could still be sent despite demo limitations - all sending functionality now properly restricted
 - **PRICING PAGE DEMO TIER ENHANCED**: ✅ Changed "Free" tier to "Demo" tier with accurate messaging reflecting testing environment rather than functional free features
-- **Demo Tier Features Updated**: ✅ Splash screen now shows "Explore all interfaces", "Create up to 3 test items", "Preview all features", "No sending functionality"
+- **Demo Tier Features Updated**: ✅ Splash screen now shows "Explore all interfaces", "Test all features", "Preview functionality", "No sending functionality" - removed specific 3-item limit messaging for less restrictive appearance
 - **Core Tier Features Clarified**: ✅ Updated Core tier to reflect actual implemented features: "Unlimited bookings & contracts", "Professional invoicing", "Client address book", "Email sending & templates", "Compliance documents", "Cloud document storage"
 - **Premium Tier Features Updated**: ✅ Updated Premium tier to reflect planned Phase 2 features: "Advanced booking analytics", "Calendar integrations", "Client booking portal", "Enhanced AI parsing", "Priority support"
 - **Premium Pricing Strategy Updated**: ✅ Removed £13.99 price display for Premium tier, now shows "Coming Soon" to create intrigue and allow flexible pricing for Phase 2 launch
