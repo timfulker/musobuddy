@@ -51,7 +51,7 @@ export default function PricingPage() {
             Choose Your MusoBuddy Plan
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Professional tools for serious musicians. Streamline your business with smart contracts, invoices, and client management.
+            Professional tools for serious musicians. Try our demo environment or upgrade to streamline your business with smart contracts, invoices, and client management.
           </p>
         </div>
 
@@ -67,26 +67,30 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-12">
-          {/* Free Plan */}
-          <Card className="border-2">
+          {/* Demo Plan */}
+          <Card className="border-2 border-gray-300">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Free</CardTitle>
+              <CardTitle className="text-2xl">Demo</CardTitle>
               <div className="text-3xl font-bold">£0</div>
-              <p className="text-gray-500">Limited features</p>
+              <p className="text-gray-500">Test the platform</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
                 <li className="flex items-center">
-                  <Check className="w-4 h-4 text-green-500 mr-2" />
-                  5 bookings per month
+                  <Check className="w-4 h-4 text-blue-500 mr-2" />
+                  Explore all interfaces
                 </li>
                 <li className="flex items-center">
-                  <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Basic contract templates
+                  <Check className="w-4 h-4 text-blue-500 mr-2" />
+                  Create up to 3 test items
                 </li>
                 <li className="flex items-center">
-                  <Check className="w-4 h-4 text-green-500 mr-2" />
-                  Email notifications
+                  <Check className="w-4 h-4 text-blue-500 mr-2" />
+                  Preview all features
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-blue-500 mr-2" />
+                  No sending functionality
                 </li>
               </ul>
               <Button 
@@ -94,7 +98,7 @@ export default function PricingPage() {
                 className="w-full"
                 disabled={currentPlan === 'free'}
               >
-                {currentPlan === 'free' ? 'Current Plan' : 'Downgrade'}
+                {currentPlan === 'free' ? 'Current Demo' : 'Try Demo'}
               </Button>
             </CardContent>
           </Card>
@@ -202,35 +206,59 @@ export default function PricingPage() {
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-4">Feature</th>
-                  <th className="text-center py-4">Free</th>
+                  <th className="text-center py-4">Demo</th>
                   <th className="text-center py-4">Core</th>
                   <th className="text-center py-4">Premium</th>
                 </tr>
               </thead>
               <tbody className="space-y-4">
                 <tr className="border-b">
-                  <td className="py-4">Monthly Bookings</td>
-                  <td className="text-center py-4">5</td>
+                  <td className="py-4">Bookings Created</td>
+                  <td className="text-center py-4">3 test items</td>
                   <td className="text-center py-4">Unlimited</td>
                   <td className="text-center py-4">Unlimited</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-4">Contract Templates</td>
-                  <td className="text-center py-4">Basic</td>
-                  <td className="text-center py-4">Professional</td>
-                  <td className="text-center py-4">Custom</td>
+                  <td className="py-4">Contract Creation</td>
+                  <td className="text-center py-4">3 test items</td>
+                  <td className="text-center py-4">Unlimited</td>
+                  <td className="text-center py-4">Unlimited</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-4">Invoice Management</td>
+                  <td className="py-4">Contract Sending</td>
                   <td className="text-center py-4">✗</td>
                   <td className="text-center py-4">✓</td>
                   <td className="text-center py-4">✓</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-4">Client Portal</td>
+                  <td className="py-4">Invoice Creation</td>
+                  <td className="text-center py-4">3 test items</td>
+                  <td className="text-center py-4">Unlimited</td>
+                  <td className="text-center py-4">Unlimited</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4">Invoice Sending</td>
                   <td className="text-center py-4">✗</td>
                   <td className="text-center py-4">✓</td>
                   <td className="text-center py-4">✓</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4">PDF Downloads</td>
+                  <td className="text-center py-4">✗</td>
+                  <td className="text-center py-4">✓</td>
+                  <td className="text-center py-4">✓</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4">Cloud Storage</td>
+                  <td className="text-center py-4">✗</td>
+                  <td className="text-center py-4">✓</td>
+                  <td className="text-center py-4">✓</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-4">Address Book</td>
+                  <td className="text-center py-4">3 test items</td>
+                  <td className="text-center py-4">Unlimited</td>
+                  <td className="text-center py-4">Unlimited</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-4">Email Automation</td>
@@ -239,14 +267,8 @@ export default function PricingPage() {
                   <td className="text-center py-4">✓</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-4">Analytics</td>
-                  <td className="text-center py-4">✗</td>
-                  <td className="text-center py-4">Basic</td>
-                  <td className="text-center py-4">Advanced</td>
-                </tr>
-                <tr className="border-b">
                   <td className="py-4">Support</td>
-                  <td className="text-center py-4">Community</td>
+                  <td className="text-center py-4">Demo only</td>
                   <td className="text-center py-4">Email</td>
                   <td className="text-center py-4">Priority</td>
                 </tr>
@@ -260,16 +282,16 @@ export default function PricingPage() {
           <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
           <div className="max-w-2xl mx-auto space-y-4">
             <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="font-semibold mb-2">What can I do in the demo?</h3>
+              <p className="text-gray-600">The demo lets you explore all interfaces and create up to 3 test items in each category (bookings, contracts, invoices). You can't send emails or download PDFs, but you can see how everything works.</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
               <p className="text-gray-600">Yes, you can cancel your subscription at any time. Your access will continue until the end of your billing period.</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
               <p className="text-gray-600">We accept all major credit cards, debit cards, and PayPal through Stripe's secure payment processing.</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="font-semibold mb-2">Is there a setup fee?</h3>
-              <p className="text-gray-600">No setup fees, no hidden costs. Just the monthly subscription fee.</p>
             </div>
           </div>
         </div>
