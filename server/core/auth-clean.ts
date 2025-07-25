@@ -8,14 +8,9 @@ export async function setupAuthentication(app: Express): Promise<void> {
   // Authentication middleware for unified email/password system
   app.use(async (req: any, res, next) => {
     try {
-      // Debug session data
-      if (req.url === '/api/auth/user') {
-        console.log('🔍 Session debug for /api/auth/user:');
-        console.log('Session ID:', req.sessionID);
-        console.log('Session data:', JSON.stringify(req.session, null, 2));
-        console.log('Session userId:', req.session?.userId);
-        console.log('Session passport.user:', req.session?.passport?.user);
-        console.log('Session user.id:', req.session?.user?.id);
+      // Minimal debug for production
+      if (req.url === '/api/auth/user' && req.session?.userId) {
+        console.log('✅ Auth check: User', req.session.userId, 'authenticated');
       }
       
       // Check for session-based authentication first - handle multiple session formats
