@@ -168,20 +168,181 @@ Step 4: System Introduction
 └── "Start managing bookings" completion
 ```
 
-**Email Setup Decision Points:**
+## Email System Architecture & Decisions
 
-**A) Email Modification: ✅ PERMANENT ASSIGNMENT**
-- **Chosen:** One-time setup during onboarding, cannot be changed
-- **Alternative:** Allow changes with admin approval or restrictions
+### Core Email Routing System
 
-**Rationale:** Prevents confusion for clients, maintains professional consistency, reduces support burden
+**Current Implementation:**
+- **Mailgun Domain:** mg.musobuddy.com (authenticated sending domain)
+- **Routing Pattern:** leads+customprefix@mg.musobuddy.com → individual user accounts
+- **Backend Processing:** Single webhook endpoint handles all incoming emails
+- **AI Processing:** Email content parsed and converted to bookings automatically
 
-**B) Email Format: ✅ GMAIL-STYLE PREFIX**
+### Email Setup Decision Points
+
+**A) Email Modification Policy: ✅ PERMANENT ASSIGNMENT**
+- **Chosen:** One-time setup during onboarding, cannot be changed later
+- **Alternative 1:** Allow changes with admin approval or restrictions
+- **Alternative 2:** Allow unlimited changes with routing updates
+
+**Rationale:** 
+- Prevents client confusion when email address changes
+- Maintains professional consistency
+- Reduces support burden and routing complexity
+- Forces users to choose thoughtfully during setup
+
+**B) Email Format: ✅ GMAIL-STYLE PREFIX SYSTEM**
 - **Chosen:** leads+customprefix@mg.musobuddy.com
-- **Alternative 1:** customprefix@mg.musobuddy.com (requires subdomain setup)
-- **Alternative 2:** Fixed format with user ID (less professional)
+- **Alternative 1:** customprefix@mg.musobuddy.com (dedicated subdomain per user)
+- **Alternative 2:** Fixed format with user ID (e.g., leads+user123@mg.musobuddy.com)
+- **Alternative 3:** Department-style (customprefix.leads@mg.musobuddy.com)
 
-**Rationale:** Leverages existing Mailgun routing, professional appearance, easy implementation
+**Rationale:**
+- Leverages existing Mailgun routing infrastructure (no DNS changes needed)
+- Professional appearance that clients understand
+- Easy implementation with current webhook system
+- Familiar Gmail-style format builds user confidence
+
+**C) Existing Account Email Assignment: ✅ DEFINED STRATEGY**
+- **Admin Account (timfulker@gmail.com):** Keep as leads@mg.musobuddy.com (no prefix)
+- **Musician Account:** Assign "timfulkermusic" prefix → leads+timfulkermusic@mg.musobuddy.com
+
+**Rationale:**
+- Admin maintains universal inbox for system administration
+- Musician account gets personalized email for testing user experience
+- Clear separation between admin and user functions
+
+### Email Routing Technical Implementation
+
+**Current Mailgun Configuration:**
+```
+Route: *.mg.musobuddy.com → webhook endpoint
+Processing: Extract prefix from email address → route to user account
+Storage: emailPrefix field in users table (unique constraint)
+```
+
+**Enhanced Routing for New Users:**
+```javascript
+// Email processing logic
+const emailAddress = 'leads+johndoe@mg.musobuddy.com';
+const prefix = extractPrefix(emailAddress); // 'johndoe'
+const user = getUserByEmailPrefix(prefix);
+if (user) {
+  createBookingForUser(user.id, emailContent);
+} else {
+  // Handle unrecognized prefix
+}
+```
+
+### Email Availability Checking System
+
+**Real-time Validation:**
+```
+User types: "johndoe"
+System checks: Database for existing emailPrefix = "johndoe"
+Response: Available/Taken with smart suggestions
+```
+
+**Smart Suggestions Algorithm:**
+```
+If "johndoe" is taken, suggest:
+- johndoemusic
+- johndoelive
+- johndoegigs
+- johndoe2024
+- john-doe-music
+```
+
+**Validation Rules:**
+- 3-30 characters length
+- Alphanumeric and hyphens only
+- No consecutive hyphens
+- Cannot start or end with hyphen
+- Reserved words blocked (admin, support, billing, etc.)
+
+### Professional Client Experience
+
+**What Clients See:**
+1. Musician shares: "Email me at leads+johndoe@mg.musobuddy.com"
+2. Client sends inquiry to that address
+3. System automatically creates booking in musician's account
+4. Musician responds with professional contracts/quotes
+5. No client awareness of backend system complexity
+
+**Email Templates for Clients:**
+- Professional signatures in all outbound emails
+- Branded email templates for contracts and invoices
+- Clear unsubscribe and contact options
+- Consistent domain builds trust (mg.musobuddy.com)
+
+### Multi-Tenant Email Security
+
+**Isolation Guarantees:**
+- Each user's email prefix is unique across entire system
+- No cross-user email contamination possible
+- Failed prefix lookup routes to admin for investigation
+- Audit trail for all email processing
+
+**Privacy & Data Protection:**
+- User email prefixes stored encrypted
+- GDPR compliance for email data retention
+- User can request email data deletion
+- No sharing of email routing information between users
+
+### Email System Scalability
+
+**Current Capacity:**
+- Unlimited users (prefix-based routing scales horizontally)
+- No DNS changes required for new users
+- Single webhook endpoint handles all traffic
+- Database lookup performance optimized with indexes
+
+**Future Enhancements Considered:**
+- Custom domain options for premium users
+- Email analytics and delivery tracking
+- Advanced spam filtering and security
+- Integration with customer email clients
+
+### Alternative Email Systems Evaluated
+
+**Option A: Subdomain per User (customprefix@mg.musobuddy.com)**
+- **Pros:** Most professional appearance, cleaner format
+- **Cons:** Requires DNS wildcard setup, complex SSL management, higher infrastructure costs
+- **Verdict:** ❌ Technical complexity outweighs marginal benefit
+
+**Option B: User ID Based System (leads+user123@mg.musobuddy.com)**
+- **Pros:** Guaranteed uniqueness, simple implementation
+- **Cons:** Unprofessional appearance, poor user experience, not memorable
+- **Verdict:** ❌ Damages professional image
+
+**Option C: Department Style (customprefix.leads@mg.musobuddy.com)**
+- **Pros:** Professional corporate appearance
+- **Cons:** Less familiar to users, potential confusion with periods
+- **Verdict:** ❌ Gmail-style plus addressing more familiar
+
+**Option D: Changeable Email Addresses**
+- **Pros:** User flexibility, can improve branding over time
+- **Cons:** Client confusion, broken email links, routing complexity, support burden
+- **Verdict:** ❌ Professional consistency more important than flexibility
+
+### Email System Integration with Trial/Billing
+
+**Trial Period Email Access:**
+- Full email routing active during 14-day trial
+- No restrictions on incoming email volume
+- Complete booking creation and management
+- Professional email signatures and branding
+
+**Post-Trial Email Behavior:**
+- **Paid Users:** Full email functionality continues
+- **Cancelled Users:** Email routing disabled after grace period
+- **Suspended Users:** Emails bounce with professional message
+
+**Admin Override Capabilities:**
+- Manually assign email prefixes for special users
+- Override prefix uniqueness for migrations
+- Temporary email routing for troubleshooting
+- Email analytics and delivery monitoring
 
 ### Phase 7: Trial Period Management
 
