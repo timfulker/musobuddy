@@ -25,13 +25,13 @@ export default function TrialSuccessPage() {
     retry: false, // Don't auto-retry on 401
   });
 
-  // Session restoration mutation
+  // Session restoration mutation - simplified approach using session ID only
   const restoreSessionMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/auth/restore-session', {
+      // Use the session ID to restore authentication by finding the user who just completed checkout
+      return apiRequest('/api/auth/restore-session-by-stripe', {
         method: 'POST',
         body: JSON.stringify({ 
-          email: 'tim@saxweddings.com', // TODO: Get from URL params or local storage
           sessionId 
         }),
         headers: {
@@ -63,11 +63,11 @@ export default function TrialSuccessPage() {
       console.log('Attempting session restoration...');
       restoreSessionMutation.mutate();
     }
-  }, [sessionId, user, isLoading, restoreSessionMutation.isPending]);
+  }, [sessionId, user, isLoading, restoreSessionMutation.isPending, restoreSessionMutation]);
 
   // Redirect to dashboard if user is already authenticated and subscribed
   useEffect(() => {
-    if (user && user.isSubscribed) {
+    if (user && (user as any).isSubscribed) {
       console.log('User is authenticated and subscribed, redirecting to dashboard...');
       setLocation('/dashboard');
     }

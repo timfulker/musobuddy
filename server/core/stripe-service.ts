@@ -93,6 +93,7 @@ export class StripeService {
         cancel_url: `${getAppServerUrl()}/pricing`,
         metadata: {
           userId: userId,
+          userEmail: user.email || '',
           trial_type: 'core_monthly',
         },
         allow_promotion_codes: false,
@@ -109,6 +110,25 @@ export class StripeService {
   async createCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI') {
     // Legacy method for non-trial subscriptions
     return this.createTrialCheckoutSession(userId, priceId);
+  }
+
+  async getSessionDetails(sessionId: string) {
+    if (!this.stripe) {
+      throw new Error('Stripe not configured - please add STRIPE_TEST_SECRET_KEY environment variable');
+    }
+    
+    try {
+      const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+      return {
+        id: session.id,
+        customer: session.customer,
+        metadata: session.metadata,
+        status: session.status,
+      };
+    } catch (error) {
+      console.error('Error getting session details:', error);
+      throw error;
+    }
   }
 
   async handleWebhook(body: Buffer, signature: string) {

@@ -410,6 +410,73 @@ export class ProductionAuthSystem {
       });
     });
 
+    // Restore session using Stripe session ID - find user who completed this checkout
+    this.app.post('/api/auth/restore-session-by-stripe', async (req: any, res) => {
+      try {
+        const { sessionId } = req.body;
+        
+        if (!sessionId) {
+          return res.status(400).json({ error: 'Session ID required' });
+        }
+
+        console.log('🔄 Attempting session restoration by Stripe session:', sessionId);
+
+        // Import StripeService to get session details
+        const { StripeService } = await import('./stripe-service');
+        const stripeService = new StripeService();
+        
+        try {
+          // Get session details from Stripe
+          const sessionDetails = await stripeService.getSessionDetails(sessionId);
+          const userId = sessionDetails.metadata?.userId;
+          
+          if (!userId) {
+            return res.status(400).json({ error: 'User ID not found in session metadata' });
+          }
+
+          // Get user by ID
+          const user = await storage.getUserById(userId);
+          if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+          }
+
+          // Verify user has completed Stripe checkout (is subscribed)
+          if (!user.isSubscribed) {
+            return res.status(400).json({ error: 'User has not completed subscription process' });
+          }
+
+          // Restore session
+          req.session.userId = user.id;
+          
+          console.log('✅ Session restored for user via Stripe session:', user.email);
+          
+          res.json({
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              phoneVerified: user.phoneVerified,
+              onboardingCompleted: user.onboardingCompleted,
+              tier: user.tier,
+              isSubscribed: user.isSubscribed,
+              isLifetime: user.isLifetime,
+              isAdmin: user.isAdmin
+            }
+          });
+
+        } catch (stripeError) {
+          console.error('❌ Stripe session lookup failed:', stripeError);
+          return res.status(400).json({ error: 'Invalid or expired session ID' });
+        }
+
+      } catch (error: any) {
+        console.error('❌ Session restoration by Stripe error:', error);
+        res.status(500).json({ error: 'Session restoration failed' });
+      }
+    });
+
     console.log('✅ Production authentication routes registered');
   }
 }
