@@ -83,23 +83,19 @@ function Router() {
       }} />
       
       {/* Protected routes - require authentication */}
-      {isAuthenticated ? (
-        <>
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/bookings" component={Bookings} />
-          <Route path="/new-booking" component={NewBooking} />
-          <Route path="/address-book" component={AddressBook} />
-          <Route path="/contracts" component={Contracts} />
-          <Route path="/invoices" component={Invoices} />
-          <Route path="/compliance" component={Compliance} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/templates" component={Templates} />
-          <Route path="/user-guide" component={UserGuide} />
-          <Route path="/feedback" component={Feedback} />
-          <Route path="/email-setup" component={EmailSetup} />
-          <Route path="/admin" component={Admin} />
-        </>
-      ) : null}
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/bookings" component={Bookings} />
+      <Route path="/new-booking" component={NewBooking} />
+      <Route path="/address-book" component={AddressBook} />
+      <Route path="/contracts" component={Contracts} />
+      <Route path="/invoices" component={Invoices} />
+      <Route path="/compliance" component={Compliance} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/templates" component={Templates} />
+      <Route path="/user-guide" component={UserGuide} />
+      <Route path="/feedback" component={Feedback} />
+      <Route path="/email-setup" component={EmailSetup} />
+      <Route path="/admin" component={Admin} />
       
       <Route component={NotFound} />
     </Switch>
