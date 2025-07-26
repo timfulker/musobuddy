@@ -350,6 +350,55 @@ export class ProductionAuthSystem {
       }
     });
 
+    // Session restoration route for post-Stripe redirect
+    this.app.post('/api/auth/restore-session', async (req: any, res) => {
+      try {
+        const { email, sessionId } = req.body;
+        
+        if (!email) {
+          return res.status(400).json({ error: 'Email required for session restoration' });
+        }
+
+        console.log('🔄 Attempting session restoration for:', email);
+
+        // Find user by email
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify user has completed Stripe checkout (is subscribed)
+        if (!user.isSubscribed) {
+          return res.status(400).json({ error: 'User has not completed subscription process' });
+        }
+
+        // Restore session
+        req.session.userId = user.id;
+        
+        console.log('✅ Session restored for user:', user.email);
+        
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            phoneVerified: user.phoneVerified,
+            onboardingCompleted: user.onboardingCompleted,
+            tier: user.tier,
+            isSubscribed: user.isSubscribed,
+            isLifetime: user.isLifetime,
+            isAdmin: user.isAdmin
+          }
+        });
+
+      } catch (error: any) {
+        console.error('❌ Session restoration error:', error);
+        res.status(500).json({ error: 'Session restoration failed' });
+      }
+    });
+
     // Logout route
     this.app.post('/api/auth/logout', (req: any, res) => {
       req.session.destroy((err: any) => {

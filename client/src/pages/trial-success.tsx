@@ -18,11 +18,60 @@ export default function TrialSuccessPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get('session_id');
 
-  // Verify trial setup
-  const { data: user, isLoading } = useQuery({
+  // Verify trial setup with session restoration
+  const { data: user, isLoading, refetch } = useQuery({
     queryKey: ['/api/auth/user'],
     enabled: !!sessionId,
+    retry: false, // Don't auto-retry on 401
   });
+
+  // Session restoration mutation
+  const restoreSessionMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/auth/restore-session', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          email: 'tim@saxweddings.com', // TODO: Get from URL params or local storage
+          sessionId 
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Session restored!",
+        description: "Welcome back to MusoBuddy.",
+      });
+      refetch(); // Refresh user data
+    },
+    onError: (error: any) => {
+      console.error('Session restoration failed:', error);
+      toast({
+        title: "Session restoration failed",
+        description: "Please try logging in manually.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Attempt session restoration if user query fails with 401
+  // Automatic session restoration effect
+  useEffect(() => {
+    if (sessionId && user === undefined && !isLoading && !restoreSessionMutation.isPending) {
+      console.log('Attempting session restoration...');
+      restoreSessionMutation.mutate();
+    }
+  }, [sessionId, user, isLoading, restoreSessionMutation.isPending]);
+
+  // Redirect to dashboard if user is already authenticated and subscribed
+  useEffect(() => {
+    if (user && user.isSubscribed) {
+      console.log('User is authenticated and subscribed, redirecting to dashboard...');
+      setLocation('/dashboard');
+    }
+  }, [user, setLocation]);
 
   const completeOnboardingMutation = useMutation({
     mutationFn: async () => {

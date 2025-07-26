@@ -35,7 +35,7 @@ function getAppServerUrl(): string {
 let stripe: Stripe | null = null;
 if (process.env.STRIPE_TEST_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY, {
-    apiVersion: '2023-10-16',
+    apiVersion: '2025-06-30.basil' as any,
   });
 }
 
@@ -133,15 +133,15 @@ export class StripeService {
       console.log(`🔥 [STRIPE-${webhookId}] Event type: ${event.type}`);
       console.log(`🔥 [STRIPE-${webhookId}] Event ID: ${event.id}`);
 
-      let result = { received: true, eventType: event.type, eventId: event.id, userId: undefined, customerId: undefined };
+      let result = { received: true, eventType: event.type, eventId: event.id, userId: undefined as string | undefined, customerId: undefined as string | undefined };
 
       switch (event.type) {
         case 'checkout.session.completed':
           console.log(`🔥 [STRIPE-${webhookId}] Processing checkout completion...`);
           const session = event.data.object as Stripe.Checkout.Session;
           await this.handleCheckoutCompleted(session);
-          result.userId = session.metadata?.userId;
-          result.customerId = session.customer as string;
+          result.userId = session.metadata?.userId || undefined;
+          result.customerId = (session.customer as string) || undefined;
           console.log(`🔥 [STRIPE-${webhookId}] ✅ Checkout completion processed`);
           break;
         
