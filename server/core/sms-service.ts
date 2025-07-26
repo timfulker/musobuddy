@@ -37,10 +37,11 @@ export class SmsService {
     }
 
     try {
-      // For trial accounts, we need to bypass SMS and use email verification instead
+      // For trial accounts during development, log codes to console
       if (this.fromNumber === '+15005550006') {
-        console.log(`🔄 Trial mode: SMS sending disabled, returning success for development`);
-        console.log(`📧 Trial mode: Verification code for ${phoneNumber} is: ${code}`);
+        console.log(`🔄 Trial mode: SMS sending disabled, returning success for testing`);
+        console.log(`📧 Production Note: Verification code for ${phoneNumber} is: ${code}`);
+        console.log(`🚀 Production Ready: Once UK regulatory approval completes, switch TWILIO_PHONE_NUMBER to your purchased UK number for live SMS`);
         return true;
       }
 
