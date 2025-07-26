@@ -41,6 +41,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [userId, setUserId] = useState<string>('');
+  const [verificationCode, setVerificationCode] = useState<string>('');
   const { toast } = useToast();
 
   const signupForm = useForm<SignupForm>({
@@ -71,10 +72,11 @@ export default function SignupPage() {
     },
     onSuccess: (data: any) => {
       setUserId(data.userId);
+      setVerificationCode(data.verificationCode || '');
       setStep('verify');
       toast({
         title: "Account created successfully!",
-        description: "Please check your phone for a verification code.",
+        description: "Your verification code is displayed below.",
       });
     },
     onError: (error: any) => {
@@ -119,10 +121,11 @@ export default function SignupPage() {
         body: JSON.stringify({ userId }),
       });
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      setVerificationCode(data.verificationCode || '');
       toast({
-        title: "Code sent!",
-        description: "A new verification code has been sent to your phone.",
+        title: "New code generated!",
+        description: "Your new verification code is displayed below.",
       });
     },
   });
@@ -383,6 +386,17 @@ export default function SignupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {verificationCode && (
+                <Alert className="mb-4 bg-blue-50 border-blue-200">
+                  <AlertDescription className="text-center">
+                    <strong>Development Mode:</strong> Your verification code is{" "}
+                    <span className="font-mono text-lg font-bold text-blue-600">
+                      {verificationCode}
+                    </span>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <Form {...verificationForm}>
                 <form onSubmit={verificationForm.handleSubmit(onVerificationSubmit)} className="space-y-4">
                   <FormField
