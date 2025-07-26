@@ -3,7 +3,7 @@ import session from 'express-session';
 import ConnectPgSimple from 'connect-pg-simple';
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
-import { setupAuthentication } from "./core/auth-clean";
+// Removed dual auth system import
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
@@ -433,16 +433,12 @@ Extract in JSON format:
 
 async function startServer() {
   try {
-    // CRITICAL: Setup authentication FIRST, before any other routes
-    await setupAuthentication(app);
-    console.log('✅ Authentication system initialized');
-    
-    // Contract signing will be handled by main routes
-    
-    // Register production authentication system
+    // UNIFIED AUTHENTICATION: Use only ProductionAuthSystem
+    console.log('🔐 Registering production authentication routes...');
     const { ProductionAuthSystem } = await import('./core/auth-production');
     const authSystem = new ProductionAuthSystem(app);
     authSystem.registerRoutes();
+    console.log('✅ Production authentication routes registered');
 
     // Register all other routes AFTER authentication
     console.log('🔄 Registering API routes...');
