@@ -15,6 +15,7 @@ import { Music, Shield, CheckCircle, Phone, Mail, User, Eye, EyeOff } from "luci
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const signupSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -43,6 +44,13 @@ export default function SignupPage() {
   const [userId, setUserId] = useState<string>('');
   const [verificationCode, setVerificationCode] = useState<string>('');
   const { toast } = useToast();
+  const { user, isLoading } = useAuth();
+  
+  // If user is already authenticated, go straight to trial step
+  if (!isLoading && user && step !== 'trial') {
+    setStep('trial');
+    setUserId(user.id);
+  }
 
   const signupForm = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
