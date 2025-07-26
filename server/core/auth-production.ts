@@ -278,6 +278,44 @@ export class ProductionAuthSystem {
       }
     });
 
+    // Get current user route
+    this.app.get('/api/auth/user', async (req: any, res) => {
+      try {
+        console.log('🔍 Auth check for userId:', req.session?.userId);
+        
+        const userId = req.session?.userId;
+        if (!userId) {
+          console.log('❌ No session userId found');
+          return res.status(401).json({ error: 'Not authenticated' });
+        }
+
+        const user = await storage.getUserById(userId);
+        if (!user) {
+          console.log('❌ User not found in database for ID:', userId);
+          return res.status(401).json({ error: 'User not found' });
+        }
+
+        console.log('✅ User authenticated:', user.email);
+        
+        res.json({
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phoneVerified: user.phoneVerified,
+          onboardingCompleted: user.onboardingCompleted,
+          tier: user.tier,
+          isSubscribed: user.isSubscribed,
+          isLifetime: user.isLifetime,
+          isAdmin: user.isAdmin
+        });
+
+      } catch (error: any) {
+        console.error('❌ Auth check error:', error);
+        res.status(500).json({ error: 'Authentication check failed' });
+      }
+    });
+
     // Logout route
     this.app.post('/api/auth/logout', (req: any, res) => {
       req.session.destroy((err: any) => {
