@@ -26,6 +26,11 @@ export class Storage {
     return result[0] || null;
   }
 
+  async getUserByPhone(phoneNumber: string) {
+    const result = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return result[0] || null;
+  }
+
   async authenticateUser(email: string, password: string) {
     const user = await this.getUserByEmail(email);
     if (!user || !user.password) {

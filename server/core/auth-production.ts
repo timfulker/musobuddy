@@ -84,10 +84,16 @@ export class ProductionAuthSystem {
 
         const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
 
-        // Check if user already exists
+        // Check if user already exists (email or phone)
         const existingUser = await storage.getUserByEmail(email);
         if (existingUser) {
           return res.status(400).json({ error: 'Account already exists with this email' });
+        }
+
+        // Check if phone number is already registered
+        const existingPhone = await storage.getUserByPhone(normalizedPhone);
+        if (existingPhone) {
+          return res.status(400).json({ error: 'Account already exists with this phone number' });
         }
 
         // Create user account
