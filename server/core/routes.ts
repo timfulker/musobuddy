@@ -293,6 +293,9 @@ export async function registerRoutes(app: Express) {
         .set({ verifiedAt: new Date() })
         .where(eq(phoneVerifications.id, record.id));
 
+      // Ensure session is maintained after verification
+      req.session.userId = userId;
+
       res.json({ success: true, message: 'Phone number verified successfully' });
 
     } catch (error: any) {
