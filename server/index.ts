@@ -45,7 +45,116 @@ validateStartup().catch(error => {
 // Setup graceful shutdown
 setupGracefulShutdown();
 
-// Stripe webhook handler (must be BEFORE general JSON middleware)
+// In-memory storage for recent webhook events (last 100)
+const recentWebhooks: Array<{
+  id: string;
+  timestamp: string;
+  type: string;
+  status: 'success' | 'error';
+  userId?: string;
+  customerId?: string;
+  error?: string;
+}> = [];
+
+// Helper function to add webhook event
+function logWebhookEvent(event: any) {
+  const webhookEvent = {
+    id: Date.now().toString(),
+    timestamp: new Date().toISOString(),
+    status: 'success' as const,
+    type: 'unknown',
+    ...event
+  };
+  
+  recentWebhooks.unshift(webhookEvent);
+  if (recentWebhooks.length > 100) {
+    recentWebhooks.pop(); // Keep only last 100 events
+  }
+  
+  console.log(`🔥 [WEBHOOK-MONITOR] Event logged:`, webhookEvent);
+}
+
+// Add route to view recent webhook activity
+app.get('/api/webhook-monitor', (req, res) => {
+  res.json({
+    total: recentWebhooks.length,
+    events: recentWebhooks.slice(0, 20), // Return last 20 events
+    lastEvent: recentWebhooks[0],
+    stats: {
+      successful: recentWebhooks.filter(e => e.status === 'success').length,
+      errors: recentWebhooks.filter(e => e.status === 'error').length,
+      lastHour: recentWebhooks.filter(e => 
+        new Date(e.timestamp) > new Date(Date.now() - 60 * 60 * 1000)
+      ).length
+    }
+  });
+});
+
+// Simple HTML page to view webhook status
+app.get('/webhook-status', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>🔥 Webhook Monitor</title>
+      <meta http-equiv="refresh" content="10">
+      <style>
+        body { font-family: monospace; margin: 20px; background: #1a1a1a; color: #fff; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .event { margin: 10px 0; padding: 15px; border: 1px solid #374151; background: #111827; border-radius: 8px; }
+        .stats { background: #1f2937; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .stats h2 { margin-top: 0; color: #fbbf24; }
+        h1 { color: #fbbf24; }
+      </style>
+    </head>
+    <body>
+      <h1>🔥 MusoBuddy Webhook Monitor</h1>
+      <p>This page auto-refreshes every 10 seconds</p>
+      <div id="status">Loading...</div>
+      
+      <script>
+        async function loadStatus() {
+          try {
+            const response = await fetch('/api/webhook-monitor');
+            const data = await response.json();
+            
+            document.getElementById('status').innerHTML = \`
+              <div class="stats">
+                <h2>📊 Webhook Stats</h2>
+                <p><strong>Total Events:</strong> \${data.total}</p>
+                <p><strong>Successful:</strong> <span class="success">\${data.stats.successful}</span></p>
+                <p><strong>Errors:</strong> <span class="error">\${data.stats.errors}</span></p>
+                <p><strong>Last Hour:</strong> \${data.stats.lastHour}</p>
+                \${data.lastEvent ? \`<p><strong>Last Event:</strong> \${data.lastEvent.type} at \${new Date(data.lastEvent.timestamp).toLocaleString()}</p>\` : ''}
+              </div>
+              
+              <h2>🔍 Recent Webhook Events</h2>
+              \${data.events.length ? data.events.map(event => \`
+                <div class="event \${event.status}">
+                  <strong>🕐 \${new Date(event.timestamp).toLocaleString()}</strong><br>
+                  <strong>📋 Type:</strong> \${event.type}<br>
+                  <strong>✅ Status:</strong> \${event.status}
+                  \${event.userId ? \`<br><strong>👤 User ID:</strong> \${event.userId}\` : ''}
+                  \${event.customerId ? \`<br><strong>💳 Customer ID:</strong> \${event.customerId}\` : ''}
+                  \${event.error ? \`<br><strong>❌ Error:</strong> \${event.error}\` : ''}
+                </div>
+              \`).join('') : '<p>No webhook events recorded yet.</p>'}
+            \`;
+          } catch (error) {
+            document.getElementById('status').innerHTML = '<div class="error">Error loading webhook status</div>';
+          }
+        }
+        
+        loadStatus();
+        setInterval(loadStatus, 10000); // Refresh every 10 seconds
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+// Enhanced Stripe webhook handler with better logging
 app.post('/api/stripe-webhook', 
   // Skip JSON parsing for this route only
   (req, res, next) => {
@@ -63,26 +172,51 @@ app.post('/api/stripe-webhook',
   },
   async (req, res) => {
     const { stripeService } = await import('./core/stripe-service.js');
+    const webhookId = Date.now().toString(); // Unique ID for tracking
+    
     try {
-      console.log('🔍 Custom Stripe webhook handler triggered');
-      console.log('🔍 Request body type:', typeof req.body);
-      console.log('🔍 Request body is Buffer:', Buffer.isBuffer(req.body));
-      console.log('🔍 Request body length:', req.body?.length);
+      // ENHANCED: Add timestamp and unique ID to all logs
+      console.log(`🔥 [WEBHOOK-${webhookId}] [${new Date().toISOString()}] Stripe webhook received`);
+      console.log(`🔥 [WEBHOOK-${webhookId}] Body type: ${typeof req.body}, isBuffer: ${Buffer.isBuffer(req.body)}`);
+      console.log(`🔥 [WEBHOOK-${webhookId}] Body length: ${req.body?.length}`);
       
       const signature = req.headers['stripe-signature'] as string;
-      console.log('🔍 Webhook signature present:', !!signature);
+      console.log(`🔥 [WEBHOOK-${webhookId}] Signature present: ${!!signature}`);
       
       if (!Buffer.isBuffer(req.body)) {
-        console.log('⚠️ Converting body to Buffer...');
+        console.log(`🔥 [WEBHOOK-${webhookId}] Converting body to Buffer...`);
         req.body = Buffer.from(JSON.stringify(req.body));
       }
       
-      await stripeService.handleWebhook(req.body, signature);
-      console.log('✅ Webhook processed successfully');
-      res.json({ received: true });
+      // ENHANCED: Log before processing
+      console.log(`🔥 [WEBHOOK-${webhookId}] Processing webhook with stripeService...`);
+      
+      const result = await stripeService.handleWebhook(req.body, signature);
+      
+      // Log successful webhook
+      logWebhookEvent({
+        type: result.eventType || 'unknown',
+        status: 'success',
+        userId: result.userId,
+        customerId: result.customerId
+      });
+      
+      // ENHANCED: Log success with result
+      console.log(`🔥 [WEBHOOK-${webhookId}] ✅ Webhook processed successfully:`, result);
+      
+      res.json({ received: true, webhookId });
     } catch (error: any) {
-      console.error('❌ Webhook error:', error.message);
-      res.status(400).json({ error: error.message });
+      // Log failed webhook
+      logWebhookEvent({
+        type: 'error',
+        status: 'error',
+        error: error.message
+      });
+      
+      // ENHANCED: Better error logging
+      console.error(`🔥 [WEBHOOK-${webhookId}] ❌ ERROR:`, error.message);
+      console.error(`🔥 [WEBHOOK-${webhookId}] ❌ STACK:`, error.stack);
+      res.status(400).json({ error: error.message, webhookId });
     }
   }
 );

@@ -112,13 +112,16 @@ export class StripeService {
   }
 
   async handleWebhook(body: Buffer, signature: string) {
+    const webhookId = Date.now().toString();
+    
     if (!this.stripe) {
       throw new Error('Stripe not configured - please add STRIPE_TEST_SECRET_KEY environment variable');
     }
     
     try {
-      console.log('🔍 Received webhook with signature:', signature ? 'Present' : 'Missing');
-      console.log('🔍 Webhook body length:', body.length);
+      console.log(`🔥 [STRIPE-${webhookId}] [${new Date().toISOString()}] Processing webhook`);
+      console.log(`🔥 [STRIPE-${webhookId}] Signature: ${signature ? 'Present' : 'Missing'}`);
+      console.log(`🔥 [STRIPE-${webhookId}] Body length: ${body.length}`);
       
       const event = this.stripe.webhooks.constructEvent(
         body,
@@ -126,53 +129,67 @@ export class StripeService {
         process.env.STRIPE_WEBHOOK_SECRET || ''
       );
 
-      console.log('✅ Webhook signature verified successfully');
-      console.log('🔍 Stripe webhook event:', event.type);
-      console.log('🔍 Event ID:', event.id);
+      console.log(`🔥 [STRIPE-${webhookId}] ✅ Signature verified`);
+      console.log(`🔥 [STRIPE-${webhookId}] Event type: ${event.type}`);
+      console.log(`🔥 [STRIPE-${webhookId}] Event ID: ${event.id}`);
+
+      let result = { received: true, eventType: event.type, eventId: event.id, userId: undefined, customerId: undefined };
 
       switch (event.type) {
         case 'checkout.session.completed':
-          await this.handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+          console.log(`🔥 [STRIPE-${webhookId}] Processing checkout completion...`);
+          const session = event.data.object as Stripe.Checkout.Session;
+          await this.handleCheckoutCompleted(session);
+          result.userId = session.metadata?.userId;
+          result.customerId = session.customer as string;
+          console.log(`🔥 [STRIPE-${webhookId}] ✅ Checkout completion processed`);
           break;
         
         case 'customer.subscription.deleted':
+          console.log(`🔥 [STRIPE-${webhookId}] Processing subscription deletion...`);
           await this.handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+          console.log(`🔥 [STRIPE-${webhookId}] ✅ Subscription deletion processed`);
           break;
         
         case 'invoice.payment_failed':
+          console.log(`🔥 [STRIPE-${webhookId}] Processing payment failure...`);
           await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
+          console.log(`🔥 [STRIPE-${webhookId}] ✅ Payment failure processed`);
           break;
         
         default:
-          console.log(`Unhandled event type: ${event.type}`);
+          console.log(`🔥 [STRIPE-${webhookId}] ⚠️ Unhandled event type: ${event.type}`);
       }
 
-      return { received: true };
+      console.log(`🔥 [STRIPE-${webhookId}] ✅ Webhook handling complete`);
+      return result;
     } catch (error) {
-      console.error('Webhook error:', error);
+      console.error(`🔥 [STRIPE-${webhookId}] ❌ Webhook error:`, error);
       throw error;
     }
   }
 
   private async handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-    console.log('🔍 Processing checkout.session.completed webhook');
-    console.log('🔍 Session object:', JSON.stringify(session, null, 2));
+    const sessionId = Date.now().toString();
+    console.log(`🔥 [CHECKOUT-${sessionId}] [${new Date().toISOString()}] Processing checkout completion`);
+    console.log(`🔥 [CHECKOUT-${sessionId}] Session ID: ${session.id}`);
     
     const userId = session.metadata?.userId;
     const customerId = session.customer as string;
 
-    console.log('🔍 Extracted userId from metadata:', userId);
-    console.log('🔍 Extracted customerId:', customerId);
+    console.log(`🔥 [CHECKOUT-${sessionId}] UserID: ${userId}`);
+    console.log(`🔥 [CHECKOUT-${sessionId}] CustomerID: ${customerId}`);
 
     if (!userId) {
-      console.error('❌ No userId in checkout session metadata');
-      console.error('❌ Available metadata:', session.metadata);
+      console.error(`🔥 [CHECKOUT-${sessionId}] ❌ No userId in metadata:`, session.metadata);
       return;
     }
 
     try {
+      console.log(`🔥 [CHECKOUT-${sessionId}] Updating user subscription...`);
+      
       // Update user subscription status
-      console.log('🔍 Updating user with:', {
+      console.log(`🔥 [CHECKOUT-${sessionId}] Updating user with:`, {
         isSubscribed: true,
         plan: 'core',
         stripeCustomerId: customerId,
@@ -184,20 +201,15 @@ export class StripeService {
         stripeCustomerId: customerId,
       });
 
-      console.log('✅ User subscription activated:', userId);
+      console.log(`🔥 [CHECKOUT-${sessionId}] ✅ User subscription activated: ${userId}`);
       
       // Verify the update worked
       const updatedUser = await storage.getUserById(userId);
-      console.log('✅ User after update:', {
-        id: updatedUser?.id,
-        email: updatedUser?.email,
-        plan: updatedUser?.plan,
-        isSubscribed: updatedUser?.isSubscribed,
-        stripeCustomerId: updatedUser?.stripeCustomerId
-      });
+      console.log(`🔥 [CHECKOUT-${sessionId}] ✅ Verification - User plan: ${updatedUser?.plan}, subscribed: ${updatedUser?.isSubscribed}`);
       
     } catch (error) {
-      console.error('❌ Error updating user after checkout:', error);
+      console.error(`🔥 [CHECKOUT-${sessionId}] ❌ Error updating user:`, error);
+      throw error; // Re-throw to ensure webhook fails properly
     }
   }
 
