@@ -83,6 +83,22 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== NOTIFICATIONS API =====
+  app.get('/api/notifications', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Return empty notifications array for now
+      res.json([]);
+    } catch (error: any) {
+      console.error('❌ Notifications error:', error);
+      res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+  });
+  
   // ===== BOOKING ROUTES =====
   
   console.log('✅ Clean routes registered successfully');
