@@ -11,8 +11,25 @@ import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
 
 export default function ActionableEnquiries() {
-  const { data: enquiries = [], isLoading } = useQuery({
+  const { data: enquiries = [], isLoading, error } = useQuery({
     queryKey: ["/api/bookings"],
+    queryFn: async () => {
+      console.log('📋 Fetching bookings from API...');
+      const response = await fetch('/api/bookings', {
+        credentials: 'include'
+      });
+      
+      console.log('📋 Bookings API response status:', response.status);
+      
+      if (!response.ok) {
+        console.error('❌ Bookings API error:', response.status, response.statusText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('📋 Received bookings:', data.length, 'items');
+      return data;
+    }
   });
 
   const { data: conflicts = [] } = useQuery({
@@ -39,6 +56,10 @@ export default function ActionableEnquiries() {
 
   // Debug logging - summary of all enquiries by status
   useEffect(() => {
+    console.log('📊 Dashboard bookings loaded:', enquiries?.length || 0, 'items');
+    console.log('📊 Is loading:', isLoading);
+    console.log('📊 Error:', error);
+    
     if (Array.isArray(enquiries) && enquiries.length > 0) {
       const statusCounts = (enquiries as any[]).reduce((acc: any, enquiry: any) => {
         acc[enquiry.status] = (acc[enquiry.status] || 0) + 1;
@@ -46,17 +67,17 @@ export default function ActionableEnquiries() {
       }, {});
       console.log('📊 Enquiries by status:', statusCounts);
       
-      // Log completed enquiries to understand the issue
-      const completedEnquiries = (enquiries as any[]).filter((e: any) => e.status === 'completed');
-      console.log('✅ Completed enquiries:', completedEnquiries.length, completedEnquiries.map((e: any) => ({
+      // Log first few enquiries for debugging
+      console.log('📊 First 3 enquiries:', enquiries.slice(0, 3).map((e: any) => ({
         id: e.id,
-        title: e.title,
+        clientName: e.clientName,
         eventDate: e.eventDate,
-        createdAt: e.createdAt,
         status: e.status
       })));
+    } else {
+      console.log('📊 No enquiries found or still loading');
     }
-  }, [enquiries]);
+  }, [enquiries, isLoading, error]);
 
   // Detect conflicts for an enquiry (same logic as events window)
   const detectConflicts = (enquiry: Enquiry) => {

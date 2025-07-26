@@ -221,5 +221,89 @@ export async function registerRoutes(app: Express) {
   
   // ===== BOOKING ROUTES =====
   
+  // Get all bookings for authenticated user
+  app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookings = await storage.getBookings(req.session.userId);
+      console.log(`📋 Fetched ${bookings.length} bookings for user ${req.session.userId}`);
+      res.json(bookings);
+    } catch (error) {
+      console.error('❌ Failed to fetch bookings:', error);
+      res.status(500).json({ error: 'Failed to fetch bookings' });
+    }
+  });
+
+  // Get individual booking
+  app.get('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const booking = await storage.getBooking(bookingId, req.session.userId);
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      res.json(booking);
+    } catch (error) {
+      console.error('❌ Failed to fetch booking:', error);
+      res.status(500).json({ error: 'Failed to fetch booking' });
+    }
+  });
+
+  // Create new booking
+  app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingData = {
+        ...req.body,
+        userId: req.session.userId
+      };
+      const newBooking = await storage.createBooking(bookingData);
+      console.log(`✅ Created booking #${newBooking.id} for user ${req.session.userId}`);
+      res.json(newBooking);
+    } catch (error) {
+      console.error('❌ Failed to create booking:', error);
+      res.status(500).json({ error: 'Failed to create booking' });
+    }
+  });
+
+  // Update booking
+  app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const updatedBooking = await storage.updateBooking(bookingId, req.body, req.session.userId);
+      if (!updatedBooking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      console.log(`✅ Updated booking #${bookingId} for user ${req.session.userId}`);
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error('❌ Failed to update booking:', error);
+      res.status(500).json({ error: 'Failed to update booking' });
+    }
+  });
+
+  // Delete booking
+  app.delete('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      await storage.deleteBooking(bookingId, req.session.userId);
+      console.log(`✅ Deleted booking #${bookingId} for user ${req.session.userId}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Failed to delete booking:', error);
+      res.status(500).json({ error: 'Failed to delete booking' });
+    }
+  });
+
+  // Conflicts endpoint
+  app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookings = await storage.getBookings(req.session.userId);
+      // Simple conflict detection - return empty array for now
+      res.json([]);
+    } catch (error) {
+      console.error('❌ Failed to fetch conflicts:', error);
+      res.status(500).json({ error: 'Failed to fetch conflicts' });
+    }
+  });
+  
   console.log('✅ Clean routes registered successfully');
 }
