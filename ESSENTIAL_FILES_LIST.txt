@@ -1,0 +1,12 @@
+Essential Files for Webhook Logging Issue (5 files total):
+
+1. server/index.ts - Main webhook handler (lines 48-91)
+2. server/core/stripe-service.ts - Webhook processing (lines 114-200) 
+3. server/core/storage.ts - Database operations
+4. .env - Environment variables (STRIPE_WEBHOOK_SECRET, etc.)
+5. package.json - Dependencies
+
+Problem: Console logs appear in development but not published version.
+Evidence: Webhook works (200 OK, DB updates) but logs not visible.
+
+Download these 5 files only.
