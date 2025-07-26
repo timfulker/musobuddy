@@ -130,16 +130,29 @@ export default function SignupPage() {
 
   const startTrialMutation = useMutation({
     mutationFn: async () => {
+      console.log('🚀 Frontend: Starting trial with userId:', userId);
       return apiRequest('/api/auth/start-trial', {
         method: 'POST',
         body: JSON.stringify({ userId }),
       });
     },
     onSuccess: (data: any) => {
+      console.log('✅ Frontend: Trial response:', data);
       // Redirect to Stripe checkout for trial setup
-      window.location.href = data.checkoutUrl;
+      if (data.checkoutUrl) {
+        console.log('🔗 Frontend: Redirecting to:', data.checkoutUrl);
+        window.location.href = data.checkoutUrl;
+      } else {
+        console.error('❌ Frontend: No checkoutUrl in response:', data);
+        toast({
+          title: "Trial setup failed",
+          description: "No checkout URL received from server",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error: any) => {
+      console.error('❌ Frontend: Trial error:', error);
       toast({
         title: "Trial setup failed",
         description: error.message || "Unable to start trial",
