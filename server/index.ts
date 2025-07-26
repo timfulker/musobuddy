@@ -244,16 +244,26 @@ app.use(session({
   saveUninitialized: false,
   name: 'sessionId',
   cookie: {
-    secure: false,
+    secure: isProduction,           // ✅ True in production
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax'
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: isProduction ? 'none' : 'lax' as 'none' | 'lax',  // ✅ 'none' for production
+    domain: isProduction ? '.replit.app' : undefined  // ✅ Allow subdomains
   }
 }));
 
 // CORS middleware for contract signing from R2
 app.use('/api/contracts/sign', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
+// Add CORS for session restoration
+app.use('/api/auth/restore-session-by-stripe', (req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
@@ -469,7 +479,7 @@ async function startServer() {
         serveStaticFixed(app);
       } else {
         console.log('🛠️ Development mode: using Vite dev server');
-        await setupVite(app);
+        await setupVite(app, server);
         serveStatic(app);
       }
     } catch (error: any) {

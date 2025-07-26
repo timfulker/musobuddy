@@ -59,11 +59,11 @@ export default function TrialSuccessPage() {
   // Attempt session restoration if user query fails with 401
   // Automatic session restoration effect
   useEffect(() => {
-    if (sessionId && user === undefined && !isLoading && !restoreSessionMutation.isPending) {
+    if (sessionId && !user && !isLoading && !restoreSessionMutation.isPending) {
       console.log('Attempting session restoration...');
       restoreSessionMutation.mutate();
     }
-  }, [sessionId, user, isLoading, restoreSessionMutation.isPending, restoreSessionMutation]);
+  }, [sessionId, user, isLoading]);
 
   // Redirect to dashboard if user is already authenticated and subscribed
   useEffect(() => {
