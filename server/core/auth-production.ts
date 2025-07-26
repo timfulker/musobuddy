@@ -274,7 +274,69 @@ export class ProductionAuthSystem {
       }
     });
 
+    // Session restoration endpoint for Stripe checkout
+    this.app.post('/api/auth/restore-session', async (req: any, res) => {
+      try {
+        const { sessionId } = req.body;
+        
+        if (!sessionId) {
+          return res.status(400).json({ error: 'Session ID required' });
+        }
 
+        console.log('🔄 Restoring session for Stripe sessionId:', sessionId);
+
+        // Import StripeService to get session details
+        const { StripeService } = await import('./stripe-service');
+        const stripeService = new StripeService();
+        
+        // Get session details from Stripe
+        const sessionDetails = await stripeService.getSessionDetails(sessionId);
+        const userId = sessionDetails.metadata?.userId;
+        
+        if (!userId) {
+          console.error('❌ No userId in Stripe session metadata');
+          return res.status(400).json({ error: 'Invalid session - no user ID' });
+        }
+
+        // Get user from database
+        const user = await storage.getUserById(userId);
+        if (!user) {
+          console.error('❌ User not found:', userId);
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Restore session
+        req.session.userId = user.id;
+        
+        console.log('✅ Session restored for user:', user.email);
+        
+        // Force session save and return success
+        req.session.save((err: any) => {
+          if (err) {
+            console.error('❌ Session save error:', err);
+            return res.status(500).json({ error: 'Session save failed' });
+          }
+          
+          res.json({
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              phoneVerified: user.phoneVerified,
+              onboardingCompleted: user.onboardingCompleted,
+              isSubscribed: user.isSubscribed,
+              isLifetime: user.isLifetime
+            }
+          });
+        });
+        
+      } catch (error: any) {
+        console.error('❌ Session restoration error:', error);
+        res.status(500).json({ error: 'Session restoration failed' });
+      }
+    });
 
     // Start trial route (redirects to Stripe checkout)
     this.app.post('/api/auth/start-trial', async (req: any, res) => {

@@ -20,7 +20,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, refetch } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Handle Stripe session restoration on dashboard load
   useEffect(() => {
@@ -40,8 +40,8 @@ export default function Dashboard() {
         // Remove the stripe_session parameter from URL
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
-        // Refresh auth state
-        refetch();
+        // Force page reload to refresh auth state
+        window.location.reload();
         toast({
           title: "Welcome to MusoBuddy!",
           description: "Your account is now active. Let's get started with setting up your email integration.",
