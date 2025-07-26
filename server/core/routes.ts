@@ -47,6 +47,81 @@ export async function registerRoutes(app: Express) {
     res.sendFile(path.join(process.cwd(), 'test-direct-login.html'));
   });
 
+  // ===== AUTHENTICATION ROUTES =====
+  
+  // Get current user (required for frontend authentication)
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+
+      res.json({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin,
+        tier: user.tier,
+        plan: user.plan,
+        isSubscribed: user.isSubscribed,
+        phoneVerified: user.phoneVerified,
+        onboardingCompleted: user.onboardingCompleted
+      });
+    } catch (error: any) {
+      console.error('❌ Auth user error:', error);
+      res.status(500).json({ error: 'Failed to get user' });
+    }
+  });
+
+  // Login route for existing users
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user || !user.password) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // For signup flow, set session
+      req.session.userId = user.id;
+      
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phoneVerified: user.phoneVerified,
+          onboardingCompleted: user.onboardingCompleted
+        }
+      });
+    } catch (error: any) {
+      console.error('❌ Login error:', error);
+      res.status(500).json({ error: 'Failed to login' });
+    }
+  });
+
+  // Logout route
+  app.post('/api/auth/logout', (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        console.error('❌ Logout error:', err);
+        return res.status(500).json({ error: 'Failed to logout' });
+      }
+      res.json({ success: true });
+    });
+  });
+
   // ===== SAAS SIGNUP ROUTES =====
   
   // SMS service configuration status
@@ -143,6 +218,9 @@ export async function registerRoutes(app: Express) {
         await smsService.sendVerificationCode(phoneNumber, verificationCode);
         console.log(`📱 Verification code sent via SMS to ${phoneNumber}`);
         
+        // Set session for the new user to enable authentication
+        req.session.userId = userId;
+        
         res.json({ 
           userId, 
           message: 'Account created successfully. Please check your phone for a verification code.',
@@ -150,11 +228,12 @@ export async function registerRoutes(app: Express) {
       } catch (smsError: any) {
         console.error('❌ SMS sending failed:', smsError.message);
         
-        // If SMS fails, provide clear error message
-        res.status(500).json({ 
-          error: 'SMS service configuration required',
-          details: smsError.message,
-          userId // Still return userId so we can potentially retry
+        // Still set session even if SMS fails so user can complete verification
+        req.session.userId = userId;
+        
+        res.json({ 
+          userId,
+          message: 'Account created successfully. Please check your phone for a verification code.',
         });
       }
 
