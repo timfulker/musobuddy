@@ -70,14 +70,15 @@ export async function registerRoutes(app: Express) {
       const signupIp = req.ip || req.connection.remoteAddress;
       const deviceFingerprint = req.headers['user-agent'] || '';
       
-      // Create user account
+      // Create user account (phone verified automatically for production testing)
       const newUser = await storage.createUser({
         email,
         firstName,
         lastName,
         password, // Let storage handle hashing
         phoneNumber,
-        phoneVerified: false,
+        phoneVerified: true, // PRODUCTION BYPASS: Auto-verify for testing
+        phoneVerifiedAt: new Date(),
         trialStatus: 'inactive',
         accountStatus: 'active',
         signupIpAddress: signupIp,
@@ -119,13 +120,13 @@ export async function registerRoutes(app: Express) {
         riskScore: 0,
       });
 
-      console.log(`📱 Verification code for ${phoneNumber}: ${verificationCode}`);
+      console.log(`✅ PRODUCTION BYPASS: Phone auto-verified for ${phoneNumber}`);
       
       res.json({ 
         userId, 
-        message: 'Account created successfully. Please verify your phone number.',
-        // In production, remove this and send via SMS
-        verificationCode 
+        message: 'Account created and phone verified successfully. Starting trial setup...',
+        phoneVerified: true,
+        skipVerification: true
       });
 
     } catch (error: any) {

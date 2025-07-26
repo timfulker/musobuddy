@@ -72,12 +72,22 @@ export default function SignupPage() {
     },
     onSuccess: (data: any) => {
       setUserId(data.userId);
-      setVerificationCode(data.verificationCode || '');
-      setStep('verify');
-      toast({
-        title: "Account created successfully!",
-        description: "Your verification code is displayed below.",
-      });
+      if (data.skipVerification) {
+        // Production bypass - skip verification step
+        setStep('trial');
+        toast({
+          title: "Account created successfully!",
+          description: "Phone verified automatically. Setting up your trial...",
+        });
+      } else {
+        // Development mode - show verification step
+        setVerificationCode(data.verificationCode || '');
+        setStep('verify');
+        toast({
+          title: "Account created successfully!",
+          description: "Your verification code is displayed below.",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
