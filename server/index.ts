@@ -480,12 +480,17 @@ async function startServer() {
       } else {
         console.log('🛠️ Development mode: using Vite dev server');
         
+        // Setup port for development
+        const port = process.env.PORT || 5000;
+        console.log('🔌 Development port:', port);
+        
         // Setup Vite first (before server start)
         console.log('🔧 Setting up Vite development server...');
         const { setupVite } = await import('./vite');
         
         // Create server but don't start listening yet
-        const server = require('http').createServer(app);
+        const { createServer } = await import('http');
+        const server = createServer(app);
         
         try {
           await setupVite(app, server);
@@ -509,20 +514,13 @@ async function startServer() {
       process.exit(1);
     }
     
-    // Use environment PORT with fallback
-    const port = process.env.PORT || 5000;
-    console.log('🔌 Server port configuration:', {
-      PORT: process.env.PORT,
-      finalPort: port,
-      deployment: !!process.env.REPLIT_DEPLOYMENT
-    });
-    
-    // Only start server if not already started in development mode
+    // Production server startup (development uses different startup above)
     if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT) {
+      const port = process.env.PORT || 5000;
       app.listen(Number(port), "0.0.0.0", () => {
         console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
         console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
-        console.log(`📁 Serving from: ${process.env.NODE_ENV === 'production' ? 'dist/public' : 'development'}`);
+        console.log(`📁 Serving from: dist/public`);
       });
     }
     
