@@ -439,17 +439,30 @@ async function startServer() {
     
     // Contract signing will be handled by main routes
     
-    // Register all routes AFTER authentication
+    // Register production authentication system
+    const { ProductionAuthSystem } = await import('./core/auth-production');
+    const authSystem = new ProductionAuthSystem(app);
+    authSystem.registerRoutes();
+
+    // Register all other routes AFTER authentication
     console.log('🔄 Registering API routes...');
     const server = await registerRoutes(app);
     console.log('✅ API routes registered successfully');
     
     // Add production error handling
     try {
-      // Detect production environment from multiple sources
+      // Fix environment detection once and for all
       const isProduction = process.env.NODE_ENV === 'production' || 
-                          process.env.REPLIT_ENVIRONMENT === 'production' ||
-                          process.env.REPLIT_DEPLOYMENT;
+                          !!process.env.REPLIT_DEPLOYMENT ||
+                          process.env.REPLIT_ENVIRONMENT === 'production';
+      
+      console.log('🔍 Environment detection result:', {
+        NODE_ENV: process.env.NODE_ENV,
+        REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+        REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
+        isProduction,
+        finalDecision: isProduction ? 'PRODUCTION' : 'DEVELOPMENT'
+      });
       
       if (isProduction) {
         console.log('🏭 Production mode detected: serving static files');

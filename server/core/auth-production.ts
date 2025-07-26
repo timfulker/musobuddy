@@ -27,6 +27,7 @@ export class ProductionAuthSystem {
       normalized = '+' + normalized;
     }
     
+    console.log('📱 Phone normalization:', { original: phone, normalized });
     return normalized;
   }
 
