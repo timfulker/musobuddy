@@ -99,7 +99,7 @@ export class StripeService {
         billing_address_collection: 'required',
       });
 
-      return { sessionId: session.id, url: session.url };
+      return { sessionId: session.id, checkoutUrl: session.url };
     } catch (error) {
       console.error('Error creating trial checkout session:', error);
       throw error;

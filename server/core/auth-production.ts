@@ -320,6 +320,12 @@ export class ProductionAuthSystem {
 
         console.log('🚀 Starting trial for user:', userId);
 
+        // Store the session ID in user record for session restoration
+        await storage.updateUser(userId, { 
+          lastSessionId: req.sessionID,
+          trialInProgress: true 
+        });
+
         // Import StripeService dynamically
         const { StripeService } = await import('./stripe-service');
         const stripeService = new StripeService();
