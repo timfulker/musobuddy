@@ -46,12 +46,14 @@ export default function TrialSuccessPage() {
         return res.json();
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Session restore success:', data);
       toast({
         title: "Session restored!",
         description: "Welcome back to MusoBuddy.",
       });
-      refetch(); // Refresh user data
+      // Force page reload to refresh authentication state
+      window.location.href = '/dashboard';
     },
     onError: (error: any) => {
       console.error('Session restoration failed:', error);
@@ -66,11 +68,12 @@ export default function TrialSuccessPage() {
   // Attempt session restoration if user query fails with 401
   // Automatic session restoration effect
   useEffect(() => {
-    if (sessionId && !user && !isLoading && !restoreSessionMutation.isPending) {
-      console.log('Attempting session restoration...');
+    // FORCE session restoration immediately on page load with sessionId
+    if (sessionId && !restoreSessionMutation.isPending) {
+      console.log('🔄 FORCE session restoration for sessionId:', sessionId);
       restoreSessionMutation.mutate();
     }
-  }, [sessionId, user, isLoading]);
+  }, [sessionId]); // Remove dependency on user/isLoading
 
   // Redirect to dashboard if user is already authenticated and subscribed
   useEffect(() => {
