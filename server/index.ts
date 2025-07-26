@@ -356,7 +356,7 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientAddress: null,
       eventType: aiResult.eventType,
       gigType: aiResult.gigType,
-      fee: null,
+      fee: aiResult.fee || aiResult.estimatedValue || null,
       equipmentRequirements: null,
       specialRequirements: null,
       estimatedValue: aiResult.estimatedValue,
@@ -406,7 +406,7 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<any
     new (await import('openai')).default({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
     
   if (!openai) {
-    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
   }
 
   try {
@@ -418,7 +418,7 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<any
 Email Subject: ${subject}
 Email Content: ${processedBody}
 
-Extract in JSON format:
+Extract in JSON format. Look carefully for all money amounts, fees, quotes, budgets, and prices:
 {
   "eventDate": "YYYY-MM-DD or null",
   "eventTime": "HH:MM or null", 
@@ -426,7 +426,9 @@ Extract in JSON format:
   "eventType": "wedding/party/corporate/etc or null",
   "gigType": "solo/duo/band/etc or null",
   "clientPhone": "phone number or null",
-  "estimatedValue": "amount or null",
+  "fee": "amount with £ symbol if found, or null",
+  "budget": "budget range or amount if mentioned, or null",
+  "estimatedValue": "any other monetary value mentioned, or null",
   "applyNowLink": "URL or null"
 }`;
 
@@ -438,10 +440,12 @@ Extract in JSON format:
       temperature: 0.1
     });
 
-    return JSON.parse(response.choices[0].message.content || '{}');
+    const aiResult = JSON.parse(response.choices[0].message.content || '{}');
+    console.log('🤖 AI extraction result:', JSON.stringify(aiResult, null, 2));
+    return aiResult;
   } catch (error) {
     console.log('🤖 AI parsing failed, using fallback');
-    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, estimatedValue: null, applyNowLink: null };
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
   }
 }
 
