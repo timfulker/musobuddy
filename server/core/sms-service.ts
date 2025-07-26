@@ -53,6 +53,11 @@ export class SmsService {
         throw new Error(`Trial account restriction: Phone number ${phoneNumber} must be verified in your Twilio console first. Go to Twilio Console > Phone Numbers > Verified Caller IDs to add this number.`);
       }
       
+      // Check if FROM number isn't properly configured for trial account
+      if (error.code === 21659) {
+        throw new Error(`Trial account FROM number issue: The sending number must be a verified Twilio number or the account needs full activation. Current FROM number may need verification or regulatory approval.`);
+      }
+      
       throw new Error(`Failed to send verification code: ${error.message}`);
     }
   }
