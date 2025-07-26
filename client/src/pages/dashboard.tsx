@@ -56,7 +56,7 @@ export default function Dashboard() {
         });
       });
     }
-  }, [toast, refetch]);
+  }, [toast]);
 
   // Redirect to login if not authenticated (but skip if we're processing Stripe session)
   useEffect(() => {
