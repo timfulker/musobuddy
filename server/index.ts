@@ -508,7 +508,7 @@ async function startServer() {
       deployment: !!process.env.REPLIT_DEPLOYMENT
     });
     
-    server.listen(Number(port), "0.0.0.0", () => {
+    app.listen(Number(port), "0.0.0.0", () => {
       console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
       console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
       console.log(`📁 Serving from: ${process.env.NODE_ENV === 'production' ? 'dist/public' : 'development'}`);
