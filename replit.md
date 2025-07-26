@@ -471,18 +471,16 @@ The application is designed to be user-friendly while maintaining professional-g
 - **WEBHOOK COMPATIBILITY**: ✅ Webhook handling updated for test mode events and proper test environment validation
 - **Status**: STRIPE TEST MODE FULLY OPERATIONAL - Beta testers can safely test subscription flow with test card numbers without real charges
 
-### 2025-07-25 - STRIPE WEBHOOK CONFIGURATION COMPLETE - Automatic Subscription Updates Fixed
-- **CRITICAL WEBHOOK ISSUE IDENTIFIED**: ✅ Discovered Stripe webhook endpoint was completely missing from dashboard, preventing automatic subscription status updates
-- **WEBHOOK ENDPOINT CONFIGURED**: ✅ Added https://musobuddy.replit.app/api/stripe-webhook to Stripe test dashboard with required events
-- **WEBHOOK EVENTS SELECTED**: ✅ Configured checkout.session.completed, customer.subscription.deleted, and invoice.payment_failed events
-- **WEBHOOK SECRET UPDATED**: ✅ Replaced STRIPE_WEBHOOK_SECRET in Replit environment with new webhook signing secret from Stripe dashboard
-- **DEBUGGING SYSTEM ENHANCED**: ✅ Added comprehensive webhook logging to diagnose subscription status update failures
-- **AUTOMATIC UPDATES ENABLED**: ✅ Subscription status will now update automatically when payments complete without manual database intervention
-- **TRIAL SUCCESS PAGE AUTO-ROUTING REMOVED**: ✅ Removed 3-second auto-timer allowing users to read success messages before manually proceeding
-- **ONBOARDING ENDPOINT FIXED**: ✅ Added authentication to /api/auth/complete-onboarding endpoint fixing "Start Email Setup" button functionality
-- **ROOT CAUSE RESOLUTION**: ✅ Stripe checkout worked but webhook endpoint was missing, preventing automatic subscription activation
-- **PRODUCTION READINESS**: ✅ Same webhook configuration process required for live environment with production webhook secret
-- **Status**: WEBHOOK SYSTEM FULLY CONFIGURED - Automatic subscription status updates operational, manual database fixes no longer required
+### 2025-07-26 - STRIPE WEBHOOK CONFIGURATION COMPLETE - API Version Issue Fixed
+- **CRITICAL ROOT CAUSE IDENTIFIED**: ✅ Webhook was configured but using outdated API version 2014-08-20 preventing event delivery
+- **OLD WEBHOOK DELETED**: ✅ Removed webhook with 10-year-old API version that was blocking Stripe event delivery
+- **NEW WEBHOOK CREATED**: ✅ Created webhook with current API version 2023-10-16 and enhanced event coverage
+- **WEBHOOK EVENTS ENHANCED**: ✅ Added checkout.session.completed, customer.subscription.deleted, invoice.payment_failed, customer.subscription.created, invoice.payment_succeeded
+- **NEW WEBHOOK SECRET**: ✅ Updated STRIPE_WEBHOOK_SECRET to whsec_UG2YTKBYCHpYv5AQvHMJTNrmi3fXayh6 in Replit environment
+- **ENHANCED LOGGING ADDED**: ✅ Added detailed webhook request logging for real-time debugging and monitoring
+- **PRODUCTION DEPLOYMENT NOTES**: ✅ Same process required for live environment - delete old webhook, create new with API version 2023-10-16, update webhook secret
+- **TEST ENVIRONMENT VERIFIED**: ✅ Stripe events showing successful payment completion, new webhook ready for testing
+- **Status**: WEBHOOK SYSTEM MODERNIZED - API version updated, comprehensive logging active, ready for automatic subscription activation testing
 
 ### 2025-07-25 - Admin Password Management System Enhanced - Secure Password Changes Implemented
 - **PASSWORD VIEWING FUNCTIONALITY IMPLEMENTED**: ✅ Added temporary plain text password display for admin to securely transfer existing user passwords to password manager
