@@ -446,15 +446,14 @@ async function startServer() {
 
     // Register all other routes AFTER authentication
     console.log('🔄 Registering API routes...');
-    const server = await registerRoutes(app);
+    await registerRoutes(app);
     console.log('✅ API routes registered successfully');
     
     // Add production error handling
     try {
-      // Fix environment detection once and for all
-      const isProduction = process.env.NODE_ENV === 'production' || 
-                          !!process.env.REPLIT_DEPLOYMENT ||
-                          process.env.REPLIT_ENVIRONMENT === 'production';
+      // Fix environment detection - only use production serving when actually deployed
+      const isProduction = process.env.NODE_ENV === 'production' && 
+                          !!process.env.REPLIT_DEPLOYMENT;
       
       console.log('🔍 Environment detection result:', {
         NODE_ENV: process.env.NODE_ENV,
@@ -474,7 +473,7 @@ async function startServer() {
         serveStaticFixed(app);
       } else {
         console.log('🛠️ Development mode: using Vite dev server');
-        await setupVite(app, server);
+        await setupVite(app);
         serveStatic(app);
       }
     } catch (error: any) {
