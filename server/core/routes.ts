@@ -49,6 +49,24 @@ export async function registerRoutes(app: Express) {
 
   // ===== SAAS SIGNUP ROUTES =====
   
+  // SMS service configuration status
+  app.get('/api/sms/status', async (req, res) => {
+    try {
+      const { smsService } = await import('./sms-service.ts');
+      const status = smsService.getConfigurationStatus();
+      
+      res.json({
+        configured: status.configured,
+        missingCredentials: status.missingCredentials,
+        message: status.configured 
+          ? 'SMS service is properly configured' 
+          : `Missing credentials: ${status.missingCredentials.join(', ')}`
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Failed to check SMS status' });
+    }
+  });
+  
   // User signup with phone verification
   app.post('/api/auth/signup', async (req: any, res) => {
     try {
@@ -70,15 +88,14 @@ export async function registerRoutes(app: Express) {
       const signupIp = req.ip || req.connection.remoteAddress;
       const deviceFingerprint = req.headers['user-agent'] || '';
       
-      // Create user account (phone verified automatically for production testing)
+      // Create user account
       const newUser = await storage.createUser({
         email,
         firstName,
         lastName,
         password, // Let storage handle hashing
         phoneNumber,
-        phoneVerified: true, // PRODUCTION BYPASS: Auto-verify for testing
-        phoneVerifiedAt: new Date(),
+        phoneVerified: false,
         trialStatus: 'inactive',
         accountStatus: 'active',
         signupIpAddress: signupIp,
@@ -120,14 +137,26 @@ export async function registerRoutes(app: Express) {
         riskScore: 0,
       });
 
-      console.log(`✅ PRODUCTION BYPASS: Phone auto-verified for ${phoneNumber}`);
-      
-      res.json({ 
-        userId, 
-        message: 'Account created and phone verified successfully. Starting trial setup...',
-        phoneVerified: true,
-        skipVerification: true
-      });
+      // Send verification code via SMS
+      try {
+        const { smsService } = await import('./sms-service.ts');
+        await smsService.sendVerificationCode(phoneNumber, verificationCode);
+        console.log(`📱 Verification code sent via SMS to ${phoneNumber}`);
+        
+        res.json({ 
+          userId, 
+          message: 'Account created successfully. Please check your phone for a verification code.',
+        });
+      } catch (smsError: any) {
+        console.error('❌ SMS sending failed:', smsError.message);
+        
+        // If SMS fails, provide clear error message
+        res.status(500).json({ 
+          error: 'SMS service configuration required',
+          details: smsError.message,
+          userId // Still return userId so we can potentially retry
+        });
+      }
 
     } catch (error: any) {
       console.error('❌ Signup error:', error);
@@ -216,14 +245,23 @@ export async function registerRoutes(app: Express) {
         attempts: 0,
       });
 
-      console.log(`📱 New verification code for ${user.phoneNumber}: ${verificationCode}`);
-      
-      res.json({ 
-        success: true, 
-        message: 'Verification code sent',
-        // In production, remove this
-        verificationCode 
-      });
+      // Send verification code via SMS
+      try {
+        const { smsService } = await import('./sms-service.ts');
+        await smsService.sendVerificationCode(user.phoneNumber || '', verificationCode);
+        console.log(`📱 New verification code sent via SMS to ${user.phoneNumber}`);
+        
+        res.json({ 
+          success: true, 
+          message: 'New verification code sent to your phone',
+        });
+      } catch (smsError: any) {
+        console.error('❌ SMS resend failed:', smsError.message);
+        res.status(500).json({ 
+          error: 'Failed to send verification code',
+          details: smsError.message
+        });
+      }
 
     } catch (error: any) {
       console.error('❌ Resend verification error:', error);
