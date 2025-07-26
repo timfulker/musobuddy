@@ -61,8 +61,10 @@ export class ProductionAuthSystem {
           lastName: user.lastName,
           phoneVerified: user.phoneVerified,
           onboardingCompleted: user.onboardingCompleted || false,
-          tier: user.tier || 'demo',
-          isAdmin: user.isAdmin || false
+          tier: user.tier || 'trial',
+          isAdmin: user.isAdmin || false,
+          isSubscribed: user.isSubscribed || false,
+          isLifetime: user.isLifetime || false
         });
       } catch (error: any) {
         console.error('❌ Auth user error:', error);
@@ -96,7 +98,7 @@ export class ProductionAuthSystem {
           return res.status(400).json({ error: 'Account already exists with this phone number' });
         }
 
-        // Create user account
+        // Create user account with 14-day trial
         const userId = nanoid();
         const user = await storage.createUser({
           id: userId,
@@ -106,7 +108,7 @@ export class ProductionAuthSystem {
           phoneNumber: normalizedPhone,
           password, // Will be hashed by storage layer
           phoneVerified: false,
-          tier: 'demo',
+          tier: 'trial',
           onboardingCompleted: false
         });
 

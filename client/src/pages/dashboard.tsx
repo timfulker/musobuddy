@@ -60,7 +60,6 @@ export default function Dashboard() {
           <DashboardHeader />
           
           <main className="p-6 space-y-8 max-w-7xl mx-auto">
-            <DemoBanner />
             <StatsCards />
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
               <div className="xl:col-span-3 space-y-8">
@@ -104,7 +103,6 @@ export default function Dashboard() {
         <DashboardHeader />
         
         <main className="p-3 md:p-6 space-y-3 md:space-y-6">
-          <DemoBanner />
           <StatsCards />
           
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 md:gap-6">

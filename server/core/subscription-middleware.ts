@@ -92,7 +92,7 @@ export const requireSubscriptionOrAdmin = async (req: Request, res: Response, ne
 export const hasSubscriptionAccess = async (userId: string): Promise<boolean> => {
   try {
     const user = await storage.getUserById(userId);
-    return user ? (user.isSubscribed || user.isLifetime || user.isAdmin) : false;
+    return user ? (!!user.isSubscribed || !!user.isLifetime || !!user.isAdmin) : false;
   } catch (error) {
     console.error('Access check error:', error);
     return false;

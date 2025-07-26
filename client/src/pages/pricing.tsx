@@ -68,7 +68,7 @@ export default function PricingPage() {
             Choose Your MusoBuddy Plan
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Professional tools for serious musicians. Try our demo environment or upgrade to streamline your business with smart contracts, invoices, and client management.
+            Professional tools for serious musicians. Start with a free 14-day trial to streamline your business with smart contracts, invoices, and client management.
           </p>
         </div>
 
@@ -84,38 +84,43 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-12">
-          {/* Demo Plan */}
-          <Card className="border-2 border-gray-300">
+          {/* 14-Day Trial Plan */}
+          <Card className="border-2 border-green-400">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Demo</CardTitle>
+              <CardTitle className="text-2xl">Free Trial</CardTitle>
               <div className="text-3xl font-bold">£0</div>
-              <p className="text-gray-500">Test the platform</p>
+              <p className="text-gray-500">14 days free</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
                 <li className="flex items-center">
-                  <Check className="w-4 h-4 text-blue-500 mr-2" />
-                  Explore all interfaces
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Full platform access
                 </li>
                 <li className="flex items-center">
-                  <Check className="w-4 h-4 text-blue-500 mr-2" />
-                  Test all features
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Create & send contracts
                 </li>
                 <li className="flex items-center">
-                  <Check className="w-4 h-4 text-blue-500 mr-2" />
-                  Preview functionality
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Generate invoices
                 </li>
                 <li className="flex items-center">
-                  <Check className="w-4 h-4 text-blue-500 mr-2" />
-                  No sending functionality
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  Email templates & sending
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-green-500 mr-2" />
+                  No credit card required
                 </li>
               </ul>
               <Button 
                 variant="outline" 
-                className="w-full"
-                disabled={currentPlan === 'free'}
+                className="w-full bg-green-50 border-green-300 hover:bg-green-100"
+                disabled={currentPlan === 'trial'}
+                onClick={() => window.location.href = '/signup'}
               >
-                {currentPlan === 'free' ? 'Current Demo' : 'Try Demo'}
+                {currentPlan === 'trial' ? 'Current Trial' : 'Start Free Trial'}
               </Button>
             </CardContent>
           </Card>
