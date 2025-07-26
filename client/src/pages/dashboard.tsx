@@ -40,12 +40,12 @@ export default function Dashboard() {
         // Remove the stripe_session parameter from URL
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
-        // Force page reload to refresh auth state
-        window.location.reload();
         toast({
           title: "Welcome to MusoBuddy!",
           description: "Your account is now active. Let's get started with setting up your email integration.",
         });
+        // Force page reload to refresh auth state
+        setTimeout(() => window.location.reload(), 100);
       })
       .catch((error) => {
         console.error('❌ Session restoration failed:', error);
