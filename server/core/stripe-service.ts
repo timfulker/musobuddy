@@ -89,7 +89,7 @@ export class StripeService {
             trial_type: 'core_monthly',
           },
         },
-        success_url: `${getAppServerUrl()}/trial-success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${getAppServerUrl()}/dashboard?stripe_session={CHECKOUT_SESSION_ID}`,
         cancel_url: `${getAppServerUrl()}/pricing`,
         metadata: {
           userId: userId,

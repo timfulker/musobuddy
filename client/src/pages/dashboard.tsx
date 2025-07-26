@@ -14,23 +14,63 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useResponsive } from "@/hooks/useResponsive";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, refetch } = useAuth();
 
-  // Redirect to login if not authenticated
+  // Handle Stripe session restoration on dashboard load
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const stripeSessionId = urlParams.get('stripe_session');
+    
+    if (stripeSessionId) {
+      console.log('🔄 Stripe checkout completed, restoring session:', stripeSessionId);
+      
+      // Call session restoration API
+      apiRequest('/api/auth/restore-session', {
+        method: 'POST',
+        body: JSON.stringify({ sessionId: stripeSessionId })
+      })
+      .then(() => {
+        console.log('✅ Session restored successfully');
+        // Remove the stripe_session parameter from URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+        // Refresh auth state
+        refetch();
+        toast({
+          title: "Welcome to MusoBuddy!",
+          description: "Your account is now active. Let's get started with setting up your email integration.",
+        });
+      })
+      .catch((error) => {
+        console.error('❌ Session restoration failed:', error);
+        toast({
+          title: "Authentication Issue",
+          description: "Please log in again to continue.",
+          variant: "destructive",
+        });
+      });
+    }
+  }, [toast, refetch]);
+
+  // Redirect to login if not authenticated (but skip if we're processing Stripe session)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasStripeSession = urlParams.get('stripe_session');
+    
+    if (!isLoading && !isAuthenticated && !hasStripeSession) {
       toast({
         title: "Unauthorized",
         description: "You are logged out. Logging in again...",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
       return;
     }
