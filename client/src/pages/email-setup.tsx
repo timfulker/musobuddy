@@ -44,7 +44,7 @@ export default function EmailSetup() {
         method: 'POST',
         body: JSON.stringify({ prefix }),
       });
-      return response as EmailCheckResponse;
+      return response.json();
     },
     onSuccess: (data: EmailCheckResponse) => {
       setCheckResult(data);
@@ -67,7 +67,7 @@ export default function EmailSetup() {
         method: 'POST',
         body: JSON.stringify({ prefix }),
       });
-      return response;
+      return response.json();
     },
     onSuccess: (data: any) => {
       toast({
