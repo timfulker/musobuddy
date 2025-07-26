@@ -6,6 +6,8 @@
 - Stripe subscription integration working
 - Phone verification authentication system deployed
 
+*Note: This roadmap has been superseded by the comprehensive roadmap document provided by the user. Please refer to the attached comprehensive roadmap for the complete Phase 1-3 implementation plan.*
+
 ---
 
 ## Phase 1: Core Platform (COMPLETED ✅)
