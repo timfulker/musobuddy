@@ -796,28 +796,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Stripe webhook (PUBLIC - Stripe needs to access this)
-  app.post('/api/stripe-webhook', 
-    (req, res, next) => {
-      // Store original req.body as buffer for Stripe webhook verification
-      req.body = req.body;
-      next();
-    },
-    async (req, res) => {
-      try {
-        console.log('🔍 Received webhook request from Stripe');
-        const signature = req.headers['stripe-signature'] as string;
-        console.log('🔍 Webhook signature present:', !!signature);
-        
-        await stripeService.handleWebhook(req.body, signature);
-        console.log('✅ Webhook processed successfully');
-        res.json({ received: true });
-      } catch (error: any) {
-        console.error('❌ Webhook error:', error.message);
-        res.status(400).json({ error: error.message });
-      }
-    }
-  );
+  // Stripe webhook is now handled in server/index.ts before JSON middleware
 
   // Get subscription status (AUTHENTICATED)
   app.get('/api/subscription/status', isAuthenticated, async (req, res) => {

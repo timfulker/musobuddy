@@ -35,7 +35,7 @@ function getAppServerUrl(): string {
 let stripe: Stripe | null = null;
 if (process.env.STRIPE_TEST_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY, {
-    apiVersion: '2025-06-30.basil',
+    apiVersion: '2023-10-16',
   });
 }
 

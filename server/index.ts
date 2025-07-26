@@ -45,7 +45,49 @@ validateStartup().catch(error => {
 // Setup graceful shutdown
 setupGracefulShutdown();
 
-// Essential middleware
+// Stripe webhook handler (must be BEFORE general JSON middleware)
+app.post('/api/stripe-webhook', 
+  // Skip JSON parsing for this route only
+  (req, res, next) => {
+    if (req.is('application/json')) {
+      let data = '';
+      req.setEncoding('utf8');
+      req.on('data', chunk => data += chunk);
+      req.on('end', () => {
+        req.body = Buffer.from(data, 'utf8');
+        next();
+      });
+    } else {
+      next();
+    }
+  },
+  async (req, res) => {
+    const { stripeService } = await import('./core/stripe-service.js');
+    try {
+      console.log('🔍 Custom Stripe webhook handler triggered');
+      console.log('🔍 Request body type:', typeof req.body);
+      console.log('🔍 Request body is Buffer:', Buffer.isBuffer(req.body));
+      console.log('🔍 Request body length:', req.body?.length);
+      
+      const signature = req.headers['stripe-signature'] as string;
+      console.log('🔍 Webhook signature present:', !!signature);
+      
+      if (!Buffer.isBuffer(req.body)) {
+        console.log('⚠️ Converting body to Buffer...');
+        req.body = Buffer.from(JSON.stringify(req.body));
+      }
+      
+      await stripeService.handleWebhook(req.body, signature);
+      console.log('✅ Webhook processed successfully');
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error('❌ Webhook error:', error.message);
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+// Essential middleware for all other routes
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
