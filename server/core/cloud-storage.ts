@@ -18,8 +18,9 @@ export function getAppServerUrl(): string {
   }
   
   if (process.env.REPLIT_DEV_DOMAIN) {
-    console.log('🔗 Detected REPLIT_DEV_DOMAIN, using production URL');
-    return 'https://musobuddy.replit.app';
+    const devUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    console.log('🔗 Detected REPLIT_DEV_DOMAIN, using development URL:', devUrl);
+    return devUrl;
   }
   
   // 3. Check for production indicators
