@@ -198,7 +198,10 @@ export class StripeService {
       await storage.updateUser(userId, {
         isSubscribed: true,
         plan: 'core',
+        tier: 'core',
         stripeCustomerId: customerId,
+        trialStatus: 'active',
+        trialExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
       });
 
       console.log(`🔥 [CHECKOUT-${sessionId}] ✅ User subscription activated: ${userId}`);
