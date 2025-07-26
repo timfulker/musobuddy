@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, AlertCircle, Mail, Copy, Check, Crown, Lock } from 'lucide-react';
+import { CheckCircle, AlertCircle, Mail, Copy, Check, Crown, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'wouter';
@@ -137,6 +137,16 @@ export default function EmailSetup() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
+        
+        {/* Back to Dashboard Button */}
+        <div className="flex justify-start">
+          <Link href="/dashboard">
+            <Button variant="outline" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
         
         {/* Header */}
         <div className="text-center space-y-2">
