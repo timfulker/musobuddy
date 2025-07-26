@@ -136,8 +136,17 @@ export default function SignupPage() {
         body: JSON.stringify({ userId }),
       });
     },
-    onSuccess: (data: any) => {
-      console.log('✅ Frontend: Trial response:', data);
+    onSuccess: async (response: any) => {
+      console.log('✅ Frontend: Trial response:', response);
+      
+      // Parse JSON if it's a Response object
+      let data = response;
+      if (response instanceof Response) {
+        console.log('🔄 Frontend: Parsing Response object...');
+        data = await response.json();
+        console.log('📄 Frontend: Parsed data:', data);
+      }
+      
       // Redirect to Stripe checkout for trial setup
       if (data.checkoutUrl) {
         console.log('🔗 Frontend: Redirecting to:', data.checkoutUrl);
