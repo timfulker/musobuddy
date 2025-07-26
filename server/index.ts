@@ -479,74 +479,34 @@ async function startServer() {
         serveStaticFixed(app);
       } else {
         console.log('🛠️ Development mode: using Vite dev server');
-        // Skip Vite setup for now, use fallback static serving
-        app.get('*', (req, res) => {
-          if (req.path.startsWith('/api/')) {
-            res.status(404).json({ error: 'API endpoint not found' });
-          } else {
-            res.status(200).send(`
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <title>MusoBuddy - Development Mode</title>
-                <style>
-                  body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-                  .success { color: #16a34a; background: #dcfce7; padding: 20px; border-radius: 8px; margin: 20px 0; }
-                  .info { color: #2563eb; background: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0; }
-                  .api-test { background: #f8fafc; padding: 15px; border-radius: 8px; font-family: monospace; }
-                </style>
-              </head>
-              <body>
-                <h1>🎵 MusoBuddy - Development Server</h1>
-                
-                <div class="success">
-                  <h2>✅ Authentication System Operational</h2>
-                  <p>All session authentication fixes have been successfully applied and tested.</p>
-                </div>
-                
-                <div class="info">
-                  <h2>🔗 API Endpoints Available</h2>
-                  <p>The backend is running and API endpoints are accessible:</p>
-                  <div class="api-test">
-                    • POST /api/auth/signup - User registration<br>
-                    • POST /api/auth/verify-phone - Phone verification<br>
-                    • POST /api/auth/start-trial - Stripe checkout<br>
-                    • GET /api/auth/user - Authentication check<br>
-                    • All other /api/* endpoints
-                  </div>
-                </div>
-                
-                <div class="info">
-                  <h2>🚀 Ready for Production Testing</h2>
-                  <p>The authentication system is working perfectly in development mode. Ready to test in production environment.</p>
-                </div>
-              </body>
-              </html>
-            `);
-          }
+        
+        // Setup Vite first (before server start)
+        console.log('🔧 Setting up Vite development server...');
+        const { setupVite } = await import('./vite');
+        
+        // Create server but don't start listening yet
+        const server = require('http').createServer(app);
+        
+        try {
+          await setupVite(app, server);
+          console.log('✅ Vite development server configured');
+        } catch (viteError: any) {
+          console.error('❌ Vite setup failed:', viteError.message);
+          throw viteError;
+        }
+        
+        // Now start the server
+        server.listen(Number(port), "0.0.0.0", () => {
+          console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
+          console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
+          console.log(`📁 Serving from: development with Vite`);
         });
+        return; // Exit early since server.listen is called above
       }
     } catch (error: any) {
-      console.log('⚠️ Static serving setup failed:', error.message);
-      
-      // Minimal fallback for broken deployments
-      app.get('*', (req, res) => {
-        if (req.path.startsWith('/api/')) {
-          res.status(404).json({ error: 'API endpoint not found' });
-        } else {
-          res.status(500).send(`
-            <!DOCTYPE html>
-            <html>
-            <head><title>MusoBuddy - Server Error</title></head>
-            <body>
-              <h1>Server Configuration Error</h1>
-              <p>The server is having trouble serving static files.</p>
-              <p>API is available at /api/ endpoints.</p>
-            </body>
-            </html>
-          `);
-        }
-      });
+      console.error('❌ Static serving setup failed:', error.message);
+      console.error('Stack:', error.stack);
+      process.exit(1);
     }
     
     // Use environment PORT with fallback
@@ -557,11 +517,14 @@ async function startServer() {
       deployment: !!process.env.REPLIT_DEPLOYMENT
     });
     
-    app.listen(Number(port), "0.0.0.0", () => {
-      console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
-      console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
-      console.log(`📁 Serving from: ${process.env.NODE_ENV === 'production' ? 'dist/public' : 'development'}`);
-    });
+    // Only start server if not already started in development mode
+    if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT) {
+      app.listen(Number(port), "0.0.0.0", () => {
+        console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
+        console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
+        console.log(`📁 Serving from: ${process.env.NODE_ENV === 'production' ? 'dist/public' : 'development'}`);
+      });
+    }
     
   } catch (error: any) {
     console.error('❌ Server startup failed:', error);
