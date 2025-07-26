@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye, Crown, Lock } from "lucide-react";
+import { Search, Filter, MoreHorizontal, PoundSterling, Calendar, FileText, Download, Plus, Send, Edit, CheckCircle, AlertTriangle, Trash2, Archive, FileDown, RefreshCw, ArrowLeft, Eye } from "lucide-react";
 import { insertInvoiceSchema, type Invoice } from "@shared/schema";
 import { useLocation, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -55,9 +55,7 @@ export default function Invoices() {
   const { isDesktop } = useResponsive();
   const { user } = useAuth();
   
-  // Demo limitations
-  const isDemoUser = user && !user.isSubscribed && !user.isLifetime && !user.isAdmin;
-  const DEMO_LIMIT = 3;
+
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['/api/invoices'],
@@ -437,24 +435,6 @@ export default function Invoices() {
       updateInvoiceMutation.mutate({ id: editingInvoice.id, data: finalData });
     } else {
       // Create new invoice
-      // Demo limitation - check creation limit for non-subscribers
-      if (isDemoUser && invoices.length >= DEMO_LIMIT) {
-        toast({
-          title: "Demo Limitation",
-          description: `Demo users are limited to ${DEMO_LIMIT} invoices. Please upgrade to create unlimited invoices.`,
-          variant: "destructive",
-          action: (
-            <Link href="/pricing">
-              <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-                <Crown className="w-3 h-3 mr-1" />
-                Upgrade
-              </Button>
-            </Link>
-          ),
-        });
-        return;
-      }
-
       createInvoiceMutation.mutate(finalData);
     }
   };
@@ -533,31 +513,7 @@ export default function Invoices() {
       console.error('🔥 Email Send: Error message:', error.message);
       console.error('🔥 Email Send: Error stack:', error.stack);
       
-      // Parse error response for demo limitations
-      let errorData = null;
-      try {
-        errorData = JSON.parse(error.message);
-      } catch (e) {
-        // If not JSON, treat as plain error
-      }
-      
-      // Handle demo limitations with upgrade prompt
-      if (errorData?.demoMode || errorData?.error === 'Demo Limitation') {
-        toast({
-          title: "Demo Limitation",
-          description: errorData?.message || "Invoice sending requires a paid subscription. Please upgrade to send invoices to clients.",
-          variant: "destructive",
-          action: (
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.href = '/pricing'}
-              className="ml-2 text-sm bg-orange-600 hover:bg-orange-700 text-white"
-            >
-              Upgrade Now
-            </Button>
-          ),
-        });
-      } else if (error.message && error.message.includes("session has expired")) {
+      if (error.message && error.message.includes("session has expired")) {
         toast({
           title: "Session Expired",
           description: "Your session has expired. Please log out and log back in to continue.",
@@ -583,24 +539,6 @@ export default function Invoices() {
   });
 
   const handleSendInvoice = (invoice: Invoice) => {
-    // Demo limitation - block invoice sending for non-subscribers
-    if (isDemoUser) {
-      toast({
-        title: "Demo Limitation",
-        description: "Invoice sending requires a paid subscription. You can create and view invoices in demo mode.",
-        variant: "destructive",
-        action: (
-          <Link href="/pricing">
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Crown className="w-3 h-3 mr-1" />
-              Upgrade
-            </Button>
-          </Link>
-        ),
-      });
-      return;
-    }
-
     console.log('=== INVOICE SEND DEBUG ===');
     console.log('Invoice ID:', invoice.id);
     console.log('Invoice data:', invoice);
@@ -622,25 +560,6 @@ export default function Invoices() {
   };
 
   const handleConfirmSendInvoice = () => {
-    // Demo limitation - additional check for invoice sending
-    if (isDemoUser) {
-      toast({
-        title: "Demo Limitation",
-        description: "Invoice sending requires a paid subscription. Please upgrade to send invoices to clients.",
-        variant: "destructive",
-        action: (
-          <Link href="/pricing">
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Crown className="w-3 h-3 mr-1" />
-              Upgrade
-            </Button>
-          </Link>
-        ),
-      });
-      setCustomMessageDialog(false);
-      return;
-    }
-
     if (invoiceToSend) {
       console.log('Sending invoice with custom message:', customMessage);
       sendInvoiceMutation.mutate({
@@ -701,46 +620,10 @@ export default function Invoices() {
   };
 
   const handleSendReminder = (invoice: Invoice) => {
-    // Demo limitation - block reminder sending for non-subscribers
-    if (isDemoUser) {
-      toast({
-        title: "Demo Limitation",
-        description: "Overdue reminder sending requires a paid subscription. You can create and view invoices in demo mode.",
-        variant: "destructive",
-        action: (
-          <Link href="/pricing">
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Crown className="w-3 h-3 mr-1" />
-              Upgrade
-            </Button>
-          </Link>
-        ),
-      });
-      return;
-    }
-
     sendReminderMutation.mutate(invoice);
   };
 
   const handleResendInvoice = (invoice: Invoice) => {
-    // Demo limitation - block invoice resending for non-subscribers
-    if (isDemoUser) {
-      toast({
-        title: "Demo Limitation",
-        description: "Invoice sending requires a paid subscription. You can create and view invoices in demo mode.",
-        variant: "destructive",
-        action: (
-          <Link href="/pricing">
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Crown className="w-3 h-3 mr-1" />
-              Upgrade
-            </Button>
-          </Link>
-        ),
-      });
-      return;
-    }
-
     // Check if invoice has client email
     if (!invoice.clientEmail) {
       toast({
@@ -929,24 +812,6 @@ export default function Invoices() {
   };
 
   const handleDownloadInvoice = async (invoice: Invoice) => {
-    // Demo limitation - block downloads for non-subscribers
-    if (isDemoUser) {
-      toast({
-        title: "Demo Limitation",
-        description: "Invoice downloads require a paid subscription. You can view and create invoices in demo mode.",
-        variant: "destructive",
-        action: (
-          <Link href="/pricing">
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Crown className="w-3 h-3 mr-1" />
-              Upgrade
-            </Button>
-          </Link>
-        ),
-      });
-      return;
-    }
-
     try {
       const response = await fetch(`/api/invoices/${invoice.id}/pdf`);
       if (!response.ok) {

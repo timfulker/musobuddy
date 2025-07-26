@@ -40,9 +40,7 @@ interface CalendarEvent {
 export default function UnifiedBookings() {
   const { user } = useAuth();
   
-  // Demo limitations
-  const isDemoUser = user && !user.isSubscribed && !user.isLifetime && !user.isAdmin;
-  const DEMO_LIMIT = 3;
+
   
   // Status color helper function
   const getStatusBorderColor = (status: string) => {

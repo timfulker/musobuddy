@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertClientSchema, type InsertClient, type Client } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight, ArrowLeft, AlertTriangle, UserPlus, Download, Edit2, Eye, Crown, Lock } from "lucide-react";
+import { Users, Plus, Mail, Phone, MapPin, Search, Edit, Trash2, Calendar, DollarSign, Grid, List, Filter, SortAsc, ChevronLeft, ChevronRight, ArrowLeft, AlertTriangle, UserPlus, Download, Edit2, Eye } from "lucide-react";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,9 +34,7 @@ export default function AddressBook() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   
-  // Demo limitations
-  const isDemoUser = user && !user.isSubscribed && !user.isLifetime && !user.isAdmin;
-  const DEMO_LIMIT = 3;
+
 
   const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
@@ -150,24 +148,6 @@ export default function AddressBook() {
   });
 
   const handleSubmit = (data: InsertClient) => {
-    // Demo limitation - check creation limit for non-subscribers
-    if (isDemoUser && clients.length >= DEMO_LIMIT) {
-      toast({
-        title: "Demo Limitation",
-        description: `Demo users are limited to ${DEMO_LIMIT} address book entries. Please upgrade to add unlimited contacts.`,
-        variant: "destructive",
-        action: (
-          <Link href="/pricing">
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Crown className="w-3 h-3 mr-1" />
-              Upgrade
-            </Button>
-          </Link>
-        ),
-      });
-      return;
-    }
-
     console.log("Form submitted with data:", data);
     console.log("Form errors:", form.formState.errors);
     

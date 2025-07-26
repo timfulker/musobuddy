@@ -38,9 +38,7 @@ export default function Compliance() {
   const [location] = useLocation();
   const { user } = useAuth();
   
-  // Demo limitations
-  const isDemoUser = user && !user.isSubscribed && !user.isLifetime && !user.isAdmin;
-  const DEMO_LIMIT = 3;
+
   
   // Check for booking context from URL parameters
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -276,23 +274,6 @@ export default function Compliance() {
   }, []);
 
   const onSubmit = (data: z.infer<typeof complianceFormSchema>) => {
-    // Demo limitation - block uploads for non-subscribers but allow dialog exploration
-    if (isDemoUser) {
-      toast({
-        title: "Demo Limitation",
-        description: "Compliance document uploads require a paid subscription. You can explore the interface in demo mode.",
-        variant: "destructive",
-        action: (
-          <Link href="/pricing">
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Crown className="w-3 h-3 mr-1" />
-              Upgrade
-            </Button>
-          </Link>
-        ),
-      });
-      return;
-    }
 
     console.log('🚀 Form submitted!', {
       uploadMethod,

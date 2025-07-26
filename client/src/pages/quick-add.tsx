@@ -37,11 +37,7 @@ export default function QuickAddPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Demo limitations
-  const isDemoUser = user && !user.isSubscribed && !user.isLifetime && !user.isAdmin;
-  const DEMO_LIMIT = 3;
-  
-  // Get existing bookings count for demo limitation
+  // Get existing bookings for context
   const { data: bookings = [] } = useQuery({
     queryKey: ['/api/bookings'],
   });
@@ -98,24 +94,6 @@ export default function QuickAddPage() {
   });
 
   const onSubmit = (data: QuickAddFormData) => {
-    // Demo limitation - check creation limit for non-subscribers
-    if (isDemoUser && bookingsArray.length >= DEMO_LIMIT) {
-      toast({
-        title: "Demo Limitation",
-        description: `Demo users are limited to ${DEMO_LIMIT} bookings. Please upgrade to create unlimited bookings.`,
-        variant: "destructive",
-        action: (
-          <Link href="/pricing">
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Crown className="w-3 h-3 mr-1" />
-              Upgrade
-            </Button>
-          </Link>
-        ),
-      });
-      return;
-    }
-
     createEnquiryMutation.mutate(data);
   };
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import DashboardHeader from "@/components/dashboard-header";
-import DemoBanner from "@/components/demo-banner";
 import StatsCards from "@/components/stats-cards";
 import ActionableEnquiries from "@/components/kanban-board";
 import CalendarWidget from "@/components/calendar-widget";
