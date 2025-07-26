@@ -310,6 +310,38 @@ export class ProductionAuthSystem {
       }
     });
 
+    // Start trial route (redirects to Stripe checkout)
+    this.app.post('/api/auth/start-trial', async (req: any, res) => {
+      try {
+        const userId = req.session?.userId;
+        if (!userId) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        console.log('🚀 Starting trial for user:', userId);
+
+        // Import StripeService dynamically
+        const { StripeService } = await import('./stripe-service');
+        const stripeService = new StripeService();
+        
+        // Use the Core plan price ID for trial
+        const corePrice = 'price_1RouBwD9Bo26CG1DAF1rkSZI'; // Test price ID
+        
+        const session = await stripeService.createTrialCheckoutSession(userId, corePrice);
+        
+        console.log('✅ Trial checkout session created:', session.sessionId);
+        res.json({ 
+          success: true, 
+          checkoutUrl: session.checkoutUrl,
+          sessionId: session.sessionId 
+        });
+        
+      } catch (error: any) {
+        console.error('❌ Start trial error:', error);
+        res.status(500).json({ error: error.message || 'Failed to start trial' });
+      }
+    });
+
     // Logout route
     this.app.post('/api/auth/logout', (req: any, res) => {
       req.session.destroy((err: any) => {
