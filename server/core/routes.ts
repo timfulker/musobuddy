@@ -244,7 +244,9 @@ export async function registerRoutes(app: Express) {
   });
 
   // Verify phone number
+  console.log('🔄 Registering /api/auth/verify-phone route...');
   app.post('/api/auth/verify-phone', async (req: any, res) => {
+    console.log('🔍 Phone verification endpoint called with:', req.body);
     try {
       const { userId, verificationCode } = req.body;
       

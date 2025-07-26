@@ -440,7 +440,9 @@ async function startServer() {
     // Contract signing will be handled by main routes
     
     // Register all routes AFTER authentication
+    console.log('🔄 Registering API routes...');
     const server = await registerRoutes(app);
+    console.log('✅ API routes registered successfully');
     
     // Add production error handling
     try {
