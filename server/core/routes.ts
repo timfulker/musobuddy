@@ -32,6 +32,57 @@ export async function registerRoutes(app: Express) {
   // ===== SIGNUP ROUTES =====
   // Signup routes are now handled by ProductionAuthSystem
 
+  // ===== STRIPE ROUTES =====
+  
+  // Create Stripe checkout session (AUTHENTICATED)
+  app.post('/api/create-checkout-session', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { priceId } = req.body;
+      if (!priceId) {
+        return res.status(400).json({ error: 'Price ID required' });
+      }
+
+      console.log('🛒 Creating checkout session for user:', userId, 'priceId:', priceId);
+
+      const { StripeService } = await import('./stripe-service');
+      const stripeService = new StripeService();
+      
+      const session = await stripeService.createTrialCheckoutSession(userId, priceId);
+      
+      console.log('✅ Checkout session created:', session.sessionId);
+      res.json(session);
+      
+    } catch (error: any) {
+      console.error('❌ Checkout session error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get subscription status (AUTHENTICATED)
+  app.get('/api/subscription/status', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { StripeService } = await import('./stripe-service');
+      const stripeService = new StripeService();
+      
+      const status = await stripeService.getSubscriptionStatus(userId);
+      res.json(status);
+      
+    } catch (error: any) {
+      console.error('❌ Subscription status error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ===== BOOKING ROUTES =====
   
   console.log('✅ Clean routes registered successfully');
