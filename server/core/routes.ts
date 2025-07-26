@@ -805,11 +805,15 @@ export async function registerRoutes(app: Express) {
     },
     async (req, res) => {
       try {
+        console.log('🔍 Received webhook request from Stripe');
         const signature = req.headers['stripe-signature'] as string;
+        console.log('🔍 Webhook signature present:', !!signature);
+        
         await stripeService.handleWebhook(req.body, signature);
+        console.log('✅ Webhook processed successfully');
         res.json({ received: true });
       } catch (error: any) {
-        console.error('Webhook error:', error);
+        console.error('❌ Webhook error:', error.message);
         res.status(400).json({ error: error.message });
       }
     }
