@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Music, CheckCircle, Calendar, Mail, FileText, CreditCard, ArrowRight } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,6 +13,7 @@ export default function TrialSuccessPage() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<'welcome' | 'onboarding' | 'email-setup' | 'complete'>('welcome');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Get URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -49,11 +50,17 @@ export default function TrialSuccessPage() {
     onSuccess: (data) => {
       console.log('✅ Session restore success:', data);
       toast({
-        title: "Session restored!",
-        description: "Welcome back to MusoBuddy.",
+        title: "Welcome to MusoBuddy!",
+        description: "Your account is now active.",
       });
-      // Force page reload to refresh authentication state
-      window.location.href = '/dashboard';
+      
+      // CRITICAL: Clear all React Query cache to force authentication refresh
+      queryClient.clear();
+      
+      // Small delay then redirect to dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
     },
     onError: (error: any) => {
       console.error('Session restoration failed:', error);
