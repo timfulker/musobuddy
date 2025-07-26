@@ -363,6 +363,59 @@ export class ProductionAuthSystem {
       }
     });
 
+    // Server-side redirect handler for trial success (bypasses browser cache)
+    this.app.get('/trial-success', async (req: any, res) => {
+      try {
+        const sessionId = req.query.session_id;
+        
+        if (!sessionId) {
+          return res.redirect('/?error=no_session_id');
+        }
+
+        console.log('🔄 Server-side session restoration for sessionId:', sessionId);
+
+        // Import StripeService to get session details
+        const { StripeService } = await import('./stripe-service');
+        const stripeService = new StripeService();
+        
+        // Get session details from Stripe
+        const sessionDetails = await stripeService.getSessionDetails(sessionId);
+        const userId = sessionDetails.metadata?.userId;
+        
+        if (!userId) {
+          console.error('❌ No userId in Stripe session metadata');
+          return res.redirect('/?error=invalid_session');
+        }
+
+        // Get user from database
+        const user = await storage.getUserById(userId);
+        if (!user) {
+          console.error('❌ User not found:', userId);
+          return res.redirect('/?error=user_not_found');
+        }
+
+        // Restore session on server
+        req.session.userId = user.id;
+        
+        console.log('✅ Server-side session restored for:', user.email);
+        
+        // Force session save before redirect
+        req.session.save((err: any) => {
+          if (err) {
+            console.error('❌ Session save error:', err);
+            return res.redirect('/?error=session_save_failed');
+          }
+          
+          // Redirect to dashboard with authenticated session
+          res.redirect('/dashboard');
+        });
+        
+      } catch (error: any) {
+        console.error('❌ Server-side session restoration error:', error);
+        res.redirect('/?error=session_restore_failed');
+      }
+    });
+
     // Logout route
     this.app.post('/api/auth/logout', (req: any, res) => {
       req.session.destroy((err: any) => {
