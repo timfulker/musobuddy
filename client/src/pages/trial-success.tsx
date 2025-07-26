@@ -22,21 +22,28 @@ export default function TrialSuccessPage() {
   const { data: user, isLoading, refetch } = useQuery({
     queryKey: ['/api/auth/user'],
     enabled: !!sessionId,
-    retry: false, // Don't auto-retry on 401
+    retry: 1,
+    queryFn: () => fetch('/api/auth/user', { credentials: 'include' }).then(res => res.json()),
   });
 
   // Session restoration mutation - simplified approach using session ID only
   const restoreSessionMutation = useMutation({
     mutationFn: async () => {
       // Use the session ID to restore authentication by finding the user who just completed checkout
-      return apiRequest('/api/auth/restore-session-by-stripe', {
+      return fetch('/api/auth/restore-session-by-stripe', {
         method: 'POST',
-        body: JSON.stringify({ 
-          sessionId 
-        }),
+        credentials: 'include', // THIS IS CRITICAL - include cookies
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ 
+          sessionId 
+        }),
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
       });
     },
     onSuccess: () => {
