@@ -6,15 +6,35 @@
 ```
 server/
 ├── index.ts                     # Main server entry point with webhook handler
+├── static-serve.ts              # Static file serving configuration
+├── vite.ts                      # Vite development server integration
+├── db.ts                        # Database utilities
 ├── core/
-│   ├── auth.ts                  # Authentication middleware and utilities
+│   ├── auth-clean.ts            # Clean authentication implementation
+│   ├── auth-stability.ts        # Authentication stability fixes
 │   ├── database.ts              # Database connection and validation
-│   ├── routes.ts                # All API routes and endpoints
+│   ├── routes.ts                # All API routes and endpoints (MAIN)
 │   ├── storage.ts               # Database operations and data access layer
 │   ├── stripe-service.ts        # Stripe integration and webhook processing
 │   ├── services.ts              # Business logic services
-│   └── cloud-storage.ts         # Cloudflare R2 integration
-└── vite.ts                      # Vite development server integration
+│   ├── cloud-storage.ts         # Cloudflare R2 integration
+│   ├── subscription-middleware.ts # Subscription access control
+│   ├── conflict-engine.ts       # Booking conflict detection
+│   ├── pdf-generator.ts         # PDF generation for contracts/invoices
+│   ├── contract-template.ts     # Contract template engine
+│   ├── html-contract-template.ts # HTML contract templates
+│   ├── new-contract-template.ts # Updated contract templates
+│   ├── email-onboarding.ts      # Email automation
+│   ├── mailgun-email-restored.ts # Email service integration
+│   ├── mailgun-routes.ts        # Email routing
+│   ├── webhook-service.ts       # Webhook processing
+│   ├── production-safeguards.ts # Production safety measures
+│   └── [backup files]           # Various backup/working versions
+├── public/                      # Built frontend assets
+├── test/
+│   └── contract-signing.ts      # Contract signing tests
+└── assets/
+    └── musobuddy-logo.png      # Logo assets
 ```
 
 ### Client-Side Files

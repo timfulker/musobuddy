@@ -16,6 +16,8 @@
 - **`server/index.ts`** (Lines 48-91) - Main webhook endpoint with custom raw body processing
 - **`server/core/stripe-service.ts`** (Lines 114-200) - Webhook event processing logic
 - **`server/core/storage.ts`** - Database operations for user subscription updates
+- **`server/core/routes.ts`** - Main API routes file
+- **`server/core/webhook-service.ts`** - Additional webhook processing utilities
 
 ### Configuration Files
 - **`.env`** - Environment variables (STRIPE_WEBHOOK_SECRET, API keys)
