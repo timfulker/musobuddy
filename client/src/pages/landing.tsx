@@ -178,7 +178,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <p className="text-center text-sm text-gray-500 mt-4">
-                14-day free trial • No credit card required
+                14-day free trial • Then £9.99/month
               </p>
             </CardContent>
           </Card>

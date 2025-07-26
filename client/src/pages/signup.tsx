@@ -181,7 +181,7 @@ export default function SignupPage() {
           <div className="text-center mb-6">
             <Badge className="bg-green-100 text-green-800 border-green-200 px-4 py-2">
               <CheckCircle className="h-4 w-4 mr-2" />
-              14-Day Free Trial • No Credit Card Required
+              14-Day Free Trial • Then £9.99/month
             </Badge>
           </div>
 
@@ -465,7 +465,7 @@ export default function SignupPage() {
               <Alert className="mb-6">
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
-                  No payment required now. You'll only be charged after your 14-day trial ends.
+                  Credit card required for trial setup. You'll be charged £9.99/month after your 14-day trial ends.
                 </AlertDescription>
               </Alert>
 
