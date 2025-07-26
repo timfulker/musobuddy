@@ -172,7 +172,8 @@ export class ProductionAuthSystem {
       console.log('📱 Phone verification request:', req.body);
       
       try {
-        const { userId, verificationCode } = req.body;
+        const { verificationCode } = req.body;
+        const userId = req.session.userId;
 
         if (!userId || !verificationCode) {
           return res.status(400).json({ error: 'User ID and verification code required' });
