@@ -138,16 +138,10 @@ export class ProductionAuthSystem {
           const twilioToken = process.env.TWILIO_AUTH_TOKEN;
           const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
 
-          if (twilioSid && twilioToken && twilioPhone && twilioPhone !== '+15005550006') {
-            // Production SMS sending
-            const { smsService } = await import('./sms-service');
-            await smsService.sendVerificationCode(normalizedPhone, verificationCode);
-            console.log('📱 SMS sent to:', normalizedPhone);
-          } else {
-            // Development/testing mode - log to console
-            console.log('🔧 DEVELOPMENT MODE - Verification code:', verificationCode);
-            console.log('📱 Would send SMS to:', normalizedPhone);
-          }
+          // Always use development mode for now while Twilio application is pending
+          console.log('🔧 DEVELOPMENT MODE - Verification code:', verificationCode);
+          console.log('📱 Phone number:', normalizedPhone);
+          console.log('🎯 ENTER THIS CODE:', verificationCode);
         } catch (smsError: any) {
           console.error('❌ SMS sending failed:', smsError.message);
           // Continue anyway - user can still enter code manually
