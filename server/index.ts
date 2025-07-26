@@ -228,10 +228,11 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Session configuration for authentication
 const PgSession = ConnectPgSimple(session);
 
-// Fix production session configuration
-const isProduction = process.env.NODE_ENV === 'production' || 
-                    process.env.REPLIT_ENVIRONMENT === 'production' ||
-                    process.env.REPLIT_DEPLOYMENT;
+// Fix production session configuration - only use REPLIT_DEPLOYMENT for production
+const isProduction = !!(process.env.NODE_ENV === 'production' || 
+                       process.env.REPLIT_DEPLOYMENT);
+
+
 
 app.use(session({
   store: new PgSession({
@@ -242,7 +243,6 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
   resave: false,
   saveUninitialized: false,
-  name: 'sessionId',
   cookie: {
     secure: isProduction,           // ✅ True in production
     httpOnly: true,

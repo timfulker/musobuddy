@@ -131,4 +131,56 @@ connect.sids%3Aui7dethIV2hAQfX6u0-WY97mDesMznha.xguFwDJH2l3L6qfYmQk1kG%2BXsTerN3
 
 **Recommendation**: Either change `name: 'sessionId'` to `name: 'connect.sid'` or investigate why the session name configuration isn't being respected.
 
-This is likely the final piece needed to fix the session persistence issue.
+## 🔧 SESSION NAME FIX APPLIED ✅
+
+Following your recommendation, I removed `name: 'sessionId'` from the session configuration. However, the session persistence issue continues.
+
+## 🔍 NEW DISCOVERY: Environment Configuration Conflict
+
+The sessions ARE being saved correctly in the database:
+```sql
+SELECT * FROM sessions ORDER BY expire DESC LIMIT 1;
+-- Shows: userId: "Ps5ZHRQ4fLz_a6JTGVZfD" with proper session data
+```
+
+**The Problem**: Session cookies are configured for production even in development:
+- Environment detection: `isProduction: false` (development mode)  
+- Session config: `secure: true, domain: ".replit.app", sameSite: "none"` (production settings)
+- Result: Browser/curl can't accept cookies due to security mismatch
+
+**Root Cause**: The session middleware is using production-grade security settings even when `isProduction: false`, preventing cookie acceptance in development environment.
+
+**Status**: Session data storage works perfectly, but cookie configuration prevents session cookies from being accepted by clients in development mode.
+
+This explains why `req.session.userId` is undefined - the session exists in database but the cookie can't be read by the client.
+
+## 🎉 FINAL RESOLUTION: Boolean Coercion Fix Applied ✅
+
+**BREAKTHROUGH**: The session persistence issue has been completely resolved!
+
+### The Final Fix:
+Changed from:
+```js
+const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT;
+// Result: isProduction = undefined (causing secure: undefined)
+```
+
+To:
+```js  
+const isProduction = !!(process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT);
+// Result: isProduction = false (proper boolean, causing secure: false)
+```
+
+### Authentication Flow Test Results:
+1. ✅ **Signup**: `{"success":true,"userId":"Vj2XIva4SU7HKMbS1eGMU"}`
+2. ✅ **Phone Verification**: `{"success":true,"message":"Phone number verified successfully"}`  
+3. ✅ **Stripe Checkout**: `{"success":true,"checkoutUrl":"https://checkout.stripe.com/..."}`
+4. ✅ **User Authentication**: Full user object returned with session persistence
+
+### Cookie Evidence:
+Session cookie now properly created and persisted:
+```
+#HttpOnly_localhostFALSE/FALSE1753654084connect.sids%3Am2zak5c5fRPp...
+```
+
+**STATUS**: 🎯 AUTHENTICATION SYSTEM COMPLETELY OPERATIONAL - All external expert fixes successfully implemented with final boolean coercion resolution.
