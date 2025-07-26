@@ -312,10 +312,10 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     
     // Parse email format: leads+customprefix@mg.musobuddy.com (Enhanced Hybrid System)
     if (recipientField.includes('@mg.musobuddy.com')) {
-      // Extract custom prefix from plus addressing
-      const prefixMatch = recipientField.match(/leads\+([^@]+)@mg\.musobuddy\.com$/);
+      // Extract custom prefix from plus addressing - handle both + and space (URL decoded)
+      const prefixMatch = recipientField.match(/leads[\+\s]([^@]+)@mg\.musobuddy\.com$/);
       if (prefixMatch) {
-        const customPrefix = prefixMatch[1];
+        const customPrefix = prefixMatch[1].trim();
         console.log(`📧 [${requestId}] Extracted custom email prefix:`, customPrefix);
         
         // Look up user by their custom email prefix
