@@ -47,6 +47,12 @@ export class SmsService {
       return true;
     } catch (error: any) {
       console.error('❌ Failed to send SMS:', error);
+      
+      // Check if this is a trial account restriction
+      if (error.code === 21211) {
+        throw new Error(`Trial account restriction: Phone number ${phoneNumber} must be verified in your Twilio console first. Go to Twilio Console > Phone Numbers > Verified Caller IDs to add this number.`);
+      }
+      
       throw new Error(`Failed to send verification code: ${error.message}`);
     }
   }
