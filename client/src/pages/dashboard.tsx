@@ -33,7 +33,10 @@ export default function Dashboard() {
       // Call session restoration API
       apiRequest('/api/auth/restore-session', {
         method: 'POST',
-        body: JSON.stringify({ sessionId: stripeSessionId })
+        body: JSON.stringify({ sessionId: stripeSessionId }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
       .then(() => {
         console.log('✅ Session restored successfully');

@@ -260,12 +260,16 @@ app.use('/api/contracts/sign', (req, res, next) => {
   next();
 });
 
-// Add CORS for session restoration
-app.use('/api/auth/restore-session-by-stripe', (req, res, next) => {
+// Add CORS for session restoration endpoints
+app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user'], (req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
   next();
 });
 
