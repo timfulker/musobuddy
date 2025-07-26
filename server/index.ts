@@ -273,6 +273,15 @@ app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/a
   next();
 });
 
+// Helper function to parse currency values to numeric
+function parseCurrencyToNumber(value: string | null | undefined): number | null {
+  if (!value) return null;
+  // Remove currency symbols and commas, parse as float
+  const numericString = value.toString().replace(/[£$€,]/g, '').trim();
+  const parsed = parseFloat(numericString);
+  return isNaN(parsed) ? null : parsed;
+}
+
 // CRITICAL: Email webhook registered FIRST
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
@@ -340,6 +349,12 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       console.log(`📧 [${requestId}] No user match found, using default user:`, userId);
     }
 
+    // Parse currency values for database
+    const parsedFee = parseCurrencyToNumber(aiResult.fee) || parseCurrencyToNumber(aiResult.estimatedValue) || null;
+    const parsedEstimatedValue = parseCurrencyToNumber(aiResult.estimatedValue);
+    
+    console.log(`📧 [${requestId}] Currency parsing: fee "${aiResult.fee}" -> ${parsedFee}, estimatedValue "${aiResult.estimatedValue}" -> ${parsedEstimatedValue}`);
+
     // Create booking
     const bookingData = {
       userId: userId,
@@ -356,10 +371,10 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientAddress: null,
       eventType: aiResult.eventType,
       gigType: aiResult.gigType,
-      fee: aiResult.fee || aiResult.estimatedValue || null,
+      fee: parsedFee,
       equipmentRequirements: null,
       specialRequirements: null,
-      estimatedValue: aiResult.estimatedValue,
+      estimatedValue: parsedEstimatedValue,
       status: "new",
       notes: bodyField,
       originalEmailContent: bodyField,
