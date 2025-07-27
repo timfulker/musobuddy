@@ -228,9 +228,18 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Session configuration for authentication
 const PgSession = ConnectPgSimple(session);
 
-// Fix production session configuration - only use REPLIT_DEPLOYMENT for production
+// Fix production session configuration - check all production indicators
 const isProduction = !!(process.env.NODE_ENV === 'production' || 
-                       process.env.REPLIT_DEPLOYMENT);
+                       process.env.REPLIT_DEPLOYMENT ||
+                       process.env.REPLIT_ENVIRONMENT === 'production');
+
+console.log('🔍 Environment detection result:', {
+  NODE_ENV: process.env.NODE_ENV,
+  REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+  REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
+  isProduction,
+  finalDecision: isProduction ? 'PRODUCTION' : 'DEVELOPMENT'
+});
 
 
 

@@ -5,8 +5,10 @@ import { users, phoneVerifications } from "../../shared/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
-// Production environment detection
-const isProduction = !!(process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT);
+// Production environment detection - check all production indicators
+const isProduction = !!(process.env.NODE_ENV === 'production' || 
+                       process.env.REPLIT_DEPLOYMENT ||
+                       process.env.REPLIT_ENVIRONMENT === 'production');
 
 export interface AuthRoutes {
   app: Express;
