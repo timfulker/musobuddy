@@ -534,8 +534,8 @@ async function startServer() {
     
     // Add production error handling
     try {
-      // Fix environment detection - use production serving when NODE_ENV is production
-      const isProduction = process.env.NODE_ENV === 'production';
+      // Robust environment detection - works in both development and actual deployment
+      const isProduction = process.env.NODE_ENV === 'production' || !!process.env.REPLIT_DEPLOYMENT;
       
       console.log('🔍 Environment detection result:', {
         NODE_ENV: process.env.NODE_ENV,
