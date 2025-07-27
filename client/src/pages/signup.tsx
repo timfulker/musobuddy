@@ -81,10 +81,20 @@ export default function SignupPage() {
     onSuccess: (data: any) => {
       setUserId(data.userId);
       setStep('verify');
-      toast({
-        title: "Account created successfully!",
-        description: "Please check your phone for a verification code.",
-      });
+      
+      // Store verification code if SMS failed (Twilio trial limitation)
+      if (data.verificationCode) {
+        setVerificationCode(data.verificationCode);
+        toast({
+          title: "Account created successfully!",
+          description: data.tempMessage || `SMS not available - use code: ${data.verificationCode}`,
+        });
+      } else {
+        toast({
+          title: "Account created successfully!",
+          description: "Please check your phone for a verification code.",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -414,6 +424,15 @@ export default function SignupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Show verification code if SMS failed */}
+              {verificationCode && (
+                <Alert className="mb-4 border-orange-200 bg-orange-50">
+                  <AlertDescription className="text-center">
+                    <div className="text-sm text-orange-800 mb-2">SMS not available - use this code:</div>
+                    <div className="text-3xl font-bold text-orange-900 tracking-widest">{verificationCode}</div>
+                  </AlertDescription>
+                </Alert>
+              )}
               
               <Form {...verificationForm}>
                 <form onSubmit={verificationForm.handleSubmit(onVerificationSubmit)} className="space-y-4">
