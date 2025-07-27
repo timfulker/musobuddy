@@ -141,41 +141,80 @@ export class ProductionAuthSystem {
             userId: req.session.userId,
             isAdmin: req.session.isAdmin,
             email: req.session.email,
-            sessionId: req.sessionID
+            sessionId: req.sessionID,
+            sessionCookie: req.session.cookie,
+            sessionStore: req.sessionStore ? 'available' : 'missing'
           });
 
-          // Force session save
+          // Force session save with multiple attempts
           return new Promise((resolve, reject) => {
+            // First attempt
             req.session.save((err: any) => {
               if (err) {
-                console.error(`❌ EMERGENCY: Session save failed:`, err);
-                return res.status(500).json({ error: 'Session save failed' });
+                console.error(`❌ EMERGENCY: Session save failed (attempt 1):`, err);
+                
+                // Second attempt after brief delay
+                setTimeout(() => {
+                  req.session.save((err2: any) => {
+                    if (err2) {
+                      console.error(`❌ EMERGENCY: Session save failed (attempt 2):`, err2);
+                      return res.status(500).json({ error: 'Session save failed after multiple attempts' });
+                    }
+                    
+                    console.log(`✅ EMERGENCY: Session saved on attempt 2`);
+                    console.log(`🔍 EMERGENCY: Final session check:`, req.session);
+                    
+                    res.json({
+                      success: true,
+                      requiresVerification: false,
+                      message: 'EMERGENCY Admin login successful',
+                      sessionInfo: {
+                        sessionId: req.sessionID,
+                        userId: req.session.userId,
+                        isAdmin: req.session.isAdmin
+                      },
+                      user: {
+                        id: 'admin-emergency-id',
+                        email: email,
+                        firstName: 'Admin',
+                        lastName: 'User',
+                        tier: 'admin',
+                        isAdmin: true,
+                        isSubscribed: true,
+                        isLifetime: true,
+                        phoneVerified: true
+                      }
+                    });
+                  });
+                }, 100);
+              } else {
+                console.log(`✅ EMERGENCY: Session saved successfully on attempt 1`);
+                console.log(`🔍 EMERGENCY: Final session check:`, req.session);
+                console.log(`🔍 EMERGENCY: Session cookie details:`, req.session.cookie);
+                
+                res.json({
+                  success: true,
+                  requiresVerification: false,
+                  message: 'EMERGENCY Admin login successful',
+                  sessionInfo: {
+                    sessionId: req.sessionID,
+                    userId: req.session.userId,
+                    isAdmin: req.session.isAdmin,
+                    sessionCookie: req.session.cookie
+                  },
+                  user: {
+                    id: 'admin-emergency-id',
+                    email: email,
+                    firstName: 'Admin',
+                    lastName: 'User',
+                    tier: 'admin',
+                    isAdmin: true,
+                    isSubscribed: true,
+                    isLifetime: true,
+                    phoneVerified: true
+                  }
+                });
               }
-              
-              console.log(`✅ EMERGENCY: Session saved successfully`);
-              console.log(`🔍 EMERGENCY: Final session check:`, req.session);
-              
-              res.json({
-                success: true,
-                requiresVerification: false,
-                message: 'EMERGENCY Admin login successful',
-                sessionInfo: {
-                  sessionId: req.sessionID,
-                  userId: req.session.userId,
-                  isAdmin: req.session.isAdmin
-                },
-                user: {
-                  id: 'admin-emergency-id',
-                  email: email,
-                  firstName: 'Admin',
-                  lastName: 'User',
-                  tier: 'admin',
-                  isAdmin: true,
-                  isSubscribed: true,
-                  isLifetime: true,
-                  phoneVerified: true
-                }
-              });
             });
           });
         }
@@ -207,6 +246,46 @@ export class ProductionAuthSystem {
         sessionKeys: Object.keys(req.session || {}),
         cookies: req.headers.cookie,
         timestamp: new Date().toISOString()
+      });
+    });
+
+    // Environment debug endpoint
+    this.app.get('/api/debug/environment', (req: any, res) => {
+      const { ENV } = require('../environment.js');
+      
+      res.json({
+        environment: ENV,
+        processEnv: {
+          NODE_ENV: process.env.NODE_ENV,
+          REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+          REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
+          REPLIT_DEV_DOMAIN: process.env.REPLIT_DEV_DOMAIN
+        },
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Session destruction endpoint for testing
+    this.app.post('/api/debug/clear-session', (req: any, res) => {
+      console.log('🧹 CLEARING SESSION FOR TESTING');
+      console.log('🔍 Before clear - Session ID:', req.sessionID);
+      console.log('🔍 Before clear - Session data:', req.session);
+      
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error('❌ Session destruction failed:', err);
+          return res.status(500).json({ error: 'Session destruction failed' });
+        }
+        
+        console.log('✅ Session destroyed successfully');
+        res.clearCookie('musobuddy.sid');
+        res.clearCookie('connect.sid');
+        
+        res.json({
+          success: true,
+          message: 'Session cleared - try admin login now',
+          timestamp: new Date().toISOString()
+        });
       });
     });
 
