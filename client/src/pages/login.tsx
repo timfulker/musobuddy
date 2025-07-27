@@ -18,12 +18,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     
-    console.log('🔍 Frontend: Login form submitted');
-    console.log('🔍 Frontend: Email:', email);
-    console.log('🔍 Frontend: Password length:', password.length);
-
     try {
-      console.log('🔍 Frontend: Making fetch request to /api/auth/login');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,31 +26,40 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log('🔍 Frontend: Response status:', response.status);
       const data = await response.json();
-      console.log('🔍 Frontend: Response data:', data);
 
-      if (data.success) {
-        // Invalidate auth queries to trigger refetch with correct query key
-        await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-        
+      if (!response.ok) {
         toast({
-          title: "Login successful",
-          description: "Welcome back!",
-        });
-        
-        // Small delay to ensure query invalidation completes
-        setTimeout(() => {
-          // Navigate to dashboard directly instead of reload
-          window.location.href = '/dashboard';
-        }, 100);
-      } else {
-        toast({
-          title: "Login failed",
-          description: data.message || "Invalid email or password",
           variant: "destructive",
+          title: "Login Failed",
+          description: data.error || 'Invalid email or password'
         });
+        return;
       }
+
+      if (data.requiresVerification) {
+        // User needs SMS verification
+        toast({
+          title: "Verification Required",
+          description: `Please verify your phone number. SMS sent to ${data.phoneNumber}`
+        });
+        // Redirect to verification page
+        window.location.href = '/verify-phone';
+        return;
+      }
+
+      // Login successful
+      toast({
+        title: "Welcome back!",
+        description: "Login successful"
+      });
+      
+      // Invalidate auth queries to trigger refetch
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      
+      // Redirect to dashboard
+      window.location.href = '/dashboard';
+
     } catch (error) {
       console.error('Login error:', error);
       toast({

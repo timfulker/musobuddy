@@ -73,6 +73,95 @@ export class ProductionAuthSystem {
       }
     });
 
+    // Login endpoint - handles unverified accounts
+    this.app.post('/api/auth/login', async (req: any, res) => {
+      console.log('🔐 Login attempt:', { email: req.body.email });
+      
+      try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+          return res.status(400).json({ error: 'Email and password required' });
+        }
+
+        // Find user by email
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Check password
+        const bcrypt = await import('bcrypt');
+        const passwordValid = await bcrypt.compare(password, user.password || '');
+        if (!passwordValid) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Set session
+        req.session.userId = user.id;
+
+        console.log('✅ Login successful for:', email, 'Phone verified:', user.phoneVerified);
+
+        // Check if phone is verified
+        if (!user.phoneVerified) {
+          // Generate new verification code for unverified user
+          const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+          const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+          // Store verification code
+          await db.insert(phoneVerifications).values({
+            phoneNumber: user.phoneNumber || '',
+            verificationCode,
+            expiresAt,
+            ipAddress: req.ip || 'unknown',
+            userAgent: req.headers['user-agent'] || 'unknown',
+            attempts: 0,
+          });
+
+          // Send SMS
+          if (ENV.isProduction) {
+            try {
+              const { SmsService } = await import('./sms-service');
+              const smsService = new SmsService();
+              await smsService.sendVerificationCode(user.phoneNumber || '', verificationCode);
+              console.log('📱 SMS sent to:', user.phoneNumber);
+            } catch (error) {
+              console.error('❌ SMS sending failed:', error);
+            }
+          } else {
+            console.log('📱 [DEV] Verification code for', user.phoneNumber, ':', verificationCode);
+          }
+
+          return res.json({
+            success: true,
+            requiresVerification: true,
+            message: 'Login successful. Please verify your phone number.',
+            phoneNumber: user.phoneNumber
+          });
+        }
+
+        // Phone verified - normal login
+        res.json({
+          success: true,
+          requiresVerification: false,
+          message: 'Login successful',
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            tier: user.tier,
+            isSubscribed: user.isSubscribed,
+            isLifetime: user.isLifetime
+          }
+        });
+
+      } catch (error: any) {
+        console.error('❌ Login error:', error);
+        res.status(500).json({ error: 'Login failed' });
+      }
+    });
+
     // User signup - production version
     this.app.post('/api/auth/signup', async (req: any, res) => {
       try {
