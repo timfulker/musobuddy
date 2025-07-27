@@ -22,22 +22,25 @@ function detectEnvironment(): EnvironmentConfig {
   const replitEnvironment = process.env.REPLIT_ENVIRONMENT;
   const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
   
-  // Production indicators (in order of priority)
-  // SIMPLIFIED: Only production if explicitly deployed
-  // This fixes the confusion between dev and production
-  const isProduction = nodeEnv === 'production' && !!replitDeployment;
+  // CRITICAL FIX: Simplified production detection
+  // We're in production if we have REPLIT_ENVIRONMENT=production OR a production domain
+  const isProduction = (
+    replitEnvironment === 'production' || 
+    nodeEnv === 'production' ||
+    (replitDevDomain && replitDevDomain.includes('replit.dev'))
+  );
   
   // Determine app server URL
   let appServerUrl: string;
   if (process.env.APP_SERVER_URL) {
     // Explicit override (highest priority)
     appServerUrl = process.env.APP_SERVER_URL;
-  } else if (isProduction) {
-    // True production deployment
-    appServerUrl = 'https://musobuddy.replit.app';
   } else if (replitDevDomain) {
-    // Development on Replit
+    // Use the actual domain we're running on (development or production)
     appServerUrl = `https://${replitDevDomain}`;
+  } else if (isProduction) {
+    // Fallback to production URL
+    appServerUrl = 'https://musobuddy.replit.app';
   } else {
     // Local development
     appServerUrl = 'http://localhost:5000';
@@ -47,7 +50,7 @@ function detectEnvironment(): EnvironmentConfig {
     isProduction,
     isDevelopment: !isProduction,
     appServerUrl,
-    sessionSecure: false, // ALWAYS false for Replit - fixes cookie issues
+    sessionSecure: false, // CRITICAL: Always false for Replit domains to fix authentication
     nodeEnv,
     replitDeployment,
     replitEnvironment,

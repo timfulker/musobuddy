@@ -275,7 +275,7 @@ const sessionConfig = {
     secure: false,        // CRITICAL: Always false for Replit (even on HTTPS)
     httpOnly: false,      // CRITICAL: Allow JS access for debugging
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none',     // CRITICAL: Required for cross-site Replit forwarding
+    sameSite: 'none' as const,     // CRITICAL: Required for cross-site Replit forwarding
     domain: undefined     // CRITICAL: Let browser handle domain automatically
   }
 };
