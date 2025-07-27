@@ -260,7 +260,9 @@ validateSessionConfiguration();
 
 
 
-// CRITICAL FIX for Replit Cookie/Session Issues
+// FIXED CODE - REPLACE WITH THIS:
+const isProductionDeployment = !!process.env.REPLIT_DEPLOYMENT;
+
 const sessionConfig = {
   store: new PgSession({
     conString: process.env.DATABASE_URL,
@@ -272,24 +274,49 @@ const sessionConfig = {
   saveUninitialized: true,
   name: 'musobuddy.sid',
   cookie: {
-    secure: false,        // CRITICAL: Always false for Replit (even on HTTPS)
-    httpOnly: false,      // CRITICAL: Allow JS access for debugging
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none' as const,     // CRITICAL: Required for cross-site Replit forwarding
-    domain: undefined     // CRITICAL: Let browser handle domain automatically
+    secure: isProductionDeployment,  // ✅ FIXED: true for production HTTPS
+    httpOnly: false,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: isProductionDeployment ? 'none' as const : 'lax' as const, // ✅ FIXED
+    domain: undefined
   }
 };
 
-console.log('🔧 REPLIT-OPTIMIZED Session configuration:', {
+console.log('🔧 CORRECTED Session configuration:', {
+  environment: isProductionDeployment ? 'PRODUCTION' : 'DEVELOPMENT',
   secure: sessionConfig.cookie.secure,
-  httpOnly: sessionConfig.cookie.httpOnly,
   sameSite: sessionConfig.cookie.sameSite,
-  domain: sessionConfig.cookie.domain,
-  name: sessionConfig.name,
-  environment: process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT'
+  replitDeployment: process.env.REPLIT_DEPLOYMENT || 'not-set'
 });
 
 app.use(session(sessionConfig));
+
+// ADD THIS NEW CODE - Debug endpoint for testing
+app.get('/api/debug/session-test', (req: any, res) => {
+  if (!req.session.testData) {
+    req.session.testData = {
+      timestamp: new Date().toISOString(),
+      testValue: Math.random().toString(36)
+    };
+  }
+
+  req.session.save((err: any) => {
+    if (err) {
+      return res.json({
+        status: 'FAILED',
+        error: err.message,
+        environment: process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT'
+      });
+    }
+
+    res.json({
+      status: 'SUCCESS',
+      sessionId: req.sessionID,
+      environment: process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT',
+      timestamp: new Date().toISOString()
+    });
+  });
+});
 
 // ENHANCED Session Debug Middleware
 app.use((req: any, res, next) => {
