@@ -270,12 +270,11 @@ app.use(session({
   resave: false,
   saveUninitialized: true,  // Changed to true to ensure session creation
   cookie: {
-    secure: ENV.sessionSecure,      // Now correctly false in development
+    secure: false,  // CRITICAL FIX: Force false for Replit development environment 
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: ENV.isProduction ? 'none' as 'none' : 'lax' as 'lax',
+    sameSite: 'lax' as 'lax',  // Use lax for better compatibility
     // Don't set domain for development - let browser handle it
-    // This allows cookies to work on both localhost and Replit dev domains
     domain: undefined
   }
 }));
