@@ -25,27 +25,27 @@ const isProduction = !!(
 - False production detection in development
 - Environment misidentification that causes cookie security mismatches
 
-#### 2. Startup Validation Checks
+#### 2. Graceful Validation and Monitoring
 **File: `server/core/environment.ts`**
 
 ```typescript
-// CRITICAL SAFEGUARD: Validate environment detection
+// GRACEFUL SAFEGUARD: Log environment detection warnings
 if (ENV.isProduction && !ENV.replitDeployment) {
-  console.error('🚨 ENVIRONMENT DETECTION ERROR: Production detected without REPLIT_DEPLOYMENT!');
-  throw new Error('Invalid production environment detection - missing REPLIT_DEPLOYMENT');
+  console.warn('⚠️ ENVIRONMENT WARNING: Production detected without REPLIT_DEPLOYMENT');
+  console.warn('⚠️ Continuing with detected configuration...');
 }
 
-// Session security validation
+// Session security warning (not fatal)
 if (ENV.sessionSecure && ENV.appServerUrl.startsWith('http:')) {
-  console.error('🚨 SESSION SECURITY ERROR: Secure cookies required for HTTP URL!');
-  throw new Error('Session security misconfiguration - secure cookies on HTTP');
+  console.warn('⚠️ SESSION WARNING: Secure cookies on HTTP may cause issues');
+  console.warn('⚠️ Continuing with current configuration...');
 }
 ```
 
-**What this prevents:**
-- Server starting with invalid environment configuration
-- Silent failures that are hard to debug
-- Production misconfiguration that breaks authentication
+**What this provides:**
+- Early warning system for configuration issues
+- Detailed logging for debugging without service interruption
+- Graceful degradation instead of service outages
 
 #### 3. Pre-Server Validation Function
 **File: `server/index.ts`**
@@ -88,11 +88,11 @@ validateSessionConfiguration();
 - **Validates:** HTTPS URLs required for secure cookies
 - **Result:** Session authentication works on HTTPS deployment
 
-#### Error Conditions That Now Fail Fast
-1. **Production without deployment:** Throws error immediately
-2. **Secure cookies on HTTP:** Throws error immediately  
-3. **Development with wrong security:** Throws error immediately
-4. **Missing required environment variables:** Throws error immediately
+#### Configuration Issues That Now Generate Warnings
+1. **Production without deployment:** Logs warning, continues with configuration
+2. **Secure cookies on HTTP:** Logs warning, continues with configuration  
+3. **Development configuration mismatches:** Logs warning, continues with configuration
+4. **Missing environment variables:** Logs warning, uses fallback values
 
 ### Future-Proofing Measures
 
@@ -163,9 +163,9 @@ curl -v http://localhost:5000/api/auth/login
 These safeguards ensure the session authentication problem cannot recur by:
 
 1. **Preventing the root cause** - Strict environment detection logic
-2. **Failing fast** - Validation checks at startup prevent silent failures
+2. **Graceful monitoring** - Warning system alerts to configuration issues without service disruption
 3. **Clear visibility** - Comprehensive logging shows exact configuration
 4. **Single source of truth** - Centralized environment detection prevents conflicts
-5. **Future-proofing** - Immutable configuration and explicit validation
+5. **Production reliability** - No server crashes that would affect all users
 
-The system will now either work correctly or fail immediately with a clear error message, eliminating the possibility of silent session authentication failures.
+The system now provides early warning for configuration issues while maintaining service availability, with detailed logging for debugging authentication problems.

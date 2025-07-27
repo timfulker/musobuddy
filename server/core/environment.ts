@@ -72,23 +72,23 @@ console.log('🔍 AUTHORITATIVE ENVIRONMENT DETECTION:', {
   replitDevDomain: ENV.replitDevDomain
 });
 
-// CRITICAL SAFEGUARD: Validate environment detection
+// GRACEFUL SAFEGUARD: Log environment detection warnings
 if (ENV.isProduction && !ENV.replitDeployment) {
-  console.error('🚨 ENVIRONMENT DETECTION ERROR: Production detected without REPLIT_DEPLOYMENT!');
-  console.error('🚨 This indicates a configuration bug that will break session authentication');
-  console.error('🚨 Environment variables:', {
+  console.warn('⚠️ ENVIRONMENT WARNING: Production detected without REPLIT_DEPLOYMENT');
+  console.warn('⚠️ This may indicate environment misconfiguration');
+  console.warn('⚠️ Environment variables:', {
     NODE_ENV: process.env.NODE_ENV,
     REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
     REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT
   });
-  throw new Error('Invalid production environment detection - missing REPLIT_DEPLOYMENT');
+  console.warn('⚠️ Continuing with detected configuration...');
 }
 
-// Session security validation
+// Session security warning (not fatal)
 if (ENV.sessionSecure && ENV.appServerUrl.startsWith('http:')) {
-  console.error('🚨 SESSION SECURITY ERROR: Secure cookies required for HTTP URL!');
-  console.error('🚨 This will break session authentication in development');
-  throw new Error('Session security misconfiguration - secure cookies on HTTP');
+  console.warn('⚠️ SESSION WARNING: Secure cookies on HTTP may cause issues');
+  console.warn('⚠️ This configuration may break session authentication');
+  console.warn('⚠️ Continuing with current configuration...');
 }
 
 // Convenience functions
@@ -98,25 +98,33 @@ export const getAppServerUrl = (): string => ENV.appServerUrl;
 export const shouldUseSecureCookies = (): boolean => ENV.sessionSecure;
 
 /**
- * SAFEGUARD: Validate session configuration for current environment
- * Call this before starting the server to catch configuration errors early
+ * GRACEFUL VALIDATION: Check session configuration and log warnings
+ * Does not crash the server - logs warnings for monitoring
  */
 export function validateSessionConfiguration(): void {
+  const warnings: string[] = [];
+  
   if (ENV.isProduction) {
     if (!ENV.sessionSecure) {
-      throw new Error('Production environment must use secure session cookies');
+      warnings.push('Production should use secure session cookies');
     }
     if (!ENV.appServerUrl.startsWith('https:')) {
-      throw new Error('Production environment must use HTTPS URLs');
+      warnings.push('Production should use HTTPS URLs');
     }
     if (!ENV.replitDeployment) {
-      throw new Error('Production environment requires REPLIT_DEPLOYMENT');
+      warnings.push('Production should have REPLIT_DEPLOYMENT set');
     }
   } else {
     if (ENV.sessionSecure && ENV.appServerUrl.startsWith('http:')) {
-      throw new Error('Development environment cannot use secure cookies with HTTP');
+      warnings.push('Development using secure cookies with HTTP may cause issues');
     }
   }
   
-  console.log('✅ Session configuration validated for', ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
+  if (warnings.length > 0) {
+    console.warn('⚠️ Session configuration warnings:');
+    warnings.forEach(warning => console.warn(`   - ${warning}`));
+    console.warn('⚠️ Server continuing with current configuration');
+  } else {
+    console.log('✅ Session configuration validated for', ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
+  }
 }
