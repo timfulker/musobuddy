@@ -1,21 +1,22 @@
-// CENTRALIZED ENVIRONMENT DETECTION - Single Source of Truth
-// This file provides consistent environment detection across the entire application
-
-export interface EnvironmentConfig {
+/**
+ * Replit-specific environment detection
+ * Handles both development (janeway.replit.dev) and production (musobuddy.replit.app)
+ */
+interface EnvironmentConfig {
   isProduction: boolean;
   isDevelopment: boolean;
-  isReplitProduction: boolean; // NEW: Specific Replit production flag
+  isReplitProduction: boolean;
   appServerUrl: string;
   sessionSecure: boolean;
   nodeEnv: string;
-  replitDeployment: string | undefined;
-  replitEnvironment: string | undefined;
-  replitDevDomain: string | undefined;
+  replitDeployment?: string;
+  replitEnvironment?: string;
+  replitDevDomain?: string;
 }
 
 /**
- * Authoritative environment detection
- * This is the ONLY function that should determine production vs development
+ * Replit-specific environment detection
+ * Handles both development (janeway.replit.dev) and production (musobuddy.replit.app)
  */
 function detectEnvironment(): EnvironmentConfig {
   const nodeEnv = process.env.NODE_ENV || 'development';
@@ -34,7 +35,7 @@ function detectEnvironment(): EnvironmentConfig {
   // CRITICAL: Override NODE_ENV based on Replit detection
   const isProduction = isReplitProduction || nodeEnv === 'production';
   
-  // Determine app server URL
+  // Determine app server URL with Replit-specific logic
   let appServerUrl: string;
   if (process.env.APP_SERVER_URL) {
     // Explicit override (highest priority)
@@ -43,19 +44,19 @@ function detectEnvironment(): EnvironmentConfig {
     // REPLIT PRODUCTION: Use the known production URL
     appServerUrl = 'https://musobuddy.replit.app';
   } else if (replitDevDomain) {
-    // Development on Replit (like current janeway domain)
+    // REPLIT DEVELOPMENT: Use the dev domain
     appServerUrl = `https://${replitDevDomain}`;
   } else {
-    // Local development
+    // Local development fallback
     appServerUrl = 'http://localhost:5000';
   }
   
   return {
     isProduction,
     isDevelopment: !isProduction,
-    isReplitProduction, // NEW: Specific Replit production flag
+    isReplitProduction,
     appServerUrl,
-    sessionSecure: isReplitProduction, // Secure cookies only in Replit production
+    sessionSecure: isReplitProduction,
     nodeEnv,
     replitDeployment,
     replitEnvironment,
@@ -65,6 +66,19 @@ function detectEnvironment(): EnvironmentConfig {
 
 // Export the authoritative environment configuration
 export const ENV = detectEnvironment();
+
+// Helper functions for backwards compatibility
+export const isProduction = () => ENV.isProduction;
+export const getAppServerUrl = () => ENV.appServerUrl;
+
+export function validateSessionConfiguration() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required for session storage');
+  }
+  if (!process.env.SESSION_SECRET) {
+    console.warn('⚠️ SESSION_SECRET not set - using default (not recommended for production)');
+  }
+}
 
 // Log Replit-specific environment detection
 console.log('🔍 REPLIT ENVIRONMENT DETECTION:', {
@@ -79,59 +93,20 @@ console.log('🔍 REPLIT ENVIRONMENT DETECTION:', {
   replSlug: process.env.REPL_SLUG || 'NOT_SET'
 });
 
-// GRACEFUL SAFEGUARD: Log environment detection warnings
-if (ENV.isProduction && !ENV.replitDeployment) {
-  console.warn('⚠️ ENVIRONMENT WARNING: Production detected without REPLIT_DEPLOYMENT');
-  console.warn('⚠️ This may indicate environment misconfiguration');
-  console.warn('⚠️ Environment variables:', {
-    NODE_ENV: process.env.NODE_ENV,
-    REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
-    REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT
-  });
-  console.warn('⚠️ Continuing with detected configuration...');
-}
-
-// Session security warning (not fatal)
-if (ENV.sessionSecure && ENV.appServerUrl.startsWith('http:')) {
-  console.warn('⚠️ SESSION WARNING: Secure cookies on HTTP may cause issues');
-  console.warn('⚠️ This configuration may break session authentication');
-  console.warn('⚠️ Continuing with current configuration...');
-}
-
-// Convenience functions
-export const isProduction = (): boolean => ENV.isProduction;
-export const isDevelopment = (): boolean => ENV.isDevelopment;
-export const getAppServerUrl = (): string => ENV.appServerUrl;
-export const shouldUseSecureCookies = (): boolean => false; // ALWAYS false for Replit
-
-/**
- * GRACEFUL VALIDATION: Check session configuration and log warnings
- * Does not crash the server - logs warnings for monitoring
- */
-export function validateSessionConfiguration(): void {
-  const warnings: string[] = [];
+// REPLIT PRODUCTION VALIDATION
+if (ENV.isReplitProduction) {
+  console.log('🚀 REPLIT PRODUCTION MODE DETECTED');
+  console.log('📍 Production URL:', ENV.appServerUrl);
+  console.log('🔒 Session Security:', ENV.sessionSecure ? 'ENABLED' : 'DISABLED');
   
-  if (ENV.isProduction) {
-    if (!ENV.sessionSecure) {
-      warnings.push('Production should use secure session cookies');
-    }
-    if (!ENV.appServerUrl.startsWith('https:')) {
-      warnings.push('Production should use HTTPS URLs');
-    }
-    if (!ENV.replitDeployment) {
-      warnings.push('Production should have REPLIT_DEPLOYMENT set');
-    }
-  } else {
-    if (ENV.sessionSecure && ENV.appServerUrl.startsWith('http:')) {
-      warnings.push('Development using secure cookies with HTTP may cause issues');
-    }
+  // Validate production requirements
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ REPLIT PRODUCTION ERROR: DATABASE_URL not set');
   }
-  
-  if (warnings.length > 0) {
-    console.warn('⚠️ Session configuration warnings:');
-    warnings.forEach(warning => console.warn(`   - ${warning}`));
-    console.warn('⚠️ Server continuing with current configuration');
-  } else {
-    console.log('✅ Session configuration validated for', ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
+  if (!process.env.SESSION_SECRET) {
+    console.warn('⚠️ REPLIT PRODUCTION WARNING: SESSION_SECRET not set - using default');
   }
+} else {
+  console.log('🛠️ REPLIT DEVELOPMENT MODE');
+  console.log('📍 Development URL:', ENV.appServerUrl);
 }

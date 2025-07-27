@@ -32,17 +32,30 @@ export class ProductionAuthSystem {
     return normalized;
   }
 
-  // CRITICAL FIX: Unified session save function
+  // CRITICAL FIX: Replit production-aware session save function
   private async saveSession(req: any): Promise<void> {
     return new Promise((resolve, reject) => {
+      // REPLIT PRODUCTION: Add extra validation
+      if (!req.session) {
+        console.error('❌ No session object available for save');
+        reject(new Error('No session object'));
+        return;
+      }
+      
       req.session.save((err: any) => {
         if (err) {
-          console.error('❌ Session save failed:', err);
+          console.error('❌ REPLIT PRODUCTION Session save failed:', err);
+          console.error('❌ Session state:', {
+            sessionId: req.sessionID,
+            hasSession: !!req.session,
+            keys: req.session ? Object.keys(req.session) : 'no session'
+          });
           reject(err);
         } else {
-          console.log('✅ Session saved successfully:', {
+          console.log('✅ REPLIT PRODUCTION Session saved successfully:', {
             sessionId: req.sessionID,
             userId: req.session.userId,
+            isReplitProduction: ENV.appServerUrl.includes('musobuddy.replit.app'),
             timestamp: new Date().toISOString()
           });
           resolve();
@@ -67,8 +80,7 @@ export class ProductionAuthSystem {
           cookieHeader: req.headers.cookie,
           sessionStore: req.sessionStore ? 'available' : 'missing',
           isEmergencyAdmin: userId === 'admin-emergency-id',
-          emergencyLogin: req.session?.emergencyLogin,
-          DUAL_COOKIE_CHECK: req.headers.cookie?.includes('musobuddy.sid') ? 'LEGACY_COOKIE_DETECTED' : 'CLEAN'
+          emergencyLogin: req.session?.emergencyLogin
         });
         
         if (!userId) {
@@ -194,6 +206,96 @@ export class ProductionAuthSystem {
         console.error(`❌ [ADMIN-${loginId}] Admin login error:`, error);
         res.status(500).json({ error: 'Admin login failed' });
       }
+    });
+
+    // FIXED: Single login endpoint - handles all login cases
+    this.app.post('/api/auth/login', async (req: any, res) => {
+      console.log('🔐 Login attempt:', { email: req.body.email });
+      
+      try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+          return res.status(400).json({ error: 'Email and password required' });
+        }
+
+        // Find user by email
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Check password
+        const bcrypt = await import('bcrypt');
+        const passwordValid = await bcrypt.compare(password, user.password || '');
+        if (!passwordValid) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Set session
+        req.session.userId = user.id;
+        
+        // CRITICAL FIX: Force session save for immediate availability
+        try {
+          await this.saveSession(req);
+        } catch (saveError) {
+          console.error('❌ Session save failed during login:', saveError);
+          return res.status(500).json({ error: 'Login failed - session error' });
+        }
+
+        console.log('✅ Login successful for:', email, 'Session saved');
+
+        // Admin users always bypass verification
+        if (user.isAdmin) {
+          console.log('✅ Admin user detected - bypassing verification requirements');
+          return res.json({
+            success: true,
+            requiresVerification: false,
+            message: 'Admin login successful',
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              tier: user.tier,
+              isAdmin: user.isAdmin,
+              isSubscribed: user.isSubscribed,
+              isLifetime: user.isLifetime
+            }
+          });
+        }
+
+        // Regular user login (phone verification may be required)
+        res.json({
+          success: true,
+          requiresVerification: !user.phoneVerified,
+          message: user.phoneVerified ? 'Login successful' : 'Please verify your phone number',
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            tier: user.tier,
+            isSubscribed: user.isSubscribed,
+            isLifetime: user.isLifetime
+          }
+        });
+
+      } catch (error: any) {
+        console.error('❌ Login error:', error);
+        res.status(500).json({ error: 'Login failed' });
+      }
+    });
+
+    // Logout route
+    this.app.post('/api/auth/logout', (req: any, res) => {
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error('❌ Logout error:', err);
+          return res.status(500).json({ error: 'Logout failed' });
+        }
+        res.json({ success: true });
+      });
     });
 
     console.log('✅ Production authentication routes registered');

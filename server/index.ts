@@ -249,17 +249,18 @@ app.post('/api/stripe-webhook',
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// SESSION AUTHENTICATION COMPLETELY FIXED - Single session system only
-import { setupSessionMiddleware, addSessionTestEndpoint, addSessionCleanupEndpoint, addReplitProductionDebugEndpoint } from './core/session-config.js';
+// CRITICAL FIX: Import session setup functions including cookie cleanup
+import { setupSessionMiddleware, addSessionTestEndpoint, addSessionCleanupEndpoint, addReplitProductionDebugEndpoint, addCookieCleanupEndpoint } from './core/session-config.js';
 
-// SESSION NAME FIXED: Use default session name to prevent conflicts
-console.log('🔧 Configuring session middleware...');
+// REPLACE the entire existing session configuration with this:
+console.log('🔧 Configuring session middleware for Replit production...');
 setupSessionMiddleware(app);
 
-// Add session testing endpoints
+// Add session testing and cleanup endpoints
 addSessionTestEndpoint(app);
 addSessionCleanupEndpoint(app);
 addReplitProductionDebugEndpoint(app);
+addCookieCleanupEndpoint(app); // NEW: Clear conflicting cookies
 
 // Session test endpoints are now added via setupSessionMiddleware
 

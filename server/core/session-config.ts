@@ -1,6 +1,24 @@
 import session from 'express-session';
 import ConnectPgSimple from 'connect-pg-simple';
-import { ENV, validateSessionConfiguration } from './environment.js';
+import { ENV } from './environment.js';
+
+function isReplitProduction(): boolean {
+  return !!(
+    process.env.REPLIT_DEPLOYMENT ||
+    process.env.REPLIT_ENVIRONMENT === 'production' ||
+    process.env.REPLIT_DB_URL ||
+    (typeof process.env.REPL_SLUG !== 'undefined' && !process.env.REPLIT_DEV_DOMAIN)
+  );
+}
+
+function validateSessionConfiguration() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required for session storage');
+  }
+  if (!process.env.SESSION_SECRET) {
+    console.warn('⚠️ SESSION_SECRET not set - using default (not recommended for production)');
+  }
+}
 
 // CRITICAL FIX: Enhanced session configuration with better error handling
 export function setupSessionMiddleware(app: any) {
@@ -12,7 +30,7 @@ export function setupSessionMiddleware(app: any) {
   validateSessionConfiguration();
 
   // REPLIT PRODUCTION-SPECIFIC session configuration
-  const isReplitProd = ENV.isReplitProduction;
+  const isReplitProd = isReplitProduction();
   
   const sessionConfig = {
     store: new PgSession({
@@ -31,35 +49,31 @@ export function setupSessionMiddleware(app: any) {
     resave: false,
     saveUninitialized: false, // Don't save empty sessions
     rolling: true, // Reset expiration on each request
-    name: 'connect.sid', // FIXED: Use consistent session name
-    proxy: false, // FIXED: No proxy trust in development
+    name: 'connect.sid', // FIXED: Use standard session name
+    proxy: isReplitProd, // CRITICAL: Trust Replit's proxy in production
     cookie: {
-      secure: false, // FIXED: Always false for development environment
+      secure: isReplitProd, // REPLIT PRODUCTION: true for HTTPS, false for dev
       httpOnly: false, // Allow frontend access
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax' as const, // FIXED: Use lax for development
-      domain: undefined // FIXED: No domain restriction in development
+      sameSite: isReplitProd ? 'none' as const : 'lax' as const, // REPLIT PRODUCTION: 'none' for cross-site
+      domain: isReplitProd ? '.replit.app' : undefined // REPLIT PRODUCTION: Set domain
     }
   };
 
-  console.log('🔧 REPLIT PRODUCTION Session configuration:', {
-    environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
+  console.log('🔧 Session configuration:', {
+    environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT', 
     isReplitProduction: isReplitProd,
     appServerUrl: ENV.appServerUrl,
+    sessionName: sessionConfig.name,
     proxy: sessionConfig.proxy,
     secure: sessionConfig.cookie.secure,
     sameSite: sessionConfig.cookie.sameSite,
     domain: sessionConfig.cookie.domain,
-    saveUninitialized: sessionConfig.saveUninitialized,
-    rolling: sessionConfig.rolling,
     sessionSecret: process.env.SESSION_SECRET ? 'SET' : 'MISSING',
-    databaseUrl: process.env.DATABASE_URL ? 'SET' : 'MISSING',
-    replitEnvironment: ENV.replitEnvironment,
-    replitDeployment: ENV.replitDeployment
+    databaseUrl: process.env.DATABASE_URL ? 'SET' : 'MISSING'
   });
 
   // CRITICAL: Test session store connectivity
-  const sessionStore = sessionConfig.store;
   console.log('🔍 Testing session store connectivity...');
   
   // Apply session middleware
@@ -91,38 +105,6 @@ export function setupSessionMiddleware(app: any) {
 
   console.log('✅ Session middleware configured');
   return sessionConfig;
-}
-
-// REPLIT PRODUCTION: Specific debugging endpoint
-export function addReplitProductionDebugEndpoint(app: any) {
-  app.get('/api/debug/replit-production', (req: any, res: any) => {
-    console.log('🚀 REPLIT PRODUCTION DEBUG CHECK');
-    
-    const replitEnvVars = {
-      REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
-      REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,  
-      REPLIT_DEV_DOMAIN: process.env.REPLIT_DEV_DOMAIN,
-      REPLIT_DB_URL: process.env.REPLIT_DB_URL ? 'SET' : 'NOT_SET',
-      REPL_SLUG: process.env.REPL_SLUG,
-      NODE_ENV: process.env.NODE_ENV,
-      DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT_SET',
-      SESSION_SECRET: process.env.SESSION_SECRET ? 'SET' : 'NOT_SET'
-    };
-    
-    res.json({
-      status: 'REPLIT_PRODUCTION_DEBUG',
-      timestamp: new Date().toISOString(),
-      environment: ENV,
-      replitEnvVars,
-      sessionId: req.sessionID,
-      hasSession: !!req.session,
-      sessionKeys: req.session ? Object.keys(req.session) : [],
-      userAgent: req.headers['user-agent'],
-      host: req.headers.host,
-      origin: req.headers.origin,
-      cookies: req.headers.cookie ? 'PRESENT' : 'MISSING'
-    });
-  });
 }
 
 // CRITICAL: Session validation endpoint
@@ -167,6 +149,38 @@ export function addSessionTestEndpoint(app: any) {
   });
 }
 
+// REPLIT PRODUCTION: Specific debugging endpoint
+export function addReplitProductionDebugEndpoint(app: any) {
+  app.get('/api/debug/replit-production', (req: any, res: any) => {
+    console.log('🚀 REPLIT PRODUCTION DEBUG CHECK');
+    
+    const replitEnvVars = {
+      REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+      REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,  
+      REPLIT_DEV_DOMAIN: process.env.REPLIT_DEV_DOMAIN,
+      REPLIT_DB_URL: process.env.REPLIT_DB_URL ? 'SET' : 'NOT_SET',
+      REPL_SLUG: process.env.REPL_SLUG,
+      NODE_ENV: process.env.NODE_ENV,
+      DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT_SET',
+      SESSION_SECRET: process.env.SESSION_SECRET ? 'SET' : 'NOT_SET'
+    };
+    
+    res.json({
+      status: 'REPLIT_PRODUCTION_DEBUG',
+      timestamp: new Date().toISOString(),
+      environment: ENV,
+      replitEnvVars,
+      sessionId: req.sessionID,
+      hasSession: !!req.session,
+      sessionKeys: req.session ? Object.keys(req.session) : [],
+      userAgent: req.headers['user-agent'],
+      host: req.headers.host,
+      origin: req.headers.origin,
+      cookies: req.headers.cookie ? 'PRESENT' : 'MISSING'
+    });
+  });
+}
+
 // CRITICAL: Session cleanup endpoint for testing
 export function addSessionCleanupEndpoint(app: any) {
   app.post('/api/debug/clear-session-enhanced', (req: any, res: any) => {
@@ -197,6 +211,39 @@ export function addSessionCleanupEndpoint(app: any) {
         sessionId: sessionId,
         remainingKeys: Object.keys(req.session),
         timestamp: new Date().toISOString()
+      });
+    });
+  });
+}
+
+// CRITICAL: Cookie conflict resolution endpoint
+export function addCookieCleanupEndpoint(app: any) {
+  app.post('/api/debug/clear-all-cookies', (req: any, res: any) => {
+    console.log('🧹 CLEARING ALL SESSION COOKIES');
+    console.log('🔍 Current cookies:', req.headers.cookie);
+    console.log('🔍 Session before clear:', req.session);
+    
+    // Destroy current session
+    req.session.destroy((err: any) => {
+      if (err) {
+        console.error('❌ Session destruction failed:', err);
+      } else {
+        console.log('✅ Session destroyed successfully');
+      }
+      
+      // Clear ALL possible session cookies
+      res.clearCookie('musobuddy.sid');
+      res.clearCookie('connect.sid');
+      res.clearCookie('musobuddy.sid', { domain: '.replit.app' });
+      res.clearCookie('connect.sid', { domain: '.replit.app' });
+      res.clearCookie('musobuddy.sid', { path: '/' });
+      res.clearCookie('connect.sid', { path: '/' });
+      
+      res.json({
+        success: true,
+        message: 'All session cookies cleared - ready for clean admin login',
+        timestamp: new Date().toISOString(),
+        instructions: 'Now try admin login again with fresh session'
       });
     });
   });
