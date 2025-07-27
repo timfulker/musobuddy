@@ -36,8 +36,13 @@ export default function LoginPage() {
       console.log('🔍 Frontend: Response data:', data);
 
       if (data.success) {
-        // Invalidate auth queries to trigger refetch
-        await queryClient.invalidateQueries({ queryKey: ['auth'] });
+        // Invalidate auth queries to trigger refetch with correct query key
+        await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+        
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
         
         // Small delay to ensure query invalidation completes
         setTimeout(() => {
