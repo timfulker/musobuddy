@@ -253,6 +253,10 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 const PgSession = ConnectPgSimple(session);
 
 // Use centralized environment detection
+import { validateSessionConfiguration } from './core/environment.js';
+
+// SAFEGUARD: Validate session configuration before starting server
+validateSessionConfiguration();
 
 
 

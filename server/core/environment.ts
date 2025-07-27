@@ -72,8 +72,51 @@ console.log('🔍 AUTHORITATIVE ENVIRONMENT DETECTION:', {
   replitDevDomain: ENV.replitDevDomain
 });
 
+// CRITICAL SAFEGUARD: Validate environment detection
+if (ENV.isProduction && !ENV.replitDeployment) {
+  console.error('🚨 ENVIRONMENT DETECTION ERROR: Production detected without REPLIT_DEPLOYMENT!');
+  console.error('🚨 This indicates a configuration bug that will break session authentication');
+  console.error('🚨 Environment variables:', {
+    NODE_ENV: process.env.NODE_ENV,
+    REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+    REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT
+  });
+  throw new Error('Invalid production environment detection - missing REPLIT_DEPLOYMENT');
+}
+
+// Session security validation
+if (ENV.sessionSecure && ENV.appServerUrl.startsWith('http:')) {
+  console.error('🚨 SESSION SECURITY ERROR: Secure cookies required for HTTP URL!');
+  console.error('🚨 This will break session authentication in development');
+  throw new Error('Session security misconfiguration - secure cookies on HTTP');
+}
+
 // Convenience functions
 export const isProduction = (): boolean => ENV.isProduction;
 export const isDevelopment = (): boolean => ENV.isDevelopment;
 export const getAppServerUrl = (): string => ENV.appServerUrl;
 export const shouldUseSecureCookies = (): boolean => ENV.sessionSecure;
+
+/**
+ * SAFEGUARD: Validate session configuration for current environment
+ * Call this before starting the server to catch configuration errors early
+ */
+export function validateSessionConfiguration(): void {
+  if (ENV.isProduction) {
+    if (!ENV.sessionSecure) {
+      throw new Error('Production environment must use secure session cookies');
+    }
+    if (!ENV.appServerUrl.startsWith('https:')) {
+      throw new Error('Production environment must use HTTPS URLs');
+    }
+    if (!ENV.replitDeployment) {
+      throw new Error('Production environment requires REPLIT_DEPLOYMENT');
+    }
+  } else {
+    if (ENV.sessionSecure && ENV.appServerUrl.startsWith('http:')) {
+      throw new Error('Development environment cannot use secure cookies with HTTP');
+    }
+  }
+  
+  console.log('✅ Session configuration validated for', ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
+}
