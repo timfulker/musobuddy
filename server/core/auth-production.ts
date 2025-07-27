@@ -166,12 +166,20 @@ export class ProductionAuthSystem {
     // Phone verification - production version
     this.app.post('/api/auth/verify-phone', async (req: any, res) => {
       console.log('📱 Phone verification request:', req.body);
+      console.log('🔍 Session debug:', {
+        sessionId: req.sessionID,
+        sessionExists: !!req.session,
+        userId: req.session?.userId,
+        cookieHeader: req.headers.cookie,
+        userAgent: req.headers['user-agent']
+      });
       
       try {
         const { verificationCode } = req.body;
         const userId = req.session.userId;
 
         if (!userId || !verificationCode) {
+          console.log('❌ Missing data - userId:', !!userId, 'verificationCode:', !!verificationCode);
           return res.status(400).json({ error: 'User ID and verification code required' });
         }
 

@@ -247,8 +247,9 @@ app.use(session({
     secure: isProduction,           // ✅ True in production
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: isProduction ? 'none' : 'lax' as 'none' | 'lax',  // ✅ 'none' for production
-    domain: isProduction ? '.replit.app' : undefined  // ✅ Allow subdomains
+    sameSite: 'lax' as 'lax',  // ✅ Use 'lax' for same-site requests
+    // Remove domain restriction for same-origin requests
+    domain: undefined
   }
 }));
 
