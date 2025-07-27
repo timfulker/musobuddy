@@ -226,7 +226,7 @@ export class ProductionAuthSystem {
 
     // Environment debug endpoint
     this.app.get('/api/debug/environment', (req: any, res) => {
-      const { ENV } = require('../environment.js');
+      const { ENV } = require('./environment');
       
       res.json({
         environment: ENV,
