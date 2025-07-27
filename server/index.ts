@@ -273,7 +273,10 @@ app.use(session({
     secure: ENV.sessionSecure,      // Now correctly false in development
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax' as 'lax'
+    sameSite: 'lax' as 'lax',
+    // Don't set domain for development - let browser handle it
+    // This allows cookies to work on both localhost and Replit dev domains
+    domain: undefined
   }
 }));
 

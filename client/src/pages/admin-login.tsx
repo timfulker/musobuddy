@@ -41,11 +41,14 @@ export default function AdminLoginPage() {
       console.log('✅ Admin login successful:', data);
       
       // Check immediately if auth is working
+      console.log('🔍 Making auth check to:', window.location.origin + '/api/auth/user');
       const authCheck = await fetch('/api/auth/user', {
         credentials: 'include'
       });
       console.log('🔍 Auth check response status:', authCheck.status);
       console.log('🔍 Auth check response headers:', Object.fromEntries(authCheck.headers.entries()));
+      console.log('🔍 Current page URL:', window.location.href);
+      console.log('🔍 Document cookies:', document.cookie);
       
       if (!authCheck.ok) {
         console.error('❌ Auth check failed after login');
