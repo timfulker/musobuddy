@@ -309,7 +309,7 @@ export class ProductionAuthSystem {
 
         // Store verification code
         await db.insert(phoneVerifications).values({
-          phoneNumber: user.phoneNumber,
+          phoneNumber: user.phoneNumber || '',
           verificationCode,
           expiresAt,
           ipAddress: req.ip || 'unknown',
@@ -337,7 +337,7 @@ export class ProductionAuthSystem {
             const message = await client.messages.create({
               body: `Your MusoBuddy verification code is: ${verificationCode}`,
               from: twilioPhone,
-              to: user.phoneNumber
+              to: user.phoneNumber || ''
             });
             
             console.log('📱 SMS resent successfully:', message.sid);
