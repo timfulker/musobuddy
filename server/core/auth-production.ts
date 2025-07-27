@@ -152,9 +152,10 @@ export class ProductionAuthSystem {
 
           if (twilioSid && twilioToken && twilioPhone) {
             // Send real SMS (both dev and production)
-            const twilio = require('twilio')(twilioSid, twilioToken);
+            const { default: twilio } = await import('twilio');
+            const client = twilio(twilioSid, twilioToken);
             
-            const message = await twilio.messages.create({
+            const message = await client.messages.create({
               body: `Your MusoBuddy verification code is: ${verificationCode}`,
               from: twilioPhone,
               to: normalizedPhone
@@ -280,6 +281,92 @@ export class ProductionAuthSystem {
       } catch (error: any) {
         console.error('❌ Phone verification error:', error);
         res.status(500).json({ error: 'Verification failed' });
+      }
+    });
+
+    // Resend verification code for existing users
+    this.app.post('/api/auth/resend-code', async (req: any, res) => {
+      try {
+        const { email } = req.body;
+
+        if (!email) {
+          return res.status(400).json({ error: 'Email required' });
+        }
+
+        // Find user by email
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return res.status(404).json({ error: 'Account not found' });
+        }
+
+        if (user.phoneVerified) {
+          return res.status(400).json({ error: 'Phone already verified' });
+        }
+
+        // Generate new verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Store verification code
+        await db.insert(phoneVerifications).values({
+          phoneNumber: user.phoneNumber,
+          verificationCode,
+          expiresAt,
+          ipAddress: req.ip || 'unknown',
+          userAgent: req.headers['user-agent'] || 'unknown',
+          attempts: 0,
+        });
+
+        // Set session for verification
+        req.session.userId = user.id;
+
+        console.log('🔄 Resending verification code to:', user.phoneNumber);
+        console.log('📱 New verification code:', verificationCode);
+
+        // Send SMS via Twilio
+        const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+        const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+        const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+        let smsSuccess = false;
+
+        try {
+          if (twilioSid && twilioToken && twilioPhone) {
+            const { default: twilio } = await import('twilio');
+            const client = twilio(twilioSid, twilioToken);
+            
+            const message = await client.messages.create({
+              body: `Your MusoBuddy verification code is: ${verificationCode}`,
+              from: twilioPhone,
+              to: user.phoneNumber
+            });
+            
+            console.log('📱 SMS resent successfully:', message.sid);
+            smsSuccess = true;
+          } else {
+            console.log('❌ Missing Twilio credentials - SMS not sent');
+            console.log('🎯 ENTER THIS CODE:', verificationCode);
+          }
+        } catch (smsError: any) {
+          console.error('❌ SMS sending failed:', smsError.message);
+          console.log('🎯 FALLBACK CODE:', verificationCode);
+        }
+
+        const shouldIncludeCode = !smsSuccess;
+
+        res.json({
+          success: true,
+          message: shouldIncludeCode ? 
+            'Verification code generated. SMS not available - use code shown below.' :
+            'Verification code sent to your phone.',
+          ...(shouldIncludeCode && { 
+            verificationCode, 
+            tempMessage: 'SMS not configured - use code above' 
+          })
+        });
+
+      } catch (error: any) {
+        console.error('❌ Resend code error:', error);
+        res.status(500).json({ error: 'Failed to resend verification code' });
       }
     });
 
