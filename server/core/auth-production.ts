@@ -169,8 +169,10 @@ export class ProductionAuthSystem {
           success: true,
           userId,
           message: 'Account created. Check your phone for verification code.',
-          // Include code in response for development/testing
-          ...(process.env.NODE_ENV === 'development' && { verificationCode })
+          // Include code in response for development/testing OR if SMS fails
+          ...(process.env.NODE_ENV === 'development' && { verificationCode }),
+          // Temporary: Include code for production testing until Twilio number is purchased
+          ...(isProduction && { verificationCode, tempMessage: 'SMS not configured - use code above' })
         });
 
       } catch (error: any) {
