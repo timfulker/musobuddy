@@ -5,6 +5,9 @@ import { users, phoneVerifications } from "../../shared/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
+// Production environment detection
+const isProduction = !!(process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT);
+
 export interface AuthRoutes {
   app: Express;
 }
@@ -133,20 +136,33 @@ export class ProductionAuthSystem {
         
         console.log('📱 Generated verification code:', verificationCode);
 
-        // For production: Send via Twilio (if configured)
+        // Send SMS via Twilio in production
         try {
-          // Check if Twilio is properly configured
           const twilioSid = process.env.TWILIO_ACCOUNT_SID;
           const twilioToken = process.env.TWILIO_AUTH_TOKEN;
           const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
 
-          // Always use development mode for now while Twilio application is pending
-          console.log('🔧 DEVELOPMENT MODE - Verification code:', verificationCode);
-          console.log('📱 Phone number:', normalizedPhone);
-          console.log('🎯 ENTER THIS CODE:', verificationCode);
+          if (twilioSid && twilioToken && twilioPhone && isProduction) {
+            // Production: Send real SMS
+            const twilio = require('twilio')(twilioSid, twilioToken);
+            
+            const message = await twilio.messages.create({
+              body: `Your MusoBuddy verification code is: ${verificationCode}`,
+              from: twilioPhone,
+              to: normalizedPhone
+            });
+            
+            console.log('📱 SMS sent successfully:', message.sid);
+          } else {
+            // Development: Console logging
+            console.log('🔧 DEVELOPMENT MODE - Verification code:', verificationCode);
+            console.log('📱 Phone number:', normalizedPhone);
+            console.log('🎯 ENTER THIS CODE:', verificationCode);
+          }
         } catch (smsError: any) {
           console.error('❌ SMS sending failed:', smsError.message);
           // Continue anyway - user can still enter code manually
+          console.log('🎯 FALLBACK CODE:', verificationCode);
         }
 
         res.json({
