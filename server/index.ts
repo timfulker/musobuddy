@@ -12,14 +12,17 @@ import { ENV, isProduction } from "./core/environment";
 
 const app = express();
 
-// Add health check endpoint immediately (before any middleware)
-app.get('/', (req: Request, res: Response) => {
+// Add health check endpoint for deployment validation
+app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
     environment: ENV.isProduction ? 'production' : 'development'
   });
 });
+
+// Health check endpoint moved - deployment systems should use /health
+// The root route will be handled by the static file serving for the React app
 
 // Add request timeout middleware to prevent hanging requests
 app.use((req: Request, res: Response, next) => {
