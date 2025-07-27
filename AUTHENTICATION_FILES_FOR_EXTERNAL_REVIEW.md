@@ -62,8 +62,15 @@ SESSION_SECRET: [Present]
 api/auth/user:1  Failed to load resource: the server responded with a status of 401 ()
 🔍 Auth check response: 401
 ❌ User not authenticated
+api/auth/verify-phone:1  Failed to load resource: the server responded with a status of 400 ()
 🔍 No token provided in request (repeated 100+ times)
 ```
+
+## SMS Verification Issues
+- Phone verification endpoint returning 400 errors
+- Regular users cannot complete login due to SMS verification failures
+- Admin users should bypass SMS verification entirely
+- Twilio integration may have credential or configuration issues
 
 ## Authentication Flow Attempts
 1. Session-based (original) - Failed due to domain forwarding

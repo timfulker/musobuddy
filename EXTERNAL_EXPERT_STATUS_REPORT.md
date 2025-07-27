@@ -44,6 +44,8 @@ curl -X POST https://f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janew
 - Session cookies not being set/sent
 - JWT tokens not being received by backend
 - Domain forwarding breaking cookie persistence
+- SMS verification system failing with 400 errors
+- Regular user login blocked by phone verification failures
 
 ## AUTHENTICATION ARCHITECTURE ATTEMPTS
 
@@ -90,6 +92,12 @@ api/auth/user:1  Failed to load resource: the server responded with a status of 
 api/auth/verify-phone:1  Failed to load resource: the server responded with a status of 400 ()
 ```
 
+### SMS Verification Failure
+- **Issue**: Phone verification system failing during user login process
+- **Error**: 400 status on /api/auth/verify-phone endpoint
+- **Impact**: Regular users cannot complete verification to access dashboard
+- **Admin Bypass**: Admin login should bypass SMS verification entirely
+
 ### Server Logs
 ```
 🔍 No token provided in request (repeated 100+ times)
@@ -108,9 +116,10 @@ api/auth/verify-phone:1  Failed to load resource: the server responded with a st
 ## EXTERNAL EXPERT REQUIREMENTS
 
 ### Immediate Access Needed
-1. **Admin Dashboard Access** - Critical for business operations
+1. **Admin Dashboard Access** - Critical for business operations (should bypass SMS verification)
 2. **User Login System** - Platform unusable without authentication
-3. **Stable Authentication** - Must work across domain forwarding
+3. **SMS Verification Fix** - Regular users blocked by phone verification failures
+4. **Stable Authentication** - Must work across domain forwarding
 
 ### Technical Investigation Needed
 1. **Domain Forwarding Impact** - How Replit forwards musobuddy.replit.app to dev domain
