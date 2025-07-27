@@ -73,7 +73,64 @@ export class ProductionAuthSystem {
       }
     });
 
-    // Login endpoint - handles unverified accounts
+    // Admin login endpoint - always bypasses verification for admin users
+    this.app.post('/api/auth/admin-login', async (req: any, res) => {
+      console.log('🔐 ADMIN Login attempt:', { email: req.body.email });
+      
+      try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+          return res.status(400).json({ error: 'Email and password required' });
+        }
+
+        // Find user by email
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Check if user is admin
+        if (!user.isAdmin) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Check password
+        const bcrypt = await import('bcrypt');
+        const passwordValid = await bcrypt.compare(password, user.password || '');
+        if (!passwordValid) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Set session - admin always gets through
+        req.session.userId = user.id;
+
+        console.log('✅ ADMIN Login successful for:', email, 'Bypassing verification requirements');
+
+        // Admin login always succeeds regardless of phone verification
+        res.json({
+          success: true,
+          requiresVerification: false,
+          message: 'Admin login successful',
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            tier: user.tier,
+            isAdmin: user.isAdmin,
+            isSubscribed: user.isSubscribed,
+            isLifetime: user.isLifetime
+          }
+        });
+
+      } catch (error: any) {
+        console.error('❌ Admin login error:', error);
+        res.status(500).json({ error: 'Admin login failed' });
+      }
+    });
+
+    // Regular login endpoint - handles unverified accounts
     this.app.post('/api/auth/login', async (req: any, res) => {
       console.log('🔐 Login attempt:', { email: req.body.email });
       
@@ -102,7 +159,27 @@ export class ProductionAuthSystem {
 
         console.log('✅ Login successful for:', email, 'Phone verified:', user.phoneVerified);
 
-        // Check if phone is verified
+        // Admin users always bypass verification
+        if (user.isAdmin) {
+          console.log('✅ Admin user detected - bypassing verification requirements');
+          return res.json({
+            success: true,
+            requiresVerification: false,
+            message: 'Admin login successful',
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              tier: user.tier,
+              isAdmin: user.isAdmin,
+              isSubscribed: user.isSubscribed,
+              isLifetime: user.isLifetime
+            }
+          });
+        }
+
+        // Check if phone is verified for regular users
         if (!user.phoneVerified) {
           // Generate new verification code for unverified user
           const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
