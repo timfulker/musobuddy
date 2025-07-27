@@ -8,6 +8,8 @@ export function useAuth() {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
+  console.log('🔍 useAuth state:', { user, isLoading, error });
+
   // Admin users are always considered fully authenticated regardless of verification status
   const isAdminAuthenticated = (user as any)?.isAdmin === true;
   const isRegularUserAuthenticated = !!user && !error && (user as any)?.phoneVerified;

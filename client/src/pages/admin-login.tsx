@@ -44,6 +44,19 @@ export default function AdminLoginPage() {
       const authCheck = await fetch('/api/auth/user', {
         credentials: 'include'
       });
+      console.log('🔍 Auth check response status:', authCheck.status);
+      console.log('🔍 Auth check response headers:', Object.fromEntries(authCheck.headers.entries()));
+      
+      if (!authCheck.ok) {
+        console.error('❌ Auth check failed after login');
+        toast({
+          variant: "destructive",
+          title: "Authentication Issue",
+          description: "Login successful but session not established"
+        });
+        return;
+      }
+      
       const authData = await authCheck.json();
       console.log('🔍 Immediate auth check after admin login:', authData);
       
