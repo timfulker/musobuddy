@@ -31,7 +31,8 @@ export function setupSessionMiddleware(app: any) {
     resave: false,
     saveUninitialized: false, // Don't save empty sessions
     rolling: true, // Reset expiration on each request
-    name: 'musobuddy.sid',
+    // SESSION NAME FIXED: Use default name to prevent conflicts
+    // name: 'musobuddy.sid', // Removed custom name causing conflicts
     proxy: isReplitProd, // CRITICAL: Trust Replit's proxy in production
     cookie: {
       secure: isReplitProd, // REPLIT PRODUCTION: true for HTTPS, false for dev
