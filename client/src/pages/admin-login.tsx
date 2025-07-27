@@ -38,6 +38,15 @@ export default function AdminLoginPage() {
       }
 
       // Admin login successful
+      console.log('✅ Admin login successful:', data);
+      
+      // Check immediately if auth is working
+      const authCheck = await fetch('/api/auth/user', {
+        credentials: 'include'
+      });
+      const authData = await authCheck.json();
+      console.log('🔍 Immediate auth check after admin login:', authData);
+      
       toast({
         title: "Admin Access Granted",
         description: "Welcome back, administrator!"
@@ -46,8 +55,10 @@ export default function AdminLoginPage() {
       // Invalidate auth queries to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
+      // Small delay to ensure session is set before redirect
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
 
     } catch (error) {
       console.error('Admin login error:', error);
