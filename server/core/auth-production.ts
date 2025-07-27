@@ -147,14 +147,14 @@ export class ProductionAuthSystem {
               req.session.email = email;
               req.session.emergencyLogin = true;
           
-          console.log(`💾 EMERGENCY: Session data set:`, {
-            userId: req.session.userId,
-            isAdmin: req.session.isAdmin,
-            email: req.session.email,
-            sessionId: req.sessionID,
-            sessionCookie: req.session.cookie,
-            sessionStore: req.sessionStore ? 'available' : 'missing'
-          });
+              console.log(`💾 EMERGENCY: Session data set:`, {
+                userId: req.session.userId,
+                isAdmin: req.session.isAdmin,
+                email: req.session.email,
+                sessionId: req.sessionID,
+                sessionCookie: req.session.cookie,
+                sessionStore: req.sessionStore ? 'available' : 'missing'
+              });
 
               // Force session save after setting data
               req.session.save((saveErr: any) => {
