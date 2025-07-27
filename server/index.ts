@@ -257,6 +257,7 @@ const PgSession = ConnectPgSimple(session);
 
 
 app.use(session({
+  name: 'musobuddy.sid',  // Explicit session name to prevent conflicts
   store: new PgSession({
     conString: process.env.DATABASE_URL,
     tableName: 'sessions',
@@ -266,11 +267,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: ENV.sessionSecure,      // ✅ True in production
+    secure: ENV.sessionSecure,      // Now correctly false in development
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax' as 'lax',      // ✅ Use 'lax' for same-site requests
-    domain: undefined              // Remove domain restriction for same-origin requests
+    sameSite: 'lax' as 'lax',
+    domain: undefined
   }
 }));
 

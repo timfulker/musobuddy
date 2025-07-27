@@ -23,10 +23,10 @@ function detectEnvironment(): EnvironmentConfig {
   const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
   
   // Production indicators (in order of priority)
+  // CRITICAL FIX: Only true production when actually deployed
   const isProduction = !!(
-    nodeEnv === 'production' ||                    // Explicit production mode
-    replitDeployment ||                           // Replit deployment
-    replitEnvironment === 'production'            // Replit production environment
+    replitDeployment ||                           // Replit deployment (most reliable)
+    (nodeEnv === 'production' && replitDeployment) // Explicit production mode with deployment
   );
   
   // Determine app server URL
