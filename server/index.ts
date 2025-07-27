@@ -260,7 +260,8 @@ validateSessionConfiguration();
 
 
 
-app.use(session({
+// BULLETPROOF SESSION CONFIGURATION - Handles all domain scenarios
+const sessionConfig = {
   store: new PgSession({
     conString: process.env.DATABASE_URL,
     tableName: 'sessions',
@@ -268,16 +269,26 @@ app.use(session({
   }),
   secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
   resave: false,
-  saveUninitialized: true,  // Changed to true to ensure session creation
+  saveUninitialized: true,
+  name: 'musobuddy.sid', // Custom session name to avoid conflicts
   cookie: {
-    secure: false,  // CRITICAL FIX: Force false for Replit development environment 
-    httpOnly: true,
+    secure: false,  // Always false for Replit domains (they use HTTPS but need different config)
+    httpOnly: false, // CRITICAL: Allow JavaScript access for debugging and manual handling
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax' as 'lax',  // Use lax for better compatibility
-    // Don't set domain for development - let browser handle it
-    domain: undefined
+    sameSite: 'lax' as 'lax',
+    domain: undefined // Let browser handle domain automatically
   }
-}));
+};
+
+console.log('🔧 Session configuration:', {
+  secure: sessionConfig.cookie.secure,
+  httpOnly: sessionConfig.cookie.httpOnly,
+  sameSite: sessionConfig.cookie.sameSite,
+  domain: sessionConfig.cookie.domain,
+  name: sessionConfig.name
+});
+
+app.use(session(sessionConfig));
 
 // CORS middleware for contract signing from R2
 app.use('/api/contracts/sign', (req, res, next) => {

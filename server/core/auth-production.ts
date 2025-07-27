@@ -104,8 +104,21 @@ export class ProductionAuthSystem {
 
         // Set session - admin always gets through
         req.session.userId = user.id;
+        
+        // CRITICAL FIX: Force session save for immediate availability
+        await new Promise((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) {
+              console.error('❌ Session save error:', err);
+              reject(err);
+            } else {
+              console.log('✅ Session saved successfully with ID:', req.session.id);
+              resolve(true);
+            }
+          });
+        });
 
-        console.log('✅ ADMIN Login successful for:', email, 'Bypassing verification requirements');
+        console.log('✅ ADMIN Login successful for:', email, 'Session saved, bypassing verification requirements');
 
         // Admin login always succeeds regardless of phone verification
         res.json({
@@ -156,8 +169,16 @@ export class ProductionAuthSystem {
 
         // Set session
         req.session.userId = user.id;
+        
+        // CRITICAL FIX: Force session save for immediate availability
+        await new Promise((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) reject(err);
+            else resolve(true);
+          });
+        });
 
-        console.log('✅ Login successful for:', email, 'Phone verified:', user.phoneVerified);
+        console.log('✅ Login successful for:', email, 'Session saved, phone verified:', user.phoneVerified);
 
         // Admin users always bypass verification
         if (user.isAdmin) {
