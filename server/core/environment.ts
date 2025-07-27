@@ -22,12 +22,13 @@ function detectEnvironment(): EnvironmentConfig {
   const replitEnvironment = process.env.REPLIT_ENVIRONMENT;
   const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
   
-  // CRITICAL FIX: Simplified production detection
-  // We're in production if we have REPLIT_ENVIRONMENT=production OR a production domain
+  // CRITICAL FIX: Correct production detection
+  // Only production if we have REPLIT_DEPLOYMENT (actual deployment) 
+  // OR we're on the actual production domain
   const isProduction = (
-    replitEnvironment === 'production' || 
-    nodeEnv === 'production' ||
-    (replitDevDomain && replitDevDomain.includes('replit.dev'))
+    !!replitDeployment || 
+    (replitDevDomain && replitDevDomain === 'musobuddy.replit.app') ||
+    nodeEnv === 'production'
   );
   
   // Determine app server URL
@@ -35,12 +36,12 @@ function detectEnvironment(): EnvironmentConfig {
   if (process.env.APP_SERVER_URL) {
     // Explicit override (highest priority)
     appServerUrl = process.env.APP_SERVER_URL;
-  } else if (replitDevDomain) {
-    // Use the actual domain we're running on (development or production)
-    appServerUrl = `https://${replitDevDomain}`;
   } else if (isProduction) {
-    // Fallback to production URL
+    // True production deployment
     appServerUrl = 'https://musobuddy.replit.app';
+  } else if (replitDevDomain) {
+    // Development on Replit (like current janeway domain)
+    appServerUrl = `https://${replitDevDomain}`;
   } else {
     // Local development
     appServerUrl = 'http://localhost:5000';
@@ -50,7 +51,7 @@ function detectEnvironment(): EnvironmentConfig {
     isProduction,
     isDevelopment: !isProduction,
     appServerUrl,
-    sessionSecure: false, // CRITICAL: Always false for Replit domains to fix authentication
+    sessionSecure: isProduction && !replitDevDomain, // Only secure for true production without dev domains
     nodeEnv,
     replitDeployment,
     replitEnvironment,
