@@ -23,13 +23,9 @@ function detectEnvironment(): EnvironmentConfig {
   const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
   
   // CRITICAL FIX: Correct production detection
-  // Only production if we have REPLIT_DEPLOYMENT (actual deployment) 
-  // OR we're on the actual production domain
-  const isProduction = (
-    !!replitDeployment || 
-    (replitDevDomain && replitDevDomain === 'musobuddy.replit.app') ||
-    nodeEnv === 'production'
-  );
+  // We are ONLY in production if we have REPLIT_DEPLOYMENT set
+  // janeway.replit.dev domains are ALWAYS development regardless of REPLIT_ENVIRONMENT
+  const isProduction = !!replitDeployment;
   
   // Determine app server URL
   let appServerUrl: string;
