@@ -12,6 +12,26 @@ import { ENV, isProduction } from "./core/environment";
 
 const app = express();
 
+// Add health check endpoint immediately (before any middleware)
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    environment: ENV.isProduction ? 'production' : 'development'
+  });
+});
+
+// Add request timeout middleware to prevent hanging requests
+app.use((req: Request, res: Response, next) => {
+  req.setTimeout(30000, () => {
+    console.log('⚠️ Request timeout for:', req.url);
+    if (!res.headersSent) {
+      res.status(408).json({ error: 'Request timeout' });
+    }
+  });
+  next();
+});
+
 // Environment validation
 const requiredEnvVars = ['DATABASE_URL', 'SESSION_SECRET'];
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -581,10 +601,31 @@ async function startServer() {
     // Production server startup (development uses different startup above)
     if (ENV.isProduction) {
       const port = process.env.PORT || 5000;
-      app.listen(Number(port), "0.0.0.0", () => {
+      
+      const server = app.listen(Number(port), "0.0.0.0", () => {
         console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
         console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV}`);
         console.log(`📁 Serving from: dist/public`);
+      });
+
+      // Add error handling for server binding issues
+      server.on('error', (error: any) => {
+        if (error.code === 'EADDRINUSE') {
+          console.error(`❌ Port ${port} is already in use`);
+          process.exit(1);
+        } else {
+          console.error('❌ Server error:', error);
+          process.exit(1);
+        }
+      });
+
+      // Handle shutdown gracefully
+      process.on('SIGTERM', () => {
+        console.log('🔄 SIGTERM received, shutting down gracefully');
+        server.close(() => {
+          console.log('✅ Server closed');
+          process.exit(0);
+        });
       });
     }
     
