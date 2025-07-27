@@ -389,18 +389,28 @@ export class ProductionAuthSystem {
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        // Force session save before responding
         req.session.userId = user.id;
-
-        res.json({
-          success: true,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            phoneVerified: user.phoneVerified,
-            onboardingCompleted: user.onboardingCompleted
+        console.log('🔍 Setting session userId:', user.id);
+        
+        req.session.save((err: any) => {
+          if (err) {
+            console.error('❌ Session save error:', err);
+            return res.status(500).json({ error: 'Session save failed' });
           }
+          
+          console.log('✅ Session saved successfully for user:', user.email);
+          res.json({
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              phoneVerified: user.phoneVerified,
+              onboardingCompleted: user.onboardingCompleted
+            }
+          });
         });
 
       } catch (error: any) {
