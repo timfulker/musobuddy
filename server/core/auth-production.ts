@@ -170,30 +170,6 @@ export class ProductionAuthSystem {
         console.log(`❌ EMERGENCY: Not hardcoded admin credentials`);
         return res.status(401).json({ error: 'Emergency mode: only hardcoded admin allowed' });
 
-        console.log(`🎉 [ADMIN-${loginId}] Admin login completed for: ${email}`);
-
-        res.json({
-          success: true,
-          requiresVerification: false,
-          message: 'Admin login successful - session confirmed',
-          sessionInfo: {
-            sessionId: req.sessionID,
-            userId: req.session.userId,
-            isAdmin: req.session.isAdmin
-          },
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            tier: user.tier,
-            isAdmin: user.isAdmin,
-            isSubscribed: user.isSubscribed,
-            isLifetime: user.isLifetime,
-            phoneVerified: true
-          }
-        });
-
       } catch (error: any) {
         console.error(`❌ [ADMIN-${loginId}] Admin login error:`, error);
         res.status(500).json({ error: 'Admin login failed' });
