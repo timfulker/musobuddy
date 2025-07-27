@@ -32,13 +32,13 @@ export function setupSessionMiddleware(app: any) {
     saveUninitialized: false, // Don't save empty sessions
     rolling: true, // Reset expiration on each request
     name: 'connect.sid', // FIXED: Use consistent session name
-    proxy: isReplitProd, // CRITICAL: Trust Replit's proxy in production
+    proxy: false, // FIXED: No proxy trust in development
     cookie: {
-      secure: isReplitProd, // REPLIT PRODUCTION: true for HTTPS, false for dev
+      secure: false, // FIXED: Always false for development environment
       httpOnly: false, // Allow frontend access
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: isReplitProd ? 'none' as const : 'lax' as const, // REPLIT PRODUCTION: 'none' for cross-site
-      domain: isReplitProd ? '.replit.app' : undefined // REPLIT PRODUCTION: Set domain
+      sameSite: 'lax' as const, // FIXED: Use lax for development
+      domain: undefined // FIXED: No domain restriction in development
     }
   };
 
