@@ -22,10 +22,9 @@ function detectEnvironment(): EnvironmentConfig {
   const replitEnvironment = process.env.REPLIT_ENVIRONMENT;
   const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
   
-  // CRITICAL FIX: Correct production detection
-  // We are ONLY in production if we have REPLIT_DEPLOYMENT set
-  // janeway.replit.dev domains are ALWAYS development regardless of REPLIT_ENVIRONMENT
-  const isProduction = !!replitDeployment;
+  // CRITICAL FIX: Multiple production detection methods
+  // Check REPLIT_DEPLOYMENT first, then REPLIT_ENVIRONMENT for production
+  const isProduction = !!replitDeployment || replitEnvironment === 'production';
   
   // Determine app server URL
   let appServerUrl: string;
@@ -47,7 +46,7 @@ function detectEnvironment(): EnvironmentConfig {
     isProduction,
     isDevelopment: !isProduction,
     appServerUrl,
-    sessionSecure: isProduction && !replitDevDomain, // Only secure for true production without dev domains
+    sessionSecure: isProduction, // Secure cookies for all production environments
     nodeEnv,
     replitDeployment,
     replitEnvironment,

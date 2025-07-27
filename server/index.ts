@@ -260,9 +260,7 @@ validateSessionConfiguration();
 
 
 
-// FIXED CODE - REPLACE WITH THIS:
-const isProductionDeployment = !!process.env.REPLIT_DEPLOYMENT;
-
+// Use centralized environment detection for session configuration
 const sessionConfig = {
   store: new PgSession({
     conString: process.env.DATABASE_URL,
@@ -274,24 +272,27 @@ const sessionConfig = {
   saveUninitialized: true,
   name: 'musobuddy.sid',
   cookie: {
-    secure: isProductionDeployment,  // ✅ FIXED: true for production HTTPS
+    secure: ENV.sessionSecure,  // ✅ FIXED: Use centralized environment detection
     httpOnly: false,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: isProductionDeployment ? 'none' as const : 'lax' as const, // ✅ FIXED
+    sameSite: ENV.isProduction ? 'none' as const : 'lax' as const, // ✅ FIXED: Use centralized detection
     domain: undefined
   }
 };
 
-console.log('🔧 CORRECTED Session configuration:', {
-  environment: isProductionDeployment ? 'PRODUCTION' : 'DEVELOPMENT',
+console.log('🔧 CENTRALIZED Session configuration:', {
+  environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
   secure: sessionConfig.cookie.secure,
   sameSite: sessionConfig.cookie.sameSite,
-  replitDeployment: process.env.REPLIT_DEPLOYMENT || 'not-set'
+  sessionSecure: ENV.sessionSecure,
+  appServerUrl: ENV.appServerUrl,
+  replitDeployment: ENV.replitDeployment || 'not-set',
+  replitEnvironment: ENV.replitEnvironment || 'not-set'
 });
 
 app.use(session(sessionConfig));
 
-// ADD THIS NEW CODE - Debug endpoint for testing
+// Debug endpoint for testing session with centralized environment
 app.get('/api/debug/session-test', (req: any, res) => {
   if (!req.session.testData) {
     req.session.testData = {
@@ -305,14 +306,16 @@ app.get('/api/debug/session-test', (req: any, res) => {
       return res.json({
         status: 'FAILED',
         error: err.message,
-        environment: process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT'
+        environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
+        environmentDetails: ENV
       });
     }
 
     res.json({
       status: 'SUCCESS',
       sessionId: req.sessionID,
-      environment: process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT',
+      environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
+      environmentDetails: ENV,
       timestamp: new Date().toISOString()
     });
   });
