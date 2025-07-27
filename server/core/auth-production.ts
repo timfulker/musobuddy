@@ -2,7 +2,7 @@ import { type Express } from "express";
 import { storage } from "./storage";
 import { db } from "./database";
 import { users, phoneVerifications } from "../../shared/schema";
-import { eq, desc, and, gte } from "drizzle-orm";
+import { eq, desc, and, gte, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { ENV, isProduction, getAppServerUrl } from "./environment";
 
@@ -149,12 +149,6 @@ export class ProductionAuthSystem {
           sessionData: req.session
         });
 
-        // Update user last login
-        await storage.updateUser(user.id, {
-          lastLoginAt: new Date(),
-          lastLoginIP: req.ip || 'unknown'
-        });
-
         console.log(`🎉 [ADMIN-${loginId}] Admin login completed for: ${email}`);
 
         res.json({
@@ -183,6 +177,26 @@ export class ProductionAuthSystem {
         console.error(`❌ [ADMIN-${loginId}] Admin login error:`, error);
         res.status(500).json({ error: 'Admin login failed' });
       }
+    });
+
+    // Super detailed session debug endpoint
+    this.app.get('/api/debug/session-detailed', (req: any, res) => {
+      console.log('🔬 DETAILED SESSION DEBUG');
+      console.log('Session ID:', req.sessionID);
+      console.log('Session object:', JSON.stringify(req.session, null, 2));
+      console.log('Session store details:', {
+        hasStore: !!req.sessionStore,
+        storeType: req.sessionStore?.constructor.name
+      });
+
+      res.json({
+        sessionID: req.sessionID,
+        session: req.session,
+        hasSession: !!req.session,
+        sessionKeys: Object.keys(req.session || {}),
+        cookies: req.headers.cookie,
+        timestamp: new Date().toISOString()
+      });
     });
 
     // Regular login endpoint - handles unverified accounts
@@ -491,7 +505,7 @@ export class ProductionAuthSystem {
               and(
                 eq(phoneVerifications.verificationCode, verificationCode),
                 gte(phoneVerifications.expiresAt, new Date()),
-                eq(phoneVerifications.verifiedAt, null) // Not yet verified
+                isNull(phoneVerifications.verifiedAt) // Not yet verified
               )
             )
             .orderBy(desc(phoneVerifications.createdAt))
