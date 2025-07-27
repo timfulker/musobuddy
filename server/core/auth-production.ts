@@ -4,11 +4,7 @@ import { db } from "./database";
 import { users, phoneVerifications } from "../../shared/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
 import { nanoid } from "nanoid";
-
-// Production environment detection - check all production indicators
-const isProduction = !!(process.env.NODE_ENV === 'production' || 
-                       process.env.REPLIT_DEPLOYMENT ||
-                       process.env.REPLIT_ENVIRONMENT === 'production');
+import { ENV, isProduction, getAppServerUrl } from "./environment";
 
 export interface AuthRoutes {
   app: Express;
@@ -150,9 +146,8 @@ export class ProductionAuthSystem {
             hasSid: !!twilioSid,
             hasToken: !!twilioToken, 
             hasPhone: !!twilioPhone,
-            isProduction,
-            nodeEnv: process.env.NODE_ENV,
-            replitEnv: process.env.REPLIT_ENVIRONMENT
+            isProduction: ENV.isProduction,
+            environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT'
           });
 
           if (twilioSid && twilioToken && twilioPhone) {

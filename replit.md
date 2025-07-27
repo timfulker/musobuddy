@@ -542,6 +542,19 @@ The application is designed to be user-friendly while maintaining professional-g
 - **ZERO CONFIGURATION REQUIRED**: ✅ New user signups will have email integration working immediately after setting email prefix during onboarding
 - **Status**: EMAIL WEBHOOK SYSTEM FULLY OPERATIONAL - Complete generic auto-routing infrastructure ready for all users
 
+### 2025-07-27 - CENTRALIZED ENVIRONMENT DETECTION SYSTEM IMPLEMENTED - Production/Development Switching Fixed
+- **CRITICAL ISSUE RESOLVED**: ✅ Fixed uncontrolled switching between production and development modes caused by multiple conflicting environment detection functions
+- **CENTRALIZED SYSTEM CREATED**: ✅ Created single authoritative `server/core/environment.ts` file providing consistent environment detection across entire application
+- **MULTIPLE DETECTION SOURCES UNIFIED**: ✅ Consolidated environment detection from 4+ different files (auth-production.ts, cloud-storage.ts, stripe-service.ts, index.ts) into single source
+- **AUTHORITATIVE CONFIGURATION**: ✅ Single ENV object provides isProduction, appServerUrl, sessionSecure, and all environment variables with comprehensive logging
+- **CONSISTENT PRODUCTION DETECTION**: ✅ Environment now consistently detected as PRODUCTION based on REPLIT_ENVIRONMENT=production with proper URL resolution
+- **SMS SYSTEM STABILIZED**: ✅ SMS sending now uses centralized environment detection preventing configuration inconsistencies that blocked Twilio integration
+- **SESSION SECURITY UNIFIED**: ✅ All session cookies, CORS headers, and security settings now use centralized ENV.sessionSecure for consistent production behavior
+- **URL DETECTION CENTRALIZED**: ✅ Single getAppServerUrl() function prevents production/development URL conflicts in contract signing, invoices, and cloud storage
+- **STARTUP LOGGING CLEANED**: ✅ Removed duplicate and conflicting environment detection logs, now shows single authoritative environment configuration
+- **PRODUCTION RELIABILITY**: ✅ System no longer switches unpredictably between modes - solid foundation for enterprise deployment and user authentication
+- **Status**: ENVIRONMENT DETECTION COMPLETELY STABLE - Single source of truth prevents production/development mode confusion
+
 ### 2025-07-26 - AI FEE EXTRACTION SYSTEM COMPLETELY FIXED - Production Ready Financial Data Capture
 - **CRITICAL BUG IDENTIFIED AND RESOLVED**: ✅ AI was extracting fees as "estimatedValue" but booking creation was setting "fee: null" causing financial data loss
 - **AI PROMPT ENHANCEMENT**: ✅ Enhanced prompt with explicit instruction "Look carefully for all money amounts, fees, quotes, budgets, and prices"

@@ -8,6 +8,7 @@ import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
 import { validateStartup, setupGracefulShutdown } from "./core/production-safeguards";
+import { ENV, isProduction } from "./core/environment";
 
 const app = express();
 
@@ -228,18 +229,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Session configuration for authentication
 const PgSession = ConnectPgSimple(session);
 
-// Fix production session configuration - check all production indicators
-const isProduction = !!(process.env.NODE_ENV === 'production' || 
-                       process.env.REPLIT_DEPLOYMENT ||
-                       process.env.REPLIT_ENVIRONMENT === 'production');
-
-console.log('🔍 Environment detection result:', {
-  NODE_ENV: process.env.NODE_ENV,
-  REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
-  REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
-  isProduction,
-  finalDecision: isProduction ? 'PRODUCTION' : 'DEVELOPMENT'
-});
+// Use centralized environment detection
 
 
 
@@ -253,12 +243,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: isProduction,           // ✅ True in production
+    secure: ENV.sessionSecure,      // ✅ True in production
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax' as 'lax',  // ✅ Use 'lax' for same-site requests
-    // Remove domain restriction for same-origin requests
-    domain: undefined
+    sameSite: 'lax' as 'lax',      // ✅ Use 'lax' for same-site requests
+    domain: undefined              // Remove domain restriction for same-origin requests
   }
 }));
 
@@ -544,18 +533,7 @@ async function startServer() {
     
     // Add production error handling
     try {
-      // Robust environment detection - works in both development and actual deployment
-      const isProduction = process.env.NODE_ENV === 'production' || !!process.env.REPLIT_DEPLOYMENT;
-      
-      console.log('🔍 Environment detection result:', {
-        NODE_ENV: process.env.NODE_ENV,
-        REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
-        REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
-        isProduction,
-        finalDecision: isProduction ? 'PRODUCTION' : 'DEVELOPMENT'
-      });
-      
-      if (isProduction) {
+      if (ENV.isProduction) {
         console.log('🏭 Production mode detected: serving static files');
         console.log('🔍 Environment indicators:', {
           NODE_ENV: process.env.NODE_ENV,
@@ -601,7 +579,7 @@ async function startServer() {
     }
     
     // Production server startup (development uses different startup above)
-    if (process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT) {
+    if (ENV.isProduction) {
       const port = process.env.PORT || 5000;
       app.listen(Number(port), "0.0.0.0", () => {
         console.log(`🚀 MusoBuddy server started on http://0.0.0.0:${port}`);
