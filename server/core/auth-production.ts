@@ -132,6 +132,13 @@ export class ProductionAuthSystem {
         // Set session immediately
         req.session.userId = userId;
         
+        console.log('✅ SESSION SET:', {
+          sessionId: req.sessionID,
+          userId: userId,
+          sessionExists: !!req.session,
+          sessionData: req.session
+        });
+        
         console.log('📱 Generated verification code:', verificationCode);
 
         // Get Twilio credentials  
@@ -202,12 +209,14 @@ export class ProductionAuthSystem {
     // Phone verification - production version
     this.app.post('/api/auth/verify-phone', async (req: any, res) => {
       console.log('📱 Phone verification request:', req.body);
-      console.log('🔍 Session debug:', {
+      console.log('🔍 ENHANCED Session debug:', {
         sessionId: req.sessionID,
         sessionExists: !!req.session,
+        sessionData: req.session,
         userId: req.session?.userId,
         cookieHeader: req.headers.cookie,
-        userAgent: req.headers['user-agent']
+        userAgent: req.headers['user-agent'],
+        allHeaders: req.headers
       });
       
       try {

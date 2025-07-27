@@ -261,7 +261,6 @@ validateSessionConfiguration();
 
 
 app.use(session({
-  name: 'musobuddy.sid',  // Explicit session name to prevent conflicts
   store: new PgSession({
     conString: process.env.DATABASE_URL,
     tableName: 'sessions',
@@ -269,13 +268,12 @@ app.use(session({
   }),
   secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,  // Changed to true to ensure session creation
   cookie: {
     secure: ENV.sessionSecure,      // Now correctly false in development
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax' as 'lax',
-    domain: undefined
+    sameSite: 'lax' as 'lax'
   }
 }));
 
