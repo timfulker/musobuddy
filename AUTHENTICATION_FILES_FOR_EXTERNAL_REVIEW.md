@@ -7,18 +7,21 @@
 2. **client/src/App.tsx** - Routing and authentication checks (lines 36-101)
 3. **client/src/pages/login.tsx** - Login form and authentication flow
 4. **client/src/pages/admin-login.tsx** - Admin bypass login page
-5. **client/src/lib/queryClient.ts** - API request handling and error management
+5. **client/src/pages/signup.tsx** - User registration with phone verification
+6. **client/src/pages/verify-phone.tsx** - Phone verification code entry page
+7. **client/src/lib/queryClient.ts** - API request handling and error management
 
 ### Backend Authentication
 6. **server/core/auth-production.ts** - Authentication middleware and routes
 7. **server/core/token-auth.ts** - JWT token authentication system (latest attempt)
-8. **server/core/environment.ts** - Environment detection system
-9. **server/index.ts** - Main server setup with session configuration (lines 263-295)
-10. **server/core/storage.ts** - User authentication methods
+8. **server/core/sms-service.ts** - SMS verification service with Twilio integration
+9. **server/core/environment.ts** - Environment detection system
+10. **server/index.ts** - Main server setup with session configuration (lines 263-295)
+11. **server/core/storage.ts** - User authentication methods
 
 ### Database & Schema
-11. **shared/schema.ts** - User schema and database structure
-12. **server/core/database.ts** - Database connection and configuration
+12. **shared/schema.ts** - User schema and database structure (includes phoneVerifications table)
+13. **server/core/database.ts** - Database connection and configuration
 
 ## Current Issue
 User login succeeds on backend (confirmed via curl tests) but frontend authentication state detection fails, causing redirect loop back to landing page instead of dashboard access.
@@ -71,6 +74,27 @@ api/auth/verify-phone:1  Failed to load resource: the server responded with a st
 - Regular users cannot complete login due to SMS verification failures
 - Admin users should bypass SMS verification entirely
 - Twilio integration may have credential or configuration issues
+
+### SMS-Related Files Requiring Review
+- **server/core/sms-service.ts** - Twilio SMS service implementation
+- **client/src/pages/verify-phone.tsx** - Phone verification UI
+- **client/src/pages/signup.tsx** - Registration with SMS verification
+- **verify-phone-twilio.js** - Twilio phone verification helper script
+- **shared/schema.ts** - phoneVerifications table schema
+
+### SMS Environment Variables
+```
+TWILIO_ACCOUNT_SID: [Required for SMS]
+TWILIO_AUTH_TOKEN: [Required for SMS]  
+TWILIO_PHONE_NUMBER: [Required for SMS sending]
+```
+
+### SMS Error Scenarios
+1. **Twilio Trial Restrictions** - Unverified phone numbers blocked
+2. **Configuration Missing** - Missing Twilio credentials
+3. **Phone Number Format** - UK number normalization issues
+4. **Rate Limiting** - SMS sending frequency restrictions
+5. **Environment Detection** - Production vs development SMS behavior
 
 ## Authentication Flow Attempts
 1. Session-based (original) - Failed due to domain forwarding
