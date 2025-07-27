@@ -108,24 +108,14 @@ export class ProductionAuthSystem {
           lastName,
           phoneNumber: normalizedPhone,
           password, // Will be hashed by storage layer
-          phoneVerified: true, // TEMPORARY: Skip verification during Twilio upgrade
+          phoneVerified: false,
           tier: 'trial',
           onboardingCompleted: false
         });
 
         console.log('✅ User created:', userId);
-        console.log('⚠️ TEMPORARY: Phone verification bypassed during Twilio upgrade');
 
-        // Skip verification during Twilio upgrade - redirect to dashboard
-        res.json({
-          success: true,
-          userId,
-          message: 'Account created successfully. Phone verification temporarily bypassed.',
-          skipVerification: true
-        });
-        return;
-
-        // Generate verification code (disabled during Twilio upgrade)
+        // Generate verification code
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
