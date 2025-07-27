@@ -16,15 +16,21 @@ export default function AdminLoginPage() {
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsLoading(true);
     
+    console.log('🔥 FRONTEND: Admin login starting', { email, hasPassword: !!password });
+    
     try {
+      console.log('🔥 FRONTEND: Making fetch request to /api/auth/admin-login');
       const response = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
+      
+      console.log('🔥 FRONTEND: Got response status:', response.status);
 
       const data = await response.json();
 
