@@ -131,11 +131,21 @@ export class ProductionAuthSystem {
         if (email === 'timfulker@gmail.com' && password === 'MusoBuddy2025!') {
           console.log(`🔑 EMERGENCY: Using hardcoded admin credentials`);
           
-          // Bypass database lookup and set session directly
-          req.session.userId = 'admin-emergency-id';
-          req.session.isAdmin = true;
-          req.session.email = email;
-          req.session.emergencyLogin = true;
+          // CRITICAL FIX: Regenerate session with correct security settings
+          return new Promise((resolve, reject) => {
+            req.session.regenerate((err: any) => {
+              if (err) {
+                console.error('❌ Session regeneration failed:', err);
+                // Continue with existing session
+              } else {
+                console.log('✅ Session regenerated with fresh security settings');
+              }
+              
+              // Set session data after regeneration
+              req.session.userId = 'admin-emergency-id';
+              req.session.isAdmin = true;
+              req.session.email = email;
+              req.session.emergencyLogin = true;
           
           console.log(`💾 EMERGENCY: Session data set:`, {
             userId: req.session.userId,
@@ -146,49 +156,14 @@ export class ProductionAuthSystem {
             sessionStore: req.sessionStore ? 'available' : 'missing'
           });
 
-          // Force session save with multiple attempts
-          return new Promise((resolve, reject) => {
-            // First attempt
-            req.session.save((err: any) => {
-              if (err) {
-                console.error(`❌ EMERGENCY: Session save failed (attempt 1):`, err);
+              // Force session save after setting data
+              req.session.save((saveErr: any) => {
+                if (saveErr) {
+                  console.error(`❌ EMERGENCY: Session save failed:`, saveErr);
+                  return res.status(500).json({ error: 'Session save failed' });
+                }
                 
-                // Second attempt after brief delay
-                setTimeout(() => {
-                  req.session.save((err2: any) => {
-                    if (err2) {
-                      console.error(`❌ EMERGENCY: Session save failed (attempt 2):`, err2);
-                      return res.status(500).json({ error: 'Session save failed after multiple attempts' });
-                    }
-                    
-                    console.log(`✅ EMERGENCY: Session saved on attempt 2`);
-                    console.log(`🔍 EMERGENCY: Final session check:`, req.session);
-                    
-                    res.json({
-                      success: true,
-                      requiresVerification: false,
-                      message: 'EMERGENCY Admin login successful',
-                      sessionInfo: {
-                        sessionId: req.sessionID,
-                        userId: req.session.userId,
-                        isAdmin: req.session.isAdmin
-                      },
-                      user: {
-                        id: 'admin-emergency-id',
-                        email: email,
-                        firstName: 'Admin',
-                        lastName: 'User',
-                        tier: 'admin',
-                        isAdmin: true,
-                        isSubscribed: true,
-                        isLifetime: true,
-                        phoneVerified: true
-                      }
-                    });
-                  });
-                }, 100);
-              } else {
-                console.log(`✅ EMERGENCY: Session saved successfully on attempt 1`);
+                console.log(`✅ EMERGENCY: Session saved successfully`);
                 console.log(`🔍 EMERGENCY: Final session check:`, req.session);
                 console.log(`🔍 EMERGENCY: Session cookie details:`, req.session.cookie);
                 
@@ -214,7 +189,7 @@ export class ProductionAuthSystem {
                     phoneVerified: true
                   }
                 });
-              }
+              });
             });
           });
         }
