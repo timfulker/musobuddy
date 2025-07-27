@@ -8,10 +8,16 @@ export function useAuth() {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
+  // Admin users are always considered fully authenticated regardless of verification status
+  const isAdminAuthenticated = (user as any)?.isAdmin === true;
+  const isRegularUserAuthenticated = !!user && !error && (user as any)?.phoneVerified;
+
   return {
     user,
-    isAuthenticated: !!user && !error,
+    isAuthenticated: isAdminAuthenticated || isRegularUserAuthenticated,
     isLoading,
-    error
+    error,
+    isAdmin: (user as any)?.isAdmin === true,
+    needsVerification: !!user && !(user as any)?.phoneVerified && !(user as any)?.isAdmin
   };
 }
