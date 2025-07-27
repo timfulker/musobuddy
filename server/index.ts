@@ -114,6 +114,11 @@ app.get('/api/webhook-monitor', (req, res) => {
   });
 });
 
+// Authentication test page
+app.get('/auth-test', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'browser-auth-test.html'));
+});
+
 // Simple HTML page to view webhook status
 app.get('/webhook-status', (req, res) => {
   res.send(`
