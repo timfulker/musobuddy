@@ -273,7 +273,7 @@ app.use(session({
     secure: ENV.sessionSecure,      // Now correctly false in development
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax' as 'lax',
+    sameSite: ENV.isProduction ? 'none' as 'none' : 'lax' as 'lax',
     // Don't set domain for development - let browser handle it
     // This allows cookies to work on both localhost and Replit dev domains
     domain: undefined
@@ -288,10 +288,25 @@ app.use('/api/contracts/sign', (req, res, next) => {
   next();
 });
 
-// Add CORS for session restoration endpoints
-app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user'], (req, res, next) => {
+// Add CORS for session restoration endpoints and auth routes
+app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/api/auth/user', '/api/auth/admin-login', '/api/auth/login'], (req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  
+  // Determine the correct origin to allow
+  const origin = req.headers.origin || 
+                 req.headers.referer?.replace(/\/[^\/]*$/, '') || // Extract origin from referer
+                 (req.headers.host?.includes('musobuddy.replit.app') ? 'https://musobuddy.replit.app' : 
+                  req.headers.host?.includes('janeway.replit.dev') ? `https://${req.headers.host}` : 
+                  'http://localhost:5000');
+  
+  console.log('🔍 CORS Origin Detection:', {
+    originalOrigin: req.headers.origin,
+    referer: req.headers.referer,
+    host: req.headers.host,
+    determinedOrigin: origin
+  });
+  
+  res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   

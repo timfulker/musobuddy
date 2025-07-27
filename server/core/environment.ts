@@ -23,9 +23,11 @@ function detectEnvironment(): EnvironmentConfig {
   const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
   
   // Production indicators (in order of priority)
-  // CRITICAL FIX: Only true production when actually deployed
-  // REPLIT_DEPLOYMENT is the definitive indicator of actual deployment
-  const isProduction = !!(replitDeployment && replitDeployment.trim() !== '');
+  // CRITICAL FIX: Production detection based on multiple indicators
+  // 1. REPLIT_DEPLOYMENT exists (actual deployment)
+  // 2. Accessing via musobuddy.replit.app domain (production domain)
+  const isProduction = !!(replitDeployment && replitDeployment.trim() !== '') || 
+                       (replitEnvironment === 'production');
   
   // Determine app server URL
   let appServerUrl: string;
