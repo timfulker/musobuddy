@@ -5,11 +5,11 @@
 ### What We Faced
 Building a SaaS platform with multiple deployment environments (development/production), we experienced seemingly random failures:
 
-- Contract signing failed intermittently
-- Session authentication broke after payments  
-- Email webhooks couldn't find correct API endpoints
+- Document signing failed intermittently
+- Session authentication broke after payment processing  
+- API webhooks couldn't find correct endpoints
 - Cross-origin request failures
-- Users logged out unexpectedly after Stripe redirects
+- Users logged out unexpectedly after third-party service redirects
 
 ### Root Cause Discovery
 The issue wasn't random - **multiple files were making independent environment detection decisions:**
@@ -32,14 +32,14 @@ const isProduction = process.env.NODE_ENV === 'production' || !!process.env.REPL
 
 ### Specific Failure Scenarios
 
-**Contract Signing Failure:**
-- Contract page generated with production URL: `https://app.replit.app`
-- Session cookies created with development domain: `dev-123.replit.dev`
+**Document Signing Failure:**
+- Document page generated with production URL: `https://app.yourplatform.com`
+- Session cookies created with development domain: `dev-123.yourplatform.dev`
 - JavaScript tried to POST to wrong server → 401 Unauthorized
 
 **Payment Flow Broken:**
-- Stripe success URL set to: `https://dev-123.replit.dev/trial-success`
-- Session cookies secured for: `https://app.replit.app`
+- Payment processor success URL set to: `https://dev-123.yourplatform.dev/success`
+- Session cookies secured for: `https://app.yourplatform.com`
 - User returned to wrong domain → Session not found → Login loop
 
 **API Endpoint Confusion:**
@@ -71,7 +71,7 @@ function detectEnvironment(): EnvironmentConfig {
   if (process.env.APP_SERVER_URL) {
     appServerUrl = process.env.APP_SERVER_URL;  // Override
   } else if (isProduction) {
-    appServerUrl = 'https://musobuddy.replit.app';  // Production
+    appServerUrl = 'https://app.yourplatform.com';  // Production
   } else if (replitDevDomain) {
     appServerUrl = `https://${replitDevDomain}`;    // Development
   } else {
@@ -95,7 +95,7 @@ export const ENV = detectEnvironment();
 ```javascript
 // Different logic in every file
 const isProduction = process.env.NODE_ENV === 'production';
-const serverUrl = isProduction ? 'https://app.replit.app' : 'http://localhost:5000';
+const serverUrl = isProduction ? 'https://app.yourplatform.com' : 'http://localhost:5000';
 ```
 
 **After:**
@@ -119,24 +119,24 @@ cookie: {
 }
 ```
 
-**Contract Generation:**
+**Document Generation:**
 ```javascript
-const signingPageUrl = `${ENV.appServerUrl}/sign-contract/${contractId}`;
+const signingPageUrl = `${ENV.appServerUrl}/sign-document/${documentId}`;
 ```
 
-**Stripe Integration:**
+**Payment Integration:**
 ```javascript
-success_url: `${ENV.appServerUrl}/trial-success`,
+success_url: `${ENV.appServerUrl}/success`,
 cancel_url: `${ENV.appServerUrl}/pricing`
 ```
 
 ## Results After Implementation
 
 ### Immediate Fixes
-- ✅ Contract signing working consistently
+- ✅ Document signing working consistently
 - ✅ Payment flow completion to correct URLs  
 - ✅ Session persistence across redirects
-- ✅ Email webhooks hitting correct endpoints
+- ✅ API webhooks hitting correct endpoints
 - ✅ No more cross-origin failures
 
 ### System Stability
