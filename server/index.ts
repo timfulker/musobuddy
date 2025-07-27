@@ -290,6 +290,10 @@ console.log('🔧 Session configuration:', {
 
 app.use(session(sessionConfig));
 
+// Add token authentication middleware
+import { TokenAuthSystem } from './core/token-auth.js';
+app.use(TokenAuthSystem.middleware());
+
 // CORS middleware for contract signing from R2
 app.use('/api/contracts/sign', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');

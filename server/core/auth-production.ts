@@ -120,11 +120,16 @@ export class ProductionAuthSystem {
 
         console.log('✅ ADMIN Login successful for:', email, 'Session saved, bypassing verification requirements');
 
+        // Generate JWT token for client-side storage
+        const { TokenAuthSystem } = await import('./token-auth.js');
+        const token = TokenAuthSystem.generateToken(user.id, user.email);
+
         // Admin login always succeeds regardless of phone verification
         res.json({
           success: true,
           requiresVerification: false,
           message: 'Admin login successful',
+          token, // Include token for client-side storage
           user: {
             id: user.id,
             email: user.email,

@@ -40,28 +40,11 @@ export default function AdminLoginPage() {
       // Admin login successful
       console.log('✅ Admin login successful:', data);
       
-      // Check immediately if auth is working
-      console.log('🔍 Making auth check to:', window.location.origin + '/api/auth/user');
-      const authCheck = await fetch('/api/auth/user', {
-        credentials: 'include'
-      });
-      console.log('🔍 Auth check response status:', authCheck.status);
-      console.log('🔍 Auth check response headers:', Object.fromEntries(authCheck.headers.entries()));
-      console.log('🔍 Current page URL:', window.location.href);
-      console.log('🔍 Document cookies:', document.cookie);
-      
-      if (!authCheck.ok) {
-        console.error('❌ Auth check failed after login');
-        toast({
-          variant: "destructive",
-          title: "Authentication Issue",
-          description: "Login successful but session not established"
-        });
-        return;
+      // Store token if provided
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+        console.log('✅ Token stored in localStorage');
       }
-      
-      const authData = await authCheck.json();
-      console.log('🔍 Immediate auth check after admin login:', authData);
       
       toast({
         title: "Admin Access Granted",
@@ -71,10 +54,8 @@ export default function AdminLoginPage() {
       // Invalidate auth queries to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
-      // Small delay to ensure session is set before redirect
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 500);
+      // Navigate immediately
+      window.location.href = '/dashboard';
 
     } catch (error) {
       console.error('Admin login error:', error);

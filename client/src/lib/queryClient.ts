@@ -60,8 +60,20 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     console.log('🔍 Making query request to:', queryKey[0]);
+    
+    // Get auth token from localStorage
+    const token = localStorage.getItem('authToken');
+    const headers: HeadersInit = {};
+    
+    // Add Bearer token if available
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔍 Using token authentication');
+    }
+    
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers,
     });
     
     console.log('🔍 Query response status:', res.status);
