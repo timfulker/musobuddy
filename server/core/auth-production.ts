@@ -67,7 +67,8 @@ export class ProductionAuthSystem {
           cookieHeader: req.headers.cookie,
           sessionStore: req.sessionStore ? 'available' : 'missing',
           isEmergencyAdmin: userId === 'admin-emergency-id',
-          emergencyLogin: req.session?.emergencyLogin
+          emergencyLogin: req.session?.emergencyLogin,
+          DUAL_COOKIE_CHECK: req.headers.cookie?.includes('musobuddy.sid') ? 'LEGACY_COOKIE_DETECTED' : 'CLEAN'
         });
         
         if (!userId) {
