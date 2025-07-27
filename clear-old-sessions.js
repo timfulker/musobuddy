@@ -1,26 +1,29 @@
-// CRITICAL SESSION CLEANUP SCRIPT
-// This clears all existing sessions to fix authentication issues
+import pkg from 'pg';
+const { Client } = pkg;
 
-const { Pool } = require('pg');
+const client = new Client({
+  connectionString: process.env.DATABASE_URL
+});
 
-async function clearOldSessions() {
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
+async function clearSessions() {
+  console.log('🧹 Clearing old sessions...');
   
   try {
-    console.log('🧹 Clearing all old sessions to fix authentication...');
+    await client.connect();
     
-    const result = await pool.query('DELETE FROM sessions WHERE sid != $1', ['admin-session-keep']);
-    console.log(`✅ Cleared ${result.rowCount} old sessions`);
+    // Delete all sessions to force clean slate
+    const result = await client.query('DELETE FROM sessions');
+    console.log(`✅ Deleted ${result.rowCount} sessions`);
     
-    console.log('🔄 Sessions cleared. Users need to login again with fresh sessions.');
+    // List remaining sessions
+    const remaining = await client.query('SELECT * FROM sessions');
+    console.log(`📊 Remaining sessions: ${remaining.rowCount}`);
     
   } catch (error) {
-    console.error('❌ Session cleanup error:', error);
+    console.error('❌ Session cleanup failed:', error);
   } finally {
-    await pool.end();
+    await client.end();
   }
 }
 
-clearOldSessions();
+clearSessions();

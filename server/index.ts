@@ -249,89 +249,32 @@ app.post('/api/stripe-webhook',
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Session configuration for authentication
-const PgSession = ConnectPgSimple(session);
+// CRITICAL FIX: Import session setup functions
+import { setupSessionMiddleware, addSessionTestEndpoint, addSessionCleanupEndpoint } from './core/session-config.js';
 
-// Use centralized environment detection
-import { validateSessionConfiguration } from './core/environment.js';
+// REPLACE the entire existing session configuration with this:
+console.log('🔧 Configuring session middleware...');
+setupSessionMiddleware(app);
 
-// SAFEGUARD: Validate session configuration before starting server
-validateSessionConfiguration();
+// Add session testing endpoints
+addSessionTestEndpoint(app);
+addSessionCleanupEndpoint(app);
 
+// Session test endpoints are now added via setupSessionMiddleware
 
-
-// Use centralized environment detection for session configuration
-const sessionConfig = {
-  store: new PgSession({
-    conString: process.env.DATABASE_URL,
-    tableName: 'sessions',
-    createTableIfMissing: true
-  }),
-  secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
-  resave: false,
-  saveUninitialized: true,
-  name: 'musobuddy.sid',
-  cookie: {
-    secure: ENV.sessionSecure,  // ✅ FIXED: Use centralized environment detection
-    httpOnly: false,
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: ENV.isProduction ? 'none' as const : 'lax' as const, // ✅ FIXED: Use centralized detection
-    domain: undefined
-  }
-};
-
-console.log('🔧 CENTRALIZED Session configuration:', {
-  environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
-  secure: sessionConfig.cookie.secure,
-  sameSite: sessionConfig.cookie.sameSite,
-  sessionSecure: ENV.sessionSecure,
-  appServerUrl: ENV.appServerUrl,
-  replitDeployment: ENV.replitDeployment || 'not-set',
-  replitEnvironment: ENV.replitEnvironment || 'not-set'
-});
-
-app.use(session(sessionConfig));
-
-// Debug endpoint for testing session with centralized environment
-app.get('/api/debug/session-test', (req: any, res) => {
-  if (!req.session.testData) {
-    req.session.testData = {
-      timestamp: new Date().toISOString(),
-      testValue: Math.random().toString(36)
-    };
-  }
-
-  req.session.save((err: any) => {
-    if (err) {
-      return res.json({
-        status: 'FAILED',
-        error: err.message,
-        environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
-        environmentDetails: ENV
-      });
-    }
-
-    res.json({
-      status: 'SUCCESS',
-      sessionId: req.sessionID,
-      environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
-      environmentDetails: ENV,
-      timestamp: new Date().toISOString()
-    });
-  });
-});
-
-// ENHANCED Session Debug Middleware
+// ENHANCED Session Debug Middleware - SIMPLIFIED
 app.use((req: any, res, next) => {
-  console.log('🔍 SESSION DEBUG:', {
-    url: req.url,
-    method: req.method,
-    sessionId: req.sessionID,
-    userId: req.session?.userId,
-    hasSession: !!req.session,
-    cookieHeader: req.headers.cookie,
-    userAgent: req.headers['user-agent']?.slice(0, 50)
-  });
+  // Only log for auth-related routes to reduce noise
+  if (req.url.includes('/auth/') || req.url.includes('/debug/')) {
+    console.log('🔍 SESSION DEBUG:', {
+      url: req.url,
+      method: req.method,
+      sessionId: req.sessionID,
+      userId: req.session?.userId,
+      hasSession: !!req.session,
+      sessionKeys: req.session ? Object.keys(req.session) : []
+    });
+  }
   next();
 });
 
