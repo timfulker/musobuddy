@@ -101,6 +101,12 @@ export class ProductionAuthSystem {
       }
     });
 
+    // Test endpoint to verify admin login route is accessible
+    this.app.get('/api/auth/admin-test', (req: any, res) => {
+      console.log('🧪 ADMIN TEST ENDPOINT HIT');
+      res.json({ message: 'Admin route is accessible', timestamp: new Date().toISOString() });
+    });
+
     // Emergency bulletproof admin login endpoint
     this.app.post('/api/auth/admin-login', async (req: any, res) => {
       const loginId = Date.now().toString();

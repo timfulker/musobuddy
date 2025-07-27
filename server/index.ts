@@ -567,6 +567,16 @@ async function startServer() {
   try {
     // UNIFIED AUTHENTICATION: Use only ProductionAuthSystem
     console.log('🔐 Registering production authentication routes...');
+    
+    // Add debug middleware to catch admin login requests
+    app.use('/api/auth', (req, res, next) => {
+      console.log(`🔍 AUTH ROUTE HIT: ${req.method} ${req.url}`);
+      if (req.url === '/admin-login' && req.method === 'POST') {
+        console.log('🚨 ADMIN LOGIN REQUEST DETECTED!', req.body);
+      }
+      next();
+    });
+    
     const { ProductionAuthSystem } = await import('./core/auth-production');
     const authSystem = new ProductionAuthSystem(app);
     authSystem.registerRoutes();
