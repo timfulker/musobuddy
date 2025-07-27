@@ -46,7 +46,9 @@ export class ProductionAuthSystem {
           sessionUserId: userId,
           sessionData: req.session,
           cookieHeader: req.headers.cookie,
-          sessionStore: req.sessionStore ? 'available' : 'missing'
+          sessionStore: req.sessionStore ? 'available' : 'missing',
+          isEmergencyAdmin: userId === 'admin-emergency-id',
+          emergencyLogin: req.session?.emergencyLogin
         });
         
         if (!userId) {
@@ -61,6 +63,12 @@ export class ProductionAuthSystem {
         // Handle emergency admin session
         if (userId === 'admin-emergency-id' && req.session.emergencyLogin) {
           console.log('✅ EMERGENCY admin session authenticated:', req.session.email);
+          console.log('🔍 EMERGENCY session data:', {
+            userId: req.session.userId,
+            isAdmin: req.session.isAdmin,
+            email: req.session.email,
+            emergencyLogin: req.session.emergencyLogin
+          });
           return res.json({
             id: 'admin-emergency-id',
             email: req.session.email,
