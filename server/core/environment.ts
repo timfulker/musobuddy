@@ -4,6 +4,7 @@
 export interface EnvironmentConfig {
   isProduction: boolean;
   isDevelopment: boolean;
+  isReplitProduction: boolean; // NEW: Specific Replit production flag
   appServerUrl: string;
   sessionSecure: boolean;
   nodeEnv: string;
@@ -22,17 +23,24 @@ function detectEnvironment(): EnvironmentConfig {
   const replitEnvironment = process.env.REPLIT_ENVIRONMENT;
   const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
   
-  // CRITICAL FIX: Multiple production detection methods
-  // Check REPLIT_DEPLOYMENT first, then REPLIT_ENVIRONMENT for production
-  const isProduction = !!replitDeployment || replitEnvironment === 'production';
+  // REPLIT PRODUCTION DETECTION: Multiple methods for Replit's deployment
+  const isReplitProduction = !!(
+    replitDeployment || // Replit sets this in true production deployments
+    replitEnvironment === 'production' || // Alternative production indicator
+    process.env.REPLIT_DB_URL || // Production usually has Replit DB
+    (typeof process.env.REPL_SLUG !== 'undefined' && !replitDevDomain) // In Replit without dev domain = production
+  );
+  
+  // CRITICAL: Override NODE_ENV based on Replit detection
+  const isProduction = isReplitProduction || nodeEnv === 'production';
   
   // Determine app server URL
   let appServerUrl: string;
   if (process.env.APP_SERVER_URL) {
     // Explicit override (highest priority)
     appServerUrl = process.env.APP_SERVER_URL;
-  } else if (isProduction) {
-    // True production deployment
+  } else if (isReplitProduction) {
+    // REPLIT PRODUCTION: Use the known production URL
     appServerUrl = 'https://musobuddy.replit.app';
   } else if (replitDevDomain) {
     // Development on Replit (like current janeway domain)
@@ -45,8 +53,9 @@ function detectEnvironment(): EnvironmentConfig {
   return {
     isProduction,
     isDevelopment: !isProduction,
+    isReplitProduction, // NEW: Specific Replit production flag
     appServerUrl,
-    sessionSecure: isProduction, // Secure cookies for all production environments
+    sessionSecure: isReplitProduction, // Secure cookies only in Replit production
     nodeEnv,
     replitDeployment,
     replitEnvironment,
@@ -57,16 +66,17 @@ function detectEnvironment(): EnvironmentConfig {
 // Export the authoritative environment configuration
 export const ENV = detectEnvironment();
 
-// Log environment detection result once at startup
-console.log('🔍 AUTHORITATIVE ENVIRONMENT DETECTION:', {
+// Log Replit-specific environment detection
+console.log('🔍 REPLIT ENVIRONMENT DETECTION:', {
   isProduction: ENV.isProduction,
-  isDevelopment: ENV.isDevelopment,
+  isReplitProduction: ENV.isReplitProduction,
   appServerUrl: ENV.appServerUrl,
   sessionSecure: ENV.sessionSecure,
-  nodeEnv: ENV.nodeEnv,
   replitDeployment: ENV.replitDeployment,
   replitEnvironment: ENV.replitEnvironment,
-  replitDevDomain: ENV.replitDevDomain
+  replitDevDomain: ENV.replitDevDomain,
+  replDbUrl: process.env.REPLIT_DB_URL ? 'SET' : 'NOT_SET',
+  replSlug: process.env.REPL_SLUG || 'NOT_SET'
 });
 
 // GRACEFUL SAFEGUARD: Log environment detection warnings

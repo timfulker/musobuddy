@@ -201,3 +201,80 @@ export function addSessionCleanupEndpoint(app: any) {
     });
   });
 }
+
+// CRITICAL: Session validation endpoint
+export function addSessionTestEndpoint(app: any) {
+  app.get('/api/debug/session-test-enhanced', (req: any, res: any) => {
+    console.log('🧪 ENHANCED SESSION TEST');
+    
+    // Set test data
+    if (!req.session.testData) {
+      req.session.testData = {
+        timestamp: new Date().toISOString(),
+        testValue: Math.random().toString(36),
+        counter: 1
+      };
+    } else {
+      req.session.testData.counter = (req.session.testData.counter || 0) + 1;
+      req.session.testData.lastAccess = new Date().toISOString();
+    }
+
+    // Force save and test
+    req.session.save((err: any) => {
+      if (err) {
+        console.error('❌ Session test save failed:', err);
+        return res.json({
+          status: 'FAILED',
+          error: err.message,
+          sessionId: req.sessionID,
+          environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT'
+        });
+      }
+
+      console.log('✅ Session test save successful');
+      res.json({
+        status: 'SUCCESS',
+        sessionId: req.sessionID,
+        sessionData: req.session.testData,
+        sessionKeys: Object.keys(req.session),
+        environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
+        timestamp: new Date().toISOString()
+      });
+    });
+  });
+}
+
+// CRITICAL: Session cleanup endpoint for testing
+export function addSessionCleanupEndpoint(app: any) {
+  app.post('/api/debug/clear-session-enhanced', (req: any, res: any) => {
+    console.log('🧹 ENHANCED SESSION CLEANUP');
+    console.log('🔍 Before clear - Session ID:', req.sessionID);
+    console.log('🔍 Before clear - Session data:', req.session);
+    
+    // Clear all session data but keep session alive
+    const sessionId = req.sessionID;
+    
+    // Method 1: Clear all properties except cookie
+    Object.keys(req.session).forEach(key => {
+      if (key !== 'cookie') {
+        delete req.session[key];
+      }
+    });
+    
+    req.session.save((err: any) => {
+      if (err) {
+        console.error('❌ Session cleanup failed:', err);
+        return res.status(500).json({ error: 'Session cleanup failed' });
+      }
+      
+      console.log('✅ Session cleaned successfully');
+      res.json({
+        success: true,
+        message: 'Session data cleared - session still active',
+        sessionId: sessionId,
+        remainingKeys: Object.keys(req.session),
+        timestamp: new Date().toISOString()
+      });
+    });
+  });
+}
