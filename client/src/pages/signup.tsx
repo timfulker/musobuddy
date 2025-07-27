@@ -73,6 +73,9 @@ export default function SignupPage() {
 
   const signupMutation = useMutation({
     mutationFn: async (data: SignupForm) => {
+      // Store phone and email for verification fallback
+      localStorage.setItem('signupPhone', data.phoneNumber);
+      localStorage.setItem('signupEmail', data.email);
       return apiRequest('/api/auth/signup', {
         method: 'POST',
         body: JSON.stringify(data),

@@ -23,9 +23,9 @@ function detectEnvironment(): EnvironmentConfig {
   const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
   
   // Production indicators (in order of priority)
-  // CRITICAL FIX: Production detection based on actual deployment status
-  // Only consider true production when REPLIT_DEPLOYMENT has actual content
-  const isProduction = !!(replitDeployment && replitDeployment.trim() !== '');
+  // SIMPLIFIED: Only production if explicitly deployed
+  // This fixes the confusion between dev and production
+  const isProduction = nodeEnv === 'production' && !!replitDeployment;
   
   // Determine app server URL
   let appServerUrl: string;
@@ -47,7 +47,7 @@ function detectEnvironment(): EnvironmentConfig {
     isProduction,
     isDevelopment: !isProduction,
     appServerUrl,
-    sessionSecure: isProduction,
+    sessionSecure: false, // ALWAYS false for Replit - fixes cookie issues
     nodeEnv,
     replitDeployment,
     replitEnvironment,
@@ -93,7 +93,7 @@ if (ENV.sessionSecure && ENV.appServerUrl.startsWith('http:')) {
 export const isProduction = (): boolean => ENV.isProduction;
 export const isDevelopment = (): boolean => ENV.isDevelopment;
 export const getAppServerUrl = (): string => ENV.appServerUrl;
-export const shouldUseSecureCookies = (): boolean => ENV.sessionSecure;
+export const shouldUseSecureCookies = (): boolean => false; // ALWAYS false for Replit
 
 /**
  * GRACEFUL VALIDATION: Check session configuration and log warnings

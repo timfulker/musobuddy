@@ -102,34 +102,79 @@ export class ProductionAuthSystem {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Set session - admin always gets through
-        req.session.userId = user.id;
-        
-        // CRITICAL FIX: Force session save for immediate availability
+        // CRITICAL FIX: Force session regeneration for clean state
         await new Promise((resolve, reject) => {
-          req.session.save((err: any) => {
+          req.session.regenerate((err: any) => {
             if (err) {
-              console.error('❌ Session save error:', err);
+              console.error('❌ Session regeneration error:', err);
               reject(err);
             } else {
-              console.log('✅ Session saved successfully with ID:', req.session.id);
+              console.log('✅ Session regenerated for admin:', req.sessionID);
               resolve(true);
             }
           });
         });
 
-        console.log('✅ ADMIN Login successful for:', email, 'Session saved, bypassing verification requirements');
+        // Set session with admin flag
+        req.session.userId = user.id;
+        req.session.isAdmin = true;
+        req.session.adminLoginTime = new Date().toISOString();
+        
+        // CRITICAL FIX: Force session save with multiple attempts
+        let sessionSaved = false;
+        let attempts = 0;
+        const maxAttempts = 3;
 
-        // Generate JWT token for client-side storage
-        const { TokenAuthSystem } = await import('./token-auth.js');
-        const token = TokenAuthSystem.generateToken(user.id, user.email);
+        while (!sessionSaved && attempts < maxAttempts) {
+          attempts++;
+          try {
+            await new Promise((resolve, reject) => {
+              req.session.save((err: any) => {
+                if (err) {
+                  console.error(`❌ Session save attempt ${attempts} error:`, err);
+                  reject(err);
+                } else {
+                  console.log(`✅ Session save attempt ${attempts} successful:`, {
+                    sessionId: req.session.id,
+                    userId: req.session.userId,
+                    isAdmin: req.session.isAdmin
+                  });
+                  sessionSaved = true;
+                  resolve(true);
+                }
+              });
+            });
+          } catch (error) {
+            if (attempts === maxAttempts) {
+              throw error;
+            }
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+
+        // Update user last login
+        await storage.updateUser(user.id, {
+          lastLoginAt: new Date(),
+          lastLoginIP: req.ip || 'unknown'
+        });
+
+        console.log('✅ ADMIN Login successful for:', email, 'Session ID:', req.sessionID);
+
+        // Generate simple token as backup authentication
+        const token = `admin-session-${user.id}-${Date.now()}`;
 
         // Admin login always succeeds regardless of phone verification
         res.json({
           success: true,
           requiresVerification: false,
-          message: 'Admin login successful',
+          message: 'Admin login successful - bypassing all verification requirements',
           token, // Include token for client-side storage
+          sessionInfo: {
+            sessionId: req.sessionID,
+            userId: req.session.userId,
+            isAdmin: req.session.isAdmin
+          },
           user: {
             id: user.id,
             email: user.email,
@@ -138,7 +183,8 @@ export class ProductionAuthSystem {
             tier: user.tier,
             isAdmin: user.isAdmin,
             isSubscribed: user.isSubscribed,
-            isLifetime: user.isLifetime
+            isLifetime: user.isLifetime,
+            phoneVerified: true // Admin always considered verified
           }
         });
 
@@ -398,7 +444,7 @@ export class ProductionAuthSystem {
       }
     });
 
-    // Phone verification - production version
+    // Phone verification - ENHANCED with fallback logic for session issues
     this.app.post('/api/auth/verify-phone', async (req: any, res) => {
       console.log('📱 Phone verification request:', req.body);
       console.log('🔍 ENHANCED Session debug:', {
@@ -408,16 +454,76 @@ export class ProductionAuthSystem {
         userId: req.session?.userId,
         cookieHeader: req.headers.cookie,
         userAgent: req.headers['user-agent'],
-        allHeaders: req.headers
+        allHeaders: Object.keys(req.headers)
       });
       
       try {
-        const { verificationCode } = req.body;
-        const userId = req.session.userId;
+        const { verificationCode, phoneNumber, email } = req.body;
+        let userId = req.session?.userId;
 
-        if (!userId || !verificationCode) {
-          console.log('❌ Missing data - userId:', !!userId, 'verificationCode:', !!verificationCode);
-          return res.status(400).json({ error: 'User ID and verification code required' });
+        if (!verificationCode) {
+          console.log('❌ Missing verification code');
+          return res.status(400).json({ error: 'Verification code required' });
+        }
+
+        // FALLBACK 1: If no session userId, try to find user by phone number
+        if (!userId && phoneNumber) {
+          console.log('🔄 FALLBACK: Looking up user by phone number:', phoneNumber);
+          const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+          const user = await storage.getUserByPhone(normalizedPhone);
+          if (user) {
+            userId = user.id;
+            console.log('✅ FALLBACK: Found user by phone:', userId);
+            // Restore session
+            req.session.userId = userId;
+          }
+        }
+
+        // FALLBACK 2: If still no user, try to find by email
+        if (!userId && email) {
+          console.log('🔄 FALLBACK: Looking up user by email:', email);
+          const user = await storage.getUserByEmail(email);
+          if (user) {
+            userId = user.id;
+            console.log('✅ FALLBACK: Found user by email:', userId);
+            // Restore session
+            req.session.userId = userId;
+          }
+        }
+
+        // FALLBACK 3: Find user by recent unverified verification record
+        if (!userId) {
+          console.log('🔄 FALLBACK: Looking for recent verification record');
+          const recentVerifications = await db.select()
+            .from(phoneVerifications)
+            .where(
+              and(
+                eq(phoneVerifications.verificationCode, verificationCode),
+                gte(phoneVerifications.expiresAt, new Date()),
+                eq(phoneVerifications.verifiedAt, null) // Not yet verified
+              )
+            )
+            .orderBy(desc(phoneVerifications.createdAt))
+            .limit(1);
+
+          if (recentVerifications.length > 0) {
+            const verification = recentVerifications[0];
+            const user = await storage.getUserByPhone(verification.phoneNumber);
+            if (user) {
+              userId = user.id;
+              console.log('✅ FALLBACK: Found user by verification record:', userId);
+              // Restore session
+              req.session.userId = userId;
+            }
+          }
+        }
+
+        if (!userId) {
+          console.log('❌ Could not determine user ID through any method');
+          return res.status(400).json({ 
+            error: 'Session expired. Please restart the signup process.',
+            requiresRestart: true 
+          });
         }
 
         // Get user
@@ -430,12 +536,13 @@ export class ProductionAuthSystem {
           return res.status(400).json({ error: 'Phone already verified' });
         }
 
-        // Find latest verification code for this phone
+        // Find latest verification code for this phone with enhanced matching
         const verification = await db.select()
           .from(phoneVerifications)
           .where(
             and(
               eq(phoneVerifications.phoneNumber, user.phoneNumber || ''),
+              eq(phoneVerifications.verificationCode, verificationCode),
               gte(phoneVerifications.expiresAt, new Date())
             )
           )
@@ -443,12 +550,17 @@ export class ProductionAuthSystem {
           .limit(1);
 
         if (verification.length === 0) {
-          return res.status(400).json({ error: 'No valid verification code found' });
+          console.log('❌ No valid verification code found for:', {
+            phoneNumber: user.phoneNumber,
+            code: verificationCode,
+            currentTime: new Date().toISOString()
+          });
+          return res.status(400).json({ error: 'Invalid or expired verification code' });
         }
 
         const record = verification[0];
 
-        // Check if code matches
+        // Check if code matches (already checked in query, but double-check)
         if (record.verificationCode !== verificationCode) {
           // Increment attempts
           await db.update(phoneVerifications)
@@ -469,14 +581,26 @@ export class ProductionAuthSystem {
           .set({ verifiedAt: new Date() })
           .where(eq(phoneVerifications.id, record.id));
 
-        // Ensure session is set
+        // FORCE session save with callback
         req.session.userId = userId;
+        await new Promise((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) {
+              console.error('❌ Session save error after verification:', err);
+              reject(err);
+            } else {
+              console.log('✅ Session saved after verification:', req.session.id);
+              resolve(true);
+            }
+          });
+        });
 
         console.log('✅ Phone verified for user:', userId);
 
         res.json({
           success: true,
-          message: 'Phone number verified successfully'
+          message: 'Phone number verified successfully',
+          userId: userId // Include userId for frontend reference
         });
 
       } catch (error: any) {

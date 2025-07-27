@@ -17,16 +17,38 @@ export default function VerifyPhonePage() {
     setIsLoading(true);
     
     try {
+      // Get stored phone number and email from localStorage for fallback
+      const storedPhone = localStorage.getItem('signupPhone');
+      const storedEmail = localStorage.getItem('signupEmail');
+      
       const response = await fetch('/api/auth/verify-phone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ verificationCode }),
+        body: JSON.stringify({ 
+          verificationCode,
+          phoneNumber: storedPhone, // Include for fallback lookup
+          email: storedEmail // Include for fallback lookup
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if we need to restart signup process
+        if (data.requiresRestart) {
+          toast({
+            variant: "destructive",
+            title: "Session Expired",
+            description: "Please complete signup again"
+          });
+          // Clear stored data and redirect to signup
+          localStorage.removeItem('signupPhone');
+          localStorage.removeItem('signupEmail');
+          window.location.href = '/signup';
+          return;
+        }
+        
         toast({
           variant: "destructive",
           title: "Verification Failed",
@@ -35,7 +57,10 @@ export default function VerifyPhonePage() {
         return;
       }
 
-      // Verification successful
+      // Verification successful - clear temporary storage
+      localStorage.removeItem('signupPhone');
+      localStorage.removeItem('signupEmail');
+      
       toast({
         title: "Phone Verified!",
         description: "Your account has been verified successfully"

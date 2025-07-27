@@ -260,7 +260,7 @@ validateSessionConfiguration();
 
 
 
-// BULLETPROOF SESSION CONFIGURATION - Handles all domain scenarios
+// CRITICAL FIX for Replit Cookie/Session Issues
 const sessionConfig = {
   store: new PgSession({
     conString: process.env.DATABASE_URL,
@@ -270,25 +270,40 @@ const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
   resave: false,
   saveUninitialized: true,
-  name: 'musobuddy.sid', // Custom session name to avoid conflicts
+  name: 'musobuddy.sid',
   cookie: {
-    secure: false,  // Always false for Replit domains (they use HTTPS but need different config)
-    httpOnly: false, // CRITICAL: Allow JavaScript access for debugging and manual handling
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax' as 'lax',
-    domain: undefined // Let browser handle domain automatically
+    secure: false,        // CRITICAL: Always false for Replit (even on HTTPS)
+    httpOnly: false,      // CRITICAL: Allow JS access for debugging
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'none',     // CRITICAL: Required for cross-site Replit forwarding
+    domain: undefined     // CRITICAL: Let browser handle domain automatically
   }
 };
 
-console.log('🔧 Session configuration:', {
+console.log('🔧 REPLIT-OPTIMIZED Session configuration:', {
   secure: sessionConfig.cookie.secure,
   httpOnly: sessionConfig.cookie.httpOnly,
   sameSite: sessionConfig.cookie.sameSite,
   domain: sessionConfig.cookie.domain,
-  name: sessionConfig.name
+  name: sessionConfig.name,
+  environment: process.env.REPLIT_DEPLOYMENT ? 'PRODUCTION' : 'DEVELOPMENT'
 });
 
 app.use(session(sessionConfig));
+
+// ENHANCED Session Debug Middleware
+app.use((req: any, res, next) => {
+  console.log('🔍 SESSION DEBUG:', {
+    url: req.url,
+    method: req.method,
+    sessionId: req.sessionID,
+    userId: req.session?.userId,
+    hasSession: !!req.session,
+    cookieHeader: req.headers.cookie,
+    userAgent: req.headers['user-agent']?.slice(0, 50)
+  });
+  next();
+});
 
 // Add token authentication middleware
 import { TokenAuthSystem } from './core/token-auth.js';
