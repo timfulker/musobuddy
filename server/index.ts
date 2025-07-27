@@ -116,7 +116,23 @@ app.get('/api/webhook-monitor', (req, res) => {
 
 // Authentication test page
 app.get('/auth-test', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'browser-auth-test.html'));
+  res.send(`
+    <h1>Quick Auth Test</h1>
+    <button onclick="testLogin()">Test Admin Login</button>
+    <div id="result"></div>
+    <script>
+    async function testLogin() {
+      const response = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({email: 'timfulker@gmail.com', password: 'MusoBuddy2025!'})
+      });
+      const data = await response.json();
+      document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+    }
+    </script>
+  `);
 });
 
 // Simple HTML page to view webhook status
