@@ -138,14 +138,25 @@ export class ProductionAuthSystem {
         
         console.log('📱 Generated verification code:', verificationCode);
 
-        // Send SMS via Twilio in production
-        try {
-          const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-          const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-          const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+        // Get Twilio credentials  
+        const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+        const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+        const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+        let smsSuccess = false;
 
-          if (twilioSid && twilioToken && twilioPhone && isProduction) {
-            // Production: Send real SMS
+        // Send SMS via Twilio
+        try {
+          console.log('🔍 SMS attempt with:', {
+            hasSid: !!twilioSid,
+            hasToken: !!twilioToken, 
+            hasPhone: !!twilioPhone,
+            isProduction,
+            nodeEnv: process.env.NODE_ENV,
+            replitEnv: process.env.REPLIT_ENVIRONMENT
+          });
+
+          if (twilioSid && twilioToken && twilioPhone) {
+            // Send real SMS (both dev and production)
             const twilio = require('twilio')(twilioSid, twilioToken);
             
             const message = await twilio.messages.create({
@@ -155,26 +166,35 @@ export class ProductionAuthSystem {
             });
             
             console.log('📱 SMS sent successfully:', message.sid);
+            console.log('📱 Message status:', message.status);
+            smsSuccess = true;
           } else {
-            // Development: Console logging
-            console.log('🔧 DEVELOPMENT MODE - Verification code:', verificationCode);
-            console.log('📱 Phone number:', normalizedPhone);
+            // Missing credentials
+            console.log('❌ Missing Twilio credentials - SMS not sent');
             console.log('🎯 ENTER THIS CODE:', verificationCode);
           }
         } catch (smsError: any) {
           console.error('❌ SMS sending failed:', smsError.message);
+          console.error('❌ SMS error code:', smsError.code);
+          console.error('❌ SMS error details:', smsError.moreInfo);
           // Continue anyway - user can still enter code manually
           console.log('🎯 FALLBACK CODE:', verificationCode);
         }
 
+        // Determine if we should include verification code in response
+        const shouldIncludeCode = !smsSuccess;
+
         res.json({
           success: true,
           userId,
-          message: 'Account created. Check your phone for verification code.',
-          // Include code in response for development/testing OR if SMS fails
-          ...(process.env.NODE_ENV === 'development' && { verificationCode }),
-          // Temporary: Include code for production testing until Twilio number is purchased
-          ...(isProduction && { verificationCode, tempMessage: 'SMS not configured - use code above' })
+          message: shouldIncludeCode ? 
+            'Account created. SMS not available - use code shown below.' :
+            'Account created. Check your phone for verification code.',
+          // Include code only if SMS couldn't be sent
+          ...(shouldIncludeCode && { 
+            verificationCode, 
+            tempMessage: 'SMS not configured - use code above' 
+          })
         });
 
       } catch (error: any) {
