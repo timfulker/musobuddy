@@ -35,26 +35,37 @@ export class ProductionAuthSystem {
   public registerRoutes() {
     console.log('🔐 Registering production authentication routes...');
 
-    // Get current authenticated user
+    // Enhanced auth check with detailed session debugging
     this.app.get('/api/auth/user', async (req: any, res) => {
       try {
         const userId = req.session?.userId;
-        console.log('🔍 Auth check for userId:', userId);
+        
+        console.log('🔍 AUTH CHECK DEBUG:', {
+          sessionId: req.sessionID,
+          hasSession: !!req.session,
+          sessionUserId: userId,
+          sessionData: req.session,
+          cookieHeader: req.headers.cookie,
+          sessionStore: req.sessionStore ? 'available' : 'missing'
+        });
         
         if (!userId) {
-          console.log('❌ No session userId found');
+          console.log('❌ No session userId found - session details:', {
+            sessionExists: !!req.session,
+            sessionKeys: req.session ? Object.keys(req.session) : 'no session',
+            sessionId: req.sessionID
+          });
           return res.status(401).json({ error: 'Not authenticated' });
         }
 
         const user = await storage.getUserById(userId);
         if (!user) {
           console.log('❌ User not found for ID:', userId);
-          // Clear invalid session
           req.session.destroy(() => {});
           return res.status(401).json({ error: 'User not found' });
         }
 
-        console.log('✅ User authenticated:', user.email);
+        console.log('✅ User authenticated successfully:', user.email);
         res.json({
           id: user.id,
           email: user.email,
@@ -75,7 +86,11 @@ export class ProductionAuthSystem {
 
     // Admin login endpoint - always bypasses verification for admin users
     this.app.post('/api/auth/admin-login', async (req: any, res) => {
-      console.log('🔐 ADMIN Login attempt:', { email: req.body.email });
+      const loginId = Date.now().toString();
+      console.log(`🔐 [ADMIN-${loginId}] Login attempt:`, { 
+        email: req.body.email,
+        sessionId: req.sessionID 
+      });
       
       try {
         const { email, password } = req.body;
@@ -102,56 +117,37 @@ export class ProductionAuthSystem {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // CRITICAL FIX: Force session regeneration for clean state
+        console.log(`✅ [ADMIN-${loginId}] Credentials validated for:`, email);
+
+        // Set session data
+        req.session.userId = user.id;
+        req.session.isAdmin = true;
+        req.session.adminLoginTime = new Date().toISOString();
+
+        console.log(`📝 [ADMIN-${loginId}] Session data set:`, {
+          userId: req.session.userId,
+          isAdmin: req.session.isAdmin,
+          sessionId: req.sessionID
+        });
+
+        // CRITICAL: Force session save and wait for completion
         await new Promise((resolve, reject) => {
-          req.session.regenerate((err: any) => {
+          req.session.save((err: any) => {
             if (err) {
-              console.error('❌ Session regeneration error:', err);
+              console.error(`❌ [ADMIN-${loginId}] Session save failed:`, err);
               reject(err);
             } else {
-              console.log('✅ Session regenerated for admin:', req.sessionID);
+              console.log(`✅ [ADMIN-${loginId}] Session saved successfully - userId: ${req.session.userId}`);
               resolve(true);
             }
           });
         });
 
-        // Set session with admin flag
-        req.session.userId = user.id;
-        req.session.isAdmin = true;
-        req.session.adminLoginTime = new Date().toISOString();
-        
-        // CRITICAL FIX: Force session save with multiple attempts
-        let sessionSaved = false;
-        let attempts = 0;
-        const maxAttempts = 3;
-
-        while (!sessionSaved && attempts < maxAttempts) {
-          attempts++;
-          try {
-            await new Promise((resolve, reject) => {
-              req.session.save((err: any) => {
-                if (err) {
-                  console.error(`❌ Session save attempt ${attempts} error:`, err);
-                  reject(err);
-                } else {
-                  console.log(`✅ Session save attempt ${attempts} successful:`, {
-                    sessionId: req.session.id,
-                    userId: req.session.userId,
-                    isAdmin: req.session.isAdmin
-                  });
-                  sessionSaved = true;
-                  resolve(true);
-                }
-              });
-            });
-          } catch (error) {
-            if (attempts === maxAttempts) {
-              throw error;
-            }
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
+        // Verify session was saved by reading it back
+        console.log(`🔍 [ADMIN-${loginId}] Session verification:`, {
+          sessionUserId: req.session.userId,
+          sessionData: req.session
+        });
 
         // Update user last login
         await storage.updateUser(user.id, {
@@ -159,17 +155,12 @@ export class ProductionAuthSystem {
           lastLoginIP: req.ip || 'unknown'
         });
 
-        console.log('✅ ADMIN Login successful for:', email, 'Session ID:', req.sessionID);
+        console.log(`🎉 [ADMIN-${loginId}] Admin login completed for: ${email}`);
 
-        // Generate simple token as backup authentication
-        const token = `admin-session-${user.id}-${Date.now()}`;
-
-        // Admin login always succeeds regardless of phone verification
         res.json({
           success: true,
           requiresVerification: false,
-          message: 'Admin login successful - bypassing all verification requirements',
-          token, // Include token for client-side storage
+          message: 'Admin login successful - session confirmed',
           sessionInfo: {
             sessionId: req.sessionID,
             userId: req.session.userId,
@@ -184,12 +175,12 @@ export class ProductionAuthSystem {
             isAdmin: user.isAdmin,
             isSubscribed: user.isSubscribed,
             isLifetime: user.isLifetime,
-            phoneVerified: true // Admin always considered verified
+            phoneVerified: true
           }
         });
 
       } catch (error: any) {
-        console.error('❌ Admin login error:', error);
+        console.error(`❌ [ADMIN-${loginId}] Admin login error:`, error);
         res.status(500).json({ error: 'Admin login failed' });
       }
     });
