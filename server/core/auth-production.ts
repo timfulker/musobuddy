@@ -374,13 +374,18 @@ export class ProductionAuthSystem {
     this.app.post('/api/auth/login', async (req: any, res) => {
       try {
         const { email, password } = req.body;
+        console.log('🔍 Login attempt:', { email, passwordLength: password?.length });
 
         if (!email || !password) {
           return res.status(400).json({ error: 'Email and password required' });
         }
 
+        console.log('🔍 Calling storage.authenticateUser...');
         const user = await storage.authenticateUser(email, password);
+        console.log('🔍 authenticateUser result:', user ? 'Found user' : 'No user found');
+        
         if (!user) {
+          console.log('❌ Authentication failed for:', email);
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
