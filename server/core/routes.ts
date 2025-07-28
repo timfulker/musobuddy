@@ -394,7 +394,7 @@ export async function registerRoutes(app: Express) {
       for (let i = 0; i < bookings.length; i++) {
         const booking = bookings[i];
         
-        if (!booking.eventDate || !booking.eventTime || !booking.eventEndTime) {
+        if (!booking.eventDate || !booking.eventTime) {
           console.log(`🔍 BACKEND CONFLICT DEBUG - Skipping booking ${booking.id} - missing time data:`, {
             eventDate: booking.eventDate,
             eventTime: booking.eventTime,
@@ -403,13 +403,34 @@ export async function registerRoutes(app: Express) {
           continue;
         }
         
+        // Parse time range format like "16:00-20:00" or use separate fields
+        let startTime, endTime;
+        if (booking.eventTime.includes('-')) {
+          // Time range format: "16:00-20:00"
+          const [start, end] = booking.eventTime.split('-');
+          startTime = start.trim();
+          endTime = end.trim();
+        } else if (booking.eventEndTime) {
+          // Separate fields
+          startTime = booking.eventTime;
+          endTime = booking.eventEndTime;
+        } else {
+          console.log(`🔍 BACKEND CONFLICT DEBUG - Skipping booking ${booking.id} - invalid time format:`, {
+            eventTime: booking.eventTime,
+            eventEndTime: booking.eventEndTime
+          });
+          continue;
+        }
+        
         const bookingDate = new Date(booking.eventDate).toDateString();
-        const bookingStart = new Date(`${booking.eventDate.toISOString().split('T')[0]}T${booking.eventTime}`);
-        const bookingEnd = new Date(`${booking.eventDate.toISOString().split('T')[0]}T${booking.eventEndTime}`);
+        const bookingStart = new Date(`${booking.eventDate.toISOString().split('T')[0]}T${startTime}`);
+        const bookingEnd = new Date(`${booking.eventDate.toISOString().split('T')[0]}T${endTime}`);
         
         console.log(`🔍 BACKEND CONFLICT DEBUG - Checking booking ${booking.id} (${booking.clientName}):`, {
           date: bookingDate,
-          timeRange: `${booking.eventTime} - ${booking.eventEndTime}`,
+          originalTimeRange: booking.eventTime,
+          parsedStartTime: startTime,
+          parsedEndTime: endTime,
           startTime: bookingStart.toISOString(),
           endTime: bookingEnd.toISOString()
         });
@@ -418,21 +439,38 @@ export async function registerRoutes(app: Express) {
         for (let j = i + 1; j < bookings.length; j++) {
           const otherBooking = bookings[j];
           
-          if (!otherBooking.eventDate || !otherBooking.eventTime || !otherBooking.eventEndTime) {
+          if (!otherBooking.eventDate || !otherBooking.eventTime) {
             continue;
           }
           
           const otherDate = new Date(otherBooking.eventDate).toDateString();
           if (otherDate !== bookingDate) continue; // Different dates, no conflict
           
-          const otherStart = new Date(`${otherBooking.eventDate.toISOString().split('T')[0]}T${otherBooking.eventTime}`);
-          const otherEnd = new Date(`${otherBooking.eventDate.toISOString().split('T')[0]}T${otherBooking.eventEndTime}`);
+          // Parse other booking time range
+          let otherStartTime, otherEndTime;
+          if (otherBooking.eventTime.includes('-')) {
+            // Time range format: "19:00-23:00"
+            const [start, end] = otherBooking.eventTime.split('-');
+            otherStartTime = start.trim();
+            otherEndTime = end.trim();
+          } else if (otherBooking.eventEndTime) {
+            // Separate fields
+            otherStartTime = otherBooking.eventTime;
+            otherEndTime = otherBooking.eventEndTime;
+          } else {
+            continue; // Skip invalid time format
+          }
+          
+          const otherStart = new Date(`${otherBooking.eventDate.toISOString().split('T')[0]}T${otherStartTime}`);
+          const otherEnd = new Date(`${otherBooking.eventDate.toISOString().split('T')[0]}T${otherEndTime}`);
           
           // Check for time overlap
           const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
           
           console.log(`🔍 BACKEND CONFLICT DEBUG - Comparing with booking ${otherBooking.id} (${otherBooking.clientName}):`, {
-            otherTimeRange: `${otherBooking.eventTime} - ${otherBooking.eventEndTime}`,
+            originalTimeRange: otherBooking.eventTime,
+            parsedStartTime: otherStartTime,
+            parsedEndTime: otherEndTime,
             hasTimeOverlap,
             calculation: {
               bookingStart: bookingStart.toISOString(),
