@@ -148,7 +148,7 @@ export function ConflictResolutionDialog({
   const BookingCard = ({ booking, isConflicting = false }: { booking: any, isConflicting?: boolean }) => (
     <div className={`p-4 border rounded-lg ${isConflicting ? 'border-red-200 bg-red-50' : 'border-blue-200 bg-blue-50'}`}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-gray-900">{booking.eventType || booking.clientName || 'Unknown Event'}</h3>
+        <h3 className="font-medium text-gray-900">{booking?.eventType || booking?.clientName || booking?.title || 'Unknown Event'}</h3>
         <div className="flex items-center space-x-2">
           <Badge className={getStatusColor(booking.status)}>
             {booking.status?.replace('_', ' ').toUpperCase()}
