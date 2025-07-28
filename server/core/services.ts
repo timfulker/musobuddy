@@ -4,7 +4,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import PDFDocument from 'pdfkit';
 import Anthropic from '@anthropic-ai/sdk';
-import { getAppServerUrl } from './cloud-storage';
+import { ENV } from './environment';
 
 // Restored original working Mailgun configuration from before rebuild
 export class MailgunService {

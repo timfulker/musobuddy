@@ -6,7 +6,7 @@ import { serveStaticFixed } from "./static-serve";
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
-import { ENV } from "./core/environment-rebuilt";
+import { ENV } from "./core/environment";
 import { createSessionMiddleware } from "./core/session-rebuilt";
 import { setupAuthRoutes } from "./core/auth-rebuilt";
 

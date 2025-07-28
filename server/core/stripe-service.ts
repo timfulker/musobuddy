@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { storage } from './storage';
 
 // Import centralized environment detection
-import { ENV } from './environment-rebuilt';
+import { ENV } from './environment';
 
 // Initialize Stripe with test key for beta testing (only if available)
 let stripe: Stripe | null = null;

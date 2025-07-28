@@ -4,7 +4,7 @@ import type { Contract, Invoice, UserSettings } from '@shared/schema';
 import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
 
 // Import centralized environment detection
-import { ENV } from './environment-rebuilt';
+import { ENV } from './environment';
 
 // Cloudflare R2 configuration
 const r2Client = new S3Client({

@@ -1,7 +1,7 @@
 // COMPLETELY REBUILT SESSION SYSTEM
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
-import { ENV } from './environment-rebuilt.js';
+import { ENV } from './environment.js';
 
 const PgSession = connectPgSimple(session);
 

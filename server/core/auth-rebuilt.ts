@@ -1,7 +1,7 @@
 // COMPLETELY REBUILT AUTHENTICATION SYSTEM
 import { type Express } from "express";
 import { storage } from "./storage.js";
-import { ENV } from './environment-rebuilt.js';
+import { ENV } from './environment.js';
 
 /**
  * REBUILT AUTHENTICATION MIDDLEWARE
