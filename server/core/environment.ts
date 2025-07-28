@@ -21,11 +21,11 @@ interface EnvironmentConfig {
  * Handles both development (janeway.replit.dev) and production (musobuddy.replit.app)
  */
 function detectEnvironment(): EnvironmentConfig {
-  // Replit production takes precedence over NODE_ENV
-  const isReplitProduction = process.env.REPLIT_ENVIRONMENT === 'production';
+  // True production only when REPLIT_DEPLOYMENT exists (actual deployed app)
+  const isReplitProduction = !!process.env.REPLIT_DEPLOYMENT;
   
-  // For Replit, ignore NODE_ENV if REPLIT_ENVIRONMENT is set
-  const isProduction = isReplitProduction;
+  // Production detection: REPLIT_DEPLOYMENT exists OR NODE_ENV is production
+  const isProduction = isReplitProduction || process.env.NODE_ENV === 'production';
   
   const appServerUrl = isReplitProduction 
     ? 'https://musobuddy.replit.app'

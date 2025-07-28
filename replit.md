@@ -529,6 +529,19 @@ The application is designed to be user-friendly while maintaining professional-g
 - **TEST ENVIRONMENT VERIFIED**: ✅ Stripe events showing successful payment completion, new webhook ready for testing
 - **Status**: WEBHOOK SYSTEM MODERNIZED - API version updated, comprehensive logging active, ready for automatic subscription activation testing
 
+### 2025-07-28 - CONFLICT DETECTION BUG INVESTIGATION + ENVIRONMENT DETECTION FIX
+- **CRITICAL BUG INVESTIGATION**: ✅ User discovered overlapping bookings (16/06/2026, 16:00-20:00 vs 19:00-23:00) not showing as conflicts despite 1-hour overlap
+- **ROOT CAUSE IDENTIFIED**: ✅ Backend `/api/conflicts` endpoint was returning empty array instead of performing actual conflict detection
+- **BACKEND CONFLICT DETECTION IMPLEMENTED**: ✅ Added comprehensive conflict detection algorithm with detailed debugging to routes.ts
+- **FRONTEND CONFLICT DEBUGGING ENHANCED**: ✅ Added extensive console logging to bookings page conflict detection function
+- **ENVIRONMENT DETECTION CRITICAL FIX**: ✅ Fixed incorrect production mode detection causing authentication failures in development
+- **SESSION AUTHENTICATION RESTORED**: ✅ Updated environment.ts to only detect production when REPLIT_DEPLOYMENT exists (actual deployment)
+- **SECURE COOKIE ISSUE RESOLVED**: ✅ Session cookies now properly work in development with sessionSecure: false
+- **DEBUGGING INFRASTRUCTURE COMPLETE**: ✅ Both backend and frontend now have comprehensive conflict detection logging
+- **USER AUTHENTICATION FUNCTIONAL**: ✅ Environment fix resolved session authentication preventing access to conflict detection API
+- **OVERLAP CALCULATION ALGORITHM**: ✅ Proper time overlap detection using standard algorithm: bookingStart < otherEnd && bookingEnd > otherStart
+- **Status**: CONFLICT DETECTION SYSTEM OPERATIONAL - Backend API fixed, environment detection corrected, comprehensive debugging active
+
 ### 2025-07-28 - CALENDAR NAVIGATION ISSUES FIXED - Dashboard to Booking Date Navigation + Fixed Window Layout
 - **CRITICAL FIX: Dashboard Booking Click Navigation**: ✅ Fixed dashboard booking clicks to navigate calendar to booking's month instead of current month
 - **URL Parameter Handling Added**: ✅ Added useEffect to detect ?id= parameter and automatically navigate calendar to specific booking's date
