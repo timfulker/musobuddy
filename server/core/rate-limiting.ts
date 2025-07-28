@@ -53,7 +53,12 @@ export const generalApiRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip for static assets and health checks
+    // Skip rate limiting entirely in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
+    // Skip for static assets and health checks in production
     return req.path.startsWith('/assets/') || 
            req.path === '/health' ||
            req.path === '/api/health';
@@ -68,7 +73,12 @@ export const slowDownMiddleware = slowDown({
   maxDelayMs: 2000, // Maximum delay of 2 seconds
   validate: { delayMs: false }, // Disable warning about delayMs
   skip: (req) => {
-    // Skip for static assets and health checks
+    // Skip slowdown entirely in development
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
+    
+    // Skip for static assets and health checks in production
     return req.path.startsWith('/assets/') || 
            req.path === '/health' ||
            req.path === '/api/health';

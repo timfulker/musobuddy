@@ -4,29 +4,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
-interface BookingConflict {
-  id: number;
-  enquiryId: number;
-  conflictType: 'booking' | 'enquiry';
-  conflictId: number;
-  severity: 'high' | 'medium' | 'low';
-  message: string;
-  resolved: boolean;
-  createdAt: string;
-  enquiry?: {
-    title: string;
+interface BackendConflict {
+  id: string;
+  bookings: Array<{
+    id: number;
     clientName: string;
     eventDate: string;
     eventTime?: string;
     venue?: string;
-  };
-  conflictItem?: {
-    title: string;
-    clientName: string;
-    eventDate: string;
-    eventTime?: string;
-    venue?: string;
-  };
+    status: string;
+  }>;
+  severity: 'critical' | 'warning';
+  type: 'same_day';
+  date: string;
 }
 
 export default function ConflictsWidget({ onFilterByConflictType }: { onFilterByConflictType?: (severity: string) => void }) {
@@ -36,13 +26,13 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const unresolvedConflicts = (conflicts as BookingConflict[]).filter((c: BookingConflict) => !c.resolved);
+  const backendConflicts = conflicts as BackendConflict[];
 
   // Group conflicts by severity for counter display
   const conflictCounts = {
-    high: unresolvedConflicts.filter((c: BookingConflict) => c.severity === 'high').length,
-    medium: unresolvedConflicts.filter((c: BookingConflict) => c.severity === 'medium').length,
-    low: unresolvedConflicts.filter((c: BookingConflict) => c.severity === 'low').length,
+    high: backendConflicts.filter((c: BackendConflict) => c.severity === 'critical').length,
+    medium: backendConflicts.filter((c: BackendConflict) => c.severity === 'warning').length,
+    low: 0, // No resolved conflicts in this format
   };
 
   const handleConflictTypeClick = (severity: string) => {
@@ -73,13 +63,13 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" />
           Scheduling Conflicts
-          {unresolvedConflicts.length > 0 && (
-            <Badge variant="destructive">{unresolvedConflicts.length}</Badge>
+          {backendConflicts.length > 0 && (
+            <Badge variant="destructive">{backendConflicts.length}</Badge>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {unresolvedConflicts.length === 0 ? (
+        {backendConflicts.length === 0 ? (
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-green-500" />
             No scheduling conflicts
@@ -87,14 +77,14 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
         ) : (
           <div className="space-y-4">
             {/* Conflict Type Counters */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 className={`h-16 flex flex-col items-center justify-center gap-1 ${
                   conflictCounts.high > 0 ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'opacity-50'
                 }`}
-                onClick={() => handleConflictTypeClick('high')}
+                onClick={() => handleConflictTypeClick('critical')}
                 disabled={conflictCounts.high === 0}
               >
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -109,7 +99,7 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
                 className={`h-16 flex flex-col items-center justify-center gap-1 ${
                   conflictCounts.medium > 0 ? 'border-orange-300 bg-orange-50 hover:bg-orange-100' : 'opacity-50'
                 }`}
-                onClick={() => handleConflictTypeClick('medium')}
+                onClick={() => handleConflictTypeClick('warning')}
                 disabled={conflictCounts.medium === 0}
               >
                 <div className="w-3 h-3 rounded-full bg-orange-500"></div>
@@ -117,54 +107,45 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
                   {conflictCounts.medium} Warning
                 </span>
               </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                className={`h-16 flex flex-col items-center justify-center gap-1 ${
-                  conflictCounts.low > 0 ? 'border-yellow-300 bg-yellow-50 hover:bg-yellow-100' : 'opacity-50'
-                }`}
-                onClick={() => handleConflictTypeClick('low')}
-                disabled={conflictCounts.low === 0}
-              >
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <span className="text-xs font-medium">
-                  {conflictCounts.low} Resolved
-                </span>
-              </Button>
             </div>
 
-            {/* Recent Conflicts List */}
+            {/* Active Conflicts List */}
             <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-600">Recent Conflicts</h4>
-              {unresolvedConflicts.slice(0, 3).map((conflict: BookingConflict) => (
+              <h4 className="text-sm font-medium text-gray-600">Active Conflicts</h4>
+              {backendConflicts.slice(0, 3).map((conflict: BackendConflict) => (
                 <div
                   key={conflict.id}
                   className={`p-3 rounded-lg border ${
-                    conflict.severity === 'high' ? 'border-red-200 bg-red-50' :
-                    conflict.severity === 'medium' ? 'border-yellow-200 bg-yellow-50' :
-                    'border-blue-200 bg-blue-50'
+                    conflict.severity === 'critical' ? 'border-red-200 bg-red-50' :
+                    'border-orange-200 bg-orange-50'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge 
-                          variant={conflict.severity === 'high' ? 'destructive' : 'default'}
+                          variant={conflict.severity === 'critical' ? 'destructive' : 'default'}
                           className="text-xs"
                         >
                           {conflict.severity.toUpperCase()}
                         </Badge>
                         <span className="text-sm font-medium">
-                          {conflict.enquiry?.clientName}
+                          Same Day Conflict
                         </span>
                       </div>
                       <p className="text-xs text-gray-600 mb-2">
-                        {conflict.message}
+                        {conflict.bookings.length} bookings on {new Date(conflict.date).toLocaleDateString()}:
                       </p>
-                      <div className="text-xs text-gray-500">
-                        {conflict.enquiry?.eventDate && new Date(conflict.enquiry.eventDate).toLocaleDateString()}
-                        {conflict.enquiry?.eventTime && ` at ${conflict.enquiry.eventTime}`}
+                      <div className="text-xs text-gray-500 space-y-1">
+                        {conflict.bookings.map((booking, idx) => (
+                          <div key={booking.id} className="flex items-center gap-2">
+                            <span>• {booking.clientName}</span>
+                            {booking.eventTime && <span className="text-gray-400">({booking.eventTime})</span>}
+                            <Badge variant="outline" className="text-xs">
+                              {booking.status}
+                            </Badge>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -172,10 +153,10 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
               ))}
             </div>
             
-            {unresolvedConflicts.length > 3 && (
+            {backendConflicts.length > 3 && (
               <div className="text-center">
                 <Button variant="outline" size="sm">
-                  View All {unresolvedConflicts.length} Conflicts
+                  View All {backendConflicts.length} Conflicts
                 </Button>
               </div>
             )}
