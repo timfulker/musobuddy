@@ -468,88 +468,10 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Conflicts endpoint - OPTIMIZED conflict detection
+  // Conflicts endpoint - DISABLED for performance
   app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
-    try {
-      const bookings = await storage.getBookings(req.session.userId);
-      console.log(`🔍 OPTIMIZED CONFLICT DETECTION - Processing ${bookings.length} bookings`);
-      
-      // PERFORMANCE FIX: Only check active/upcoming bookings to reduce processing load
-      const activeBookings = bookings.filter(booking => {
-        const bookingDate = new Date(booking.eventDate);
-        const today = new Date();
-        const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-        
-        return booking.eventDate && 
-               bookingDate >= oneYearAgo && 
-               booking.status !== 'cancelled' && 
-               booking.status !== 'completed';
-      });
-      
-      console.log(`🔍 PERFORMANCE: Reduced from ${bookings.length} to ${activeBookings.length} active bookings`);
-      
-      const conflicts = [];
-      
-      // OPTIMIZED: Only check recent/upcoming bookings with time overlap logic
-      for (let i = 0; i < activeBookings.length; i++) {
-        const booking = activeBookings[i];
-        
-        if (!booking.eventDate || !booking.eventTime) continue;
-        
-        for (let j = i + 1; j < activeBookings.length; j++) {
-          const other = activeBookings[j];
-          
-          if (!other.eventDate || !other.eventTime) continue;
-          
-          // Same date check
-          const bookingDate = new Date(booking.eventDate).toDateString();
-          const otherDate = new Date(other.eventDate).toDateString();
-          if (otherDate !== bookingDate) continue; // Different dates, no conflict
-          
-          // Same date = conflict (severity determined by time overlap)
-          let conflictSeverity = 'high';
-          let conflictMessage = `Date conflict with ${other.clientName || 'Unknown Client'}`;
-          
-          // Check for time overlap if both have time information
-          if (booking.eventTime && other.eventTime && booking.eventEndTime && other.eventEndTime) {
-            try {
-              const bookingStart = new Date(`${bookingDate} ${booking.eventTime}`);
-              const bookingEnd = new Date(`${bookingDate} ${booking.eventEndTime}`);
-              const otherStart = new Date(`${otherDate} ${other.eventTime}`);
-              const otherEnd = new Date(`${otherDate} ${other.eventEndTime}`);
-              
-              const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
-              
-              if (hasTimeOverlap) {
-                conflictSeverity = 'high'; // Red - actual time overlap
-                conflictMessage = `Time overlap with ${other.clientName || 'Unknown Client'}`;
-              } else {
-                conflictSeverity = 'medium'; // Amber - same date, different times
-                conflictMessage = `Same date as ${other.clientName || 'Unknown Client'} but different times`;
-              }
-            } catch (error) {
-              // If time parsing fails, default to date conflict
-            }
-          }
-          
-          conflicts.push({
-            id: conflicts.length + 1,
-            enquiryId: booking.id,
-            conflictType: 'booking',
-            conflictId: other.id,
-            severity: conflictSeverity,
-            message: conflictMessage,
-            resolved: false
-          });
-        }
-      }
-      
-      console.log(`🔍 OPTIMIZED CONFLICT DETECTION COMPLETE - Found ${conflicts.length} conflicts`);
-      res.json(conflicts);
-    } catch (error) {
-      console.error('❌ Failed to fetch conflicts:', error);
-      res.status(500).json({ error: 'Failed to fetch conflicts' });
-    }
+    console.log('🚫 CONFLICT DETECTION DISABLED - Returning empty array for performance');
+    res.json([]);
   });
   
   console.log('✅ Clean routes registered successfully');
