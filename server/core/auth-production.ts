@@ -298,6 +298,50 @@ export class ProductionAuthSystem {
       });
     });
 
+    // Resend verification code
+    this.app.post('/api/auth/resend-code', async (req: any, res) => {
+      try {
+        // Get user from session
+        const userId = req.session?.userId;
+        if (!userId) {
+          return res.status(401).json({ error: 'Not authenticated' });
+        }
+
+        const user = await this.storage.getUser(userId);
+        if (!user || !user.phoneNumber) {
+          return res.status(400).json({ error: 'User not found or no phone number' });
+        }
+
+        // Generate new verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Store in database
+        await this.db.insert(phoneVerifications).values({
+          phoneNumber: user.phoneNumber,
+          verificationCode,
+          expiresAt,
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+        });
+
+        // Send SMS (or log in trial mode)
+        const { smsService } = await import('./sms-service');
+        await smsService.sendVerificationCode(user.phoneNumber, verificationCode);
+
+        res.json({ 
+          success: true, 
+          message: 'New verification code sent',
+          // In development/trial mode, include code for testing
+          ...(ENV.isProduction ? {} : { code: verificationCode })
+        });
+
+      } catch (error: any) {
+        console.error('❌ Resend verification error:', error);
+        res.status(500).json({ error: 'Failed to resend verification code' });
+      }
+    });
+
     console.log('✅ Production authentication routes registered');
   }
 }
