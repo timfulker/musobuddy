@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import ConflictResolutionModal from "./ConflictResolutionModal";
+import { ConflictResolutionDialog } from "./ConflictResolutionDialog";
 
 interface Conflict {
   withBookingId: number;
@@ -172,11 +172,12 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
       </Dialog>
 
       {/* Full Conflict Resolution Modal */}
-      <ConflictResolutionModal
-        isOpen={showResolutionModal}
-        onClose={() => setShowResolutionModal(false)}
-        currentBooking={currentBooking}
-        conflicts={conflicts || []}
+      <ConflictResolutionDialog
+        open={showResolutionModal}
+        onOpenChange={setShowResolutionModal}
+        primaryBooking={currentBooking}
+        conflictingBookings={conflicts || []}
+        onResolved={() => setShowResolutionModal(false)}
       />
     </>
   );

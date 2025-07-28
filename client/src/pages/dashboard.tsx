@@ -6,7 +6,7 @@ import ActionableEnquiries from "@/components/kanban-board";
 import CalendarWidget from "@/components/calendar-widget";
 import QuickActions from "@/components/quick-actions";
 import ComplianceAlerts from "@/components/compliance-alerts";
-import RecentSignedContracts from "@/components/RecentSignedContracts";
+import { ContractNotifications } from "@/components/contract-notifications";
 import ConflictsWidget from "@/components/conflicts-widget";
 import BookingCTAButtons from "@/components/booking-cta-buttons";
 import MobileNav from "@/components/mobile-nav";
@@ -114,7 +114,7 @@ export default function Dashboard() {
                 <QuickActions />
                 <ConflictsWidget />
                 <ComplianceAlerts />
-                <RecentSignedContracts />
+                <ContractNotifications />
               </div>
             </div>
           </main>
@@ -159,7 +159,7 @@ export default function Dashboard() {
               <QuickActions />
               <ConflictsWidget />
               <ComplianceAlerts />
-              <RecentSignedContracts />
+              <ContractNotifications />
             </div>
           </div>
         </main>
