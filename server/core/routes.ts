@@ -426,9 +426,9 @@ export async function registerRoutes(app: Express) {
             booking2: `${otherBooking.id} (${otherBooking.clientName}) - ${otherDate}`
           });
           
-          // Determine conflict severity based on time information
-          let conflictSeverity = 'high'; // Default to hard/red conflict
-          let conflictMessage = `Same date booking with ${otherBooking.clientName || 'Unknown Client'}`;
+          // Same date = automatic conflict, severity determined by time overlap if available
+          let conflictSeverity = 'high'; // Default to hard/red conflict  
+          let conflictMessage = `Date conflict with ${otherBooking.clientName || 'Unknown Client'}`;
           let overlapMinutes = null;
           
           // Try to soften conflict if time information is available
