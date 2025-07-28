@@ -197,15 +197,9 @@ export class ProductionAuthSystem {
                 id: req.session.userId,
                 email: req.session.email,
                 isAdmin: true,
-                tier: 'admin'
-              }
-              user: {
-                id: 'admin-emergency-id',
-                email: email,
+                tier: 'admin',
                 firstName: 'Admin',
                 lastName: 'User',
-                tier: 'admin',
-                isAdmin: true,
                 isSubscribed: true,
                 isLifetime: true,
                 phoneVerified: true

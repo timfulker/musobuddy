@@ -410,9 +410,12 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     // AI parsing
     const aiResult = await parseEmailWithAI(bodyField, subjectField);
     
-    // Extract user ID from recipient email address
+    // Extract user ID from recipient email address using fallback system
     const recipientField = req.body.To || req.body.recipient || '';
     console.log(`📧 [${requestId}] Recipient field:`, recipientField);
+    
+    // FALLBACK PROTECTION: Import webhook fallbacks
+    const { getUserByEmailPrefix } = await import('./core/webhook-auth-fallbacks');
     
     let userId = null;
     
@@ -424,18 +427,17 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
         const customPrefix = prefixMatch[1].trim();
         console.log(`📧 [${requestId}] Extracted custom email prefix:`, customPrefix);
         
-        // Look up user by their custom email prefix
+        // FALLBACK PROTECTION: Look up user using authentication-independent method
         try {
-          const users = await storage.getAllUsers();
-          const user = users.find((u: any) => u.emailPrefix === customPrefix);
+          const user = await getUserByEmailPrefix(customPrefix);
           if (user) {
             userId = user.id;
-            console.log(`📧 [${requestId}] Found user for custom prefix "${customPrefix}":`, userId);
+            console.log(`📧 [${requestId}] FALLBACK: Found user for custom prefix "${customPrefix}":`, userId);
           } else {
-            console.log(`📧 [${requestId}] No user found for custom prefix "${customPrefix}"`);
+            console.log(`📧 [${requestId}] FALLBACK: No user found for custom prefix "${customPrefix}"`);
           }
         } catch (error) {
-          console.log(`❌ [${requestId}] Error looking up user by custom prefix:`, error);
+          console.log(`❌ [${requestId}] FALLBACK: Error looking up user by custom prefix:`, error);
         }
       }
     }

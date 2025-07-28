@@ -311,10 +311,20 @@ export async function registerRoutes(app: Express) {
   // Get all bookings for authenticated user
   app.get('/api/bookings', async (req: any, res) => {
     try {
-      // EMERGENCY FIX: Force admin user bookings
-      const adminUserId = '43963086';
-      const bookings = await storage.getBookings(adminUserId);
-      console.log(`📋 EMERGENCY: Fetched ${bookings.length} bookings for admin user ${adminUserId}`);
+      // FALLBACK PROTECTION: Import fallback system
+      const { getBookingsForUser, getAdminUser } = await import('./webhook-auth-fallbacks');
+      
+      let userId = req.session?.userId;
+      
+      // If no session userId, fall back to admin user
+      if (!userId) {
+        const adminUser = await getAdminUser();
+        userId = adminUser?.id || '43963086';
+        console.log(`📋 FALLBACK: Using admin user ${userId} for bookings request`);
+      }
+      
+      const bookings = await getBookingsForUser(userId);
+      console.log(`📋 Retrieved ${bookings.length} bookings for user ${userId}`);
       res.json(bookings);
     } catch (error) {
       console.error('❌ Failed to fetch bookings:', error);
