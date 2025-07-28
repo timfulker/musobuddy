@@ -79,7 +79,7 @@ export default function NotificationsDropdown() {
 
       setNotifications(notificationsList);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      // Error fetching notifications - handled gracefully
       setNotifications([]);
     } finally {
       setLoading(false);

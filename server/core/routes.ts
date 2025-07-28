@@ -98,7 +98,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== NOTIFICATIONS API =====
-  app.get('/api/notifications', async (req: any, res) => {
+  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
       if (!userId) {

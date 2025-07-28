@@ -49,7 +49,7 @@ export default function ActionableEnquiries() {
         const parsed = JSON.parse(savedResolvedConflicts);
         setResolvedConflicts(new Set(parsed));
       } catch (error) {
-        console.error('Error parsing resolved conflicts:', error);
+        // Error parsing resolved conflicts - handled gracefully
       }
     }
   }, []);
@@ -68,12 +68,7 @@ export default function ActionableEnquiries() {
       
       
       // Log first few enquiries for debugging
-      console.log('📊 First 3 enquiries:', enquiries.slice(0, 3).map((e: any) => ({
-        id: e.id,
-        clientName: e.clientName,
-        eventDate: e.eventDate,
-        status: e.status
-      })));
+      // First 3 enquiries debug removed for performance
     } else {
       
     }
@@ -253,14 +248,7 @@ export default function ActionableEnquiries() {
     const getBadgeInfo = () => {
       // Debug logging to check badge generation
       if (hasConflicts || needsResponse(enquiry)) {
-        console.log('Badge generation debug:', {
-          title: enquiry.title,
-          hasConflicts,
-          isResolved,
-          severity,
-          needsResponse: needsResponse(enquiry),
-          conflictsLength: conflicts.length
-        });
+        // Badge generation debug removed for performance
       }
       
       if (hasConflicts && isResolved) {
