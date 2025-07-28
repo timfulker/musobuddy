@@ -5,13 +5,11 @@ import { createSessionMiddleware } from './session-config.js';
 // ProductionAuthSystem removed - using direct route registration
 import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 
-// CLEAN AUTHENTICATION MIDDLEWARE
+// OPTIMIZED AUTHENTICATION MIDDLEWARE - No logging
 const isAuthenticated = (req: any, res: any, next: any) => {
   if (!req.session?.userId) {
-    console.log('❌ Authentication required - no session userId');
     return res.status(401).json({ error: 'Authentication required' });
   }
-  console.log(`✅ Authenticated request from user: ${req.session.userId}`);
   next();
 };
 
@@ -74,14 +72,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Get current user endpoint - direct implementation
+  // Get current user endpoint - OPTIMIZED: No logging
   app.get('/api/auth/user', (req: any, res) => {
-    console.log(`👤 Clean auth check - Session:`, {
-      userId: req.session?.userId,
-      sessionId: req.sessionID,
-      hasSession: !!req.session
-    });
-    
     if (!req.session?.userId) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
@@ -395,13 +387,19 @@ export async function registerRoutes(app: Express) {
       const userId = req.session?.userId;
       
       if (!userId) {
-        console.log('❌ No authenticated session for bookings request');
         return res.status(401).json({ error: 'Authentication required' });
       }
       
+      // CRITICAL PERFORMANCE FIX: Limit to 50 most recent bookings
+      const limit = parseInt(req.query.limit as string) || 50;
       const bookings = await storage.getBookings(userId);
-      console.log(`📋 CLEAN: Retrieved ${bookings.length} bookings for authenticated user ${userId}`);
-      res.json(bookings);
+      
+      // Sort by date and limit results to prevent system overload
+      const recentBookings = bookings
+        .sort((a: any, b: any) => new Date(b.eventDate || 0).getTime() - new Date(a.eventDate || 0).getTime())
+        .slice(0, limit);
+      
+      res.json(recentBookings);
     } catch (error) {
       console.error('❌ Failed to fetch bookings:', error);
       res.status(500).json({ error: 'Failed to fetch bookings' });
