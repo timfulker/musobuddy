@@ -17,7 +17,7 @@ interface EnvironmentConfig {
  */
 function createEnvironmentConfig(): EnvironmentConfig {
   // Production: Only when actually deployed on Replit
-  const isProduction = process.env.REPLIT_DEPLOYMENT === 'true';
+  const isProduction = Boolean(process.env.REPLIT_DEPLOYMENT);
   
   // Development: Everything else
   const isDevelopment = !isProduction;

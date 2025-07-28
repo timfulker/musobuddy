@@ -30,11 +30,12 @@ app.get('/health', (req: Request, res: Response) => {
 // Prevents production deployment with wrong environment settings
 if (process.env.NODE_ENV === 'production' && !ENV.isProduction) {
   console.error('❌ PRODUCTION DEPLOYMENT ERROR:');
-  console.error('NODE_ENV=production but REPLIT_DEPLOYMENT not set to "true"');
-  console.error('This indicates a deployment configuration problem.');
+  console.error('NODE_ENV=production but REPLIT_DEPLOYMENT not set properly');
+  console.error('REPLIT_DEPLOYMENT should be truthy (string "true" or numeric "1")');
   console.error('Environment vars:', {
     NODE_ENV: process.env.NODE_ENV,
-    REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT
+    REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+    type: typeof process.env.REPLIT_DEPLOYMENT
   });
   process.exit(1);
 }
