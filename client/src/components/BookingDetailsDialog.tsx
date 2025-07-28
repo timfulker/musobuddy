@@ -33,8 +33,8 @@ import type { Booking } from "@shared/schema";
 const bookingDetailsSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
   eventDate: z.string().min(1, "Event date is required"),
-  eventTime: z.string().optional(),
-  eventEndTime: z.string().optional(),
+  eventStartTime: z.string().optional(),
+  eventFinishTime: z.string().optional(),
   venue: z.string().optional(),
   fee: z.string().optional(),
   clientEmail: z.string().email().optional().or(z.literal("")),
@@ -137,8 +137,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     defaultValues: {
       clientName: "",
       eventDate: "",
-      eventTime: "",
-      eventEndTime: "",
+      eventStartTime: "",
+      eventFinishTime: "",
       venue: "",
       fee: "",
       clientEmail: "",
@@ -169,28 +169,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   // Initialize form when booking changes
   useEffect(() => {
     if (booking) {
-      // Parse formatted time back into separate start and end times
-      let startTime = "";
-      let endTime = "";
-      
-      if (booking.eventTime) {
-        if (booking.eventTime.includes(' - ')) {
-          // Time is formatted as "20:00 - 21:00"
-          const [start, end] = booking.eventTime.split(' - ');
-          startTime = start.trim();
-          endTime = end.trim();
-        } else {
-          // Time is single value, use eventEndTime if available
-          startTime = booking.eventTime;
-          endTime = booking.eventEndTime || "";
-        }
-      }
-      
       const bookingData = {
         clientName: booking.clientName || "",
         eventDate: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : "",
-        eventTime: startTime,
-        eventEndTime: endTime,
+        eventStartTime: booking.eventStartTime || "",
+        eventFinishTime: booking.eventFinishTime || "",
         venue: booking.venue || "",
         fee: booking.fee || "",
         clientEmail: booking.clientEmail || "",
@@ -331,11 +314,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       ...(contractToUse.clientAddress && !currentFormData.clientAddress?.trim() && { clientAddress: contractToUse.clientAddress }),
       ...(contractToUse.venue && !currentFormData.venue?.trim() && { venue: contractToUse.venue }),
       ...(contractToUse.venueAddress && !currentFormData.venueAddress?.trim() && { venueAddress: contractToUse.venueAddress }),
-      ...(contractToUse.eventTime && !currentFormData.eventTime?.trim() && { 
-        eventTime: convertTimeFormat(contractToUse.eventTime) 
+      ...(contractToUse.eventStartTime && !currentFormData.eventStartTime?.trim() && { 
+        eventStartTime: convertTimeFormat(contractToUse.eventStartTime) 
       }),
-      ...(contractToUse.eventEndTime && !currentFormData.eventEndTime?.trim() && { 
-        eventEndTime: convertTimeFormat(contractToUse.eventEndTime) 
+      ...(contractToUse.eventFinishTime && !currentFormData.eventFinishTime?.trim() && { 
+        eventFinishTime: convertTimeFormat(contractToUse.eventFinishTime) 
       }),
       ...(contractToUse.fee && (!currentFormData.fee || currentFormData.fee === '0') && { fee: contractToUse.fee.toString() }),
       ...(contractToUse.equipmentRequirements && !currentFormData.equipmentRequirements?.trim() && { 
@@ -550,12 +533,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         updates.eventDate = extractedData.eventDate;
         fieldsUpdated++;
       }
-      if (extractedData.eventTime && !currentData.eventTime?.trim()) {
-        updates.eventTime = extractedData.eventTime;
+      if (extractedData.eventStartTime && !currentData.eventStartTime?.trim()) {
+        updates.eventStartTime = extractedData.eventStartTime;
         fieldsUpdated++;
       }
-      if (extractedData.eventEndTime && !currentData.eventEndTime?.trim()) {
-        updates.eventEndTime = extractedData.eventEndTime;
+      if (extractedData.eventFinishTime && !currentData.eventFinishTime?.trim()) {
+        updates.eventFinishTime = extractedData.eventFinishTime;
         fieldsUpdated++;
       }
       if (extractedData.fee && (!currentData.fee || currentData.fee === '0')) {
@@ -749,10 +732,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="eventTime"
+                      name="eventStartTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Start Time</FormLabel>
+                          <FormLabel>Event Start Time</FormLabel>
                           <FormControl>
                             <Input {...field} type="time" />
                           </FormControl>
@@ -762,10 +745,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                     />
                     <FormField
                       control={form.control}
-                      name="eventEndTime"
+                      name="eventFinishTime"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>End Time</FormLabel>
+                          <FormLabel>Event Finish Time</FormLabel>
                           <FormControl>
                             <Input {...field} type="time" />
                           </FormControl>

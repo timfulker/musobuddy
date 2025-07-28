@@ -19,8 +19,9 @@ export interface BookingInfo {
   id: number;
   clientName: string;
   eventDate: string;
-  eventTime?: string;
-  eventEndTime?: string;
+  eventStartTime?: string;
+  eventFinishTime?: string;
+  eventTime?: string; // For backward compatibility
   venue?: string;
   status: string;
 }
@@ -57,7 +58,7 @@ export class ConflictEngine {
     eventDate: Date
   ): ConflictDetectionResult {
     // If either booking lacks time info, assume same-day warning
-    if (!booking1.eventTime || !booking2.eventTime) {
+    if (!booking1.eventStartTime || !booking2.eventStartTime) {
       return {
         hasConflict: true,
         severity: 'warning',
@@ -68,20 +69,20 @@ export class ConflictEngine {
     }
 
     // Parse start times
-    const start1 = this.parseTime(booking1.eventTime, eventDate);
-    const start2 = this.parseTime(booking2.eventTime, eventDate);
+    const start1 = this.parseTime(booking1.eventStartTime, eventDate);
+    const start2 = this.parseTime(booking2.eventStartTime, eventDate);
 
     if (!start1 || !start2) {
       return this.noConflict(booking1, booking2);
     }
 
     // Parse end times (default to 2 hours if not specified)
-    const end1 = booking1.eventEndTime 
-      ? this.parseTime(booking1.eventEndTime, eventDate)
+    const end1 = booking1.eventFinishTime 
+      ? this.parseTime(booking1.eventFinishTime, eventDate)
       : new Date(start1.getTime() + (2 * 60 * 60 * 1000)); // +2 hours
 
-    const end2 = booking2.eventEndTime 
-      ? this.parseTime(booking2.eventEndTime, eventDate)
+    const end2 = booking2.eventFinishTime 
+      ? this.parseTime(booking2.eventFinishTime, eventDate)
       : new Date(start2.getTime() + (2 * 60 * 60 * 1000)); // +2 hours
 
     if (!end1 || !end2) {

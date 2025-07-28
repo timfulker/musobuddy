@@ -275,8 +275,8 @@ export const bookings = pgTable("bookings", {
   clientEmail: varchar("client_email"),
   clientPhone: varchar("client_phone"),
   eventDate: timestamp("event_date"),
-  eventTime: varchar("event_time"),
-  eventEndTime: varchar("event_end_time"), // End time for performance
+  eventStartTime: varchar("event_start_time"), // Start time for performance  
+  eventFinishTime: varchar("event_finish_time"), // Finish time for performance
   performanceDuration: text("performance_duration"), // Duration as text (e.g., "2 hours", "90 minutes")
   venue: varchar("venue"),
   venueAddress: text("venue_address"),

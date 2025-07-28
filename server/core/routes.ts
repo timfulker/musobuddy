@@ -373,9 +373,13 @@ export async function registerRoutes(app: Express) {
             const timeOverlap = hasTimeOverlap(booking1, booking2);
             const severity = timeOverlap ? 'hard' : 'soft';
             
+            const timeDisplay2 = booking2.eventStartTime && booking2.eventFinishTime 
+              ? `${booking2.eventStartTime} - ${booking2.eventFinishTime}`
+              : booking2.eventTime || 'Time not specified';
+              
             const conflictMessage = timeOverlap 
-              ? `Time overlap with ${booking2.clientName} (${booking2.eventTime})`
-              : `Same day booking with ${booking2.clientName} (${booking2.eventTime})`;
+              ? `Time overlap with ${booking2.clientName} (${timeDisplay2})`
+              : `Same day booking with ${booking2.clientName} (${timeDisplay2})`;
             
             // Create conflict entry for booking1 about booking2
             conflicts.push({
@@ -384,7 +388,7 @@ export async function registerRoutes(app: Express) {
               severity,
               clientName: booking2.clientName || 'Unknown Client',
               status: booking2.status || 'new',
-              time: booking2.eventTime || 'Time not specified',
+              time: timeDisplay2,
               canEdit: true,
               canReject: true,
               type: 'same_day',
@@ -394,9 +398,13 @@ export async function registerRoutes(app: Express) {
             });
             
             // Create conflict entry for booking2 about booking1
+            const timeDisplay1 = booking1.eventStartTime && booking1.eventFinishTime 
+              ? `${booking1.eventStartTime} - ${booking1.eventFinishTime}`
+              : booking1.eventTime || 'Time not specified';
+              
             const reverseMessage = timeOverlap 
-              ? `Time overlap with ${booking1.clientName} (${booking1.eventTime})`
-              : `Same day booking with ${booking1.clientName} (${booking1.eventTime})`;
+              ? `Time overlap with ${booking1.clientName} (${timeDisplay1})`
+              : `Same day booking with ${booking1.clientName} (${timeDisplay1})`;
               
             conflicts.push({
               bookingId: booking2.id,
@@ -404,7 +412,7 @@ export async function registerRoutes(app: Express) {
               severity,
               clientName: booking1.clientName || 'Unknown Client', 
               status: booking1.status || 'new',
-              time: booking1.eventTime || 'Time not specified',
+              time: timeDisplay1,
               canEdit: true,
               canReject: true,
               type: 'same_day',

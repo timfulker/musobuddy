@@ -36,8 +36,8 @@ const contractFormSchema = z.object({
   // Everything else optional
   contractNumber: z.string().optional(),
   venue: z.string().optional(),
-  eventTime: z.string().optional(),
-  eventEndTime: z.string().optional(),
+  eventStartTime: z.string().optional(),
+  eventFinishTime: z.string().optional(),
   deposit: z.string().optional(),
   clientAddress: z.string().optional(),
   clientPhone: z.string().optional(),
@@ -100,8 +100,8 @@ export default function Contracts() {
       clientPhone: "",
       clientAddress: "",
       eventDate: "",
-      eventTime: "",
-      eventEndTime: "",
+      eventStartTime: "",
+      eventFinishTime: "",
       venue: "",
       venueAddress: "",
       fee: "",
@@ -163,8 +163,8 @@ export default function Contracts() {
               form.setValue('venue', booking.venue || '');
               form.setValue('venueAddress', booking.venueAddress || '');
               form.setValue('eventDate', booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '');
-              form.setValue('eventTime', booking.eventTime || '');
-              form.setValue('eventEndTime', booking.eventEndTime || '');
+              form.setValue('eventStartTime', booking.eventStartTime || '');
+              form.setValue('eventFinishTime', booking.eventFinishTime || '');
               form.setValue('fee', booking.fee || '');
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
               form.setValue('specialRequirements', booking.specialRequirements || '');
@@ -205,7 +205,8 @@ export default function Contracts() {
             form.setValue('clientPhone', enquiry.clientPhone || '');
             form.setValue('venue', enquiry.venue || '');
             form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
-            form.setValue('eventTime', enquiry.eventTime || '');
+            form.setValue('eventStartTime', enquiry.eventStartTime || '');
+            form.setValue('eventFinishTime', enquiry.eventFinishTime || '');
             form.setValue('fee', enquiry.fee || '');
             
             // Auto-generate contract number with event date and client name
@@ -747,10 +748,10 @@ export default function Contracts() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
-                            name="eventTime"
+                            name="eventStartTime"
                             render={({ field }) => (
                               <FormItem className="space-y-2">
-                                <FormLabel className="text-red-600 font-medium">Start Time *</FormLabel>
+                                <FormLabel className="text-red-600 font-medium">Event Start Time *</FormLabel>
                                 <FormControl>
                                   <Input type="time" step="300" {...field} value={field.value || ""} />
                                 </FormControl>
@@ -760,10 +761,10 @@ export default function Contracts() {
                           />
                           <FormField
                             control={form.control}
-                            name="eventEndTime"
+                            name="eventFinishTime"
                             render={({ field }) => (
                               <FormItem className="space-y-2">
-                                <FormLabel className="text-red-600 font-medium">End Time *</FormLabel>
+                                <FormLabel className="text-red-600 font-medium">Event Finish Time *</FormLabel>
                                 <FormControl>
                                   <Input type="time" step="300" {...field} value={field.value || ""} />
                                 </FormControl>

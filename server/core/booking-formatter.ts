@@ -11,8 +11,9 @@ export interface FormattedBooking {
   clientEmail?: string;
   clientPhone?: string;
   eventDate?: Date;
-  eventTime?: string; // Formatted as "19:00 - 22:00" or single time
-  eventEndTime?: string; // Raw end time from database
+  eventStartTime?: string; // Start time from database
+  eventFinishTime?: string; // Finish time from database
+  eventTime?: string; // Formatted display time (for backward compatibility)
   performanceDuration?: string;
   venue?: string;
   eventType?: string;
@@ -64,23 +65,11 @@ export function formatBooking(rawBooking: any): FormattedBooking {
   
   const formatted: FormattedBooking = { ...rawBooking };
   
-  // Format time range consistently - but check if already formatted
-  if (rawBooking.eventTime && rawBooking.eventEndTime) {
-    // Don't double-format if eventTime already contains a range
-    if (!rawBooking.eventTime.includes(' - ')) {
-      formatted.eventTime = `${rawBooking.eventTime} - ${rawBooking.eventEndTime}`;
-    }
-    // If already formatted, keep as-is but ensure eventEndTime is preserved for conflict detection
-    else {
-      formatted.eventTime = rawBooking.eventTime;
-      // Extract end time from formatted string if needed
-      if (rawBooking.eventTime.includes(' - ') && !formatted.eventEndTime) {
-        const parts = rawBooking.eventTime.split(' - ');
-        if (parts.length === 2) {
-          formatted.eventEndTime = parts[1];
-        }
-      }
-    }
+  // Format time range for display - create eventTime from start/finish times
+  if (rawBooking.eventStartTime && rawBooking.eventFinishTime) {
+    formatted.eventTime = `${rawBooking.eventStartTime} - ${rawBooking.eventFinishTime}`;
+  } else if (rawBooking.eventStartTime) {
+    formatted.eventTime = rawBooking.eventStartTime;
   }
   
   return formatted;
@@ -99,17 +88,15 @@ export function formatBookings(rawBookings: any[]): FormattedBooking[] {
  * Get raw time components for conflict detection
  */
 export function parseBookingTime(booking: FormattedBooking): { startTime: string; endTime: string } | null {
-  if (!booking.eventTime) return null;
-  
-  // If formatted time range "19:00 - 22:00"
-  if (booking.eventTime.includes(' - ')) {
-    const [startTime, endTime] = booking.eventTime.split(' - ');
-    return { startTime: startTime.trim(), endTime: endTime.trim() };
+  // Use the dedicated start and finish time fields
+  if (booking.eventStartTime && booking.eventFinishTime) {
+    return { startTime: booking.eventStartTime, endTime: booking.eventFinishTime };
   }
   
-  // If single time, use both eventTime and eventEndTime from raw data
-  if (booking.eventEndTime) {
-    return { startTime: booking.eventTime, endTime: booking.eventEndTime };
+  // Fallback: parse formatted time if available (for backward compatibility)
+  if (booking.eventTime?.includes(' - ')) {
+    const [startTime, endTime] = booking.eventTime.split(' - ');
+    return { startTime: startTime.trim(), endTime: endTime.trim() };
   }
   
   return null;

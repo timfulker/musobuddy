@@ -98,16 +98,14 @@ export default function ActionableEnquiries() {
         try {
           let enquiryStart, enquiryEnd, otherStart, otherEnd;
           
-          if (enquiry.eventTime && enquiry.eventTime.includes('-')) {
-            const [start, end] = enquiry.eventTime.split('-');
-            enquiryStart = new Date(`${enquiry.eventDate}T${start.trim()}`);
-            enquiryEnd = new Date(`${enquiry.eventDate}T${end.trim()}`);
+          if (enquiry.eventStartTime && enquiry.eventFinishTime) {
+            enquiryStart = new Date(`${enquiry.eventDate}T${enquiry.eventStartTime}`);
+            enquiryEnd = new Date(`${enquiry.eventDate}T${enquiry.eventFinishTime}`);
           }
           
-          if (other.eventTime && other.eventTime.includes('-')) {
-            const [start, end] = other.eventTime.split('-');
-            otherStart = new Date(`${other.eventDate}T${start.trim()}`);
-            otherEnd = new Date(`${other.eventDate}T${end.trim()}`);
+          if (other.eventStartTime && other.eventFinishTime) {
+            otherStart = new Date(`${other.eventDate}T${other.eventStartTime}`);
+            otherEnd = new Date(`${other.eventDate}T${other.eventFinishTime}`);
           }
           
           // If we have valid times, check for overlap
@@ -328,13 +326,11 @@ export default function ActionableEnquiries() {
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-2" />
                   <span>
-                    {enquiry.eventTime 
-                      ? enquiry.eventTime.includes(' - ') 
-                        ? enquiry.eventTime // Already formatted as "20:00 - 21:00"
-                        : enquiry.eventEndTime 
-                          ? `${enquiry.eventTime} - ${enquiry.eventEndTime}` // Needs formatting
-                          : enquiry.eventTime // Single time only
-                      : '00:00 - 23:59'
+                    {enquiry.eventStartTime && enquiry.eventFinishTime
+                      ? `${enquiry.eventStartTime} - ${enquiry.eventFinishTime}`
+                      : enquiry.eventStartTime
+                        ? enquiry.eventStartTime
+                        : enquiry.eventTime || '00:00 - 23:59'
                     }
                   </span>
                 </div>
