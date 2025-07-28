@@ -31,6 +31,18 @@ export class Storage {
     return result[0] || null;
   }
 
+  /**
+   * Get user by email prefix
+   * Used for admin email prefix management and validation
+   * @param emailPrefix - The email prefix to search for (e.g., "saxweddings")
+   * @returns User object or null if not found
+   */
+  async getUserByEmailPrefix(emailPrefix: string) {
+    const result = await db.select().from(users)
+      .where(eq(users.emailPrefix, emailPrefix.toLowerCase()));
+    return result[0] || null;
+  }
+
   async authenticateUser(email: string, password: string) {
     const user = await this.getUserByEmail(email);
     if (!user || !user.password) {
@@ -57,6 +69,13 @@ export class Storage {
     return result[0];
   }
 
+  /**
+   * Update user data
+   * Can be used to change email prefix: await storage.updateUser(userId, { emailPrefix: "newprefix" })
+   * @param id - User ID
+   * @param updates - Fields to update (including emailPrefix)
+   * @returns Updated user object
+   */
   async updateUser(id: string, updates: any) {
     const result = await db.update(users)
       .set({ ...updates, updatedAt: new Date() })
