@@ -45,6 +45,42 @@ export async function registerRoutes(app: Express) {
 
   // ===== STRIPE ROUTES =====
   
+  // Start trial (create Stripe checkout session) - REQUIRES AUTHENTICATION
+  app.post('/api/auth/start-trial', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        console.log('❌ No userId in session for start-trial');
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      console.log('🚀 Backend: Starting trial for userId:', userId);
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      if (!user.phoneVerified) {
+        return res.status(400).json({ error: 'Phone verification required' });
+      }
+
+      console.log('📋 Backend: User found and verified, creating checkout session...');
+
+      const { StripeService } = await import('./stripe-service');
+      const stripeService = new StripeService();
+      
+      const session = await stripeService.createTrialCheckoutSession(userId);
+      
+      console.log('✅ Backend: Checkout session created:', session.sessionId);
+      res.json(session);
+      
+    } catch (error: any) {
+      console.error('❌ Start trial error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
   // Create Stripe checkout session (AUTHENTICATED)
   app.post('/api/create-checkout-session', async (req: any, res) => {
     try {

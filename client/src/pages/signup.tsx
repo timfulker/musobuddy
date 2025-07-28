@@ -60,6 +60,9 @@ export default function SignupPage() {
   if (!isLoading && user && step === 'trial' && !userId) {
     setUserId(user.id);
   }
+  
+  // Debug authentication state
+  console.log('🔍 Auth state - isLoading:', isLoading, 'user:', user, 'step:', step, 'userId:', userId);
 
   const signupForm = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
@@ -161,9 +164,10 @@ export default function SignupPage() {
   const startTrialMutation = useMutation({
     mutationFn: async () => {
       console.log('🚀 Frontend: Starting trial with userId:', userId);
+      // Don't send userId in body since backend uses session authentication
       return apiRequest('/api/auth/start-trial', {
         method: 'POST',
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({}),
       });
     },
     onSuccess: async (response: any) => {

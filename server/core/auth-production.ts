@@ -379,10 +379,15 @@ export class ProductionAuthSystem {
           phoneVerifiedAt: new Date()
         });
 
+        // CRITICAL: Set session for authenticated user after phone verification
+        req.session.userId = user.id;
+        req.session.email = user.email;
+        req.session.phoneVerified = true;
+
         // Save session
         await this.saveSession(req);
 
-        console.log('✅ Phone verified successfully for:', user.email);
+        console.log('✅ Phone verified successfully for:', user.email, 'Session set with userId:', user.id);
 
         res.json({
           success: true,
