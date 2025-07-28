@@ -169,20 +169,34 @@ export default function UnifiedBookings() {
     }
   }, [bookings]); // Depend on bookings data
 
-  // Conflict detection function (same as dashboard) with enhanced debugging
+  // Conflict detection function - FIXED to handle range format like "16:00-20:00"
   const detectConflicts = (booking: any) => {
-    if (!booking.eventDate || !booking.eventTime || !booking.eventEndTime) {
-      console.log(`🔍 CONFLICT DEBUG - Missing data for booking ${booking.id}:`, {
-        eventDate: booking.eventDate,
-        eventTime: booking.eventTime,
-        eventEndTime: booking.eventEndTime
-      });
+    if (!booking.eventDate) {
+      console.log(`🔍 CONFLICT DEBUG - Missing event date for booking ${booking.id}`);
       return [];
     }
     
     const bookingDate = new Date(booking.eventDate).toDateString();
-    const bookingStart = new Date(`${booking.eventDate}T${booking.eventTime}`);
-    const bookingEnd = new Date(`${booking.eventDate}T${booking.eventEndTime}`);
+    
+    // Parse time range format "16:00-20:00" or separate eventTime/eventEndTime
+    let bookingStartTime, bookingEndTime;
+    
+    if (booking.eventTime && booking.eventTime.includes('-')) {
+      // Handle range format like "16:00-20:00"
+      const [start, end] = booking.eventTime.split('-');
+      bookingStartTime = start.trim();
+      bookingEndTime = end.trim();
+    } else if (booking.eventTime && booking.eventEndTime) {
+      // Handle separate fields
+      bookingStartTime = booking.eventTime;
+      bookingEndTime = booking.eventEndTime;
+    } else {
+      // Missing time data - still treat as same-day conflict
+      console.log(`🔍 CONFLICT DEBUG - Missing time data for booking ${booking.id}, checking same-day conflicts only`);
+    }
+    
+    const bookingStart = bookingStartTime ? new Date(`${booking.eventDate}T${bookingStartTime}`) : null;
+    const bookingEnd = bookingEndTime ? new Date(`${booking.eventDate}T${bookingEndTime}`) : null;
     
     console.log(`🔍 CONFLICT DEBUG - Checking booking ${booking.id} (${booking.clientName}):`, {
       date: bookingDate,
