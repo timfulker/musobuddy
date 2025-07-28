@@ -49,7 +49,15 @@ export function createSessionMiddleware() {
   return session(sessionConfig);
 }
 
-// REMOVED: Legacy duplicate session configuration - use createSessionMiddleware() instead
+// LEGACY: Enhanced session configuration with better error handling (kept for compatibility)
+export function setupSessionMiddleware(app: any) {
+  console.log('🔧 Setting up session middleware...');
+  
+  const sessionMiddleware = createSessionMiddleware();
+  app.use(sessionMiddleware);
+  
+  console.log('✅ Session middleware configured using createSessionMiddleware');
+}
 
 // CRITICAL: Session validation endpoint
 export function addSessionTestEndpoint(app: any) {
