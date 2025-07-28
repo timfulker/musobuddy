@@ -159,66 +159,77 @@ export default function UnifiedBookings() {
     }
   }, [bookings]); // Depend on bookings data
 
-  // Conflict detection function - Re-enabled with optimization
-  const detectConflicts = (booking: any) => {
-    if (!booking.eventDate || !bookings || bookings.length === 0) return [];
+  // OPTIMIZED: Memoized conflict detection to prevent excessive re-computation
+  const conflictsByBookingId = React.useMemo(() => {
+    if (!bookings || bookings.length === 0) return {};
     
-    const bookingDate = new Date(booking.eventDate).toDateString();
+    const conflicts: Record<number, any[]> = {};
+    const bookingsByDate: Record<string, any[]> = {};
     
-    // Find conflicts with other bookings on the same date
-    const conflicts = (bookings as any[])
-      .filter((other: any) => {
-        if (other.id === booking.id) return false;
-        if (!other.eventDate) return false;
-        if (other.status === 'cancelled' || other.status === 'rejected') return false;
-        
-        const otherDate = new Date(other.eventDate).toDateString();
-        return otherDate === bookingDate; // Same day = potential conflict
-      })
-      .map((other: any) => {
-        // Default to critical conflict for same day
-        let severity = 'critical';
-        let hasTimeOverlap = true;
-        
-        // Try to determine if there's actual time overlap
-        try {
-          if (booking.eventTime && other.eventTime && 
-              booking.eventTime.includes('-') && other.eventTime.includes('-')) {
+    // Group bookings by date for efficient lookup
+    (bookings as any[]).forEach((booking: any) => {
+      if (!booking.eventDate || booking.status === 'cancelled' || booking.status === 'rejected') return;
+      
+      const dateKey = new Date(booking.eventDate).toDateString();
+      if (!bookingsByDate[dateKey]) {
+        bookingsByDate[dateKey] = [];
+      }
+      bookingsByDate[dateKey].push(booking);
+    });
+    
+    // Only process dates with multiple bookings
+    Object.entries(bookingsByDate).forEach(([dateKey, dayBookings]) => {
+      if (dayBookings.length < 2) return; // No conflicts possible
+      
+      dayBookings.forEach((booking: any) => {
+        const bookingConflicts = dayBookings
+          .filter((other: any) => other.id !== booking.id)
+          .map((other: any) => {
+            let severity = 'hard'; // Default to hard conflict for same day
+            let hasTimeOverlap = true;
             
-            const [bookingStart, bookingEnd] = booking.eventTime.split('-').map((t: string) => t.trim());
-            const [otherStart, otherEnd] = other.eventTime.split('-').map((t: string) => t.trim());
+            // Simple time overlap check - avoid complex date parsing
+            try {
+              if (booking.eventTime && other.eventTime && 
+                  booking.eventTime.includes('-') && other.eventTime.includes('-')) {
+                
+                const [bookingStart, bookingEnd] = booking.eventTime.split('-');
+                const [otherStart, otherEnd] = other.eventTime.split('-');
+                
+                // Simple string comparison for basic overlap detection
+                hasTimeOverlap = bookingStart.trim() !== otherEnd.trim() && bookingEnd.trim() !== otherStart.trim();
+                severity = hasTimeOverlap ? 'hard' : 'soft';
+              }
+            } catch (error) {
+              // Keep as hard conflict if parsing fails
+            }
             
-            const bookingStartTime = new Date(`${booking.eventDate}T${bookingStart}`);
-            const bookingEndTime = new Date(`${booking.eventDate}T${bookingEnd}`);
-            const otherStartTime = new Date(`${other.eventDate}T${otherStart}`);
-            const otherEndTime = new Date(`${other.eventDate}T${otherEnd}`);
-            
-            // Check for time overlap: bookingStart < otherEnd && bookingEnd > otherStart
-            hasTimeOverlap = bookingStartTime < otherEndTime && bookingEndTime > otherStartTime;
-            severity = hasTimeOverlap ? 'critical' : 'warning';
-          }
-        } catch (error) {
-          // Keep as critical if time parsing fails
-          console.warn('Time parsing failed for conflict detection:', error);
-        }
+            return {
+              withBookingId: other.id,
+              severity,
+              clientName: other.clientName || 'Unknown Client',
+              status: other.status || 'new',
+              time: other.eventTime || 'Time not specified',
+              canEdit: true,
+              canReject: true,
+              type: 'same_day',
+              message: hasTimeOverlap 
+                ? `Time overlap with ${other.clientName} (${other.eventTime})`
+                : `Same day booking with ${other.clientName} (${other.eventTime})`,
+              overlapMinutes: hasTimeOverlap ? 60 : undefined
+            };
+          });
         
-        return {
-          withBookingId: other.id,
-          severity: severity === 'critical' ? 'hard' : 'soft', // Convert to expected format
-          clientName: other.clientName || 'Unknown Client',
-          status: other.status || 'new',
-          time: other.eventTime || 'Time not specified',
-          canEdit: true,
-          canReject: true,
-          type: 'same_day',
-          message: hasTimeOverlap 
-            ? `Time overlap with ${other.clientName} (${other.eventTime})`
-            : `Same day booking with ${other.clientName} (${other.eventTime})`,
-          overlapMinutes: hasTimeOverlap ? 60 : undefined // Estimate for now
-        };
+        conflicts[booking.id] = bookingConflicts;
       });
+    });
     
     return conflicts;
+  }, [bookings]);
+
+  // OPTIMIZED: Simple conflict lookup instead of complex computation
+  const detectConflicts = (booking: any) => {
+    return conflictsByBookingId[booking.id] || [];
   };
 
   // Function to open compliance dialog from booking action menu

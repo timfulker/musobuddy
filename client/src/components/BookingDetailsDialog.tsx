@@ -619,11 +619,20 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   };
 
   const handleSave = () => {
-    if (!booking?.id || !hasChanges) {
+    if (!booking?.id) {
       toast({
         title: "Error",
-        description: "No booking selected or no changes to save",
+        description: "No booking selected",
         variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!hasChanges) {
+      toast({
+        title: "Info",
+        description: "No changes detected to save",
+        variant: "default"
       });
       return;
     }
