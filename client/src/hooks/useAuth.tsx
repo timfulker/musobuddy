@@ -1,6 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export function useAuth() {
+  const queryClient = useQueryClient();
+  
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['/api/auth/user'],
     retry: false,
@@ -9,6 +12,21 @@ export function useAuth() {
   });
 
   console.log('🔍 useAuth state:', { user, isLoading, error });
+
+  const logout = async () => {
+    try {
+      await apiRequest('/api/auth/logout', {
+        method: 'POST'
+      });
+      // Clear all queries and redirect
+      queryClient.clear();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/';
+    }
+  };
 
   // Admin users are always considered fully authenticated regardless of verification status
   const isAdminAuthenticated = (user as any)?.isAdmin === true;
@@ -20,6 +38,7 @@ export function useAuth() {
     isLoading,
     error,
     isAdmin: (user as any)?.isAdmin === true,
-    needsVerification: !!user && !(user as any)?.phoneVerified && !(user as any)?.isAdmin
+    needsVerification: !!user && !(user as any)?.phoneVerified && !(user as any)?.isAdmin,
+    logout
   };
 }
