@@ -265,7 +265,32 @@ export class ProductionAuthSystem {
           });
         }
 
-        // Regular user login (phone verification may be required)
+        // Regular user login - send verification code if needed
+        if (!user.phoneVerified && user.phoneNumber) {
+          // Generate and send verification code
+          const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+          const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+          // Store in database
+          await db.insert(phoneVerifications).values({
+            phoneNumber: this.normalizePhoneNumber(user.phoneNumber),
+            verificationCode,
+            expiresAt,
+            ipAddress: req.ip || '',
+            userAgent: req.headers['user-agent'] || '',
+          });
+
+          // Send SMS
+          try {
+            const { smsService } = await import('./sms-service');
+            await smsService.sendVerificationCode(user.phoneNumber, verificationCode);
+            console.log('📱 Verification code sent to:', user.phoneNumber);
+          } catch (smsError: any) {
+            console.error('❌ SMS send failed:', smsError.message);
+            // Continue anyway - user can use resend button
+          }
+        }
+
         res.json({
           success: true,
           requiresVerification: !user.phoneVerified,
