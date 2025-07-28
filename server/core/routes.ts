@@ -466,10 +466,51 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Conflicts endpoint - DISABLED for performance
+  // Conflicts endpoint - RE-ENABLED with optimization
   app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
-    console.log('🚫 CONFLICT DETECTION DISABLED - Returning empty array for performance');
-    res.json([]);
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Get only recent bookings to reduce processing load
+      const bookings = await storage.getBookings(userId);
+      const recentBookings = bookings
+        .filter((b: any) => b.status !== 'cancelled' && b.status !== 'completed')
+        .slice(0, 100); // Limit to 100 active bookings
+      
+      const conflicts: any[] = [];
+      
+      // Simple conflict detection for same dates
+      for (let i = 0; i < recentBookings.length; i++) {
+        for (let j = i + 1; j < recentBookings.length; j++) {
+          const booking1 = recentBookings[i];
+          const booking2 = recentBookings[j];
+          
+          if (!booking1.eventDate || !booking2.eventDate) continue;
+          
+          const date1 = new Date(booking1.eventDate).toDateString();
+          const date2 = new Date(booking2.eventDate).toDateString();
+          
+          // Check if same date
+          if (date1 === date2) {
+            conflicts.push({
+              id: `${booking1.id}-${booking2.id}`,
+              bookings: [booking1, booking2],
+              severity: 'critical',
+              type: 'same_day',
+              date: date1
+            });
+          }
+        }
+      }
+      
+      res.json(conflicts);
+    } catch (error) {
+      console.error('❌ Conflicts error:', error);
+      res.status(500).json({ error: 'Failed to detect conflicts' });
+    }
   });
   
   console.log('✅ Clean routes registered successfully');
