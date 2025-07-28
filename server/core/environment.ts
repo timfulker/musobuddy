@@ -12,6 +12,8 @@ interface EnvironmentConfig {
   replitDeployment?: string;
   replitEnvironment?: string;
   replitDevDomain?: string;
+  DATABASE_URL: string;
+  SESSION_SECRET: string;
 }
 
 /**
@@ -40,7 +42,9 @@ function detectEnvironment(): EnvironmentConfig {
     nodeEnv: process.env.NODE_ENV || 'development',
     replitDeployment: process.env.REPLIT_DEPLOYMENT,
     replitEnvironment: process.env.REPLIT_ENVIRONMENT,
-    replitDevDomain: process.env.REPLIT_DEV_DOMAIN
+    replitDevDomain: process.env.REPLIT_DEV_DOMAIN,
+    DATABASE_URL: process.env.DATABASE_URL!,
+    SESSION_SECRET: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025-default'
   };
 }
 
