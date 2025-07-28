@@ -1,39 +1,48 @@
-// Check Twilio account status and upgrade options
-const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+// Check Twilio account status
+import twilio from 'twilio';
 
 async function checkTwilioAccount() {
+  console.log('📱 Checking Twilio account status...');
+  
   try {
-    const { default: twilio } = await import('twilio');
-    const client = twilio(twilioSid, twilioToken);
+    const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
     
-    // Get account info
-    const account = await client.api.accounts(twilioSid).fetch();
+    // Check account information
+    const account = await client.api.accounts(process.env.TWILIO_ACCOUNT_SID).fetch();
+    console.log('Account Status:', account.status);
+    console.log('Account Type:', account.type);
     
-    console.log('📊 Twilio Account Status:');
-    console.log('Account SID:', account.sid);
-    console.log('Status:', account.status);
-    console.log('Type:', account.type);
-    console.log('Friendly Name:', account.friendlyName);
+    // Check if account is in trial mode
+    console.log('Account SID:', process.env.TWILIO_ACCOUNT_SID);
+    console.log('From Number:', process.env.TWILIO_PHONE_NUMBER);
     
-    // Get balance
-    const balance = await client.balance.fetch();
-    console.log('💰 Current Balance:', balance.balance, balance.currency);
+    // Check recent messages (last 5)
+    console.log('\n📧 Recent SMS Messages:');
+    const messages = await client.messages.list({ limit: 5 });
     
-    // Check if trial account
-    if (account.type === 'Trial') {
-      console.log('\n🚨 TRIAL ACCOUNT DETECTED');
-      console.log('❌ Trial accounts can only send SMS to verified numbers');
-      console.log('✅ SOLUTION: Upgrade to paid account for unlimited SMS');
-      console.log('💳 Cost: ~$20/month + SMS usage (~$0.04 per message)');
-      console.log('🔗 Upgrade at: https://console.twilio.com/billing');
-    } else {
-      console.log('\n✅ PAID ACCOUNT - Should work for all numbers');
+    messages.forEach((message, i) => {
+      console.log(`${i + 1}. SID: ${message.sid}`);
+      console.log(`   To: ${message.to}`);
+      console.log(`   Status: ${message.status}`);
+      console.log(`   Date: ${message.dateCreated}`);
+      console.log(`   Error: ${message.errorCode || 'None'}`);
+      console.log('');
+    });
+    
+    // Check if +447764190034 is a verified number (trial accounts only)
+    try {
+      console.log('\n📞 Checking verified numbers:');
+      const outgoingCallerIds = await client.outgoingCallerIds.list();
+      console.log('Verified numbers:', outgoingCallerIds.map(id => id.phoneNumber));
+    } catch (error) {
+      console.log('Could not fetch verified numbers (might not be trial account)');
     }
     
   } catch (error) {
-    console.error('❌ Error checking account:', error.message);
+    console.error('❌ Twilio error:', error);
   }
+  
+  process.exit(0);
 }
 
 checkTwilioAccount();

@@ -1,41 +1,24 @@
-// Direct test of SMS sending
-import twilio from 'twilio';
+// Direct SMS test
+import { smsService } from './server/core/sms-service.js';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const fromNumber = process.env.TWILIO_PHONE_NUMBER;
-
-console.log('🔧 Direct Twilio Test');
-console.log('- Account SID exists:', !!accountSid);
-console.log('- Auth Token exists:', !!authToken);
-console.log('- From Number:', fromNumber || 'NOT SET');
-
-if (!accountSid || !authToken || !fromNumber) {
-  console.error('❌ Missing Twilio credentials');
-  process.exit(1);
+async function testSMSDirect() {
+  console.log('📱 Testing SMS service directly...');
+  
+  // Check service configuration
+  const config = smsService.getConfigurationStatus();
+  console.log('SMS Configuration:', config);
+  console.log('Service configured:', smsService.isServiceConfigured());
+  
+  // Test sending SMS
+  try {
+    console.log('\n📱 Attempting to send test SMS to +447764190034...');
+    const result = await smsService.sendVerificationCode('+447764190034', '123456');
+    console.log('SMS send result:', result);
+  } catch (error) {
+    console.error('SMS send error:', error);
+  }
+  
+  process.exit(0);
 }
 
-try {
-  const client = twilio(accountSid, authToken);
-  
-  console.log('📱 Sending test SMS...');
-  
-  const message = await client.messages.create({
-    body: 'MusoBuddy Test: Your verification code is 123456',
-    from: fromNumber,
-    to: '+447764190034'
-  });
-  
-  console.log('✅ SMS sent successfully! SID:', message.sid);
-  console.log('Message details:', {
-    to: message.to,
-    from: message.from,
-    status: message.status,
-    dateCreated: message.dateCreated
-  });
-  
-} catch (error: any) {
-  console.error('❌ SMS send failed:', error.message);
-  console.error('Error code:', error.code);
-  console.error('More info:', error.moreInfo);
-}
+testSMSDirect();
