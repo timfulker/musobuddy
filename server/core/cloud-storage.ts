@@ -174,11 +174,8 @@ function generateAlreadySignedPageHTML(
     });
   };
 
-  // Dynamic URL based on environment
-  const isReplit = process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DEV_DOMAIN;
-  const APP_SERVER_URL = isReplit 
-    ? 'https://musobuddy.replit.app' 
-    : 'http://localhost:5000';
+  // Use centralized environment detection - no more conflicts
+  const APP_SERVER_URL = ENV.appServerUrl;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -389,7 +386,7 @@ function generateContractSigningPageHTML(
     });
   };
 
-  // CRITICAL: Use app server for API calls, cloud storage for documents
+  // Use centralized environment detection
   const APP_SERVER_URL = ENV.appServerUrl;
   const contractId = contract.id;
 

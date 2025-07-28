@@ -641,7 +641,7 @@ async function startServer() {
     }
     
     // Production server startup (development uses different startup above)
-    if (isActualProduction) {
+    if (ENV.isProduction) {
       const port = process.env.PORT || 5000;
       
       const server = app.listen(Number(port), "0.0.0.0", () => {
