@@ -340,7 +340,14 @@ export default function ActionableEnquiries() {
               <div className="flex flex-wrap gap-1">
                 {/* Conflict badge */}
                 {hasConflicts && (
-                  <Badge variant="outline" className="text-xs text-red-700 bg-red-50 border-red-300">
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs ${
+                      conflicts.some(c => c.severity === 'hard') 
+                        ? 'text-red-700 bg-red-50 border-red-300'
+                        : 'text-orange-700 bg-orange-50 border-orange-300'
+                    }`}
+                  >
                     ⚠️ Conflict
                   </Badge>
                 )}

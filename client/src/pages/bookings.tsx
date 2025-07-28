@@ -963,7 +963,14 @@ export default function UnifiedBookings() {
                               </Badge>
                               {/* Conflict badge - matching dashboard style */}
                               {detectConflicts(booking).length > 0 && (
-                                <Badge variant="outline" className="text-xs text-red-700 bg-red-50 border-red-300">
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${
+                                    detectConflicts(booking).some(c => c.severity === 'hard')
+                                      ? 'text-red-700 bg-red-50 border-red-300'
+                                      : 'text-orange-700 bg-orange-50 border-orange-300'
+                                  }`}
+                                >
                                   ⚠️ Conflict
                                 </Badge>
                               )}

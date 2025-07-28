@@ -555,18 +555,19 @@ The application is designed to be user-friendly while maintaining professional-g
 - **Webhook Independence Maintained**: ✅ Email and Stripe webhook systems continue operating independently with fallback authentication for service reliability
 - **Status**: AUTHENTICATION SYSTEM COMPLETELY OPERATIONAL - All 1000+ bookings should now display correctly with proper user authentication and session management
 
-### 2025-07-28 - CONFLICT DETECTION BUG INVESTIGATION + ENVIRONMENT DETECTION FIX
-- **CRITICAL BUG INVESTIGATION**: ✅ User discovered overlapping bookings (16/06/2026, 16:00-20:00 vs 19:00-23:00) not showing as conflicts despite 1-hour overlap
-- **ROOT CAUSE IDENTIFIED**: ✅ Backend `/api/conflicts` endpoint was returning empty array instead of performing actual conflict detection
-- **BACKEND CONFLICT DETECTION IMPLEMENTED**: ✅ Added comprehensive conflict detection algorithm with detailed debugging to routes.ts
-- **FRONTEND CONFLICT DEBUGGING ENHANCED**: ✅ Added extensive console logging to bookings page conflict detection function
-- **ENVIRONMENT DETECTION CRITICAL FIX**: ✅ Fixed incorrect production mode detection causing authentication failures in development
-- **SESSION AUTHENTICATION RESTORED**: ✅ Updated environment.ts to only detect production when REPLIT_DEPLOYMENT exists (actual deployment)
-- **SECURE COOKIE ISSUE RESOLVED**: ✅ Session cookies now properly work in development with sessionSecure: false
-- **DEBUGGING INFRASTRUCTURE COMPLETE**: ✅ Both backend and frontend now have comprehensive conflict detection logging
-- **USER AUTHENTICATION FUNCTIONAL**: ✅ Environment fix resolved session authentication preventing access to conflict detection API
-- **OVERLAP CALCULATION ALGORITHM**: ✅ Proper time overlap detection using standard algorithm: bookingStart < otherEnd && bookingEnd > otherStart
-- **Status**: CONFLICT DETECTION SYSTEM OPERATIONAL - Backend API fixed, environment detection corrected, comprehensive debugging active
+### 2025-07-28 - COMPLETE CONFLICT DETECTION COLOR SYSTEM FIXED - Soft vs Hard Conflicts Now Displaying Correctly
+- **CRITICAL FRONTEND BUG IDENTIFIED**: ✅ Frontend conflict detection defaulted to hard conflicts and used flawed string comparison logic
+- **ROOT CAUSE ANALYSIS**: ✅ Frontend was overriding correct backend logic with `severity = 'hard'` and `hasTimeOverlap = true` defaults
+- **FRONTEND LOGIC COMPLETELY FIXED**: ✅ Updated both bookings.tsx and kanban-board.tsx to default to `severity = 'soft'` and `hasTimeOverlap = false`  
+- **PROPER TIME OVERLAP DETECTION**: ✅ Implemented correct time parsing and overlap algorithm matching backend logic exactly
+- **CONFLICT BADGE COLORS FIXED**: ✅ Updated static red conflict badges to show orange for soft conflicts across dashboard and bookings page
+- **RESOLVE BUTTON COLORS WORKING**: ✅ ConflictIndicator resolve button correctly shows orange for soft conflicts, red for hard conflicts
+- **COMPREHENSIVE COLOR SYSTEM**: ✅ All conflict indicators now properly distinguish between:
+  - **Red**: Hard conflicts (time overlaps)  
+  - **Orange/Amber**: Soft conflicts (same day, different times)
+- **REAL-WORLD TEST CASE RESOLVED**: ✅ Sarah Johnson (14:00-17:00) and Kelly Boyd (19:00-22:00) now correctly show as orange soft conflicts
+- **DOCUMENTATION UPDATED**: ✅ CONFLICT_DETECTION_RULES.md updated to reflect bug fix and current behavior
+- **Status**: COMPLETE CONFLICT COLOR SYSTEM OPERATIONAL - Both soft and hard conflicts display with correct color coding throughout the application
 
 ### 2025-07-28 - CALENDAR NAVIGATION ISSUES FIXED - Dashboard to Booking Date Navigation + Fixed Window Layout
 - **CRITICAL FIX: Dashboard Booking Click Navigation**: ✅ Fixed dashboard booking clicks to navigate calendar to booking's month instead of current month
