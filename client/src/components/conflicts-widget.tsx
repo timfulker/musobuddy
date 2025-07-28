@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +19,13 @@ interface BackendConflict {
   date: string;
 }
 
-export default function ConflictsWidget({ onFilterByConflictType }: { onFilterByConflictType?: (severity: string) => void }) {
+interface ConflictsWidgetProps {
+  onFilterByConflictType?: (type: string) => void;
+}
+
+function ConflictsWidget({ onFilterByConflictType }: ConflictsWidgetProps) {
   const { data: conflicts = [], isLoading } = useQuery({
-    queryKey: ["/api/conflicts"],
-    staleTime: 30000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: ['/api/conflicts'],
   });
 
   const backendConflicts = conflicts as BackendConflict[];
@@ -67,19 +70,31 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
     );
   }
 
+  // Get unique conflicts for display
+  const uniqueConflicts = React.useMemo(() => {
+    const uniqueMap = new Map();
+    backendConflicts.forEach((conflict: BackendConflict) => {
+      const key = [conflict.bookingId, conflict.withBookingId].sort().join('-');
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, conflict);
+      }
+    });
+    return Array.from(uniqueMap.values());
+  }, [backendConflicts]);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" />
           Scheduling Conflicts
-          {backendConflicts.length > 0 && (
-            <Badge variant="destructive">{backendConflicts.length}</Badge>
+          {uniqueConflicts.length > 0 && (
+            <Badge variant="destructive">{uniqueConflicts.length}</Badge>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {backendConflicts.length === 0 ? (
+        {uniqueConflicts.length === 0 ? (
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-green-500" />
             No scheduling conflicts
@@ -122,17 +137,7 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
             {/* Active Conflicts List */}
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-gray-600">Active Conflicts</h4>
-              {React.useMemo(() => {
-                // Group conflicts by booking pairs to avoid duplicates
-                const uniqueConflicts = new Map();
-                backendConflicts.forEach((conflict: BackendConflict) => {
-                  const key = [conflict.bookingId, conflict.withBookingId].sort().join('-');
-                  if (!uniqueConflicts.has(key)) {
-                    uniqueConflicts.set(key, conflict);
-                  }
-                });
-                return Array.from(uniqueConflicts.values());
-              }, [backendConflicts]).slice(0, 3).map((conflict: BackendConflict) => (
+              {uniqueConflicts.slice(0, 3).map((conflict: BackendConflict) => (
                 <div
                   key={`${conflict.bookingId}-${conflict.withBookingId}`}
                   className={`p-3 rounded-lg border ${
@@ -172,10 +177,10 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
               ))}
             </div>
             
-            {backendConflicts.length > 3 && (
+            {uniqueConflicts.length > 3 && (
               <div className="text-center">
                 <Button variant="outline" size="sm">
-                  View All {backendConflicts.length} Conflicts
+                  View All {uniqueConflicts.length} Conflicts
                 </Button>
               </div>
             )}
@@ -185,3 +190,5 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
     </Card>
   );
 }
+
+export default ConflictsWidget;
