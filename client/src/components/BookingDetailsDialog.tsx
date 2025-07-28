@@ -79,6 +79,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   const [isParsingContract, setIsParsingContract] = useState(false);
   const [parseResult, setParseResult] = useState<any>(null);
   const [documentType, setDocumentType] = useState<'contract' | 'invoice' | 'other'>('contract');
+  const [extractedData, setExtractedData] = useState<any>(null);
+  const [contractParsingResult, setContractParsingResult] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -123,12 +125,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   });
 
   // Find the most recent contract for this booking
-  const bookingContract = contracts ? contracts.find((contract: any) => 
-    contract.enquiryId === booking?.id
-  ) : null;
+  const bookingContract = Array.isArray(contracts) 
+    ? contracts.find((contract: any) => contract.enquiryId === booking?.id)
+    : null;
 
   // Extract gig types from user settings
-  const userGigTypes = userSettings && userSettings.gigTypes ? userSettings.gigTypes : [];
+  const userGigTypes = Array.isArray(userSettings?.gigTypes) ? userSettings.gigTypes : [];
 
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
@@ -228,7 +230,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         }
       });
 
-      const response = await fetch(`/api/bookings/${booking?.id}`, {
+      if (!booking?.id) {
+        throw new Error('Booking ID is required');
+      }
+      
+      const response = await fetch(`/api/bookings/${booking.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -613,12 +619,24 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   };
 
   const handleSave = () => {
-    if (!booking || !hasChanges) return;
+    if (!booking?.id || !hasChanges) {
+      toast({
+        title: "Error",
+        description: "No booking selected or no changes to save",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const formData = form.getValues();
+    
+    // Prepare data for backend - let storage.ts handle date conversion
     const updateData = {
       ...formData,
       customFields: JSON.stringify(customFields),
+      // Keep eventDate as string, storage.ts will convert it to Date
     };
+    
     updateBookingMutation.mutate(updateData);
   };
 
@@ -1255,7 +1273,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                         {booking?.uploadedContractUrl && (
                           <div className="bg-blue-50 p-3 rounded-md">
                             <p className="text-sm text-blue-700 mb-2">
-                              📄 Contract: {booking.uploadedContractFilename}
+                              📄 Contract: {String(booking.uploadedContractFilename || 'Unknown')}
                             </p>
                             <Button
                               type="button"
@@ -1285,13 +1303,13 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                         {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.map((doc: any, index: number) => (
                           <div key={index} className="bg-gray-50 p-3 rounded-md">
                             <p className="text-sm text-gray-700 mb-2">
-                              📎 {doc.type || 'Document'}: {doc.filename}
+                              📎 {String(doc.type || 'Document')}: {String(doc.filename)}
                             </p>
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={() => window.open(doc.url!, '_blank')}
+                              onClick={() => window.open(String(doc.url), '_blank')}
                             >
                               View Document
                             </Button>
