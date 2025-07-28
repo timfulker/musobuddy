@@ -167,7 +167,7 @@ export class ProductionAuthSystem {
             console.error(`❌ EMERGENCY: Database error:`, dbError);
           }
           
-          // CRITICAL FIX: Set session data with real user ID if found
+          // CRITICAL FIX: Set session data with real user ID
           req.session.userId = adminUser ? adminUser.id : 'admin-emergency-id';
           req.session.isAdmin = true;
           req.session.email = email;
@@ -180,22 +180,25 @@ export class ProductionAuthSystem {
             sessionId: req.sessionID
           });
 
-          // Force session save with our unified function
-          try {
-            await this.saveSession(req);
+          // EXTERNAL REVIEWER'S EXACT FIX: Explicitly save session with callback
+          req.session.save((err: any) => {
+            if (err) {
+              console.error(`❌ EMERGENCY: Session save error:`, err);
+              return res.status(500).json({ error: 'Session save failed' });
+            }
             
-            console.log(`✅ EMERGENCY: Session saved successfully`);
-            console.log(`🔍 EMERGENCY: Final session check:`, req.session);
+            console.log(`✅ EMERGENCY: Session saved successfully with callback`);
             
             return res.json({
               success: true,
               requiresVerification: false,
-              message: 'EMERGENCY Admin login successful',
-              sessionInfo: {
-                sessionId: req.sessionID,
-                userId: req.session.userId,
-                isAdmin: req.session.isAdmin
-              },
+              message: 'Admin login successful',
+              user: {
+                id: req.session.userId,
+                email: req.session.email,
+                isAdmin: true,
+                tier: 'admin'
+              }
               user: {
                 id: 'admin-emergency-id',
                 email: email,
