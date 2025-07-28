@@ -179,17 +179,56 @@ app.use(sessionMiddleware);
 registerProductionAuthRoutes(app);
 ```
 
-## Current Environment Variables (Replit Production)
+## CRITICAL: Replit Dual Environment Conflict Issue
+
+**MAJOR COMPLICATION**: Replit has two potentially conflicting environment detection systems that may be causing session cookie confusion:
+
+### Environment Variables (Current State)
 ```
-NODE_ENV=development
-REPLIT_ENVIRONMENT=production
-REPLIT_DEV_DOMAIN=f19aba74-886b-4308-a2de-cc9ba5e94af8-00-2ux7uy3ch9t9f.janeway.replit.dev
-SESSION_SECRET=[REDACTED - CONFIRMED PRESENT]
-DATABASE_URL=[REDACTED - CONFIRMED PRESENT]
-TWILIO_ACCOUNT_SID=[REDACTED - CONFIRMED WORKING]
-TWILIO_AUTH_TOKEN=[REDACTED - CONFIRMED WORKING]
-TWILIO_PHONE_NUMBER=+447411548804
+NODE_ENV=development                    ← Standard Node.js environment
+REPLIT_ENVIRONMENT=production          ← Replit-specific environment  
+REPLIT_DEV_DOMAIN=f19aba74-886b-4308... ← Development domain present
+SESSION_SECRET=[CONFIRMED PRESENT]
+DATABASE_URL=[CONFIRMED PRESENT]  
+TWILIO_ACCOUNT_SID=[CONFIRMED WORKING]
+TWILIO_AUTH_TOKEN=[CONFIRMED WORKING]
 ```
+
+### The Dual Environment Problem
+1. **NODE_ENV=development** suggests development mode
+2. **REPLIT_ENVIRONMENT=production** suggests production mode  
+3. **REPLIT_DEV_DOMAIN exists** suggests development environment
+4. **Production URL** (musobuddy.replit.app) is live and accessible
+
+### Session Configuration Impact
+This dual environment creates conflicting session cookie settings:
+
+```typescript
+// Current logic tries to resolve conflict:
+const isReplitProduction = !!(
+  process.env.REPLIT_DEPLOYMENT ||           // Not set
+  process.env.REPLIT_ENVIRONMENT === 'production' ||  // TRUE
+  process.env.REPLIT_DB_URL ||               // Not checked
+  (typeof process.env.REPL_SLUG !== 'undefined' && !replitDevDomain)  // Dev domain EXISTS
+);
+
+// Results in:
+isProduction: true          // Based on REPLIT_ENVIRONMENT
+sessionSecure: true         // Requires HTTPS cookies
+appServerUrl: 'https://musobuddy.replit.app'  // Production URL
+```
+
+### Potential Session Cookie Conflicts
+- **Development tools** may expect `secure: false` cookies
+- **Production infrastructure** requires `secure: true` cookies  
+- **Domain mismatch** between dev domain and production domain
+- **Proxy configuration** conflicts between development and production modes
+
+### External Reviewer Questions
+1. **Does Replit's dual environment cause session middleware to configure cookies incorrectly?**
+2. **Should session cookies use development settings despite REPLIT_ENVIRONMENT=production?**
+3. **Is the presence of REPLIT_DEV_DOMAIN interfering with production cookie transmission?**
+4. **Does Replit's infrastructure handle session cookies differently in this mixed environment state?**
 
 ## Test Results & Evidence
 
