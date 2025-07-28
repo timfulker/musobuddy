@@ -298,6 +298,91 @@ export class ProductionAuthSystem {
       });
     });
 
+    // Phone verification endpoint
+    this.app.post('/api/auth/verify-phone', async (req: any, res) => {
+      try {
+        const { verificationCode, phoneNumber, email } = req.body;
+        const userId = req.session?.userId;
+
+        console.log('📱 Phone verification attempt:', { 
+          hasSession: !!req.session,
+          userId,
+          codeProvided: !!verificationCode,
+          phoneProvided: !!phoneNumber 
+        });
+
+        // Get user from session or fallback
+        let user;
+        if (userId) {
+          user = await storage.getUser(userId);
+        } else if (email) {
+          // Fallback for session issues
+          user = await storage.getUserByEmail(email);
+          if (user) {
+            req.session.userId = user.id;
+          }
+        }
+
+        if (!user) {
+          return res.status(400).json({ error: 'User session not found' });
+        }
+
+        if (!user.phoneNumber) {
+          return res.status(400).json({ error: 'No phone number on record' });
+        }
+
+        // Check verification code
+        const normalizedPhone = this.normalizePhoneNumber(user.phoneNumber);
+        const [verification] = await db
+          .select()
+          .from(phoneVerifications)
+          .where(and(
+            eq(phoneVerifications.phoneNumber, normalizedPhone),
+            eq(phoneVerifications.verificationCode, verificationCode),
+            gte(phoneVerifications.expiresAt, new Date()),
+            isNull(phoneVerifications.verifiedAt)
+          ))
+          .orderBy(desc(phoneVerifications.createdAt))
+          .limit(1);
+
+        if (!verification) {
+          console.log('❌ Invalid verification code');
+          return res.status(400).json({ error: 'Invalid or expired verification code' });
+        }
+
+        // Mark as verified
+        await db
+          .update(phoneVerifications)
+          .set({ verifiedAt: new Date() })
+          .where(eq(phoneVerifications.id, verification.id));
+
+        // Update user
+        await storage.updateUser(user.id, {
+          phoneVerified: true,
+          phoneVerifiedAt: new Date()
+        });
+
+        // Save session
+        await this.saveSession(req);
+
+        console.log('✅ Phone verified successfully for:', user.email);
+
+        res.json({
+          success: true,
+          message: 'Phone verified successfully',
+          user: {
+            id: user.id,
+            email: user.email,
+            phoneVerified: true
+          }
+        });
+
+      } catch (error: any) {
+        console.error('❌ Phone verification error:', error);
+        res.status(500).json({ error: 'Verification failed' });
+      }
+    });
+
     // Resend verification code
     this.app.post('/api/auth/resend-code', async (req: any, res) => {
       try {
@@ -307,7 +392,7 @@ export class ProductionAuthSystem {
           return res.status(401).json({ error: 'Not authenticated' });
         }
 
-        const user = await this.storage.getUser(userId);
+        const user = await storage.getUser(userId);
         if (!user || !user.phoneNumber) {
           return res.status(400).json({ error: 'User not found or no phone number' });
         }
@@ -317,7 +402,7 @@ export class ProductionAuthSystem {
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         // Store in database
-        await this.db.insert(phoneVerifications).values({
+        await db.insert(phoneVerifications).values({
           phoneNumber: user.phoneNumber,
           verificationCode,
           expiresAt,
