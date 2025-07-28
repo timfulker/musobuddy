@@ -173,15 +173,10 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
 
       {/* Full Conflict Resolution Modal */}
       <ConflictResolutionDialog
-        open={showResolutionModal}
-        onOpenChange={setShowResolutionModal}
-        primaryBooking={currentBooking}
-        conflictingBookings={conflicts || []}
-        onResolved={() => {
-          setShowResolutionModal(false);
-          // Force refresh of conflict data
-          window.location.reload();
-        }}
+        isOpen={showResolutionModal}
+        onClose={() => setShowResolutionModal(false)}
+        selectedBooking={currentBooking}
+        conflicts={conflicts || []}
       />
     </>
   );
