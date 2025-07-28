@@ -56,7 +56,7 @@ export function setupSessionMiddleware(app: any) {
       httpOnly: false, // Allow frontend access
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: isReplitProd ? 'none' as const : 'lax' as const, // REPLIT PRODUCTION: 'none' for cross-site
-      domain: isReplitProd ? '.replit.app' : undefined // REPLIT PRODUCTION: Set domain
+      domain: undefined // CRITICAL FIX: Let browser handle domain automatically
     }
   };
 
