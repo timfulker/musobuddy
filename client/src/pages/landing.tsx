@@ -79,78 +79,67 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Everything You Need to Run Your Music Business
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            From booking enquiries to payment collection, MusoBuddy handles the business side 
-            so you can focus on the music.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <FileText className="h-12 w-12 text-purple-600 mb-4" />
-              <CardTitle>Smart Contracts</CardTitle>
-              <CardDescription>
-                Generate professional contracts with digital signatures and automatic reminders.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CreditCard className="h-12 w-12 text-purple-600 mb-4" />
-              <CardTitle>Automated Invoicing</CardTitle>
-              <CardDescription>
-                Create and send professional invoices with payment tracking and overdue alerts.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <Mail className="h-12 w-12 text-purple-600 mb-4" />
-              <CardTitle>Email Integration</CardTitle>
-              <CardDescription>
-                Automatic booking enquiry processing from your personalized email address.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
+      {/* Features */}
+      <section className="py-20 bg-white dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Everything You Need to Succeed
+            </h3>
+            <p className="text-xl text-gray-600 dark:text-gray-300">
+              Professional tools built specifically for musicians and music industry professionals
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="p-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
               <Calendar className="h-12 w-12 text-purple-600 mb-4" />
-              <CardTitle>Calendar Management</CardTitle>
-              <CardDescription>
-                Track all your gigs with conflict detection and calendar integration.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <Shield className="h-12 w-12 text-purple-600 mb-4" />
-              <CardTitle>Compliance Tracking</CardTitle>
-              <CardDescription>
-                Manage insurance, licenses, and PAT testing with expiry alerts.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <Star className="h-12 w-12 text-purple-600 mb-4" />
-              <CardTitle>Client Management</CardTitle>
-              <CardDescription>
-                Build relationships with automatic client history and repeat booking tracking.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Smart Booking Management</h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                Intelligent enquiry tracking, availability checking, and conflict detection to never miss a gig opportunity.
+              </p>
+            </div>
+            
+            <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <FileText className="h-12 w-12 text-blue-600 mb-4" />
+              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Professional Contracts</h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                Musicians' Union compliant contracts with digital signatures, automated reminders, and secure storage.
+              </p>
+            </div>
+            
+            <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <CreditCard className="h-12 w-12 text-green-600 mb-4" />
+              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Automated Invoicing</h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                Professional invoices with payment tracking, automated reminders, and integrated financial management.
+              </p>
+            </div>
+            
+            <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <Mail className="h-12 w-12 text-yellow-600 mb-4" />
+              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Email Integration</h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                Automatic booking enquiry processing from your personalized email address with AI parsing.
+              </p>
+            </div>
+            
+            <div className="p-6 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <Shield className="h-12 w-12 text-red-600 mb-4" />
+              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Compliance Tracking</h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                Manage insurance, licenses, and PAT testing with expiry alerts and automated compliance sharing.
+              </p>
+            </div>
+            
+            <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+              <Star className="h-12 w-12 text-indigo-600 mb-4" />
+              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Client Management</h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                Build relationships with automatic client history, repeat booking tracking, and professional communication.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
