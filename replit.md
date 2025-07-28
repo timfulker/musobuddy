@@ -594,6 +594,17 @@ The application is designed to be user-friendly while maintaining professional-g
 - **ADMIN-ONLY ACCESS CONFIRMED**: ✅ All email prefix changes require admin authentication and include comprehensive audit logging
 - **Status**: COMPLETE ADMIN EMAIL PREFIX MANAGEMENT SYSTEM DOCUMENTED - Three methods available (SQL, storage API, admin endpoint) with full validation and recovery procedures
 
+### 2025-07-28 - CONFLICT DETECTION & PRODUCTION DEPLOYMENT COMPLETELY FIXED
+- **CRITICAL PRODUCTION DEPLOYMENT FIXED**: ✅ Resolved environment detection to handle both REPLIT_DEPLOYMENT='1' (numeric) and 'true' (string) values
+- **CONFLICT DETECTION RE-ENABLED**: ✅ Fixed bookings page conflict detection that was completely disabled (returning empty array)
+- **DASHBOARD CONFLICTS WIDGET ENHANCED**: ✅ Updated to show detailed conflict information with client names, times, and severity levels
+- **RATE LIMITING DEVELOPMENT FIX**: ✅ Disabled aggressive rate limiting in development mode preventing 429 errors and blank pages
+- **CONFLICT RESOLUTION MODAL FIXED**: ✅ Enhanced resolve button functionality with proper data handling and page refresh after resolution
+- **BACKEND API FORMAT ALIGNMENT**: ✅ Updated conflicts widget to handle actual backend conflict API format instead of expected format
+- **DUAL CONFLICT DETECTION**: ✅ System now properly detects same-day conflicts: red (time overlap) vs amber (same day, different times)
+- **PRODUCTION VALIDATION ENHANCED**: ✅ Added comprehensive logging and graceful fallback for environment detection edge cases
+- **Status**: COMPLETE CONFLICT SYSTEM + PRODUCTION DEPLOYMENT OPERATIONAL - Both conflict detection and deployment issues resolved
+
 ### 2025-07-28 - AUTHENTICATION SYSTEM COMPLETELY OPERATIONAL - Critical Session Persistence Fixed
 - **CRITICAL SESSION ISSUE RESOLVED**: ✅ Fixed phone verification not setting session authentication causing 401 errors on trial setup page  
 - **SESSION AUTHENTICATION FIXED**: ✅ Phone verification endpoint now properly sets req.session.userId, req.session.email, req.session.phoneVerified
