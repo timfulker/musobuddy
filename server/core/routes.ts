@@ -313,6 +313,12 @@ export async function registerRoutes(app: Express) {
   // Get all bookings for authenticated user
   app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
+      console.log(`🔍 Session data for bookings request:`, {
+        userId: req.session?.userId,
+        sessionId: req.sessionID,
+        session: req.session
+      });
+      
       const bookings = await storage.getBookings(req.session.userId);
       console.log(`📋 Fetched ${bookings.length} bookings for user ${req.session.userId}`);
       res.json(bookings);
