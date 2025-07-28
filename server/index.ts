@@ -7,8 +7,9 @@ import { serveStaticFixed } from "./static-serve";
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
-
-import { ENV, isProduction } from "./core/environment";
+import { ENV } from "./core/environment-rebuilt";
+import { createSessionMiddleware } from "./core/session-rebuilt";
+import { setupAuthRoutes } from "./core/auth-rebuilt";
 
 const app = express();
 
