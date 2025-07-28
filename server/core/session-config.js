@@ -10,7 +10,7 @@ export function createSessionMiddleware() {
     store: new PgSession({
       conString: ENV.DATABASE_URL,
       tableName: 'sessions',
-      createTableIfMissing: false,
+      createTableIfMissing: true,
     }),
     secret: ENV.SESSION_SECRET,
     resave: false,
