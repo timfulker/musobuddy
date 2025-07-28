@@ -233,6 +233,9 @@ app.post('/api/stripe-webhook',
       // ENHANCED: Log before processing
       console.log(`🔥 [WEBHOOK-${webhookId}] Processing webhook with stripeService...`);
       
+      // FALLBACK PROTECTION: Import fallbacks for Stripe webhook
+      const { getUserByStripeCustomerId } = await import('./core/webhook-auth-fallbacks');
+      
       const result = await stripeService.handleWebhook(req.body, signature);
       
       // Log successful webhook
