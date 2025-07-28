@@ -1,207 +1,114 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Music, CheckCircle, Calendar, Mail, FileText, CreditCard, ArrowRight } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { Link, useLocation } from "wouter";
+import { CheckCircle, ArrowRight, Mail, LayoutDashboard } from "lucide-react";
 
 export default function TrialSuccessPage() {
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState<'welcome' | 'onboarding' | 'email-setup' | 'complete'>('welcome');
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { user, isLoading } = useAuth();
+  const [isRestoringSession, setIsRestoringSession] = useState(false);
 
-  // Get URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const sessionId = urlParams.get('session_id');
+  // Session restoration effect
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (!user && !isLoading) {
+        setIsRestoringSession(true);
+        
+        try {
+          console.log('🔄 Attempting session restoration after Stripe checkout...');
+          
+          const response = await fetch('/api/auth/restore-session', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
 
-  // Verify trial setup with session restoration
-  const { data: user, isLoading, refetch } = useQuery({
-    queryKey: ['/api/auth/user'],
-    enabled: !!sessionId,
-    retry: 1,
-    queryFn: () => fetch('/api/auth/user', { credentials: 'include' }).then(res => res.json()),
-  });
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Session restored successfully:', result);
+            
+            toast({
+              title: "Welcome back!",
+              description: "Your session has been restored successfully.",
+            });
 
-  // Session restoration mutation - simplified approach using session ID only
-  const restoreSessionMutation = useMutation({
-    mutationFn: async () => {
-      // Use the session ID to restore authentication by finding the user who just completed checkout
-      return fetch('/api/auth/restore-session-by-stripe', {
-        method: 'POST',
-        credentials: 'include', // THIS IS CRITICAL - include cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          sessionId 
-        }),
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+            // Trigger auth refresh
+            window.location.reload();
+          } else {
+            console.error('❌ Session restoration failed:', response.status);
+            
+            toast({
+              title: "Session restoration failed",
+              description: "Please try logging in again.",
+              variant: "destructive",
+            });
+            
+            setLocation('/');
+          }
+        } catch (error) {
+          console.error('❌ Session restoration error:', error);
+          
+          toast({
+            title: "Connection error",
+            description: "Please check your connection and try again.",
+            variant: "destructive",
+          });
+          
+          setLocation('/');
+        } finally {
+          setIsRestoringSession(false);
         }
-        return res.json();
-      });
-    },
-    onSuccess: (data) => {
-      console.log('✅ Session restore success:', data);
-      toast({
-        title: "Welcome to MusoBuddy!",
-        description: "Your account is now active.",
-      });
-      
-      // CRITICAL: Clear all React Query cache to force authentication refresh
-      queryClient.clear();
-      
-      // Small delay then redirect to dashboard
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1000);
-    },
-    onError: (error: any) => {
-      console.error('Session restoration failed:', error);
-      toast({
-        title: "Session restoration failed",
-        description: "Please try logging in manually.",
-        variant: "destructive",
-      });
-    },
-  });
+      }
+    };
 
-  // Attempt session restoration if user query fails with 401
-  // Automatic session restoration effect
-  useEffect(() => {
-    // FORCE session restoration immediately on page load with sessionId
-    if (sessionId && !restoreSessionMutation.isPending) {
-      console.log('🔄 FORCE session restoration for sessionId:', sessionId);
-      restoreSessionMutation.mutate();
+    // Only attempt restoration if we don't have a user
+    if (!isLoading && !user) {
+      restoreSession();
     }
-  }, [sessionId]); // Remove dependency on user/isLoading
+  }, [user, isLoading, toast, setLocation]);
 
-  // Redirect to dashboard if user is already authenticated and subscribed
-  useEffect(() => {
-    if (user && (user as any).isSubscribed) {
-      console.log('User is authenticated and subscribed, redirecting to dashboard...');
-      setLocation('/dashboard');
-    }
-  }, [user, setLocation]);
-
-  const completeOnboardingMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest('/api/auth/complete-onboarding', {
-        method: 'POST',
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Onboarding complete!",
-        description: "Welcome to MusoBuddy. Let's set up your email address.",
-      });
-      setStep('email-setup');
-    },
-  });
-
-  // Removed auto-progression - users now manually continue
-
-  const handleGetStarted = () => {
-    completeOnboardingMutation.mutate();
-  };
-
-  const handleSkipToApp = () => {
+  const handleGoToDashboard = () => {
+    console.log('🏠 User choosing to go directly to dashboard');
+    
+    toast({
+      title: "Welcome to MusoBuddy!",
+      description: "You can set up email integration later from your settings.",
+    });
+    
     setLocation('/dashboard');
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <Music className="h-12 w-12 text-purple-600 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600 dark:text-gray-300">Setting up your trial...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleSetupEmail = () => {
+    console.log('📧 User choosing to set up email integration');
+    
+    toast({
+      title: "Let's set up your email",
+      description: "We'll help you create your booking email address.",
+    });
+    
+    setLocation('/email-setup');
+  };
 
-  if (step === 'welcome') {
+  // Show loading while restoring session
+  if (isLoading || isRestoringSession) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl text-center">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center space-x-2 mb-6">
-              <Music className="h-8 w-8 text-purple-600" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
-            </div>
-            <div className="mb-6">
-              <CheckCircle className="h-20 w-20 text-green-500 mx-auto mb-4" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              Welcome to MusoBuddy!
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-6">
-              Your 14-day free trial has started successfully. You now have full access to all features.
-            </p>
-            <Badge className="bg-green-100 text-green-800 border-green-200 px-4 py-2 text-lg">
-              <Calendar className="h-4 w-4 mr-2" />
-              Trial Active Until {new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()}
-            </Badge>
-          </div>
-
-          {/* Success Card */}
-          <Card className="border-2 border-green-200 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-2xl text-green-700">Trial Activated!</CardTitle>
-              <CardDescription className="text-lg">
-                Your payment method has been securely saved. You won't be charged until your trial ends.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert className="mb-6 bg-green-50 border-green-200">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-700">
-                  <strong>What happens next:</strong> Explore all features for 14 days. 
-                  We'll send you a reminder 5 days before your trial ends. Cancel anytime with no charges.
-                </AlertDescription>
-              </Alert>
-
-              <div className="grid md:grid-cols-2 gap-4 mb-8">
-                <div className="text-left p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <CreditCard className="h-8 w-8 text-purple-600 mb-2" />
-                  <h3 className="font-semibold mb-1">Payment Secured</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Your card is saved securely. £9.99/month after trial.
-                  </p>
-                </div>
-                <div className="text-left p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <FileText className="h-8 w-8 text-purple-600 mb-2" />
-                  <h3 className="font-semibold mb-1">Full Access</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    All features unlocked for 14 days. No limitations.
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                onClick={() => setStep('onboarding')}
-                size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-4 mr-4"
-              >
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-
-              <Button
-                onClick={handleSkipToApp}
-                variant="outline"
-                size="lg"
-                className="text-lg px-8 py-4"
-              >
-                Skip to Dashboard
-              </Button>
+        <div className="w-full max-w-md">
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                {isRestoringSession ? 'Restoring your session...' : 'Loading...'}
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300">
+                Please wait while we set everything up.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -209,144 +116,27 @@ export default function TrialSuccessPage() {
     );
   }
 
-  if (step === 'onboarding') {
+  // Redirect if not authenticated
+  if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl">
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center space-x-2 mb-6">
-              <Music className="h-8 w-8 text-purple-600" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Let's Set Up Your Music Business
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
-              Quick setup to get you started with professional booking management
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {/* Step 1 */}
-            <Card className="border-2 border-purple-200 bg-purple-50 dark:bg-purple-900/20">
-              <CardHeader className="text-center">
-                <div className="bg-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                  1
-                </div>
-                <CardTitle className="flex items-center justify-center space-x-2">
-                  <Mail className="h-5 w-5 text-purple-600" />
-                  <span>Email Setup</span>
-                </CardTitle>
-                <CardDescription>
-                  Get your personalized booking email address like tim-leads@mg.musobuddy.com
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {/* Step 2 */}
-            <Card className="border-2 border-gray-200">
-              <CardHeader className="text-center">
-                <div className="bg-gray-300 text-gray-600 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                  2
-                </div>
-                <CardTitle className="flex items-center justify-center space-x-2">
-                  <FileText className="h-5 w-5 text-gray-600" />
-                  <span>Business Details</span>
-                </CardTitle>
-                <CardDescription>
-                  Add your business information for professional contracts and invoices
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {/* Step 3 */}
-            <Card className="border-2 border-gray-200">
-              <CardHeader className="text-center">
-                <div className="bg-gray-300 text-gray-600 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                  3
-                </div>
-                <CardTitle className="flex items-center justify-center space-x-2">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <span>First Booking</span>
-                </CardTitle>
-                <CardDescription>
-                  Create your first booking or import existing calendar data
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
-          <div className="text-center">
-            <Button
-              onClick={handleGetStarted}
-              size="lg"
-              className="bg-purple-600 hover:bg-purple-700 text-lg px-12 py-4"
-              disabled={completeOnboardingMutation.isPending}
-            >
-              {completeOnboardingMutation.isPending ? "Setting up..." : "Start Email Setup"}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            
-            <p className="mt-4 text-sm text-gray-500">
-              Takes less than 5 minutes to complete
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'email-setup') {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-2 mb-6">
-              <Music className="h-8 w-8 text-purple-600" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Almost Ready!
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Let's set up your personalized booking email address
-            </p>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Mail className="h-5 w-5 text-purple-600" />
-                <span>Email Setup Required</span>
-              </CardTitle>
-              <CardDescription>
-                Choose your unique email prefix to receive booking enquiries automatically
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert className="mb-6">
-                <Mail className="h-4 w-4" />
-                <AlertDescription>
-                  This will be your main booking email address. Clients will send enquiries here and they'll automatically become bookings in your system.
-                </AlertDescription>
-              </Alert>
-
-              <div className="space-y-4">
-                <Link href="/email-setup">
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-lg py-3">
-                    Set Up Email Address
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-
-                <Button
-                  onClick={handleSkipToApp}
-                  variant="ghost"
-                  className="w-full"
-                >
-                  Skip for now (set up later in settings)
+      <div className="min-h-screen bg-gradient-to-b from-red-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-8 text-center">
+              <div className="text-red-600 mb-4">
+                <CheckCircle className="h-12 w-12 mx-auto" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Authentication Required
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Please log in to continue setting up your account.
+              </p>
+              <Link href="/">
+                <Button className="w-full">
+                  Go to Login
                 </Button>
-              </div>
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -354,5 +144,80 @@ export default function TrialSuccessPage() {
     );
   }
 
-  return null;
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center space-x-2 mb-6">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
+          </Link>
+        </div>
+
+        {/* Success Card */}
+        <Card className="border-0 shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl text-gray-900 dark:text-white">
+              Trial Activated!
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            <div className="text-center">
+              <p className="text-gray-600 dark:text-gray-300 mb-2">
+                Welcome to MusoBuddy, <span className="font-semibold">{user.firstName}</span>!
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Your 14-day free trial is now active. Choose how you'd like to continue:
+              </p>
+            </div>
+
+            {/* Option 1: Go to Dashboard */}
+            <Button
+              onClick={handleGoToDashboard}
+              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white"
+              size="lg"
+            >
+              <LayoutDashboard className="h-5 w-5 mr-2" />
+              Go to Dashboard
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+
+            {/* Option 2: Set up Email */}
+            <Button
+              onClick={handleSetupEmail}
+              variant="outline"
+              className="w-full h-12 border-2 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/20"
+              size="lg"
+            >
+              <Mail className="h-5 w-5 mr-2" />
+              Set up Email Integration
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+
+            {/* Info text */}
+            <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                You can set up email integration anytime from your dashboard settings.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center mt-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Questions? Check our{" "}
+            <Link href="/help" className="text-purple-600 hover:text-purple-700 dark:text-purple-400">
+              help center
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
