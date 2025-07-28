@@ -328,8 +328,12 @@ export default function ActionableEnquiries() {
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-2" />
                   <span>
-                    {enquiry.eventTime && enquiry.eventEndTime 
-                      ? `${enquiry.eventTime} - ${enquiry.eventEndTime}`
+                    {enquiry.eventTime 
+                      ? enquiry.eventTime.includes(' - ') 
+                        ? enquiry.eventTime // Already formatted as "20:00 - 21:00"
+                        : enquiry.eventEndTime 
+                          ? `${enquiry.eventTime} - ${enquiry.eventEndTime}` // Needs formatting
+                          : enquiry.eventTime // Single time only
                       : '00:00 - 23:59'
                     }
                   </span>

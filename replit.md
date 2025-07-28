@@ -629,6 +629,8 @@ The application is designed to be user-friendly while maintaining professional-g
 - **ENHANCED CONFLICT ACCURACY**: ✅ Kelly Boyd (19:00-22:00) vs Sarah Johnson (20:00-21:00) will now correctly show as time overlap (hard/red conflict)
 - **CACHE INVALIDATION FIXED**: ✅ ConflictIndicator component updated to fetch fresh data with `staleTime: 0, gcTime: 0`
 - **PRODUCTION READY DATABASE**: ✅ Single PostgreSQL bookings table as sole source of truth with consistent API layer formatting
+- **DASHBOARD TIME DISPLAY FIX**: ✅ Fixed kanban-board and ConflictResolutionDialog double-formatting causing "20:00 - 21:00 - 21:00" display
+- **FRONTEND CONSISTENCY**: ✅ All components now check if time is already formatted before adding additional " - " separators
 
 ### 2025-07-28 - AUTHENTICATION SYSTEM COMPLETELY OPERATIONAL - Critical Session Persistence Fixed
 - **CRITICAL SESSION ISSUE RESOLVED**: ✅ Fixed phone verification not setting session authentication causing 401 errors on trial setup page  

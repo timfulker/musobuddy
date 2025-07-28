@@ -177,7 +177,16 @@ export function ConflictResolutionDialog({
           
           <div className="flex items-center space-x-2">
             <Clock className="w-4 h-4 text-gray-500" />
-            <span>{booking?.eventTime || 'No time'} - {booking?.eventEndTime || 'No end time'}</span>
+            <span>
+              {booking?.eventTime 
+                ? booking.eventTime.includes(' - ') 
+                  ? booking.eventTime // Already formatted as "20:00 - 21:00"
+                  : booking.eventEndTime 
+                    ? `${booking.eventTime} - ${booking.eventEndTime}` // Needs formatting
+                    : booking.eventTime // Single time only
+                : 'No time'
+              }
+            </span>
           </div>
           
           <div className="flex items-center space-x-2">
