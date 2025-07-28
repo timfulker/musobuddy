@@ -74,7 +74,7 @@ export default function VerifyPhonePage() {
       // Invalidate auth queries to trigger refetch
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
-      // Redirect back to signup page for trial setup (Stripe checkout)
+      // Redirect to trial setup page (signup page with step=trial parameter)
       console.log('🔄 Redirecting to trial setup...');
       window.location.href = '/signup?step=trial';
 
