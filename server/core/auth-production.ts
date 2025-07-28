@@ -467,6 +467,115 @@ export class ProductionAuthSystem {
       }
     });
 
+    // CRITICAL FIX: Add missing signup endpoint
+    this.app.post('/api/auth/signup', async (req: any, res) => {
+      console.log('📝 Signup attempt:', { email: req.body.email, phone: req.body.phoneNumber });
+      
+      try {
+        const { firstName, lastName, email, phoneNumber, password } = req.body;
+
+        if (!firstName || !lastName || !email || !phoneNumber || !password) {
+          return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        // Check if user already exists
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser) {
+          return res.status(400).json({ error: 'User already exists with this email' });
+        }
+
+        // Hash password
+        const bcrypt = await import('bcrypt');
+        const hashedPassword = await bcrypt.hash(password, 12);
+
+        // Normalize phone number
+        const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+
+        // Create user
+        const userId = nanoid();
+        const user = await storage.createUser({
+          id: userId,
+          firstName,
+          lastName,
+          email: email.toLowerCase(),
+          phoneNumber: normalizedPhone,
+          password: hashedPassword,
+          phoneVerified: false,
+          tier: 'trial',
+          trialStartDate: new Date(),
+          trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+          onboardingCompleted: false,
+          emailPrefix: '',
+          isAdmin: false,
+          isSubscribed: false,
+          isLifetime: false
+        });
+
+        // Set session for the new user
+        req.session.userId = userId;
+        
+        // Save session immediately
+        await this.saveSession(req);
+
+        // Generate verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Store verification code
+        await db.insert(phoneVerifications).values({
+          phoneNumber: normalizedPhone,
+          verificationCode,
+          expiresAt,
+          ipAddress: req.ip || '',
+          userAgent: req.headers['user-agent'] || '',
+        });
+
+        console.log('📱 Verification code stored for signup:', {
+          phone: normalizedPhone,
+          code: verificationCode,
+          userId
+        });
+
+        // Send SMS
+        try {
+          console.log('📱 Attempting to send SMS for signup...');
+          await smsService.sendVerificationCode(normalizedPhone, verificationCode);
+          console.log('✅ Verification code sent successfully');
+          
+          res.json({ 
+            userId,
+            success: true,
+            message: 'Account created successfully. Please check your phone for a verification code.',
+          });
+        } catch (smsError: any) {
+          console.error('❌ SMS send failed during signup:', smsError.message);
+          console.error('❌ Full SMS error:', smsError);
+          
+          // In development, return the code
+          if (ENV.isDevelopment) {
+            console.log('📱 Development mode - returning verification code for testing');
+            res.json({ 
+              userId,
+              success: true,
+              message: 'Account created successfully.',
+              verificationCode, // For testing when SMS fails
+              tempMessage: 'SMS not available in trial mode - use the code shown below'
+            });
+          } else {
+            res.json({ 
+              userId,
+              success: true,
+              message: 'Account created successfully. Please check your phone for a verification code.',
+            });
+          }
+        }
+
+      } catch (error: any) {
+        console.error('❌ Signup error:', error);
+        res.status(500).json({ error: 'Failed to create account' });
+      }
+    });
+
     console.log('✅ Production authentication routes registered');
   }
 }

@@ -52,10 +52,10 @@ export function createSessionMiddleware() {
     name: 'connect.sid',
     proxy: ENV.isProduction, // Trust proxy in production
     cookie: {
-      secure: ENV.sessionSecure,
-      httpOnly: true, // Change from false to true for security (as suggested by reviewer)
+      secure: false, // CRITICAL FIX: Always false for Replit development/production testing
+      httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: ENV.isProduction ? 'none' as const : 'lax' as const,
+      sameSite: 'lax' as const, // CRITICAL FIX: Always lax for Replit
       domain: undefined, // Let Express handle this
       path: '/', // Explicitly set path
     }
