@@ -113,41 +113,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ===== SESSION RESTORATION API =====
-  app.post('/api/auth/restore-session', async (req: any, res) => {
-    try {
-      console.log('🔄 Session restoration attempt:', {
-        sessionId: req.sessionID,
-        hasSession: !!req.session,
-        userId: req.session?.userId
-      });
-
-      // Check if session already exists and is valid
-      if (req.session?.userId) {
-        const user = await storage.getUserById(req.session.userId);
-        if (user) {
-          console.log('✅ Session already valid for user:', user.email);
-          return res.json({ 
-            success: true, 
-            message: 'Session already valid',
-            user: {
-              id: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName
-            }
-          });
-        }
-      }
-
-      console.log('❌ No valid session found for restoration');
-      res.status(401).json({ success: false, error: 'No session to restore' });
-      
-    } catch (error: any) {
-      console.error('❌ Session restoration error:', error);
-      res.status(500).json({ success: false, error: 'Session restoration failed' });
-    }
-  });
+  // Session restoration route moved to auth-rebuilt.ts to avoid duplication
 
   // ===== EMAIL SETUP API =====
   app.get('/api/email/my-address', async (req: any, res) => {

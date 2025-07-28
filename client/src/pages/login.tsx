@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  // Admin mode removed per user request
   const { toast } = useToast();
   const queryClient = useQueryClient(); // Proper way to access query client
 
@@ -20,7 +20,7 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      const endpoint = isAdminMode ? '/api/auth/admin-login' : '/api/auth/login';
+      const endpoint = '/api/auth/login'; // Admin login removed per user request
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,16 +79,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-900">
-            {isAdminMode ? 'Admin Login' : 'Login to MusoBuddy'}
+            Login to MusoBuddy
           </CardTitle>
           <p className="text-gray-600 mt-2">
-            {isAdminMode ? 'Administrator access - bypasses verification' : 'Professional music business management'}
+            Professional music business management
           </p>
-          {isAdminMode && (
-            <div className="text-sm text-orange-600 bg-orange-50 p-2 rounded mt-2">
-              Admin mode: Always grants access regardless of verification status
-            </div>
-          )}
+          {/* Admin mode UI removed per user request */}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -116,21 +112,11 @@ export default function LoginPage() {
             </div>
             <Button 
               type="submit" 
-              className={`w-full ${isAdminMode ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'}`}
+              className="w-full bg-purple-600 hover:bg-purple-700"
               disabled={isLoading}
             >
-              {isLoading ? "Signing In..." : (isAdminMode ? "Admin Login" : "Sign In")}
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
-            
-            <div className="text-center mt-4">
-              <button
-                type="button"
-                onClick={() => setIsAdminMode(!isAdminMode)}
-                className="text-sm text-gray-500 hover:text-gray-700 underline"
-              >
-                {isAdminMode ? 'Switch to Regular Login' : 'Admin Login'}
-              </button>
-            </div>
           </form>
         </CardContent>
       </Card>

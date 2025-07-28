@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
-import AdminLoginPage from "@/pages/admin-login";
+// AdminLoginPage import removed
 import VerifyPhonePage from "@/pages/verify-phone";
 import Dashboard from "@/pages/dashboard";
 import Bookings from "@/pages/bookings";
@@ -61,7 +61,7 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={LoginPage} />
-      <Route path="/admin-login" component={AdminLoginPage} />
+      {/* Admin login removed per user request */}
       <Route path="/verify-phone" component={VerifyPhonePage} />
       <Route path="/trial-success" component={TrialSuccessPage} />
       <Route path="/sign-contract/:id" component={SignContract} />
