@@ -61,9 +61,17 @@ export function ConflictResolutionDialog({
     }
   };
 
-  const handleEdit = (booking: any) => {
+  const handleEdit = (conflictOrBooking: any) => {
     if (onEditBooking) {
-      onEditBooking(booking);
+      // If this is a conflict object, we need to pass the selected booking instead
+      if (conflictOrBooking.withBookingId || conflictOrBooking.severity) {
+        console.log('Passing selectedBooking to onEditBooking:', selectedBooking);
+        onEditBooking(selectedBooking);
+      } else {
+        // This is already a booking object
+        console.log('Passing booking object to onEditBooking:', conflictOrBooking);
+        onEditBooking(conflictOrBooking);
+      }
       onClose(); // Close the conflict dialog when opening edit
     } else {
       toast({
