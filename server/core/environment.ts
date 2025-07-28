@@ -51,12 +51,15 @@ function detectEnvironment(): EnvironmentConfig {
     appServerUrl = 'http://localhost:5000';
   }
   
+  // CRITICAL FIX: Override session security for localhost testing
+  const sessionSecure = isReplitProduction && !appServerUrl.includes('localhost');
+  
   return {
     isProduction,
     isDevelopment: !isProduction,
     isReplitProduction,
     appServerUrl,
-    sessionSecure: isReplitProduction,
+    sessionSecure,
     nodeEnv,
     replitDeployment,
     replitEnvironment,

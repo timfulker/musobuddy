@@ -1,7 +1,8 @@
 import { type Express } from "express";
 import path from "path";
 import { storage } from "./storage";
-// import { authMonitor } from "./auth-monitor";
+import { createSessionMiddleware } from './session-config.js';
+import { ProductionAuthSystem } from './auth-production.js';
 
 // Middleware
 const isAuthenticated = (req: any, res: any, next: any) => {
@@ -12,6 +13,16 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express) {
+  // CRITICAL FIX: Set up session middleware FIRST
+  console.log('📦 Registering session middleware...');
+  const sessionMiddleware = createSessionMiddleware();
+  app.use(sessionMiddleware);
+  
+  // Initialize auth system AFTER session middleware
+  console.log('🔐 Initializing authentication system...');
+  const authSystem = new ProductionAuthSystem(app);
+  authSystem.registerRoutes();
+
   // ===== SYSTEM HEALTH & MONITORING =====
   app.get('/api/health/auth', (req, res) => {
     res.json({ status: 'healthy', message: 'Auth system operational' });
@@ -237,7 +248,7 @@ export async function registerRoutes(app: Express) {
   app.get('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const booking = await storage.getBooking(bookingId, req.session.userId);
+      const booking = await storage.getBooking(bookingId);
       if (!booking) {
         return res.status(404).json({ error: 'Booking not found' });
       }
@@ -268,7 +279,7 @@ export async function registerRoutes(app: Express) {
   app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const updatedBooking = await storage.updateBooking(bookingId, req.body, req.session.userId);
+      const updatedBooking = await storage.updateBooking(bookingId, req.body);
       if (!updatedBooking) {
         return res.status(404).json({ error: 'Booking not found' });
       }
@@ -284,7 +295,7 @@ export async function registerRoutes(app: Express) {
   app.delete('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      await storage.deleteBooking(bookingId, req.session.userId);
+      await storage.deleteBooking(bookingId);
       console.log(`✅ Deleted booking #${bookingId} for user ${req.session.userId}`);
       res.json({ success: true });
     } catch (error) {

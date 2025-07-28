@@ -20,7 +20,64 @@ function validateSessionConfiguration() {
   }
 }
 
-// CRITICAL FIX: Enhanced session configuration with better error handling
+// CRITICAL FIX: Create session middleware (external reviewer's fix)
+export function createSessionMiddleware() {
+  console.log('📦 Creating session middleware...');
+  
+  const PgSession = ConnectPgSimple(session);
+
+  // SAFEGUARD: Validate session configuration before creating middleware
+  validateSessionConfiguration();
+
+  // REPLIT PRODUCTION-SPECIFIC session configuration
+  const isReplitProd = isReplitProduction();
+  
+  const sessionConfig = {
+    store: new PgSession({
+      conString: process.env.DATABASE_URL,
+      tableName: 'sessions',
+      createTableIfMissing: true,
+      // CRITICAL: Add error handling for store
+      errorLog: (err: any) => {
+        console.error('❌ Session store error:', err);
+      },
+      // REPLIT PRODUCTION: Add connection timeout handling
+      ttl: 24 * 60 * 60, // 24 hours in seconds
+      pruneSessionInterval: 60 * 15 // Clean expired sessions every 15 minutes
+    }),
+    secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
+    resave: false,
+    saveUninitialized: false, // Don't save empty sessions
+    rolling: true, // Reset expiration on each request
+    name: 'connect.sid',
+    proxy: ENV.isProduction, // Trust proxy in production
+    cookie: {
+      secure: ENV.sessionSecure,
+      httpOnly: true, // Change from false to true for security (as suggested by reviewer)
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: ENV.isProduction ? 'none' as const : 'lax' as const,
+      domain: undefined, // Let Express handle this
+      path: '/', // Explicitly set path
+    }
+  };
+
+  console.log('📦 Session middleware configuration:', {
+    environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT', 
+    isReplitProduction: isReplitProd,
+    appServerUrl: ENV.appServerUrl,
+    sessionName: sessionConfig.name,
+    proxy: sessionConfig.proxy,
+    secure: sessionConfig.cookie.secure,
+    sameSite: sessionConfig.cookie.sameSite,
+    domain: sessionConfig.cookie.domain,
+    sessionSecret: process.env.SESSION_SECRET ? 'SET' : 'MISSING',
+    databaseUrl: process.env.DATABASE_URL ? 'SET' : 'MISSING'
+  });
+  
+  return session(sessionConfig);
+}
+
+// LEGACY: Enhanced session configuration with better error handling (kept for compatibility)
 export function setupSessionMiddleware(app: any) {
   console.log('🔧 Setting up session middleware...');
   
