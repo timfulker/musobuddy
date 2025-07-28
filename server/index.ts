@@ -319,21 +319,7 @@ app.get('/api/test-sms', async (req, res) => {
 
 // Session middleware is now configured inline
 
-// ENHANCED Session Debug Middleware - SIMPLIFIED
-app.use((req: any, res, next) => {
-  // Only log for auth-related routes to reduce noise
-  if (req.url.includes('/auth/') || req.url.includes('/debug/')) {
-    console.log('🔍 SESSION DEBUG:', {
-      url: req.url,
-      method: req.method,
-      sessionId: req.sessionID,
-      userId: req.session?.userId,
-      hasSession: !!req.session,
-      sessionKeys: req.session ? Object.keys(req.session) : []
-    });
-  }
-  next();
-});
+// Session debug middleware DISABLED for performance
 
 // Token authentication middleware removed (using session auth)
 
@@ -356,12 +342,7 @@ app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/a
                   req.headers.host?.includes('janeway.replit.dev') ? `https://${req.headers.host}` : 
                   'http://localhost:5000');
   
-  console.log('🔍 CORS Origin Detection:', {
-    originalOrigin: req.headers.origin,
-    referer: req.headers.referer,
-    host: req.headers.host,
-    determinedOrigin: origin
-  });
+  // CORS logging disabled for performance
   
   res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
