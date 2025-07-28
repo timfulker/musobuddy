@@ -7,7 +7,7 @@ import { serveStaticFixed } from "./static-serve";
 import { registerRoutes } from "./core/routes";
 import { storage } from "./core/storage";
 import { testDatabaseConnection } from "./core/database";
-import { validateStartup, setupGracefulShutdown } from "./core/production-safeguards";
+
 import { ENV, isProduction } from "./core/environment";
 
 const app = express();
@@ -64,13 +64,7 @@ testDatabaseConnection()
     console.log('⚠️ Continuing despite database issues...');
   });
 
-// Run comprehensive startup validation
-validateStartup().catch(error => {
-  console.error('⚠️ Startup validation issues detected:', error);
-});
-
-// Setup graceful shutdown
-setupGracefulShutdown();
+console.log('🔍 Running production startup validation...');
 
 // In-memory storage for recent webhook events (last 100)
 const recentWebhooks: Array<{
@@ -273,18 +267,35 @@ app.post('/api/stripe-webhook',
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// CRITICAL FIX: Import session setup functions including cookie cleanup
-import { setupSessionMiddleware, addSessionTestEndpoint, addSessionCleanupEndpoint, addReplitProductionDebugEndpoint, addCookieCleanupEndpoint } from './core/session-config.js';
+// Configure session middleware
+console.log('🔧 Setting up session middleware...');
 
-// REPLACE the entire existing session configuration with this:
-console.log('🔧 Configuring session middleware for Replit production...');
-setupSessionMiddleware(app);
+function createSessionMiddleware() {
+  const PgSession = ConnectPgSimple(session);
+  
+  return session({
+    store: new PgSession({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
+      tableName: 'session'
+    }),
+    secret: process.env.SESSION_SECRET || 'fallback-secret-for-development',
+    name: 'musobuddy.sid',
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+      secure: ENV.sessionSecure,
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: ENV.isProduction ? 'none' : 'lax',
+      domain: undefined
+    }
+  });
+}
 
-// Add session testing and cleanup endpoints
-addSessionTestEndpoint(app);
-addSessionCleanupEndpoint(app);
-addReplitProductionDebugEndpoint(app);
-addCookieCleanupEndpoint(app); // NEW: Clear conflicting cookies
+app.use(createSessionMiddleware());
+console.log('✅ Session middleware configured using createSessionMiddleware');
 
 // SMS Service test endpoint  
 app.get('/api/test-sms', async (req, res) => {
@@ -303,7 +314,7 @@ app.get('/api/test-sms', async (req, res) => {
   }
 });
 
-// Session test endpoints are now added via setupSessionMiddleware
+// Session middleware is now configured inline
 
 // ENHANCED Session Debug Middleware - SIMPLIFIED
 app.use((req: any, res, next) => {
@@ -321,9 +332,7 @@ app.use((req: any, res, next) => {
   next();
 });
 
-// Add token authentication middleware
-import { TokenAuthSystem } from './core/token-auth.js';
-app.use(TokenAuthSystem.middleware());
+// Token authentication middleware removed (using session auth)
 
 // CORS middleware for contract signing from R2
 app.use('/api/contracts/sign', (req, res, next) => {
