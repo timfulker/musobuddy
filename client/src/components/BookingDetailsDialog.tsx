@@ -169,11 +169,28 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   // Initialize form when booking changes
   useEffect(() => {
     if (booking) {
+      // Parse formatted time back into separate start and end times
+      let startTime = "";
+      let endTime = "";
+      
+      if (booking.eventTime) {
+        if (booking.eventTime.includes(' - ')) {
+          // Time is formatted as "20:00 - 21:00"
+          const [start, end] = booking.eventTime.split(' - ');
+          startTime = start.trim();
+          endTime = end.trim();
+        } else {
+          // Time is single value, use eventEndTime if available
+          startTime = booking.eventTime;
+          endTime = booking.eventEndTime || "";
+        }
+      }
+      
       const bookingData = {
         clientName: booking.clientName || "",
         eventDate: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : "",
-        eventTime: booking.eventTime || "",
-        eventEndTime: booking.eventEndTime || "",
+        eventTime: startTime,
+        eventEndTime: endTime,
         venue: booking.venue || "",
         fee: booking.fee || "",
         clientEmail: booking.clientEmail || "",

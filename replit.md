@@ -631,6 +631,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **PRODUCTION READY DATABASE**: ✅ Single PostgreSQL bookings table as sole source of truth with consistent API layer formatting
 - **DASHBOARD TIME DISPLAY FIX**: ✅ Fixed kanban-board and ConflictResolutionDialog double-formatting causing "20:00 - 21:00 - 21:00" display
 - **FRONTEND CONSISTENCY**: ✅ All components now check if time is already formatted before adding additional " - " separators
+- **EDIT FORM TIME PARSING**: ✅ Fixed BookingDetailsDialog to parse formatted times "20:00 - 21:00" back into separate start "20:00" and end "21:00" fields for editing
 
 ### 2025-07-28 - AUTHENTICATION SYSTEM COMPLETELY OPERATIONAL - Critical Session Persistence Fixed
 - **CRITICAL SESSION ISSUE RESOLVED**: ✅ Fixed phone verification not setting session authentication causing 401 errors on trial setup page  
