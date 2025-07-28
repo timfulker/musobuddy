@@ -49,60 +49,7 @@ export function createSessionMiddleware() {
   return session(sessionConfig);
 }
 
-// LEGACY: Enhanced session configuration with better error handling (kept for compatibility)
-export function setupSessionMiddleware(app: any) {
-  console.log('🔧 Setting up session middleware...');
-  
-  const PgSession = ConnectPgSimple(session);
-
-  // SAFEGUARD: Validate session configuration before starting server
-  validateSessionConfiguration();
-
-  // REPLIT PRODUCTION-SPECIFIC session configuration
-  const isReplitProd = isReplitProduction();
-  
-  const sessionConfig = {
-    store: new PgSession({
-      conString: process.env.DATABASE_URL,
-      tableName: 'sessions',
-      createTableIfMissing: true,
-      // CRITICAL: Add error handling for store
-      errorLog: (err: any) => {
-        console.error('❌ Session store error:', err);
-      },
-      // REPLIT PRODUCTION: Add connection timeout handling
-      ttl: 24 * 60 * 60, // 24 hours in seconds
-      pruneSessionInterval: 60 * 15 // Clean expired sessions every 15 minutes
-    }),
-    secret: process.env.SESSION_SECRET || 'musobuddy-session-secret-2025',
-    resave: false,
-    saveUninitialized: false, // Don't save empty sessions
-    rolling: true, // Reset expiration on each request
-    name: 'connect.sid', // FIXED: Use standard session name
-    proxy: isReplitProd, // CRITICAL: Trust Replit's proxy in production
-    cookie: {
-      secure: isReplitProd, // REPLIT PRODUCTION: true for HTTPS, false for dev
-      httpOnly: false, // Allow frontend access
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: isReplitProd ? 'none' as const : 'lax' as const, // REPLIT PRODUCTION: 'none' for cross-site
-      domain: undefined // CRITICAL FIX: Let browser handle domain automatically
-    }
-  };
-
-  console.log('🔧 Session configuration:', {
-    environment: ENV.isProduction ? 'PRODUCTION' : 'DEVELOPMENT', 
-    isReplitProduction: isReplitProd,
-    appServerUrl: ENV.appServerUrl,
-    sessionName: sessionConfig.name,
-    proxy: sessionConfig.proxy,
-    secure: sessionConfig.cookie.secure,
-    sameSite: sessionConfig.cookie.sameSite,
-    domain: sessionConfig.cookie.domain,
-    sessionSecret: process.env.SESSION_SECRET ? 'SET' : 'MISSING',
-    databaseUrl: process.env.DATABASE_URL ? 'SET' : 'MISSING'
-  });
-
-  // CRITICAL: Test session store connectivity
+// REMOVED: Legacy duplicate session configuration - use createSessionMiddleware() instead
   console.log('🔍 Testing session store connectivity...');
   
   // Apply session middleware
