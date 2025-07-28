@@ -563,7 +563,18 @@ async function parseEmailWithAI(emailBody: string, subject: string): Promise<any
 Email Subject: ${subject}
 Email Content: ${processedBody}
 
-Extract in JSON format. Look carefully for all money amounts, fees, quotes, budgets, and prices:
+IMPORTANT DATE PARSING INSTRUCTIONS:
+- "sixth of September this year" = 2025-09-06
+- "September 6th this year" = 2025-09-06  
+- "6th September this year" = 2025-09-06
+- Handle ordinal numbers (1st, 2nd, 3rd, 4th, etc.) and written numbers (first, second, third, etc.)
+
+IMPORTANT FEE PARSING INSTRUCTIONS:
+- Look for any amount with £, $, € symbols
+- Handle formats like "£250Between" or "£250 Between" - extract just "£250"
+- Look for phrases like "fee will be", "cost is", "budget", "price"
+
+Extract in JSON format:
 {
   "eventDate": "YYYY-MM-DD or null",
   "eventTime": "HH:MM or null", 
