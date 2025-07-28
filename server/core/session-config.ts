@@ -50,38 +50,6 @@ export function createSessionMiddleware() {
 }
 
 // REMOVED: Legacy duplicate session configuration - use createSessionMiddleware() instead
-  console.log('🔍 Testing session store connectivity...');
-  
-  // Apply session middleware
-  app.use(session(sessionConfig));
-  
-  // ENHANCED: Session monitoring middleware
-  app.use((req: any, res: any, next: any) => {
-    const originalSave = req.session.save;
-    req.session.save = function(callback?: any) {
-      console.log('💾 Session save called:', {
-        sessionId: req.sessionID,
-        userId: req.session.userId,
-        keys: Object.keys(req.session),
-        timestamp: new Date().toISOString()
-      });
-      
-      return originalSave.call(this, (err: any) => {
-        if (err) {
-          console.error('❌ Session save failed:', err);
-        } else {
-          console.log('✅ Session save successful:', req.sessionID);
-        }
-        if (callback) callback(err);
-      });
-    };
-    
-    next();
-  });
-
-  console.log('✅ Session middleware configured');
-  return sessionConfig;
-}
 
 // CRITICAL: Session validation endpoint
 export function addSessionTestEndpoint(app: any) {
