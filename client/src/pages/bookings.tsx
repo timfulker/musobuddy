@@ -563,6 +563,12 @@ export default function UnifiedBookings() {
     setBookingDetailsDialogOpen(true);
   };
 
+  // Handler for editing booking from conflict resolution dialog
+  const handleEditBookingFromConflict = (booking: any) => {
+    setSelectedBookingForDetails(booking);
+    setBookingDetailsDialogOpen(true);
+  };
+
   const days = generateCalendar();
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -909,6 +915,7 @@ export default function UnifiedBookings() {
                       <ConflictIndicator 
                         bookingId={booking.id} 
                         conflicts={detectConflicts(booking)}
+                        onEditBooking={handleEditBookingFromConflict}
                       />
                       
                       <CardContent className="p-6">

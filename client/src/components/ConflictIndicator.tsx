@@ -29,9 +29,10 @@ interface ConflictIndicatorProps {
   bookingId: number;
   conflicts: Conflict[];
   onOpenModal?: () => void;
+  onEditBooking?: (booking: any) => void;
 }
 
-export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }: ConflictIndicatorProps) {
+export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, onEditBooking }: ConflictIndicatorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showResolutionModal, setShowResolutionModal] = useState(false);
 
@@ -177,6 +178,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal }:
         onClose={() => setShowResolutionModal(false)}
         selectedBooking={currentBooking}
         conflicts={conflicts || []}
+        onEditBooking={onEditBooking}
       />
     </>
   );

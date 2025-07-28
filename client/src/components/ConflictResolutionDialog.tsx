@@ -15,13 +15,15 @@ interface ConflictResolutionDialogProps {
   onClose: () => void;
   selectedBooking: any;
   conflicts: any[];
+  onEditBooking?: (booking: any) => void;
 }
 
 export function ConflictResolutionDialog({
   isOpen,
   onClose,
   selectedBooking,
-  conflicts
+  conflicts,
+  onEditBooking
 }: ConflictResolutionDialogProps) {
   const [isResolving, setIsResolving] = useState(false);
   const [resolutionAction, setResolutionAction] = useState<string>('');
@@ -60,11 +62,16 @@ export function ConflictResolutionDialog({
   };
 
   const handleEdit = (booking: any) => {
-    
-    toast({
-      title: "Edit Booking",
-      description: "This will open the booking edit form",
-    });
+    if (onEditBooking) {
+      onEditBooking(booking);
+      onClose(); // Close the conflict dialog when opening edit
+    } else {
+      toast({
+        title: "Edit Booking",
+        description: "Edit functionality not available in this context",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleReject = async (booking: any) => {
