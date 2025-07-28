@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import path from "path";
 import { storage } from "./storage";
-import { createSessionMiddleware } from './session-config.js';
+// Session middleware imported inline
 // ProductionAuthSystem removed - using direct route registration
 import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 
@@ -20,9 +20,7 @@ export async function registerRoutes(app: Express) {
   app.use(slowDownMiddleware);
   
   // CRITICAL: Set up session middleware AFTER rate limiting
-  console.log('📦 Registering session middleware...');
-  const sessionMiddleware = createSessionMiddleware();
-  app.use(sessionMiddleware);
+  console.log('📦 Session middleware already configured in main server');
   
   // CLEAN AUTHENTICATION ROUTES - Direct registration without separate class
   console.log('🔐 Setting up clean authentication routes...');

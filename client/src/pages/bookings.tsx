@@ -424,7 +424,7 @@ export default function UnifiedBookings() {
       String(date.getDate()).padStart(2, '0');
     const events: CalendarEvent[] = [];
 
-    (bookings as any[]).forEach((booking: any) => {
+    (bookings as any[] || []).forEach((booking: any) => {
       if (booking.eventDate) {
         const bookingDate = new Date(booking.eventDate);
         const bookingDateStr = bookingDate.getFullYear() + '-' + 
