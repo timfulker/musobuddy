@@ -81,33 +81,57 @@ export default function ActionableEnquiries() {
 
   // Detect conflicts for an enquiry (same logic as events window)
   const detectConflicts = (enquiry: Enquiry) => {
-    // Use the correct field names from the database: eventTime and eventEndTime
-    if (!enquiry.eventDate || !enquiry.eventTime || !enquiry.eventEndTime) return [];
+    if (!enquiry.eventDate) return [];
     
     const enquiryDate = new Date(enquiry.eventDate).toDateString();
-    const enquiryStart = new Date(`${enquiry.eventDate}T${enquiry.eventTime}`);
-    const enquiryEnd = new Date(`${enquiry.eventDate}T${enquiry.eventEndTime}`);
     
-    return (enquiries as any[]).filter((other: Enquiry) => {
-      if (other.id === enquiry.id) return false;
-      if (!other.eventDate || !other.eventTime || !other.eventEndTime) return false;
-      
-      const otherDate = new Date(other.eventDate).toDateString();
-      if (otherDate !== enquiryDate) return false;
-      
-      const otherStart = new Date(`${other.eventDate}T${other.eventTime}`);
-      const otherEnd = new Date(`${other.eventDate}T${other.eventEndTime}`);
-      
-      // Check for time overlap
-      const hasTimeOverlap = enquiryStart < otherEnd && enquiryEnd > otherStart;
-      
-      // Return the conflict object with the original enquiry data plus hasTimeOverlap
-      return {
-        ...other,
-        type: 'booking',
-        hasTimeOverlap
-      };
-    }).filter(Boolean);
+    // Find all bookings on the same date - this is the primary conflict rule  
+    return (enquiries as any[])
+      .filter((other: Enquiry) => {
+        if (other.id === enquiry.id) return false;
+        if (!other.eventDate) return false;
+        
+        const otherDate = new Date(other.eventDate).toDateString();
+        return otherDate === enquiryDate; // Same day = conflict
+      })
+      .map((other: Enquiry) => {
+        // Default to hard conflict for same day
+        let hasTimeOverlap = true;
+        let severity = 'hard';
+        
+        // Try to parse times to soften conflict if no overlap
+        try {
+          let enquiryStart, enquiryEnd, otherStart, otherEnd;
+          
+          if (enquiry.eventTime && enquiry.eventTime.includes('-')) {
+            const [start, end] = enquiry.eventTime.split('-');
+            enquiryStart = new Date(`${enquiry.eventDate}T${start.trim()}`);
+            enquiryEnd = new Date(`${enquiry.eventDate}T${end.trim()}`);
+          }
+          
+          if (other.eventTime && other.eventTime.includes('-')) {
+            const [start, end] = other.eventTime.split('-');
+            otherStart = new Date(`${other.eventDate}T${start.trim()}`);
+            otherEnd = new Date(`${other.eventDate}T${end.trim()}`);
+          }
+          
+          // If we have valid times, check for overlap
+          if (enquiryStart && enquiryEnd && otherStart && otherEnd) {
+            hasTimeOverlap = enquiryStart < otherEnd && enquiryEnd > otherStart;
+            severity = hasTimeOverlap ? 'hard' : 'soft';
+          }
+        } catch (error) {
+          // Keep as hard conflict if time parsing fails
+        }
+        
+        return {
+          ...other,
+          type: 'booking',
+          hasTimeOverlap,
+          severity
+        };
+      })
+      .filter(Boolean);
   };
 
   const getEnquiryConflict = (enquiryId: number) => {
