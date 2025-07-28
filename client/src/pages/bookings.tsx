@@ -213,12 +213,18 @@ export default function UnifiedBookings() {
         }
         
         return {
-          ...other,
-          severity,
-          hasTimeOverlap,
+          withBookingId: other.id,
+          severity: severity === 'critical' ? 'hard' : 'soft', // Convert to expected format
+          clientName: other.clientName || 'Unknown Client',
+          status: other.status || 'new',
+          time: other.eventTime || 'Time not specified',
+          canEdit: true,
+          canReject: true,
+          type: 'same_day',
           message: hasTimeOverlap 
             ? `Time overlap with ${other.clientName} (${other.eventTime})`
-            : `Same day booking with ${other.clientName} (${other.eventTime})`
+            : `Same day booking with ${other.clientName} (${other.eventTime})`,
+          overlapMinutes: hasTimeOverlap ? 60 : undefined // Estimate for now
         };
       });
     

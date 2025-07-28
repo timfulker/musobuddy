@@ -351,11 +351,33 @@ export async function registerRoutes(app: Express) {
           
           // Check if same date
           if (date1 === date2) {
+            // Create conflict entry for booking1 about booking2
             conflicts.push({
-              id: `${booking1.id}-${booking2.id}`,
-              bookings: [booking1, booking2],
-              severity: 'critical',
+              bookingId: booking1.id,
+              withBookingId: booking2.id,
+              severity: 'hard', // Use 'hard' instead of 'critical' to match frontend
+              clientName: booking2.clientName || 'Unknown Client',
+              status: booking2.status || 'new',
+              time: booking2.eventTime || 'Time not specified',
+              canEdit: true,
+              canReject: true,
               type: 'same_day',
+              message: `Same day booking with ${booking2.clientName} (${booking2.eventTime})`,
+              date: date1
+            });
+            
+            // Create conflict entry for booking2 about booking1  
+            conflicts.push({
+              bookingId: booking2.id,
+              withBookingId: booking1.id,
+              severity: 'hard',
+              clientName: booking1.clientName || 'Unknown Client', 
+              status: booking1.status || 'new',
+              time: booking1.eventTime || 'Time not specified',
+              canEdit: true,
+              canReject: true,
+              type: 'same_day',
+              message: `Same day booking with ${booking1.clientName} (${booking1.eventTime})`,
               date: date1
             });
           }
