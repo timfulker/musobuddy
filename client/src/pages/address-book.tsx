@@ -42,14 +42,14 @@ export default function AddressBook() {
 
   const createClientMutation = useMutation({
     mutationFn: (data: InsertClient) => {
-      console.log("Creating client with data:", data);
+      
       return apiRequest("/api/clients", {
         method: "POST",
         body: JSON.stringify(data)
       });
     },
     onSuccess: (response) => {
-      console.log("Client created successfully:", response);
+      
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
       setIsCreateOpen(false);
       form.reset();
@@ -148,14 +148,14 @@ export default function AddressBook() {
   });
 
   const handleSubmit = (data: InsertClient) => {
-    console.log("Form submitted with data:", data);
-    console.log("Form errors:", form.formState.errors);
+    
+    
     
     if (editingClient) {
-      console.log("Updating client:", editingClient.id);
+      
       updateClientMutation.mutate({ id: editingClient.id, data });
     } else {
-      console.log("Creating new client");
+      
       createClientMutation.mutate(data);
     }
   };

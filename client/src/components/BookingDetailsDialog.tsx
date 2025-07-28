@@ -271,10 +271,10 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     // Use provided contract or find the latest one
     const contractToUse = contract || bookingContract;
     
-    console.log('🔄 handleCopyFromContract called with:', contractToUse);
+    // handleCopyFromContract called
     
     if (!contractToUse) {
-      console.log('❌ No contract found to copy from');
+      // No contract found to copy from
       toast({
         title: "No Contract Found",
         description: "No contract found for this booking to copy data from.",
@@ -284,7 +284,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     }
 
     const currentFormData = form.getValues();
-    console.log('📋 Current form data:', currentFormData);
+    // Current form data logged
     let fieldsUpdated = 0;
     
     // Define protected fields that should never be overwritten by contract imports

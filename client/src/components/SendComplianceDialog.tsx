@@ -134,15 +134,7 @@ Best regards,
     enabled: isOpen,
   });
 
-  // Debug document loading
-  useEffect(() => {
-    console.log('SendComplianceDialog - Documents loaded:', { 
-      documentsCount: documents.length, 
-      documents, 
-      isLoading, 
-      isOpen 
-    });
-  }, [documents, isLoading, isOpen]);
+  // Documents loaded
 
   // Send compliance documents mutation
   const sendDocumentsMutation = useMutation({

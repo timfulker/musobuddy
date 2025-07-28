@@ -315,7 +315,7 @@ export default function Contracts() {
   // Email sending mutation
   const sendEmailMutation = useMutation({
     mutationFn: async ({ contractId, customMessage }: { contractId: number, customMessage?: string }) => {
-      console.log('🔥 FRONTEND: Sending contract email for contract:', contractId);
+      
 
       return apiRequest("/api/contracts/send-email", {
         method: "POST",
@@ -369,13 +369,13 @@ export default function Contracts() {
 
   const deleteContractMutation = useMutation({
     mutationFn: async (contractId: number) => {
-      console.log("🔥 Deleting contract:", contractId);
+      
       return apiRequest(`/api/contracts/${contractId}`, {
         method: "DELETE",
       });
     },
     onSuccess: (data) => {
-      console.log("🔥 Delete success, invalidating cache");
+      
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       toast({
         title: "Success",
@@ -421,31 +421,31 @@ export default function Contracts() {
   };
 
   const handleSendEmail = (contract: Contract) => {
-    console.log('🔥 FRONTEND: handleSendEmail called with contract:', contract.id);
-    console.log('🔥 FRONTEND: Contract details:', contract);
-    console.log('🔥 FRONTEND: sendEmailMutation.isPending:', sendEmailMutation.isPending);
+    
+    
+    
     sendEmailMutation.mutate({ contractId: contract.id });
   };
 
   const handleViewSignedContract = (contract: Contract) => {
-    console.log('🎯 FRONTEND: handleViewSignedContract called');
-    console.log('🎯 Contract status:', contract.status);
-    console.log('🎯 Cloud storage URL:', contract.cloudStorageUrl);
+    
+    
+    
     
     // For signed contracts, prioritize cloud storage URL
     if (contract.status === 'signed' && contract.cloudStorageUrl) {
-      console.log('✅ Opening signed contract from cloud storage');
+      
       window.open(contract.cloudStorageUrl, '_blank');
     } 
     // For signed contracts without cloud URL, use download endpoint
     else if (contract.status === 'signed') {
-      console.log('⚠️ Using download endpoint for signed contract');
+      
       const downloadUrl = `/api/contracts/${contract.id}/download`;
       window.open(downloadUrl, '_blank');
     }
     // For draft/unsigned contracts, use local view
     else {
-      console.log('📄 Opening draft contract in local view');
+      
       setLocation(`/view-contract/${contract.id}`);
     }
   };
@@ -476,7 +476,7 @@ export default function Contracts() {
         body: JSON.stringify({ contractIds: selectedContracts })
       });
 
-      console.log('🔥 Bulk delete result:', result);
+      
 
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       setSelectedContracts([]);

@@ -60,7 +60,7 @@ export function ConflictResolutionDialog({
   };
 
   const handleEdit = (booking: any) => {
-    console.log('Edit booking:', booking);
+    
     toast({
       title: "Edit Booking",
       description: "This will open the booking edit form",

@@ -150,7 +150,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     credentials: 'include', // Important for session-based auth
   });
   
-  console.log('🔥 Settings API response status:', response.status);
+  
   
   if (!response.ok) {
     console.error('🔥 Settings API error:', response.status, response.statusText);
@@ -158,7 +158,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   }
   
   const data = await response.json();
-  console.log('🔥 Raw settings response:', data);
+  
   
   // Parse stringified JSON fields
   let parsedInstruments = [];
@@ -306,7 +306,7 @@ export default function Settings() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     select: (data) => {
-      console.log('🔥 Settings data loaded:', data);
+      
       console.log('🔥 Address fields:', {
         addressLine1: data?.addressLine1,
         city: data?.city,
@@ -337,7 +337,7 @@ export default function Settings() {
   // Save settings function - simplified version
   const saveSettings = useMutation({
     mutationFn: async (data: SettingsFormData) => {
-      console.log('🚀 Saving settings:', data);
+      
       
       const response = await fetch('/api/settings', {
         method: 'POST',
@@ -356,7 +356,7 @@ export default function Settings() {
       return await response.json();
     },
     onSuccess: (data) => {
-      console.log('✅ Settings saved successfully:', data);
+      
       setHasChanges(false);
       toast({
         title: "Success",
@@ -393,7 +393,7 @@ export default function Settings() {
   // Initialize form when settings are loaded - but don't reset if user has unsaved changes
   useEffect(() => {
     if (settings && !saveSettings.isPending && !hasChanges) {
-      console.log('🔄 FORM RESET: Resetting form with settings:', settings);
+      
       
       // Create the form data object with actual values - include ALL fields from database
       const formData = {
@@ -416,7 +416,7 @@ export default function Settings() {
         gigTypes: settings.gigTypes || [],
       };
       
-      console.log('🔄 Actual form data to set:', formData);
+      
       
       // Force reset form with settings data
       form.reset(formData);
@@ -540,7 +540,7 @@ export default function Settings() {
 
 
   const onSubmit = (data: SettingsFormData) => {
-    console.log('🚀 Form submitted with data:', data);
+    
     
     // Include instruments and gig types in the form data
     const completeData = {
@@ -549,7 +549,7 @@ export default function Settings() {
       gigTypes,
     };
     
-    console.log('🚀 Complete data being sent:', completeData);
+    
     saveSettings.mutate(completeData);
   };
 
@@ -1495,10 +1495,10 @@ export default function Settings() {
                   type="submit"
                   disabled={saveSettings.isPending || !hasChanges}
                   onClick={(e) => {
-                    console.log('🚀 BUTTON CLICKED!');
-                    console.log('🚀 hasChanges:', hasChanges);
-                    console.log('🚀 disabled:', saveSettings.isPending || !hasChanges);
-                    console.log('🚀 form.formState.errors:', form.formState.errors);
+                    
+                    
+                    
+                    
                     // Don't prevent default - let the form submit naturally
                   }}
                   className={`px-8 py-2 border-0 transition-all duration-300 ${

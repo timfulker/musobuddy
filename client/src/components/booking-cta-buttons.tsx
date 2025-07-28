@@ -59,11 +59,7 @@ export default function BookingCTAButtons() {
     );
   }
 
-  // Debug logging
-  console.log("🔍 CTA Buttons Debug:", {
-    bookings: bookings.length,
-    bookingsData: bookings.slice(0, 2)
-  });
+  // Debug logging removed for performance
 
   // Use contextual actions to determine what bookings need attention
   const needsResponse = bookings.filter(
@@ -84,12 +80,7 @@ export default function BookingCTAButtons() {
   const contracts = needsContract;
   const invoices = needsInvoice;
 
-  console.log("🔍 CTA Counts:", {
-    needsResponse: needsResponse.length,
-    needsContract: needsContract.length,
-    needsInvoice: needsInvoice.length,
-    totalBookings: bookings.length
-  });
+  // CTA counts calculated
 
   const ctaButtons = [
     {

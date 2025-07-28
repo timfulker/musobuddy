@@ -234,9 +234,9 @@ export default function Invoices() {
 
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("🔥 Frontend: Making invoice creation request");
-      console.log("🔥 Frontend: Request data:", JSON.stringify(data, null, 2));
-      console.log("🔥 Frontend: Request URL:", '/api/invoices');
+      
+      
+      
       
       // Use fetch directly to ensure we hit the priority route
       const response = await fetch('/api/invoices', {
@@ -248,8 +248,8 @@ export default function Invoices() {
         body: JSON.stringify(data),
       });
       
-      console.log("🔥 Frontend: Response status:", response.status);
-      console.log("🔥 Frontend: Response ok:", response.ok);
+      
+      
       
       if (!response.ok) {
         const errorData = await response.text();
@@ -258,11 +258,11 @@ export default function Invoices() {
       }
       
       const result = await response.json();
-      console.log("🔥 Frontend: Success response:", result);
+      
       return result;
     },
     onSuccess: (data) => {
-      console.log("🔥 Frontend: Mutation success:", data);
+      
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
       form.reset();
       setIsDialogOpen(false);
@@ -308,7 +308,7 @@ export default function Invoices() {
 
   const updateInvoiceMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      console.log("Updating invoice with data:", JSON.stringify(data, null, 2));
+      
       const response = await apiRequest(`/api/invoices/${id}`, {
         method: 'PATCH',
         body: data
@@ -366,8 +366,8 @@ export default function Invoices() {
 
 
   const onSubmit = (data: z.infer<typeof invoiceFormSchema>) => {
-    console.log("Form submission data:", JSON.stringify(data, null, 2));
-    console.log("Selected contract ID:", selectedContractId);
+    
+    
     
     // Client-side validation with user-friendly prompts
     const validationIssues = [];
@@ -428,7 +428,7 @@ export default function Invoices() {
       depositPaid: data.depositPaid?.trim() || null,
     };
     
-    console.log("Final data being sent:", JSON.stringify(finalData, null, 2));
+    
     
     if (editingInvoice) {
       // Update existing invoice
@@ -469,9 +469,9 @@ export default function Invoices() {
   // Invoice action handlers
   const sendInvoiceMutation = useMutation({
     mutationFn: async ({ invoiceId, customMessage }: { invoiceId: number, customMessage?: string }) => {
-      console.log('🔥 Email Send: Starting invoice email send');
-      console.log('🔥 Email Send: Invoice ID:', invoiceId);
-      console.log('🔥 Email Send: Custom message:', customMessage);
+      
+      
+      
       
       // Use direct fetch to avoid middleware interference (same fix as invoice creation)
       const response = await fetch('/api/invoices/send-email', {
@@ -483,8 +483,8 @@ export default function Invoices() {
         body: JSON.stringify({ invoiceId, customMessage }),
       });
       
-      console.log('🔥 Email Send: Response status:', response.status);
-      console.log('🔥 Email Send: Response ok:', response.ok);
+      
+      
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -493,11 +493,11 @@ export default function Invoices() {
       }
       
       const result = await response.json();
-      console.log('🔥 Email Send: Success response:', result);
+      
       return result;
     },
     onSuccess: () => {
-      console.log('🔥 Email Send: SUCCESS');
+      
       queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
       setCustomMessageDialog(false);
       setInvoiceToSend(null);
@@ -539,9 +539,9 @@ export default function Invoices() {
   });
 
   const handleSendInvoice = (invoice: Invoice) => {
-    console.log('=== INVOICE SEND DEBUG ===');
-    console.log('Invoice ID:', invoice.id);
-    console.log('Invoice data:', invoice);
+    
+    
+    
     
     // Check if invoice has client email
     if (!invoice.clientEmail) {
@@ -561,7 +561,7 @@ export default function Invoices() {
 
   const handleConfirmSendInvoice = () => {
     if (invoiceToSend) {
-      console.log('Sending invoice with custom message:', customMessage);
+      
       sendInvoiceMutation.mutate({
         invoiceId: invoiceToSend.id,
         customMessage: customMessage.trim() || undefined
@@ -685,7 +685,7 @@ export default function Invoices() {
 
   const deleteMutation = useMutation({
     mutationFn: async (invoiceIds: number[]) => {
-      console.log("🔥 Frontend: Deleting invoices:", invoiceIds);
+      
       const responses = await Promise.all(
         invoiceIds.map(async (id) => {
           const response = await fetch(`/api/invoices/${id}`, {
@@ -705,7 +705,7 @@ export default function Invoices() {
       return responses;
     },
     onSuccess: () => {
-      console.log("🔥 Frontend: Delete successful, invalidating cache");
+      
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       setSelectedInvoices([]);
       toast({

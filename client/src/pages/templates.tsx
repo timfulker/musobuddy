@@ -66,7 +66,7 @@ export default function Templates() {
       if (response.ok) {
         const booking = await response.json();
         setBookingData(booking);
-        console.log('✅ Booking data loaded:', booking);
+        
       } else {
         console.error('❌ Failed to fetch booking:', response.status, response.statusText);
         const errorText = await response.text();
@@ -89,7 +89,7 @@ export default function Templates() {
       if (response.ok) {
         const settings = await response.json();
         setUserSettings(settings);
-        console.log('✅ User settings loaded:', settings);
+        
       } else {
         console.error('❌ Failed to fetch user settings');
       }
@@ -437,7 +437,7 @@ export default function Templates() {
           title: "Email Sent Successfully",
           description: message,
         });
-        console.log('✅ Template email sent:', result);
+        
         setShowPreview(false);
         setPreviewData(null);
         

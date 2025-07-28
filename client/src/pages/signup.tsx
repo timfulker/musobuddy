@@ -62,7 +62,7 @@ export default function SignupPage() {
   }
   
   // Debug authentication state
-  console.log('🔍 Auth state - isLoading:', isLoading, 'user:', user, 'step:', step, 'userId:', userId);
+  
 
   const signupForm = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
@@ -163,7 +163,7 @@ export default function SignupPage() {
 
   const startTrialMutation = useMutation({
     mutationFn: async () => {
-      console.log('🚀 Frontend: Starting trial with userId:', userId);
+      
       // Don't send userId in body since backend uses session authentication
       return apiRequest('/api/auth/start-trial', {
         method: 'POST',
@@ -171,19 +171,19 @@ export default function SignupPage() {
       });
     },
     onSuccess: async (response: any) => {
-      console.log('✅ Frontend: Trial response:', response);
+      
       
       // Parse JSON if it's a Response object
       let data = response;
       if (response instanceof Response) {
-        console.log('🔄 Frontend: Parsing Response object...');
+        
         data = await response.json();
-        console.log('📄 Frontend: Parsed data:', data);
+        
       }
       
       // Redirect to Stripe checkout for trial setup
       if (data.checkoutUrl) {
-        console.log('🔗 Frontend: Redirecting to:', data.checkoutUrl);
+        
         window.location.href = data.checkoutUrl;
       } else {
         console.error('❌ Frontend: No checkoutUrl in response:', data);

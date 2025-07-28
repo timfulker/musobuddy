@@ -28,7 +28,7 @@ export default function Dashboard() {
     const stripeSessionId = urlParams.get('stripe_session');
     
     if (stripeSessionId) {
-      console.log('🔄 Stripe checkout completed, restoring session:', stripeSessionId);
+      
       
       // Call session restoration API
       apiRequest('/api/auth/restore-session', {
@@ -39,7 +39,7 @@ export default function Dashboard() {
         }
       })
       .then(() => {
-        console.log('✅ Session restored successfully');
+        
         // Remove the stripe_session parameter from URL
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);

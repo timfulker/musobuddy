@@ -47,22 +47,22 @@ export default function Compliance() {
   
   // Auto-open send dialog if coming from booking response
   useEffect(() => {
-    console.log('URL parameters:', { bookingId, action });
+    
     if (bookingId && action === 'send') {
-      console.log('Opening send compliance dialog from booking response');
+      
       setIsSendDialogOpen(true);
     }
-    console.log('Compliance page loaded, fileInputRef:', fileInputRef.current);
+    
   }, [bookingId, action]);
 
   // Debug send dialog state
   useEffect(() => {
-    console.log('Send dialog state changed:', { isSendDialogOpen });
+    
   }, [isSendDialogOpen]);
 
   // Debug effect to check ref after component mount
   useEffect(() => {
-    console.log('File input ref after mount:', fileInputRef.current);
+    
     if (fileInputRef.current) {
       console.log('File input properties:', {
         type: fileInputRef.current.type,
@@ -163,7 +163,7 @@ export default function Compliance() {
     
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      console.log('❌ File too large:', file.size);
+      
       toast({
         title: "File too large",
         description: "Please select a file smaller than 10MB",
@@ -183,7 +183,7 @@ export default function Compliance() {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      console.log('❌ File type not allowed:', file.type);
+      
       toast({
         title: "Invalid file type",
         description: "Please upload PDF, Word, text, or image files",
@@ -192,14 +192,14 @@ export default function Compliance() {
       return;
     }
 
-    console.log('✅ File validated, setting state');
+    
     setSelectedFile(file);
-    console.log('📝 File state set, auto-filling name');
+    
     
     // Auto-fill document name if not set
     if (!form.getValues('name')) {
       form.setValue('name', file.name);
-      console.log('🏷️ Auto-filled name:', file.name);
+      
     }
   }, [form, toast]);
 
@@ -217,18 +217,18 @@ export default function Compliance() {
     e.preventDefault();
     setIsDragging(false);
     
-    console.log('File dropped', e.dataTransfer.files);
+    
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      console.log('Dropped file:', files[0]);
+      
       handleFileSelect(files[0]);
     }
   }, [handleFileSelect]);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('File input changed', e.target.files);
+    
     if (e.target.files && e.target.files.length > 0) {
-      console.log('Selected file:', e.target.files[0]);
+      
       handleFileSelect(e.target.files[0]);
     }
   }, [handleFileSelect]);
@@ -241,7 +241,7 @@ export default function Compliance() {
   }, []);
 
   const handleDialogClose = useCallback(() => {
-    console.log('Dialog closing, resetting state');
+    
     setSelectedFile(null);
     setUploadMethod('file');
     setIsDragging(false);
@@ -253,7 +253,7 @@ export default function Compliance() {
 
   // Debug dialog state changes
   useEffect(() => {
-    console.log('Dialog state changed:', { isDialogOpen });
+    
   }, [isDialogOpen]);
 
   const downloadDocument = useCallback((document: ComplianceDocument) => {
@@ -291,7 +291,7 @@ export default function Compliance() {
     });
     
     if (uploadMethod === 'file' && selectedFile) {
-      console.log('📤 Uploading file:', selectedFile.name);
+      
       // Upload file
       const formData = new FormData();
       formData.append('documentFile', selectedFile);
@@ -300,10 +300,10 @@ export default function Compliance() {
       if (data.expiryDate) {
         formData.append('expiryDate', data.expiryDate);
       }
-      console.log('📝 FormData prepared, calling mutation');
+      
       uploadDocumentMutation.mutate(formData);
     } else {
-      console.log('🔗 Creating document with URL');
+      
       // Create document with URL
       createDocumentMutation.mutate(data);
     }
@@ -411,7 +411,7 @@ export default function Compliance() {
               <Button 
                 className="bg-purple-600 hover:bg-purple-700"
                 onClick={() => {
-                  console.log('Add Document button clicked - opening dialog');
+                  
                   setIsDialogOpen(true);
                 }}
               >
@@ -486,7 +486,7 @@ export default function Compliance() {
                           variant={uploadMethod === 'file' ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => {
-                            console.log('🔥 Upload File button clicked!');
+                            
                             setUploadMethod('file');
                             // Create a temporary file input and trigger it
                             const tempInput = document.createElement('input');
@@ -495,7 +495,7 @@ export default function Compliance() {
                             tempInput.onchange = (e) => {
                               const target = e.target as HTMLInputElement;
                               if (target.files && target.files[0]) {
-                                console.log('📁 File selected via Upload File button:', target.files[0]);
+                                
                                 handleFileSelect(target.files[0]);
                               }
                             };
@@ -626,8 +626,8 @@ export default function Compliance() {
                           
                           // Force validation and show detailed results
                           form.trigger().then(isValid => {
-                            console.log('🧪 Validation triggered:', isValid);
-                            console.log('🧪 Updated errors:', form.formState.errors);
+                            
+                            
                           });
                         }}
                       >

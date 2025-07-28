@@ -61,7 +61,7 @@ export default function VerifyPhonePage() {
       localStorage.removeItem('signupPhone');
       localStorage.removeItem('signupEmail');
       
-      console.log('✅ Phone verification successful, user data:', data.user);
+      
       
       toast({
         title: "Phone Verified!",
@@ -75,7 +75,7 @@ export default function VerifyPhonePage() {
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
       // Redirect to trial setup page (signup page with step=trial parameter)
-      console.log('🔄 Redirecting to trial setup...');
+      
       window.location.href = '/signup?step=trial';
 
     } catch (error) {

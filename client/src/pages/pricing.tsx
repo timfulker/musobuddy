@@ -19,14 +19,14 @@ export default function PricingPage() {
   const createCheckoutMutation = useMutation({
     mutationFn: async (priceId: string) => {
       try {
-        console.log('Creating checkout session for priceId:', priceId);
+        
         const response = await apiRequest('/api/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ priceId }),
         });
         const data = await response.json();
-        console.log('Checkout session created:', data);
+        
         return data;
       } catch (error) {
         console.error('Checkout session creation failed:', error);
@@ -34,7 +34,7 @@ export default function PricingPage() {
       }
     },
     onSuccess: (data) => {
-      console.log('Redirecting to Stripe checkout:', data.url);
+      
       if (data.url) {
         window.location.href = data.url;
       } else if (data.checkoutUrl) {

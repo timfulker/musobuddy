@@ -19,7 +19,7 @@ export default function TrialSuccessPage() {
         setIsRestoringSession(true);
         
         try {
-          console.log('🔄 Attempting session restoration after Stripe checkout...');
+          
           
           const response = await fetch('/api/auth/restore-session', {
             method: 'POST',
@@ -31,7 +31,7 @@ export default function TrialSuccessPage() {
 
           if (response.ok) {
             const result = await response.json();
-            console.log('✅ Session restored successfully:', result);
+            
             
             toast({
               title: "Welcome back!",
@@ -74,7 +74,7 @@ export default function TrialSuccessPage() {
   }, [user, isLoading, toast, setLocation]);
 
   const handleGoToDashboard = () => {
-    console.log('🏠 User choosing to go directly to dashboard');
+    
     
     toast({
       title: "Welcome to MusoBuddy!",
@@ -85,7 +85,7 @@ export default function TrialSuccessPage() {
   };
 
   const handleSetupEmail = () => {
-    console.log('📧 User choosing to set up email integration');
+    
     
     toast({
       title: "Let's set up your email",
