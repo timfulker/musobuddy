@@ -158,8 +158,17 @@ export class ProductionAuthSystem {
         if (email === 'timfulker@gmail.com' && password === 'MusoBuddy2025!') {
           console.log(`🔑 EMERGENCY: Using hardcoded admin credentials`);
           
-          // CRITICAL FIX: Set session data directly without regeneration
-          req.session.userId = 'admin-emergency-id';
+          // Get the actual user from database
+          let adminUser;
+          try {
+            adminUser = await storage.getUserByEmail('timfulker@gmail.com');
+            console.log(`🔍 EMERGENCY: Admin user found:`, !!adminUser);
+          } catch (dbError) {
+            console.error(`❌ EMERGENCY: Database error:`, dbError);
+          }
+          
+          // CRITICAL FIX: Set session data with real user ID if found
+          req.session.userId = adminUser ? adminUser.id : 'admin-emergency-id';
           req.session.isAdmin = true;
           req.session.email = email;
           req.session.emergencyLogin = true;
