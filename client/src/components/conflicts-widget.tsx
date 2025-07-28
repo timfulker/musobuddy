@@ -23,7 +23,7 @@ interface ConflictsWidgetProps {
   onFilterByConflictType?: (type: string) => void;
 }
 
-function ConflictsWidget({ onFilterByConflictType }: ConflictsWidgetProps) {
+export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWidgetProps) {
   const { data: conflicts = [], isLoading } = useQuery({
     queryKey: ['/api/conflicts'],
   });
@@ -190,5 +190,3 @@ function ConflictsWidget({ onFilterByConflictType }: ConflictsWidgetProps) {
     </Card>
   );
 }
-
-export default ConflictsWidget;
