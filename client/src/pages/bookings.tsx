@@ -126,17 +126,7 @@ export default function UnifiedBookings() {
     retry: 2,
   }) as { data: any[], error?: any };
 
-  // Debug log backend conflicts
-  useEffect(() => {
-    if (backendConflicts && backendConflicts.length > 0) {
-      console.log(`🔍 BACKEND CONFLICTS RECEIVED:`, {
-        count: backendConflicts.length,
-        conflicts: backendConflicts
-      });
-    } else {
-      console.log(`🔍 NO BACKEND CONFLICTS RECEIVED`, { backendConflicts });
-    }
-  }, [backendConflicts]);
+  // Backend conflicts loaded
 
   // Handle URL parameters for booking navigation from dashboard
   useEffect(() => {

@@ -11,7 +11,7 @@ export function useAuth() {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
-  console.log('🔍 useAuth state:', { user, isLoading, error });
+  // Reduced logging for performance
 
   const logout = async () => {
     try {

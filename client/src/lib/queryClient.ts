@@ -59,7 +59,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    console.log('🔍 Making query request to:', queryKey[0]);
+    // Query request to: ${queryKey[0]}
     
     // Get auth token from localStorage
     const token = localStorage.getItem('authToken');
@@ -68,7 +68,7 @@ export const getQueryFn: <T>(options: {
     // Add Bearer token if available
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-      console.log('🔍 Using token authentication');
+      // Using token authentication
     }
     
     const res = await fetch(queryKey[0] as string, {
@@ -76,17 +76,16 @@ export const getQueryFn: <T>(options: {
       headers,
     });
     
-    console.log('🔍 Query response status:', res.status);
-    console.log('🔍 Query response headers:', Object.fromEntries(res.headers.entries()));
+    // Query response status: ${res.status}
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      console.log('🔍 Query returned null due to 401');
+      // Query returned null due to 401
       return null;
     }
 
     await throwIfResNotOk(res);
     const data = await res.json();
-    console.log('🔍 Query response data:', data);
+    // Query response data received
     return data;
   };
 
