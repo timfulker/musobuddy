@@ -2,54 +2,38 @@ import session from 'express-session';
 import ConnectPgSimple from 'connect-pg-simple';
 import { ENV } from './environment.js';
 
-// Create session middleware
+// EXTERNAL REVIEWER'S EXACT FIX: Create session middleware
 export function createSessionMiddleware() {
   const PgSession = ConnectPgSimple(session);
   
-  return session({
+  const sessionConfig = {
     store: new PgSession({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-      tableName: 'session'
+      conString: ENV.DATABASE_URL,
+      tableName: 'sessions',
+      createTableIfMissing: false,
     }),
-    secret: process.env.SESSION_SECRET || 'fallback-secret-for-development',
-    name: 'musobuddy.sid',
+    secret: ENV.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     rolling: true,
+    name: 'connect.sid',
+    proxy: ENV.isProduction, // Trust proxy in production
     cookie: {
       secure: ENV.sessionSecure,
-      httpOnly: true,
+      httpOnly: true, // Change from false to true for security
       maxAge: 24 * 60 * 60 * 1000,
       sameSite: ENV.isProduction ? 'none' : 'lax',
-      domain: undefined
+      domain: undefined, // Let Express handle this
+      path: '/', // Explicitly set path
     }
-  });
+  };
+  
+  return session(sessionConfig);
 }
 
 export function setupSessionMiddleware(app) {
-  const PgSession = ConnectPgSimple(session);
-  
-  const sessionMiddleware = session({
-    store: new PgSession({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-      tableName: 'session'
-    }),
-    secret: process.env.SESSION_SECRET || 'fallback-secret-for-development',
-    name: 'musobuddy.sid',
-    resave: false,
-    saveUninitialized: false,
-    rolling: true,
-    cookie: {
-      secure: ENV.sessionSecure,
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: ENV.isProduction ? 'none' : 'lax',
-      domain: undefined
-    }
-  });
-  
+  console.log('📦 Registering session middleware...');
+  const sessionMiddleware = createSessionMiddleware();
   app.use(sessionMiddleware);
   console.log('✅ Session middleware configured');
 }
@@ -60,7 +44,12 @@ export function addSessionTestEndpoint(app) {
     res.json({
       sessionId: req.sessionID,
       session: req.session,
-      cookies: req.headers.cookie
+      cookies: req.headers.cookie,
+      environment: {
+        isProduction: ENV.isProduction,
+        sessionSecure: ENV.sessionSecure,
+        appServerUrl: ENV.appServerUrl
+      }
     });
   });
 }
@@ -69,6 +58,7 @@ export function addSessionTestEndpoint(app) {
 export function addSessionCleanupEndpoint(app) {
   app.post('/api/debug/clear-session', (req, res) => {
     req.session.destroy(() => {
+      res.clearCookie('connect.sid');
       res.clearCookie('musobuddy.sid');
       res.json({ message: 'Session cleared' });
     });
@@ -81,7 +71,17 @@ export function addReplitProductionDebugEndpoint(app) {
     res.json({
       isProduction: ENV.isProduction,
       sessionSecure: ENV.sessionSecure,
-      appServerUrl: ENV.appServerUrl
+      appServerUrl: ENV.appServerUrl,
+      replitEnvironment: process.env.REPLIT_ENVIRONMENT,
+      replitDeployment: process.env.REPLIT_DEPLOYMENT,
+      sessionConfig: {
+        name: 'connect.sid',
+        proxy: ENV.isProduction,
+        secure: ENV.sessionSecure,
+        sameSite: ENV.isProduction ? 'none' : 'lax',
+        domain: undefined,
+        path: '/'
+      }
     });
   });
 }
@@ -89,8 +89,8 @@ export function addReplitProductionDebugEndpoint(app) {
 // Add cookie cleanup endpoint
 export function addCookieCleanupEndpoint(app) {
   app.post('/api/debug/clear-cookies', (req, res) => {
-    res.clearCookie('musobuddy.sid');
     res.clearCookie('connect.sid');
+    res.clearCookie('musobuddy.sid');
     res.json({ message: 'Cookies cleared' });
   });
 }
