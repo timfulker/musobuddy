@@ -100,34 +100,16 @@ export class Storage {
     return result[0];
   }
 
-  // Bookings
+  // Bookings - Return raw data without transformation
   async getBookings(userId: string) {
-    const results = await db.select().from(bookings)
+    return await db.select().from(bookings)
       .where(eq(bookings.userId, userId))
       .orderBy(desc(bookings.createdAt));
-    
-    // Format time ranges consistently for all bookings
-    return results.map(booking => {
-      if (booking.eventTime && booking.eventEndTime) {
-        booking.eventTime = `${booking.eventTime} - ${booking.eventEndTime}`;
-      }
-      return booking;
-    });
   }
 
   async getBooking(id: number) {
     const result = await db.select().from(bookings).where(eq(bookings.id, id));
-    if (!result[0]) return null;
-    
-    // Format the booking data consistently with the bookings list
-    const booking = result[0];
-    
-    // Format time range consistently
-    if (booking.eventTime && booking.eventEndTime) {
-      booking.eventTime = `${booking.eventTime} - ${booking.eventEndTime}`;
-    }
-    
-    return booking;
+    return result[0] || null;
   }
 
   async createBooking(bookingData: any) {

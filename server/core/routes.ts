@@ -246,16 +246,22 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
+      // Import booking formatter
+      const { formatBookings } = await import('./booking-formatter');
+      
       // CRITICAL PERFORMANCE FIX: Limit to 50 most recent bookings
       const limit = parseInt(req.query.limit as string) || 50;
-      const bookings = await storage.getBookings(userId);
+      const rawBookings = await storage.getBookings(userId);
       
       // Sort by date and limit results to prevent system overload
-      const recentBookings = bookings
+      const recentBookings = rawBookings
         .sort((a: any, b: any) => new Date(b.eventDate || 0).getTime() - new Date(a.eventDate || 0).getTime())
         .slice(0, limit);
       
-      res.json(recentBookings);
+      // Format bookings consistently
+      const formattedBookings = formatBookings(recentBookings);
+      
+      res.json(formattedBookings);
     } catch (error) {
       console.error('❌ Failed to fetch bookings:', error);
       res.status(500).json({ error: 'Failed to fetch bookings' });
@@ -266,11 +272,18 @@ export async function registerRoutes(app: Express) {
   app.get('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const booking = await storage.getBooking(bookingId);
-      if (!booking) {
+      const rawBooking = await storage.getBooking(bookingId);
+      if (!rawBooking) {
         return res.status(404).json({ error: 'Booking not found' });
       }
-      res.json(booking);
+      
+      // Import booking formatter
+      const { formatBooking } = await import('./booking-formatter');
+      
+      // Format booking consistently
+      const formattedBooking = formatBooking(rawBooking);
+      
+      res.json(formattedBooking);
     } catch (error) {
       console.error('❌ Failed to fetch booking:', error);
       res.status(500).json({ error: 'Failed to fetch booking' });
@@ -322,7 +335,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Conflicts endpoint - RE-ENABLED with optimization
+  // Conflicts endpoint - UNIFIED with single data source
   app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
@@ -330,15 +343,20 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      // Get only recent bookings to reduce processing load
-      const bookings = await storage.getBookings(userId);
-      const recentBookings = bookings
+      // Import booking formatter and conflict detection utilities
+      const { formatBookings, hasTimeOverlap } = await import('./booking-formatter');
+      
+      // Get raw bookings and format them consistently
+      const rawBookings = await storage.getBookings(userId);
+      const formattedBookings = formatBookings(rawBookings);
+      
+      const recentBookings = formattedBookings
         .filter((b: any) => b.status !== 'cancelled' && b.status !== 'completed')
         .slice(0, 100); // Limit to 100 active bookings
       
       const conflicts: any[] = [];
       
-      // Simple conflict detection for same dates
+      // Unified conflict detection using formatted data
       for (let i = 0; i < recentBookings.length; i++) {
         for (let j = i + 1; j < recentBookings.length; j++) {
           const booking1 = recentBookings[i];
@@ -351,39 +369,11 @@ export async function registerRoutes(app: Express) {
           
           // Check if same date
           if (date1 === date2) {
-            // Enhanced time overlap detection matching frontend logic
-            let severity = 'hard'; // Default to hard conflict for same day
-            let hasTimeOverlap = true;
+            // Use unified time overlap detection
+            const timeOverlap = hasTimeOverlap(booking1, booking2);
+            const severity = timeOverlap ? 'hard' : 'soft';
             
-            // Check for actual time overlap if times are formatted as ranges
-            try {
-              if (booking1.eventTime && booking2.eventTime && 
-                  booking1.eventTime.includes(' - ') && booking2.eventTime.includes(' - ')) {
-                
-                const [booking1Start, booking1End] = booking1.eventTime.split(' - ');
-                const [booking2Start, booking2End] = booking2.eventTime.split(' - ');
-                
-                // Convert times to comparable format for overlap detection
-                const parseTime = (timeStr: string) => {
-                  const [hours, minutes] = timeStr.split(':').map(Number);
-                  return hours * 60 + (minutes || 0);
-                };
-                
-                const b1Start = parseTime(booking1Start.trim());
-                const b1End = parseTime(booking1End.trim());
-                const b2Start = parseTime(booking2Start.trim());
-                const b2End = parseTime(booking2End.trim());
-                
-                // Check for actual time overlap: start1 < end2 && end1 > start2
-                hasTimeOverlap = b1Start < b2End && b1End > b2Start;
-                severity = hasTimeOverlap ? 'hard' : 'soft';
-              }
-            } catch (error) {
-              console.log('Time parsing error, keeping as hard conflict:', error);
-              // Keep as hard conflict if parsing fails
-            }
-            
-            const conflictMessage = hasTimeOverlap 
+            const conflictMessage = timeOverlap 
               ? `Time overlap with ${booking2.clientName} (${booking2.eventTime})`
               : `Same day booking with ${booking2.clientName} (${booking2.eventTime})`;
             
@@ -400,11 +390,11 @@ export async function registerRoutes(app: Express) {
               type: 'same_day',
               message: conflictMessage,
               date: date1,
-              overlapMinutes: hasTimeOverlap ? 60 : undefined
+              overlapMinutes: timeOverlap ? 60 : undefined
             });
             
             // Create conflict entry for booking2 about booking1
-            const reverseMessage = hasTimeOverlap 
+            const reverseMessage = timeOverlap 
               ? `Time overlap with ${booking1.clientName} (${booking1.eventTime})`
               : `Same day booking with ${booking1.clientName} (${booking1.eventTime})`;
               
@@ -420,7 +410,7 @@ export async function registerRoutes(app: Express) {
               type: 'same_day',
               message: reverseMessage,
               date: date1,
-              overlapMinutes: hasTimeOverlap ? 60 : undefined
+              overlapMinutes: timeOverlap ? 60 : undefined
             });
           }
         }
