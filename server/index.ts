@@ -20,9 +20,24 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
-    environment: ENV.isProduction ? 'production' : 'development'
+    environment: ENV.isProduction ? 'production' : 'development',
+    replit_deployment: process.env.REPLIT_DEPLOYMENT,
+    node_env: process.env.NODE_ENV
   });
 });
+
+// PRODUCTION DEPLOYMENT VALIDATION
+// Prevents production deployment with wrong environment settings
+if (process.env.NODE_ENV === 'production' && !ENV.isProduction) {
+  console.error('❌ PRODUCTION DEPLOYMENT ERROR:');
+  console.error('NODE_ENV=production but REPLIT_DEPLOYMENT not set to "true"');
+  console.error('This indicates a deployment configuration problem.');
+  console.error('Environment vars:', {
+    NODE_ENV: process.env.NODE_ENV,
+    REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT
+  });
+  process.exit(1);
+}
 
 // Health check endpoint moved - deployment systems should use /health
 // The root route will be handled by the static file serving for the React app
