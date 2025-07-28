@@ -638,3 +638,716 @@ cookie: {
 - Issue is specifically with express-session cookie transmission in Replit production environment
 - **CRITICAL**: SMS delivery is working perfectly, code generation works, user creation works - ONLY session persistence fails
 - May require Replit-specific session configuration that differs from standard Express.js setup
+
+---
+
+# COMPLETE FILE CONTENTS FOR EXTERNAL REVIEW
+
+The following are the complete contents of all authentication flow files to enable comprehensive analysis:
+
+## 1. server/core/routes.ts
+```typescript
+import { type Express } from "express";
+import path from "path";
+import { storage } from "./storage";
+// import { authMonitor } from "./auth-monitor";
+
+// Middleware
+const isAuthenticated = (req: any, res: any, next: any) => {
+  if (!req.session?.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  next();
+};
+
+export async function registerRoutes(app: Express) {
+  // ===== SYSTEM HEALTH & MONITORING =====
+  app.get('/api/health/auth', (req, res) => {
+    res.json({ status: 'healthy', message: 'Auth system operational' });
+  });
+
+  app.get('/api/health/system', async (req, res) => {
+    res.json({ status: 'healthy', message: 'System operational' });
+  });
+
+  // ===== TEST ROUTES =====
+  app.get('/test-login', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'test-direct-login.html'));
+  });
+
+  // ===== AUTHENTICATION ROUTES =====
+  // Authentication routes are now handled by ProductionAuthSystem
+
+  // ===== SIGNUP ROUTES =====
+  // Signup routes are now handled by ProductionAuthSystem
+
+  // ===== STRIPE ROUTES =====
+  
+  // Create Stripe checkout session (AUTHENTICATED)
+  app.post('/api/create-checkout-session', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { priceId } = req.body;
+      if (!priceId) {
+        return res.status(400).json({ error: 'Price ID required' });
+      }
+
+      console.log('🛒 Creating checkout session for user:', userId, 'priceId:', priceId);
+
+      const { StripeService } = await import('./stripe-service');
+      const stripeService = new StripeService();
+      
+      const session = await stripeService.createTrialCheckoutSession(userId, priceId);
+      
+      console.log('✅ Checkout session created:', session.sessionId);
+      res.json(session);
+      
+    } catch (error: any) {
+      console.error('❌ Checkout session error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get subscription status (AUTHENTICATED)
+  app.get('/api/subscription/status', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { StripeService } = await import('./stripe-service');
+      const stripeService = new StripeService();
+      
+      const status = await stripeService.getSubscriptionStatus(userId);
+      res.json(status);
+      
+    } catch (error: any) {
+      console.error('❌ Subscription status error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== NOTIFICATIONS API =====
+  app.get('/api/notifications', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Return empty notifications array for now
+      res.json([]);
+    } catch (error: any) {
+      console.error('❌ Notifications error:', error);
+      res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+  });
+
+  // ===== EMAIL SETUP API =====
+  app.get('/api/email/my-address', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Check if user has email prefix set
+      if (user.emailPrefix) {
+        res.json({ 
+          email: `leads+${user.emailPrefix}@mg.musobuddy.com`,
+          needsSetup: false 
+        });
+      } else {
+        res.json({ 
+          email: null,
+          needsSetup: true 
+        });
+      }
+    } catch (error: any) {
+      console.error('❌ Email address error:', error);
+      res.status(500).json({ error: 'Failed to get email address' });
+    }
+  });
+
+  app.post('/api/email/check-availability', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { prefix } = req.body;
+      if (!prefix) {
+        return res.status(400).json({ error: 'Prefix required' });
+      }
+      
+      // Basic validation
+      if (prefix.length < 2) {
+        return res.json({ 
+          available: false, 
+          error: 'Prefix must be at least 2 characters' 
+        });
+      }
+      
+      if (!/^[a-z0-9]+$/.test(prefix)) {
+        return res.json({ 
+          available: false, 
+          error: 'Prefix can only contain lowercase letters and numbers' 
+        });
+      }
+      
+      // Check if prefix is already taken
+      const users = await storage.getAllUsers();
+      const existingUser = users.find((u: any) => u.emailPrefix === prefix);
+      
+      if (existingUser) {
+        // Suggest alternative
+        const suggestion = `${prefix}${Math.floor(Math.random() * 99) + 1}`;
+        return res.json({ 
+          available: false, 
+          error: 'This prefix is already taken',
+          suggestion 
+        });
+      }
+      
+      res.json({ 
+        available: true,
+        fullEmail: `leads+${prefix}@mg.musobuddy.com`
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Email availability error:', error);
+      res.status(500).json({ error: 'Failed to check availability' });
+    }
+  });
+
+  app.post('/api/email/assign-prefix', async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { prefix } = req.body;
+      if (!prefix) {
+        return res.status(400).json({ error: 'Prefix required' });
+      }
+      
+      // Double-check availability
+      const users = await storage.getAllUsers();
+      const existingUser = users.find((u: any) => u.emailPrefix === prefix);
+      
+      if (existingUser) {
+        return res.status(409).json({ error: 'Prefix no longer available' });
+      }
+      
+      // Assign prefix to user
+      await storage.updateUser(userId, { emailPrefix: prefix });
+      
+      const fullEmail = `leads+${prefix}@mg.musobuddy.com`;
+      
+      res.json({ 
+        success: true,
+        email: fullEmail,
+        prefix 
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Email assignment error:', error);
+      res.status(500).json({ error: 'Failed to assign email' });
+    }
+  });
+  
+  // ===== BOOKING ROUTES =====
+  
+  // Get all bookings for authenticated user
+  app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookings = await storage.getBookings(req.session.userId);
+      console.log(`📋 Fetched ${bookings.length} bookings for user ${req.session.userId}`);
+      res.json(bookings);
+    } catch (error) {
+      console.error('❌ Failed to fetch bookings:', error);
+      res.status(500).json({ error: 'Failed to fetch bookings' });
+    }
+  });
+
+  // Get individual booking
+  app.get('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const booking = await storage.getBooking(bookingId, req.session.userId);
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      res.json(booking);
+    } catch (error) {
+      console.error('❌ Failed to fetch booking:', error);
+      res.status(500).json({ error: 'Failed to fetch booking' });
+    }
+  });
+
+  // Create new booking
+  app.post('/api/bookings', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingData = {
+        ...req.body,
+        userId: req.session.userId
+      };
+      const newBooking = await storage.createBooking(bookingData);
+      console.log(`✅ Created booking #${newBooking.id} for user ${req.session.userId}`);
+      res.json(newBooking);
+    } catch (error) {
+      console.error('❌ Failed to create booking:', error);
+      res.status(500).json({ error: 'Failed to create booking' });
+    }
+  });
+
+  // Update booking
+  app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const updatedBooking = await storage.updateBooking(bookingId, req.body, req.session.userId);
+      if (!updatedBooking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      console.log(`✅ Updated booking #${bookingId} for user ${req.session.userId}`);
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error('❌ Failed to update booking:', error);
+      res.status(500).json({ error: 'Failed to update booking' });
+    }
+  });
+
+  // Delete booking
+  app.delete('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      await storage.deleteBooking(bookingId, req.session.userId);
+      console.log(`✅ Deleted booking #${bookingId} for user ${req.session.userId}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Failed to delete booking:', error);
+      res.status(500).json({ error: 'Failed to delete booking' });
+    }
+  });
+
+  // Conflicts endpoint
+  app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
+    try {
+      const bookings = await storage.getBookings(req.session.userId);
+      // Simple conflict detection - return empty array for now
+      res.json([]);
+    } catch (error) {
+      console.error('❌ Failed to fetch conflicts:', error);
+      res.status(500).json({ error: 'Failed to fetch conflicts' });
+    }
+  });
+  
+  console.log('✅ Clean routes registered successfully');
+}
+```
+
+## 2. server/core/storage.ts
+```typescript
+import { db } from "./database";
+import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments, clients } from "../../shared/schema";
+import { eq, and, desc, sql, gte, lte, lt } from "drizzle-orm";
+import bcrypt from "bcrypt";
+
+export class Storage {
+  private db = db;
+  // Users
+  async getUser(id: string) {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0] || null;
+  }
+
+  async getUserById(id: string) {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0] || null;
+  }
+
+  async getUserByStripeCustomerId(stripeCustomerId: string) {
+    const result = await db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId));
+    return result[0] || null;
+  }
+
+  async getUserByEmail(email: string) {
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0] || null;
+  }
+
+  async getUserByPhone(phoneNumber: string) {
+    const result = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return result[0] || null;
+  }
+
+  async authenticateUser(email: string, password: string) {
+    const user = await this.getUserByEmail(email);
+    if (!user || !user.password) {
+      return null;
+    }
+    
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return null;
+    }
+    
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  async updateUserInfo(id: string, updates: any) {
+    const result = await db.update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateUser(id: string, updates: any) {
+    const result = await db.update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // ... (rest of storage methods)
+}
+
+export const storage = new Storage();
+```
+
+## 3. server/core/database.ts
+```typescript
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon, neonConfig } from "@neondatabase/serverless";
+import * as schema from "../../shared/schema";
+
+// Configure Neon for better stability
+neonConfig.fetchConnectionCache = true;
+neonConfig.fetchEndpoint = (host, port, { jwtAuth, ...options }) => {
+  const protocol = options.ssl !== false ? 'https' : 'http';
+  return `${protocol}://${host}:${port || (options.ssl !== false ? 443 : 80)}/sql`;
+};
+
+// Database connection setup with connection pooling
+const connectionString = process.env.DATABASE_URL!;
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+const sql = neon(connectionString, {
+  fetchOptions: {
+    cache: 'no-cache',
+  },
+});
+
+export const db = drizzle(sql, { schema });
+
+export async function testDatabaseConnection(): Promise<boolean> {
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      await sql`SELECT 1 as test`;
+      console.log('✅ Database connection successful');
+      return true;
+    } catch (error: any) {
+      console.error(`❌ Database connection attempt ${4 - retries} failed:`, error.message);
+      retries--;
+      if (retries > 0) {
+        console.log('🔄 Retrying database connection...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  }
+  return false;
+}
+```
+
+## 4. shared/schema.ts (Users & Sessions Tables)
+```typescript
+import { pgTable, text, varchar, timestamp, jsonb, index, serial, integer, decimal, boolean } from "drizzle-orm/pg-core";
+
+// Session storage table - mandatory for authentication
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table - mandatory for authentication
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  password: varchar("password"), // Password for admin-created users
+  isAdmin: boolean("is_admin").default(false), // Admin role flag
+  tier: varchar("tier").default("free"), // User tier (free, pro, enterprise)
+  // Stripe subscription fields
+  plan: text("plan").default("free"), // 'free', 'core', 'premium'
+  isSubscribed: boolean("is_subscribed").default(false),
+  isLifetime: boolean("is_lifetime").default(false),
+  stripeCustomerId: text("stripe_customer_id"),
+  emailPrefix: text("email_prefix").unique(),
+  // SaaS Trial Management Fields
+  phoneNumber: varchar("phone_number", { length: 20 }).unique(),
+  phoneVerified: boolean("phone_verified").default(false),
+  phoneVerifiedAt: timestamp("phone_verified_at"),
+  trialStartedAt: timestamp("trial_started_at"),
+  trialExpiresAt: timestamp("trial_expires_at"),
+  trialStatus: varchar("trial_status", { length: 20 }).default("inactive"),
+  accountStatus: varchar("account_status", { length: 20 }).default("active"),
+  // Existing fields
+  isActive: boolean("is_active").default(true),
+  lastLoginAt: timestamp("last_login_at"),
+  lastLoginIP: varchar("last_login_ip"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+```
+
+## 5. client/src/hooks/useAuth.ts
+```typescript
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+
+export function useAuth() {
+  const queryClient = useQueryClient();
+
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    staleTime: 5000,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const response = await fetch("/api/auth/user", {
+        credentials: "include",
+      });
+
+      console.log('🔍 Auth check response:', response.status);
+
+      if (response.status === 401) {
+        console.log('❌ User not authenticated');
+        return null;
+      }
+
+      if (!response.ok) {
+        console.error('❌ Auth error:', response.status, response.statusText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const userData = await response.json();
+      console.log('✅ User authenticated:', userData.email);
+      return userData;
+    },
+  });
+
+  const logout = useCallback(async () => {
+    try {
+      console.log('🚪 Initiating logout...');
+
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Logout successful:', result);
+
+        // Clear all queries to reset the app state
+        queryClient.clear();
+
+        // Force refetch of auth status
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+        // Redirect to landing page
+        if (result.redirectTo) {
+          window.location.href = result.redirectTo;
+        } else {
+          window.location.href = '/';
+        }
+      } else {
+        console.error('❌ Logout failed:', response.status, response.statusText);
+
+        // Even if server logout fails, clear client state and redirect
+        queryClient.clear();
+        window.location.href = '/?error=logout_failed';
+      }
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+
+      // Fallback: clear client state and redirect anyway
+      queryClient.clear();
+      window.location.href = '/?error=logout_error';
+    }
+  }, [queryClient]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      console.log('🔑 Attempting login for:', email);
+
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('✅ Login successful:', userData.email);
+
+        // Invalidate auth query to refetch user data
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+        return { success: true, user: userData };
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed' }));
+        console.error('❌ Login failed:', response.status, errorData);
+        return { success: false, error: errorData.message || 'Login failed' };
+      }
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      return { success: false, error: 'Network error during login' };
+    }
+  }, [queryClient]);
+
+  return {
+    user,
+    isLoading,
+    isAuthenticated: !!user && !error,
+    logout,
+    login,
+  };
+}
+```
+
+## 6. client/src/lib/queryClient.ts
+```typescript
+import { QueryClient, QueryFunction } from "@tanstack/react-query";
+
+async function throwIfResNotOk(res: Response) {
+  if (!res.ok) {
+    const text = (await res.text()) || res.statusText;
+    
+    // Handle authentication errors with user-friendly messages
+    if (res.status === 401) {
+      throw new Error("Your session has expired. Please log in again to continue.");
+    }
+    
+    throw new Error(`${res.status}: ${text}`);
+  }
+}
+
+export async function apiRequest(
+  url: string,
+  options?: {
+    method?: string;
+    body?: any;
+    headers?: Record<string, string>;
+  }
+): Promise<Response> {
+  const method = options?.method || 'GET';
+  let body = options?.body;
+  const headers = options?.headers || {};
+  
+  if (body) {
+    if (body instanceof FormData) {
+      // Don't set Content-Type for FormData - let browser set it with boundary
+      // FormData should be sent as-is
+    } else if (typeof body === 'object') {
+      body = JSON.stringify(body);
+      headers['Content-Type'] = 'application/json';
+    } else if (typeof body === 'string') {
+      headers['Content-Type'] = 'application/json';
+    }
+  }
+
+  const res = await fetch(url, {
+    method,
+    headers,
+    body,
+    credentials: "include",
+  });
+
+  // Check for authentication errors and provide user-friendly messages
+  if (res.status === 401) {
+    throw new Error("Your session has expired. Please log in again to continue.");
+  }
+
+  await throwIfResNotOk(res);
+  return res;
+}
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      queryFn: getQueryFn({ on401: "returnNull" }),
+      refetchInterval: false,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes cache
+      retry: false,
+    },
+    mutations: {
+      retry: false,
+    },
+  },
+});
+```
+
+## 7. package.json (Key Dependencies)
+```json
+{
+  "dependencies": {
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "connect-pg-simple": "^10.0.0",
+    "bcrypt": "^6.0.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "drizzle-orm": "^0.39.1"
+  }
+}
+```
+
+---
+
+**EXTERNAL REVIEWER NOTES:**
+- Session creation works (confirmed by database evidence showing 5 stored sessions)
+- Session retrieval from database works (confirmed by console logs)
+- Issue is specifically with Set-Cookie headers missing from HTTP responses
+- CRITICAL: This prevents frontend session persistence despite backend session storage working correctly
+- Environment: NODE_ENV=development + REPLIT_ENVIRONMENT=production (potential conflict)
+- Missing session middleware setup may be the root cause - routes.ts shows session middleware should be called from registerRoutes() but implementation unclear
+
+
+
+
+
+
+
+
