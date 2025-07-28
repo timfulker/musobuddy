@@ -379,6 +379,12 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     const subjectField = req.body.Subject || req.body.subject || '';
     const bodyField = req.body['body-plain'] || req.body.text || '';
     
+    console.log(`📧 [${requestId}] Email data:`, {
+      from: fromField,
+      subject: subjectField,
+      bodyLength: bodyField?.length || 0
+    });
+    
     if (!fromField && !subjectField && !bodyField) {
       console.log(`❌ [${requestId}] No email data found`);
       return res.status(400).json({ error: 'No email data found' });
@@ -397,8 +403,15 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientName = clientEmail.split('@')[0];
     }
     
-    // AI parsing
-    const aiResult = await parseEmailWithAI(bodyField, subjectField);
+    // AI parsing with error handling
+    let aiResult;
+    try {
+      aiResult = await parseEmailWithAI(bodyField, subjectField);
+      console.log(`🤖 [${requestId}] AI parsing successful:`, aiResult);
+    } catch (aiError) {
+      console.error(`❌ [${requestId}] AI parsing failed:`, aiError);
+      aiResult = { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
+    }
     
     // Extract user ID from recipient email address using fallback system
     const recipientField = req.body.To || req.body.recipient || '';
@@ -409,25 +422,31 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     
     let userId = null;
     
-    // Parse email format: leads+customprefix@mg.musobuddy.com (Enhanced Hybrid System)
+    // Parse email format: leads+customprefix@mg.musobuddy.com OR leads@mg.musobuddy.com (fallback to admin)
     if (recipientField.includes('@mg.musobuddy.com')) {
-      // Extract custom prefix from plus addressing - handle both + and space (URL decoded)
-      const prefixMatch = recipientField.match(/leads[\+\s]([^@]+)@mg\.musobuddy\.com$/);
-      if (prefixMatch) {
-        const customPrefix = prefixMatch[1].trim();
-        console.log(`📧 [${requestId}] Extracted custom email prefix:`, customPrefix);
-        
-        // FALLBACK PROTECTION: Look up user using authentication-independent method
-        try {
-          const user = await getUserByEmailPrefix(customPrefix);
-          if (user) {
-            userId = user.id;
-            console.log(`📧 [${requestId}] FALLBACK: Found user for custom prefix "${customPrefix}":`, userId);
-          } else {
-            console.log(`📧 [${requestId}] FALLBACK: No user found for custom prefix "${customPrefix}"`);
+      // Check for generic leads@ address first
+      if (recipientField.includes('leads@mg.musobuddy.com')) {
+        console.log(`📧 [${requestId}] Generic leads@ address, using admin user`);
+        userId = "43963086"; // Admin user for generic leads@ emails
+      } else {
+        // Extract custom prefix from plus addressing - handle both + and space (URL decoded)
+        const prefixMatch = recipientField.match(/leads[\+\s]([^@]+)@mg\.musobuddy\.com$/);
+        if (prefixMatch) {
+          const customPrefix = prefixMatch[1].trim();
+          console.log(`📧 [${requestId}] Extracted custom email prefix:`, customPrefix);
+          
+          // FALLBACK PROTECTION: Look up user using authentication-independent method
+          try {
+            const user = await getUserByEmailPrefix(customPrefix);
+            if (user) {
+              userId = user.id;
+              console.log(`📧 [${requestId}] FALLBACK: Found user for custom prefix "${customPrefix}":`, userId);
+            } else {
+              console.log(`📧 [${requestId}] FALLBACK: No user found for custom prefix "${customPrefix}"`);
+            }
+          } catch (error) {
+            console.log(`❌ [${requestId}] FALLBACK: Error looking up user by custom prefix:`, error);
           }
-        } catch (error) {
-          console.log(`❌ [${requestId}] FALLBACK: Error looking up user by custom prefix:`, error);
         }
       }
     }
@@ -477,8 +496,14 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       finalAmount: null
     };
     
-    const newBooking = await storage.createBooking(bookingData);
-    console.log(`✅ [${requestId}] Created booking #${newBooking.id}`);
+    let newBooking;
+    try {
+      newBooking = await storage.createBooking(bookingData);
+      console.log(`✅ [${requestId}] Created booking #${newBooking.id}`);
+    } catch (dbError: any) {
+      console.error(`❌ [${requestId}] Database error creating booking:`, dbError);
+      return res.status(500).json({ error: 'Failed to create booking', details: dbError?.message || 'Unknown database error' });
+    }
     
     // Auto-create client in address book from inquiry
     if (clientName && clientName !== 'Unknown') {
@@ -498,9 +523,25 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientEmail
     });
     
-  } catch (error) {
-    console.error(`❌ [${requestId}] Error:`, error);
-    res.status(500).json({ error: 'Processing failed' });
+  } catch (error: any) {
+    console.error(`❌ [${requestId}] Critical webhook error:`, {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack,
+      requestBody: Object.keys(req.body)
+    });
+    
+    // Log webhook event for monitoring
+    logWebhookEvent({
+      type: 'email',
+      status: 'error',
+      error: error?.message || 'Unknown error'
+    });
+    
+    res.status(500).json({ 
+      error: 'Email processing failed', 
+      requestId: requestId,
+      details: error?.message || 'Unknown error' 
+    });
   }
 });
 
