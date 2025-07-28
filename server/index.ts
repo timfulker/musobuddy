@@ -554,22 +554,9 @@ Extract in JSON format. Look carefully for all money amounts, fees, quotes, budg
 
 async function startServer() {
   try {
-    // UNIFIED AUTHENTICATION: Use only ProductionAuthSystem
-    console.log('🔐 Registering production authentication routes...');
-    
-    // Add debug middleware to catch admin login requests
-    app.use('/api/auth', (req, res, next) => {
-      console.log(`🔍 AUTH ROUTE HIT: ${req.method} ${req.url}`);
-      if (req.url === '/admin-login' && req.method === 'POST') {
-        console.log('🚨 ADMIN LOGIN REQUEST DETECTED!', req.body);
-      }
-      next();
-    });
-    
-    const { ProductionAuthSystem } = await import('./core/auth-production');
-    const authSystem = new ProductionAuthSystem(app);
-    authSystem.setupRoutes();
-    console.log('✅ Production authentication routes registered');
+    // CRITICAL FIX: REMOVE DUPLICATE AUTHENTICATION SYSTEM  
+    // Authentication will be handled by registerRoutes() below with proper session middleware order
+    console.log('🔧 Skipping duplicate authentication setup - will be handled by registerRoutes()');
 
     // CRITICAL: Add trial-success server-side redirect BEFORE Vite setup
     app.get('/trial-success', async (req: any, res) => {
