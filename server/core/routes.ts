@@ -394,114 +394,123 @@ export async function registerRoutes(app: Express) {
       for (let i = 0; i < bookings.length; i++) {
         const booking = bookings[i];
         
-        if (!booking.eventDate || !booking.eventTime) {
-          console.log(`🔍 BACKEND CONFLICT DEBUG - Skipping booking ${booking.id} - missing time data:`, {
-            eventDate: booking.eventDate,
-            eventTime: booking.eventTime,
-            eventEndTime: booking.eventEndTime
-          });
-          continue;
-        }
-        
-        // Parse time range format like "16:00-20:00" or use separate fields
-        let startTime, endTime;
-        if (booking.eventTime.includes('-')) {
-          // Time range format: "16:00-20:00"
-          const [start, end] = booking.eventTime.split('-');
-          startTime = start.trim();
-          endTime = end.trim();
-        } else if (booking.eventEndTime) {
-          // Separate fields
-          startTime = booking.eventTime;
-          endTime = booking.eventEndTime;
-        } else {
-          console.log(`🔍 BACKEND CONFLICT DEBUG - Skipping booking ${booking.id} - invalid time format:`, {
-            eventTime: booking.eventTime,
-            eventEndTime: booking.eventEndTime
+        if (!booking.eventDate) {
+          console.log(`🔍 BACKEND CONFLICT DEBUG - Skipping booking ${booking.id} - missing date:`, {
+            eventDate: booking.eventDate
           });
           continue;
         }
         
         const bookingDate = new Date(booking.eventDate).toDateString();
-        const bookingStart = new Date(`${booking.eventDate.toISOString().split('T')[0]}T${startTime}`);
-        const bookingEnd = new Date(`${booking.eventDate.toISOString().split('T')[0]}T${endTime}`);
         
         console.log(`🔍 BACKEND CONFLICT DEBUG - Checking booking ${booking.id} (${booking.clientName}):`, {
           date: bookingDate,
-          originalTimeRange: booking.eventTime,
-          parsedStartTime: startTime,
-          parsedEndTime: endTime,
-          startTime: bookingStart.toISOString(),
-          endTime: bookingEnd.toISOString()
+          eventTime: booking.eventTime,
+          eventEndTime: booking.eventEndTime
         });
         
         // Check against all other bookings
         for (let j = i + 1; j < bookings.length; j++) {
           const otherBooking = bookings[j];
           
-          if (!otherBooking.eventDate || !otherBooking.eventTime) {
+          if (!otherBooking.eventDate) {
             continue;
           }
           
           const otherDate = new Date(otherBooking.eventDate).toDateString();
           if (otherDate !== bookingDate) continue; // Different dates, no conflict
           
-          // Parse other booking time range
-          let otherStartTime, otherEndTime;
-          if (otherBooking.eventTime.includes('-')) {
-            // Time range format: "19:00-23:00"
-            const [start, end] = otherBooking.eventTime.split('-');
-            otherStartTime = start.trim();
-            otherEndTime = end.trim();
-          } else if (otherBooking.eventEndTime) {
-            // Separate fields
-            otherStartTime = otherBooking.eventTime;
-            otherEndTime = otherBooking.eventEndTime;
-          } else {
-            continue; // Skip invalid time format
-          }
-          
-          const otherStart = new Date(`${otherBooking.eventDate.toISOString().split('T')[0]}T${otherStartTime}`);
-          const otherEnd = new Date(`${otherBooking.eventDate.toISOString().split('T')[0]}T${otherEndTime}`);
-          
-          // Check for time overlap
-          const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
-          
-          console.log(`🔍 BACKEND CONFLICT DEBUG - Comparing with booking ${otherBooking.id} (${otherBooking.clientName}):`, {
-            originalTimeRange: otherBooking.eventTime,
-            parsedStartTime: otherStartTime,
-            parsedEndTime: otherEndTime,
-            hasTimeOverlap,
-            calculation: {
-              bookingStart: bookingStart.toISOString(),
-              bookingEnd: bookingEnd.toISOString(),
-              otherStart: otherStart.toISOString(),
-              otherEnd: otherEnd.toISOString(),
-              condition1: `${bookingStart.toISOString()} < ${otherEnd.toISOString()} = ${bookingStart < otherEnd}`,
-              condition2: `${bookingEnd.toISOString()} > ${otherStart.toISOString()} = ${bookingEnd > otherStart}`
-            }
+          // DATE CONFLICT DETECTED - Same date bookings always conflict
+          console.log(`🔍 BACKEND DATE CONFLICT DETECTED - Same date bookings:`, {
+            booking1: `${booking.id} (${booking.clientName}) - ${bookingDate}`,
+            booking2: `${otherBooking.id} (${otherBooking.clientName}) - ${otherDate}`
           });
           
-          if (hasTimeOverlap) {
-            const overlapMinutes = Math.round((Math.min(bookingEnd.getTime(), otherEnd.getTime()) - Math.max(bookingStart.getTime(), otherStart.getTime())) / (1000 * 60));
-            
-            // Add conflict for both bookings
-            allConflicts.push({
-              id: allConflicts.length + 1,
-              enquiryId: booking.id,
-              conflictType: 'booking',
-              conflictId: otherBooking.id,
-              severity: 'high',
-              message: `Time overlap with ${otherBooking.clientName || 'Unknown Client'} (${overlapMinutes} minutes)`,
-              resolved: false
-            });
-            
-            console.log(`🔍 BACKEND CONFLICT FOUND - Booking ${booking.id} conflicts with booking ${otherBooking.id}:`, {
-              overlapMinutes,
-              booking1: `${booking.clientName} ${booking.eventTime}-${booking.eventEndTime}`,
-              booking2: `${otherBooking.clientName} ${otherBooking.eventTime}-${otherBooking.eventEndTime}`
-            });
+          // Determine conflict severity based on time information
+          let conflictSeverity = 'high'; // Default to hard/red conflict
+          let conflictMessage = `Same date booking with ${otherBooking.clientName || 'Unknown Client'}`;
+          let overlapMinutes = null;
+          
+          // Try to soften conflict if time information is available
+          if (booking.eventTime && otherBooking.eventTime) {
+            try {
+              // Parse time range format like "16:00-20:00" or use separate fields
+              let startTime, endTime, otherStartTime, otherEndTime;
+              
+              if (booking.eventTime.includes('-')) {
+                const [start, end] = booking.eventTime.split('-');
+                startTime = start.trim();
+                endTime = end.trim();
+              } else if (booking.eventEndTime) {
+                startTime = booking.eventTime;
+                endTime = booking.eventEndTime;
+              }
+              
+              if (otherBooking.eventTime.includes('-')) {
+                const [start, end] = otherBooking.eventTime.split('-');
+                otherStartTime = start.trim();
+                otherEndTime = end.trim();
+              } else if (otherBooking.eventEndTime) {
+                otherStartTime = otherBooking.eventTime;
+                otherEndTime = otherBooking.eventEndTime;
+              }
+              
+              // If we have complete time information for both bookings
+              if (startTime && endTime && otherStartTime && otherEndTime) {
+                const bookingStart = new Date(`${booking.eventDate.toISOString().split('T')[0]}T${startTime}`);
+                const bookingEnd = new Date(`${booking.eventDate.toISOString().split('T')[0]}T${endTime}`);
+                const otherStart = new Date(`${otherBooking.eventDate.toISOString().split('T')[0]}T${otherStartTime}`);
+                const otherEnd = new Date(`${otherBooking.eventDate.toISOString().split('T')[0]}T${otherEndTime}`);
+                
+                // Check for time overlap
+                const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
+                
+                console.log(`🔍 BACKEND TIME OVERLAP CHECK:`, {
+                  booking1Time: `${startTime}-${endTime}`,
+                  booking2Time: `${otherStartTime}-${otherEndTime}`,
+                  hasTimeOverlap,
+                  calculation: {
+                    condition1: `${bookingStart.toISOString()} < ${otherEnd.toISOString()} = ${bookingStart < otherEnd}`,
+                    condition2: `${bookingEnd.toISOString()} > ${otherStart.toISOString()} = ${bookingEnd > otherStart}`
+                  }
+                });
+                
+                if (hasTimeOverlap) {
+                  // Hard conflict - actual time overlap
+                  overlapMinutes = Math.round((Math.min(bookingEnd.getTime(), otherEnd.getTime()) - Math.max(bookingStart.getTime(), otherStart.getTime())) / (1000 * 60));
+                  conflictSeverity = 'high';
+                  conflictMessage = `Time overlap with ${otherBooking.clientName || 'Unknown Client'} (${overlapMinutes} minutes)`;
+                } else {
+                  // Soft conflict - same date but different times
+                  conflictSeverity = 'medium';
+                  conflictMessage = `Same date as ${otherBooking.clientName || 'Unknown Client'} but different times`;
+                }
+              }
+            } catch (error) {
+              console.log(`🔍 BACKEND TIME PARSING ERROR:`, error);
+              // Keep default hard conflict if time parsing fails
+            }
           }
+          
+          // Add conflict entry
+          allConflicts.push({
+            id: allConflicts.length + 1,
+            enquiryId: booking.id,
+            conflictType: 'booking',
+            conflictId: otherBooking.id,
+            severity: conflictSeverity,
+            message: conflictMessage,
+            resolved: false,
+            overlapMinutes: overlapMinutes
+          });
+          
+          console.log(`🔍 BACKEND CONFLICT REGISTERED:`, {
+            severity: conflictSeverity,
+            message: conflictMessage,
+            overlapMinutes: overlapMinutes,
+            booking1: `${booking.clientName} ${booking.eventTime || 'No time'}`,
+            booking2: `${otherBooking.clientName} ${otherBooking.eventTime || 'No time'}`
+          });
         }
       }
       
