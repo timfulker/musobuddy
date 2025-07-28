@@ -372,7 +372,7 @@ function parseCurrencyToNumber(value: string | null | undefined): number | null 
 // CRITICAL: Email webhook registered FIRST
 app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
-  console.log(`📧 [${requestId}] Email webhook received`);
+  console.log(`📧 [${requestId}] Email webhook received - ${new Date().toISOString()}`);
   
   try {
     const fromField = req.body.From || req.body.from || '';
@@ -499,7 +499,7 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     let newBooking;
     try {
       newBooking = await storage.createBooking(bookingData);
-      console.log(`✅ [${requestId}] Created booking #${newBooking.id}`);
+      console.log(`✅ [${requestId}] Created booking #${newBooking.id} - SUCCESS`);
     } catch (dbError: any) {
       console.error(`❌ [${requestId}] Database error creating booking:`, dbError);
       return res.status(500).json({ error: 'Failed to create booking', details: dbError?.message || 'Unknown database error' });
