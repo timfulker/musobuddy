@@ -12,6 +12,9 @@ import { ENV, isProduction } from "./core/environment";
 
 const app = express();
 
+// CRITICAL: Trust proxy BEFORE session middleware
+app.set('trust proxy', 1);
+
 // Add health check endpoint for deployment validation
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ 
@@ -565,7 +568,7 @@ async function startServer() {
     
     const { ProductionAuthSystem } = await import('./core/auth-production');
     const authSystem = new ProductionAuthSystem(app);
-    authSystem.registerRoutes();
+    authSystem.setupRoutes();
     console.log('✅ Production authentication routes registered');
 
     // CRITICAL: Add trial-success server-side redirect BEFORE Vite setup

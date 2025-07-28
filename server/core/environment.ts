@@ -19,40 +19,17 @@ interface EnvironmentConfig {
  * Handles both development (janeway.replit.dev) and production (musobuddy.replit.app)
  */
 function detectEnvironment(): EnvironmentConfig {
-  const nodeEnv = process.env.NODE_ENV || 'development';
-  const replitDeployment = process.env.REPLIT_DEPLOYMENT;
-  const replitEnvironment = process.env.REPLIT_ENVIRONMENT;
-  const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
+  // Replit production takes precedence over NODE_ENV
+  const isReplitProduction = process.env.REPLIT_ENVIRONMENT === 'production';
   
-  // REPLIT PRODUCTION DETECTION: Multiple methods for Replit's deployment
-  const isReplitProduction = !!(
-    replitDeployment || // Replit sets this in true production deployments
-    replitEnvironment === 'production' || // Alternative production indicator
-    process.env.REPLIT_DB_URL || // Production usually has Replit DB
-    (typeof process.env.REPL_SLUG !== 'undefined' && !replitDevDomain) // In Replit without dev domain = production
-  );
+  // For Replit, ignore NODE_ENV if REPLIT_ENVIRONMENT is set
+  const isProduction = isReplitProduction;
   
-  // CRITICAL: Override NODE_ENV based on Replit detection
-  const isProduction = isReplitProduction || nodeEnv === 'production';
+  const appServerUrl = isReplitProduction 
+    ? 'https://musobuddy.replit.app'
+    : `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}`;
   
-  // Determine app server URL with Replit-specific logic
-  let appServerUrl: string;
-  if (process.env.APP_SERVER_URL) {
-    // Explicit override (highest priority)
-    appServerUrl = process.env.APP_SERVER_URL;
-  } else if (isReplitProduction) {
-    // REPLIT PRODUCTION: Use the known production URL
-    appServerUrl = 'https://musobuddy.replit.app';
-  } else if (replitDevDomain) {
-    // REPLIT DEVELOPMENT: Use the dev domain
-    appServerUrl = `https://${replitDevDomain}`;
-  } else {
-    // Local development fallback
-    appServerUrl = 'http://localhost:5000';
-  }
-  
-  // CRITICAL FIX: Override session security for localhost testing
-  const sessionSecure = isReplitProduction && !appServerUrl.includes('localhost');
+  const sessionSecure = isProduction;
   
   return {
     isProduction,
@@ -60,10 +37,10 @@ function detectEnvironment(): EnvironmentConfig {
     isReplitProduction,
     appServerUrl,
     sessionSecure,
-    nodeEnv,
-    replitDeployment,
-    replitEnvironment,
-    replitDevDomain
+    nodeEnv: process.env.NODE_ENV || 'development',
+    replitDeployment: process.env.REPLIT_DEPLOYMENT,
+    replitEnvironment: process.env.REPLIT_ENVIRONMENT,
+    replitDevDomain: process.env.REPLIT_DEV_DOMAIN
   };
 }
 

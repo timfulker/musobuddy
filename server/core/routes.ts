@@ -13,7 +13,7 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express) {
-  // CRITICAL FIX: Set up session middleware FIRST
+  // CRITICAL: Set up session middleware FIRST
   console.log('📦 Registering session middleware...');
   const sessionMiddleware = createSessionMiddleware();
   app.use(sessionMiddleware);
@@ -21,7 +21,7 @@ export async function registerRoutes(app: Express) {
   // Initialize auth system AFTER session middleware
   console.log('🔐 Initializing authentication system...');
   const authSystem = new ProductionAuthSystem(app);
-  authSystem.registerRoutes();
+  authSystem.setupRoutes();
 
   // ===== SYSTEM HEALTH & MONITORING =====
   app.get('/api/health/auth', (req, res) => {

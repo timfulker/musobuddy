@@ -65,7 +65,7 @@ export class ProductionAuthSystem {
     });
   }
 
-  public registerRoutes() {
+  public setupRoutes() {
     console.log('🔐 Registering production authentication routes...');
 
     // Enhanced auth check with detailed session debugging
@@ -233,28 +233,60 @@ export class ProductionAuthSystem {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Set session
+        // EXTERNAL REVIEWER'S EXACT FIX: Set session data and explicitly save with callback
         req.session.userId = user.id;
+        req.session.email = user.email;
+        req.session.requiresVerification = !user.phoneVerified;
         
-        // CRITICAL FIX: Force session save for immediate availability
-        try {
-          await this.saveSession(req);
-        } catch (saveError) {
-          console.error('❌ Session save failed during login:', saveError);
-          return res.status(500).json({ error: 'Login failed - session error' });
-        }
+        // CRITICAL: Explicitly save session before response
+        req.session.save(async (err: any) => {
+          if (err) {
+            console.error('❌ Session save error:', err);
+            return res.status(500).json({ error: 'Session save failed' });
+          }
+          
+          console.log('✅ Login successful for:', email, 'Session saved with callback');
+          
+          // Handle SMS verification for non-verified users
+          if (!user.phoneVerified && user.phoneNumber) {
+            // Generate and send verification code
+            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-        console.log('✅ Login successful for:', email, 'Session saved');
+            // Store in database
+            await db.insert(phoneVerifications).values({
+              phoneNumber: this.normalizePhoneNumber(user.phoneNumber),
+              verificationCode,
+              expiresAt,
+              ipAddress: req.ip || '',
+              userAgent: req.headers['user-agent'] || '',
+            });
 
-        // Admin users always bypass verification
-        if (user.isAdmin) {
-          console.log('✅ Admin user detected - bypassing verification requirements');
-          return res.json({
-            success: true,
-            requiresVerification: false,
-            message: 'Admin login successful',
-            user: {
-              id: user.id,
+            // Send SMS
+            try {
+              await smsService.sendVerificationCode(user.phoneNumber, verificationCode);
+              console.log('✅ Verification code sent successfully to:', user.phoneNumber);
+            } catch (smsError: any) {
+              console.error('❌ SMS send failed:', smsError.message);
+              if (ENV.isDevelopment) {
+                console.log('📱 Development mode - verification code is:', verificationCode);
+              }
+            }
+          }
+          
+          // Send response AFTER session is saved
+          if (!user.phoneVerified) {
+            return res.json({
+              success: true,
+              requiresVerification: true,
+              message: 'Please verify your phone number'
+            });
+          }
+          
+          res.json({ 
+            success: true, 
+            user: { 
+              id: user.id, 
               email: user.email,
               firstName: user.firstName,
               lastName: user.lastName,
@@ -262,63 +294,8 @@ export class ProductionAuthSystem {
               isAdmin: user.isAdmin,
               isSubscribed: user.isSubscribed,
               isLifetime: user.isLifetime
-            }
+            } 
           });
-        }
-
-        // Regular user login - send verification code if needed
-        if (!user.phoneVerified && user.phoneNumber) {
-          // Generate and send verification code
-          const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-          const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-          // Store in database
-          await db.insert(phoneVerifications).values({
-            phoneNumber: this.normalizePhoneNumber(user.phoneNumber),
-            verificationCode,
-            expiresAt,
-            ipAddress: req.ip || '',
-            userAgent: req.headers['user-agent'] || '',
-          });
-
-          console.log('📱 Verification code stored in database:', {
-            phone: user.phoneNumber,
-            code: verificationCode,
-            expiresAt
-          });
-
-          // Send SMS
-          try {
-            console.log('📱 Attempting to send SMS to:', user.phoneNumber);
-            console.log('📱 SMS Service configured:', smsService.isServiceConfigured());
-            console.log('📱 SMS Service status:', smsService.getConfigurationStatus());
-            
-            await smsService.sendVerificationCode(user.phoneNumber, verificationCode);
-            console.log('✅ Verification code sent successfully to:', user.phoneNumber);
-          } catch (smsError: any) {
-            console.error('❌ SMS send failed:', smsError.message);
-            console.error('❌ Full SMS error:', smsError);
-            // In development, log the code
-            if (ENV.isDevelopment) {
-              console.log('📱 Development mode - verification code is:', verificationCode);
-            }
-            // Continue anyway - user can use resend button
-          }
-        }
-
-        res.json({
-          success: true,
-          requiresVerification: !user.phoneVerified,
-          message: user.phoneVerified ? 'Login successful' : 'Please verify your phone number',
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            tier: user.tier,
-            isSubscribed: user.isSubscribed,
-            isLifetime: user.isLifetime
-          }
         });
 
       } catch (error: any) {
