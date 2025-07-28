@@ -37,10 +37,18 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
   const [showResolutionModal, setShowResolutionModal] = useState(false);
 
   // Fetch the current booking data for the resolution modal
-  const { data: currentBooking } = useQuery({
+  const { data: currentBooking, refetch: refetchBooking } = useQuery({
     queryKey: [`/api/bookings/${bookingId}`],
     enabled: showResolutionModal,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache (v5 property name)
   });
+
+  // Refetch when modal opens to ensure fresh data
+  const handleResolveClick = () => {
+    setShowResolutionModal(true);
+    refetchBooking(); // Force fresh data fetch
+  };
 
   if (!conflicts || conflicts.length === 0) {
     return null;
@@ -86,7 +94,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
       onOpenModal();
     } else {
       // Skip simple modal and go directly to full resolution modal
-      setShowResolutionModal(true);
+      handleResolveClick();
     }
   };
 
@@ -101,7 +109,7 @@ export default function ConflictIndicator({ bookingId, conflicts, onOpenModal, o
           'bg-yellow-500 hover:bg-yellow-600'
         }`}
         title={getTooltipText()}
-        onClick={handleClick}
+        onClick={handleResolveClick}
       >
         <span className="text-xs font-medium">Resolve</span>
       </Button>

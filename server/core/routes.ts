@@ -351,34 +351,76 @@ export async function registerRoutes(app: Express) {
           
           // Check if same date
           if (date1 === date2) {
+            // Enhanced time overlap detection matching frontend logic
+            let severity = 'hard'; // Default to hard conflict for same day
+            let hasTimeOverlap = true;
+            
+            // Check for actual time overlap if times are formatted as ranges
+            try {
+              if (booking1.eventTime && booking2.eventTime && 
+                  booking1.eventTime.includes(' - ') && booking2.eventTime.includes(' - ')) {
+                
+                const [booking1Start, booking1End] = booking1.eventTime.split(' - ');
+                const [booking2Start, booking2End] = booking2.eventTime.split(' - ');
+                
+                // Convert times to comparable format for overlap detection
+                const parseTime = (timeStr: string) => {
+                  const [hours, minutes] = timeStr.split(':').map(Number);
+                  return hours * 60 + (minutes || 0);
+                };
+                
+                const b1Start = parseTime(booking1Start.trim());
+                const b1End = parseTime(booking1End.trim());
+                const b2Start = parseTime(booking2Start.trim());
+                const b2End = parseTime(booking2End.trim());
+                
+                // Check for actual time overlap: start1 < end2 && end1 > start2
+                hasTimeOverlap = b1Start < b2End && b1End > b2Start;
+                severity = hasTimeOverlap ? 'hard' : 'soft';
+              }
+            } catch (error) {
+              console.log('Time parsing error, keeping as hard conflict:', error);
+              // Keep as hard conflict if parsing fails
+            }
+            
+            const conflictMessage = hasTimeOverlap 
+              ? `Time overlap with ${booking2.clientName} (${booking2.eventTime})`
+              : `Same day booking with ${booking2.clientName} (${booking2.eventTime})`;
+            
             // Create conflict entry for booking1 about booking2
             conflicts.push({
               bookingId: booking1.id,
               withBookingId: booking2.id,
-              severity: 'hard', // Use 'hard' instead of 'critical' to match frontend
+              severity,
               clientName: booking2.clientName || 'Unknown Client',
               status: booking2.status || 'new',
               time: booking2.eventTime || 'Time not specified',
               canEdit: true,
               canReject: true,
               type: 'same_day',
-              message: `Same day booking with ${booking2.clientName} (${booking2.eventTime})`,
-              date: date1
+              message: conflictMessage,
+              date: date1,
+              overlapMinutes: hasTimeOverlap ? 60 : undefined
             });
             
-            // Create conflict entry for booking2 about booking1  
+            // Create conflict entry for booking2 about booking1
+            const reverseMessage = hasTimeOverlap 
+              ? `Time overlap with ${booking1.clientName} (${booking1.eventTime})`
+              : `Same day booking with ${booking1.clientName} (${booking1.eventTime})`;
+              
             conflicts.push({
               bookingId: booking2.id,
               withBookingId: booking1.id,
-              severity: 'hard',
+              severity,
               clientName: booking1.clientName || 'Unknown Client', 
               status: booking1.status || 'new',
               time: booking1.eventTime || 'Time not specified',
               canEdit: true,
               canReject: true,
               type: 'same_day',
-              message: `Same day booking with ${booking1.clientName} (${booking1.eventTime})`,
-              date: date1
+              message: reverseMessage,
+              date: date1,
+              overlapMinutes: hasTimeOverlap ? 60 : undefined
             });
           }
         }
