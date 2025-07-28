@@ -61,16 +61,22 @@ export default function VerifyPhonePage() {
       localStorage.removeItem('signupPhone');
       localStorage.removeItem('signupEmail');
       
+      console.log('✅ Phone verification successful, user data:', data.user);
+      
       toast({
         title: "Phone Verified!",
         description: "Your account has been verified successfully"
       });
       
-      // Invalidate auth queries to trigger refetch
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      // CRITICAL FIX: Wait for session to be properly established before redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
+      // Invalidate auth queries to trigger refetch
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      
+      // CRITICAL FIX: Force reload instead of redirect to ensure session cookies are properly handled
+      console.log('🔄 Reloading page to establish proper session...');
+      window.location.reload();
 
     } catch (error) {
       console.error('Verification error:', error);
