@@ -30,24 +30,6 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
 
   const backendConflicts = conflicts as BackendConflict[];
 
-  // Group conflicts by severity for counter display
-  const conflictCounts = React.useMemo(() => {
-    const uniqueConflicts = new Map();
-    backendConflicts.forEach((c: BackendConflict) => {
-      const key = [c.bookingId, c.withBookingId].sort().join('-');
-      if (!uniqueConflicts.has(key)) {
-        uniqueConflicts.set(key, c);
-      }
-    });
-    
-    const conflicts = Array.from(uniqueConflicts.values());
-    return {
-      high: conflicts.filter((c: BackendConflict) => c.severity === 'hard').length,
-      medium: conflicts.filter((c: BackendConflict) => c.severity === 'soft').length,
-      low: 0,
-    };
-  }, [backendConflicts]);
-
   const handleConflictTypeClick = (severity: string) => {
     if (onFilterByConflictType) {
       onFilterByConflictType(severity);
@@ -71,16 +53,21 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
   }
 
   // Get unique conflicts for display
-  const uniqueConflicts = React.useMemo(() => {
-    const uniqueMap = new Map();
-    backendConflicts.forEach((conflict: BackendConflict) => {
-      const key = [conflict.bookingId, conflict.withBookingId].sort().join('-');
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, conflict);
-      }
-    });
-    return Array.from(uniqueMap.values());
-  }, [backendConflicts]);
+  const uniqueMap = new Map();
+  backendConflicts.forEach((conflict: BackendConflict) => {
+    const key = [conflict.bookingId, conflict.withBookingId].sort().join('-');
+    if (!uniqueMap.has(key)) {
+      uniqueMap.set(key, conflict);
+    }
+  });
+  const uniqueConflicts = Array.from(uniqueMap.values());
+
+  // Group conflicts by severity for counter display
+  const conflictCounts = {
+    high: uniqueConflicts.filter((c: BackendConflict) => c.severity === 'hard').length,
+    medium: uniqueConflicts.filter((c: BackendConflict) => c.severity === 'soft').length,
+    low: 0,
+  };
 
   return (
     <Card>
