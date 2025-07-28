@@ -74,9 +74,9 @@ export default function VerifyPhonePage() {
       // Invalidate auth queries to trigger refetch
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
-      // CRITICAL FIX: Force reload instead of redirect to ensure session cookies are properly handled
-      console.log('🔄 Reloading page to establish proper session...');
-      window.location.reload();
+      // Redirect back to signup page for trial setup (Stripe checkout)
+      console.log('🔄 Redirecting to trial setup...');
+      window.location.href = '/signup?step=trial';
 
     } catch (error) {
       console.error('Verification error:', error);

@@ -38,17 +38,26 @@ type PhoneVerificationForm = z.infer<typeof phoneVerificationSchema>;
 
 export default function SignupPage() {
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState<'signup' | 'verify' | 'trial'>('signup');
+  const { toast } = useToast();
+  const { user, isLoading } = useAuth();
+  
+  // Check URL parameters for step
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlStep = urlParams.get('step');
+  
+  const [step, setStep] = useState<'signup' | 'verify' | 'trial'>(() => {
+    // If coming from verification with step=trial, go to trial
+    if (urlStep === 'trial') return 'trial';
+    return 'signup';
+  });
+  
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [userId, setUserId] = useState<string>('');
   const [verificationCode, setVerificationCode] = useState<string>('');
-  const { toast } = useToast();
-  const { user, isLoading } = useAuth();
   
-  // If user is already authenticated, go straight to trial step
-  if (!isLoading && user && step !== 'trial') {
-    setStep('trial');
+  // If user is already authenticated and we're on trial step, set userId
+  if (!isLoading && user && step === 'trial' && !userId) {
     setUserId(user.id);
   }
 
