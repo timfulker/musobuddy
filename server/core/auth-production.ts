@@ -5,6 +5,7 @@ import { users, phoneVerifications } from "../../shared/schema";
 import { eq, desc, and, gte, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { ENV, isProduction, getAppServerUrl } from "./environment";
+import { smsService } from "./sms-service";
 
 export interface AuthRoutes {
   app: Express;
@@ -280,13 +281,27 @@ export class ProductionAuthSystem {
             userAgent: req.headers['user-agent'] || '',
           });
 
+          console.log('📱 Verification code stored in database:', {
+            phone: user.phoneNumber,
+            code: verificationCode,
+            expiresAt
+          });
+
           // Send SMS
           try {
-            const { smsService } = await import('./sms-service');
+            console.log('📱 Attempting to send SMS to:', user.phoneNumber);
+            console.log('📱 SMS Service configured:', smsService.isServiceConfigured());
+            console.log('📱 SMS Service status:', smsService.getConfigurationStatus());
+            
             await smsService.sendVerificationCode(user.phoneNumber, verificationCode);
-            console.log('📱 Verification code sent to:', user.phoneNumber);
+            console.log('✅ Verification code sent successfully to:', user.phoneNumber);
           } catch (smsError: any) {
             console.error('❌ SMS send failed:', smsError.message);
+            console.error('❌ Full SMS error:', smsError);
+            // In development, log the code
+            if (ENV.isDevelopment) {
+              console.log('📱 Development mode - verification code is:', verificationCode);
+            }
             // Continue anyway - user can use resend button
           }
         }

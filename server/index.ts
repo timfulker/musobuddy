@@ -283,6 +283,23 @@ addSessionCleanupEndpoint(app);
 addReplitProductionDebugEndpoint(app);
 addCookieCleanupEndpoint(app); // NEW: Clear conflicting cookies
 
+// SMS Service test endpoint  
+app.get('/api/test-sms', async (req, res) => {
+  try {
+    const { smsService } = await import('./core/sms-service');
+    const status = smsService.getConfigurationStatus();
+    console.log('🔧 SMS Service test - Configuration:', status);
+    res.json({
+      smsServiceConfigured: smsService.isServiceConfigured(),
+      configurationStatus: status,
+      twilioNumber: process.env.TWILIO_PHONE_NUMBER ? process.env.TWILIO_PHONE_NUMBER.substring(0, 6) + '...' : 'NOT SET'
+    });
+  } catch (error: any) {
+    console.error('❌ SMS test endpoint error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Session test endpoints are now added via setupSessionMiddleware
 
 // ENHANCED Session Debug Middleware - SIMPLIFIED

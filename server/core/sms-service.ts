@@ -14,12 +14,18 @@ export class SmsService {
     const authToken = process.env.TWILIO_AUTH_TOKEN;
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
+    console.log('🔧 SMS Service initialization:');
+    console.log('- Account SID exists:', !!accountSid);
+    console.log('- Auth Token exists:', !!authToken);
+    console.log('- From Number:', fromNumber || 'NOT SET');
+
     if (accountSid && authToken && fromNumber) {
       try {
         this.client = twilio(accountSid, authToken);
         this.fromNumber = fromNumber;
         this.isConfigured = true;
         console.log('✅ SMS Service initialized with Twilio');
+        console.log('✅ Using phone number:', this.fromNumber);
       } catch (error) {
         console.error('❌ Failed to initialize Twilio client:', error);
         this.isConfigured = false;
@@ -44,6 +50,12 @@ export class SmsService {
         console.log(`🚀 Production Ready: Once UK regulatory approval completes, switch TWILIO_PHONE_NUMBER to your purchased UK number for live SMS`);
         return true;
       }
+
+      console.log(`📱 Attempting to send SMS:`, {
+        to: phoneNumber,
+        from: this.fromNumber,
+        codeLength: code.length
+      });
 
       const message = await this.client.messages.create({
         body: `Your MusoBuddy verification code is: ${code}. This code expires in 10 minutes.`,
