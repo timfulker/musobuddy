@@ -130,7 +130,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     : null;
 
   // Extract gig types from user settings
-  const userGigTypes = Array.isArray(userSettings?.gigTypes) ? userSettings.gigTypes : [];
+  const userGigTypes = Array.isArray((userSettings as any)?.gigTypes) ? (userSettings as any).gigTypes : [];
 
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
@@ -1297,7 +1297,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                         {booking?.uploadedInvoiceUrl && (
                           <div className="bg-green-50 p-3 rounded-md">
                             <p className="text-sm text-green-700 mb-2">
-                              💰 Invoice: {booking.uploadedInvoiceFilename}
+                              💰 Invoice: {String(booking.uploadedInvoiceFilename || 'Unknown')}
                             </p>
                             <Button
                               type="button"
@@ -1309,7 +1309,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                             </Button>
                           </div>
                         )}
-                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && booking.uploadedDocuments.map((doc: any, index: number) => (
+                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && (booking.uploadedDocuments as any[]).map((doc: any, index: number) => (
                           <div key={index} className="bg-gray-50 p-3 rounded-md">
                             <p className="text-sm text-gray-700 mb-2">
                               📎 {String(doc.type || 'Document')}: {String(doc.filename)}
