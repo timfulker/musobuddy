@@ -120,6 +120,37 @@ export default function UnifiedBookings() {
     retry: 2,
   });
 
+  // Handle URL parameters for booking navigation from dashboard
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookingId = urlParams.get('id');
+    
+    if (bookingId && bookings.length > 0) {
+      // Find the booking by ID
+      const targetBooking = (bookings as any[]).find((b: any) => b.id.toString() === bookingId);
+      
+      if (targetBooking && targetBooking.eventDate) {
+        // Navigate calendar to booking's month
+        const bookingDate = new Date(targetBooking.eventDate);
+        setCurrentDate(bookingDate);
+        
+        // Switch to calendar view
+        setViewMode('calendar');
+        localStorage.setItem('bookingViewMode', 'calendar');
+        
+        // Open booking details dialog after a short delay
+        setTimeout(() => {
+          setSelectedBookingForDetails(targetBooking);
+          setBookingDetailsDialogOpen(true);
+        }, 300);
+        
+        // Clean up URL parameter
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [bookings]); // Depend on bookings data
+
   // Conflict detection function (same as dashboard)
   const detectConflicts = (booking: any) => {
     if (!booking.eventDate || !booking.eventTime || !booking.eventEndTime) return [];
@@ -824,10 +855,10 @@ export default function UnifiedBookings() {
           </div>
         </div>
 
-        {/* Scrollable Content Area - Force height constraint */}
-        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 450px)' }}>
-          <div className="p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+        {/* Content Area - Different handling for list vs calendar */}
+        <div className={`${viewMode === 'list' ? 'overflow-y-auto' : 'flex flex-col'}`} style={{ height: 'calc(100vh - 450px)' }}>
+          <div className={`${viewMode === 'list' ? 'p-6' : 'p-6 flex-1 flex flex-col'}`}>
+            <div className={`max-w-7xl mx-auto ${viewMode === 'list' ? 'space-y-6' : 'flex-1 flex flex-col'}`}>
 
             {/* Content Based on View Mode */}
             {viewMode === 'list' ? (
@@ -1008,9 +1039,9 @@ export default function UnifiedBookings() {
                 )}
               </div>
             ) : (
-              /* Calendar View */
-              <Card>
-                <CardHeader>
+              /* Calendar View - Fixed Window */
+              <Card className="h-full">
+                <CardHeader className="flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <Button variant="outline" size="sm" onClick={goToPrevious}>
@@ -1033,22 +1064,22 @@ export default function UnifiedBookings() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  {/* Calendar Grid */}
-                  <div className="grid grid-cols-7 gap-1">
+                <CardContent className="h-full flex-1">
+                  {/* Calendar Grid - Fixed Height */}
+                  <div className="grid grid-cols-7 gap-1 h-full">
                     {/* Day Headers */}
                     {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                      <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+                      <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
                         {day}
                       </div>
                     ))}
                     
-                    {/* Calendar Days */}
+                    {/* Calendar Days - Fixed Height Grid */}
                     {days.map((day, index) => (
                       <div
                         key={index}
                         className={`
-                          min-h-24 p-2 border border-gray-200 cursor-pointer hover:bg-gray-50
+                          h-24 p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden
                           ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
                           ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
                         `}
@@ -1058,7 +1089,7 @@ export default function UnifiedBookings() {
                           {day.day}
                         </div>
                         <div className="space-y-1">
-                          {day.events.slice(0, 3).map((event, eventIndex) => (
+                          {day.events.slice(0, 2).map((event, eventIndex) => (
                             <div
                               key={eventIndex}
                               className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
@@ -1066,9 +1097,9 @@ export default function UnifiedBookings() {
                               {event.title}
                             </div>
                           ))}
-                          {day.events.length > 3 && (
+                          {day.events.length > 2 && (
                             <div className="text-xs text-gray-500">
-                              +{day.events.length - 3} more
+                              +{day.events.length - 2} more
                             </div>
                           )}
                         </div>

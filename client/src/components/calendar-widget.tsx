@@ -124,7 +124,7 @@ export default function CalendarWidget() {
       <CardHeader className="pb-6">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-semibold">Upcoming Gigs</CardTitle>
-          <Link href="/calendar">
+          <Link href="/bookings">
             <Button variant="outline" size="sm" className="h-9">
               <ArrowRight className="w-4 h-4 mr-2" />
               View Calendar

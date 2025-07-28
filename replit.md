@@ -529,6 +529,19 @@ The application is designed to be user-friendly while maintaining professional-g
 - **TEST ENVIRONMENT VERIFIED**: ✅ Stripe events showing successful payment completion, new webhook ready for testing
 - **Status**: WEBHOOK SYSTEM MODERNIZED - API version updated, comprehensive logging active, ready for automatic subscription activation testing
 
+### 2025-07-28 - CALENDAR NAVIGATION ISSUES FIXED - Dashboard to Booking Date Navigation + Fixed Window Layout
+- **CRITICAL FIX: Dashboard Booking Click Navigation**: ✅ Fixed dashboard booking clicks to navigate calendar to booking's month instead of current month
+- **URL Parameter Handling Added**: ✅ Added useEffect to detect ?id= parameter and automatically navigate calendar to specific booking's date
+- **Calendar View Auto-Switch**: ✅ Dashboard clicks now automatically switch to calendar view and open booking details dialog
+- **FIXED WINDOW CALENDAR LAYOUT**: ✅ Removed scrollable calendar container, implemented fixed window height for entire month display
+- **Calendar Grid Enhancement**: ✅ Calendar now uses fixed height (h-24) cells with proper overflow handling and full month visibility
+- **Responsive Calendar Design**: ✅ Calendar cards use flex layout with fixed header and full-height grid for professional appearance
+- **URL Cleanup Implementation**: ✅ Automatically removes URL parameters after navigation to keep clean URLs
+- **Calendar-Widget Link Fixed**: ✅ Updated calendar widget "View Calendar" button to navigate to /bookings (unified page) instead of /calendar
+- **Professional User Experience**: ✅ Seamless navigation from dashboard upcoming gigs directly to specific booking month with details dialog
+- **Layout Architecture**: ✅ Different layout handling for list view (scrollable) vs calendar view (fixed window) for optimal user experience
+- **Status**: CALENDAR NAVIGATION COMPLETELY FIXED - Dashboard clicks navigate to correct booking month in fixed-window calendar layout
+
 ### 2025-07-28 - EMAIL PREFIX ADMIN MANAGEMENT DOCUMENTATION COMPLETE - Comprehensive Change Procedures Documented
 - **ADMIN EMAIL PREFIX GUIDE CREATED**: ✅ Created complete ADMIN_EMAIL_PREFIX_MANAGEMENT.md with step-by-step procedures for changing user email prefixes at admin level
 - **DATABASE CLEANUP VERIFIED**: ✅ Confirmed clean database state with 2 users (timfulker@gmail.com admin, tim@saxweddings.com with "saxweddings" prefix)
