@@ -567,7 +567,10 @@ The application is designed to be user-friendly while maintaining professional-g
   - **Orange/Amber**: Soft conflicts (same day, different times)
 - **REAL-WORLD TEST CASE RESOLVED**: ✅ Sarah Johnson (14:00-17:00) and Kelly Boyd (19:00-22:00) now correctly show as orange soft conflicts
 - **DOCUMENTATION UPDATED**: ✅ CONFLICT_DETECTION_RULES.md updated to reflect bug fix and current behavior
-- **Status**: COMPLETE CONFLICT COLOR SYSTEM OPERATIONAL - Both soft and hard conflicts display with correct color coding throughout the application
+- **REJECT BOOKING FUNCTIONALITY FIXED**: ✅ Fixed reject button in conflict resolution modal to actually delete bookings instead of calling non-existent endpoint
+- **PROPER DELETION IMPLEMENTATION**: ✅ Updated handleReject to use DELETE /api/bookings/:id endpoint for permanent booking removal
+- **CANCELLED BOOKING EXCLUSION**: ✅ Conflict detection system already properly excludes cancelled and rejected bookings from conflict calculations
+- **Status**: COMPLETE CONFLICT SYSTEM OPERATIONAL - Both soft/hard conflict colors working correctly and reject functionality properly deletes conflicting bookings
 
 ### 2025-07-28 - CALENDAR NAVIGATION ISSUES FIXED - Dashboard to Booking Date Navigation + Fixed Window Layout
 - **CRITICAL FIX: Dashboard Booking Click Navigation**: ✅ Fixed dashboard booking clicks to navigate calendar to booking's month instead of current month

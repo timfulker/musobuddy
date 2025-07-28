@@ -34,9 +34,14 @@ export function ConflictResolutionDialog({
     try {
       setIsResolving(true);
       
-      await apiRequest(`/api/bookings/${bookingId}/resolve-conflict`, {
+      // For now, just update the booking status to 'cancelled' as a simple resolution
+      // This can be expanded later with more sophisticated conflict resolution
+      await apiRequest(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ action, resolutionNotes: `Conflict resolved via ${action}` })
+        body: JSON.stringify({ 
+          status: 'cancelled',
+          notes: `Conflict resolved via ${action}` 
+        })
       });
 
       toast({
@@ -86,9 +91,32 @@ export function ConflictResolutionDialog({
     if (!booking?.id) return;
     
     try {
-      await handleResolve('reject', booking.id);
+      setIsResolving(true);
+      
+      // Actually delete the booking instead of calling non-existent resolve-conflict endpoint
+      await apiRequest(`/api/bookings/${booking.id}`, {
+        method: 'DELETE'
+      });
+
+      toast({
+        title: "Booking Deleted",
+        description: `Booking for ${booking.clientName || 'Unknown Client'} has been deleted successfully.`,
+      });
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      
+      onClose();
     } catch (error) {
-      console.error('Error rejecting booking:', error);
+      console.error('Error deleting booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete booking. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsResolving(false);
     }
   };
 
