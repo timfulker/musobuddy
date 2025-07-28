@@ -6,6 +6,12 @@ import { eq, desc, and, gte, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { ENV, isProduction, getAppServerUrl } from "./environment";
 import { smsService } from "./sms-service";
+import { 
+  loginRateLimit, 
+  phoneVerificationRateLimit, 
+  signupRateLimit,
+  passwordResetRateLimit
+} from "./rate-limiting";
 
 export interface AuthRoutes {
   app: Express;
@@ -209,8 +215,8 @@ export class ProductionAuthSystem {
       }
     });
 
-    // FIXED: Single login endpoint - handles all login cases
-    this.app.post('/api/auth/login', async (req: any, res) => {
+    // HARDENING: Login endpoint with rate limiting protection
+    this.app.post('/api/auth/login', loginRateLimit, async (req: any, res) => {
       console.log('🔐 Login attempt:', { email: req.body.email });
       
       try {
@@ -315,8 +321,8 @@ export class ProductionAuthSystem {
       });
     });
 
-    // Phone verification endpoint
-    this.app.post('/api/auth/verify-phone', async (req: any, res) => {
+    // HARDENING: Phone verification endpoint with rate limiting protection
+    this.app.post('/api/auth/verify-phone', phoneVerificationRateLimit, async (req: any, res) => {
       try {
         const { verificationCode, phoneNumber, email } = req.body;
         const userId = req.session?.userId;
@@ -450,7 +456,8 @@ export class ProductionAuthSystem {
     });
 
     // CRITICAL FIX: Add missing signup endpoint
-    this.app.post('/api/auth/signup', async (req: any, res) => {
+    // HARDENING: Signup endpoint with rate limiting protection
+    this.app.post('/api/auth/signup', signupRateLimit, async (req: any, res) => {
       console.log('📝 Signup attempt:', { email: req.body.email, phone: req.body.phoneNumber });
       
       try {

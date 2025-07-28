@@ -1,88 +1,89 @@
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
-import { ENV } from './environment.js';
 
 /**
- * Customer Confidence Rate Limiting
- * Balanced protection without Fort Knox overkill
+ * Rate limiting configuration for MusoBuddy authentication endpoints
+ * Protects against brute force attacks and SMS abuse
  */
 
-// AUTHENTICATION PROTECTION: Prevent brute force attacks on musician accounts
-export const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts per window
+// Login protection - prevents brute force attacks
+export const loginRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // 5 attempts per minute per IP
   message: {
-    error: 'Too many authentication attempts. Please try again in 15 minutes.',
-    retryAfter: '15 minutes'
+    error: 'Too many login attempts. Please wait a minute before trying again.'
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip in development for easier testing
-  skip: ENV.isDevelopment ? () => true : () => false
+  skip: (req) => {
+    // Skip rate limiting for admin in development
+    return process.env.NODE_ENV === 'development' && req.body?.email === 'timfulker@gmail.com';
+  }
 });
 
-// PHONE VERIFICATION PROTECTION: Prevent SMS cost abuse
+// Phone verification protection - prevents SMS abuse
 export const phoneVerificationRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // 5 verification codes per hour per IP
+  max: 3, // 3 verification codes per hour per IP
   message: {
-    error: 'Too many verification code requests. Please try again in an hour.',
-    retryAfter: '1 hour'
+    error: 'Too many verification attempts. Please wait an hour before requesting another code.'
   },
-  keyGenerator: (req) => {
-    // Rate limit by phone number AND IP for better protection
-    const phone = req.body.phoneNumber || req.body.phone || 'unknown';
-    return `${req.ip}-${phone}`;
-  },
-  skip: ENV.isDevelopment ? () => true : () => false
+  standardHeaders: true,
+  legacyHeaders: false
 });
 
-// SIGNUP PROTECTION: Prevent spam registrations
+// Signup protection - prevents spam registrations
 export const signupRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // 3 signups per hour per IP
+  max: 10, // 10 signups per hour per IP
   message: {
-    error: 'Too many signup attempts. Please try again in an hour.',
-    retryAfter: '1 hour'
+    error: 'Too many signup attempts. Please wait an hour before creating another account.'
   },
-  skip: ENV.isDevelopment ? () => true : () => false
+  standardHeaders: true,
+  legacyHeaders: false
 });
 
-// API PROTECTION: General API rate limiting for customer confidence
-export const apiRateLimit = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
+// General API protection - prevents API abuse
+export const generalApiRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
   max: 100, // 100 requests per minute per IP
   message: {
-    error: 'Too many requests. Please slow down.',
-    retryAfter: '1 minute'
+    error: 'Too many requests. Please slow down.'
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: ENV.isDevelopment ? () => true : () => false
+  skip: (req) => {
+    // Skip for static assets and health checks
+    return req.path.startsWith('/assets/') || 
+           req.path === '/health' ||
+           req.path === '/api/health';
+  }
 });
 
-// PERFORMANCE PROTECTION: Slow down suspicious rapid requests
-export const speedLimit = slowDown({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  delayAfter: 50, // Allow 50 requests per window at full speed
-  delayMs: 500, // Add 500ms delay after limit
+// Slow down repeated requests (adds delay instead of blocking)
+export const slowDownMiddleware = slowDown({
+  windowMs: 60 * 1000, // 1 minute
+  delayAfter: 50, // Allow 50 requests per minute at full speed
+  delayMs: () => 100, // Add 100ms delay per request after limit (fixed for v2)
   maxDelayMs: 2000, // Maximum delay of 2 seconds
-  skip: ENV.isDevelopment ? () => true : () => false
+  validate: { delayMs: false }, // Disable warning about delayMs
+  skip: (req) => {
+    // Skip for static assets and health checks
+    return req.path.startsWith('/assets/') || 
+           req.path === '/health' ||
+           req.path === '/api/health';
+  }
 });
 
-/**
- * Business Benefits:
- * 
- * 1. CUSTOMER CONFIDENCE: Professional security measures visible to users
- * 2. COST PROTECTION: Prevents SMS abuse (Twilio charges per message)
- * 3. PERFORMANCE: Maintains responsiveness under load
- * 4. STABILITY: Prevents system overload from automated attacks
- * 5. MUSICIAN PROTECTION: Protects booking accounts from brute force
- * 
- * Supports 2,000+ concurrent users while maintaining performance
- */
+// Password reset protection - prevents abuse of password reset
+export const passwordResetRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 password reset attempts per hour per IP
+  message: {
+    error: 'Too many password reset attempts. Please wait an hour before trying again.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
-console.log('🛡️ Rate limiting configured for customer confidence and stability');
-console.log('📊 Capacity: Supports 2,000+ concurrent users');
-console.log('💰 Protection: SMS cost abuse prevention active');
-console.log('🎵 Security: Musician account protection enabled');
+console.log('🛡️ Rate limiting configured - Login: 5/min, SMS: 3/hour, Signup: 10/hour, API: 100/min');

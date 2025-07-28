@@ -3,6 +3,7 @@ import path from "path";
 import { storage } from "./storage";
 import { createSessionMiddleware } from './session-config.js';
 import { ProductionAuthSystem } from './auth-production.js';
+import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 
 // Middleware
 const isAuthenticated = (req: any, res: any, next: any) => {
@@ -13,7 +14,12 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express) {
-  // CRITICAL: Set up session middleware FIRST
+  // HARDENING: Apply general rate limiting and slow down protection
+  console.log('🛡️ Setting up rate limiting protection...');
+  app.use(generalApiRateLimit);
+  app.use(slowDownMiddleware);
+  
+  // CRITICAL: Set up session middleware AFTER rate limiting
   console.log('📦 Registering session middleware...');
   const sessionMiddleware = createSessionMiddleware();
   app.use(sessionMiddleware);
