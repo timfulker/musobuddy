@@ -64,9 +64,23 @@ export function formatBooking(rawBooking: any): FormattedBooking {
   
   const formatted: FormattedBooking = { ...rawBooking };
   
-  // Format time range consistently
+  // Format time range consistently - but check if already formatted
   if (rawBooking.eventTime && rawBooking.eventEndTime) {
-    formatted.eventTime = `${rawBooking.eventTime} - ${rawBooking.eventEndTime}`;
+    // Don't double-format if eventTime already contains a range
+    if (!rawBooking.eventTime.includes(' - ')) {
+      formatted.eventTime = `${rawBooking.eventTime} - ${rawBooking.eventEndTime}`;
+    }
+    // If already formatted, keep as-is but ensure eventEndTime is preserved for conflict detection
+    else {
+      formatted.eventTime = rawBooking.eventTime;
+      // Extract end time from formatted string if needed
+      if (rawBooking.eventTime.includes(' - ') && !formatted.eventEndTime) {
+        const parts = rawBooking.eventTime.split(' - ');
+        if (parts.length === 2) {
+          formatted.eventEndTime = parts[1];
+        }
+      }
+    }
   }
   
   return formatted;
