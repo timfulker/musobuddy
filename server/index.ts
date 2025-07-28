@@ -1,6 +1,5 @@
 import express, { type Request, Response } from "express";
-import session from 'express-session';
-import ConnectPgSimple from 'connect-pg-simple';
+// Session imports now handled by rebuilt system
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
 // Removed dual auth system import
@@ -271,35 +270,11 @@ app.post('/api/stripe-webhook',
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Configure session middleware
-console.log('🔧 Setting up session middleware...');
-
-function createSessionMiddleware() {
-  const PgSession = ConnectPgSimple(session);
-  
-  return session({
-    store: new PgSession({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-      tableName: 'session'
-    }),
-    secret: process.env.SESSION_SECRET || 'fallback-secret-for-development',
-    name: 'musobuddy.sid',
-    resave: false,
-    saveUninitialized: false,
-    rolling: true,
-    cookie: {
-      secure: ENV.sessionSecure,
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: ENV.isProduction ? 'none' : 'lax',
-      domain: undefined
-    }
-  });
-}
-
-app.use(createSessionMiddleware());
-console.log('✅ Session middleware configured using createSessionMiddleware');
+// REBUILT: Session middleware
+console.log('🔧 Setting up REBUILT session middleware...');
+const sessionMiddleware = createSessionMiddleware();
+app.use(sessionMiddleware);
+console.log('✅ REBUILT session middleware configured');
 
 // SMS Service test endpoint  
 app.get('/api/test-sms', async (req, res) => {
@@ -608,6 +583,11 @@ async function startServer() {
       }
     });
 
+    // Setup rebuilt authentication first
+    console.log('🔐 Setting up REBUILT authentication...');
+    setupAuthRoutes(app);
+    console.log('✅ REBUILT authentication configured');
+    
     // Register all other routes AFTER authentication
     console.log('🔄 Registering API routes...');
     await registerRoutes(app);

@@ -22,82 +22,8 @@ export async function registerRoutes(app: Express) {
   // CRITICAL: Set up session middleware AFTER rate limiting
   console.log('📦 Session middleware already configured in main server');
   
-  // CLEAN AUTHENTICATION ROUTES - Direct registration without separate class
-  console.log('🔐 Setting up clean authentication routes...');
-  
-  // Admin login endpoint - direct implementation
-  app.post('/api/auth/admin-login', async (req: any, res) => {
-    const loginId = Date.now().toString();
-    console.log(`🔐 [ADMIN-${loginId}] Clean admin login attempt`);
-    
-    try {
-      const { email, password } = req.body;
-      
-      if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        const adminUser = await storage.getUserByEmail('timfulker@gmail.com');
-        
-        req.session.userId = adminUser?.id || '43963086';
-        req.session.email = email;
-        req.session.isAdmin = true;
-        req.session.phoneVerified = true;
-        
-        // Save session with explicit callback handling
-        req.session.save((err: any) => {
-          if (err) {
-            console.error(`❌ [ADMIN-${loginId}] Session save error:`, err);
-            return res.status(500).json({ error: 'Session save failed' });
-          }
-          
-          console.log(`✅ [ADMIN-${loginId}] Clean session saved: ${req.session.userId}`);
-          
-          return res.json({
-            success: true,
-            user: {
-              id: req.session.userId,
-              email: email,
-              isAdmin: true,
-              tier: 'admin',
-              phoneVerified: true
-            }
-          });
-        });
-      } else {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-    } catch (error) {
-      console.error(`❌ [ADMIN-${loginId}] Clean login error:`, error);
-      res.status(500).json({ error: 'Login failed' });
-    }
-  });
-
-  // Get current user endpoint - OPTIMIZED: No logging
-  app.get('/api/auth/user', (req: any, res) => {
-    if (!req.session?.userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-    
-    res.json({
-      id: req.session.userId,
-      email: req.session.email,
-      isAdmin: req.session.isAdmin || false,
-      tier: 'admin',
-      phoneVerified: req.session.phoneVerified || false
-    });
-  });
-
-  // Logout endpoint - direct implementation
-  app.post('/api/auth/logout', (req: any, res) => {
-    req.session.destroy((err: any) => {
-      if (err) {
-        console.error('❌ Clean logout error:', err);
-        return res.status(500).json({ error: 'Logout failed' });
-      }
-      console.log('✅ Clean logout successful');
-      res.json({ success: true });
-    });
-  });
-  
-  console.log('✅ Clean authentication routes registered directly');
+  // Authentication routes now handled by rebuilt system in server/index.ts
+  console.log('🔐 Authentication routes handled by rebuilt system');
 
   // ===== SYSTEM HEALTH & MONITORING =====
   app.get('/api/health/auth', (req, res) => {
