@@ -151,15 +151,29 @@ export default function UnifiedBookings() {
     }
   }, [bookings]); // Depend on bookings data
 
-  // Conflict detection function (same as dashboard)
+  // Conflict detection function (same as dashboard) with enhanced debugging
   const detectConflicts = (booking: any) => {
-    if (!booking.eventDate || !booking.eventTime || !booking.eventEndTime) return [];
+    if (!booking.eventDate || !booking.eventTime || !booking.eventEndTime) {
+      console.log(`🔍 CONFLICT DEBUG - Missing data for booking ${booking.id}:`, {
+        eventDate: booking.eventDate,
+        eventTime: booking.eventTime,
+        eventEndTime: booking.eventEndTime
+      });
+      return [];
+    }
     
     const bookingDate = new Date(booking.eventDate).toDateString();
     const bookingStart = new Date(`${booking.eventDate}T${booking.eventTime}`);
     const bookingEnd = new Date(`${booking.eventDate}T${booking.eventEndTime}`);
     
-    return (bookings as any[])
+    console.log(`🔍 CONFLICT DEBUG - Checking booking ${booking.id} (${booking.clientName}):`, {
+      date: bookingDate,
+      timeRange: `${booking.eventTime} - ${booking.eventEndTime}`,
+      startTime: bookingStart.toISOString(),
+      endTime: bookingEnd.toISOString()
+    });
+    
+    const conflicts = (bookings as any[])
       .filter((other: any) => {
         if (other.id === booking.id) return false;
         if (!other.eventDate || !other.eventTime || !other.eventEndTime) return false;
@@ -172,6 +186,19 @@ export default function UnifiedBookings() {
         
         // Check for time overlap
         const hasTimeOverlap = bookingStart < otherEnd && bookingEnd > otherStart;
+        
+        console.log(`🔍 CONFLICT DEBUG - Comparing with booking ${other.id} (${other.clientName}):`, {
+          otherTimeRange: `${other.eventTime} - ${other.eventEndTime}`,
+          hasTimeOverlap,
+          calculation: {
+            bookingStart: bookingStart.toISOString(),
+            bookingEnd: bookingEnd.toISOString(),
+            otherStart: otherStart.toISOString(),
+            otherEnd: otherEnd.toISOString(),
+            condition1: `${bookingStart.toISOString()} < ${otherEnd.toISOString()} = ${bookingStart < otherEnd}`,
+            condition2: `${bookingEnd.toISOString()} > ${otherStart.toISOString()} = ${bookingEnd > otherStart}`
+          }
+        });
         
         return hasTimeOverlap || bookingDate === otherDate; // Return true for conflicts
       })
@@ -196,6 +223,13 @@ export default function UnifiedBookings() {
             Math.round((Math.min(bookingEnd.getTime(), otherEnd.getTime()) - Math.max(bookingStart.getTime(), otherStart.getTime())) / (1000 * 60)) : 0
         };
       });
+    
+    console.log(`🔍 CONFLICT DEBUG - Results for booking ${booking.id}:`, {
+      conflictCount: conflicts.length,
+      conflicts: conflicts.map(c => ({ id: c.withBookingId, severity: c.severity, message: c.message }))
+    });
+    
+    return conflicts;
   };
 
   // Function to open compliance dialog from booking action menu
