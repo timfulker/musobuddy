@@ -169,7 +169,7 @@ export default function UnifiedBookings() {
     }
   }, [bookings]); // Depend on bookings data
 
-  // Conflict detection function - FIXED to handle range format like "16:00-20:00"
+  // CORE CONFLICT RULE: Same day = RED conflict, then check times to soften to AMBER
   const detectConflicts = (booking: any) => {
     if (!booking.eventDate) {
       console.log(`🔍 CONFLICT DEBUG - Missing event date for booking ${booking.id}`);
@@ -177,26 +177,7 @@ export default function UnifiedBookings() {
     }
     
     const bookingDate = new Date(booking.eventDate).toDateString();
-    
-    // Parse time range format "16:00-20:00" or separate eventTime/eventEndTime
-    let bookingStartTime, bookingEndTime;
-    
-    if (booking.eventTime && booking.eventTime.includes('-')) {
-      // Handle range format like "16:00-20:00"
-      const [start, end] = booking.eventTime.split('-');
-      bookingStartTime = start.trim();
-      bookingEndTime = end.trim();
-    } else if (booking.eventTime && booking.eventEndTime) {
-      // Handle separate fields
-      bookingStartTime = booking.eventTime;
-      bookingEndTime = booking.eventEndTime;
-    } else {
-      // Missing time data - still treat as same-day conflict
-      console.log(`🔍 CONFLICT DEBUG - Missing time data for booking ${booking.id}, checking same-day conflicts only`);
-    }
-    
-    const bookingStart = bookingStartTime ? new Date(`${booking.eventDate}T${bookingStartTime}`) : null;
-    const bookingEnd = bookingEndTime ? new Date(`${booking.eventDate}T${bookingEndTime}`) : null;
+    console.log(`🔍 CONFLICT DEBUG - Checking booking ${booking.id} on date: ${bookingDate}`);
     
     console.log(`🔍 CONFLICT DEBUG - Checking booking ${booking.id} (${booking.clientName}):`, {
       date: bookingDate,
