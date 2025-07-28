@@ -24,8 +24,8 @@ function detectEnvironment(): EnvironmentConfig {
   // Replit production detection based on REPLIT_ENVIRONMENT
   const isReplitProduction = process.env.REPLIT_ENVIRONMENT === 'production';
   
-  // Only production when actually deployed (REPLIT_DEPLOYMENT exists)
-  const isProduction = !!process.env.REPLIT_DEPLOYMENT;
+  // Production when REPLIT_ENVIRONMENT is production (deployed app)
+  const isProduction = process.env.REPLIT_ENVIRONMENT === 'production';
   
   const appServerUrl = isReplitProduction 
     ? 'https://musobuddy.replit.app'
