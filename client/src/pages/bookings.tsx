@@ -185,23 +185,35 @@ export default function UnifiedBookings() {
         const bookingConflicts = dayBookings
           .filter((other: any) => other.id !== booking.id)
           .map((other: any) => {
-            let severity = 'hard'; // Default to hard conflict for same day
-            let hasTimeOverlap = true;
+            let severity = 'soft'; // Default to soft conflict for same day
+            let hasTimeOverlap = false;
             
-            // Simple time overlap check - avoid complex date parsing
+            // Proper time overlap check using same logic as backend
             try {
               if (booking.eventTime && other.eventTime && 
-                  booking.eventTime.includes('-') && other.eventTime.includes('-')) {
+                  booking.eventTime.includes(' - ') && other.eventTime.includes(' - ')) {
                 
-                const [bookingStart, bookingEnd] = booking.eventTime.split('-');
-                const [otherStart, otherEnd] = other.eventTime.split('-');
+                const [bookingStart, bookingEnd] = booking.eventTime.split(' - ');
+                const [otherStart, otherEnd] = other.eventTime.split(' - ');
                 
-                // Simple string comparison for basic overlap detection
-                hasTimeOverlap = bookingStart.trim() !== otherEnd.trim() && bookingEnd.trim() !== otherStart.trim();
+                // Convert times to minutes for accurate comparison
+                const parseTime = (timeStr: string): number => {
+                  const [hours, minutes] = timeStr.trim().split(':').map(Number);
+                  return hours * 60 + (minutes || 0);
+                };
+                
+                const start1 = parseTime(bookingStart);
+                const end1 = parseTime(bookingEnd);
+                const start2 = parseTime(otherStart);
+                const end2 = parseTime(otherEnd);
+                
+                // Proper overlap detection: start1 < end2 && end1 > start2
+                hasTimeOverlap = start1 < end2 && end1 > start2;
                 severity = hasTimeOverlap ? 'hard' : 'soft';
               }
             } catch (error) {
-              // Keep as hard conflict if parsing fails
+              // Keep as soft conflict if parsing fails (same day, unknown times)
+              severity = 'soft';
             }
             
             return {

@@ -90,9 +90,9 @@ export default function ActionableEnquiries() {
         return otherDate === enquiryDate; // Same day = conflict
       })
       .map((other: Enquiry) => {
-        // Default to hard conflict for same day
-        let hasTimeOverlap = true;
-        let severity = 'hard';
+        // Default to soft conflict for same day
+        let hasTimeOverlap = false;
+        let severity = 'soft';
         
         // Try to parse times to soften conflict if no overlap
         try {

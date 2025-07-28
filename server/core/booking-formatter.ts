@@ -122,6 +122,13 @@ export function hasTimeOverlap(booking1: FormattedBooking, booking2: FormattedBo
   const start2 = parseTime(time2.startTime);
   const end2 = parseTime(time2.endTime);
   
+  // Debug logging to track conflict detection
+  console.log(`🔍 Time overlap check:
+    Booking 1: ${time1.startTime}-${time1.endTime} (${start1}-${end1} minutes)
+    Booking 2: ${time2.startTime}-${time2.endTime} (${start2}-${end2} minutes)
+    Overlap formula: ${start1} < ${end2} && ${end1} > ${start2}
+    Result: ${start1 < end2 && end1 > start2}`);
+  
   // Check for overlap: start1 < end2 && end1 > start2
   return start1 < end2 && end1 > start2;
 }
