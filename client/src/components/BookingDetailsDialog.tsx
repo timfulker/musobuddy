@@ -649,7 +649,12 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     updateBookingMutation.mutate(updateData);
   };
 
-  if (!booking) return null;
+  if (!booking) {
+    console.log('BookingDetailsDialog: No booking provided', { open, booking });
+    return null;
+  }
+  
+  console.log('BookingDetailsDialog rendering with booking:', booking);
 
   return (
     <Dialog open={open} onOpenChange={handleCancel}>

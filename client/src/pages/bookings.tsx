@@ -576,6 +576,7 @@ export default function UnifiedBookings() {
 
   // Handler for editing booking from conflict resolution dialog
   const handleEditBookingFromConflict = (booking: any) => {
+    console.log('handleEditBookingFromConflict called with booking:', booking);
     setSelectedBookingForDetails(booking);
     setBookingDetailsDialogOpen(true);
   };
@@ -1161,6 +1162,9 @@ export default function UnifiedBookings() {
         open={bookingDetailsDialogOpen}
         onOpenChange={setBookingDetailsDialogOpen}
         booking={selectedBookingForDetails}
+        onBookingUpdate={() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+        }}
       />
       
       <BookingStatusDialog
