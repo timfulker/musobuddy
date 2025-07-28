@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { storage } from './storage';
 
 // Import centralized environment detection
-import { getAppServerUrl } from './environment';
+import { ENV } from './environment-rebuilt';
 
 // Initialize Stripe with test key for beta testing (only if available)
 let stripe: Stripe | null = null;
@@ -62,8 +62,8 @@ export class StripeService {
             trial_type: 'core_monthly',
           },
         },
-        success_url: `${getAppServerUrl()}/trial-success?stripe_session={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${getAppServerUrl()}/pricing`,
+        success_url: `${ENV.appServerUrl}/trial-success?stripe_session={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${ENV.appServerUrl}/pricing`,
         metadata: {
           userId: userId,
           userEmail: user.email || '',

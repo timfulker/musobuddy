@@ -4,7 +4,7 @@ import type { Contract, Invoice, UserSettings } from '@shared/schema';
 import { generateContractPDF, generateInvoicePDF } from './pdf-generator';
 
 // Import centralized environment detection
-import { getAppServerUrl } from './environment';
+import { ENV } from './environment-rebuilt';
 
 // Cloudflare R2 configuration
 const r2Client = new S3Client({
@@ -390,7 +390,7 @@ function generateContractSigningPageHTML(
   };
 
   // CRITICAL: Use app server for API calls, cloud storage for documents
-  const APP_SERVER_URL = getAppServerUrl();
+  const APP_SERVER_URL = ENV.appServerUrl;
   const contractId = contract.id;
 
   return `<!DOCTYPE html>
