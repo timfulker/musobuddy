@@ -106,7 +106,7 @@ export default function UnifiedBookings() {
   const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ["/api/bookings"],
     retry: 2,
-  });
+  }) as { data: Enquiry[], isLoading: boolean };
 
   const { data: contracts = [] } = useQuery({
     queryKey: ["/api/contracts"],
@@ -119,6 +119,24 @@ export default function UnifiedBookings() {
     queryKey: ["/api/invoices"],
     retry: 2,
   });
+
+  // Fetch conflicts from backend
+  const { data: backendConflicts = [] } = useQuery({
+    queryKey: ["/api/conflicts"],
+    retry: 2,
+  }) as { data: any[], error?: any };
+
+  // Debug log backend conflicts
+  useEffect(() => {
+    if (backendConflicts && backendConflicts.length > 0) {
+      console.log(`🔍 BACKEND CONFLICTS RECEIVED:`, {
+        count: backendConflicts.length,
+        conflicts: backendConflicts
+      });
+    } else {
+      console.log(`🔍 NO BACKEND CONFLICTS RECEIVED`, { backendConflicts });
+    }
+  }, [backendConflicts]);
 
   // Handle URL parameters for booking navigation from dashboard
   useEffect(() => {
