@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Session Debug</title>
+</head>
+<body>
+    <h1>Session Cookie Debug</h1>
+    
+    <button onclick="testLogin()">Test Admin Login</button>
+    <button onclick="testAuth()">Test Auth Status</button>
+    <button onclick="showCookies()">Show Cookies</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        function log(message) {
+            document.getElementById('result').innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        function showCookies() {
+            log('All cookies: ' + document.cookie);
+        }
+        
+        async function testLogin() {
+            try {
+                log('Testing admin login...');
+                const response = await fetch('/api/auth/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email: 'timfulker@gmail.com', password: 'admin123' })
+                });
+                
+                const result = await response.json();
+                log('Login result: ' + JSON.stringify(result, null, 2));
+                log('Login status: ' + response.status);
+                
+                // Show cookies after login
+                log('Cookies after login: ' + document.cookie);
+                
+            } catch (error) {
+                log('Login error: ' + error.message);
+            }
+        }
+        
+        async function testAuth() {
+            try {
+                log('Testing auth status...');
+                const response = await fetch('/api/auth/user', {
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                log('Auth result: ' + JSON.stringify(result, null, 2));
+                log('Auth status: ' + response.status);
+                
+            } catch (error) {
+                log('Auth error: ' + error.message);
+            }
+        }
+        
+        // Clear results
+        document.getElementById('result').innerHTML = '';
+        log('Session debug page loaded');
+        showCookies();
+    </script>
+</body>
+</html>
