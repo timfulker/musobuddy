@@ -5,17 +5,16 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 
 interface BackendConflict {
-  id: string;
-  bookings: Array<{
-    id: number;
-    clientName: string;
-    eventDate: string;
-    eventTime?: string;
-    venue?: string;
-    status: string;
-  }>;
-  severity: 'critical' | 'warning';
-  type: 'same_day';
+  bookingId: number;
+  withBookingId: number;
+  severity: 'hard' | 'soft';
+  clientName: string;
+  status: string;
+  time: string;
+  canEdit: boolean;
+  canReject: boolean;
+  type: string;
+  message: string;
   date: string;
 }
 
@@ -29,11 +28,22 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
   const backendConflicts = conflicts as BackendConflict[];
 
   // Group conflicts by severity for counter display
-  const conflictCounts = {
-    high: backendConflicts.filter((c: BackendConflict) => c.severity === 'critical').length,
-    medium: backendConflicts.filter((c: BackendConflict) => c.severity === 'warning').length,
-    low: 0, // No resolved conflicts in this format
-  };
+  const conflictCounts = React.useMemo(() => {
+    const uniqueConflicts = new Map();
+    backendConflicts.forEach((c: BackendConflict) => {
+      const key = [c.bookingId, c.withBookingId].sort().join('-');
+      if (!uniqueConflicts.has(key)) {
+        uniqueConflicts.set(key, c);
+      }
+    });
+    
+    const conflicts = Array.from(uniqueConflicts.values());
+    return {
+      high: conflicts.filter((c: BackendConflict) => c.severity === 'hard').length,
+      medium: conflicts.filter((c: BackendConflict) => c.severity === 'soft').length,
+      low: 0,
+    };
+  }, [backendConflicts]);
 
   const handleConflictTypeClick = (severity: string) => {
     if (onFilterByConflictType) {
@@ -84,7 +94,7 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
                 className={`h-16 flex flex-col items-center justify-center gap-1 ${
                   conflictCounts.high > 0 ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'opacity-50'
                 }`}
-                onClick={() => handleConflictTypeClick('critical')}
+                onClick={() => handleConflictTypeClick('hard')}
                 disabled={conflictCounts.high === 0}
               >
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -99,7 +109,7 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
                 className={`h-16 flex flex-col items-center justify-center gap-1 ${
                   conflictCounts.medium > 0 ? 'border-orange-300 bg-orange-50 hover:bg-orange-100' : 'opacity-50'
                 }`}
-                onClick={() => handleConflictTypeClick('warning')}
+                onClick={() => handleConflictTypeClick('soft')}
                 disabled={conflictCounts.medium === 0}
               >
                 <div className="w-3 h-3 rounded-full bg-orange-500"></div>
@@ -112,11 +122,21 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
             {/* Active Conflicts List */}
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-gray-600">Active Conflicts</h4>
-              {backendConflicts.slice(0, 3).map((conflict: BackendConflict) => (
+              {React.useMemo(() => {
+                // Group conflicts by booking pairs to avoid duplicates
+                const uniqueConflicts = new Map();
+                backendConflicts.forEach((conflict: BackendConflict) => {
+                  const key = [conflict.bookingId, conflict.withBookingId].sort().join('-');
+                  if (!uniqueConflicts.has(key)) {
+                    uniqueConflicts.set(key, conflict);
+                  }
+                });
+                return Array.from(uniqueConflicts.values());
+              }, [backendConflicts]).slice(0, 3).map((conflict: BackendConflict) => (
                 <div
-                  key={conflict.id}
+                  key={`${conflict.bookingId}-${conflict.withBookingId}`}
                   className={`p-3 rounded-lg border ${
-                    conflict.severity === 'critical' ? 'border-red-200 bg-red-50' :
+                    conflict.severity === 'hard' ? 'border-red-200 bg-red-50' :
                     'border-orange-200 bg-orange-50'
                   }`}
                 >
@@ -124,28 +144,27 @@ export default function ConflictsWidget({ onFilterByConflictType }: { onFilterBy
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge 
-                          variant={conflict.severity === 'critical' ? 'destructive' : 'default'}
+                          variant={conflict.severity === 'hard' ? 'destructive' : 'default'}
                           className="text-xs"
                         >
-                          {conflict.severity.toUpperCase()}
+                          {conflict.severity === 'hard' ? 'CRITICAL' : 'WARNING'}
                         </Badge>
                         <span className="text-sm font-medium">
                           Same Day Conflict
                         </span>
                       </div>
                       <p className="text-xs text-gray-600 mb-2">
-                        {conflict.bookings.length} bookings on {new Date(conflict.date).toLocaleDateString()}:
+                        Conflict on {new Date(conflict.date).toLocaleDateString()}
                       </p>
                       <div className="text-xs text-gray-500 space-y-1">
-                        {conflict.bookings.map((booking, idx) => (
-                          <div key={booking.id} className="flex items-center gap-2">
-                            <span>• {booking.clientName}</span>
-                            {booking.eventTime && <span className="text-gray-400">({booking.eventTime})</span>}
-                            <Badge variant="outline" className="text-xs">
-                              {booking.status}
-                            </Badge>
-                          </div>
-                        ))}
+                        <div className="flex items-center gap-2">
+                          <span>• {conflict.clientName}</span>
+                          <span className="text-gray-400">({conflict.time})</span>
+                          <Badge variant="outline" className="text-xs">
+                            {conflict.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">{conflict.message}</p>
                       </div>
                     </div>
                   </div>
