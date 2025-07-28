@@ -171,13 +171,9 @@ export default function UnifiedBookings() {
 
   // Conflict detection function - FIXED: Same day = conflict, regardless of time parsing
   const detectConflicts = (booking: any) => {
-    if (!booking.eventDate) {
-      console.log(`🔍 CONFLICT DEBUG - Missing event date for booking ${booking.id}`);
-      return [];
-    }
+    if (!booking.eventDate) return [];
     
     const bookingDate = new Date(booking.eventDate).toDateString();
-    console.log(`🔍 CONFLICT DEBUG - Checking booking ${booking.id} on date: ${bookingDate}`);
     
     // Find all bookings on the same date - this is the primary conflict rule
     const conflicts = (bookings as any[])
@@ -186,11 +182,7 @@ export default function UnifiedBookings() {
         if (!other.eventDate) return false;
         
         const otherDate = new Date(other.eventDate).toDateString();
-        const isSameDay = otherDate === bookingDate;
-        
-        console.log(`🔍 CONFLICT DEBUG - Comparing dates: ${bookingDate} vs ${otherDate}, same day: ${isSameDay}`);
-        
-        return isSameDay;
+        return otherDate === bookingDate;
       })
       .map((other: any) => {
         // Default to 'hard' (red) conflict for same day
@@ -225,11 +217,8 @@ export default function UnifiedBookings() {
             } else {
               severity = 'soft'; // Amber - same day but no time overlap
             }
-            
-            console.log(`🔍 CONFLICT DEBUG - Time analysis: overlap=${hasTimeOverlap}, severity=${severity}, minutes=${overlapMinutes}`);
           }
         } catch (error) {
-          console.log(`🔍 CONFLICT DEBUG - Time parsing failed, keeping as hard conflict:`, error);
           // Keep as hard conflict if time parsing fails
         }
         
@@ -248,11 +237,6 @@ export default function UnifiedBookings() {
           overlapMinutes
         };
       });
-    
-    console.log(`🔍 CONFLICT DEBUG - Results for booking ${booking.id}:`, {
-      conflictCount: conflicts.length,
-      conflicts: conflicts.map(c => ({ id: c.withBookingId, severity: c.severity, message: c.message }))
-    });
     
     return conflicts;
   };
