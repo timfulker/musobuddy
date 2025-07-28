@@ -6,51 +6,76 @@ import { Check, Music, FileText, Mail, Calendar, CreditCard, Shield, Star } from
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Navigation */}
-      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Music className="h-8 w-8 text-purple-600" />
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link href="/login">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="/signup">
-              <Button className="bg-purple-600 hover:bg-purple-700">Start Free Trial</Button>
-            </Link>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header */}
+      <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-2">
+              <Music className="h-10 w-10 text-purple-600" />
+              <h1 className="text-2xl font-bold text-purple-800 dark:text-purple-200">MusoBuddy</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/login">
+                <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-4xl mx-auto">
-          <Badge className="mb-4 bg-purple-100 text-purple-800 border-purple-200">
-            14-Day Free Trial
-          </Badge>
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Professional Music Business Management
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Streamline your music career with automated contracts, invoicing, and client management. 
-            Trusted by professional musicians across the UK.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="mb-8">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+              Your Complete
+              <span className="text-purple-600 block">Music Business</span>
+              Management Platform
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-12">
+              Streamline your music career with intelligent booking management, professional contracts, 
+              automated invoicing, and compliance tracking - all in one powerful platform designed for musicians.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Link href="/signup">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-4">
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg">
                 Start Your Free Trial
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-4">
-              Watch Demo
+            <Button variant="outline" size="lg" className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg">
+              See Demo
             </Button>
           </div>
-          <p className="text-sm text-gray-500 mt-4">
-            No credit card required • Full access for 14 days • Cancel anytime
-          </p>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">10,000+</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">Musicians</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">50K+</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">Bookings</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">£2M+</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">Revenue</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">98%</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">Satisfaction</div>
+            </div>
+          </div>
         </div>
       </section>
 
