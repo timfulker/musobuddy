@@ -631,14 +631,23 @@ async function startServer() {
     await registerRoutes(app);
     console.log('✅ API routes registered successfully');
     
+    // FORCE PRODUCTION STATIC SERVING when on musobuddy.replit.app
+    const isActualProduction = process.env.REPLIT_ENVIRONMENT === 'production' || 
+                               process.env.NODE_ENV === 'production' ||
+                               ENV.appServerUrl.includes('musobuddy.replit.app');
+                               
     // Add production error handling
     try {
-      if (ENV.isProduction) {
-        console.log('🏭 Production mode detected: serving static files');
+      
+      if (isActualProduction) {
+        console.log('🏭 FORCED Production mode: serving static files');
         console.log('🔍 Environment indicators:', {
           NODE_ENV: process.env.NODE_ENV,
           REPLIT_ENVIRONMENT: process.env.REPLIT_ENVIRONMENT,
-          REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT
+          REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+          appServerUrl: ENV.appServerUrl,
+          envIsProduction: ENV.isProduction,
+          forcedProduction: true
         });
         serveStaticFixed(app);
       } else {
@@ -679,7 +688,7 @@ async function startServer() {
     }
     
     // Production server startup (development uses different startup above)
-    if (ENV.isProduction) {
+    if (isActualProduction) {
       const port = process.env.PORT || 5000;
       
       const server = app.listen(Number(port), "0.0.0.0", () => {
