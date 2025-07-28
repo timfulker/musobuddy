@@ -27,9 +27,9 @@ app.get('/health', (req: Request, res: Response) => {
 // Health check endpoint moved - deployment systems should use /health
 // The root route will be handled by the static file serving for the React app
 
-// Add request timeout middleware to prevent hanging requests
+// PERFORMANCE FIX: Reduce timeout for faster response times
 app.use((req: Request, res: Response, next) => {
-  req.setTimeout(30000, () => {
+  req.setTimeout(10000, () => {
     console.log('⚠️ Request timeout for:', req.url);
     if (!res.headersSent) {
       res.status(408).json({ error: 'Request timeout' });
