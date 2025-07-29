@@ -470,8 +470,11 @@ export class MailgunService {
   }
 
   generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
-    // Use the R2 URL that was uploaded - contracts must be permanently accessible
-    const finalSigningUrl = signingUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
+    // CRITICAL FIX: Use the signing page URL from database (R2 cloud storage) instead of API endpoint
+    const finalSigningUrl = contract.signingPageUrl || signingUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
+    
+    console.log('📧 Contract email signing URL:', finalSigningUrl);
+    console.log('📧 Contract signing page URL from DB:', contract.signingPageUrl);
     
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">

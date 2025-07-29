@@ -425,18 +425,39 @@ export async function registerRoutes(app: Express) {
         console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
         
         // Upload PDF to cloud storage
-        const { uploadContractToCloud } = await import('./cloud-storage');
+        const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
         const cloudResult = await uploadContractToCloud(newContract, userSettings);
         
         if (cloudResult.success) {
-          // Update contract with cloud storage URL
-          const updatedContract = await storage.updateContract(newContract.id, {
-            cloudStorageUrl: cloudResult.url,
-            cloudStorageKey: cloudResult.key
-          });
-          
           console.log('✅ Contract PDF uploaded to cloud storage:', cloudResult.url);
-          res.json(updatedContract);
+          
+          // CRITICAL FIX: Also create and upload signing page to R2
+          console.log('📝 Creating contract signing page for R2 cloud storage...');
+          const signingPageResult = await uploadContractSigningPage(newContract, userSettings);
+          
+          if (signingPageResult.success) {
+            console.log('✅ Contract signing page uploaded to R2:', signingPageResult.url);
+            
+            // Update contract with both PDF and signing page URLs
+            const updatedContract = await storage.updateContract(newContract.id, {
+              cloudStorageUrl: cloudResult.url,
+              cloudStorageKey: cloudResult.key,
+              signingPageUrl: signingPageResult.url,
+              signingPageKey: signingPageResult.storageKey
+            });
+            
+            res.json(updatedContract);
+          } else {
+            console.log('⚠️ PDF uploaded but signing page upload failed');
+            
+            // Update contract with just PDF URL
+            const updatedContract = await storage.updateContract(newContract.id, {
+              cloudStorageUrl: cloudResult.url,
+              cloudStorageKey: cloudResult.key
+            });
+            
+            res.json(updatedContract);
+          }
         } else {
           console.log('⚠️ PDF generated but cloud upload failed, returning contract without cloud URL');
           res.json(newContract);
