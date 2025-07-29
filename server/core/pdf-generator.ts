@@ -27,6 +27,7 @@ export async function generateContractPDF(contract: any, userSettings: any): Pro
     console.log('🚀 Launching Puppeteer browser with enhanced compatibility...');
     const browser = await puppeteer.launch({
       headless: true,
+      executablePath: '/usr/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -39,7 +40,9 @@ export async function generateContractPDF(contract: any, userSettings: any): Pro
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
-        '--virtual-time-budget=5000'
+        '--virtual-time-budget=5000',
+        '--disable-extensions',
+        '--disable-default-apps'
       ],
       timeout: 30000
     });
