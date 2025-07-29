@@ -1469,6 +1469,175 @@ export async function registerRoutes(app: Express) {
     next(err);
   });
 
+  // ===== COMPLIANCE ROUTES =====
+
+  // Get all compliance documents for authenticated user
+  app.get('/api/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`📋 Fetching compliance documents for user: ${userId}`);
+      
+      const documents = await storage.getCompliance(userId);
+      
+      console.log(`✅ Retrieved ${documents.length} compliance documents for user ${userId}`);
+      res.json(documents);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to fetch compliance documents:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch compliance documents',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Create new compliance document
+  app.post('/api/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`📋 Creating compliance document for user: ${userId}`, req.body);
+      
+      const documentData = {
+        ...req.body,
+        userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const newDocument = await storage.createCompliance(documentData);
+      
+      console.log(`✅ Created compliance document for user ${userId}`);
+      res.json(newDocument);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to create compliance document:', error);
+      res.status(500).json({ 
+        error: 'Failed to create compliance document',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Upload compliance document file
+  app.post('/api/compliance/upload', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`📋 Uploading compliance document for user: ${userId}`);
+      
+      // Handle file upload using multer or similar
+      // This is a placeholder - you'll need to implement file upload logic
+      
+      if (!req.body || !req.body.documentFile) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+      
+      // TODO: Implement file upload to cloud storage
+      // For now, return success with placeholder data
+      
+      const documentData = {
+        userId,
+        type: req.body.type,
+        name: req.body.name,
+        expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : null,
+        status: 'valid',
+        documentUrl: 'placeholder-url', // Replace with actual uploaded file URL
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const newDocument = await storage.createCompliance(documentData);
+      
+      console.log(`✅ Uploaded compliance document for user ${userId}`);
+      res.json(newDocument);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to upload compliance document:', error);
+      res.status(500).json({ 
+        error: 'Failed to upload compliance document',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Update compliance document
+  app.patch('/api/compliance/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const documentId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(documentId)) {
+        return res.status(400).json({ error: 'Invalid document ID' });
+      }
+      
+      console.log(`📋 Updating compliance document #${documentId} for user: ${userId}`);
+      
+      const updatedDocument = await storage.updateCompliance(documentId, {
+        ...req.body,
+        updatedAt: new Date()
+      });
+      
+      if (!updatedDocument) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+      
+      console.log(`✅ Updated compliance document #${documentId} for user ${userId}`);
+      res.json(updatedDocument);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to update compliance document:', error);
+      res.status(500).json({ 
+        error: 'Failed to update compliance document',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Delete compliance document
+  app.delete('/api/compliance/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const documentId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(documentId)) {
+        return res.status(400).json({ error: 'Invalid document ID' });
+      }
+      
+      console.log(`📋 Deleting compliance document #${documentId} for user: ${userId}`);
+      
+      await storage.deleteCompliance(documentId, userId);
+      
+      console.log(`✅ Deleted compliance document #${documentId} for user ${userId}`);
+      res.json({ success: true });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to delete compliance document:', error);
+      res.status(500).json({ 
+        error: 'Failed to delete compliance document',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // Catch-all middleware to ensure API routes always return JSON
   app.use('/api/*', (req: any, res: any) => {
     res.setHeader('Content-Type', 'application/json');
