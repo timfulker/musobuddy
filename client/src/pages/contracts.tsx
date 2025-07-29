@@ -401,8 +401,8 @@ export default function Contracts() {
     form.setValue('clientPhone', contract.clientPhone || '');
     form.setValue('clientAddress', contract.clientAddress || '');
     form.setValue('eventDate', contract.eventDate ? new Date(contract.eventDate).toISOString().split('T')[0] : '');
-    form.setValue('eventTime', contract.eventTime || '');
-    form.setValue('eventEndTime', contract.eventEndTime || '');
+    form.setValue('eventStartTime', contract.eventTime?.split(' - ')[0] || '');
+    form.setValue('eventFinishTime', contract.eventTime?.split(' - ')[1] || '');
     form.setValue('venue', contract.venue || '');
     form.setValue('venueAddress', contract.venueAddress || '');
     form.setValue('fee', contract.fee);
@@ -585,7 +585,7 @@ export default function Contracts() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen">
-        {isDesktop && <Sidebar />}
+        {isDesktop && <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
         <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -603,7 +603,7 @@ export default function Contracts() {
   if (error) {
     return (
       <div className="flex min-h-screen">
-        {isDesktop && <Sidebar />}
+        {isDesktop && <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
         <div className={`flex-1 p-4 ${isDesktop ? 'ml-64' : ''}`}>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -1133,7 +1133,7 @@ export default function Contracts() {
                                 </div>
                                 <div>
                                   <span className="font-medium">Date:</span>
-                                  <p className="text-gray-900 dark:text-gray-100">{formatDate(contract.eventDate)}</p>
+                                  <p className="text-gray-900 dark:text-gray-100">{formatDate(contract.eventDate?.toString() || '')}</p>
                                 </div>
                               </div>
                             </div>
@@ -1254,7 +1254,7 @@ export default function Contracts() {
                       <div className="text-sm text-gray-600 space-y-1">
                         <p><strong>Client:</strong> {contractToSend.clientName}</p>
                         <p><strong>Email:</strong> {contractToSend.clientEmail}</p>
-                        <p><strong>Event:</strong> {formatDate(contractToSend.eventDate)} at {contractToSend.venue}</p>
+                        <p><strong>Event:</strong> {formatDate(contractToSend.eventDate?.toString() || '')} at {contractToSend.venue}</p>
                         <p><strong>Fee:</strong> £{contractToSend.fee}</p>
                       </div>
                     </div>
