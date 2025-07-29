@@ -169,7 +169,7 @@ export class MailgunService {
       await page.setContent(contractHTML, { waitUntil: 'networkidle0' });
       
       console.log('🖨️ Generating PDF from HTML...');
-      const pdfBuffer = await page.pdf({
+      const pdfBuffer = Buffer.from(await page.pdf({
         format: 'A4',
         margin: {
           top: '20mm',
@@ -178,7 +178,7 @@ export class MailgunService {
           left: '20mm'
         },
         printBackground: true
-      });
+      }));
       
       await browser.close();
       console.log('✅ HTML-to-PDF contract generated, size:', pdfBuffer.length, 'bytes');
