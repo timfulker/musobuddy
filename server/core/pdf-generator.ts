@@ -267,7 +267,7 @@ function generateContractHTML(
           <h4>Client</h4>
           <div class="signature-box ${contract.status === 'signed' ? 'signed-box' : ''}">
             ${contract.status === 'signed' && signatureDetails ? `
-              <p><strong>Signed by:</strong> ${signatureDetails.signatureName || 'Digital Signature'}</p>
+              <p><strong>Signed by:</strong> ${signatureDetails.signatureName || contract.clientName}</p>
               <p><strong>Date:</strong> ${signatureDetails.signedAt.toLocaleDateString('en-GB')} at ${signatureDetails.signedAt.toLocaleTimeString('en-GB')}</p>
               <p><strong>Status:</strong> Digitally Signed</p>
             ` : `
