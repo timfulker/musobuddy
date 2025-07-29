@@ -276,10 +276,36 @@ export async function registerRoutes(app: Express) {
       
       console.log(`✅ Contract #${contractId} access authorized for user ${userId}`);
       
-      // Try cloud storage first
+      // FIXED: Generate PDF locally instead of redirecting to avoid CORS issues
       if (contract.cloudStorageUrl) {
-        console.log(`🌐 Redirecting to cloud storage: ${contract.cloudStorageUrl}`);
-        return res.redirect(contract.cloudStorageUrl);
+        console.log('🌐 Cloud URL available, but generating PDF locally to avoid CORS issues');
+        
+        try {
+          const userSettings = await storage.getUserSettings(userId);
+          const { generateContractPDF } = await import('./pdf-generator');
+          
+          // Include signature details if contract is signed
+          const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+            signedAt: new Date(contract.signedAt),
+            signatureName: contract.clientSignature,
+            clientIpAddress: contract.clientIpAddress
+          } : undefined;
+          
+          const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+          
+          // Set headers for direct PDF download
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
+          res.setHeader('Content-Length', pdfBuffer.length.toString());
+          
+          console.log(`✅ PDF generated locally and served: ${pdfBuffer.length} bytes`);
+          return res.send(pdfBuffer);
+          
+        } catch (pdfError: any) {
+          console.error('❌ Local PDF generation failed, trying cloud redirect:', pdfError);
+          // Fallback to cloud redirect if local generation fails
+          return res.redirect(contract.cloudStorageUrl);
+        }
       }
       
       // Fallback: Generate PDF on-demand

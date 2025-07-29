@@ -186,33 +186,46 @@ export default function ViewContract() {
     try {
       console.log('📄 Downloading contract PDF:', contract.id);
       
-      const response = await fetch(`/api/contracts/${contract.id}/download`, {
-        credentials: 'include'
-      });
+      // FIXED: Use direct link approach instead of fetch() to avoid CORS issues
+      const downloadUrl = `/api/contracts/${contract.id}/download`;
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      // Create direct download link (works with redirects, no CORS issues)
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf`;
+      link.target = '_blank'; // Open in new tab as fallback
+      link.style.display = 'none';
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Contract-${contract.contractNumber}-${contract.status === 'signed' ? 'Signed' : 'Draft'}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log('✅ PDF download initiated successfully');
       
       toast({
-        title: "Success",
-        description: "Contract PDF downloaded successfully!",
+        title: "Download Started",
+        description: "Contract PDF download has been initiated",
       });
+      
     } catch (error: any) {
       console.error('❌ Error downloading contract:', error);
-      toast({
-        title: "Error",
-        description: "Failed to download contract PDF. " + (error.message || ''),
-        variant: "destructive",
-      });
+      
+      // Fallback: Open in new window if direct download fails
+      try {
+        const downloadUrl = `/api/contracts/${contract.id}/download`;
+        window.open(downloadUrl, '_blank');
+        
+        toast({
+          title: "PDF Opened",
+          description: "Contract PDF opened in new tab. You can save it from there.",
+        });
+      } catch (fallbackError) {
+        toast({
+          title: "Download Failed",
+          description: "Unable to download contract PDF. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
