@@ -127,29 +127,61 @@ export async function registerRoutes(app: Express) {
   app.get('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-      console.log(`🔍 Settings fetch request for user: ${userId}`);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`⚙️ Fetching settings for user: ${userId}`);
       
       const settings = await storage.getUserSettings(userId);
-      console.log(`✅ Settings retrieved for user ${userId}`);
+      
+      if (!settings) {
+        // Return default empty settings instead of 404
+        console.log(`📝 No settings found for user ${userId}, returning defaults`);
+        return res.json({
+          userId: userId,
+          businessName: '',
+          businessEmail: '',
+          businessAddress: '',
+          phone: '',
+          website: '',
+          bankDetails: '',
+          defaultTerms: ''
+        });
+      }
+      
+      console.log(`✅ Settings found for user ${userId}`);
       res.json(settings);
+      
     } catch (error: any) {
-      console.error('❌ Settings fetch error:', error);
-      res.status(500).json({ error: 'Failed to fetch settings' });
+      console.error('❌ Failed to fetch user settings:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch user settings',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
-  app.post('/api/settings', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-      const settingsData = req.body;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
-      console.log(`🔍 Settings update request for user: ${userId}`);
-      const updatedSettings = await storage.updateUserSettings(userId, settingsData);
+      console.log(`⚙️ Updating settings for user: ${userId}`, req.body);
+      
+      const updatedSettings = await storage.updateSettings(userId, req.body);
+      
       console.log(`✅ Settings updated for user ${userId}`);
       res.json(updatedSettings);
+      
     } catch (error: any) {
-      console.error('❌ Settings update error:', error);
-      res.status(500).json({ error: 'Failed to update settings' });
+      console.error('❌ Failed to update user settings:', error);
+      res.status(500).json({ 
+        error: 'Failed to update user settings',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -211,6 +243,83 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error('❌ Template delete error:', error);
       res.status(500).json({ error: 'Failed to delete template' });
+    }
+  });
+
+  // ===== CONTRACT DOWNLOAD ROUTE =====
+  app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`📄 Download request for contract #${contractId} by user ${userId}`);
+      
+      // Get contract and verify ownership
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        console.log(`❌ Contract #${contractId} not found`);
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      if (contract.userId !== userId) {
+        console.log(`❌ User ${userId} denied access to contract #${contractId} (owned by ${contract.userId})`);
+        return res.status(403).json({ error: 'Access denied - you do not own this contract' });
+      }
+      
+      console.log(`✅ Contract #${contractId} access authorized for user ${userId}`);
+      
+      // Try cloud storage first
+      if (contract.cloudStorageUrl) {
+        console.log(`🌐 Redirecting to cloud storage: ${contract.cloudStorageUrl}`);
+        return res.redirect(contract.cloudStorageUrl);
+      }
+      
+      // Fallback: Generate PDF on-demand
+      console.log('🔄 Generating PDF on-demand (no cloud URL available)...');
+      
+      try {
+        const userSettings = await storage.getUserSettings(userId);
+        const { generateContractPDF } = await import('./pdf-generator');
+        
+        // Include signature details if contract is signed
+        const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+          signedAt: new Date(contract.signedAt),
+          signatureName: contract.clientSignature,
+          clientIpAddress: contract.clientIpAddress
+        } : undefined;
+        
+        const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+        
+        // Set appropriate headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length.toString());
+        
+        console.log(`✅ PDF generated and served: ${pdfBuffer.length} bytes`);
+        res.send(pdfBuffer);
+        
+      } catch (pdfError: any) {
+        console.error('❌ PDF generation failed:', pdfError);
+        return res.status(500).json({ 
+          error: 'Failed to generate contract PDF',
+          details: process.env.NODE_ENV === 'development' ? pdfError.message : undefined
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Contract download error:', error);
+      res.status(500).json({ 
+        error: 'Failed to download contract',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
