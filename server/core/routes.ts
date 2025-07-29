@@ -123,6 +123,97 @@ export async function registerRoutes(app: Express) {
 
   // Session restoration route moved to auth-rebuilt.ts to avoid duplication
 
+  // ===== SETTINGS API =====
+  app.get('/api/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      console.log(`🔍 Settings fetch request for user: ${userId}`);
+      
+      const settings = await storage.getUserSettings(userId);
+      console.log(`✅ Settings retrieved for user ${userId}`);
+      res.json(settings);
+    } catch (error: any) {
+      console.error('❌ Settings fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  app.post('/api/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const settingsData = req.body;
+      
+      console.log(`🔍 Settings update request for user: ${userId}`);
+      const updatedSettings = await storage.updateUserSettings(userId, settingsData);
+      console.log(`✅ Settings updated for user ${userId}`);
+      res.json(updatedSettings);
+    } catch (error: any) {
+      console.error('❌ Settings update error:', error);
+      res.status(500).json({ error: 'Failed to update settings' });
+    }
+  });
+
+  // ===== EMAIL TEMPLATES API =====
+  app.get('/api/templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      console.log(`🔍 Templates fetch request for user: ${userId}`);
+      
+      const templates = await storage.getEmailTemplates(userId);
+      console.log(`✅ Templates retrieved for user ${userId}`);
+      res.json(templates);
+    } catch (error: any) {
+      console.error('❌ Templates fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch templates' });
+    }
+  });
+
+  app.post('/api/templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const templateData = req.body;
+      
+      console.log(`🔍 Template create request for user: ${userId}`);
+      const newTemplate = await storage.createEmailTemplate(userId, templateData);
+      console.log(`✅ Template created for user ${userId}`);
+      res.json(newTemplate);
+    } catch (error: any) {
+      console.error('❌ Template create error:', error);
+      res.status(500).json({ error: 'Failed to create template' });
+    }
+  });
+
+  app.put('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const templateId = req.params.id;
+      const templateData = req.body;
+      
+      console.log(`🔍 Template update request for user: ${userId}, template: ${templateId}`);
+      const updatedTemplate = await storage.updateEmailTemplate(templateId, templateData, userId);
+      console.log(`✅ Template updated for user ${userId}`);
+      res.json(updatedTemplate);
+    } catch (error: any) {
+      console.error('❌ Template update error:', error);
+      res.status(500).json({ error: 'Failed to update template' });
+    }
+  });
+
+  app.delete('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const templateId = req.params.id;
+      
+      console.log(`🔍 Template delete request for user: ${userId}, template: ${templateId}`);
+      await storage.deleteEmailTemplate(templateId, userId);
+      console.log(`✅ Template deleted for user ${userId}`);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('❌ Template delete error:', error);
+      res.status(500).json({ error: 'Failed to delete template' });
+    }
+  });
+
   // ===== EMAIL SETUP API =====
   app.get('/api/email/my-address', async (req: any, res) => {
     try {
