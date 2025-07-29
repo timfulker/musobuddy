@@ -357,15 +357,53 @@ export async function registerRoutes(app: Express) {
   // Create new contract
   app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('📝 Contract creation request:', {
+        body: req.body,
+        userId: req.session.userId,
+        hasContractNumber: !!req.body.contractNumber,
+        environment: process.env.NODE_ENV,
+        isProduction: !!process.env.REPLIT_DEPLOYMENT
+      });
+      
+      // Generate contract number if not provided
+      const contractNumber = req.body.contractNumber || 
+        `(${new Date(req.body.eventDate).toLocaleDateString('en-GB', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        })} - ${req.body.clientName})`;
+      
       const contractData = {
         ...req.body,
-        userId: req.session.userId
+        userId: req.session.userId,
+        contractNumber,
+        // Ensure required fields have defaults
+        deposit: req.body.deposit || "0.00",
+        paymentInstructions: req.body.paymentInstructions || "",
+        equipmentRequirements: req.body.equipmentRequirements || "",
+        specialRequirements: req.body.specialRequirements || ""
       };
+      
+      console.log('📝 Processed contract data:', {
+        contractNumber,
+        clientName: contractData.clientName,
+        eventDate: contractData.eventDate,
+        eventTime: contractData.eventTime,
+        fee: contractData.fee
+      });
+      
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
       res.json(newContract);
     } catch (error) {
       console.error('❌ Failed to create contract:', error);
+      console.error('❌ Contract creation error details:', {
+        message: (error as any).message,
+        code: (error as any).code,
+        detail: (error as any).detail,
+        table: (error as any).table,
+        column: (error as any).column
+      });
       res.status(500).json({ error: 'Failed to create contract' });
     }
   });
