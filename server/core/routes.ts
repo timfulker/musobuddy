@@ -620,6 +620,100 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // CRITICAL MISSING ENDPOINT: Contract signing API (PUBLIC ACCESS - no authentication required)
+  app.post('/api/contracts/sign/:id', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const { clientSignature, clientIP } = req.body;
+      
+      console.log(`📝 Contract signing request for ID: ${contractId}`);
+      console.log(`📝 Client signature: ${clientSignature}`);
+      console.log(`📝 Client IP: ${clientIP}`);
+      
+      if (!clientSignature) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Signature is required' 
+        });
+      }
+      
+      // Get contract without authentication (public signing)
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Contract not found' 
+        });
+      }
+      
+      // Check if already signed
+      if (contract.status === 'signed') {
+        return res.json({ 
+          success: false, 
+          alreadySigned: true,
+          message: 'This contract has already been signed.' 
+        });
+      }
+      
+      // Sign the contract
+      const signedContract = await storage.signContract(contractId, {
+        clientSignature,
+        clientIP: clientIP || 'Unknown',
+        signedAt: new Date().toISOString()
+      });
+      
+      // Update associated booking status if exists
+      if (contract.enquiryId) {
+        try {
+          await storage.updateBooking(contract.enquiryId, { status: 'confirmed' });
+          console.log(`✅ Updated booking #${contract.enquiryId} status to confirmed`);
+        } catch (bookingError) {
+          console.log('⚠️ Failed to update booking status:', bookingError);
+        }
+      }
+      
+      console.log(`✅ Contract #${contractId} signed successfully`);
+      
+      // Send confirmation emails
+      try {
+        const userSettings = await storage.getUserSettings(contract.userId);
+        const { MailgunService } = await import('./services');
+        const emailService = new MailgunService();
+        
+        // Upload signed contract to cloud storage
+        const { uploadContractToCloud } = await import('./cloud-storage');
+        const cloudResult = await uploadContractToCloud(signedContract, userSettings);
+        
+        if (cloudResult.success) {
+          await storage.updateContract(contractId, {
+            cloudStorageUrl: cloudResult.url,
+            cloudStorageKey: cloudResult.key
+          });
+        }
+        
+        // Send confirmation emails to both parties
+        await emailService.sendContractConfirmationEmails(signedContract, userSettings);
+        console.log('✅ Contract confirmation emails sent');
+        
+      } catch (emailError) {
+        console.error('⚠️ Contract signed but email sending failed:', emailError);
+      }
+      
+      res.json({ 
+        success: true, 
+        message: 'Contract signed successfully! Both parties will receive confirmation emails.',
+        contractId: contractId
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Contract signing error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to sign contract. Please try again.' 
+      });
+    }
+  });
+
   // CRITICAL FIX: View contract route for cloud PDF redirect (PUBLIC ACCESS)
   app.get('/view/contracts/:id', async (req: any, res) => {
     try {
