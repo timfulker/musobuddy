@@ -373,15 +373,31 @@ export async function registerRoutes(app: Express) {
           year: 'numeric' 
         })} - ${req.body.clientName})`;
       
+      // Validate required fields first
+      if (!req.body.clientName || !req.body.eventDate || !req.body.fee) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: clientName, eventDate, and fee are required' 
+        });
+      }
+
       const contractData = {
-        ...req.body,
         userId: req.session.userId,
         contractNumber,
-        // Ensure required fields have defaults
+        clientName: req.body.clientName,
+        clientEmail: req.body.clientEmail || null,
+        clientAddress: req.body.clientAddress || null,
+        clientPhone: req.body.clientPhone || null,
+        venue: req.body.venue || null,
+        venueAddress: req.body.venueAddress || null,
+        eventDate: req.body.eventDate,
+        eventTime: req.body.eventTime || null,
+        eventEndTime: req.body.eventEndTime || null,
+        fee: req.body.fee,
         deposit: req.body.deposit || "0.00",
-        paymentInstructions: req.body.paymentInstructions || "",
-        equipmentRequirements: req.body.equipmentRequirements || "",
-        specialRequirements: req.body.specialRequirements || ""
+        paymentInstructions: req.body.paymentInstructions || null,
+        equipmentRequirements: req.body.equipmentRequirements || null,
+        specialRequirements: req.body.specialRequirements || null,
+        enquiryId: req.body.enquiryId || null
       };
       
       console.log('📝 Processed contract data:', {

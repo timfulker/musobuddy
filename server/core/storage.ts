@@ -212,15 +212,46 @@ export class Storage {
   }
 
   async createContract(contractData: any) {
-    // Convert date strings to Date objects for timestamp fields
+    // Convert date strings to Date objects for timestamp fields and ensure all required fields are present
     const processedData = {
-      ...contractData,
-      eventDate: contractData.eventDate ? new Date(contractData.eventDate) : null,
+      userId: contractData.userId,
+      contractNumber: contractData.contractNumber,
+      clientName: contractData.clientName,
+      clientEmail: contractData.clientEmail || null,
+      clientAddress: contractData.clientAddress || null,
+      clientPhone: contractData.clientPhone || null,
+      venue: contractData.venue || null,
+      venueAddress: contractData.venueAddress || null,
+      eventDate: contractData.eventDate ? new Date(contractData.eventDate) : new Date(),
+      eventTime: contractData.eventTime || null,
+      eventEndTime: contractData.eventEndTime || null,
+      fee: contractData.fee || "0.00",
+      deposit: contractData.deposit || "0.00",
+      paymentInstructions: contractData.paymentInstructions || null,
+      equipmentRequirements: contractData.equipmentRequirements || null,
+      specialRequirements: contractData.specialRequirements || null,
+      clientFillableFields: contractData.clientFillableFields || null,
+      status: contractData.status || "draft",
       signedAt: contractData.signedAt ? new Date(contractData.signedAt) : null,
+      cloudStorageUrl: contractData.cloudStorageUrl || null,
+      cloudStorageKey: contractData.cloudStorageKey || null,
+      signingPageUrl: contractData.signingPageUrl || null,
+      signingPageKey: contractData.signingPageKey || null,
       signingUrlCreatedAt: contractData.signingUrlCreatedAt ? new Date(contractData.signingUrlCreatedAt) : null,
+      clientSignature: contractData.clientSignature || null,
+      clientIpAddress: contractData.clientIpAddress || null,
+      enquiryId: contractData.enquiryId || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
+    
+    console.log('💾 Creating contract with processed data:', {
+      userId: processedData.userId,
+      contractNumber: processedData.contractNumber,
+      clientName: processedData.clientName,
+      eventDate: processedData.eventDate,
+      fee: processedData.fee
+    });
     
     const result = await db.insert(contracts).values(processedData).returning();
     return result[0];
