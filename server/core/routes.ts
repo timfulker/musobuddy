@@ -705,11 +705,12 @@ export async function registerRoutes(app: Express) {
   app.post('/api/contracts/sign/:id', async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const { clientSignature, clientIP } = req.body;
+      const { clientSignature, clientIP, clientPhone, clientAddress, venueAddress } = req.body;
       
       console.log(`📝 Contract signing request for ID: ${contractId}`);
       console.log(`📝 Client signature: ${clientSignature}`);
       console.log(`📝 Client IP: ${clientIP}`);
+      console.log(`📝 All form data:`, req.body);
       
       if (!clientSignature) {
         return res.status(400).json({ 
@@ -734,6 +735,18 @@ export async function registerRoutes(app: Express) {
           alreadySigned: true,
           message: 'This contract has already been signed.' 
         });
+      }
+      
+      // Update contract with additional information from form and sign it
+      const updateData: any = {};
+      if (clientPhone) updateData.clientPhone = clientPhone;
+      if (clientAddress) updateData.clientAddress = clientAddress;
+      if (venueAddress) updateData.venueAddress = venueAddress;
+      
+      // Update contract with additional info if provided
+      if (Object.keys(updateData).length > 0) {
+        await storage.updateContract(contractId, updateData);
+        console.log(`📝 Updated contract with additional info:`, updateData);
       }
       
       // Sign the contract
