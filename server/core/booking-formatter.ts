@@ -1,6 +1,6 @@
 /**
- * Single source of truth for booking data formatting
- * All booking data transformations should go through this utility
+ * FIXED: Single source of truth for booking data formatting
+ * Handles database field migration and ensures consistent frontend format
  */
 
 export interface FormattedBooking {
@@ -11,9 +11,9 @@ export interface FormattedBooking {
   clientEmail?: string;
   clientPhone?: string;
   eventDate?: Date;
-  // Unified time fields for frontend compatibility
-  eventTime?: string; // Start time from database (mapped from event_start_time)
-  eventEndTime?: string; // End time from database (mapped from event_finish_time)
+  // FIXED: Guaranteed string fields (never undefined) for consistent frontend usage
+  eventTime: string; // Always a string, empty if not set
+  eventEndTime: string; // Always a string, empty if not set
   performanceDuration?: string;
   venue?: string;
   eventType?: string;
@@ -58,16 +58,60 @@ export interface FormattedBooking {
 }
 
 /**
- * Format a single booking from raw database data
+ * MIGRATION-SAFE: Format a single booking from raw database data
+ * Handles both old field names (during migration) and new field names
  */
 export function formatBooking(rawBooking: any): FormattedBooking {
-  if (!rawBooking) return rawBooking;
+  if (!rawBooking) {
+    console.warn('formatBooking called with null/undefined booking');
+    return null as any;
+  }
   
-  const formatted: FormattedBooking = { ...rawBooking };
+  const formatted: FormattedBooking = { 
+    ...rawBooking,
+    // CRITICAL: Ensure eventTime/eventEndTime are always strings
+    eventTime: '',
+    eventEndTime: '',
+    title: rawBooking.title || rawBooking.eventType || 'Untitled Event',
+    clientName: rawBooking.clientName || 'Unknown Client',
+    status: rawBooking.status || 'new'
+  };
   
-  // Map database field names to frontend expectations
-  formatted.eventTime = rawBooking.event_start_time || rawBooking.eventStartTime || null;
-  formatted.eventEndTime = rawBooking.event_finish_time || rawBooking.eventFinishTime || null;
+  // MIGRATION LOGIC: Handle both old and new field names
+  // Priority: new fields → old fields → fallback
+  
+  // Event time mapping with migration support
+  if (rawBooking.eventTime) {
+    // New schema: direct field access
+    formatted.eventTime = rawBooking.eventTime;
+  } else if (rawBooking.event_start_time) {
+    // Legacy schema: underscore field name
+    formatted.eventTime = rawBooking.event_start_time;
+  } else if (rawBooking.eventStartTime) {
+    // Alternative camelCase field name
+    formatted.eventTime = rawBooking.eventStartTime;
+  } else {
+    // Fallback to empty string for consistency
+    formatted.eventTime = '';
+  }
+  
+  // Event end time mapping with migration support
+  if (rawBooking.eventEndTime) {
+    // New schema: direct field access
+    formatted.eventEndTime = rawBooking.eventEndTime;
+  } else if (rawBooking.event_end_time) {
+    // Legacy schema: underscore field name
+    formatted.eventEndTime = rawBooking.event_end_time;
+  } else if (rawBooking.event_finish_time) {
+    // Legacy schema: alternative field name
+    formatted.eventEndTime = rawBooking.event_finish_time;
+  } else if (rawBooking.eventFinishTime) {
+    // Alternative camelCase field name
+    formatted.eventEndTime = rawBooking.eventFinishTime;
+  } else {
+    // Fallback to empty string for consistency
+    formatted.eventEndTime = '';
+  }
   
   return formatted;
 }

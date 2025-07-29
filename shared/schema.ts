@@ -275,8 +275,9 @@ export const bookings = pgTable("bookings", {
   clientEmail: varchar("client_email"),
   clientPhone: varchar("client_phone"),
   eventDate: timestamp("event_date"),
-  eventStartTime: varchar("event_start_time"), // Start time for performance  
-  eventFinishTime: varchar("event_finish_time"), // Finish time for performance
+  // FIXED: Consistent field naming that matches frontend expectations
+  eventTime: varchar("event_time"), // Changed from event_start_time to event_time
+  eventEndTime: varchar("event_end_time"), // Changed from event_finish_time to event_end_time
   performanceDuration: text("performance_duration"), // Duration as text (e.g., "2 hours", "90 minutes")
   venue: varchar("venue"),
   venueAddress: text("venue_address"),
@@ -622,6 +623,25 @@ export const insertClientSchema = createInsertSchema(clients).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+// UPDATED TYPE DEFINITIONS with consistent field mapping
+export type Booking = typeof bookings.$inferSelect;
+export type Contract = typeof contracts.$inferSelect;
+export type Invoice = typeof invoices.$inferSelect;
+export type Client = typeof clients.$inferSelect;
+export type ComplianceDocument = typeof complianceDocuments.$inferSelect;
+export type UserSettings = typeof userSettings.$inferSelect;
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+
+// Enhanced Booking type with guaranteed field presence for frontend
+export interface FormattedBooking extends Booking {
+  // Ensure these fields are always present as strings (never undefined)
+  eventTime: string;
+  eventEndTime: string;
+  title: string;
+  clientName: string;
+  status: string;
+}
 
 export const insertInstrumentMappingSchema = createInsertSchema(instrumentMappings).omit({
   id: true,
