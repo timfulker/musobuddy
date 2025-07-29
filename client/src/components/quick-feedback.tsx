@@ -1,31 +1,23 @@
-import { Button } from "@/components/ui/button";
-import { MessageSquare } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface QuickFeedbackProps {
-  buttonText?: string;
-  buttonSize?: "sm" | "default" | "lg";
-  buttonVariant?: "default" | "outline" | "ghost";
-}
-
-export default function QuickFeedback({ 
-  buttonText = "Feedback", 
-  buttonSize = "default",
-  buttonVariant = "default" 
-}: QuickFeedbackProps) {
-  const handleFeedbackClick = () => {
-    // Navigate to feedback page
-    window.location.href = "/feedback";
-  };
-
+export function QuickFeedback() {
   return (
-    <Button
-      onClick={handleFeedbackClick}
-      size={buttonSize}
-      variant={buttonVariant}
-      className="gap-2"
-    >
-      <MessageSquare className="h-4 w-4" />
-      {buttonText}
-    </Button>
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Feedback</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-4">
+          Help us improve MusoBuddy with your feedback
+        </p>
+        <Button variant="outline" size="sm">
+          Send Feedback
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
+
+export default QuickFeedback;
