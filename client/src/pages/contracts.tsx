@@ -244,7 +244,10 @@ export default function Contracts() {
       const contractData = {
         ...data,
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
-        enquiryId: data.enquiryId || null, // Use actual enquiry ID from form
+        enquiryId: data.enquiryId || null,
+        // Map frontend field names to backend field names
+        eventTime: data.eventStartTime || "",
+        eventEndTime: data.eventFinishTime || "",
       };
 
       return apiRequest("/api/contracts", {

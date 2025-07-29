@@ -390,8 +390,8 @@ export async function registerRoutes(app: Express) {
         venue: req.body.venue || null,
         venueAddress: req.body.venueAddress || null,
         eventDate: req.body.eventDate,
-        eventTime: req.body.eventTime || null,
-        eventEndTime: req.body.eventEndTime || null,
+        eventTime: req.body.eventTime || "", // NOT NULL constraint requires empty string, not null
+        eventEndTime: req.body.eventEndTime || "", // NOT NULL constraint requires empty string, not null
         fee: req.body.fee,
         deposit: req.body.deposit || "0.00",
         paymentInstructions: req.body.paymentInstructions || null,

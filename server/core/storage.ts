@@ -232,8 +232,8 @@ export class Storage {
             venue: contractData.venue || null,
             venueAddress: contractData.venueAddress || null,
             eventDate: contractData.eventDate ? new Date(contractData.eventDate) : new Date(),
-            eventTime: contractData.eventTime || null,
-            eventEndTime: contractData.eventEndTime || null,
+            eventTime: contractData.eventTime || "", // Handle NOT NULL constraint
+            eventEndTime: contractData.eventEndTime || "", // Handle NOT NULL constraint
             fee: contractData.fee || "0.00",
             deposit: contractData.deposit || "0.00",
             paymentInstructions: contractData.paymentInstructions || null,
