@@ -387,25 +387,23 @@ export async function registerRoutes(app: Express) {
       const userSettings = await storage.getUserSettings(req.session.userId);
       
       // Import services
-      const { MailgunEmailService } = await import('./services');
-      const emailService = new MailgunEmailService();
+      const { MailgunService } = await import('./services');
+      const emailService = new MailgunService();
       
       // Generate and upload contract PDF to cloud storage
-      const { generateContractPDF, uploadContractToCloud } = await import('./cloud-storage');
-      const pdfBuffer = await generateContractPDF(contract, userSettings);
-      const { url: pdfUrl, signingUrl } = await uploadContractToCloud(contract, pdfBuffer);
+      const { uploadContractToCloud } = await import('./cloud-storage');
+      const { url: pdfUrl } = await uploadContractToCloud(contract, userSettings);
       
       // Update contract with cloud URLs and status
       await storage.updateContract(contractId, {
         status: 'sent',
         pdfUrl,
-        signingPageUrl: signingUrl,
         sentAt: new Date()
       });
       
       // Send email with contract
       const subject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject, signingUrl);
+      await emailService.sendContractEmail(contract, userSettings, subject, pdfUrl);
       
       console.log(`✅ Contract #${contractId} sent successfully`);
       res.json({ success: true, message: 'Contract sent successfully' });
@@ -431,11 +429,11 @@ export async function registerRoutes(app: Express) {
       
       const userSettings = await storage.getUserSettings(req.session.userId);
       
-      const { MailgunEmailService } = await import('./services');
-      const emailService = new MailgunEmailService();
+      const { MailgunService } = await import('./services');
+      const emailService = new MailgunService();
       
       const subject = customMessage || `Contract reminder - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject, contract.signingPageUrl);
+      await emailService.sendContractEmail(contract, userSettings, subject);
       
       console.log(`✅ Contract #${contractId} resent successfully`);
       res.json({ success: true, message: 'Contract resent successfully' });

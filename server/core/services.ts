@@ -130,7 +130,7 @@ export class MailgunService {
       }, null, 2));
       
       console.log('📥 Testing PROFESSIONAL contract template...');
-      const { generateContractPDF: originalGenerateContractPDF } = await import('./pdf-generator-original.js');
+      const { generateContractPDF: originalGenerateContractPDF } = await import('./pdf-generator');
       console.log('✅ Professional Template imported successfully');
       
       console.log('🎯 Calling ORIGINAL working generateContractPDF...');
