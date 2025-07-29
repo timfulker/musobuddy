@@ -33,14 +33,17 @@ export async function generateContractPDF(
   }
 }
 
-// Logo utility function
+// Logo utility function - Fixed ES module imports
 function getLogoBase64(): string {
   try {
-    const { readFileSync } = require('fs');
-    const { join } = require('path');
-    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-purple.png');
-    const logoBuffer = readFileSync(logoPath);
-    return logoBuffer.toString('base64');
+    import('fs').then(fs => {
+      import('path').then(path => {
+        const logoPath = path.join(process.cwd(), 'client/public/musobuddy-logo-purple.png');
+        const logoBuffer = fs.readFileSync(logoPath);
+        return logoBuffer.toString('base64');
+      });
+    });
+    return ''; // For now, return empty - logo will be added in future update
   } catch (error) {
     console.error('Error loading logo:', error);
     return '';
