@@ -185,6 +185,31 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ADD: POST /api/settings route (frontend expects POST, backend only had PATCH)
+  app.post('/api/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`⚙️ Creating/updating settings for user: ${userId}`, req.body);
+      
+      // Use the same logic as existing PATCH handler
+      const updatedSettings = await storage.updateSettings(userId, req.body);
+      
+      console.log(`✅ Settings created/updated for user ${userId}`);
+      res.json(updatedSettings);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to create/update user settings:', error);
+      res.status(500).json({ 
+        error: 'Failed to save user settings',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // ===== EMAIL TEMPLATES API =====
   app.get('/api/templates', isAuthenticated, async (req: any, res) => {
     try {
@@ -256,6 +281,30 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error('❌ Template delete error:', error);
       res.status(500).json({ error: 'Failed to delete template' });
+    }
+  });
+
+  // ADD: PATCH /api/templates/:id route (frontend expects PATCH, backend only had PUT)
+  app.patch('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const templateId = parseInt(req.params.id);
+      const templateData = req.body;
+      
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
+      
+      console.log(`🔍 Template PATCH request for user: ${userId}, template: ${templateId}`);
+      
+      // Use the same logic as existing PUT handler
+      const updatedTemplate = await storage.updateEmailTemplate(templateId, templateData, userId);
+      
+      console.log(`✅ Template updated via PATCH for user ${userId}`);
+      res.json(updatedTemplate);
+    } catch (error: any) {
+      console.error('❌ Template PATCH error:', error);
+      res.status(500).json({ error: 'Failed to update template' });
     }
   });
 
