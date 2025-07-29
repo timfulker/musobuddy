@@ -442,21 +442,24 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Send contract via email
-  app.post('/api/contracts/:id/send', isAuthenticated, async (req: any, res) => {
+  // Send contract via email - Frontend-compatible endpoint
+  app.post('/api/contracts/send-email', isAuthenticated, async (req: any, res) => {
     try {
-      const contractId = parseInt(req.params.id);
-      const { customMessage } = req.body;
+      const { contractId, customMessage } = req.body;
+      const parsedContractId = parseInt(contractId);
       
-      console.log(`📧 Sending contract #${contractId}...`);
+      console.log(`📧 Sending contract #${parsedContractId} via send-email endpoint...`);
       
       // Get contract and user settings
-      const contract = await storage.getContract(contractId);
+      const contract = await storage.getContract(parsedContractId);
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' });
       }
       
       const userSettings = await storage.getUserSettings(req.session.userId);
+      if (!userSettings) {
+        return res.status(404).json({ error: 'User settings not found' });
+      }
       
       // Import services
       const { MailgunService } = await import('./services');
@@ -467,9 +470,9 @@ export async function registerRoutes(app: Express) {
       const { url: pdfUrl } = await uploadContractToCloud(contract, userSettings);
       
       // Update contract with cloud URLs and status
-      await storage.updateContract(contractId, {
+      await storage.updateContract(parsedContractId, {
         status: 'sent',
-        pdfUrl,
+        cloudStorageUrl: pdfUrl,
         sentAt: new Date()
       });
       
@@ -477,7 +480,7 @@ export async function registerRoutes(app: Express) {
       const subject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
       await emailService.sendContractEmail(contract, userSettings, subject, pdfUrl);
       
-      console.log(`✅ Contract #${contractId} sent successfully`);
+      console.log(`✅ Contract #${parsedContractId} sent successfully via send-email endpoint`);
       res.json({ success: true, message: 'Contract sent successfully' });
       
     } catch (error) {
