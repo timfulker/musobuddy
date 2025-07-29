@@ -103,13 +103,14 @@ export function parseBookingTime(booking: FormattedBooking): { startTime: string
 }
 
 /**
- * Check if two bookings have overlapping times
+ * Check if two bookings have overlapping times or missing times (hard conflicts)
  */
 export function hasTimeOverlap(booking1: FormattedBooking, booking2: FormattedBooking): boolean {
   const time1 = parseBookingTime(booking1);
   const time2 = parseBookingTime(booking2);
   
-  if (!time1 || !time2) return false;
+  // CRITICAL FIX: Missing times = Hard conflicts (cannot determine overlap)
+  if (!time1 || !time2) return true;
   
   // Convert times to minutes for comparison
   const parseTime = (timeStr: string): number => {

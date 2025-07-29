@@ -369,9 +369,22 @@ export async function registerRoutes(app: Express) {
           
           // Check if same date
           if (date1 === date2) {
-            // Use unified time overlap detection
-            const timeOverlap = hasTimeOverlap(booking1, booking2);
-            const severity = timeOverlap ? 'hard' : 'soft';
+            // CRITICAL FIX: Missing times should create hard conflicts
+            const time1 = booking1.eventStartTime && booking1.eventFinishTime;
+            const time2 = booking2.eventStartTime && booking2.eventFinishTime;
+            
+            let severity = 'soft'; // Default to soft for same day
+            let timeOverlap = false;
+            
+            if (!time1 || !time2) {
+              // Missing times = Hard conflict (red)
+              severity = 'hard';
+              timeOverlap = false;
+            } else {
+              // Both have times - check for actual overlap
+              timeOverlap = hasTimeOverlap(booking1, booking2);
+              severity = timeOverlap ? 'hard' : 'soft';
+            }
             
             const timeDisplay2 = booking2.eventStartTime && booking2.eventFinishTime 
               ? `${booking2.eventStartTime} - ${booking2.eventFinishTime}`

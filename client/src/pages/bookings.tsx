@@ -188,32 +188,40 @@ export default function UnifiedBookings() {
             let severity = 'soft'; // Default to soft conflict for same day
             let hasTimeOverlap = false;
             
-            // Proper time overlap check using same logic as backend
-            try {
-              if (booking.eventTime && other.eventTime && 
-                  booking.eventTime.includes(' - ') && other.eventTime.includes(' - ')) {
-                
-                const [bookingStart, bookingEnd] = booking.eventTime.split(' - ');
-                const [otherStart, otherEnd] = other.eventTime.split(' - ');
-                
-                // Convert times to minutes for accurate comparison
-                const parseTime = (timeStr: string): number => {
-                  const [hours, minutes] = timeStr.trim().split(':').map(Number);
-                  return hours * 60 + (minutes || 0);
-                };
-                
-                const start1 = parseTime(bookingStart);
-                const end1 = parseTime(bookingEnd);
-                const start2 = parseTime(otherStart);
-                const end2 = parseTime(otherEnd);
-                
-                // Proper overlap detection: start1 < end2 && end1 > start2
-                hasTimeOverlap = start1 < end2 && end1 > start2;
-                severity = hasTimeOverlap ? 'hard' : 'soft';
+            // CRITICAL FIX: Missing times = Hard conflicts (red) because overlap cannot be determined
+            if (!booking.eventTime || !other.eventTime) {
+              // If either booking has no time specified, it's a hard conflict
+              severity = 'hard';
+              hasTimeOverlap = false; // Not a time overlap, but still hard conflict
+            } else {
+              // Both bookings have times - check for actual overlap
+              try {
+                if (booking.eventTime.includes(' - ') && other.eventTime.includes(' - ')) {
+                  const [bookingStart, bookingEnd] = booking.eventTime.split(' - ');
+                  const [otherStart, otherEnd] = other.eventTime.split(' - ');
+                  
+                  // Convert times to minutes for accurate comparison
+                  const parseTime = (timeStr: string): number => {
+                    const [hours, minutes] = timeStr.trim().split(':').map(Number);
+                    return hours * 60 + (minutes || 0);
+                  };
+                  
+                  const start1 = parseTime(bookingStart);
+                  const end1 = parseTime(bookingEnd);
+                  const start2 = parseTime(otherStart);
+                  const end2 = parseTime(otherEnd);
+                  
+                  // Proper overlap detection: start1 < end2 && end1 > start2
+                  hasTimeOverlap = start1 < end2 && end1 > start2;
+                  severity = hasTimeOverlap ? 'hard' : 'soft';
+                } else {
+                  // Times exist but not in expected format - treat as hard conflict
+                  severity = 'hard';
+                }
+              } catch (error) {
+                // Parsing failed - treat as hard conflict for safety
+                severity = 'hard';
               }
-            } catch (error) {
-              // Keep as soft conflict if parsing fails (same day, unknown times)
-              severity = 'soft';
             }
             
             return {
