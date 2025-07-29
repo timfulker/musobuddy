@@ -118,10 +118,10 @@ export class MailgunService {
     }
   }
 
-  // AUTOMATIC PROFESSIONAL CONTRACT PDF GENERATION
+  // AUTOMATIC PROFESSIONAL CONTRACT PDF GENERATION - HTML-TO-PDF SYSTEM RESTORED
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
     try {
-      console.log('🚀 STARTING PDF GENERATION WITH NEW TEMPLATE...');
+      console.log('🚀 STARTING HTML-TO-PDF CONTRACT GENERATION (RESTORED SYSTEM)...');
       console.log('📊 Contract data:', JSON.stringify({
         id: contract.id,
         clientName: contract.clientName,
@@ -129,13 +129,9 @@ export class MailgunService {
         fee: contract.fee
       }, null, 2));
       
-      console.log('📥 Loading BEAUTIFUL PROFESSIONAL contract template...');
-      const { generateProfessionalContract } = await import('./new-contract-template');
-      console.log('✅ Beautiful Professional Template imported successfully');
-      
-      console.log('🎯 Calling BEAUTIFUL PROFESSIONAL contract template...');
-      const result = await generateProfessionalContract(contract, userSettings);
-      console.log('✅ ORIGINAL generateContractPDF completed, buffer size:', result.length);
+      console.log('🎨 Using RESTORED HTML-to-PDF system for beautiful contracts...');
+      const result = await this.generateContractHTMLPDF(contract, userSettings);
+      console.log('✅ HTML-to-PDF contract completed, buffer size:', result.length, 'bytes');
       
       return result;
     } catch (error: any) {
@@ -151,7 +147,375 @@ export class MailgunService {
 
 
 
-  // REMOVED OLD HTML CONTRACT GENERATION - Now uses PDFKit template exclusively
+  // HTML CONTRACT GENERATION - RESTORED for beautiful professional contracts
+  async generateContractHTMLPDF(contract: any, userSettings: any): Promise<Buffer> {
+    try {
+      console.log('🚀 STARTING HTML-TO-PDF CONTRACT GENERATION...');
+      
+      // Import Puppeteer for HTML-to-PDF generation  
+      const puppeteer = await import('puppeteer');
+      
+      console.log('🎨 Generating professional HTML contract template...');
+      const contractHTML = this.generateProfessionalContractHTML(contract, userSettings);
+      
+      console.log('🚀 Launching Puppeteer browser...');
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      });
+      
+      const page = await browser.newPage();
+      console.log('📄 Setting HTML content...');
+      await page.setContent(contractHTML, { waitUntil: 'networkidle0' });
+      
+      console.log('🖨️ Generating PDF from HTML...');
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        margin: {
+          top: '20mm',
+          right: '20mm', 
+          bottom: '20mm',
+          left: '20mm'
+        },
+        printBackground: true
+      });
+      
+      await browser.close();
+      console.log('✅ HTML-to-PDF contract generated, size:', pdfBuffer.length, 'bytes');
+      
+      return pdfBuffer;
+      
+    } catch (error: any) {
+      console.error('❌ HTML contract generation failed:', error);
+      console.log('🔄 Falling back to PDFKit template...');
+      
+      // Fallback to PDFKit if Puppeteer fails
+      const { generateProfessionalContract } = await import('./new-contract-template');
+      return await generateProfessionalContract(contract, userSettings);
+    }
+  }
+
+  // Professional HTML Contract Template - Andy Urquahart Style
+  generateProfessionalContractHTML(contract: any, userSettings: any): string {
+    const formatDate = (date: any) => {
+      if (!date) return 'Date TBC';
+      return new Date(date).toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+    };
+
+    const formatTime = (time: any) => {
+      if (!time) return 'Time TBC';
+      return time;
+    };
+
+    const clientAddress = this.formatAddress(contract.clientAddress);
+    const performerAddress = this.formatPerformerAddress(userSettings);
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Contract</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background: white;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #9333ea;
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .header .subtitle {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        
+        .draft-status {
+            background: #f3f4f6;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            color: #6b7280;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-header {
+            background: #2563eb;
+            color: white;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+        
+        .detail-block {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #9333ea;
+        }
+        
+        .detail-block h4 {
+            margin: 0 0 10px 0;
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .detail-block p {
+            margin: 5px 0;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .event-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .event-table th,
+        .event-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+            font-size: 12px;
+        }
+        
+        .event-table th {
+            background: #f3f4f6;
+            font-weight: bold;
+            color: #374151;
+        }
+        
+        .event-table tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        
+        .terms-section {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 25px 0;
+            border-left: 4px solid #2563eb;
+        }
+        
+        .terms-section h4 {
+            color: #2563eb;
+            margin: 0 0 15px 0;
+            font-size: 14px;
+        }
+        
+        .terms-section p {
+            margin: 8px 0;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        .signature-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+        
+        .signature-boxes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .signature-box {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 4px;
+            border: 2px dashed #d1d5db;
+        }
+        
+        .signature-line {
+            border-bottom: 2px solid #374151;
+            width: 200px;
+            margin: 20px auto 10px auto;
+            height: 30px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 15px;
+            background: #9333ea;
+            color: white;
+            font-size: 10px;
+            border-radius: 4px;
+        }
+        
+        @media print {
+            body { margin: 0; }
+            .header, .footer { background: #9333ea !important; }
+            .section-header { background: #2563eb !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PERFORMANCE CONTRACT</h1>
+        <div class="subtitle">(${formatDate(contract.eventDate)} - ${contract.clientName || 'Client'})</div>
+    </div>
+    
+    <div class="draft-status">DRAFT</div>
+    
+    <div class="details-grid">
+        <div class="detail-block">
+            <h4>PERFORMER DETAILS</h4>
+            <p><strong>${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'}</strong></p>
+            <p>${userSettings?.businessName || 'Tim Fulker Music'}</p>
+            <p>${performerAddress}</p>
+            <p>Phone: ${userSettings?.phone || '07765190034'}</p>
+            <p>Email: ${userSettings?.email || 'timfulkermusic@gmail.com'}</p>
+        </div>
+        
+        <div class="detail-block">
+            <h4>CLIENT DETAILS</h4>
+            <p><strong>${contract.clientName || 'Client name not provided'}</strong></p>
+            <p>${clientAddress}</p>
+            <p>Phone: ${contract.clientPhone || 'Phone not provided'}</p>
+            <p>Email: ${contract.clientEmail || 'Email not provided'}</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-header">EVENT DETAILS</div>
+        <table class="event-table">
+            <tr>
+                <th>Event Date</th>
+                <td>${formatDate(contract.eventDate)}</td>
+            </tr>
+            <tr>
+                <th>Event Time</th>
+                <td>${formatTime(contract.eventStartTime)} - ${formatTime(contract.eventFinishTime)}</td>
+            </tr>
+            <tr>
+                <th>Venue</th>
+                <td>${contract.venue || 'Venue TBC'}</td>
+            </tr>
+            <tr>
+                <th>Venue Address</th>
+                <td>${contract.venueAddress || 'Address TBC'}</td>
+            </tr>
+            <tr>
+                <th>Performance Fee</th>
+                <td><strong>£${contract.fee || 'TBC'}</strong></td>
+            </tr>
+            <tr>
+                <th>Equipment</th>
+                <td>${contract.equipmentRequirements || 'Standard setup - microphone and suitable power supply'}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="terms-section">
+        <h4>PAYMENT TERMS</h4>
+        <p>Payment of the performance fee is due within 30 days of the event date unless otherwise agreed in writing. Late payments may incur additional charges.</p>
+        
+        <h4>CANCELLATION POLICY</h4>
+        <p>Client cancellations more than 4 weeks before the event: Full refund less £50 administration fee. Client cancellations 2-4 weeks before: 50% refund. Client cancellations less than 2 weeks before: No refund. Performer reserves the right to cancel due to illness or emergency with full refund.</p>
+        
+        <h4>FORCE MAJEURE</h4>
+        <p>Neither party shall be liable for failure to perform due to circumstances beyond reasonable control including but not limited to acts of God, government restrictions, pandemics, or venue closure.</p>
+        
+        <h4>PERFORMANCE STANDARDS</h4>
+        <p>The performer will provide professional musical entertainment suitable for the occasion. Any specific musical requests should be discussed in advance. The performer reserves the right to refuse inappropriate requests.</p>
+        
+        <h4>PROFESSIONAL INSURANCE</h4>
+        <p>The performer maintains comprehensive public liability insurance. Certificates available upon request.</p>
+    </div>
+    
+    <div class="signature-section">
+        <h4 style="text-align: center; margin-bottom: 20px;">AGREEMENT SIGNATURES</h4>
+        
+        <div class="signature-boxes">
+            <div class="signature-box">
+                <p><strong>Client Signature</strong></p>
+                <div class="signature-line"></div>
+                <p>Date: _______________</p>
+                <p>${contract.clientName || 'Client Name'}</p>
+            </div>
+            
+            <div class="signature-box">
+                <p><strong>Performer Signature</strong></p>
+                <div class="signature-line"></div>
+                <p>Date: _______________</p>
+                <p>${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        Contract #${formatDate(contract.eventDate)} - ${contract.clientName || 'Client'} | Generated: ${formatDate(new Date())} | Powered by MusoBuddy
+    </div>
+</body>
+</html>`;
+  }
+
+  // Helper method for address formatting
+  formatAddress(address: string): string {
+    if (!address) return 'Address not provided';
+    
+    // Handle concatenated addresses by adding spaces after commas
+    return address
+      .replace(/,([A-Z])/g, ', $1')  // Add space after comma before capital letter
+      .replace(/([a-z])([A-Z])/g, '$1 $2')  // Add space between lowercase and uppercase
+      .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
+      .trim();
+  }
+
+  // Helper method for performer address formatting
+  formatPerformerAddress(userSettings: any): string {
+    if (!userSettings) return '59, Gloucester Rd Bournemouth Dorset BH7 6JA';
+    
+    const parts = [];
+    if (userSettings.addressLine1) parts.push(userSettings.addressLine1);
+    if (userSettings.city) parts.push(userSettings.city);
+    if (userSettings.county) parts.push(userSettings.county);
+    if (userSettings.postcode) parts.push(userSettings.postcode);
+    
+    return parts.length > 0 ? parts.join(', ') : '59, Gloucester Rd Bournemouth Dorset BH7 6JA';
+  }
 
   generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
     // Use the R2 URL that was uploaded - contracts must be permanently accessible
