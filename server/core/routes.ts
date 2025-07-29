@@ -354,6 +354,25 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== INVOICES ROUTES =====
+  
+  // Get all invoices for authenticated user
+  app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const invoices = await storage.getInvoices(userId);
+      console.log(`✅ Retrieved ${invoices.length} invoices for user ${userId}`);
+      res.json(invoices);
+    } catch (error) {
+      console.error('❌ Failed to fetch invoices:', error);
+      res.status(500).json({ error: 'Failed to fetch invoices' });
+    }
+  });
+
   // Conflicts endpoint - UNIFIED with single data source
   app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
     try {
