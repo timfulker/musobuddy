@@ -411,16 +411,34 @@ export async function registerRoutes(app: Express) {
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
       res.json(newContract);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to create contract:', error);
       console.error('❌ Contract creation error details:', {
-        message: (error as any).message,
-        code: (error as any).code,
-        detail: (error as any).detail,
-        table: (error as any).table,
-        column: (error as any).column
+        message: error?.message,
+        code: error?.code,
+        detail: error?.detail,
+        table: error?.table,
+        column: error?.column,
+        constraint: error?.constraint,
+        severity: error?.severity,
+        file: error?.file,
+        line: error?.line,
+        routine: error?.routine
       });
-      res.status(500).json({ error: 'Failed to create contract' });
+      
+      // Provide more specific error messages
+      if (error?.code === '23505') {
+        res.status(400).json({ error: 'Duplicate contract number detected' });
+      } else if (error?.code === '23502') {
+        res.status(400).json({ error: 'Missing required field: ' + (error?.column || 'unknown') });
+      } else if (error?.code === '22P02') {
+        res.status(400).json({ error: 'Invalid data format in request' });
+      } else {
+        res.status(500).json({ 
+          error: 'Failed to create contract',
+          details: error?.message || 'Unknown database error'
+        });
+      }
     }
   });
 

@@ -212,49 +212,72 @@ export class Storage {
   }
 
   async createContract(contractData: any) {
-    // Convert date strings to Date objects for timestamp fields and ensure all required fields are present
-    const processedData = {
-      userId: contractData.userId,
-      contractNumber: contractData.contractNumber,
-      clientName: contractData.clientName,
-      clientEmail: contractData.clientEmail || null,
-      clientAddress: contractData.clientAddress || null,
-      clientPhone: contractData.clientPhone || null,
-      venue: contractData.venue || null,
-      venueAddress: contractData.venueAddress || null,
-      eventDate: contractData.eventDate ? new Date(contractData.eventDate) : new Date(),
-      eventTime: contractData.eventTime || null,
-      eventEndTime: contractData.eventEndTime || null,
-      fee: contractData.fee || "0.00",
-      deposit: contractData.deposit || "0.00",
-      paymentInstructions: contractData.paymentInstructions || null,
-      equipmentRequirements: contractData.equipmentRequirements || null,
-      specialRequirements: contractData.specialRequirements || null,
-      clientFillableFields: contractData.clientFillableFields || null,
-      status: contractData.status || "draft",
-      signedAt: contractData.signedAt ? new Date(contractData.signedAt) : null,
-      cloudStorageUrl: contractData.cloudStorageUrl || null,
-      cloudStorageKey: contractData.cloudStorageKey || null,
-      signingPageUrl: contractData.signingPageUrl || null,
-      signingPageKey: contractData.signingPageKey || null,
-      signingUrlCreatedAt: contractData.signingUrlCreatedAt ? new Date(contractData.signingUrlCreatedAt) : null,
-      clientSignature: contractData.clientSignature || null,
-      clientIpAddress: contractData.clientIpAddress || null,
-      enquiryId: contractData.enquiryId || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    console.log('💾 Creating contract with processed data:', {
-      userId: processedData.userId,
-      contractNumber: processedData.contractNumber,
-      clientName: processedData.clientName,
-      eventDate: processedData.eventDate,
-      fee: processedData.fee
-    });
-    
-    const result = await db.insert(contracts).values(processedData).returning();
-    return result[0];
+    try {
+      // Handle potential duplicate contract numbers by adding suffix
+      let contractNumber = contractData.contractNumber;
+      let suffix = 1;
+      
+      while (true) {
+        try {
+          const testNumber = suffix === 1 ? contractNumber : `${contractNumber} - ${suffix}`;
+          
+          // Convert date strings to Date objects for timestamp fields and ensure all required fields are present
+          const processedData = {
+            userId: contractData.userId,
+            contractNumber: testNumber,
+            clientName: contractData.clientName,
+            clientEmail: contractData.clientEmail || null,
+            clientAddress: contractData.clientAddress || null,
+            clientPhone: contractData.clientPhone || null,
+            venue: contractData.venue || null,
+            venueAddress: contractData.venueAddress || null,
+            eventDate: contractData.eventDate ? new Date(contractData.eventDate) : new Date(),
+            eventTime: contractData.eventTime || null,
+            eventEndTime: contractData.eventEndTime || null,
+            fee: contractData.fee || "0.00",
+            deposit: contractData.deposit || "0.00",
+            paymentInstructions: contractData.paymentInstructions || null,
+            equipmentRequirements: contractData.equipmentRequirements || null,
+            specialRequirements: contractData.specialRequirements || null,
+            clientFillableFields: contractData.clientFillableFields || null,
+            status: contractData.status || "draft",
+            signedAt: contractData.signedAt ? new Date(contractData.signedAt) : null,
+            cloudStorageUrl: contractData.cloudStorageUrl || null,
+            cloudStorageKey: contractData.cloudStorageKey || null,
+            signingPageUrl: contractData.signingPageUrl || null,
+            signingPageKey: contractData.signingPageKey || null,
+            signingUrlCreatedAt: contractData.signingUrlCreatedAt ? new Date(contractData.signingUrlCreatedAt) : null,
+            clientSignature: contractData.clientSignature || null,
+            clientIpAddress: contractData.clientIpAddress || null,
+            enquiryId: contractData.enquiryId || null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          console.log('💾 Creating contract with processed data:', {
+            userId: processedData.userId,
+            contractNumber: processedData.contractNumber,
+            clientName: processedData.clientName,
+            eventDate: processedData.eventDate,
+            fee: processedData.fee
+          });
+          
+          const result = await db.insert(contracts).values(processedData).returning();
+          return result[0];
+          
+        } catch (error: any) {
+          // If unique constraint violation on contract number, try with suffix
+          if (error.code === '23505' && error.detail?.includes('contract_number')) {
+            suffix++;
+            continue;
+          }
+          throw error; // Re-throw other errors
+        }
+      }
+    } catch (error) {
+      console.error('💥 Contract creation failed:', error);
+      throw error;
+    }
   }
 
   // FIXED: updateContract method with flexible signature to handle both authenticated and public calls
