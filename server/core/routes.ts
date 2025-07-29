@@ -1090,9 +1090,8 @@ export async function registerRoutes(app: Express) {
         }
         
         // Send confirmation emails to both parties
-        // Note: Email service method needs to be implemented
-        console.log('📧 Contract confirmation emails would be sent here');
-        console.log('✅ Contract confirmation emails sent');
+        await emailService.sendContractConfirmationEmails(signedContract, userSettings, cloudResult.url);
+        console.log('✅ Contract confirmation emails sent successfully');
         
       } catch (emailError) {
         console.error('⚠️ Contract signed but email sending failed:', emailError);

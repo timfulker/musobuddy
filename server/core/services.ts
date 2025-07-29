@@ -1175,6 +1175,149 @@ Rules:
       throw error;
     }
   }
+
+  async sendContractConfirmationEmails(contract: any, userSettings: any, cloudUrl?: string) {
+    const domain = 'mg.musobuddy.com';
+    
+    console.log('📧 Sending contract confirmation emails for contract #', contract.id);
+    
+    try {
+      // Client confirmation email
+      const clientEmailData = {
+        from: `MusoBuddy <noreply@${domain}>`,
+        to: contract.clientEmail,
+        subject: `Contract Signed - Confirmation for ${contract.contractNumber}`,
+        html: this.generateClientConfirmationHTML(contract, userSettings, cloudUrl)
+      };
+
+      // Performer confirmation email
+      const performerEmailData = {
+        from: `MusoBuddy <noreply@${domain}>`,
+        to: userSettings?.businessEmail || userSettings?.email || 'timfulker@gmail.com',
+        subject: `Contract Signed - ${contract.clientName} - ${contract.contractNumber}`,
+        html: this.generatePerformerConfirmationHTML(contract, userSettings, cloudUrl)
+      };
+
+      // Send both emails
+      const [clientResult, performerResult] = await Promise.all([
+        this.mailgun.messages.create(domain, clientEmailData),
+        this.mailgun.messages.create(domain, performerEmailData)
+      ]);
+
+      console.log('✅ Contract confirmation emails sent:', {
+        client: clientResult.id,
+        performer: performerResult.id
+      });
+
+      return { clientResult, performerResult };
+      
+    } catch (error: any) {
+      console.error('❌ Contract confirmation email error:', error);
+      throw error;
+    }
+  }
+
+  generateClientConfirmationHTML(contract: any, userSettings: any, cloudUrl?: string) {
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    const businessPhone = userSettings?.phone || '';
+    const businessEmail = userSettings?.businessEmail || userSettings?.email || '';
+    
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: white;">
+        <div style="background: #9333ea; color: white; padding: 20px; text-align: center;">
+          <h1 style="margin: 0;">Contract Confirmed!</h1>
+          <p style="margin: 10px 0 0 0;">Your booking is now confirmed</p>
+        </div>
+        
+        <div style="padding: 30px;">
+          <p>Dear ${contract.clientName},</p>
+          
+          <p>Great news! Your contract has been successfully signed and your booking is now confirmed.</p>
+          
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin: 0 0 15px 0; color: #9333ea;">Booking Details</h3>
+            <p><strong>Event:</strong> ${contract.eventType || 'Musical Performance'}</p>
+            <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+            <p><strong>Time:</strong> ${contract.eventTime || 'TBC'}</p>
+            <p><strong>Venue:</strong> ${contract.venue || 'TBC'}</p>
+            <p><strong>Fee:</strong> £${contract.fee || 'TBC'}</p>
+          </div>
+          
+          ${cloudUrl ? `
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${cloudUrl}" style="background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              📄 Download Signed Contract
+            </a>
+          </div>
+          ` : ''}
+          
+          <p>We're looking forward to providing excellent musical entertainment for your event. If you have any questions or special requests, please don't hesitate to contact us.</p>
+          
+          <div style="margin: 30px 0; padding: 20px; background: #f9fafb; border-radius: 8px;">
+            <h4 style="margin: 0 0 10px 0;">Contact Information</h4>
+            <p style="margin: 5px 0;">📧 ${businessEmail}</p>
+            ${businessPhone ? `<p style="margin: 5px 0;">📞 ${businessPhone}</p>` : ''}
+          </div>
+          
+          <p>Thank you for choosing ${businessName}!</p>
+          
+          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+            This is an automated confirmation email. Contract #${contract.contractNumber}
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  generatePerformerConfirmationHTML(contract: any, userSettings: any, cloudUrl?: string) {
+    const businessName = userSettings?.businessName || 'MusoBuddy';
+    
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: white;">
+        <div style="background: #059669; color: white; padding: 20px; text-align: center;">
+          <h1 style="margin: 0;">Contract Signed!</h1>
+          <p style="margin: 10px 0 0 0;">New booking confirmed</p>
+        </div>
+        
+        <div style="padding: 30px;">
+          <p>Hi there,</p>
+          
+          <p>Excellent news! <strong>${contract.clientName}</strong> has signed the contract and your booking is now confirmed.</p>
+          
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin: 0 0 15px 0; color: #059669;">Confirmed Booking</h3>
+            <p><strong>Client:</strong> ${contract.clientName}</p>
+            <p><strong>Email:</strong> ${contract.clientEmail}</p>
+            <p><strong>Event:</strong> ${contract.eventType || 'Musical Performance'}</p>
+            <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+            <p><strong>Time:</strong> ${contract.eventTime || 'TBC'}</p>
+            <p><strong>Venue:</strong> ${contract.venue || 'TBC'}</p>
+            <p><strong>Fee:</strong> £${contract.fee || 'TBC'}</p>
+          </div>
+          
+          ${cloudUrl ? `
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${cloudUrl}" style="background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              📄 Download Signed Contract
+            </a>
+          </div>
+          ` : ''}
+          
+          <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #92400e;">Next Steps</h4>
+            <p style="margin: 5px 0;">✅ Contract signed and confirmed</p>
+            <p style="margin: 5px 0;">📅 Add event to your calendar</p>
+            <p style="margin: 5px 0;">🎵 Prepare your setlist</p>
+            <p style="margin: 5px 0;">💌 Consider sending a thank you email to client</p>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+            Contract #${contract.contractNumber} | Signed: ${new Date().toLocaleDateString('en-GB')}
+          </p>
+        </div>
+      </div>
+    `;
+  }
 }
 
 // Service instances
