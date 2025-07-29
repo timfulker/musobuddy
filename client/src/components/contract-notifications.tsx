@@ -61,7 +61,7 @@ export function ContractNotifications() {
     });
 
     setLastCheck(new Date());
-  }, [contracts, lastCheck, toast]);
+  }, [contracts.length, toast]); // Fixed: Remove lastCheck dependency to prevent infinite loop
 
   // Mark notification as read
   const markAsRead = (notificationId: number) => {

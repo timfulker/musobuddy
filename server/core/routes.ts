@@ -419,8 +419,8 @@ export async function registerRoutes(app: Express) {
         const userSettings = await storage.getUserSettings(req.session.userId);
         
         // Generate PDF using our enhanced PDF generator
-        const { generateProfessionalContractPDF } = await import('./pdf-generator');
-        const pdfBuffer = await generateProfessionalContractPDF(newContract, userSettings);
+        const { generateContractPDF } = await import('./pdf-generator');
+        const pdfBuffer = await generateContractPDF(newContract, userSettings);
         
         console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
         
@@ -596,6 +596,40 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Failed to delete contract:', error);
       res.status(500).json({ error: 'Failed to delete contract' });
+    }
+  });
+
+  // CRITICAL FIX: View contract route for cloud PDF redirect (PUBLIC ACCESS)
+  app.get('/view/contracts/:id', async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      console.log(`🔍 View contract request for ID: ${contractId}`);
+      
+      // Get contract (no authentication required for viewing signed contracts)
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).send('Contract not found');
+      }
+      
+      // Redirect to cloud storage URL if available
+      if (contract.cloudStorageUrl) {
+        console.log(`📄 Redirecting to cloud storage: ${contract.cloudStorageUrl}`);
+        return res.redirect(contract.cloudStorageUrl);
+      }
+      
+      // Fallback: Generate and serve PDF directly if no cloud URL
+      console.log('⚠️ No cloud storage URL, generating PDF on-demand...');
+      const userSettings = await storage.getUserSettings(contract.userId);
+      const { generateContractPDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateContractPDF(contract, userSettings);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ Failed to view contract:', error);
+      res.status(500).send('Contract viewing failed');
     }
   });
 
