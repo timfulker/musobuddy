@@ -82,7 +82,7 @@ export default function Contracts() {
   });
 
   const { data: enquiries = [] } = useQuery<Enquiry[]>({
-    queryKey: ["/api/enquiries"],
+    queryKey: ["/api/bookings"],
   });
 
   const { data: settings } = useQuery({

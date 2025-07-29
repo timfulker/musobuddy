@@ -335,6 +335,25 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== CONTRACTS ROUTES =====
+  
+  // Get all contracts for authenticated user
+  app.get('/api/contracts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const contracts = await storage.getContracts(userId);
+      console.log(`✅ Retrieved ${contracts.length} contracts for user ${userId}`);
+      res.json(contracts);
+    } catch (error) {
+      console.error('❌ Failed to fetch contracts:', error);
+      res.status(500).json({ error: 'Failed to fetch contracts' });
+    }
+  });
+
   // Conflicts endpoint - UNIFIED with single data source
   app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
     try {
