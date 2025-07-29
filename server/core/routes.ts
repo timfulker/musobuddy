@@ -354,6 +354,142 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Create new contract
+  app.post('/api/contracts', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractData = {
+        ...req.body,
+        userId: req.session.userId
+      };
+      const newContract = await storage.createContract(contractData);
+      console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
+      res.json(newContract);
+    } catch (error) {
+      console.error('❌ Failed to create contract:', error);
+      res.status(500).json({ error: 'Failed to create contract' });
+    }
+  });
+
+  // Send contract via email
+  app.post('/api/contracts/:id/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const { customMessage } = req.body;
+      
+      console.log(`📧 Sending contract #${contractId}...`);
+      
+      // Get contract and user settings
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const userSettings = await storage.getUserSettings(req.session.userId);
+      
+      // Import services
+      const { MailgunEmailService } = await import('./services');
+      const emailService = new MailgunEmailService();
+      
+      // Generate and upload contract PDF to cloud storage
+      const { generateContractPDF, uploadContractToCloud } = await import('./cloud-storage');
+      const pdfBuffer = await generateContractPDF(contract, userSettings);
+      const { url: pdfUrl, signingUrl } = await uploadContractToCloud(contract, pdfBuffer);
+      
+      // Update contract with cloud URLs and status
+      await storage.updateContract(contractId, {
+        status: 'sent',
+        pdfUrl,
+        signingPageUrl: signingUrl,
+        sentAt: new Date()
+      });
+      
+      // Send email with contract
+      const subject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
+      await emailService.sendContractEmail(contract, userSettings, subject, signingUrl);
+      
+      console.log(`✅ Contract #${contractId} sent successfully`);
+      res.json({ success: true, message: 'Contract sent successfully' });
+      
+    } catch (error) {
+      console.error('❌ Failed to send contract:', error);
+      res.status(500).json({ error: 'Failed to send contract' });
+    }
+  });
+
+  // Resend contract
+  app.post('/api/contracts/:id/resend', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const { customMessage } = req.body;
+      
+      console.log(`📧 Resending contract #${contractId}...`);
+      
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      const userSettings = await storage.getUserSettings(req.session.userId);
+      
+      const { MailgunEmailService } = await import('./services');
+      const emailService = new MailgunEmailService();
+      
+      const subject = customMessage || `Contract reminder - ${contract.contractNumber}`;
+      await emailService.sendContractEmail(contract, userSettings, subject, contract.signingPageUrl);
+      
+      console.log(`✅ Contract #${contractId} resent successfully`);
+      res.json({ success: true, message: 'Contract resent successfully' });
+      
+    } catch (error) {
+      console.error('❌ Failed to resend contract:', error);
+      res.status(500).json({ error: 'Failed to resend contract' });
+    }
+  });
+
+  // Get individual contract
+  app.get('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      res.json(contract);
+    } catch (error) {
+      console.error('❌ Failed to fetch contract:', error);
+      res.status(500).json({ error: 'Failed to fetch contract' });
+    }
+  });
+
+  // Update contract
+  app.patch('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const updatedContract = await storage.updateContract(contractId, req.body);
+      if (!updatedContract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      console.log(`✅ Updated contract #${contractId} for user ${req.session.userId}`);
+      res.json(updatedContract);
+    } catch (error) {
+      console.error('❌ Failed to update contract:', error);
+      res.status(500).json({ error: 'Failed to update contract' });
+    }
+  });
+
+  // Delete contract
+  app.delete('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      await storage.deleteContract(contractId);
+      console.log(`✅ Deleted contract #${contractId} for user ${req.session.userId}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Failed to delete contract:', error);
+      res.status(500).json({ error: 'Failed to delete contract' });
+    }
+  });
+
   // ===== INVOICES ROUTES =====
   
   // Get all invoices for authenticated user
