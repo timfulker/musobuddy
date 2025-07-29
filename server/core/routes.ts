@@ -1078,9 +1078,14 @@ export async function registerRoutes(app: Express) {
         const { MailgunService } = await import('./services');
         const emailService = new MailgunService();
         
-        // Upload signed contract to cloud storage
+        // Upload signed contract to cloud storage with signature details
         const { uploadContractToCloud } = await import('./cloud-storage');
-        const cloudResult = await uploadContractToCloud(signedContract, userSettings);
+        const signatureDetails = {
+          signedAt: signedContract.signedAt ? new Date(signedContract.signedAt) : new Date(),
+          signatureName: signedContract.clientSignature || undefined,
+          clientIpAddress: signedContract.clientIpAddress || undefined
+        };
+        const cloudResult = await uploadContractToCloud(signedContract, userSettings, signatureDetails);
         
         if (cloudResult.success) {
           await storage.updateContract(contractId, {

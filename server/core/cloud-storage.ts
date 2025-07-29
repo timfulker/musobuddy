@@ -778,7 +778,7 @@ function generateContractSigningPageHTML(
         clientPhone: document.getElementById('clientPhone').value.trim() || null,
         clientAddress: document.getElementById('clientAddress').value.trim() || null,
         venueAddress: document.getElementById('venueAddress').value.trim() || null,
-        clientIP: '${contract.clientIP || "Not recorded"}'  // Add client IP for audit trail
+        clientIP: '${contract.clientIpAddress || "Not recorded"}'  // Add client IP for audit trail
       };
 
       console.log('📤 Sending signing request with data:', formData);
