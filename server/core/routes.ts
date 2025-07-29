@@ -5,11 +5,19 @@ import { storage } from "./storage";
 // ProductionAuthSystem removed - using direct route registration
 import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 
-// OPTIMIZED AUTHENTICATION MIDDLEWARE - No logging
+// ENHANCED AUTHENTICATION MIDDLEWARE - With debugging for development
 const isAuthenticated = (req: any, res: any, next: any) => {
+  console.log(`🔐 Auth check for ${req.method} ${req.path}`);
+  console.log(`🔐 Session exists: ${!!req.session}`);
+  console.log(`🔐 Session userId: ${req.session?.userId}`);
+  console.log(`🔐 Session email: ${req.session?.email}`);
+  
   if (!req.session?.userId) {
+    console.log('❌ Authentication failed - no userId in session');
     return res.status(401).json({ error: 'Authentication required' });
   }
+  
+  console.log(`✅ Authentication successful for user ${req.session.userId}`);
   next();
 };
 
@@ -579,11 +587,30 @@ export async function registerRoutes(app: Express) {
   // Get individual contract
   app.get('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
     try {
+      console.log(`🔍 Contract fetch request for ID: ${req.params.id}`);
+      console.log(`🔍 Session data: userId=${req.session?.userId}, email=${req.session?.email}`);
+      
       const contractId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        console.log('❌ No userId in session for contract fetch');
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
       const contract = await storage.getContract(contractId);
       if (!contract) {
+        console.log(`❌ Contract #${contractId} not found`);
         return res.status(404).json({ error: 'Contract not found' });
       }
+      
+      // Verify user owns this contract
+      if (contract.userId !== userId) {
+        console.log(`❌ User ${userId} attempted to access contract owned by ${contract.userId}`);
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      console.log(`✅ Contract #${contractId} found and authorized for user ${userId}`);
       res.json(contract);
     } catch (error) {
       console.error('❌ Failed to fetch contract:', error);
