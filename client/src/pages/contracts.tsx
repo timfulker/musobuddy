@@ -430,25 +430,99 @@ export default function Contracts() {
   };
 
   const handleViewSignedContract = (contract: Contract) => {
+    console.log('👁️ View contract clicked:', {
+      id: contract.id,
+      status: contract.status,
+      hasCloudUrl: !!contract.cloudStorageUrl,
+      contractNumber: contract.contractNumber
+    });
     
+    // ENHANCED LOGIC: Better handling of different contract statuses and URLs
     
-    
-    
-    // For signed contracts, prioritize cloud storage URL
+    // 1. For signed contracts with cloud storage URL - open in new tab
     if (contract.status === 'signed' && contract.cloudStorageUrl) {
-      
+      console.log('🌐 Opening signed contract from cloud storage:', contract.cloudStorageUrl);
       window.open(contract.cloudStorageUrl, '_blank');
-    } 
-    // For signed contracts without cloud URL, use download endpoint
-    else if (contract.status === 'signed') {
-      
+      return;
+    }
+    
+    // 2. For signed contracts without cloud URL - try download endpoint
+    if (contract.status === 'signed') {
+      console.log('📄 Opening signed contract via download endpoint');
       const downloadUrl = `/api/contracts/${contract.id}/download`;
       window.open(downloadUrl, '_blank');
+      return;
     }
-    // For draft/unsigned contracts, use local view
-    else {
+    
+    // 3. For all other contracts (draft, sent) - use internal viewer
+    console.log('📋 Opening contract in internal viewer');
+    setLocation(`/view-contract/${contract.id}`);
+  };
+
+  // DEBUGGING: Add this temporary function to test API connectivity
+  const handleTestContractAPI = async (contract: Contract) => {
+    try {
+      console.log('🧪 Testing contract API connectivity...');
       
-      setLocation(`/view-contract/${contract.id}`);
+      // Test session endpoint first
+      const sessionResponse = await fetch('/api/debug/session', {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log('🔐 Session test result:', {
+        status: sessionResponse.status,
+        contentType: sessionResponse.headers.get('content-type')
+      });
+      
+      if (sessionResponse.ok) {
+        const sessionData = await sessionResponse.json();
+        console.log('✅ Session data:', sessionData);
+      }
+      
+      // Test contract endpoint
+      const contractResponse = await fetch(`/api/contracts/${contract.id}`, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      console.log('📋 Contract test result:', {
+        status: contractResponse.status,
+        contentType: contractResponse.headers.get('content-type')
+      });
+      
+      if (contractResponse.ok) {
+        const contractData = await contractResponse.json();
+        console.log('✅ Contract data:', contractData);
+        
+        toast({
+          title: "API Test Successful",
+          description: `Contract ${contractData.contractNumber} loaded successfully`,
+        });
+      } else {
+        const errorText = await contractResponse.text();
+        console.error('❌ Contract API error:', errorText.substring(0, 500));
+        
+        toast({
+          title: "API Test Failed",
+          description: `Status: ${contractResponse.status}. Check console for details.`,
+          variant: "destructive",
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('❌ API test error:', error);
+      toast({
+        title: "API Test Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -1150,6 +1224,18 @@ export default function Contracts() {
                               <Eye className="w-3 h-3 mr-1" />
                               View
                             </Button>
+
+                            {/* Debug button - only in development */}
+                            {process.env.NODE_ENV === 'development' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="text-xs whitespace-nowrap text-purple-600 hover:text-purple-700 border-purple-300"
+                                onClick={() => handleTestContractAPI(contract)}
+                              >
+                                🧪 Test API
+                              </Button>
+                            )}
 
                             {contract.status === "draft" && (
                               <>

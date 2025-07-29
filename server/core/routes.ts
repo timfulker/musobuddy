@@ -584,37 +584,53 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Get individual contract
+  // FIXED: Get individual contract with better error handling
   app.get('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
     try {
       console.log(`🔍 Contract fetch request for ID: ${req.params.id}`);
       console.log(`🔍 Session data: userId=${req.session?.userId}, email=${req.session?.email}`);
       
+      // Validate contract ID
       const contractId = parseInt(req.params.id);
-      const userId = req.session?.userId;
+      if (isNaN(contractId)) {
+        console.log(`❌ Invalid contract ID: ${req.params.id}`);
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
       
+      const userId = req.session?.userId;
       if (!userId) {
         console.log('❌ No userId in session for contract fetch');
         return res.status(401).json({ error: 'Authentication required' });
       }
       
+      // Get contract from database
       const contract = await storage.getContract(contractId);
       if (!contract) {
         console.log(`❌ Contract #${contractId} not found`);
         return res.status(404).json({ error: 'Contract not found' });
       }
       
-      // Verify user owns this contract
+      // CRITICAL: Verify user owns this contract
       if (contract.userId !== userId) {
         console.log(`❌ User ${userId} attempted to access contract owned by ${contract.userId}`);
-        return res.status(403).json({ error: 'Access denied' });
+        return res.status(403).json({ error: 'Access denied - you do not own this contract' });
       }
       
       console.log(`✅ Contract #${contractId} found and authorized for user ${userId}`);
-      res.json(contract);
-    } catch (error) {
+      
+      // FIXED: Ensure we return JSON with proper headers
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).json(contract);
+      
+    } catch (error: any) {
       console.error('❌ Failed to fetch contract:', error);
-      res.status(500).json({ error: 'Failed to fetch contract' });
+      
+      // CRITICAL: Always return JSON, never HTML
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({ 
+        error: 'Internal server error while fetching contract',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -844,6 +860,19 @@ export async function registerRoutes(app: Express) {
 
   // ===== INVOICES ROUTES =====
   
+  // ===== DEBUGGING ENDPOINT FOR AUTHENTICATION TESTING =====
+  app.get('/api/debug/session', (req: any, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+      sessionExists: !!req.session,
+      userId: req.session?.userId || null,
+      email: req.session?.email || null,
+      sessionData: process.env.NODE_ENV === 'development' ? req.session : 'hidden',
+      headers: process.env.NODE_ENV === 'development' ? req.headers : 'hidden',
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // Get all invoices for authenticated user
   app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
