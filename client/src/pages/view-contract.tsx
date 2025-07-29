@@ -59,7 +59,7 @@ export default function ViewContract() {
       try {
         console.log('🔍 Fetching contract:', contractId);
         
-        // FIXED: Better error handling for the API request
+        // ROBUST APPROACH: Handle the specific 200-but-HTML issue
         const response = await fetch(`/api/contracts/${contractId}`, {
           credentials: 'include',
           headers: {
@@ -71,49 +71,96 @@ export default function ViewContract() {
         console.log('📡 Response status:', response.status);
         console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
         
-        // Check if response is JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          console.error('❌ Response is not JSON, content-type:', contentType);
+        // CRITICAL FIX: Get response text first, then validate it's actually JSON
+        const responseText = await response.text();
+        console.log('📄 Response text preview (first 200 chars):', responseText.substring(0, 200));
+        
+        // Check if response looks like HTML (starts with DOCTYPE, html tag, etc.)
+        const isHTML = responseText.trim().toLowerCase().startsWith('<!doctype') || 
+                      responseText.trim().toLowerCase().startsWith('<html') ||
+                      responseText.includes('<title>') ||
+                      responseText.includes('</html>');
+        
+        if (isHTML) {
+          console.error('❌ Server returned HTML instead of JSON despite 200 status');
           
-          // Try to get the response text to see what we actually received
-          const responseText = await response.text();
-          console.error('❌ Received response text (first 500 chars):', responseText.substring(0, 500));
+          // Extract useful info from HTML if possible
+          let errorMessage = 'Server returned HTML instead of JSON';
           
-          if (response.status === 401) {
-            throw new Error('Authentication required. Please log in again.');
-          } else if (response.status === 403) {
-            throw new Error('Access denied. You do not have permission to view this contract.');
-          } else if (response.status === 404) {
-            throw new Error('Contract not found.');
-          } else {
-            throw new Error(`Server returned ${response.status}: Expected JSON but received HTML. This might be a server configuration issue.`);
+          // Try to extract title from HTML for better error message
+          const titleMatch = responseText.match(/<title>(.*?)<\/title>/i);
+          if (titleMatch) {
+            errorMessage += `: ${titleMatch[1]}`;
+          }
+          
+          // Check for specific error patterns
+          if (responseText.includes('couldn\'t reach this app')) {
+            errorMessage = 'Server is not responding properly. Please try again in a moment.';
+          } else if (responseText.includes('502 Bad Gateway')) {
+            errorMessage = 'Server is temporarily unavailable (502 Bad Gateway)';
+          } else if (responseText.includes('login') || responseText.includes('signin')) {
+            errorMessage = 'Authentication required. Please log in again.';
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        // Check if the response status indicates an error
+        if (!response.ok) {
+          // Try to parse as JSON for error details
+          try {
+            const errorData = JSON.parse(responseText);
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          } catch (parseError) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
         }
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch contract`);
+        // Now try to parse as JSON
+        let contractData;
+        try {
+          contractData = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.error('❌ Failed to parse response as JSON:', jsonError);
+          console.error('❌ Response text that failed to parse:', responseText);
+          throw new Error('Server returned invalid JSON. Please try refreshing the page.');
         }
         
-        const contractData = await response.json();
         console.log('✅ Contract data received:', contractData);
         setContract(contractData);
         
-        // Get user settings for business details
-        const settingsResponse = await fetch(`/api/settings`, {
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
+        // Get user settings for business details - use same robust approach
+        try {
+          const settingsResponse = await fetch(`/api/settings`, {
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (settingsResponse.ok) {
+            const settingsText = await settingsResponse.text();
+            
+            // Check if settings response is also HTML
+            const settingsIsHTML = settingsText.trim().toLowerCase().startsWith('<!doctype') || 
+                                  settingsText.trim().toLowerCase().startsWith('<html');
+            
+            if (!settingsIsHTML) {
+              try {
+                const settings = JSON.parse(settingsText);
+                setUserSettings(settings);
+              } catch (settingsParseError) {
+                console.warn('⚠️ Failed to parse user settings, continuing without them');
+              }
+            } else {
+              console.warn('⚠️ Settings endpoint returned HTML, continuing without settings');
+            }
+          } else {
+            console.warn('⚠️ Failed to fetch user settings:', settingsResponse.status);
           }
-        });
-        
-        if (settingsResponse.ok) {
-          const settings = await settingsResponse.json();
-          setUserSettings(settings);
-        } else {
-          console.warn('⚠️ Failed to fetch user settings:', settingsResponse.status);
+        } catch (settingsError) {
+          console.warn('⚠️ Settings fetch failed, continuing without them:', settingsError);
         }
         
       } catch (error: any) {
@@ -183,7 +230,7 @@ export default function ViewContract() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-lg">
           <CardHeader>
             <CardTitle className="text-red-600 flex items-center gap-2">
               <AlertCircle className="w-5 h-5" />
@@ -191,7 +238,21 @@ export default function ViewContract() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-gray-600">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800 text-sm mb-2"><strong>Error Details:</strong></p>
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-800 text-sm mb-2"><strong>Troubleshooting:</strong></p>
+              <ul className="text-blue-700 text-xs space-y-1">
+                <li>• Check your internet connection</li>
+                <li>• Try refreshing the page</li>
+                <li>• Make sure you're logged in</li>
+                <li>• Contact support if the problem persists</li>
+              </ul>
+            </div>
+            
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -205,7 +266,7 @@ export default function ViewContract() {
                 onClick={() => window.location.reload()}
                 className="flex-1"
               >
-                Retry
+                Refresh Page
               </Button>
             </div>
           </CardContent>
@@ -267,12 +328,11 @@ export default function ViewContract() {
             </Badge>
           </div>
           
-          {/* Preview Notice */}
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700">
-              <strong>Preview Version:</strong> This online view shows the essential contract details. 
-              For the complete contract including full terms & conditions and signature sections, 
-              please download the PDF version below.
+          {/* Success Notice */}
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-700">
+              <strong>✅ Contract Loaded Successfully:</strong> This view shows the essential contract details. 
+              For the complete contract with full terms & conditions, download the PDF below.
             </p>
           </div>
         </div>
@@ -288,22 +348,24 @@ export default function ViewContract() {
           <CardContent className="space-y-6">
             {/* Event Information */}
             <div>
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
                 Event Information
               </h3>
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <p><strong>Date:</strong> {new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
-                  <p><strong>Start Time:</strong> {contract.eventTime}</p>
-                  <p><strong>End Time:</strong> {contract.eventEndTime}</p>
-                  <p><strong>Venue:</strong> {contract.venue}</p>
-                  {contract.venueAddress && <p><strong>Venue Address:</strong> {contract.venueAddress}</p>}
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Client</label>
+                  <p className="text-gray-900">{contract.clientName}</p>
+                  <p className="text-sm text-gray-600">{contract.clientEmail}</p>
+                  {contract.clientPhone && (
+                    <p className="text-sm text-gray-600">{contract.clientPhone}</p>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <p><strong>Performance Fee:</strong> £{contract.fee}</p>
-                  {contract.deposit && parseFloat(contract.deposit) > 0 && (
-                    <p><strong>Deposit:</strong> £{contract.deposit}</p>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Event Date</label>
+                  <p className="text-gray-900">{new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+                  {contract.eventTime && contract.eventEndTime && (
+                    <p className="text-sm text-gray-600">{contract.eventTime} - {contract.eventEndTime}</p>
                   )}
                 </div>
               </div>
@@ -311,96 +373,98 @@ export default function ViewContract() {
 
             <Separator />
 
-            {/* Client Information */}
+            {/* Venue Information */}
             <div>
-              <h3 className="font-semibold mb-4">Client Information</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <p><strong>Name:</strong> {contract.clientName}</p>
-                  <p><strong>Email:</strong> {contract.clientEmail}</p>
-                  {contract.clientPhone && <p><strong>Phone:</strong> {contract.clientPhone}</p>}
-                  {contract.clientAddress && <p><strong>Address:</strong> {contract.clientAddress}</p>}
-                </div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Venue Information
+              </h3>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Venue</label>
+                <p className="text-gray-900">{contract.venue}</p>
+                {contract.venueAddress && (
+                  <p className="text-sm text-gray-600">{contract.venueAddress}</p>
+                )}
               </div>
             </div>
 
             <Separator />
 
-            {/* Payment Instructions */}
-            {contract.paymentInstructions && (
-              <div>
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Payment Instructions
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="whitespace-pre-wrap">{contract.paymentInstructions}</p>
+            {/* Financial Information */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Financial Information
+              </h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Performance Fee</label>
+                  <p className="text-gray-900 text-lg font-semibold">£{contract.fee}</p>
                 </div>
+                {contract.deposit && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Deposit</label>
+                    <p className="text-gray-900">£{contract.deposit}</p>
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Equipment Requirements */}
-            {contract.equipmentRequirements && (
-              <div>
-                <h3 className="font-semibold mb-4">Equipment Requirements</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="whitespace-pre-wrap">{contract.equipmentRequirements}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Special Requirements */}
-            {contract.specialRequirements && (
-              <div>
-                <h3 className="font-semibold mb-4">Special Requirements</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="whitespace-pre-wrap">{contract.specialRequirements}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Signature Status */}
-            {contract.status === 'signed' && contract.signedAt && (
-              <div>
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  Signature Status
-                </h3>
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                  <p className="text-green-800">
-                    <strong>✓ Contract Signed</strong><br />
-                    Signed on: {new Date(contract.signedAt).toLocaleDateString('en-GB')} at {new Date(contract.signedAt).toLocaleTimeString('en-GB')}
-                  </p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                onClick={handleDownloadPDF}
-                className="flex items-center gap-2"
-                size="lg"
-              >
-                <Download className="w-4 h-4" />
-                Download Full Contract PDF
-              </Button>
-              
-              {/* Business Details */}
-              {userSettings && (
-                <div className="text-center text-sm text-gray-600 mt-4">
-                  <p><strong>{userSettings.businessName || 'MusoBuddy'}</strong></p>
-                  {userSettings.businessEmail && <p>{userSettings.businessEmail}</p>}
-                  {userSettings.phone && <p>{userSettings.phone}</p>}
+              {contract.paymentInstructions && (
+                <div className="mt-3">
+                  <label className="text-sm font-medium text-gray-600">Payment Instructions</label>
+                  <p className="text-gray-900">{contract.paymentInstructions}</p>
                 </div>
               )}
             </div>
+
+            {/* Requirements */}
+            {(contract.equipmentRequirements || contract.specialRequirements) && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Requirements</h3>
+                  {contract.equipmentRequirements && (
+                    <div className="mb-3">
+                      <label className="text-sm font-medium text-gray-600">Equipment</label>
+                      <p className="text-gray-900">{contract.equipmentRequirements}</p>
+                    </div>
+                  )}
+                  {contract.specialRequirements && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Special Requirements</label>
+                      <p className="text-gray-900">{contract.specialRequirements}</p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Signature Information */}
+            {contract.status === 'signed' && contract.signedAt && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    Signature Information
+                  </h3>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-green-800">
+                      <strong>Contract Signed:</strong> {new Date(contract.signedAt).toLocaleDateString('en-GB')} at {new Date(contract.signedAt).toLocaleTimeString('en-GB')}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
+
+        {/* Download Button */}
+        <div className="text-center">
+          <Button onClick={handleDownloadPDF} className="bg-blue-600 hover:bg-blue-700">
+            <Download className="w-4 h-4 mr-2" />
+            Download Complete Contract PDF
+          </Button>
+        </div>
       </div>
     </div>
   );

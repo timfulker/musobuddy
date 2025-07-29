@@ -25,6 +25,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 import { ContractNotifications, useContractStatusMonitor } from "@/components/contract-notifications";
+import { HealthCheckComponent } from "@/components/health-check";
 
 const contractFormSchema = z.object({
   // TESTING: Only 4 required fields as requested
@@ -721,6 +722,13 @@ export default function Contracts() {
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Real-time contract notifications */}
             <ContractNotifications />
+
+            {/* TEMPORARY: Health Check Component for debugging */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mb-6">
+                <HealthCheckComponent />
+              </div>
+            )}
 
             {/* Header */}
             <div className="flex items-center justify-between">
