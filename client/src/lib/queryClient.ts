@@ -76,16 +76,16 @@ export const getQueryFn: <T>(options: {
       headers,
     });
     
-    // Query response status: ${res.status}
+    console.log(`🔍 Query ${queryKey[0]} response status: ${res.status}`);
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      // Query returned null due to 401
+      console.log(`🔍 Query ${queryKey[0]} returned null due to 401`);
       return null;
     }
 
     await throwIfResNotOk(res);
     const data = await res.json();
-    // Query response data received
+    console.log(`🔍 Query ${queryKey[0]} response data:`, data);
     return data;
   };
 
@@ -95,7 +95,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes cache
+      staleTime: 0, // No caching for debugging
       retry: false,
     },
     mutations: {

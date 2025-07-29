@@ -8,10 +8,11 @@ export function useAuth() {
     queryKey: ['/api/auth/user'],
     retry: false,
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 0, // No caching for auth checks
+    refetchInterval: false,
   });
 
-  // Reduced logging for performance
+  console.log('🔍 useAuth state:', { user, isLoading, error: error?.message });
 
   const logout = async () => {
     try {
