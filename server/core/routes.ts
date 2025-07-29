@@ -410,7 +410,43 @@ export async function registerRoutes(app: Express) {
       
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
-      res.json(newContract);
+      
+      // CRITICAL FIX: Generate and store PDF immediately after contract creation
+      try {
+        console.log('🎨 Generating PDF for newly created contract...');
+        
+        // Get user settings for PDF generation
+        const userSettings = await storage.getUserSettings(req.session.userId);
+        
+        // Generate PDF using our enhanced PDF generator
+        const { generateProfessionalContractPDF } = await import('./pdf-generator');
+        const pdfBuffer = await generateProfessionalContractPDF(newContract, userSettings);
+        
+        console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+        
+        // Upload PDF to cloud storage
+        const { uploadContractToCloud } = await import('./cloud-storage');
+        const cloudResult = await uploadContractToCloud(newContract, userSettings);
+        
+        if (cloudResult.success) {
+          // Update contract with cloud storage URL
+          const updatedContract = await storage.updateContract(newContract.id, {
+            cloudStorageUrl: cloudResult.url,
+            cloudStorageKey: cloudResult.key
+          });
+          
+          console.log('✅ Contract PDF uploaded to cloud storage:', cloudResult.url);
+          res.json(updatedContract);
+        } else {
+          console.log('⚠️ PDF generated but cloud upload failed, returning contract without cloud URL');
+          res.json(newContract);
+        }
+        
+      } catch (pdfError: any) {
+        console.error('⚠️ PDF generation failed, but contract was created:', pdfError.message);
+        // Still return the contract even if PDF generation fails
+        res.json(newContract);
+      }
     } catch (error: any) {
       console.error('❌ Failed to create contract:', error);
       console.error('❌ Contract creation error details:', {
