@@ -118,20 +118,18 @@ export class MailgunService {
     }
   }
 
-  // AUTOMATIC PROFESSIONAL CONTRACT PDF GENERATION - HTML-TO-PDF SYSTEM RESTORED
+  // RESTORED: Original working PDF generation method
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
     try {
-      console.log('🚀 STARTING HTML-TO-PDF CONTRACT GENERATION (RESTORED SYSTEM)...');
-      console.log('📊 Contract data:', JSON.stringify({
-        id: contract.id,
-        clientName: contract.clientName,
-        eventDate: contract.eventDate,
-        fee: contract.fee
-      }, null, 2));
+      console.log('🚀 CALLING ORIGINAL working generateContractPDF from pdf-generator...');
       
-      console.log('🎨 Using RESTORED HTML-to-PDF system for beautiful contracts...');
-      const result = await this.generateContractHTMLPDF(contract, userSettings);
-      console.log('✅ HTML-to-PDF contract completed, buffer size:', result.length, 'bytes');
+      // Use the corrected PDF generator we just restored
+      const { generateContractPDF: originalGenerateContractPDF } = await import('./pdf-generator');
+      console.log('✅ PDF generator imported successfully');
+      
+      console.log('🎯 Calling original working generateContractPDF...');
+      const result = await originalGenerateContractPDF(contract, userSettings);
+      console.log('✅ Original generateContractPDF completed, buffer size:', result.length);
       
       return result;
     } catch (error: any) {
@@ -147,53 +145,7 @@ export class MailgunService {
 
 
 
-  // HTML CONTRACT GENERATION - RESTORED for beautiful professional contracts
-  async generateContractHTMLPDF(contract: any, userSettings: any): Promise<Buffer> {
-    try {
-      console.log('🚀 STARTING HTML-TO-PDF CONTRACT GENERATION...');
-      
-      // Import Puppeteer for HTML-to-PDF generation  
-      const puppeteer = await import('puppeteer');
-      
-      console.log('🎨 Generating professional HTML contract template...');
-      const contractHTML = this.generateProfessionalContractHTML(contract, userSettings);
-      
-      console.log('🚀 Launching Puppeteer browser...');
-      const browser = await puppeteer.default.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-      });
-      
-      const page = await browser.newPage();
-      console.log('📄 Setting HTML content...');
-      await page.setContent(contractHTML, { waitUntil: 'networkidle0' });
-      
-      console.log('🖨️ Generating PDF from HTML...');
-      const pdfBuffer = Buffer.from(await page.pdf({
-        format: 'A4',
-        margin: {
-          top: '20mm',
-          right: '20mm', 
-          bottom: '20mm',
-          left: '20mm'
-        },
-        printBackground: true
-      }));
-      
-      await browser.close();
-      console.log('✅ HTML-to-PDF contract generated, size:', pdfBuffer.length, 'bytes');
-      
-      return pdfBuffer;
-      
-    } catch (error: any) {
-      console.error('❌ HTML contract generation failed:', error);
-      console.log('🔄 Falling back to PDFKit template...');
-      
-      // Fallback to PDFKit if Puppeteer fails
-      const { generateProfessionalContract } = await import('./new-contract-template');
-      return await generateProfessionalContract(contract, userSettings);
-    }
-  }
+
 
   // Professional HTML Contract Template - Andy Urquahart Style
   generateProfessionalContractHTML(contract: any, userSettings: any): string {
