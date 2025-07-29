@@ -20,7 +20,21 @@ export async function generateProfessionalContract(contract: any, userSettings: 
       });
       doc.on('error', (error) => reject(error));
 
-      console.log('📄 Creating Andy Urquahart contract format...');
+      console.log('📄 Creating beautiful professional contract format...');
+
+      // Color palette for professional styling
+      const purple = '#9333ea';
+      const blue = '#2563eb';
+      const textMain = '#1f2937';
+      const textSecondary = '#6b7280';
+      
+      // Date formatting
+      const eventDate = new Date(contract.eventDate);
+      const eventDateStr = eventDate.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
 
       // HEADER - Simple centered text like original
       doc.fillColor('#000000')
@@ -29,17 +43,10 @@ export async function generateProfessionalContract(contract: any, userSettings: 
         .text('Performance Contract', 50, 80, { align: 'center' });
 
       // Date and client name line 
-      const eventDate = new Date(contract.eventDate);
-      const dateStr = eventDate.toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-      });
-      
       doc.fontSize(14)
         .font('Helvetica')
         .fillColor('#000000')
-        .text(`(${dateStr} - ${contract.clientName || 'Client'})`, 50, 110, { align: 'center' });
+        .text(`(${eventDateStr} - ${contract.clientName || 'Client'})`, 50, 110, { align: 'center' });
 
       // DRAFT status
       doc.fillColor('#000000')

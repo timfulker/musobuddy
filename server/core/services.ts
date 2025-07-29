@@ -129,12 +129,12 @@ export class MailgunService {
         fee: contract.fee
       }, null, 2));
       
-      console.log('📥 Testing PROFESSIONAL contract template...');
-      const { generateContractPDF: originalGenerateContractPDF } = await import('./pdf-generator');
-      console.log('✅ Professional Template imported successfully');
+      console.log('📥 Loading BEAUTIFUL PROFESSIONAL contract template...');
+      const { generateProfessionalContract } = await import('./new-contract-template');
+      console.log('✅ Beautiful Professional Template imported successfully');
       
-      console.log('🎯 Calling ORIGINAL working generateContractPDF...');
-      const result = await originalGenerateContractPDF(contract, userSettings);
+      console.log('🎯 Calling BEAUTIFUL PROFESSIONAL contract template...');
+      const result = await generateProfessionalContract(contract, userSettings);
       console.log('✅ ORIGINAL generateContractPDF completed, buffer size:', result.length);
       
       return result;
