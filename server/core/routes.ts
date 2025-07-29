@@ -647,6 +647,60 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // MISSING ENDPOINT: Bulk delete contracts
+  app.post('/api/contracts/bulk-delete', isAuthenticated, async (req: any, res) => {
+    try {
+      const { contractIds } = req.body;
+      const userId = req.session.userId;
+      
+      console.log(`🗑️ Bulk delete request for ${contractIds?.length} contracts by user ${userId}`);
+      
+      if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
+        return res.status(400).json({ error: 'Contract IDs array is required' });
+      }
+      
+      // Verify all contracts belong to the authenticated user before deletion
+      const verificationPromises = contractIds.map(async (contractId: number) => {
+        const contract = await storage.getContract(contractId);
+        if (!contract) {
+          throw new Error(`Contract #${contractId} not found`);
+        }
+        if (contract.userId !== userId) {
+          throw new Error(`Access denied to contract #${contractId}`);
+        }
+        return contract;
+      });
+      
+      try {
+        await Promise.all(verificationPromises);
+      } catch (verificationError: any) {
+        console.log(`❌ Bulk delete verification failed: ${verificationError.message}`);
+        return res.status(403).json({ error: verificationError.message });
+      }
+      
+      // Delete all contracts
+      const deletePromises = contractIds.map((contractId: number) => 
+        storage.deleteContract(contractId)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      console.log(`✅ Bulk deleted ${contractIds.length} contracts for user ${userId}`);
+      res.json({ 
+        success: true, 
+        deletedCount: contractIds.length,
+        message: `Successfully deleted ${contractIds.length} contract${contractIds.length !== 1 ? 's' : ''}` 
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Bulk delete failed:', error);
+      res.status(500).json({ 
+        error: 'Failed to delete contracts', 
+        details: error.message 
+      });
+    }
+  });
+
   // CRITICAL MISSING ENDPOINT: Contract signing API (PUBLIC ACCESS - no authentication required)
   app.post('/api/contracts/sign/:id', async (req: any, res) => {
     try {
