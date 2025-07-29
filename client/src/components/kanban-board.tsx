@@ -98,14 +98,14 @@ export default function ActionableEnquiries() {
         try {
           let enquiryStart, enquiryEnd, otherStart, otherEnd;
           
-          if (enquiry.eventStartTime && enquiry.eventFinishTime) {
-            enquiryStart = new Date(`${enquiry.eventDate}T${enquiry.eventStartTime}`);
-            enquiryEnd = new Date(`${enquiry.eventDate}T${enquiry.eventFinishTime}`);
+          if (enquiry.eventTime && enquiry.eventEndTime) {
+            enquiryStart = new Date(`${enquiry.eventDate}T${enquiry.eventTime}`);
+            enquiryEnd = new Date(`${enquiry.eventDate}T${enquiry.eventEndTime}`);
           }
           
-          if (other.eventStartTime && other.eventFinishTime) {
-            otherStart = new Date(`${other.eventDate}T${other.eventStartTime}`);
-            otherEnd = new Date(`${other.eventDate}T${other.eventFinishTime}`);
+          if (other.eventTime && other.eventEndTime) {
+            otherStart = new Date(`${other.eventDate}T${other.eventTime}`);
+            otherEnd = new Date(`${other.eventDate}T${other.eventEndTime}`);
           }
           
           // If we have valid times, check for overlap
@@ -326,10 +326,10 @@ export default function ActionableEnquiries() {
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-2" />
                   <span>
-                    {enquiry.eventStartTime && enquiry.eventFinishTime
-                      ? `${enquiry.eventStartTime} - ${enquiry.eventFinishTime}`
-                      : enquiry.eventStartTime
-                        ? enquiry.eventStartTime
+                    {enquiry.eventTime && enquiry.eventEndTime
+                      ? `${enquiry.eventTime} - ${enquiry.eventEndTime}`
+                      : enquiry.eventTime
+                        ? enquiry.eventTime
                         : enquiry.eventTime || '00:00 - 23:59'
                     }
                   </span>

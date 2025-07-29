@@ -11,9 +11,9 @@ export interface FormattedBooking {
   clientEmail?: string;
   clientPhone?: string;
   eventDate?: Date;
-  eventStartTime?: string; // Start time from database
-  eventFinishTime?: string; // Finish time from database
-  eventTime?: string; // Formatted display time (for backward compatibility)
+  // Unified time fields for frontend compatibility
+  eventTime?: string; // Start time from database (mapped from event_start_time)
+  eventEndTime?: string; // End time from database (mapped from event_finish_time)
   performanceDuration?: string;
   venue?: string;
   eventType?: string;
@@ -65,12 +65,9 @@ export function formatBooking(rawBooking: any): FormattedBooking {
   
   const formatted: FormattedBooking = { ...rawBooking };
   
-  // Format time range for display - create eventTime from start/finish times
-  if (rawBooking.eventStartTime && rawBooking.eventFinishTime) {
-    formatted.eventTime = `${rawBooking.eventStartTime} - ${rawBooking.eventFinishTime}`;
-  } else if (rawBooking.eventStartTime) {
-    formatted.eventTime = rawBooking.eventStartTime;
-  }
+  // Map database field names to frontend expectations
+  formatted.eventTime = rawBooking.event_start_time || rawBooking.eventStartTime || null;
+  formatted.eventEndTime = rawBooking.event_finish_time || rawBooking.eventFinishTime || null;
   
   return formatted;
 }
@@ -88,15 +85,9 @@ export function formatBookings(rawBookings: any[]): FormattedBooking[] {
  * Get raw time components for conflict detection
  */
 export function parseBookingTime(booking: FormattedBooking): { startTime: string; endTime: string } | null {
-  // Use the dedicated start and finish time fields
-  if (booking.eventStartTime && booking.eventFinishTime) {
-    return { startTime: booking.eventStartTime, endTime: booking.eventFinishTime };
-  }
-  
-  // Fallback: parse formatted time if available (for backward compatibility)
-  if (booking.eventTime?.includes(' - ')) {
-    const [startTime, endTime] = booking.eventTime.split(' - ');
-    return { startTime: startTime.trim(), endTime: endTime.trim() };
+  // Use the unified time fields (mapped from database)
+  if (booking.eventTime && booking.eventEndTime) {
+    return { startTime: booking.eventTime, endTime: booking.eventEndTime };
   }
   
   return null;

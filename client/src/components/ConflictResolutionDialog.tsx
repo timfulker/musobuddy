@@ -206,10 +206,10 @@ export function ConflictResolutionDialog({
           <div className="flex items-center space-x-2">
             <Clock className="w-4 h-4 text-gray-500" />
             <span>
-              {booking?.eventStartTime && booking?.eventFinishTime
-                ? `${booking.eventStartTime} - ${booking.eventFinishTime}`
-                : booking?.eventStartTime
-                  ? booking.eventStartTime
+              {booking?.eventTime && booking?.eventEndTime
+                ? `${booking.eventTime} - ${booking.eventEndTime}`
+                : booking?.eventTime
+                  ? booking.eventTime
                   : booking?.eventTime || 'No time'
               }
             </span>

@@ -36,8 +36,8 @@ const contractFormSchema = z.object({
   // Everything else optional
   contractNumber: z.string().optional(),
   venue: z.string().optional(),
-  eventStartTime: z.string().optional(),
-  eventFinishTime: z.string().optional(),
+  eventTime: z.string().optional(),
+  eventEndTime: z.string().optional(),
   deposit: z.string().optional(),
   clientAddress: z.string().optional(),
   clientPhone: z.string().optional(),
@@ -100,8 +100,8 @@ export default function Contracts() {
       clientPhone: "",
       clientAddress: "",
       eventDate: "",
-      eventStartTime: "",
-      eventFinishTime: "",
+      eventTime: "",
+      eventEndTime: "",
       venue: "",
       venueAddress: "",
       fee: "",
@@ -163,8 +163,8 @@ export default function Contracts() {
               form.setValue('venue', booking.venue || '');
               form.setValue('venueAddress', booking.venueAddress || '');
               form.setValue('eventDate', booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : '');
-              form.setValue('eventStartTime', booking.eventStartTime || '');
-              form.setValue('eventFinishTime', booking.eventFinishTime || '');
+              form.setValue('eventTime', booking.eventTime || '');
+              form.setValue('eventEndTime', booking.eventEndTime || '');
               form.setValue('fee', booking.fee || '');
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
               form.setValue('specialRequirements', booking.specialRequirements || '');
@@ -205,8 +205,8 @@ export default function Contracts() {
             form.setValue('clientPhone', enquiry.clientPhone || '');
             form.setValue('venue', enquiry.venue || '');
             form.setValue('eventDate', enquiry.eventDate ? new Date(enquiry.eventDate).toISOString().split('T')[0] : '');
-            form.setValue('eventStartTime', enquiry.eventStartTime || '');
-            form.setValue('eventFinishTime', enquiry.eventFinishTime || '');
+            form.setValue('eventTime', enquiry.eventTime || '');
+            form.setValue('eventEndTime', enquiry.eventEndTime || '');
             form.setValue('fee', enquiry.fee || '');
             
             // Auto-generate contract number with event date and client name
@@ -245,9 +245,7 @@ export default function Contracts() {
         ...data,
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : null,
         enquiryId: data.enquiryId || null,
-        // Map frontend field names to backend field names
-        eventTime: data.eventStartTime || "",
-        eventEndTime: data.eventFinishTime || "",
+        // Fields now aligned - no mapping needed
       };
 
       return apiRequest("/api/contracts", {
@@ -404,8 +402,8 @@ export default function Contracts() {
     form.setValue('clientPhone', contract.clientPhone || '');
     form.setValue('clientAddress', contract.clientAddress || '');
     form.setValue('eventDate', contract.eventDate ? new Date(contract.eventDate).toISOString().split('T')[0] : '');
-    form.setValue('eventStartTime', contract.eventTime?.split(' - ')[0] || '');
-    form.setValue('eventFinishTime', contract.eventTime?.split(' - ')[1] || '');
+    form.setValue('eventTime', contract.eventTime?.split(' - ')[0] || '');
+    form.setValue('eventEndTime', contract.eventTime?.split(' - ')[1] || '');
     form.setValue('venue', contract.venue || '');
     form.setValue('venueAddress', contract.venueAddress || '');
     form.setValue('fee', contract.fee);
@@ -751,7 +749,7 @@ export default function Contracts() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
-                            name="eventStartTime"
+                            name="eventTime"
                             render={({ field }) => (
                               <FormItem className="space-y-2">
                                 <FormLabel className="text-red-600 font-medium">Event Start Time *</FormLabel>
@@ -764,7 +762,7 @@ export default function Contracts() {
                           />
                           <FormField
                             control={form.control}
-                            name="eventFinishTime"
+                            name="eventEndTime"
                             render={({ field }) => (
                               <FormItem className="space-y-2">
                                 <FormLabel className="text-red-600 font-medium">Event Finish Time *</FormLabel>
