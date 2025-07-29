@@ -203,10 +203,15 @@ export async function registerRoutes(app: Express) {
   app.post('/api/templates', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-      const templateData = req.body;
+      const templateDataWithUser = { 
+        ...req.body, 
+        userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
       
       console.log(`🔍 Template create request for user: ${userId}`);
-      const newTemplate = await storage.createEmailTemplate(userId, templateData);
+      const newTemplate = await storage.createEmailTemplate(templateDataWithUser);
       console.log(`✅ Template created for user ${userId}`);
       res.json(newTemplate);
     } catch (error: any) {
@@ -218,8 +223,12 @@ export async function registerRoutes(app: Express) {
   app.put('/api/templates/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-      const templateId = req.params.id;
+      const templateId = parseInt(req.params.id);
       const templateData = req.body;
+      
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
       
       console.log(`🔍 Template update request for user: ${userId}, template: ${templateId}`);
       const updatedTemplate = await storage.updateEmailTemplate(templateId, templateData, userId);
@@ -234,7 +243,11 @@ export async function registerRoutes(app: Express) {
   app.delete('/api/templates/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-      const templateId = req.params.id;
+      const templateId = parseInt(req.params.id);
+      
+      if (isNaN(templateId)) {
+        return res.status(400).json({ error: 'Invalid template ID' });
+      }
       
       console.log(`🔍 Template delete request for user: ${userId}, template: ${templateId}`);
       await storage.deleteEmailTemplate(templateId, userId);
@@ -287,8 +300,8 @@ export async function registerRoutes(app: Express) {
           // Include signature details if contract is signed
           const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
             signedAt: new Date(contract.signedAt),
-            signatureName: contract.clientSignature,
-            clientIpAddress: contract.clientIpAddress
+            signatureName: contract.clientSignature || undefined,
+            clientIpAddress: contract.clientIpAddress || undefined
           } : undefined;
           
           const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
@@ -318,8 +331,8 @@ export async function registerRoutes(app: Express) {
         // Include signature details if contract is signed
         const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
           signedAt: new Date(contract.signedAt),
-          signatureName: contract.clientSignature,
-          clientIpAddress: contract.clientIpAddress
+          signatureName: contract.clientSignature || undefined,
+          clientIpAddress: contract.clientIpAddress || undefined
         } : undefined;
         
         const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
@@ -1303,8 +1316,8 @@ export async function registerRoutes(app: Express) {
           // Check if same date
           if (date1 === date2) {
             // CRITICAL FIX: Missing times should create hard conflicts
-            const time1 = booking1.eventStartTime && booking1.eventFinishTime;
-            const time2 = booking2.eventStartTime && booking2.eventFinishTime;
+            const time1 = booking1.eventTime && booking1.eventEndTime;
+            const time2 = booking2.eventTime && booking2.eventEndTime;
             
             let severity = 'soft'; // Default to soft for same day
             let timeOverlap = false;
@@ -1319,8 +1332,8 @@ export async function registerRoutes(app: Express) {
               severity = timeOverlap ? 'hard' : 'soft';
             }
             
-            const timeDisplay2 = booking2.eventStartTime && booking2.eventFinishTime 
-              ? `${booking2.eventStartTime} - ${booking2.eventFinishTime}`
+            const timeDisplay2 = booking2.eventTime && booking2.eventEndTime 
+              ? `${booking2.eventTime} - ${booking2.eventEndTime}`
               : booking2.eventTime || 'Time not specified';
               
             const conflictMessage = timeOverlap 
@@ -1344,8 +1357,8 @@ export async function registerRoutes(app: Express) {
             });
             
             // Create conflict entry for booking2 about booking1
-            const timeDisplay1 = booking1.eventStartTime && booking1.eventFinishTime 
-              ? `${booking1.eventStartTime} - ${booking1.eventFinishTime}`
+            const timeDisplay1 = booking1.eventTime && booking1.eventEndTime 
+              ? `${booking1.eventTime} - ${booking1.eventEndTime}`
               : booking1.eventTime || 'Time not specified';
               
             const reverseMessage = timeOverlap 
