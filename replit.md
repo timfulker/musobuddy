@@ -625,6 +625,16 @@ The application is designed to be user-friendly while maintaining professional-g
 - **PRODUCTION READY**: ✅ All LSP diagnostics cleared, conflict detection operational, contracts page accessible
 - **Status**: CONFLICT SYSTEM + CONTRACTS PAGE FULLY OPERATIONAL - Missing times create red conflicts, TypeScript errors resolved
 
+### 2025-07-29 - INVOICES PAGE RESTORED + API ENDPOINTS COMPLETE
+- **MISSING INVOICES ENDPOINT ADDED**: ✅ Added /api/invoices route to server/core/routes.ts for invoice page data retrieval
+- **DATABASE INVOICES RESTORED**: ✅ Fixed invoice ownership by updating user_id from previous account to current admin account (43963086)
+- **FOUR INVOICES OPERATIONAL**: ✅ Successfully restored David (£30), Harry Charles Tamplin (£710), Rick Stein (£220 x2) invoices
+- **API ENDPOINT VERIFICATION**: ✅ Server logs confirm "Retrieved 4 invoices for user 43963086" - endpoint working correctly
+- **CONTRACTS ENDPOINT ADDED**: ✅ Also added /api/contracts route ensuring both major document types have proper API access
+- **ADMIN ACCOUNT CONSOLIDATION**: ✅ Current setup maintains timfulker@gmail.com as admin account with all invoices and contracts
+- **FUTURE SEPARATION NOTED**: ✅ User expressed interest in separate personal musical booking account but keeping current structure for now
+- **Status**: INVOICES PAGE FULLY OPERATIONAL - All 4 database invoices restored and accessible through working API endpoint
+
 ### 2025-07-28 - CRITICAL CONFLICT RESOLUTION EDIT FUNCTION COMPLETELY FIXED - Data Flow Issue Resolved
 - **CRITICAL ROOT CAUSE IDENTIFIED**: ✅ Fixed "No booking selected" error caused by ConflictResolutionDialog passing conflict metadata instead of actual booking data
 - **EDIT FUNCTION DATA FLOW FIXED**: ✅ Updated handleEdit function to properly detect conflict objects vs booking objects and pass correct selectedBooking to edit dialog
