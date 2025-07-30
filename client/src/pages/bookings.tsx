@@ -1045,8 +1045,13 @@ export default function UnifiedBookings() {
                                   </div>
                                   <button
                                     onClick={() => {
-                                      setSelectedBookingForConflict(booking);
-                                      setConflictResolutionDialogOpen(true);
+                                      toast({
+                                        title: "Conflict Resolution",
+                                        description: "Opening conflict resolution dialog for all bookings in this group...",
+                                      });
+                                      // For now, show first booking's details
+                                      setSelectedBookingForDetails(booking);
+                                      setBookingDetailsDialogOpen(true);
                                     }}
                                     className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors"
                                   >
@@ -1138,6 +1143,7 @@ export default function UnifiedBookings() {
                                           <div className="flex items-center justify-end mt-4">
                                             <BookingActionMenu
                                               booking={groupBooking}
+                                              onEditBooking={handleEditBooking}
                                               onSendCompliance={openComplianceDialog}
                                             />
                                           </div>
@@ -1229,6 +1235,7 @@ export default function UnifiedBookings() {
                               <div className="flex items-center gap-2">
                                 <BookingActionMenu
                                   booking={booking}
+                                  onEditBooking={handleEditBooking}
                                   onSendCompliance={openComplianceDialog}
                                 />
                               </div>

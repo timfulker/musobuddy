@@ -14,10 +14,11 @@ import { useLocation } from "wouter";
 
 interface BookingActionMenuProps {
   booking: any;
+  onEditBooking?: (booking: any) => void;
   onSendCompliance?: (booking: any) => void;
 }
 
-export default function BookingActionMenu({ booking, onSendCompliance }: BookingActionMenuProps) {
+export default function BookingActionMenu({ booking, onEditBooking, onSendCompliance }: BookingActionMenuProps) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   
@@ -74,6 +75,12 @@ export default function BookingActionMenu({ booking, onSendCompliance }: Booking
         // Navigate to templates page with booking context for thank you message
         navigate(`/templates?bookingId=${booking.id}&action=thankyou`);
         break;
+      case 'edit_booking':
+        // Open booking details dialog for editing
+        if (onEditBooking) {
+          onEditBooking(booking);
+        }
+        return;
       case 'send_compliance':
         // Open compliance dialog directly on bookings page
         if (onSendCompliance) {
@@ -140,6 +147,15 @@ export default function BookingActionMenu({ booking, onSendCompliance }: Booking
           <ThumbsUp className="w-4 h-4 mr-2" />
           Send Thank You
         </DropdownMenuItem>
+        {onEditBooking && (
+          <DropdownMenuItem 
+            onClick={() => handleAction('edit_booking')}
+            disabled={statusUpdateMutation.isPending}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Edit Booking
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem 
           onClick={() => handleAction('send_compliance')}
           disabled={statusUpdateMutation.isPending}

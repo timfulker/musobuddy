@@ -1,347 +1,137 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { CalendarDays, Clock, MapPin, User, Mail, Phone, X, Edit, Trash } from 'lucide-react';
-import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, MapPin, User, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ConflictResolutionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedBooking: any;
-  conflicts: any[];
-  onEditBooking?: (booking: any) => void;
+  conflictingBookings: any[];
+  onResolveConflict?: (bookingToKeep: any) => void;
 }
 
-export function ConflictResolutionDialog({
+export default function ConflictResolutionDialog({
   isOpen,
   onClose,
-  selectedBooking,
-  conflicts,
-  onEditBooking
+  conflictingBookings = [],
+  onResolveConflict
 }: ConflictResolutionDialogProps) {
-  const [isResolving, setIsResolving] = useState(false);
-  const [resolutionAction, setResolutionAction] = useState<string>('');
-  const [conflictingBookings, setConflictingBookings] = useState<any[]>([]);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
-  // Fetch full booking details for all conflicting bookings
-  const { data: allBookings } = useQuery({
-    queryKey: ['/api/bookings'],
-    enabled: isOpen && conflicts && conflicts.length > 0,
-    staleTime: 0,
-  });
-
-  // Update conflicting bookings when data is available
-  useEffect(() => {
-    if (allBookings && Array.isArray(allBookings) && conflicts && conflicts.length > 0) {
-      // Get all conflicting booking IDs (including the ones that conflict with each other)
-      const conflictBookingIds = new Set<number>();
-      
-      // Add the selected booking's conflicts
-      conflicts.forEach(conflict => {
-        conflictBookingIds.add(conflict.withBookingId);
-      });
-      
-      // Also find any bookings that conflict with the selected booking
-      if (selectedBooking) {
-        const selectedDate = new Date(selectedBooking.eventDate).toDateString();
-        const sameDayBookings = allBookings.filter((booking: any) => 
-          booking.eventDate && 
-          new Date(booking.eventDate).toDateString() === selectedDate &&
-          booking.id !== selectedBooking.id &&
-          booking.status !== 'cancelled' && 
-          booking.status !== 'rejected'
-        );
-        
-        sameDayBookings.forEach(booking => conflictBookingIds.add(booking.id));
-      }
-      
-      // Get the full booking data for all conflicting bookings
-      const fullConflictingBookings = Array.from(conflictBookingIds)
-        .map(id => allBookings.find((booking: any) => booking.id === id))
-        .filter(Boolean); // Remove any null/undefined entries
-      
-      setConflictingBookings(fullConflictingBookings);
-    }
-  }, [allBookings, conflicts, selectedBooking]);
-
-  const handleResolve = async (action: string, bookingId: string) => {
-    try {
-      setIsResolving(true);
-      
-      // For now, just update the booking status to 'cancelled' as a simple resolution
-      // This can be expanded later with more sophisticated conflict resolution
-      await apiRequest(`/api/bookings/${bookingId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ 
-          status: 'cancelled',
-          notes: `Conflict resolved via ${action}` 
-        })
-      });
-
+  const handleResolve = () => {
+    if (selectedBooking && onResolveConflict) {
+      onResolveConflict(selectedBooking);
       toast({
         title: "Conflict Resolved",
-        description: `Booking conflict has been resolved successfully.`,
+        description: `Kept booking for ${selectedBooking.clientName}`,
       });
-
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      
-      onClose();
-    } catch (error) {
-      console.error('Error resolving conflict:', error);
-      toast({
-        title: "Error",
-        description: "Failed to resolve conflict. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsResolving(false);
     }
+    onClose();
   };
 
-  const handleEdit = (conflictOrBooking: any) => {
-    if (onEditBooking) {
-      // If this is a conflict object, we need to pass the selected booking instead
-      if (conflictOrBooking.withBookingId || conflictOrBooking.severity) {
-        console.log('Passing selectedBooking to onEditBooking:', selectedBooking);
-        onEditBooking(selectedBooking);
-      } else {
-        // This is already a booking object
-        console.log('Passing booking object to onEditBooking:', conflictOrBooking);
-        onEditBooking(conflictOrBooking);
-      }
-      onClose(); // Close the conflict dialog when opening edit
-    } else {
-      toast({
-        title: "Edit Booking",
-        description: "Edit functionality not available in this context",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleReject = async (booking: any) => {
-    if (!booking?.id) return;
-    
-    try {
-      setIsResolving(true);
-      
-      // Actually delete the booking instead of calling non-existent resolve-conflict endpoint
-      await apiRequest(`/api/bookings/${booking.id}`, {
-        method: 'DELETE'
-      });
-
-      toast({
-        title: "Booking Deleted",
-        description: `Booking for ${booking.clientName || 'Unknown Client'} has been deleted successfully.`,
-      });
-
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-      
-      onClose();
-    } catch (error) {
-      console.error('Error deleting booking:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete booking. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsResolving(false);
-    }
-  };
-
-  if (!selectedBooking) return null;
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'new':
-      case 'enquiry':
-        return 'bg-sky-100 text-sky-800 border-sky-200';
-      case 'in_progress':
-      case 'awaiting_response':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'client_confirms':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'contract_sent':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'completed':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'cancelled':
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const BookingCard = ({ booking, isConflicting = false }: { booking: any, isConflicting?: boolean }) => {
-    if (!booking) {
-      return (
-        <div className="p-4 border rounded-lg border-gray-200 bg-gray-50">
-          <div className="text-gray-500">Booking data not available</div>
-        </div>
-      );
-    }
-
-    return (
-      <div className={`p-4 border rounded-lg ${isConflicting ? 'border-red-200 bg-red-50' : 'border-blue-200 bg-blue-50'}`}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-gray-900">{booking?.eventType || booking?.clientName || booking?.title || 'Unknown Event'}</h3>
-          <div className="flex items-center space-x-2">
-            <Badge className={getStatusColor(booking?.status)}>
-              {booking?.status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleEdit(booking)}
-              className="text-xs"
-            >
-              Edit
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleReject(booking)}
-              className="text-xs"
-            >
-              Reject
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center space-x-2">
-            <User className="w-4 h-4 text-gray-500" />
-            <span>{booking?.clientName || 'No client name'}</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Mail className="w-4 h-4 text-gray-500" />
-            <span>{booking?.clientEmail || 'No email'}</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Phone className="w-4 h-4 text-gray-500" />
-            <span>{booking?.clientPhone || 'No phone'}</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <CalendarDays className="w-4 h-4 text-gray-500" />
-            <span>{booking?.eventDate ? format(new Date(booking.eventDate), 'PPP') : 'No date'}</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Clock className="w-4 h-4 text-gray-500" />
-            <span>
-              {booking?.eventTime && booking?.eventEndTime
-                ? `${booking.eventTime} - ${booking.eventEndTime}`
-                : booking?.eventTime
-                  ? booking.eventTime
-                  : booking?.eventTime || 'No time'
-              }
-            </span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <MapPin className="w-4 h-4 text-gray-500" />
-            <span>{booking?.venue || 'No venue'}</span>
-          </div>
-        </div>
-
-        {booking?.notes && (
-          <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
-            <strong>Notes:</strong> {booking.notes}
-          </div>
-        )}
-      </div>
-    );
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <span>Conflict Resolution</span>
-            <Badge variant="destructive">
-              {conflicts?.length || 0} Conflict{(conflicts?.length || 0) !== 1 ? 's' : ''}
-            </Badge>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+            Resolve Booking Conflicts
           </DialogTitle>
           <DialogDescription>
-            Resolve scheduling conflicts between bookings. Review the conflicting bookings below and choose an action.
+            Multiple bookings are scheduled for the same time. Select which booking to keep.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Selected Booking */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 text-red-600">Primary Booking (Selected)</h3>
-            <BookingCard booking={selectedBooking} isConflicting={true} />
-          </div>
+        <div className="space-y-4">
+          {conflictingBookings.map((booking) => (
+            <div
+              key={booking.id}
+              className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                selectedBooking?.id === booking.id
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => setSelectedBooking(booking)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="space-y-2 flex-1">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">{booking.clientName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm">{formatDate(booking.eventDate)}</span>
+                    </div>
+                  </div>
 
-          {/* Conflicting Bookings */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 text-orange-600">Conflicting Bookings</h3>
-            <div className="space-y-3">
-              {conflictingBookings && conflictingBookings.length > 0 ? (
-                conflictingBookings.map((booking, index) => (
-                  <BookingCard key={booking?.id || index} booking={booking} isConflicting={false} />
-                ))
-              ) : (
-                <div className="text-gray-500 text-sm">Loading conflicting booking details...</div>
-              )}
-            </div>
-          </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm">
+                        {booking.eventTime} - {booking.eventEndTime || 'TBC'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm">{booking.venue}</span>
+                    </div>
+                  </div>
 
-          {/* Resolution Actions */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold mb-3">Resolution Actions</h3>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                onClick={() => handleResolve('reschedule', selectedBooking?.id)}
-                disabled={isResolving}
-                variant="outline"
-              >
-                Reschedule Primary Booking
-              </Button>
-              <Button
-                onClick={() => handleResolve('cancel_conflicting', selectedBooking?.id)}
-                disabled={isResolving}
-                variant="outline"
-              >
-                Cancel Conflicting Bookings
-              </Button>
-              <Button
-                onClick={() => handleResolve('manual_resolution', selectedBooking?.id)}
-                disabled={isResolving}
-                variant="outline"
-              >
-                Mark as Manually Resolved
-              </Button>
-              <Button
-                onClick={onClose}
-                variant="secondary"
-              >
-                Close
-              </Button>
+                  <div className="text-sm text-gray-600">
+                    <span className="font-medium">Event:</span> {booking.eventType} | 
+                    <span className="font-medium ml-2">Fee:</span> £{booking.agreedFee || 'TBC'}
+                  </div>
+                </div>
+
+                <div className="ml-4">
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                    booking.status === 'contract_sent' ? 'bg-orange-100 text-orange-800' :
+                    booking.status === 'client_confirms' ? 'bg-orange-100 text-orange-800' :
+                    booking.status === 'awaiting_response' ? 'bg-blue-100 text-blue-800' :
+                    booking.status === 'new' ? 'bg-sky-100 text-sky-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {booking.status?.replace('_', ' ').toUpperCase()}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleResolve}
+            disabled={!selectedBooking}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Keep Selected Booking
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
