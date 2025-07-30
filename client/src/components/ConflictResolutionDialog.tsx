@@ -41,9 +41,25 @@ export default function ConflictResolutionDialog({
 
   // Check if the current conflict group is already resolved
   const isResolved = resolutions.some((resolution: any) => {
-    const resolutionBookingIds = JSON.parse(resolution.bookingIds || '[]').sort((a: number, b: number) => a - b);
-    const currentBookingIds = conflictingBookings.map((b: any) => b.id).sort((a: number, b: number) => a - b);
-    return JSON.stringify(resolutionBookingIds) === JSON.stringify(currentBookingIds);
+    if (!resolution?.bookingIds) return false;
+    
+    try {
+      // Handle both string and array formats for bookingIds
+      let resolutionBookingIds;
+      if (typeof resolution.bookingIds === 'string') {
+        resolutionBookingIds = JSON.parse(resolution.bookingIds);
+      } else if (Array.isArray(resolution.bookingIds)) {
+        resolutionBookingIds = resolution.bookingIds;
+      } else {
+        return false;
+      }
+      
+      const currentBookingIds = conflictingBookings.map((b: any) => b.id).sort((a: number, b: number) => a - b);
+      return JSON.stringify(resolutionBookingIds.sort((a: number, b: number) => a - b)) === JSON.stringify(currentBookingIds);
+    } catch (error) {
+      console.warn('Error parsing resolution bookingIds:', error);
+      return false;
+    }
   });
 
   // Determine conflict severity based on time overlaps
