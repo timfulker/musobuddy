@@ -1321,6 +1321,56 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== PUBLIC INVOICE VIEW ROUTES (NO AUTHENTICATION) =====
+  
+  // Public invoice viewing route (for clients)
+  app.get('/view/invoices/:id', async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      
+      if (isNaN(invoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      console.log(`👁️ Public invoice view request for ID: ${invoiceId}`);
+      
+      // Get invoice from database (no user authentication required for public view)
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice) {
+        console.log(`❌ Invoice #${invoiceId} not found for public view`);
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      // If invoice has cloud storage URL, redirect to it directly
+      if (invoice.cloudStorageUrl) {
+        console.log(`✅ Redirecting to cloud storage for invoice #${invoiceId}: ${invoice.cloudStorageUrl}`);
+        return res.redirect(invoice.cloudStorageUrl);
+      }
+      
+      // Fallback: generate PDF on-demand if no cloud URL exists
+      try {
+        const userSettings = await storage.getUserSettings(invoice.userId);
+        const { generateInvoicePDF } = await import('./pdf-generator');
+        const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+        res.send(pdfBuffer);
+        
+        console.log(`✅ Generated PDF on-demand for public invoice #${invoiceId}`);
+      } catch (pdfError) {
+        console.error(`❌ Failed to generate PDF for invoice #${invoiceId}:`, pdfError);
+        res.status(500).json({ error: 'Failed to generate invoice PDF' });
+      }
+      
+    } catch (error) {
+      console.error('❌ Public invoice view error:', error);
+      res.status(500).json({ error: 'Failed to display invoice' });
+    }
+  });
+
+  // ===== AUTHENTICATED INVOICE ROUTES =====
+
   // Get all invoices for authenticated user
   app.get('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
@@ -1429,6 +1479,44 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Failed to download invoice PDF:', error);
       res.status(500).json({ error: 'Failed to download invoice PDF' });
+    }
+  });
+
+  // Regenerate invoice with fresh cloud storage URL
+  app.post('/api/invoices/:id/regenerate', isAuthenticated, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`🔄 Regenerating invoice #${invoiceId} with fresh cloud URL...`);
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice || invoice.userId !== userId) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      // Get user settings and regenerate invoice PDF
+      const userSettings = await storage.getUserSettings(userId);
+      const { uploadInvoiceToCloud } = await import('./cloud-storage');
+      const { url: freshUrl, key } = await uploadInvoiceToCloud(invoice, userSettings);
+      
+      // Update invoice with fresh cloud URL
+      const updatedInvoice = await storage.updateInvoice(invoiceId, {
+        cloudStorageUrl: freshUrl,
+        cloudStorageKey: key,
+        updatedAt: new Date()
+      });
+      
+      console.log(`✅ Invoice #${invoiceId} regenerated with fresh URL: ${freshUrl}`);
+      res.json({ success: true, invoice: updatedInvoice, newUrl: freshUrl });
+      
+    } catch (error) {
+      console.error('❌ Failed to regenerate invoice:', error);
+      res.status(500).json({ error: 'Failed to regenerate invoice' });
     }
   });
 
