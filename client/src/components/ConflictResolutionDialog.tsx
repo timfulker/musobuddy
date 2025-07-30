@@ -8,13 +8,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, User, AlertTriangle } from "lucide-react";
+import { Calendar, Clock, MapPin, User, AlertTriangle, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface ConflictResolutionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   conflictingBookings: any[];
+  onEditBooking?: (booking: any) => void;
   onResolveConflict?: (bookingToKeep: any) => void;
 }
 
@@ -22,10 +25,34 @@ export default function ConflictResolutionDialog({
   isOpen,
   onClose,
   conflictingBookings = [],
+  onEditBooking,
   onResolveConflict
 }: ConflictResolutionDialogProps) {
   const { toast } = useToast();
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (bookingId: number) => {
+      return apiRequest(`/api/bookings/${bookingId}`, {
+        method: 'DELETE'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
+      toast({
+        title: "Booking Rejected",
+        description: "Booking has been successfully removed",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reject booking",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleResolve = () => {
     if (selectedBooking && onResolveConflict) {
@@ -36,6 +63,17 @@ export default function ConflictResolutionDialog({
       });
     }
     onClose();
+  };
+
+  const handleEditBooking = (booking: any) => {
+    if (onEditBooking) {
+      onEditBooking(booking);
+      onClose(); // Close conflict dialog when opening edit
+    }
+  };
+
+  const handleRejectBooking = (booking: any) => {
+    deleteMutation.mutate(booking.id);
   };
 
   const formatDate = (dateString: string) => {
@@ -103,7 +141,7 @@ export default function ConflictResolutionDialog({
                   </div>
                 </div>
 
-                <div className="ml-4">
+                <div className="ml-4 flex flex-col gap-2">
                   <div className={`px-3 py-1 rounded-full text-xs font-medium ${
                     booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                     booking.status === 'contract_sent' ? 'bg-orange-100 text-orange-800' :
@@ -114,6 +152,34 @@ export default function ConflictResolutionDialog({
                   }`}>
                     {booking.status?.replace('_', ' ').toUpperCase()}
                   </div>
+                  
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditBooking(booking);
+                      }}
+                      className="h-8 px-2"
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRejectBooking(booking);
+                      }}
+                      className="h-8 px-2 text-red-600 hover:text-red-700"
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Reject
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -122,12 +188,12 @@ export default function ConflictResolutionDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            Close
           </Button>
           <Button 
             onClick={handleResolve}
             disabled={!selectedBooking}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-blue-600 hover:bg-blue-700"
           >
             Keep Selected Booking
           </Button>

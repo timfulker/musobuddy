@@ -1354,6 +1354,7 @@ export default function UnifiedBookings() {
             ?.bookings || []
           : []
         }
+        onEditBooking={handleEditBooking}
         onResolveConflict={(bookingToKeep) => {
           // Handle the conflict resolution logic here
           toast({
