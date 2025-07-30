@@ -24,6 +24,7 @@ import CalendarImport from "@/components/calendar-import";
 import BookingActionMenu from "@/components/booking-action-menu";
 import { SendComplianceDialog } from "@/components/SendComplianceDialog";
 import ConflictIndicator from "@/components/ConflictIndicator";
+import ConflictResolutionDialog from "@/components/ConflictResolutionDialog";
 import type { Enquiry } from "@shared/schema";
 
 type ViewMode = 'list' | 'calendar';
@@ -1045,13 +1046,8 @@ export default function UnifiedBookings() {
                                   </div>
                                   <button
                                     onClick={() => {
-                                      toast({
-                                        title: "Conflict Resolution",
-                                        description: "Opening conflict resolution dialog for all bookings in this group...",
-                                      });
-                                      // For now, show first booking's details
-                                      setSelectedBookingForDetails(booking);
-                                      setBookingDetailsDialogOpen(true);
+                                      setSelectedBookingForConflict(booking);
+                                      setConflictResolutionDialogOpen(true);
                                     }}
                                     className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors"
                                   >
@@ -1346,6 +1342,34 @@ export default function UnifiedBookings() {
         isOpen={sendComplianceDialogOpen}
         onOpenChange={setSendComplianceDialogOpen}
         booking={selectedBookingForCompliance}
+      />
+      
+      <ConflictResolutionDialog
+        isOpen={conflictResolutionDialogOpen}
+        onClose={() => setConflictResolutionDialogOpen(false)}
+        conflictingBookings={selectedBookingForConflict ? 
+          conflicts
+            .filter(c => c.bookingId === selectedBookingForConflict.id || c.conflictingBookingId === selectedBookingForConflict.id)
+            .map(c => {
+              // Return both the original booking and the conflicting booking
+              const originalBooking = bookings?.find(b => b.id === c.bookingId);
+              const conflictingBooking = bookings?.find(b => b.id === c.conflictingBookingId);
+              return [originalBooking, conflictingBooking];
+            })
+            .flat()
+            .filter(Boolean)
+            .filter((booking, index, array) => array.findIndex(b => b.id === booking.id) === index) // Remove duplicates
+          : []
+        }
+        onResolveConflict={(bookingToKeep) => {
+          // Handle the conflict resolution logic here
+          toast({
+            title: "Conflict Resolved",
+            description: `Kept booking for ${bookingToKeep.clientName}`,
+          });
+          queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+          setConflictResolutionDialogOpen(false);
+        }}
       />
 
       {/* Bulk Delete Confirmation Dialog */}
