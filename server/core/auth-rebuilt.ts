@@ -203,8 +203,8 @@ export function setupAuthRoutes(app: Express) {
       }
       
       // Regular user login
-      const user = await storage.getUserByEmail(email);
-      if (!user || user.password !== password) {
+      const user = await storage.authenticateUser(email, password);
+      if (!user) {
         return res.status(401).json({ error: 'Invalid email or password' });
       }
       
