@@ -670,17 +670,15 @@ export async function registerRoutes(app: Express) {
       // Import booking formatter
       const { formatBookings } = await import('./booking-formatter');
       
-      // CRITICAL PERFORMANCE FIX: Limit to 50 most recent bookings
-      const limit = parseInt(req.query.limit as string) || 50;
+      // Get all bookings for user - no artificial limits
       const rawBookings = await storage.getBookings(userId);
       
-      // Sort by date and limit results to prevent system overload
-      const recentBookings = rawBookings
-        .sort((a: any, b: any) => new Date(b.eventDate || 0).getTime() - new Date(a.eventDate || 0).getTime())
-        .slice(0, limit);
+      // Sort by date (most recent first) - removed artificial limit
+      const sortedBookings = rawBookings
+        .sort((a: any, b: any) => new Date(b.eventDate || 0).getTime() - new Date(a.eventDate || 0).getTime());
       
       // Format bookings consistently
-      const formattedBookings = formatBookings(recentBookings);
+      const formattedBookings = formatBookings(sortedBookings);
       
       res.json(formattedBookings);
     } catch (error) {
