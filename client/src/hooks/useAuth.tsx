@@ -10,6 +10,13 @@ export function useAuth() {
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     refetchInterval: false,
+    onError: (error: any) => {
+      // If user account no longer exists, redirect to pricing instead of blocking access
+      if (error?.message?.includes('User account no longer exists')) {
+        console.log('🔄 User account deleted - redirecting to pricing page');
+        window.location.href = '/pricing';
+      }
+    }
   });
 
   // Authentication state tracking (reduced logging for performance)
