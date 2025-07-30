@@ -63,26 +63,36 @@ export default function ConflictResolutionDialog({
             date = new Date(booking1.eventDate).toISOString().split('T')[0];
           }
           
-          // Check if both bookings have times
-          if (booking1.eventTime && booking1.eventEndTime && booking2.eventTime && booking2.eventEndTime) {
-            // Convert times to minutes for comparison
+          // Check if both bookings have start times (end times are optional)
+          if (booking1.eventTime && booking2.eventTime) {
+            // Parse start times
             const [start1Hours, start1Minutes] = booking1.eventTime.split(':').map(Number);
-            const [end1Hours, end1Minutes] = booking1.eventEndTime.split(':').map(Number);
             const [start2Hours, start2Minutes] = booking2.eventTime.split(':').map(Number);
-            const [end2Hours, end2Minutes] = booking2.eventEndTime.split(':').map(Number);
             
             const start1 = start1Hours * 60 + start1Minutes;
-            const end1 = end1Hours * 60 + end1Minutes;
             const start2 = start2Hours * 60 + start2Minutes;
-            const end2 = end2Hours * 60 + end2Minutes;
             
-            // Check for overlap
+            let end1 = start1 + 120; // Default 2-hour duration if no end time
+            let end2 = start2 + 120; // Default 2-hour duration if no end time
+            
+            // Use actual end times if available
+            if (booking1.eventEndTime) {
+              const [end1Hours, end1Minutes] = booking1.eventEndTime.split(':').map(Number);
+              end1 = end1Hours * 60 + end1Minutes;
+            }
+            
+            if (booking2.eventEndTime) {
+              const [end2Hours, end2Minutes] = booking2.eventEndTime.split(':').map(Number);
+              end2 = end2Hours * 60 + end2Minutes;
+            }
+            
+            // Check for actual time overlap
             if (start1 < end2 && end1 > start2) {
               hasTimeOverlap = true;
               break;
             }
-          } else {
-            // Missing times = hard conflict
+          } else if (!booking1.eventTime || !booking2.eventTime) {
+            // Only treat as hard conflict if NO start times at all
             hasTimeOverlap = true;
             break;
           }
