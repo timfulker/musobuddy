@@ -133,6 +133,16 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-07-30 - Session Security Vulnerability Fixed + Pricing Page Corrections Complete
+- **CRITICAL SECURITY FIX**: ✅ Fixed session validation vulnerability where deleted users remained logged in through persistent sessions
+- **Authentication Middleware Enhanced**: ✅ Updated `/api/auth/user` endpoint to validate user existence in database on every authenticated request
+- **Session Cleanup Implementation**: ✅ Invalid sessions are now automatically destroyed when deleted users are detected
+- **Pricing Page Corrections**: ✅ Fixed misleading "No credit card required" messaging to accurately show "Credit card required for setup"
+- **User Flow Improvement**: ✅ Deleted users with active sessions are now redirected to landing page instead of staying on dashboard
+- **Security Pattern Established**: ✅ Authentication middleware now checks both session presence AND current database user state
+- **Lead Email Management**: ✅ Successfully integrated lead email settings into main settings page with professional UI design
+- **Trial Messaging Accuracy**: ✅ Updated pricing page header to clearly state "14-day trial (credit card required)" for transparency
+
 ### 2025-07-30 - Complete Invoice System 404 Errors & Expired URL Issues Resolved
 - **CRITICAL PUBLIC ROUTE ADDED**: ✅ Added missing public `/view/invoices/:id` route that was causing 404 errors for client invoice access
 - **EXPIRED URL CRISIS RESOLVED**: ✅ All invoices had expired 7-day signed AWS URLs from July 18th - regenerated all with permanent public R2 URLs

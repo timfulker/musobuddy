@@ -11,10 +11,10 @@ export function useAuth() {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     refetchInterval: false,
     onError: (error: any) => {
-      // If user account no longer exists, redirect to pricing instead of blocking access
+      // If user account no longer exists, redirect to landing page
       if (error?.message?.includes('User account no longer exists')) {
-        console.log('🔄 User account deleted - redirecting to pricing page');
-        window.location.href = '/pricing';
+        console.log('🔄 User account deleted - redirecting to landing page');
+        window.location.href = '/';
       }
     }
   });
