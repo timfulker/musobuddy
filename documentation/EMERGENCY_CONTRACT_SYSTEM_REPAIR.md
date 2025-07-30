@@ -43,11 +43,13 @@ process.env.CLOUDFLARE_R2_ACCOUNT_ID
 
 ### Issue 1: "Contract Creation Failed" - PDF Generation
 **Symptoms**: 500 errors on contract creation, no PDF generated
-**Root Cause**: Puppeteer/Chromium configuration
+**Root Cause**: Puppeteer/Chromium configuration or HTML template issues
 
-**EMERGENCY FIX**:
+**COMPLETE PDF GENERATION RESTORATION**:
+
+#### Step 1: Verify Chromium Path in `server/core/services.ts`
 ```typescript
-// In server/core/services.ts - generateContractPDF method
+// CRITICAL: Exact Chromium path for Replit environment
 const browser = await puppeteer.launch({
   headless: true,
   executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -55,8 +57,302 @@ const browser = await puppeteer.launch({
     '--no-sandbox',
     '--disable-setuid-sandbox',
     '--disable-dev-shm-usage',
-    '--disable-gpu'
+    '--disable-gpu',
+    '--disable-extensions',
+    '--disable-plugins',
+    '--run-all-compositor-stages-before-draw',
+    '--no-first-run'
   ]
+});
+```
+
+#### Step 2: Complete Professional HTML Template (CRITICAL)
+```typescript
+// In server/core/services.ts - generateContractPDF method
+const htmlTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Performance Contract</title>
+    <style>
+        @page {
+            margin: 40px;
+            size: A4;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .contract-details {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            color: #2563eb;
+            min-width: 120px;
+        }
+        
+        .detail-value {
+            color: #1e293b;
+            flex: 1;
+            text-align: right;
+        }
+        
+        .parties-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 25px 0;
+        }
+        
+        .party-card {
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+        }
+        
+        .party-title {
+            background: #2563eb;
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 15px -20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .terms-section {
+            background: #fef7cd;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        
+        .terms-title {
+            color: #92400e;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .signature-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .signature-boxes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+        
+        .signature-box {
+            text-align: center;
+        }
+        
+        .signature-line {
+            border-bottom: 2px solid #374151;
+            margin-bottom: 8px;
+            height: 50px;
+            position: relative;
+        }
+        
+        .signed-name {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #059669;
+        }
+        
+        .date-signed {
+            color: #059669;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        @media print {
+            .header {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            
+            .party-card, .terms-section {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PERFORMANCE CONTRACT</h1>
+        <p style="margin: 5px 0 0 0; font-size: 14px;">Contract #${contract.contractNumber || 'N/A'}</p>
+    </div>
+
+    <div class="contract-details">
+        <div class="detail-row">
+            <span class="detail-label">Event Date:</span>
+            <span class="detail-value">${formatDate(contract.eventDate)}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Performance Time:</span>
+            <span class="detail-value">${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Venue:</span>
+            <span class="detail-value">${contract.venue || 'TBC'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Performance Fee:</span>
+            <span class="detail-value">£${contract.fee || 'TBC'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Performance Duration:</span>
+            <span class="detail-value">${contract.performanceDuration || 'TBC'}</span>
+        </div>
+    </div>
+
+    <div class="parties-section">
+        <div class="party-card">
+            <div class="party-title">CLIENT</div>
+            <p><strong>${contract.clientName || 'TBC'}</strong></p>
+            <p>${contract.clientEmail || 'TBC'}</p>
+            <p>${contract.clientPhone || 'TBC'}</p>
+            ${contract.clientAddress ? `<p>${formatAddress(contract.clientAddress)}</p>` : '<p>Address TBC</p>'}
+        </div>
+        
+        <div class="party-card">
+            <div class="party-title">PERFORMER</div>
+            <p><strong>${user.businessName || user.email}</strong></p>
+            <p>${user.email}</p>
+            <p>${user.phone || 'TBC'}</p>
+            ${formatPerformerAddress(user)}
+        </div>
+    </div>
+
+    <div class="terms-section">
+        <div class="terms-title">TERMS & CONDITIONS</div>
+        <ul style="margin: 0; padding-left: 20px;">
+            <li>Payment terms: ${contract.paymentTerms || 'As agreed between parties'}</li>
+            <li>Cancellation policy: ${contract.cancellationPolicy || 'As agreed between parties'}</li>
+            <li>Equipment requirements: ${contract.equipment || 'As specified in booking details'}</li>
+            <li>Setup time required: ${contract.setupTime || 'As agreed between parties'}</li>
+            <li>Additional terms: ${contract.additionalTerms || 'None specified'}</li>
+        </ul>
+    </div>
+
+    <div class="signature-section">
+        <p style="text-align: center; font-weight: bold; margin-bottom: 20px;">
+            By signing below, both parties agree to the terms and conditions outlined in this contract.
+        </p>
+        
+        <div class="signature-boxes">
+            <div class="signature-box">
+                <div class="signature-line">
+                    ${contract.signed && contract.signatureName ? 
+                      `<div class="signed-name">${contract.signatureName}</div>` : ''}
+                </div>
+                <p><strong>CLIENT SIGNATURE</strong></p>
+                <p>${contract.clientName || 'TBC'}</p>
+                ${contract.signed && contract.signedAt ? 
+                  `<p class="date-signed">Signed: ${formatDate(contract.signedAt)}</p>` : ''}
+            </div>
+            
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <p><strong>PERFORMER SIGNATURE</strong></p>
+                <p>${user.businessName || user.email}</p>
+                <p>Date: _________________</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+// Helper functions for formatting
+function formatDate(date: any): string {
+  if (!date) return 'TBC';
+  return new Date(date).toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function formatAddress(address: string): string {
+  if (!address) return 'TBC';
+  return address.split(',').map(part => part.trim()).join('<br>');
+}
+
+function formatPerformerAddress(user: any): string {
+  const parts = [];
+  if (user.addressLine1) parts.push(user.addressLine1);
+  if (user.city) parts.push(user.city);
+  if (user.county) parts.push(user.county);
+  if (user.postcode) parts.push(user.postcode);
+  
+  return parts.length > 0 ? `<p>${parts.join('<br>')}</p>` : '<p>Address TBC</p>';
+}
+```
+
+#### Step 3: PDF Generation Configuration
+```typescript
+// CRITICAL: Page configuration for professional output
+const page = await browser.newPage();
+await page.setContent(htmlTemplate, { waitUntil: 'networkidle0' });
+
+const pdfBuffer = await page.pdf({
+  format: 'A4',
+  printBackground: true,  // CRITICAL: Enables colored backgrounds
+  margin: {
+    top: '20px',
+    right: '20px',
+    bottom: '20px',
+    left: '20px'
+  },
+  displayHeaderFooter: false,
+  preferCSSPageSize: true
 });
 ```
 
