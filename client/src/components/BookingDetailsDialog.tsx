@@ -1309,16 +1309,17 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                             </Button>
                           </div>
                         )}
-                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && (booking.uploadedDocuments as any[]).map((doc: any, index: number) => (
+                        {booking?.uploadedDocuments && Array.isArray(booking.uploadedDocuments) && 
+                         (booking.uploadedDocuments as Array<{type?: string, filename?: string, url?: string}>).map((doc, index) => (
                           <div key={index} className="bg-gray-50 p-3 rounded-md">
                             <p className="text-sm text-gray-700 mb-2">
-                              📎 {String(doc.type || 'Document')}: {String(doc.filename)}
+                              📎 {doc.type || 'Document'}: {doc.filename || 'Unknown'}
                             </p>
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={() => window.open(String(doc.url), '_blank')}
+                              onClick={() => doc.url && window.open(doc.url, '_blank')}
                             >
                               View Document
                             </Button>
