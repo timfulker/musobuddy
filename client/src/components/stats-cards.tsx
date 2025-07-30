@@ -2,8 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { PoundSterling, Calendar, FileText, ArrowUp, Clock, AlertCircle } from "lucide-react";
 
+interface DashboardStats {
+  monthlyRevenue?: number;
+  activeBookings?: number;
+  pendingInvoices?: number;
+  overdueInvoices?: number;
+  enquiriesRequiringResponse?: number;
+}
+
 export default function StatsCards() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats = {} as DashboardStats, isLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
   });
 
@@ -31,21 +39,21 @@ export default function StatsCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
       <Card>
         <CardContent className="p-4 md:p-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-medium text-muted-foreground">This Month</p>
-              <p className="text-xl md:text-3xl font-bold text-foreground">
-                £{stats?.monthlyRevenue?.toLocaleString() || "0"}
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
+                £{stats.monthlyRevenue?.toLocaleString() || "0"}
               </p>
               <p className="text-xs md:text-sm text-green-600 mt-1 flex items-center">
                 <ArrowUp className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                 12% vs last month
               </p>
             </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <PoundSterling className="w-5 h-5 md:w-6 md:h-6 text-green-600" />
             </div>
           </div>
@@ -54,18 +62,18 @@ export default function StatsCards() {
       
       <Card>
         <CardContent className="p-4 md:p-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-medium text-muted-foreground">Active Bookings</p>
-              <p className="text-xl md:text-3xl font-bold text-foreground">
-                {stats?.activeBookings || 0}
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
+                {stats.activeBookings || 0}
               </p>
               <p className="text-xs md:text-sm text-blue-600 mt-1 flex items-center">
                 <Calendar className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                 Confirmed & awaiting signature
               </p>
             </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Calendar className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             </div>
           </div>
@@ -74,18 +82,18 @@ export default function StatsCards() {
       
       <Card>
         <CardContent className="p-4 md:p-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-medium text-muted-foreground">Pending Invoices</p>
-              <p className="text-xl md:text-3xl font-bold text-foreground">
-                £{stats?.pendingInvoices?.toLocaleString() || "0"}
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
+                £{stats.pendingInvoices?.toLocaleString() || "0"}
               </p>
               <p className="text-xs md:text-sm text-orange-600 mt-1 flex items-center">
                 <Clock className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                {stats?.overdueInvoices || 0} overdue
+                {stats.overdueInvoices || 0} overdue
               </p>
             </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <FileText className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
             </div>
           </div>
@@ -94,18 +102,18 @@ export default function StatsCards() {
       
       <Card>
         <CardContent className="p-4 md:p-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-medium text-muted-foreground">Enquiries Requiring Response</p>
-              <p className="text-xl md:text-3xl font-bold text-foreground">
-                {stats?.enquiriesRequiringResponse || 0}
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
+                {stats.enquiriesRequiringResponse || 0}
               </p>
               <p className="text-xs md:text-sm text-red-600 mt-1 flex items-center">
                 <AlertCircle className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                 Need immediate attention
               </p>
             </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-red-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-red-600" />
             </div>
           </div>

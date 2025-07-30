@@ -82,26 +82,50 @@ body {
   position: relative;
 }
 
-/* Enhanced component scaling for better deployed version visibility */
+/* Remove problematic scaling that causes overlapping text */
 .dashboard-card {
-  transform: scale(1.05); /* Increased from 1.02 for better card visibility */
+  /* Removed transform scale to prevent overlapping text */
 }
 
-/* Enhanced button and input sizing for better deployed version usability */
+/* Remove button scaling to prevent overlapping text */
 button, input, select, textarea {
-  transform: scale(1.03); /* Increased from 1.01 for better element visibility */
+  /* Removed transform scale to prevent overlapping text */
 }
 
-/* Ensure text remains readable with enhanced sizing */
+/* Ensure text remains readable with proper spacing */
 .text-balanced {
-  font-size: 1.1rem; /* Increased from 1rem for better readability */
-  line-height: 1.6; /* Increased line height for better spacing */
+  line-height: 1.5; /* Consistent line height for better readability */
 }
 
 /* Prevent layout shifts during window resize */
 .content-container {
   transition: none !important;
   will-change: auto !important;
+}
+
+/* Fix dashboard responsive spacing to prevent text overlap */
+.dashboard-spacing {
+  min-height: 0; /* Prevent flex items from overflowing */
+}
+
+/* Ensure cards have proper spacing */
+.dashboard-card-wrapper {
+  min-width: 0; /* Allow text to wrap within flex containers */
+}
+
+/* Responsive text sizing for better mobile display */
+@media (max-width: 640px) {
+  .text-responsive {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+@media (min-width: 641px) {
+  .text-responsive {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
 }
 
 /* Responsive layout utilities */

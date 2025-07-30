@@ -102,14 +102,14 @@ export default function Dashboard() {
         <div className="flex-1 ml-64 min-h-screen">
           <DashboardHeader />
           
-          <main className="p-6 space-y-8 max-w-7xl mx-auto">
+          <main className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
             <StatsCards />
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-              <div className="xl:col-span-3 space-y-8">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+              <div className="xl:col-span-3 space-y-6">
                 <ActionableEnquiries />
                 <CalendarWidget />
               </div>
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <BookingCTAButtons />
                 <QuickActions />
                 <ConflictsWidget />
@@ -145,16 +145,16 @@ export default function Dashboard() {
       <div className={`min-h-screen ${isDesktop ? 'ml-64' : ''}`}>
         <DashboardHeader />
         
-        <main className="p-3 md:p-6 space-y-3 md:space-y-6">
+        <main className="p-4 md:p-6 space-y-4 md:space-y-6">
           <StatsCards />
           
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 md:gap-6">
-            <div className="xl:col-span-3 space-y-3 md:space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
+            <div className="xl:col-span-3 space-y-4 md:space-y-6">
               <ActionableEnquiries />
               <CalendarWidget />
             </div>
             
-            <div className="space-y-3 md:space-y-6">
+            <div className="space-y-4">
               <BookingCTAButtons />
               <QuickActions />
               <ConflictsWidget />
