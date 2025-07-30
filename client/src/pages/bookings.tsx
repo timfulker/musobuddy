@@ -92,6 +92,10 @@ export default function UnifiedBookings() {
   const [sendComplianceDialogOpen, setSendComplianceDialogOpen] = useState(false);
   const [selectedBookingForCompliance, setSelectedBookingForCompliance] = useState<any>(null);
   
+  // Conflict resolution dialog states
+  const [conflictResolutionDialogOpen, setConflictResolutionDialogOpen] = useState(false);
+  const [selectedBookingForConflict, setSelectedBookingForConflict] = useState<any>(null);
+  
   // Bulk selection states
   const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -664,6 +668,12 @@ export default function UnifiedBookings() {
     setBookingDetailsDialogOpen(true);
   };
 
+  // Handler for editing booking from action menu
+  const handleEditBooking = (booking: any) => {
+    setSelectedBookingForDetails(booking);
+    setBookingDetailsDialogOpen(true);
+  };
+
   const days = generateCalendar();
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -1128,7 +1138,6 @@ export default function UnifiedBookings() {
                                           <div className="flex items-center justify-end mt-4">
                                             <BookingActionMenu
                                               booking={groupBooking}
-                                              onEditBooking={handleEditBooking}
                                               onSendCompliance={openComplianceDialog}
                                             />
                                           </div>
@@ -1220,7 +1229,6 @@ export default function UnifiedBookings() {
                               <div className="flex items-center gap-2">
                                 <BookingActionMenu
                                   booking={booking}
-                                  onEditBooking={handleEditBooking}
                                   onSendCompliance={openComplianceDialog}
                                 />
                               </div>
