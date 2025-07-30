@@ -1,4 +1,5 @@
 import express, { type Request, Response } from "express";
+import multer from 'multer';
 // Session imports now handled by rebuilt system
 import { setupVite, serveStatic } from "./vite";
 import { serveStaticFixed } from "./static-serve";
@@ -365,6 +366,17 @@ app.use(['/api/auth/restore-session', '/api/auth/restore-session-by-stripe', '/a
   next();
 });
 
+// Configure multer for handling multipart data (attachments)
+const upload = multer({
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit for attachments
+    fieldSize: 10 * 1024 * 1024, // 10MB limit for form fields
+    fields: 100, // Maximum number of non-file fields
+    files: 10 // Maximum number of file fields
+  },
+  storage: multer.memoryStorage() // Store in memory (we don't need to save files)
+});
+
 // Helper function to parse currency values to numeric
 function parseCurrencyToNumber(value: string | null | undefined): number | null {
   if (!value) return null;
@@ -374,55 +386,63 @@ function parseCurrencyToNumber(value: string | null | undefined): number | null 
   return isNaN(parsed) ? null : parsed;
 }
 
-// CRITICAL: Email webhook registered FIRST
-app.post('/api/webhook/mailgun', express.urlencoded({ extended: true, limit: '10mb' }), async (req: Request, res: Response) => {
+// ENHANCED Mailgun webhook handler with attachment support
+app.post('/api/webhook/mailgun', 
+  // Use multer to handle both form-data (with attachments) and urlencoded (without)
+  (req, res, next) => {
+    const contentType = req.headers['content-type'] || '';
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Handle emails with attachments using multer
+      console.log('📎 Handling multipart request (with attachments)');
+      upload.any()(req, res, next);
+    } else {
+      // Handle emails without attachments using urlencoded
+      console.log('📧 Handling urlencoded request (no attachments)');
+      express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
+    }
+  },
+  async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
   console.log(`📧 [${requestId}] Email webhook received - ${new Date().toISOString()}`);
   
   try {
-    // ENHANCED DEBUGGING: Log full request body structure
-    console.log(`📧 [${requestId}] RAW REQUEST BODY KEYS:`, Object.keys(req.body || {}));
-    console.log(`📧 [${requestId}] RAW REQUEST BODY:`, JSON.stringify(req.body, null, 2));
+    // ENHANCED DEBUGGING: Log content type and parsing method
+    const contentType = req.headers['content-type'] || '';
+    console.log(`📧 [${requestId}] Content-Type: ${contentType}`);
+    console.log(`📧 [${requestId}] Body keys:`, Object.keys(req.body || {}));
     
-    // Check for attachments that might cause issues
-    const attachmentCount = req.body['attachment-count'] || 0;
-    if (attachmentCount > 0) {
-      console.log(`📎 [${requestId}] Email has ${attachmentCount} attachments - checking size limits`);
-      for (let i = 1; i <= attachmentCount; i++) {
-        const attachmentSize = req.body[`attachment-${i}`]?.size || 0;
-        console.log(`📎 [${requestId}] Attachment ${i} size: ${attachmentSize} bytes`);
-        if (attachmentSize > 1000000) { // 1MB limit
-          console.log(`⚠️ [${requestId}] Large attachment detected (${attachmentSize} bytes) - processing anyway`);
-        }
-      }
+    // Handle attachment metadata from multer
+    const files = Array.isArray(req.files) ? req.files : [];
+    if (files.length > 0) {
+      console.log(`📎 [${requestId}] Received ${files.length} attachment(s):`);
+      files.forEach((file: any, index: number) => {
+        console.log(`📎 [${requestId}] Attachment ${index + 1}: ${file.originalname} (${file.size} bytes, ${file.mimetype})`);
+      });
     }
     
-    const fromField = req.body.From || req.body.from || '';
+    // Extract email fields (same logic as before)
+    const fromField = req.body.From || req.body.from || req.body.sender || '';
     const subjectField = req.body.Subject || req.body.subject || '';
-    const bodyField = req.body['body-plain'] || req.body.text || '';
+    const bodyField = req.body['body-plain'] || req.body.text || req.body['stripped-text'] || '';
+    const recipientField = req.body.To || req.body.recipient || '';
     
     console.log(`📧 [${requestId}] Email data:`, {
       from: fromField,
       subject: subjectField,
+      to: recipientField,
       bodyLength: bodyField?.length || 0,
-      attachmentCount: attachmentCount
+      hasAttachments: files.length > 0
     });
     
-    // SPECIAL LOGGING for problem email addresses
+    // SPECIAL LOGGING for previously problematic emails
     const problemEmails = ['timfulkermusic@gmail.com', 'tim@saxweddings.com'];
     const isProblematicEmail = problemEmails.some(email => fromField.includes(email));
     
     if (isProblematicEmail) {
-      console.log(`🔍 [${requestId}] SPECIAL DEBUG - Problem email detected: ${fromField}`);
-      console.log(`🔍 [${requestId}] Full email structure:`, {
-        allFields: Object.keys(req.body),
-        hasBodyPlain: !!req.body['body-plain'],
-        hasText: !!req.body.text,
-        hasFrom: !!req.body.From,
-        hasSubject: !!req.body.Subject,
-        contentLength: (req.body['body-plain'] || req.body.text || '').length,
-        attachments: attachmentCount
-      });
+      console.log(`🔍 [${requestId}] SPECIAL DEBUG - Previously problematic email: ${fromField}`);
+      console.log(`🔍 [${requestId}] Content-Type: ${contentType}`);
+      console.log(`🔍 [${requestId}] Attachment count: ${files.length}`);
     }
     
     if (!fromField && !subjectField && !bodyField) {
@@ -470,8 +490,6 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true, limit: '10
       aiResult = { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
     }
     
-    // Extract user ID from recipient email address using fallback system
-    const recipientField = req.body.To || req.body.recipient || '';
     console.log(`📧 [${requestId}] Recipient field:`, recipientField);
     
     // FALLBACK PROTECTION: Import webhook fallbacks
@@ -577,7 +595,9 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true, limit: '10
       success: true,
       enquiryId: newBooking.id,
       clientName,
-      clientEmail
+      clientEmail,
+      hasAttachments: files.length > 0,
+      attachmentCount: files.length
     });
     
   } catch (error: any) {
