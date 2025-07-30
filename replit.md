@@ -133,7 +133,7 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-07-30 - EMAIL WEBHOOK ISSUE COMPLETELY RESOLVED - Enhanced Multer Handler Deployed
+### 2025-07-30 - EMAIL WEBHOOK ISSUE COMPLETELY RESOLVED - Enhanced Multer Handler Deployed + Conflict Detection Fixed
 - **CRITICAL ROOT CAUSE IDENTIFIED**: ✅ Email signature images causing multipart/form-data encoding that original urlencoded-only handler couldn't process
 - **ENHANCED WEBHOOK HANDLER DEPLOYED**: ✅ Added multer middleware with dynamic content-type detection for both attachment and non-attachment emails
 - **PRODUCTION SOLUTION IMPLEMENTED**: ✅ Webhook automatically detects multipart/form-data vs application/x-www-form-urlencoded and uses appropriate parser
@@ -143,7 +143,10 @@ The application is designed to be user-friendly while maintaining professional-g
 - **DUAL PROCESSING CAPABILITY**: ✅ System handles both Gmail emails with signature attachments and simple text emails seamlessly
 - **EXTERNAL DOCUMENTATION COMPLETE**: ✅ EMAIL_WEBHOOK_ANALYSIS.md updated with final resolution status and technical details
 - **PRODUCTION READY**: ✅ Enhanced webhook deployed to https://musobuddy.replit.app/api/webhook/mailgun with full attachment support
-- **Status**: EMAIL WEBHOOK SYSTEM COMPLETELY OPERATIONAL - Both timfulkermusic@gmail.com and tim@saxweddings.com can now send emails with signature images without 400 errors
+- **CONFLICT DETECTION ENHANCED**: ✅ Fixed time parsing logic to properly handle both start/end times (20:00-22:00) and single start times with assumed duration
+- **FLEXIBLE TIME FORMAT SUPPORT**: ✅ System now handles "20:00", "8 PM", "8:00 PM" formats and separate eventTime/eventEndTime fields
+- **IMPROVED CONFLICT LOGIC**: ✅ Royal Bath Hotel booking with proper times now correctly shows orange (soft) conflicts instead of red when no time overlap exists
+- **Status**: EMAIL WEBHOOK SYSTEM + CONFLICT DETECTION COMPLETELY OPERATIONAL - Enhanced attachment support and accurate conflict severity detection
 
 ### 2025-07-30 - USER EXPLAINER VIDEO INTEGRATION COMPLETE - Landing Page Video Controls Operational
 - **VIDEO INTEGRATION SUCCESS**: ✅ Successfully integrated user-provided MP4 explainer video (606F7H35AI6JIPP1_1753897603372.mp4) into landing page
