@@ -133,14 +133,14 @@ export default function BookingCTAButtons() {
             className="w-full justify-between p-4 h-auto text-white shadow-md transition-all duration-200 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
             variant="default"
           >
-            <div className="flex items-center space-x-3">
-              <MessageCircle className="w-5 h-5" />
-              <div className="text-left">
-                <div className="font-medium">Bookings Need Response</div>
-                <div className="text-xs opacity-90">View all bookings to respond</div>
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
+              <MessageCircle className="w-5 h-5 flex-shrink-0" />
+              <div className="text-left min-w-0 flex-1">
+                <div className="font-medium text-sm sm:text-base leading-tight">Bookings Need Response</div>
+                <div className="text-xs opacity-90 leading-tight">View all bookings to respond</div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
               <Badge variant="secondary" className="bg-white/20 text-white">
                 {bookings.length}
               </Badge>
@@ -152,14 +152,14 @@ export default function BookingCTAButtons() {
             className="w-full justify-between p-4 h-auto text-white shadow-md transition-all duration-200 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
             variant="default"
           >
-            <div className="flex items-center space-x-3">
-              <FileText className="w-5 h-5" />
-              <div className="text-left">
-                <div className="font-medium">Contracts Need Sending</div>
-                <div className="text-xs opacity-90">View contracts to send</div>
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
+              <FileText className="w-5 h-5 flex-shrink-0" />
+              <div className="text-left min-w-0 flex-1">
+                <div className="font-medium text-sm sm:text-base leading-tight">Contracts Need Sending</div>
+                <div className="text-xs opacity-90 leading-tight">View contracts to send</div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
               <Badge variant="secondary" className="bg-white/20 text-white">
                 {contracts.length}
               </Badge>
@@ -171,14 +171,14 @@ export default function BookingCTAButtons() {
             className="w-full justify-between p-4 h-auto text-white shadow-md transition-all duration-200 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
             variant="default"
           >
-            <div className="flex items-center space-x-3">
-              <Receipt className="w-5 h-5" />
-              <div className="text-left">
-                <div className="font-medium">Invoices Need Sending</div>
-                <div className="text-xs opacity-90">View invoices to send</div>
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
+              <Receipt className="w-5 h-5 flex-shrink-0" />
+              <div className="text-left min-w-0 flex-1">
+                <div className="font-medium text-sm sm:text-base leading-tight">Invoices Need Sending</div>
+                <div className="text-xs opacity-90 leading-tight">View invoices to send</div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
               <Badge variant="secondary" className="bg-white/20 text-white">
                 {invoices.length}
               </Badge>
@@ -218,14 +218,14 @@ export default function BookingCTAButtons() {
               className={`w-full justify-between p-4 h-auto text-white shadow-md transition-all duration-200 ${button.color}`}
               variant="default"
             >
-              <div className="flex items-center space-x-3">
-                <Icon className="w-5 h-5" />
-                <div className="text-left">
-                  <div className="font-medium">{button.title}</div>
-                  <div className="text-xs opacity-90">{button.description}</div>
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <div className="text-left min-w-0 flex-1">
+                  <div className="font-medium text-sm sm:text-base leading-tight">{button.title}</div>
+                  <div className="text-xs opacity-90 leading-tight">{button.description}</div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
                 <Badge variant="secondary" className="bg-white/20 text-white">
                   {button.count}
                 </Badge>
