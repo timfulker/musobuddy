@@ -41,6 +41,12 @@ interface CalendarEvent {
 export default function UnifiedBookings() {
   const { user } = useAuth();
   
+  // Month names for display
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
 
   
   // Status color helper function
@@ -613,8 +619,70 @@ export default function UnifiedBookings() {
 
 
 
-  // Generate calendar grid
-  const generateCalendar = () => {
+  // Generate calendar data based on view type
+  const generateCalendarData = () => {
+    switch (calendarView) {
+      case 'day':
+        return generateDayView();
+      case 'week':
+        return generateWeekView();
+      case 'month':
+        return generateMonthView();
+      case 'year':
+        return generateYearView();
+      default:
+        return generateMonthView();
+    }
+  };
+
+  // Generate day view
+  const generateDayView = () => {
+    const date = new Date(currentDate);
+    const isToday = date.toDateString() === new Date().toDateString();
+    const events = getEventsForDate(date);
+    
+    return [{
+      date,
+      day: date.getDate(),
+      isCurrentMonth: true,
+      isToday,
+      hasEvents: events.length > 0,
+      events
+    }];
+  };
+
+  // Generate week view
+  const generateWeekView = () => {
+    const startOfWeek = new Date(currentDate);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+
+    const days = [];
+    const currentDateCopy = new Date(startOfWeek);
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(currentDateCopy);
+      const isToday = date.toDateString() === new Date().toDateString();
+      const events = getEventsForDate(date);
+
+      days.push({
+        date,
+        day: date.getDate(),
+        isCurrentMonth: date.getMonth() === currentDate.getMonth(),
+        isToday,
+        hasEvents: events.length > 0,
+        events
+      });
+
+      currentDateCopy.setDate(currentDateCopy.getDate() + 1);
+    }
+
+    return days;
+  };
+
+  // Generate month view (existing logic)
+  const generateMonthView = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -651,6 +719,32 @@ export default function UnifiedBookings() {
     return days;
   };
 
+  // Generate year view
+  const generateYearView = () => {
+    const year = currentDate.getFullYear();
+    const months = [];
+    
+    for (let month = 0; month < 12; month++) {
+      const monthDate = new Date(year, month, 1);
+      const monthBookings = (bookings as any[]).filter((booking: any) => {
+        if (!booking.eventDate) return false;
+        const bookingDate = new Date(booking.eventDate);
+        return bookingDate.getFullYear() === year && bookingDate.getMonth() === month;
+      });
+      
+      months.push({
+        date: monthDate,
+        month: monthDate.getMonth(),
+        year: monthDate.getFullYear(),
+        isCurrentMonth: month === new Date().getMonth() && year === new Date().getFullYear(),
+        bookingCount: monthBookings.length,
+        bookings: monthBookings
+      });
+    }
+    
+    return months;
+  };
+
   const handleDateClick = (date: Date) => {
     const events = getEventsForDate(date);
     if (events.length > 0) {
@@ -681,11 +775,8 @@ export default function UnifiedBookings() {
     setBookingDetailsDialogOpen(true);
   };
 
-  const days = generateCalendar();
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  // Get calendar data for the current view
+  const calendarData = generateCalendarData();
 
   return (
     <div className="min-h-screen bg-background layout-consistent">
@@ -1299,16 +1390,83 @@ export default function UnifiedBookings() {
               <Card className="h-full">
                 <CardHeader className="flex-shrink-0">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Button variant="outline" size="sm" onClick={goToPrevious}>
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      <h2 className="text-xl font-semibold">
-                        {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                      </h2>
-                      <Button variant="outline" size="sm" onClick={goToNext}>
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
+                    <div className="flex flex-col items-center gap-4">
+                      {/* Calendar View Toggle */}
+                      <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                        <Button
+                          variant={calendarView === 'day' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCalendarView('day')}
+                          className="rounded-md text-xs"
+                        >
+                          Day
+                        </Button>
+                        <Button
+                          variant={calendarView === 'week' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCalendarView('week')}
+                          className="rounded-md text-xs"
+                        >
+                          Week
+                        </Button>
+                        <Button
+                          variant={calendarView === 'month' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCalendarView('month')}
+                          className="rounded-md text-xs"
+                        >
+                          Month
+                        </Button>
+                        <Button
+                          variant={calendarView === 'year' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setCalendarView('year')}
+                          className="rounded-md text-xs"
+                        >
+                          Year
+                        </Button>
+                      </div>
+                      
+                      {/* Date Display - Fixed Width */}
+                      <div className="text-center">
+                        <h2 className="text-xl font-semibold min-w-[200px]">
+                          {calendarView === 'day' && currentDate.toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                          {calendarView === 'week' && (() => {
+                            const startOfWeek = new Date(currentDate);
+                            const day = startOfWeek.getDay();
+                            const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+                            startOfWeek.setDate(diff);
+                            const endOfWeek = new Date(startOfWeek);
+                            endOfWeek.setDate(startOfWeek.getDate() + 6);
+                            return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                          })()}
+                          {calendarView === 'month' && `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+                          {calendarView === 'year' && currentDate.getFullYear()}
+                        </h2>
+                        
+                        {/* Navigation Arrows - Fixed Position Below Date */}
+                        <div className="flex items-center justify-center gap-4 mt-2">
+                          <Button variant="outline" size="sm" onClick={goToPrevious}>
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentDate(new Date())}
+                            className="text-xs px-3"
+                          >
+                            Today
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={goToNext}>
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
@@ -1321,47 +1479,202 @@ export default function UnifiedBookings() {
                   </div>
                 </CardHeader>
                 <CardContent className="h-full flex-1">
-                  {/* Calendar Grid - Fixed Height */}
-                  <div className="grid grid-cols-7 gap-1 h-full">
-                    {/* Day Headers */}
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                      <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
-                        {day}
-                      </div>
-                    ))}
-                    
-                    {/* Calendar Days - Fixed Height Grid */}
-                    {days.map((day, index) => (
-                      <div
-                        key={index}
-                        className={`
-                          h-24 p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden
-                          ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
-                          ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
-                        `}
-                        onClick={() => handleDateClick(day.date)}
-                      >
-                        <div className="font-medium text-sm mb-1">
-                          {day.day}
-                        </div>
-                        <div className="space-y-1">
-                          {day.events.slice(0, 2).map((event, eventIndex) => (
-                            <div
-                              key={eventIndex}
-                              className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
-                            >
-                              {event.title}
+                  {/* Dynamic Calendar Content Based on View */}
+                  {calendarView === 'day' && (
+                    <div className="h-full">
+                      {(() => {
+                        const dayData = generateCalendarData()[0];
+                        return (
+                          <div className="h-full p-4 border border-gray-200 rounded-lg">
+                            <div className="mb-4">
+                              <h3 className="text-lg font-semibold">
+                                {dayData.date.toLocaleDateString('en-US', { 
+                                  weekday: 'long', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </h3>
+                              <p className="text-sm text-gray-500">
+                                {dayData.events.length} event{dayData.events.length !== 1 ? 's' : ''}
+                              </p>
                             </div>
-                          ))}
-                          {day.events.length > 2 && (
-                            <div className="text-xs text-gray-500">
-                              +{day.events.length - 2} more
+                            <div className="space-y-3 overflow-y-auto" style={{ height: 'calc(100% - 80px)' }}>
+                              {dayData.events.length > 0 ? (
+                                dayData.events.map((event, index) => {
+                                  const booking = (bookings as any[]).find((b: any) => b.id === event.id);
+                                  return (
+                                    <div
+                                      key={index}
+                                      className={`p-3 border rounded-lg cursor-pointer hover:shadow-md transition-shadow ${getStatusColor(event.status || 'new')}`}
+                                      onClick={() => {
+                                        if (booking) {
+                                          setSelectedBookingForDetails(booking);
+                                          setBookingDetailsDialogOpen(true);
+                                        }
+                                      }}
+                                    >
+                                      <div className="font-medium">{event.title}</div>
+                                      {booking && (
+                                        <div className="text-sm mt-1 space-y-1">
+                                          {booking.eventTime && <div>Time: {booking.eventTime}</div>}
+                                          {booking.venue && <div>Venue: {booking.venue}</div>}
+                                          {booking.fee && <div>Fee: £{booking.fee}</div>}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <div className="text-center text-gray-500 py-8">
+                                  No events scheduled for this day
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  
+                  {calendarView === 'week' && (
+                    <div className="h-full">
+                      <div className="grid grid-cols-7 gap-1 h-full">
+                        {/* Week Day Headers */}
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
+                            {day}
+                          </div>
+                        ))}
+                        
+                        {/* Week Days */}
+                        {generateCalendarData().map((day, index) => (
+                          <div
+                            key={index}
+                            className={`
+                              p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden
+                              ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
+                              ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
+                            `}
+                            style={{ height: 'calc(100% - 40px)' }}
+                            onClick={() => handleDateClick(day.date)}
+                          >
+                            <div className="font-medium text-sm mb-2">
+                              {day.day}
+                            </div>
+                            <div className="space-y-1">
+                              {day.events.slice(0, 4).map((event, eventIndex) => (
+                                <div
+                                  key={eventIndex}
+                                  className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                              {day.events.length > 4 && (
+                                <div className="text-xs text-gray-500">
+                                  +{day.events.length - 4} more
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+                  
+                  {calendarView === 'month' && (
+                    <div className="h-full">
+                      <div className="grid grid-cols-7 gap-1 h-full">
+                        {/* Month Day Headers */}
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                          <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
+                            {day}
+                          </div>
+                        ))}
+                        
+                        {/* Month Calendar Days */}
+                        {generateCalendarData().map((day, index) => (
+                          <div
+                            key={index}
+                            className={`
+                              h-24 p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden
+                              ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
+                              ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
+                            `}
+                            onClick={() => handleDateClick(day.date)}
+                          >
+                            <div className="font-medium text-sm mb-1">
+                              {day.day}
+                            </div>
+                            <div className="space-y-1">
+                              {day.events.slice(0, 2).map((event, eventIndex) => (
+                                <div
+                                  key={eventIndex}
+                                  className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                              {day.events.length > 2 && (
+                                <div className="text-xs text-gray-500">
+                                  +{day.events.length - 2} more
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {calendarView === 'year' && (
+                    <div className="h-full p-4 overflow-y-auto">
+                      <div className="grid grid-cols-3 gap-4">
+                        {generateCalendarData().map((month, index) => (
+                          <div
+                            key={index}
+                            className={`
+                              p-4 border border-gray-200 rounded-lg cursor-pointer hover:shadow-md transition-shadow
+                              ${month.isCurrentMonth ? 'bg-blue-50 border-blue-200' : ''}
+                            `}
+                            onClick={() => {
+                              setCurrentDate(month.date);
+                              setCalendarView('month');
+                            }}
+                          >
+                            <div className="text-center">
+                              <h4 className="font-semibold text-sm mb-2">
+                                {month.date.toLocaleDateString('en-US', { month: 'short' })}
+                              </h4>
+                              <div className="text-2xl font-bold text-gray-700 mb-2">
+                                {month.bookingCount}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                booking{month.bookingCount !== 1 ? 's' : ''}
+                              </div>
+                              {month.bookingCount > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {month.bookings.slice(0, 3).map((booking: any, bookingIndex: number) => (
+                                    <div
+                                      key={bookingIndex}
+                                      className="text-xs bg-white px-2 py-1 rounded truncate"
+                                    >
+                                      {booking.clientName || booking.title || 'Event'}
+                                    </div>
+                                  ))}
+                                  {month.bookingCount > 3 && (
+                                    <div className="text-xs text-gray-500">
+                                      +{month.bookingCount - 3} more
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               )}
