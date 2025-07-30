@@ -375,11 +375,28 @@ function parseCurrencyToNumber(value: string | null | undefined): number | null 
 }
 
 // CRITICAL: Email webhook registered FIRST
-app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
+app.post('/api/webhook/mailgun', express.urlencoded({ extended: true, limit: '10mb' }), async (req: Request, res: Response) => {
   const requestId = Date.now().toString();
   console.log(`📧 [${requestId}] Email webhook received - ${new Date().toISOString()}`);
   
   try {
+    // ENHANCED DEBUGGING: Log full request body structure
+    console.log(`📧 [${requestId}] RAW REQUEST BODY KEYS:`, Object.keys(req.body || {}));
+    console.log(`📧 [${requestId}] RAW REQUEST BODY:`, JSON.stringify(req.body, null, 2));
+    
+    // Check for attachments that might cause issues
+    const attachmentCount = req.body['attachment-count'] || 0;
+    if (attachmentCount > 0) {
+      console.log(`📎 [${requestId}] Email has ${attachmentCount} attachments - checking size limits`);
+      for (let i = 1; i <= attachmentCount; i++) {
+        const attachmentSize = req.body[`attachment-${i}`]?.size || 0;
+        console.log(`📎 [${requestId}] Attachment ${i} size: ${attachmentSize} bytes`);
+        if (attachmentSize > 1000000) { // 1MB limit
+          console.log(`⚠️ [${requestId}] Large attachment detected (${attachmentSize} bytes) - processing anyway`);
+        }
+      }
+    }
+    
     const fromField = req.body.From || req.body.from || '';
     const subjectField = req.body.Subject || req.body.subject || '';
     const bodyField = req.body['body-plain'] || req.body.text || '';
@@ -387,8 +404,26 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     console.log(`📧 [${requestId}] Email data:`, {
       from: fromField,
       subject: subjectField,
-      bodyLength: bodyField?.length || 0
+      bodyLength: bodyField?.length || 0,
+      attachmentCount: attachmentCount
     });
+    
+    // SPECIAL LOGGING for problem email addresses
+    const problemEmails = ['timfulkermusic@gmail.com', 'tim@saxweddings.com'];
+    const isProblematicEmail = problemEmails.some(email => fromField.includes(email));
+    
+    if (isProblematicEmail) {
+      console.log(`🔍 [${requestId}] SPECIAL DEBUG - Problem email detected: ${fromField}`);
+      console.log(`🔍 [${requestId}] Full email structure:`, {
+        allFields: Object.keys(req.body),
+        hasBodyPlain: !!req.body['body-plain'],
+        hasText: !!req.body.text,
+        hasFrom: !!req.body.From,
+        hasSubject: !!req.body.Subject,
+        contentLength: (req.body['body-plain'] || req.body.text || '').length,
+        attachments: attachmentCount
+      });
+    }
     
     if (!fromField && !subjectField && !bodyField) {
       console.log(`❌ [${requestId}] No email data found`);
@@ -408,13 +443,30 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
       clientName = clientEmail.split('@')[0];
     }
     
-    // AI parsing with error handling
+    // AI parsing with enhanced error handling
     let aiResult;
     try {
+      if (isProblematicEmail) {
+        console.log(`🔍 [${requestId}] Running AI parsing for problem email: ${fromField}`);
+      }
+      
       aiResult = await parseEmailWithAI(bodyField, subjectField);
       console.log(`🤖 [${requestId}] AI parsing successful:`, aiResult);
-    } catch (aiError) {
-      console.error(`❌ [${requestId}] AI parsing failed:`, aiError);
+      
+      if (isProblematicEmail) {
+        console.log(`🔍 [${requestId}] AI parsing completed for ${fromField} - result:`, JSON.stringify(aiResult, null, 2));
+      }
+    } catch (aiError: any) {
+      console.error(`❌ [${requestId}] AI parsing failed:`, {
+        message: aiError?.message,
+        stack: aiError?.stack,
+        fromEmail: fromField
+      });
+      
+      if (isProblematicEmail) {
+        console.log(`🔍 [${requestId}] AI parsing failed for ${fromField} - using fallback data`);
+      }
+      
       aiResult = { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
     }
     
@@ -532,8 +584,34 @@ app.post('/api/webhook/mailgun', express.urlencoded({ extended: true }), async (
     console.error(`❌ [${requestId}] Critical webhook error:`, {
       message: error?.message || 'Unknown error',
       stack: error?.stack,
-      requestBody: Object.keys(req.body)
+      requestBody: Object.keys(req.body),
+      fromEmail: req.body.From || req.body.from || 'unknown'
     });
+    
+    // SPECIAL HANDLING for problem email addresses - never return 400
+    const fromEmail = req.body.From || req.body.from || '';
+    const problemEmails = ['timfulkermusic@gmail.com', 'tim@saxweddings.com'];
+    const isProblematicEmail = problemEmails.some(email => fromEmail.includes(email));
+    
+    if (isProblematicEmail) {
+      console.error(`🔍 [${requestId}] CRITICAL ERROR for problem email ${fromEmail} - returning 200 to avoid Mailgun 400:`, error);
+      
+      // Log webhook event for monitoring
+      logWebhookEvent({
+        type: 'email',
+        status: 'error',
+        error: `${fromEmail} processing failed: ${error?.message || 'Unknown error'}`
+      });
+      
+      // Return 200 to prevent Mailgun retries, but log the error
+      return res.status(200).json({ 
+        success: false,
+        error: 'Processing failed but acknowledged', 
+        requestId: requestId,
+        details: error?.message || 'Unknown error',
+        fromEmail: fromEmail
+      });
+    }
     
     // Log webhook event for monitoring
     logWebhookEvent({
