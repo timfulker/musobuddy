@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, AlertCircle, Mail, Copy, Check, Crown, Lock, ArrowLeft } from 'lucide-react';
+import { CheckCircle, AlertCircle, Mail, Copy, Check, Crown, Lock, ArrowLeft, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 
 interface EmailCheckResponse {
@@ -31,6 +31,7 @@ export default function EmailSetup() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Get user's current email
   const { data: userEmail, isLoading } = useQuery<UserEmailResponse>({
@@ -193,6 +194,18 @@ export default function EmailSetup() {
                   Your lead email address is permanent and cannot be changed. Contact support if you need assistance.
                 </AlertDescription>
               </Alert>
+              
+              {/* Continue to Dashboard Button */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <Button
+                  onClick={() => setLocation('/dashboard')}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  size="lg"
+                >
+                  <LayoutDashboard className="h-5 w-5 mr-2" />
+                  Continue to Dashboard
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
