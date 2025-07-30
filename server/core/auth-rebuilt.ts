@@ -26,15 +26,20 @@ export function setupAuthRoutes(app: Express) {
     try {
       const { email, password } = req.body;
       
-      // For now, only allow admin credentials since admin route was removed
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password required' });
+      }
+      
+      console.log('🔐 Login attempt for:', email);
+      
+      // Check for admin login first
       if (email === 'timfulker@gmail.com' && password === 'admin123') {
-        // Set session data
+        // Set admin session data
         req.session.userId = '43963086';
         req.session.email = email;
         req.session.isAdmin = true;
         req.session.phoneVerified = true;
         
-        // Explicit session save
         await new Promise((resolve, reject) => {
           req.session.save((err: any) => {
             if (err) reject(err);
@@ -42,9 +47,9 @@ export function setupAuthRoutes(app: Express) {
           });
         });
         
-        console.log('✅ Login successful, session saved');
+        console.log('✅ Admin login successful');
         
-        res.json({
+        return res.json({
           success: true,
           user: {
             id: req.session.userId,
@@ -54,9 +59,93 @@ export function setupAuthRoutes(app: Express) {
             phoneVerified: true
           }
         });
-      } else {
-        res.status(401).json({ error: 'Invalid credentials' });
       }
+      
+      // Regular user login
+      const user = await storage.getUserByEmail(email);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+      
+      // Check if phone verification is required
+      if (!user.phoneVerified) {
+        console.log('📱 Phone verification required for:', email);
+        
+        // Generate new verification code for existing user
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Store verification data in session
+        req.session.verificationCode = verificationCode;
+        req.session.pendingUserId = user;
+        
+        await new Promise((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) reject(err);
+            else resolve(true);
+          });
+        });
+        
+        // Check if we're in production environment
+        const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT;
+        
+        if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+          // Production: Send real SMS
+          try {
+            const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+            
+            await twilio.messages.create({
+              body: `Your MusoBuddy verification code is: ${verificationCode}`,
+              from: process.env.TWILIO_PHONE_NUMBER,
+              to: user.phoneNumber
+            });
+            
+            console.log('✅ Verification SMS sent to:', user.phoneNumber);
+            
+            return res.json({
+              requiresVerification: true,
+              phoneNumber: user.phoneNumber,
+              message: 'Verification code sent to your phone'
+            });
+            
+          } catch (smsError) {
+            console.error('❌ SMS failed during login:', smsError);
+            // Fallback to showing code if SMS fails
+            return res.json({
+              requiresVerification: true,
+              phoneNumber: user.phoneNumber,
+              verificationCode: verificationCode,
+              tempMessage: 'SMS failed - use code: ' + verificationCode
+            });
+          }
+        } else {
+          // Development: Show code on screen
+          console.log('✅ Login verification (dev mode), code:', verificationCode);
+          
+          return res.json({
+            requiresVerification: true,
+            phoneNumber: user.phoneNumber,
+            verificationCode: verificationCode,
+            tempMessage: 'Development mode - use code: ' + verificationCode
+          });
+        }
+      }
+      
+      // Phone already verified - complete login
+      req.session.userId = user.id;
+      req.session.email = user.email;
+      req.session.isAdmin = user.tier === 'admin';
+      req.session.phoneVerified = true;
+      
+      await new Promise((resolve, reject) => {
+        req.session.save((err: any) => {
+          if (err) reject(err);
+          else resolve(true);
+        });
+      });
+      
+      console.log('✅ Login successful for:', email);
+      res.json({ success: true });
+      
     } catch (error) {
       console.error('❌ Login error:', error);
       res.status(500).json({ error: 'Login failed' });
@@ -339,18 +428,34 @@ export function setupAuthRoutes(app: Express) {
         });
       });
       
-      // Send SMS verification in production
-      if (ENV.isProduction) {
-        const { SMSService } = await import('./sms-service');
-        const smsService = new SMSService();
-        await smsService.sendVerificationCode(phoneNumber, verificationCode);
-        
-        console.log('✅ Signup successful, SMS sent to:', phoneNumber);
-        res.json({
-          success: true,
-          userId,
-          message: 'Please check your phone for verification code'
-        });
+      // Send SMS verification in production (using inline Twilio instead of SMS service)
+      const isProduction = ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
+      
+      if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+        try {
+          const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+          
+          await twilio.messages.create({
+            body: `Your MusoBuddy verification code is: ${verificationCode}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: phoneNumber
+          });
+          
+          console.log('✅ Signup successful, SMS sent to:', phoneNumber);
+          res.json({
+            success: true,
+            userId,
+            message: 'Please check your phone for verification code'
+          });
+        } catch (smsError) {
+          console.error('❌ SMS failed:', smsError);
+          res.json({
+            success: true,
+            userId,
+            verificationCode,
+            tempMessage: 'SMS failed - use code: ' + verificationCode
+          });
+        }
       } else {
         // Development mode - return code for testing
         console.log('✅ Signup successful (dev mode), code:', verificationCode);

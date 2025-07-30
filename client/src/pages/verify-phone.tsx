@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,8 +9,23 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function VerifyPhonePage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [displayCode, setDisplayCode] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Load stored data on page load
+  useEffect(() => {
+    const loginCode = localStorage.getItem('loginVerificationCode');
+    const loginPhone = localStorage.getItem('loginPhoneNumber');
+    const signupPhone = localStorage.getItem('signupPhone');
+    
+    if (loginCode) {
+      setDisplayCode(loginCode);
+    }
+    
+    setPhoneNumber(loginPhone || signupPhone || '');
+  }, []);
 
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +36,7 @@ export default function VerifyPhonePage() {
       const storedPhone = localStorage.getItem('signupPhone');
       const storedEmail = localStorage.getItem('signupEmail');
       
-      const response = await fetch('/api/auth/verify-phone', {
+      const response = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -60,23 +75,30 @@ export default function VerifyPhonePage() {
       // Verification successful - clear temporary storage
       localStorage.removeItem('signupPhone');
       localStorage.removeItem('signupEmail');
-      
-      
+      localStorage.removeItem('loginPhoneNumber');
+      localStorage.removeItem('loginVerificationCode');
       
       toast({
         title: "Phone Verified!",
         description: "Your account has been verified successfully"
       });
       
-      // CRITICAL FIX: Wait for session to be properly established before redirect
+      // Wait for session to be properly established before redirect
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Invalidate auth queries to trigger refetch
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
-      // Redirect to trial setup page (signup page with step=trial parameter)
+      // Check if this was login verification or signup verification
+      const isLoginVerification = localStorage.getItem('loginPhoneNumber');
       
-      window.location.href = '/signup?step=trial';
+      if (isLoginVerification) {
+        // Login verification - go to dashboard
+        window.location.href = '/dashboard';
+      } else {
+        // Signup verification - go to trial setup
+        window.location.href = '/signup?step=trial';
+      }
 
     } catch (error) {
       console.error('Verification error:', error);
@@ -141,6 +163,14 @@ export default function VerifyPhonePage() {
           </p>
         </CardHeader>
         <CardContent>
+          {/* Show verification code if available (development mode or SMS failure) */}
+          {displayCode && (
+            <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg text-center">
+              <div className="text-sm text-orange-800 mb-2">Use this verification code:</div>
+              <div className="text-3xl font-bold text-orange-900 tracking-widest">{displayCode}</div>
+            </div>
+          )}
+          
           <form onSubmit={handleVerification} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="code">Verification Code</Label>

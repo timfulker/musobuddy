@@ -41,10 +41,26 @@ export default function LoginPage() {
 
       if (data.requiresVerification) {
         // User needs SMS verification
-        toast({
-          title: "Verification Required",
-          description: `Please verify your phone number. SMS sent to ${data.phoneNumber}`
-        });
+        if (data.verificationCode) {
+          // Development mode - show code
+          toast({
+            title: "Verification Required",
+            description: data.tempMessage || `Development mode - use code: ${data.verificationCode}`
+          });
+        } else {
+          // Production mode - SMS sent
+          toast({
+            title: "Verification Required", 
+            description: data.message || `Verification code sent to ${data.phoneNumber}`
+          });
+        }
+        
+        // Store phone number for verification page
+        localStorage.setItem('loginPhoneNumber', data.phoneNumber);
+        if (data.verificationCode) {
+          localStorage.setItem('loginVerificationCode', data.verificationCode);
+        }
+        
         // Redirect to verification page
         window.location.href = '/verify-phone';
         return;
