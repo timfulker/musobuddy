@@ -62,16 +62,28 @@ export default function BookingCTAButtons() {
   // Debug logging removed for performance
 
   // Use contextual actions to determine what bookings need attention
+  // Only show bookings that genuinely need action and aren't completed or cancelled
   const needsResponse = bookings.filter(
-    (booking) => booking.status === "new" || booking.responseNeeded
+    (booking) => 
+      (booking.status === "new" || booking.responseNeeded) && 
+      booking.status !== "completed" && 
+      booking.status !== "cancelled"
   );
 
   const needsContract = bookings.filter(booking => {
+    // Don't show completed, cancelled, or already confirmed bookings
+    if (booking.status === "completed" || booking.status === "cancelled" || booking.status === "confirmed") {
+      return false;
+    }
     const actions = getContextualActions(booking);
     return actions.some(action => action.id === 'create-contract' || action.id === 'send-contract');
   });
 
   const needsInvoice = bookings.filter(booking => {
+    // Don't show completed or cancelled bookings
+    if (booking.status === "completed" || booking.status === "cancelled") {
+      return false;
+    }
     const actions = getContextualActions(booking);
     return actions.some(action => action.id === 'create-invoice' || action.id === 'send-invoice');
   });
@@ -111,84 +123,6 @@ export default function BookingCTAButtons() {
 
   // Don't show the component if there are no actionable items
   const totalActionable = needsResponse.length + needsContract.length + needsInvoice.length;
-  
-  // For testing purposes, always show at least one button
-  const testMode = totalActionable === 0;
-  if (testMode) {
-    // Show test buttons with sample data
-    return (
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-purple-600" />
-            <span>Action Required</span>
-            <Badge variant="secondary" className="ml-auto">
-              {bookings.length} bookings
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Button
-            onClick={() => setLocation("/bookings")}
-            className="w-full justify-between p-4 h-auto text-white shadow-md transition-all duration-200 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-            variant="default"
-          >
-            <div className="flex items-center space-x-3 min-w-0 flex-1">
-              <MessageCircle className="w-5 h-5 flex-shrink-0" />
-              <div className="text-left min-w-0 flex-1">
-                <div className="font-medium text-sm sm:text-base leading-tight">Bookings Need Response</div>
-                <div className="text-xs opacity-90 leading-tight">View all bookings to respond</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-              <Badge variant="secondary" className="bg-white/20 text-white">
-                {bookings.length}
-              </Badge>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </Button>
-          <Button
-            onClick={() => setLocation("/contracts")}
-            className="w-full justify-between p-4 h-auto text-white shadow-md transition-all duration-200 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
-            variant="default"
-          >
-            <div className="flex items-center space-x-3 min-w-0 flex-1">
-              <FileText className="w-5 h-5 flex-shrink-0" />
-              <div className="text-left min-w-0 flex-1">
-                <div className="font-medium text-sm sm:text-base leading-tight">Contracts Need Sending</div>
-                <div className="text-xs opacity-90 leading-tight">View contracts to send</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-              <Badge variant="secondary" className="bg-white/20 text-white">
-                {contracts.length}
-              </Badge>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </Button>
-          <Button
-            onClick={() => setLocation("/invoices")}
-            className="w-full justify-between p-4 h-auto text-white shadow-md transition-all duration-200 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
-            variant="default"
-          >
-            <div className="flex items-center space-x-3 min-w-0 flex-1">
-              <Receipt className="w-5 h-5 flex-shrink-0" />
-              <div className="text-left min-w-0 flex-1">
-                <div className="font-medium text-sm sm:text-base leading-tight">Invoices Need Sending</div>
-                <div className="text-xs opacity-90 leading-tight">View invoices to send</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-              <Badge variant="secondary" className="bg-white/20 text-white">
-                {invoices.length}
-              </Badge>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
   
   if (totalActionable === 0) {
     return null;
