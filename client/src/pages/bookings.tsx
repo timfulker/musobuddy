@@ -1348,17 +1348,10 @@ export default function UnifiedBookings() {
         isOpen={conflictResolutionDialogOpen}
         onClose={() => setConflictResolutionDialogOpen(false)}
         conflictingBookings={selectedBookingForConflict ? 
-          conflicts
-            .filter(c => c.bookingId === selectedBookingForConflict.id || c.conflictingBookingId === selectedBookingForConflict.id)
-            .map(c => {
-              // Return both the original booking and the conflicting booking
-              const originalBooking = bookings?.find(b => b.id === c.bookingId);
-              const conflictingBooking = bookings?.find(b => b.id === c.conflictingBookingId);
-              return [originalBooking, conflictingBooking];
-            })
-            .flat()
-            .filter(Boolean)
-            .filter((booking, index, array) => array.findIndex(b => b.id === booking.id) === index) // Remove duplicates
+          // Find the conflict group that contains this booking
+          conflictGroups
+            .find(group => group.bookings.some((b: any) => b.id === selectedBookingForConflict.id))
+            ?.bookings || []
           : []
         }
         onResolveConflict={(bookingToKeep) => {
