@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "wouter";
-import { CheckCircle, ArrowRight, Mail, LayoutDashboard } from "lucide-react";
+import { CheckCircle, ArrowRight, Mail, LayoutDashboard, FileText, Receipt, Users, Calendar, Sparkles, Crown } from "lucide-react";
 
 export default function TrialSuccessPage() {
   const [, setLocation] = useLocation();
