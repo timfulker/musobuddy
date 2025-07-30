@@ -379,7 +379,7 @@ export class MailgunService {
             </tr>
             <tr>
                 <th>Event Time</th>
-                <td>${formatTime(contract.eventStartTime)} - ${formatTime(contract.eventFinishTime)}</td>
+                <td>${formatTime(contract.eventTime)} - ${formatTime(contract.eventEndTime)}</td>
             </tr>
             <tr>
                 <th>Venue</th>

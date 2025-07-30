@@ -60,9 +60,15 @@ function generateContractHTML(
   }
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-  const businessAddress = userSettings?.businessAddress || '';
+  // Format business address from user settings components
+  const addressParts = [];
+  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
+  if (userSettings?.city) addressParts.push(userSettings.city);
+  if (userSettings?.county) addressParts.push(userSettings.county);
+  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
+  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
   const businessPhone = userSettings?.phone || '';
-  const businessEmail = userSettings?.businessEmail || '';
+  const businessEmail = userSettings?.email || '';
   
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
@@ -200,7 +206,7 @@ function generateContractHTML(
           </tr>
           <tr>
             <th>Event Time</th>
-            <td>${contract.eventTime}</td>
+            <td>${contract.eventTime || 'Time TBC'}${contract.eventEndTime ? ` - ${contract.eventEndTime}` : ''}</td>
           </tr>
           <tr>
             <th>Venue</th>

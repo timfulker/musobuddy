@@ -64,6 +64,14 @@ export async function generateProfessionalContract(contract: any, userSettings: 
         .text('Performer Details', 50, currentY);
 
       currentY += 25;
+      // Format performer address from user settings
+      const performerAddressParts = [];
+      if (userSettings?.addressLine1) performerAddressParts.push(userSettings.addressLine1);
+      if (userSettings?.city) performerAddressParts.push(userSettings.city);
+      if (userSettings?.county) performerAddressParts.push(userSettings.county);
+      if (userSettings?.postcode) performerAddressParts.push(userSettings.postcode);
+      const performerAddress = performerAddressParts.length > 0 ? performerAddressParts.join(', ') : '59, Gloucester Rd, Bournemouth, Dorset, BH7 6JA';
+      
       doc
         .font('Helvetica')
         .fontSize(11)
@@ -71,9 +79,9 @@ export async function generateProfessionalContract(contract: any, userSettings: 
         .text(
           `${userSettings?.firstName || 'Tim'} ${userSettings?.lastName || 'Fulker'}\n` +
           `${userSettings?.businessName || 'Tim Fulker Music'}\n` +
-          `59, Gloucester Rd Bournemouth Dorset BH7 6JA\n` +
-          `Phone: 07765190034\n` +
-          `Email: timfulkermusic@gmail.com`,
+          `${performerAddress}\n` +
+          `Phone: ${userSettings?.phone || '07765190034'}\n` +
+          `Email: ${userSettings?.email || 'timfulkermusic@gmail.com'}`,
           50, currentY
         );
 
@@ -117,7 +125,7 @@ export async function generateProfessionalContract(contract: any, userSettings: 
         ['Client Address', contract.clientAddress || 'Not provided'],
         ['Client Phone', contract.clientPhone || 'Not provided'],
         ['Event Date', eventDateStr],
-        ['Event Time', contract.eventTime || 'Time TBC'],
+        ['Event Time', `${contract.eventTime || 'Time TBC'}${contract.eventEndTime ? ` - ${contract.eventEndTime}` : ''}`],
         ['Venue', contract.venue || 'Venue TBC'],
         ['Performance Fee', `£${contract.fee || '0.00'}`],
       ];
