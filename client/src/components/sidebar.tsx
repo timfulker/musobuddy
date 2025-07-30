@@ -155,21 +155,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Crown className="w-5 h-5" />
             <span>Upgrade ⭐</span>
           </Link>
-          <Link href="/email-setup" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            // Dim for demo users
-            (!user?.isSubscribed && !user?.isLifetime && !user?.isAdmin) 
-              ? "text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-800/50 opacity-60"
-              : isActive("/email-setup") 
-                ? "bg-purple-600 text-white font-medium" 
-                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
-            <Mail className="w-5 h-5" />
-            <span>Lead Email</span>
-            {(!user?.isSubscribed && !user?.isLifetime && !user?.isAdmin) && (
-              <Lock className="w-3 h-3 ml-auto opacity-50" />
-            )}
-          </Link>
+
           <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
             isActive("/settings") 

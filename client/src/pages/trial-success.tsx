@@ -73,16 +73,7 @@ export default function TrialSuccessPage() {
     }
   }, [user, isLoading, toast, setLocation]);
 
-  const handleGoToDashboard = () => {
-    
-    
-    toast({
-      title: "Welcome to MusoBuddy!",
-      description: "You can set up email integration later from your settings.",
-    });
-    
-    setLocation('/dashboard');
-  };
+
 
   const handleSetupEmail = () => {
     
@@ -172,37 +163,25 @@ export default function TrialSuccessPage() {
                 Welcome to MusoBuddy, <span className="font-semibold">{user.firstName}</span>!
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Your 14-day free trial is now active. Choose how you'd like to continue:
+                Your 14-day free trial is now active. Let's set up your professional email address to start receiving client inquiries:
               </p>
             </div>
 
-            {/* Option 1: Go to Dashboard */}
+            {/* Single Option: Set up Email */}
             <Button
-              onClick={handleGoToDashboard}
+              onClick={handleSetupEmail}
               className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white"
               size="lg"
             >
-              <LayoutDashboard className="h-5 w-5 mr-2" />
-              Go to Dashboard
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-
-            {/* Option 2: Set up Email */}
-            <Button
-              onClick={handleSetupEmail}
-              variant="outline"
-              className="w-full h-12 border-2 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/20"
-              size="lg"
-            >
               <Mail className="h-5 w-5 mr-2" />
-              Set up Email Integration
+              Select Email Prefix
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
 
             {/* Info text */}
             <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                You can set up email integration anytime from your dashboard settings.
+                This will be your permanent professional email address for client inquiries.
               </p>
             </div>
           </CardContent>

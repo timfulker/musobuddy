@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu, Eye, ChevronDown, ChevronRight } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -279,6 +279,7 @@ export default function Settings() {
   // Collapsible state for each section
   const [expandedSections, setExpandedSections] = useState({
     business: true,
+    email: false,
     contact: false,
     address: false,
     financial: false,
@@ -797,6 +798,57 @@ export default function Settings() {
                       )}
                     />
                   </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Lead Email Management */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <Collapsible open={expandedSections.email} onOpenChange={() => toggleSection('email')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Mail className="w-5 h-5 text-purple-600" />
+                          <span>Lead Email Management</span>
+                        </div>
+                        {expandedSections.email ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-blue-900 dark:text-blue-100">Professional Email Address</h4>
+                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                              Your dedicated email address for receiving client inquiries that automatically create bookings.
+                            </p>
+                            <div className="mt-3 p-2 bg-white dark:bg-slate-800 rounded border border-blue-200 dark:border-blue-700">
+                              <code className="text-sm font-mono text-blue-800 dark:text-blue-200">
+                                Current: leads+yourprefix@mg.musobuddy.com
+                              </code>
+                            </div>
+                            <div className="mt-3">
+                              <Button 
+                                type="button"
+                                onClick={() => window.open('/email-setup', '_blank')}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                size="sm"
+                              >
+                                <Mail className="w-4 h-4 mr-2" />
+                                Change Email Prefix
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
