@@ -14,6 +14,7 @@ import { insertEnquirySchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { z } from "zod";
 
 // Enhanced schema for full booking creation
@@ -397,23 +398,11 @@ export default function NewBookingPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {userGigTypes.length > 0 ? (
-                              userGigTypes.map((gigType: string, index: number) => (
-                                <SelectItem key={index} value={gigType}>
-                                  {gigType}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <>
-                                <SelectItem value="solo_acoustic">Solo Acoustic</SelectItem>
-                                <SelectItem value="duo">Duo</SelectItem>
-                                <SelectItem value="band">Band</SelectItem>
-                                <SelectItem value="dj_set">DJ Set</SelectItem>
-                                <SelectItem value="background_music">Background Music</SelectItem>
-                                <SelectItem value="ceremony">Ceremony</SelectItem>
-                                <SelectItem value="reception">Reception</SelectItem>
-                              </>
-                            )}
+                            {COMMON_GIG_TYPES.map((gigType, index) => (
+                              <SelectItem key={index} value={gigType}>
+                                {gigType}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

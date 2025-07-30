@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import type { Booking } from "@shared/schema";
 
 const bookingDetailsSchema = z.object({
@@ -129,8 +130,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     ? contracts.find((contract: any) => contract.enquiryId === booking?.id)
     : null;
 
-  // Extract gig types from user settings
-  const userGigTypes = Array.isArray((userSettings as any)?.gigTypes) ? (userSettings as any).gigTypes : [];
+  // Use common gig types list
 
   const form = useForm<z.infer<typeof bookingDetailsSchema>>({
     resolver: zodResolver(bookingDetailsSchema),
@@ -894,16 +894,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                                   <SelectValue placeholder="Select gig type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {userGigTypes.map((gigType: string) => (
-                                    <SelectItem key={gigType} value={gigType}>
+                                  {COMMON_GIG_TYPES.map((gigType, index) => (
+                                    <SelectItem key={index} value={gigType}>
                                       {gigType}
                                     </SelectItem>
                                   ))}
-                                  {userGigTypes.length === 0 && (
-                                    <SelectItem value="none" disabled>
-                                      No gig types available - configure in Settings
-                                    </SelectItem>
-                                  )}
                                 </SelectContent>
                               </Select>
                             ) : (

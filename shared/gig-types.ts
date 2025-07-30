@@ -1,0 +1,35 @@
+// Common gig types for booking forms - static list for reliability
+export const COMMON_GIG_TYPES = [
+  "Wedding Ceremony",
+  "Wedding Reception", 
+  "Corporate Event",
+  "Private Party",
+  "Birthday Party",
+  "Anniversary",
+  "Restaurant Background",
+  "Bar/Lounge",
+  "Hotel Event",
+  "Solo Performance",
+  "Jazz Performance",
+  "Classical Concert",
+  "Acoustic Performance",
+  "Cocktail Reception",
+  "Dinner Party",
+  "Conference",
+  "Product Launch",
+  "Awards Ceremony",
+  "Charity Event",
+  "Christmas Party",
+  "New Year's Eve",
+  "Festival",
+  "Outdoor Event",
+  "Beach Event",
+  "Garden Party",
+  "Art Gallery Opening",
+  "Wine Tasting",
+  "Graduation Ceremony",
+  "Memorial Service",
+  "Other"
+] as const;
+
+export type GigType = typeof COMMON_GIG_TYPES[number];

@@ -13,6 +13,7 @@ import { Link } from "wouter";
 import { insertEnquirySchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -273,15 +274,11 @@ export default function QuickAddPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Saxophone Solo">Saxophone Solo</SelectItem>
-                            <SelectItem value="DJ Set">DJ Set</SelectItem>
-                            <SelectItem value="Sax + DJ">Sax + DJ</SelectItem>
-                            <SelectItem value="Band Performance">Band Performance</SelectItem>
-                            <SelectItem value="Session Work">Session Work</SelectItem>
-                            <SelectItem value="Wedding Ceremony">Wedding Ceremony</SelectItem>
-                            <SelectItem value="Corporate Event">Corporate Event</SelectItem>
-                            <SelectItem value="Private Party">Private Party</SelectItem>
-                            <SelectItem value="Festival">Festival</SelectItem>
+                            {COMMON_GIG_TYPES.map((gigType, index) => (
+                              <SelectItem key={index} value={gigType}>
+                                {gigType}
+                              </SelectItem>
+                            ))}
                             <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
