@@ -67,7 +67,7 @@ export class StripeService {
             trial_type: 'core_monthly',
           },
         },
-        success_url: `${ENV.appServerUrl}/trial-success?stripe_session={CHECKOUT_SESSION_ID}`,
+        success_url: `${ENV.appServerUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${ENV.appServerUrl}/pricing`,
         metadata: {
           userId: userId,

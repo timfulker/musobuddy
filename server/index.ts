@@ -616,13 +616,13 @@ async function startServer() {
     // Authentication will be handled by registerRoutes() below with proper session middleware order
     console.log('🔧 Skipping duplicate authentication setup - will be handled by registerRoutes()');
 
-    // CRITICAL: Add trial-success server-side redirect BEFORE Vite setup
-    app.get('/trial-success', async (req: any, res) => {
+    // CRITICAL: Stripe payment success handler - renamed to avoid frontend route conflict
+    app.get('/payment-success', async (req: any, res) => {
       try {
         const sessionId = req.query.session_id;
         
         if (!sessionId) {
-          console.log('❌ No session_id in trial-success redirect');
+          console.log('❌ No session_id in payment success redirect');
           return res.redirect('/?error=no_session_id');
         }
 
@@ -660,8 +660,8 @@ async function startServer() {
             return res.redirect('/?error=session_save_failed');
           }
           
-          // Redirect to dashboard with authenticated session
-          res.redirect('/dashboard');
+          // NOW redirect to the frontend trial-success page - this lets React Router handle the UX
+          res.redirect('/trial-success');
         });
         
       } catch (error: any) {
