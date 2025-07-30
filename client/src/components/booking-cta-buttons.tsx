@@ -184,12 +184,12 @@ export default function BookingCTAButtons() {
               variant="default"
             >
               <div className="flex items-center justify-between w-full">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
                   <Icon className="w-5 h-5 flex-shrink-0" />
-                  <div className="font-medium text-sm sm:text-base leading-tight">{button.title}</div>
+                  <div className="font-medium text-sm sm:text-base leading-tight min-w-0">{button.title}</div>
                 </div>
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <div className="text-2xl font-bold text-white">
+                <div className="flex items-center space-x-3 flex-shrink-0">
+                  <div className="text-xl font-bold text-white bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">
                     {button.count}
                   </div>
                   <ArrowRight className="w-4 h-4" />
