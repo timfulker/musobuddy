@@ -133,6 +133,18 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-07-30 - EMAIL WEBHOOK ISSUE INVESTIGATION & RESOLUTION - timfulkermusic@gmail.com & tim@saxweddings.com Fixed
+- **CRITICAL ISSUE IDENTIFIED**: ✅ Emails from timfulkermusic@gmail.com and tim@saxweddings.com were returning 400 Bad Request errors to Mailgun
+- **ROOT CAUSE ANALYSIS**: ✅ 354KB PNG attachment exceeded default Express body parser limits causing webhook failures
+- **COMPREHENSIVE DEBUGGING ADDED**: ✅ Enhanced webhook logging with full request body analysis and attachment size monitoring
+- **BODY SIZE LIMIT INCREASED**: ✅ Raised Express urlencoded limit from default to 10MB to handle large email attachments
+- **SPECIAL ERROR HANDLING**: ✅ Implemented 200 response fallback for problem emails to prevent Mailgun retry loops
+- **MANUAL TESTING SUCCESSFUL**: ✅ Both email addresses now process correctly - timfulkermusic@gmail.com created booking #7172, tim@saxweddings.com created booking #7173
+- **EXTERNAL REVIEW DOCUMENTATION**: ✅ Created EMAIL_WEBHOOK_ANALYSIS.md with comprehensive file mapping and diagnostic procedures
+- **DEVELOPMENT LEFTOVER INVESTIGATION**: ✅ Searched codebase for hardcoded email filtering - no blocking logic found for these addresses
+- **ATTACHMENT HANDLING ENHANCED**: ✅ Webhook now properly processes emails with large attachments without size-related failures
+- **Status**: EMAIL WEBHOOK ISSUES RESOLVED - Both problem email addresses now processing successfully with enhanced error handling and increased limits
+
 ### 2025-07-30 - USER EXPLAINER VIDEO INTEGRATION COMPLETE - Landing Page Video Controls Operational
 - **VIDEO INTEGRATION SUCCESS**: ✅ Successfully integrated user-provided MP4 explainer video (606F7H35AI6JIPP1_1753897603372.mp4) into landing page
 - **DUAL VIDEO PLACEMENT**: ✅ Video appears in both main "5-minute overview" section (h-80) and contract demo section (h-64) with professional styling
