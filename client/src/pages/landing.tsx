@@ -2,28 +2,41 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Music, FileText, Mail, Calendar, CreditCard, Shield, Star } from "lucide-react";
+import { Check, Music, FileText, Mail, Calendar, CreditCard, Shield, Star, Play, Trophy, Clock, Users } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      {/* Announcement Bar */}
+      <div className="bg-purple-600 text-white text-center py-3 px-4">
+        <p className="text-sm font-medium">
+          14-day free trial - Professional gig management starts in minutes
+        </p>
+      </div>
+
       {/* Header */}
-      <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+      <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-2">
               <Music className="h-10 w-10 text-purple-600" />
               <h1 className="text-2xl font-bold text-purple-800 dark:text-purple-200">MusoBuddy</h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#how-it-works" className="text-gray-600 hover:text-purple-600">How it works</a>
+              <a href="#features" className="text-gray-600 hover:text-purple-600">For Musicians</a>
+              <a href="#success-stories" className="text-gray-600 hover:text-purple-600">Success Stories</a>
+              <a href="#pricing" className="text-gray-600 hover:text-purple-600">Pricing</a>
               <Link href="/login">
                 <Button variant="ghost" className="text-purple-600 hover:text-purple-700">
                   Login
                 </Button>
               </Link>
+            </nav>
+            <div className="flex items-center space-x-4">
               <Link href="/signup">
                 <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-                  Get Started
+                  Start Free Trial
                 </Button>
               </Link>
             </div>
@@ -32,97 +45,161 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto text-center">
           <div className="mb-8">
-            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-              Your Complete
-              <span className="text-purple-600 block">Music Business</span>
-              Management Platform
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              Professional gig management for UK musicians - Less admin, more music
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-12">
-              Streamline your music career with intelligent booking management, professional contracts, 
-              automated invoicing, and compliance tracking - all in one powerful platform designed for musicians.
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12">
+              Professional gig management made ridiculously simple for UK musicians
             </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            
             <Link href="/signup">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg">
-                Start Your Free Trial
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-12 py-4 text-lg mb-8">
+                Start Free Trial
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg">
-              See Demo
-            </Button>
           </div>
+        </div>
+      </section>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">10,000+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Musicians</div>
+      {/* Social Proof */}
+      <section className="py-12 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
+            Join 500+ UK musicians already saving 10+ hours weekly on admin tasks and earning more through professional workflows.
+          </p>
+          <div className="flex items-center justify-center mb-8">
+            <Trophy className="h-6 w-6 text-yellow-500 mr-2" />
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Recommended by music industry professionals for serious freelancers
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Section 1: Professional Contract Generation */}
+      <section id="features" className="py-20 bg-gray-50 dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                Feature Section 1: Professional Contract Generation
+              </h3>
+              <h4 className="text-xl font-semibold text-purple-600 mb-4">
+                Section A: Main Feature Focus - Never chase contract signatures again
+              </h4>
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+                Professional PDF contracts generate instantly from your booking details and get signed digitally within hours, not days. 
+                Your clients receive beautiful, branded documents that make you look like the serious professional you are.
+              </p>
+              
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg mb-6">
+                <p className="text-sm text-gray-600 dark:text-gray-300 italic">
+                  <strong>Use case:</strong> Wedding band books Saturday ceremony Friday morning - contract sent, 
+                  signed, and filed before lunch.
+                </p>
+              </div>
+              
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                Section B: Supporting Features List
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-gray-600 dark:text-gray-300">Instant PDF generation → Professional impression in minutes</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-gray-600 dark:text-gray-300">Digital signatures → Faster bookings, fewer delays</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-gray-600 dark:text-gray-300">Cloud hosting → Clients access contracts 24/7 anywhere</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-gray-600 dark:text-gray-300">Custom branding → Your logo makes every document yours</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-gray-600 dark:text-gray-300">Automatic filing → Never lose important contracts again</span>
+                </div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">50K+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Bookings</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">£2M+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Revenue</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">98%</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Satisfaction</div>
+            <div className="bg-white dark:bg-gray-700 p-8 rounded-lg shadow-lg">
+              <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-600 rounded">
+                <Play className="h-16 w-16 text-purple-600" />
+                <span className="ml-4 text-lg text-gray-600 dark:text-gray-300">Explainer Video</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 bg-white dark:bg-gray-800">
+      {/* Feature Sections 2 & 3 */}
+      <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Everything You Need to Succeed
-            </h3>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
-              Professional tools built specifically for musicians and music industry professionals
-            </p>
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Feature Section 2: Booking Management */}
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                Feature Section 2: Booking Management System
+              </h3>
+              <h4 className="text-lg font-semibold text-purple-600 mb-4">
+                Section A: Main Feature Focus - End double-booking disasters forever
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                Smart calendar instantly spots conflicts before they happen and keeps your gig schedule perfectly organized. 
+                No more embarrassing calls explaining why you can't make a confirmed booking.
+              </p>
+              
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 italic">
+                  <strong>Use case:</strong> Private party books same Saturday as existing wedding - system flags conflict immediately, saving your reputation.
+                </p>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <p>✓ Conflict detection → Sleep peacefully knowing schedule is safe</p>
+                <p>✓ Visual calendar → See your month at a glance</p>
+                <p>✓ Status tracking → Know exactly where each booking stands</p>
+                <p>✓ Gig type selection → 30 common types ready to choose</p>
+                <p>✓ History tracking → Remember every detail from past events</p>
+              </div>
+            </div>
+
+            {/* Feature Section 3: Professional Invoice System */}
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                Feature Section 3: Professional Invoice System
+              </h3>
+              <h4 className="text-lg font-semibold text-purple-600 mb-4">
+                Section A: Main Feature Focus - Get paid faster with zero chasing
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                Beautiful invoices generate automatically after each gig and track payments so you know exactly who 
+                owes what. Professional presentation means clients pay promptly and respect your business.
+              </p>
+              
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 italic">
+                  <strong>Use case:</strong> Wedding gig finishes Sunday, invoice arrives Monday morning, payment clears Wednesday - all without you lifting a finger.
+                </p>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <p>✓ Automatic generation → Invoice ready before you pack equipment</p>
+                <p>✓ Payment tracking → Always know who owes what amount</p>
+                <p>✓ Cloud accessibility → Clients can view and pay anywhere</p>
+                <p>✓ Professional design → Commands respect and prompt payment</p>
+                <p>✓ Payment history → Complete financial record for tax time</p>
+              </div>
+            </div>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="p-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-              <Calendar className="h-12 w-12 text-purple-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Smart Booking Management</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Intelligent enquiry tracking, availability checking, and conflict detection to never miss a gig opportunity.
-              </p>
-            </div>
-            
-            <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <FileText className="h-12 w-12 text-blue-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Professional Contracts</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Musicians' Union compliant contracts with digital signatures, automated reminders, and secure storage.
-              </p>
-            </div>
-            
-            <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <CreditCard className="h-12 w-12 text-green-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Automated Invoicing</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Professional invoices with payment tracking, automated reminders, and integrated financial management.
-              </p>
-            </div>
-            
-            <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-              <Mail className="h-12 w-12 text-yellow-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Email Integration</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Automatic booking enquiry processing from your personalized email address with AI parsing.
-              </p>
-            </div>
+        </div>
+      </section>
             
             <div className="p-6 bg-red-50 dark:bg-red-900/20 rounded-lg">
               <Shield className="h-12 w-12 text-red-600 mb-4" />
