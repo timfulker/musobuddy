@@ -133,6 +133,17 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-07-30 - Contract Template Improvements Complete
+- **Field Mapping Fixed**: ✅ Updated contract templates to use correct database field names (eventTime/eventEndTime instead of eventStartTime/eventFinishTime)
+- **Event End Time Display**: ✅ All contract templates (HTML and PDF) now properly display both start and end times
+- **Performer Address Integration**: ✅ Contract templates now pull performer's business address from user settings instead of hardcoded values
+- **PDF Generator Updates**: ✅ Both pdf-generator.ts and new-contract-template.ts updated to use dynamic address formatting
+- **Custom Message Fix**: ✅ Fixed critical email issue where custom messages were replacing email subjects instead of appearing in email body after "Dear [client]"
+- **Email Template Enhancement**: ✅ Custom messages now properly appear in email body immediately after "Dear [client]" as intended
+- **Subject Line Consistency**: ✅ Email subjects remain consistent ("Contract ready for signing") while custom messages enhance the body content
+- **Resend Route Fixed**: ✅ Contract resend functionality also updated to handle custom messages correctly
+- **Status**: CONTRACT IMPROVEMENTS COMPLETE - Templates show proper addresses and times, custom messages work as intended
+
 ### 2025-07-22 - Deployment Build Fixes Applied
 - **Duplicate Function Resolution**: ✅ Removed duplicate sendContractConfirmationEmails function from line 748 in server/core/mailgun-email-restored.ts
 - **Duplicate HTML Generator Functions Fixed**: ✅ Removed duplicate generateClientConfirmationHtml and generatePerformerConfirmationHtml functions that were causing esbuild bundle failures

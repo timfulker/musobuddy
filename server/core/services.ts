@@ -20,7 +20,7 @@ export class MailgunService {
     });
   }
 
-  async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string) {
+  async sendContractEmail(contract: any, userSettings: any, subject: string, signingUrl?: string, customMessage?: string) {
     const domain = 'mg.musobuddy.com';
     
     console.log('📧 Sending contract email with PDF attachment');
@@ -42,7 +42,7 @@ export class MailgunService {
         from: `MusoBuddy <noreply@${domain}>`,
         to: contract.clientEmail,
         subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
-        html: this.generateContractEmailHTML(contract, userSettings, signingUrl),
+        html: this.generateContractEmailHTML(contract, userSettings, signingUrl, customMessage),
         attachment: [{
           data: pdfBuffer,
           filename: `Contract-${contract.contractNumber}.pdf`,
@@ -612,7 +612,7 @@ export class MailgunService {
     `;
   }
 
-  generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string) {
+  generateContractEmailHTML(contract: any, userSettings: any, signingUrl?: string, customMessage?: string) {
     // CRITICAL FIX: Use the signing page URL from database (R2 cloud storage) instead of API endpoint
     const finalSigningUrl = contract.signingPageUrl || signingUrl || `${process.env.REPL_URL || 'https://musobuddy.replit.app'}/api/contracts/public/${contract.id}`;
     
@@ -623,6 +623,7 @@ export class MailgunService {
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
         <h2>Contract Ready for Signing</h2>
         <p>Dear ${contract.clientName},</p>
+        ${customMessage ? `<p>${customMessage}</p>` : ''}
         <p>Your contract is ready for review and signing.</p>
         
         <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">

@@ -830,8 +830,8 @@ export async function registerRoutes(app: Express) {
       });
       
       // Send email with contract
-      const subject = customMessage || `Contract ready for signing - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject, pdfUrl);
+      const subject = `Contract ready for signing - ${contract.contractNumber}`;
+      await emailService.sendContractEmail(contract, userSettings, subject, pdfUrl, customMessage);
       
       console.log(`✅ Contract #${parsedContractId} sent successfully via send-email endpoint`);
       res.json({ success: true, message: 'Contract sent successfully' });
@@ -860,8 +860,8 @@ export async function registerRoutes(app: Express) {
       const { MailgunService } = await import('./services');
       const emailService = new MailgunService();
       
-      const subject = customMessage || `Contract reminder - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject);
+      const subject = `Contract reminder - ${contract.contractNumber}`;
+      await emailService.sendContractEmail(contract, userSettings, subject, undefined, customMessage);
       
       console.log(`✅ Contract #${contractId} resent successfully`);
       res.json({ success: true, message: 'Contract resent successfully' });
