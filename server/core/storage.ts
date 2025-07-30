@@ -898,55 +898,6 @@ Warm regards and best wishes,
     }
   }
 
-
-          .set({
-            ...processedData,
-            updatedAt: new Date(),
-          })
-          .where(eq(userSettings.userId, userId))
-          .returning();
-        
-        console.log(`✅ Updated settings for user ${userId}`);
-        return updatedSettings;
-      } else {
-        // Create new settings
-        const [newSettings] = await this.db
-          .insert(userSettings)
-          .values({
-            userId,
-            ...processedData,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .returning();
-        
-        console.log(`✅ Created new settings for user ${userId}`);
-        return newSettings;
-      }
-    } catch (error) {
-      console.error('❌ Failed to update settings:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get user bookings for dashboard stats
-   */
-  async getUserBookings(userId: string): Promise<any[]> {
-    try {
-      const result = await this.db
-        .select()
-        .from(bookings)
-        .where(eq(bookings.userId, userId))
-        .orderBy(desc(bookings.createdAt));
-      
-      return result.slice(0, 50); // Limit for performance
-    } catch (error) {
-      console.error('❌ Failed to fetch user bookings:', error);
-      return [];
-    }
-  }
-
   /**
    * Get user contracts for dashboard stats
    */
