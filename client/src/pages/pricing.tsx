@@ -5,9 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Star, Zap } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import Sidebar from "@/components/sidebar";
+import DashboardHeader from "@/components/dashboard-header";
+import MobileNav from "@/components/mobile-nav";
+import { useResponsive } from "@/hooks/useResponsive";
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isDesktop } = useResponsive();
 
   // Get subscription status
   const { data: subscriptionStatus } = useQuery({
@@ -59,7 +65,7 @@ export default function PricingPage() {
   const currentPlan = (subscriptionStatus as any)?.plan || 'free';
   const hasAccess = (subscriptionStatus as any)?.hasAccess || false;
 
-  return (
+  const pricingContent = (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -322,6 +328,55 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  if (isDesktop) {
+    return (
+      <div className="min-h-screen bg-background flex">
+        {/* Desktop Sidebar - Always visible */}
+        <div className="w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 fixed left-0 top-0 h-full z-30">
+          <Sidebar isOpen={true} onClose={() => {}} />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 ml-64 min-h-screen">
+          <DashboardHeader />
+          <main className="overflow-auto">
+            {pricingContent}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Mobile menu toggle */}
+      {!isDesktop && (
+        <div className="fixed top-4 left-4 z-50">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="bg-card p-2 rounded-lg shadow-lg"
+          >
+            <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Main Content */}
+      <div className="min-h-screen">
+        <DashboardHeader />
+        <main className="overflow-auto">
+          {pricingContent}
+        </main>
+      </div>
+
+      <MobileNav />
     </div>
   );
 }

@@ -133,6 +133,16 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-07-30 - Calendar Layout Consistency Fixed + User-Configurable Booking Display Complete
+- **Calendar Layout Uniformity Fixed**: ✅ Monthly calendar now uses fixed 6-row grid ensuring consistent visual appearance across all months regardless of booking count
+- **Padding System Implemented**: ✅ Calendar data padded to 42 cells (6 weeks × 7 days) with invisible cells for months requiring fewer weeks
+- **User-Configurable Booking Display**: ✅ Added Performance Settings section with simple radio button choice between "Last 50 bookings" and "Show all bookings"
+- **Database Schema Updated**: ✅ Added bookingDisplayLimit column as varchar field supporting "50" and "all" string values
+- **Backend Logic Enhanced**: ✅ Updated booking API to handle string-based display limits with proper filtering logic
+- **Simplified User Interface**: ✅ Replaced complex numeric input with user-friendly radio button options per user preference
+- **Pricing Page Sidebar Fixed**: ✅ Added missing sidebar navigation to pricing/upgrade page matching other authenticated pages
+- **Layout Consistency Achieved**: ✅ All authenticated pages now have consistent sidebar navigation for better user experience
+
 ### 2025-07-30 - CRITICAL DATA LOSS ISSUE RESOLVED - Historical Bookings Restored + Enhanced Calendar System Complete
 - **CRITICAL DATA LOSS FIXED**: ✅ Removed artificial 50-booking limit in `/api/bookings` endpoint that was hiding all historical bookings prior to June 2025
 - **ROOT CAUSE IDENTIFIED**: ✅ "Performance fix" was slicing booking results to 50 most recent items, causing older bookings to disappear from interface
