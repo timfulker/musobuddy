@@ -670,12 +670,21 @@ export async function registerRoutes(app: Express) {
       // Import booking formatter
       const { formatBookings } = await import('./booking-formatter');
       
-      // Get all bookings for user - no artificial limits
+      // Get user settings to check display limit preference
+      const userSettings = await storage.getUserSettings(userId);
+      const displayLimit = userSettings?.bookingDisplayLimit || "50"; // Default to "50" if not set
+      
+      // Get all bookings for user
       const rawBookings = await storage.getBookings(userId);
       
-      // Sort by date (most recent first) - removed artificial limit
-      const sortedBookings = rawBookings
+      // Sort by date (most recent first) and apply user-defined limit
+      let sortedBookings = rawBookings
         .sort((a: any, b: any) => new Date(b.eventDate || 0).getTime() - new Date(a.eventDate || 0).getTime());
+      
+      // Apply display limit only if set to "50" (not "all")
+      if (displayLimit === "50") {
+        sortedBookings = sortedBookings.slice(0, 50);
+      }
       
       // Format bookings consistently
       const formattedBookings = formatBookings(sortedBookings);

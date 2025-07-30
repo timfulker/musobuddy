@@ -72,6 +72,8 @@ const settingsFormSchema = z.object({
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
   bankDetails: z.string().optional().or(z.literal("")),
+  // Performance settings
+  bookingDisplayLimit: z.enum(["50", "all"]).default("50"),
   // Removed instrument and gig type fields - feature moved to documentation
   // Theme preferences
   themeTemplate: z.string().optional(),
@@ -196,6 +198,7 @@ export default function Settings() {
     address: false,
     financial: false,
     bank: false,
+    performance: false,
     // removed instruments section
     themes: false,
   });
@@ -755,6 +758,78 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Performance Settings */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <Collapsible open={expandedSections.performance} onOpenChange={() => toggleSection('performance')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <SettingsIcon className="w-5 h-5 text-purple-600" />
+                          <span>Performance Settings</span>
+                        </div>
+                        {expandedSections.performance ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
+                        Configure display options and performance preferences
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="bookingDisplayLimit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Booking Display Limit</FormLabel>
+                            <FormControl>
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="limit-50"
+                                    name="bookingDisplayLimit"
+                                    value="50"
+                                    checked={field.value === "50"}
+                                    onChange={() => field.onChange("50")}
+                                    className="text-purple-600"
+                                  />
+                                  <label htmlFor="limit-50" className="text-sm font-medium cursor-pointer">
+                                    Last 50 bookings (Recommended)
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="limit-all"
+                                    name="bookingDisplayLimit"
+                                    value="all"
+                                    checked={field.value === "all"}
+                                    onChange={() => field.onChange("all")}
+                                    className="text-purple-600"
+                                  />
+                                  <label htmlFor="limit-all" className="text-sm font-medium cursor-pointer">
+                                    Show all bookings
+                                  </label>
+                                </div>
+                              </div>
+                            </FormControl>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Choose how many bookings to display for better performance. Showing all bookings may slow down loading if you have many historical bookings.
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>

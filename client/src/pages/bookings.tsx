@@ -1586,46 +1586,63 @@ export default function UnifiedBookings() {
                   )}
                   
                   {calendarView === 'month' && (
-                    <div className="h-full">
-                      <div className="grid grid-cols-7 gap-1 h-full">
-                        {/* Month Day Headers */}
+                    <div className="h-full flex flex-col">
+                      {/* Month Day Headers - Fixed Height */}
+                      <div className="grid grid-cols-7 gap-1 flex-shrink-0">
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
                           <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 h-10 flex items-center justify-center">
                             {day}
                           </div>
                         ))}
-                        
-                        {/* Month Calendar Days */}
-                        {generateCalendarData().map((day, index) => (
-                          <div
-                            key={index}
-                            className={`
-                              h-24 p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden
-                              ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
-                              ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
-                            `}
-                            onClick={() => handleDateClick(day.date)}
-                          >
-                            <div className="font-medium text-sm mb-1">
-                              {day.day}
+                      </div>
+                      
+                      {/* Month Calendar Days - Fixed Grid Height */}
+                      <div className="grid grid-cols-7 gap-1 flex-1" style={{ gridTemplateRows: 'repeat(6, 1fr)' }}>
+                        {(() => {
+                          const calendarData = generateCalendarData();
+                          // Ensure we always have 42 cells (6 weeks × 7 days) for consistent layout
+                          const paddedData = [...calendarData];
+                          while (paddedData.length < 42) {
+                            paddedData.push({
+                              date: new Date(),
+                              day: '',
+                              isCurrentMonth: false,
+                              isToday: false,
+                              events: []
+                            });
+                          }
+                          return paddedData.map((day, index) => (
+                            <div
+                              key={index}
+                              className={`
+                                p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 overflow-hidden flex flex-col
+                                ${day.isCurrentMonth ? '' : 'bg-gray-50 text-gray-400'}
+                                ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}
+                                ${day.day === '' ? 'invisible' : ''}
+                              `}
+                              onClick={() => day.day !== '' && handleDateClick(day.date)}
+                            >
+                              <div className="font-medium text-sm mb-1 flex-shrink-0">
+                                {day.day}
+                              </div>
+                              <div className="space-y-1 flex-1 overflow-hidden">
+                                {day.events.slice(0, 2).map((event, eventIndex) => (
+                                  <div
+                                    key={eventIndex}
+                                    className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
+                                  >
+                                    {event.title}
+                                  </div>
+                                ))}
+                                {day.events.length > 2 && (
+                                  <div className="text-xs text-gray-500">
+                                    +{day.events.length - 2} more
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div className="space-y-1">
-                              {day.events.slice(0, 2).map((event, eventIndex) => (
-                                <div
-                                  key={eventIndex}
-                                  className={`text-xs p-1 rounded truncate ${getStatusColor(event.status || 'new')}`}
-                                >
-                                  {event.title}
-                                </div>
-                              ))}
-                              {day.events.length > 2 && (
-                                <div className="text-xs text-gray-500">
-                                  +{day.events.length - 2} more
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          ));
+                        })()}
                       </div>
                     </div>
                   )}

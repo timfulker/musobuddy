@@ -373,6 +373,8 @@ export const userSettings = pgTable("user_settings", {
   defaultBufferTime: integer("default_buffer_time").default(90), // minutes
   maxTravelDistance: integer("max_travel_distance").default(100), // miles
   homePostcode: varchar("home_postcode"), // For distance calculations
+  // Performance settings
+  bookingDisplayLimit: varchar("booking_display_limit").default("50"), // "50" for last 50 bookings, "all" for no limit
   // AI-powered instrument and gig type system
   selectedInstruments: text("selected_instruments"), // JSON array of selected instruments from CSV
   aiGeneratedGigTypes: text("ai_generated_gig_types"), // JSON array of AI-generated gig types
