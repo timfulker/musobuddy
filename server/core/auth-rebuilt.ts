@@ -116,7 +116,7 @@ export function setupAuthRoutes(app: Express) {
       
       // Store verification code in session
       req.session.verificationCode = verificationCode;
-      req.session.pendingUserId = newUser.id;
+      req.session.pendingUserId = newUser;
       
       await new Promise((resolve, reject) => {
         req.session.save((err: any) => {
@@ -125,14 +125,49 @@ export function setupAuthRoutes(app: Express) {
         });
       });
       
-      console.log('✅ Signup successful (dev mode), code:', verificationCode);
+      // Check if we're in production environment
+      const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT;
       
-      res.json({
-        success: true,
-        userId: newUser,
-        verificationCode: verificationCode,
-        tempMessage: 'Development mode - use code: ' + verificationCode
-      });
+      if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+        // Production: Send real SMS
+        try {
+          const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+          
+          await twilio.messages.create({
+            body: `Your MusoBuddy verification code is: ${verificationCode}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: phoneNumber
+          });
+          
+          console.log('✅ SMS sent to:', phoneNumber);
+          
+          res.json({
+            success: true,
+            userId: newUser,
+            message: 'Verification code sent to your phone'
+          });
+          
+        } catch (smsError) {
+          console.error('❌ SMS failed:', smsError);
+          // Fallback to showing code if SMS fails
+          res.json({
+            success: true,
+            userId: newUser,
+            verificationCode: verificationCode,
+            tempMessage: 'SMS failed - use code: ' + verificationCode
+          });
+        }
+      } else {
+        // Development: Show code on screen
+        console.log('✅ Signup successful (dev mode), code:', verificationCode);
+        
+        res.json({
+          success: true,
+          userId: newUser,
+          verificationCode: verificationCode,
+          tempMessage: 'Development mode - use code: ' + verificationCode
+        });
+      }
       
     } catch (error) {
       console.error('❌ Signup error:', error);
