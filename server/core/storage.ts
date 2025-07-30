@@ -875,64 +875,6 @@ Warm regards and best wishes,
       });
     }
   }
-  // ===== ENHANCED METHODS FOR COST-OPTIMIZED GIG TYPES =====
-  
-  /**
-   * Get all user settings for global gig types aggregation
-   */
-  async getAllUserSettings(): Promise<any[]> {
-    try {
-      const result = await this.db
-        .select({
-          userId: userSettings.userId,
-          selectedInstruments: userSettings.selectedInstruments,
-          gigTypes: userSettings.gigTypes,
-          businessName: userSettings.businessName,
-        })
-        .from(userSettings);
-      
-      return result;
-    } catch (error) {
-      console.error('❌ Failed to fetch all user settings:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get user contracts for dashboard stats
-   */
-  async getUserContracts(userId: string): Promise<any[]> {
-    try {
-      const result = await this.db
-        .select()
-        .from(contracts)
-        .where(eq(contracts.userId, userId))
-        .orderBy(desc(contracts.createdAt));
-      
-      return result;
-    } catch (error) {
-      console.error('❌ Failed to fetch user contracts:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get user invoices for dashboard stats
-   */
-  async getUserInvoices(userId: string): Promise<any[]> {
-    try {
-      const result = await this.db
-        .select()
-        .from(invoices)
-        .where(eq(invoices.userId, userId))
-        .orderBy(desc(invoices.createdAt));
-      
-      return result;
-    } catch (error) {
-      console.error('❌ Failed to fetch user invoices:', error);
-      return [];
-    }
-  }
 }
 
 export const storage = new Storage();
