@@ -118,10 +118,15 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="bg-gray-50 border border-gray-200 p-8 rounded">
-              <div className="flex items-center justify-center h-64 bg-white border border-gray-200 rounded">
-                <Play className="h-16 w-16 text-gray-400" />
-                <span className="ml-4 text-lg text-gray-600">Contract Demo Video</span>
-              </div>
+              <video 
+                className="w-full h-64 bg-black rounded border border-gray-200" 
+                controls 
+                preload="metadata"
+                poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjMTExODI3Ii8+Cjx0ZXh0IHg9IjQwMCIgeT0iMjI1IiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iMC4zZW0iPkNvbnRyYWN0IERlbW8gVmlkZW88L3RleHQ+Cjwvc3ZnPg=="
+              >
+                <source src="@assets/606F7H35AI6JIPP1_1753897603372.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>
@@ -200,10 +205,15 @@ export default function LandingPage() {
 
           <div className="max-w-4xl mx-auto mb-16">
             <div className="bg-gray-50 border border-gray-200 p-8">
-              <div className="flex items-center justify-center h-64 bg-white border border-gray-200">
-                <Play className="h-16 w-16 text-gray-400" />
-                <span className="ml-4 text-lg text-gray-600">Watch the 5-minute overview</span>
-              </div>
+              <video 
+                className="w-full h-80 bg-black rounded border border-gray-200" 
+                controls 
+                preload="metadata"
+                poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjMTExODI3Ii8+Cjx0ZXh0IHg9IjQwMCIgeT0iMjI1IiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iMC4zZW0iPldhdGNoIHRoZSA1LW1pbnV0ZSBvdmVydmlldzwvdGV4dD4KPHN2ZyB4PSIzNTAiIHk9IjE4NSIgd2lkdGg9IjEwMCIgaGVpZ2h0PSI4MCI+CjxwYXRoIGQ9Ik0yNSA3LjVsNTAgMzJMMjUgNzEuNXoiIGZpbGw9IndoaXRlIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KPHN2Zz4KPHN2Zz4="
+              >
+                <source src="@assets/606F7H35AI6JIPP1_1753897603372.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
 
