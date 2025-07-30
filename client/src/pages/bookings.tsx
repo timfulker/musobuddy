@@ -986,7 +986,7 @@ export default function UnifiedBookings() {
 
             {/* Content Based on View Mode */}
             {viewMode === 'list' ? (
-              /* List View */
+              /* List View with Conflict Grouping */
               <div className="space-y-4">
                 
                 {bookingsLoading ? (
@@ -999,177 +999,239 @@ export default function UnifiedBookings() {
                     {searchQuery || statusFilter !== 'all' || dateFilter !== 'all' ? 'No bookings match your filters' : 'No bookings found'}
                   </div>
                 ) : (
-                  filteredAndSortedBookings.map((booking: any) => (
-                    <Card 
-                      key={booking.id} 
-                      className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
-                        selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                      }`}
-                    >
-                      {/* Single Conflict Resolver - Only show on first booking in conflict group */}
-                      {isFirstInConflictGroup(booking) && (
-                        <ConflictIndicator 
-                          bookingId={booking.id} 
-                          conflicts={detectConflicts(booking)}
-                          onEditBooking={handleEditBookingFromConflict}
-                        />
-                      )}
+                  (() => {
+                    // Group bookings by conflict groups for visual grouping
+                    const renderedBookings = new Set<number>();
+                    const elements: JSX.Element[] = [];
+                    
+                    filteredAndSortedBookings.forEach((booking: any) => {
+                      if (renderedBookings.has(booking.id)) return;
                       
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 flex-1">
-                            <Checkbox
-                              checked={selectedBookings.includes(booking.id)}
-                              onCheckedChange={() => toggleSelectBooking(booking.id)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                            <div 
-                              className="flex-1 cursor-pointer" 
-                              onClick={() => handleBookingClick(booking)}
-                            >
-                              <div className="flex items-center gap-4 mb-2">
-                              <h3 className="text-lg font-semibold">
-                                {booking.eventType || 'Event'}
-                              </h3>
-                              <Badge className={getStatusColor(booking.status)}>
-                                {booking.status?.replace('_', ' ') || 'New'}
-                              </Badge>
-                              {/* Conflict badge - matching dashboard style */}
-                              {detectConflicts(booking).length > 0 && (
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-xs ${
-                                    detectConflicts(booking).some(c => c.severity === 'hard')
-                                      ? 'text-red-700 bg-red-50 border-red-300'
-                                      : 'text-orange-700 bg-orange-50 border-orange-300'
-                                  }`}
-                                >
-                                  ⚠️ Conflict
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div className="flex items-center gap-4">
-                                <span className="flex items-center gap-1">
-                                  <User className="w-4 h-4" />
-                                  {booking.clientName || 'Unknown Client'}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4" />
-                                  {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'}
-                                </span>
-                                {booking.eventTime && (
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4" />
-                                    {booking.eventTime}
-                                  </span>
-                                )}
-                                {booking.fee && (
-                                  <span className="flex items-center gap-1">
-                                    <PoundSterling className="w-4 h-4" />
-                                    £{booking.fee}
-                                  </span>
-                                )}
-                              </div>
-                              {booking.venue && (
-                                <div className="text-gray-500">
-                                  {booking.venue}
+                      const conflicts = detectConflicts(booking);
+                      if (conflicts.length > 0) {
+                        // This booking has conflicts - render as a group
+                        const bookingDate = new Date(booking.eventDate).toDateString();
+                        const conflictGroup = conflictGroups.find(group => group.date === bookingDate);
+                        
+                        if (conflictGroup) {
+                          // Filter group bookings to only show those in current filtered list
+                          const visibleGroupBookings = conflictGroup.bookings.filter((groupBooking: any) =>
+                            filteredAndSortedBookings.some((filtered: any) => filtered.id === groupBooking.id)
+                          );
+                          
+                          if (visibleGroupBookings.length > 1) {
+                            // Render conflict group container
+                            elements.push(
+                              <div key={`conflict-group-${bookingDate}`} className="relative">
+                                {/* Conflict Group Header with Large Resolve Button */}
+                                <div className="flex items-center justify-between mb-2 p-3 bg-red-50 border border-red-200 rounded-t-lg">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-red-700 font-medium">
+                                      ⚠️ Conflict Group - {new Date(booking.eventDate).toLocaleDateString()}
+                                    </span>
+                                    <span className="text-sm text-red-600">
+                                      ({visibleGroupBookings.length} bookings)
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedBookingForConflict(booking);
+                                      setConflictResolutionDialogOpen(true);
+                                    }}
+                                    className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors"
+                                  >
+                                    Resolve All Conflicts
+                                  </button>
                                 </div>
-                              )}
+                                
+                                {/* Grouped Bookings */}
+                                <div className="border border-red-200 border-t-0 rounded-b-lg overflow-hidden">
+                                  {visibleGroupBookings.map((groupBooking: any, index: number) => {
+                                    renderedBookings.add(groupBooking.id);
+                                    return (
+                                      <Card 
+                                        key={groupBooking.id} 
+                                        className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(groupBooking.status)} ${
+                                          selectedBookings.includes(groupBooking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                                        } ${index < visibleGroupBookings.length - 1 ? 'border-b border-gray-200' : ''} rounded-none border-0`}
+                                      >
+                                        <CardContent className="p-6">
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4 flex-1">
+                                              <Checkbox
+                                                checked={selectedBookings.includes(groupBooking.id)}
+                                                onCheckedChange={() => toggleSelectBooking(groupBooking.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                              />
+                                              <div 
+                                                className="flex-1 cursor-pointer" 
+                                                onClick={() => handleBookingClick(groupBooking)}
+                                              >
+                                                <div className="flex items-center gap-4 mb-2">
+                                                <h3 className="text-lg font-semibold">
+                                                  {groupBooking.eventType || 'Event'}
+                                                </h3>
+                                                <Badge className={getStatusColor(groupBooking.status)}>
+                                                  {groupBooking.status?.replace('_', ' ') || 'New'}
+                                                </Badge>
+                                                {/* Conflict badge - matching dashboard style */}
+                                                {detectConflicts(groupBooking).length > 0 && (
+                                                  <Badge 
+                                                    variant="outline" 
+                                                    className={`text-xs ${
+                                                      detectConflicts(groupBooking).some(c => c.severity === 'hard')
+                                                        ? 'text-red-700 bg-red-50 border-red-300'
+                                                        : 'text-orange-700 bg-orange-50 border-orange-300'
+                                                    }`}
+                                                  >
+                                                    ⚠️ Conflict
+                                                  </Badge>
+                                                )}
+                                              </div>
+                                              <div className="text-sm text-gray-600 space-y-1">
+                                                <div className="flex items-center gap-4">
+                                                  <span className="flex items-center gap-1">
+                                                    <User className="w-4 h-4" />
+                                                    {groupBooking.clientName || 'Unknown Client'}
+                                                  </span>
+                                                  {groupBooking.venue && (
+                                                    <span className="flex items-center gap-1">
+                                                      <MapPin className="w-4 h-4" />
+                                                      {groupBooking.venue}
+                                                    </span>
+                                                  )}
+                                                  {groupBooking.eventTime && (
+                                                    <span className="flex items-center gap-1">
+                                                      <Clock className="w-4 h-4" />
+                                                      {groupBooking.eventTime}
+                                                    </span>
+                                                  )}
+                                                  {groupBooking.fee && (
+                                                    <span className="flex items-center gap-1 font-medium text-green-600">
+                                                      <PoundSterling className="w-4 h-4" />
+                                                      {groupBooking.fee}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <p className="text-gray-500">
+                                                  {new Date(groupBooking.eventDate).toLocaleDateString('en-GB', {
+                                                    weekday: 'long',
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                  })}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                          <div className="flex items-center justify-end mt-4">
+                                            <BookingActionMenu
+                                              booking={groupBooking}
+                                              onEditBooking={handleEditBooking}
+                                              onSendCompliance={openComplianceDialog}
+                                            />
+                                          </div>
+                                        </CardContent>
+                                      </Card>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                            return;
+                          }
+                        }
+                      }
+                      
+                      // Non-conflicting booking or single booking in group - render normally
+                      renderedBookings.add(booking.id);
+                      elements.push(
+                        <Card 
+                          key={booking.id} 
+                          className={`relative hover:shadow-md transition-shadow border-l-4 ${getStatusBorderColor(booking.status)} ${
+                            selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                          }`}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 flex-1">
+                                <Checkbox
+                                  checked={selectedBookings.includes(booking.id)}
+                                  onCheckedChange={() => toggleSelectBooking(booking.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <div 
+                                  className="flex-1 cursor-pointer" 
+                                  onClick={() => handleBookingClick(booking)}
+                                >
+                                  <div className="flex items-center gap-4 mb-2">
+                                  <h3 className="text-lg font-semibold">
+                                    {booking.eventType || 'Event'}
+                                  </h3>
+                                  <Badge className={getStatusColor(booking.status)}>
+                                    {booking.status?.replace('_', ' ') || 'New'}
+                                  </Badge>
+                                  {/* Conflict badge - matching dashboard style */}
+                                  {detectConflicts(booking).length > 0 && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`text-xs ${
+                                        detectConflicts(booking).some(c => c.severity === 'hard')
+                                          ? 'text-red-700 bg-red-50 border-red-300'
+                                          : 'text-orange-700 bg-orange-50 border-orange-300'
+                                      }`}
+                                    >
+                                      ⚠️ Conflict
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-600 space-y-1">
+                                  <div className="flex items-center gap-4">
+                                    <span className="flex items-center gap-1">
+                                      <User className="w-4 h-4" />
+                                      {booking.clientName || 'Unknown Client'}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-4 h-4" />
+                                      {booking.eventDate ? new Date(booking.eventDate).toLocaleDateString() : 'No date'}
+                                    </span>
+                                    {booking.eventTime && (
+                                      <span className="flex items-center gap-1">
+                                        <Clock className="w-4 h-4" />
+                                        {booking.eventTime}
+                                      </span>
+                                    )}
+                                    {booking.fee && (
+                                      <span className="flex items-center gap-1">
+                                        <PoundSterling className="w-4 h-4" />
+                                        £{booking.fee}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {booking.venue && (
+                                    <div className="text-gray-500">
+                                      {booking.venue}
+                                    </div>
+                                  )}
+                                </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <BookingActionMenu
+                                  booking={booking}
+                                  onEditBooking={handleEditBooking}
+                                  onSendCompliance={openComplianceDialog}
+                                />
+                              </div>
                             </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {/* Document Viewing Buttons */}
-                            {(() => {
-                              // Find contract for this booking
-                              const bookingContract = Array.isArray(contracts) ? contracts.find(
-                                (contract: any) => contract.enquiryId === booking.id
-                              ) : null;
-
-
-                              
-                              // Find invoice for this booking  
-                              const bookingInvoice = Array.isArray(invoices) ? invoices.find(
-                                (invoice: any) => invoice.bookingId === booking.id
-                              ) : null;
-                              
-
-
-                              return (
-                                <>
-                                  {/* View Contract Button - Generated Contract */}
-                                  {bookingContract && (
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(`/view/contracts/${bookingContract.id}`, '_blank');
-                                      }}
-                                    >
-                                      <FileText className="w-4 h-4 mr-1" />
-                                      View Contract
-                                    </Button>
-                                  )}
-                                  
-                                  {/* View Contract Button - Uploaded Contract */}
-                                  {!bookingContract && booking.uploadedContractUrl && (
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(booking.uploadedContractUrl, '_blank');
-                                      }}
-                                    >
-                                      <FileText className="w-4 h-4 mr-1" />
-                                      View Contract
-                                    </Button>
-                                  )}
-                                  
-                                  {/* View Invoice Button */}
-                                  {bookingInvoice && (
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      className="text-green-600 border-green-200 hover:bg-green-50"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(`/view/invoices/${bookingInvoice.id}`, '_blank');
-                                      }}
-                                    >
-                                      <Receipt className="w-4 h-4 mr-1" />
-                                      View Invoice
-                                    </Button>
-                                  )}
-                                </>
-                              );
-                            })()}
-
-                            {/* Contract Call-to-Action for Client Confirms status */}
-                            {booking.status === 'client_confirms' && (
-                              <Button 
-                                size="sm" 
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
-                                onClick={() => navigate(`/contracts?bookingId=${booking.id}&action=create`)}
-                              >
-                                <FileText className="w-4 h-4 mr-1" />
-                                Send Contract
-                              </Button>
-                            )}
-                            
-                            <BookingActionMenu 
-                              booking={booking} 
-                              onSendCompliance={openComplianceDialog}
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                          </CardContent>
+                        </Card>
+                      );
+                    });
+                    
+                    return elements;
+                  })()
                 )}
               </div>
             ) : (
