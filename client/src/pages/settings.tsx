@@ -368,9 +368,32 @@ export default function Settings() {
       // Don't reset the form immediately - let it keep the user's changes
       // The form will be updated when the settings query refreshes
       
-      // Update local state with saved data
-      setSelectedInstruments(Array.isArray(data.selectedInstruments) ? data.selectedInstruments : []);
-      setGigTypes(Array.isArray(data.gigTypes) ? data.gigTypes : []);
+      // CRITICAL FIX: Update local state with saved data - parse JSON strings if needed
+      let savedInstruments = [];
+      let savedGigTypes = [];
+      
+      try {
+        if (typeof data.selectedInstruments === 'string') {
+          savedInstruments = JSON.parse(data.selectedInstruments);
+        } else if (Array.isArray(data.selectedInstruments)) {
+          savedInstruments = data.selectedInstruments;
+        }
+      } catch (e) {
+        console.warn('Failed to parse saved selectedInstruments:', e);
+      }
+      
+      try {
+        if (typeof data.gigTypes === 'string') {
+          savedGigTypes = JSON.parse(data.gigTypes);
+        } else if (Array.isArray(data.gigTypes)) {
+          savedGigTypes = data.gigTypes;
+        }
+      } catch (e) {
+        console.warn('Failed to parse saved gigTypes:', e);
+      }
+      
+      setSelectedInstruments(savedInstruments);
+      setGigTypes(savedGigTypes);
       
       // Store the new data as initial data for comparison
       setInitialData({
@@ -379,7 +402,7 @@ export default function Settings() {
         gigTypes: data.gigTypes || []
       });
       
-      // Invalidate and refetch settings to get fresh data
+      // Invalidate and refetch settings to get fresh data - but state variables already updated above
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
     onError: (error) => {
@@ -392,9 +415,9 @@ export default function Settings() {
     },
   });
 
-  // Initialize form when settings are loaded - but don't reset if user has unsaved changes
+  // Initialize form when settings are loaded - CRITICAL FIX for instruments and gig types disappearing
   useEffect(() => {
-    if (settings && !saveSettings.isPending && !hasChanges) {
+    if (settings && !saveSettings.isPending) {
       
       
       // Create the form data object with actual values - include ALL fields from database
@@ -420,15 +443,17 @@ export default function Settings() {
       
       
       
-      // Force reset form with settings data
-      form.reset(formData);
+      // Only reset form if this is initial load, not after save
+      if (!hasChanges) {
+        form.reset(formData);
+      }
       
-      // Set local state
+      // ALWAYS update local state with database values - this fixes the disappearing bug
       const instruments = Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : [];
       setSelectedInstruments(instruments);
       
-      // Use global gig types if available, otherwise use settings gig types
-      const gigTypesToUse = globalGigTypes && globalGigTypes.length > 0 ? globalGigTypes : (Array.isArray(settings.gigTypes) ? settings.gigTypes : []);
+      // Always use settings gig types (they contain the saved data)
+      const gigTypesToUse = Array.isArray(settings.gigTypes) ? settings.gigTypes : [];
       setGigTypes(gigTypesToUse);
       
       // Store initial data for comparison

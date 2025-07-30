@@ -61,7 +61,7 @@ function generateGigTypesForInstruments(instruments: string[]): string[] {
     'ukulele': ['Beach Wedding', 'Acoustic Performance', 'Children\'s Party', 'Outdoor Event']
   };
   
-  // General categories for common gig types
+  // General categories for common gig types - EXPANDED for more exhaustive suggestions
   const allGigTypes = [
     'Wedding Ceremony', 'Wedding Reception', 'Corporate Event', 'Private Party',
     'Restaurant Background', 'Bar/Lounge', 'Hotel Event', 'Conference',
@@ -73,6 +73,17 @@ function generateGigTypesForInstruments(instruments: string[]): string[] {
     'Trio Performance', 'Quartet Performance', 'Chamber Music', 'Orchestra',
     'Big Band', 'Jazz Ensemble', 'Rock Concert', 'Pop Concert', 'Folk Festival',
     'World Music', 'Cultural Festival', 'Religious Service', 'Memorial Service',
+    'Wine Tasting', 'Dinner Party', 'Brunch Event', 'Tea Party', 'Open Mic Night',
+    'Acoustic Evening', 'Jazz Brunch', 'Piano Bar', 'Smooth Jazz Evening',
+    'Live Music Venue', 'Pub Gig', 'Club Performance', 'Festival Main Stage',
+    'Festival Acoustic Stage', 'Street Performance', 'Busking', 'Farmers Market',
+    'Shopping Center Event', 'Mall Performance', 'Cruise Ship Entertainment',
+    'Resort Entertainment', 'Spa Background Music', 'Yoga Session', 'Meditation Music',
+    'Funeral Service', 'Church Service', 'Synagogue Service', 'Temple Ceremony',
+    'Graduation Ceremony', 'School Concert', 'College Event', 'University Gala',
+    'Retirement Party', 'Engagement Party', 'Bachelor Party', 'Bachelorette Party',
+    'Baby Shower', 'Gender Reveal', 'Christening', 'Bar Mitzvah', 'Bat Mitzvah',
+    'Quinceañera', 'Sweet 16', 'Prom After Party', 'Homecoming Dance',
     'Graduation Ceremony', 'School Event', 'University Event', 'Outdoor Concert',
     'Beach Event', 'Park Concert', 'Street Performance', 'Busking',
     'Studio Session', 'Recording Session', 'Music Video', 'Commercial',
@@ -124,8 +135,8 @@ function generateGigTypesForInstruments(instruments: string[]): string[] {
     ['Full Band Performance', 'Festival Main Stage', 'Concert Hall', 'Music Venue', 'Multi-Instrument Show'].forEach(gig => suggestions.add(gig));
   }
   
-  // Return up to 8 suggestions as array
-  return Array.from(suggestions).slice(0, 8);
+  // Return up to 12 suggestions as array for more exhaustive options
+  return Array.from(suggestions).slice(0, 12);
 }
 
 // ENHANCED AUTHENTICATION MIDDLEWARE - With debugging for development
