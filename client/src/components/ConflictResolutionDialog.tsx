@@ -41,17 +41,36 @@ export function ConflictResolutionDialog({
   // Update conflicting bookings when data is available
   useEffect(() => {
     if (allBookings && Array.isArray(allBookings) && conflicts && conflicts.length > 0) {
-      const fullConflictingBookings = conflicts
-        .map(conflict => {
-          // Find the full booking data by ID
-          const fullBooking = allBookings.find((booking: any) => booking.id === conflict.withBookingId);
-          return fullBooking || conflict; // Fallback to conflict data if booking not found
-        })
+      // Get all conflicting booking IDs (including the ones that conflict with each other)
+      const conflictBookingIds = new Set<number>();
+      
+      // Add the selected booking's conflicts
+      conflicts.forEach(conflict => {
+        conflictBookingIds.add(conflict.withBookingId);
+      });
+      
+      // Also find any bookings that conflict with the selected booking
+      if (selectedBooking) {
+        const selectedDate = new Date(selectedBooking.eventDate).toDateString();
+        const sameDayBookings = allBookings.filter((booking: any) => 
+          booking.eventDate && 
+          new Date(booking.eventDate).toDateString() === selectedDate &&
+          booking.id !== selectedBooking.id &&
+          booking.status !== 'cancelled' && 
+          booking.status !== 'rejected'
+        );
+        
+        sameDayBookings.forEach(booking => conflictBookingIds.add(booking.id));
+      }
+      
+      // Get the full booking data for all conflicting bookings
+      const fullConflictingBookings = Array.from(conflictBookingIds)
+        .map(id => allBookings.find((booking: any) => booking.id === id))
         .filter(Boolean); // Remove any null/undefined entries
       
       setConflictingBookings(fullConflictingBookings);
     }
-  }, [allBookings, conflicts]);
+  }, [allBookings, conflicts, selectedBooking]);
 
   const handleResolve = async (action: string, bookingId: string) => {
     try {

@@ -159,12 +159,13 @@ export default function UnifiedBookings() {
     }
   }, [bookings]); // Depend on bookings data
 
-  // OPTIMIZED: Memoized conflict detection to prevent excessive re-computation
-  const conflictsByBookingId = React.useMemo(() => {
-    if (!bookings || bookings.length === 0) return {};
+  // OPTIMIZED: Memoized conflict detection with conflict groups to prevent excessive re-computation
+  const { conflictsByBookingId, conflictGroups } = React.useMemo(() => {
+    if (!bookings || bookings.length === 0) return { conflictsByBookingId: {}, conflictGroups: [] };
     
     const conflicts: Record<number, any[]> = {};
     const bookingsByDate: Record<string, any[]> = {};
+    const groups: any[] = [];
     
     // Group bookings by date for efficient lookup
     (bookings as any[]).forEach((booking: any) => {
@@ -177,9 +178,19 @@ export default function UnifiedBookings() {
       bookingsByDate[dateKey].push(booking);
     });
     
-    // Only process dates with multiple bookings
+    // Only process dates with multiple bookings and create conflict groups
     Object.entries(bookingsByDate).forEach(([dateKey, dayBookings]) => {
       if (dayBookings.length < 2) return; // No conflicts possible
+      
+      // Create a conflict group for this date
+      const conflictGroup = {
+        id: `conflict-${dateKey}`,
+        date: dateKey,
+        bookings: dayBookings,
+        severity: 'soft' // Will be updated based on individual conflicts
+      };
+      
+      let hasHardConflict = false;
       
       dayBookings.forEach((booking: any) => {
         const bookingConflicts = dayBookings
@@ -253,6 +264,10 @@ export default function UnifiedBookings() {
               }
             }
             
+            if (severity === 'hard') {
+              hasHardConflict = true;
+            }
+            
             return {
               withBookingId: other.id,
               severity,
@@ -271,14 +286,33 @@ export default function UnifiedBookings() {
         
         conflicts[booking.id] = bookingConflicts;
       });
+      
+      // Update conflict group severity
+      conflictGroup.severity = hasHardConflict ? 'hard' : 'soft';
+      groups.push(conflictGroup);
     });
     
-    return conflicts;
+    return { conflictsByBookingId: conflicts, conflictGroups: groups };
   }, [bookings]);
 
   // OPTIMIZED: Simple conflict lookup instead of complex computation
   const detectConflicts = (booking: any) => {
     return conflictsByBookingId[booking.id] || [];
+  };
+
+  // Find if this booking is the first in its conflict group (to show single resolve button)
+  const isFirstInConflictGroup = (booking: any) => {
+    const conflicts = detectConflicts(booking);
+    if (conflicts.length === 0) return false;
+    
+    // Find the conflict group for this booking's date
+    const bookingDate = new Date(booking.eventDate).toDateString();
+    const conflictGroup = conflictGroups.find(group => group.date === bookingDate);
+    if (!conflictGroup) return false;
+    
+    // Return true if this is the first booking in the group (sorted by ID)
+    const sortedBookings = conflictGroup.bookings.sort((a: any, b: any) => a.id - b.id);
+    return sortedBookings[0].id === booking.id;
   };
 
   // Function to open compliance dialog from booking action menu
@@ -972,12 +1006,14 @@ export default function UnifiedBookings() {
                         selectedBookings.includes(booking.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                       }`}
                     >
-                      {/* Conflict Indicator - Top Right Corner */}
-                      <ConflictIndicator 
-                        bookingId={booking.id} 
-                        conflicts={detectConflicts(booking)}
-                        onEditBooking={handleEditBookingFromConflict}
-                      />
+                      {/* Single Conflict Resolver - Only show on first booking in conflict group */}
+                      {isFirstInConflictGroup(booking) && (
+                        <ConflictIndicator 
+                          bookingId={booking.id} 
+                          conflicts={detectConflicts(booking)}
+                          onEditBooking={handleEditBookingFromConflict}
+                        />
+                      )}
                       
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
