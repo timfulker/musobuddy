@@ -89,6 +89,139 @@ export function setupAuthRoutes(app: Express) {
     });
   });
 
+  // SIGNUP ENDPOINT - restored for production
+  app.post('/api/auth/signup', async (req: any, res) => {
+    try {
+      const { firstName, lastName, email, phoneNumber, password } = req.body;
+      
+      // Validate required fields
+      if (!firstName || !lastName || !email || !phoneNumber || !password) {
+        return res.status(400).json({ error: 'All fields are required' });
+      }
+      
+      console.log('📝 Signup attempt for:', email);
+      
+      // Create user with phone verification pending
+      const newUser = await storage.createUser({
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        password,
+        phoneVerified: false
+      });
+      
+      // Generate verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store verification code in session
+      req.session.verificationCode = verificationCode;
+      req.session.pendingUserId = newUser.id;
+      
+      await new Promise((resolve, reject) => {
+        req.session.save((err: any) => {
+          if (err) reject(err);
+          else resolve(true);
+        });
+      });
+      
+      console.log('✅ Signup successful (dev mode), code:', verificationCode);
+      
+      res.json({
+        success: true,
+        userId: newUser,
+        verificationCode: verificationCode,
+        tempMessage: 'Development mode - use code: ' + verificationCode
+      });
+      
+    } catch (error) {
+      console.error('❌ Signup error:', error);
+      res.status(500).json({ error: 'Signup failed' });
+    }
+  });
+
+  // PHONE VERIFICATION ENDPOINT - restored for production
+  app.post('/api/auth/verify', async (req: any, res) => {
+    try {
+      const { verificationCode } = req.body;
+      
+      if (!verificationCode) {
+        return res.status(400).json({ error: 'Verification code required' });
+      }
+      
+      const sessionCode = req.session.verificationCode;
+      const pendingUserId = req.session.pendingUserId;
+      
+      console.log('📱 Verification attempt:', {
+        userId: pendingUserId,
+        providedCode: verificationCode,
+        sessionCode: sessionCode
+      });
+      
+      if (verificationCode === sessionCode && pendingUserId) {
+        // Mark phone as verified
+        await storage.updateUser(pendingUserId.id, { phoneVerified: true });
+        
+        // Set authenticated session
+        req.session.userId = pendingUserId.id;
+        req.session.email = pendingUserId.email;
+        req.session.phoneVerified = true;
+        
+        // Clear verification data
+        delete req.session.verificationCode;
+        delete req.session.pendingUserId;
+        
+        await new Promise((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) reject(err);
+            else resolve(true);
+          });
+        });
+        
+        console.log('✅ Phone verification successful for:', pendingUserId.email);
+        
+        res.json({
+          success: true,
+          message: 'Phone verified successfully',
+          user: {
+            id: pendingUserId,
+            email: pendingUserId.email,
+            phoneVerified: true
+          }
+        });
+      } else {
+        res.status(400).json({ error: 'Invalid verification code' });
+      }
+      
+    } catch (error) {
+      console.error('❌ Verification error:', error);
+      res.status(500).json({ error: 'Verification failed' });
+    }
+  });
+
+  // TRIAL SETUP ENDPOINT
+  app.post('/api/auth/start-trial', async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log('🚀 Backend: Starting trial for userId:', userId);
+      
+      // For now, just redirect to pricing - Stripe integration can be added later
+      res.json({
+        success: true,
+        redirectUrl: '/pricing'
+      });
+      
+    } catch (error) {
+      console.error('❌ Trial setup error:', error);
+      res.status(500).json({ error: 'Trial setup failed' });
+    }
+  });
+
   // Session restoration - moved from routes.ts
   app.post('/api/auth/restore-session', async (req: any, res) => {
     try {
