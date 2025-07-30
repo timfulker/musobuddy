@@ -281,7 +281,7 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'All fields are required' });
       }
       
-      const userId = await storage.createUser({
+      const newUser = await storage.createUser({
         firstName,
         lastName,
         email,
@@ -291,6 +291,7 @@ export function setupAuthRoutes(app: Express) {
         isSubscribed: false
       });
       
+      const userId = newUser.id; // Extract just the ID string
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       
       req.session.userId = userId;
@@ -306,7 +307,7 @@ export function setupAuthRoutes(app: Express) {
       
       res.json({
         success: true,
-        userId,
+        userId: newUser,
         message: smsResult.message,
         ...(smsResult.showCode && { verificationCode, tempMessage: smsResult.tempMessage })
       });
@@ -322,10 +323,13 @@ export function setupAuthRoutes(app: Express) {
     try {
       const { verificationCode } = req.body;
       const sessionCode = req.session?.verificationCode;
-      const userId = req.session?.userId;
+      const sessionUserId = req.session?.userId;
       const email = req.session?.email;
       
-      console.log('📱 Verification attempt:', { userId, providedCode: verificationCode, sessionCode });
+      // Extract just the ID string if userId is an object
+      const userId = typeof sessionUserId === 'object' && sessionUserId?.id ? sessionUserId.id : sessionUserId;
+      
+      console.log('📱 Verification attempt:', { sessionUserId, extractedUserId: userId, providedCode: verificationCode, sessionCode });
       
       if (!userId || !sessionCode) {
         return res.status(400).json({ error: 'No verification session found' });
@@ -392,13 +396,27 @@ export function setupAuthRoutes(app: Express) {
   // START TRIAL
   app.post('/api/auth/start-trial', async (req: any, res) => {
     try {
-      const userId = req.session?.userId;
+      const sessionUserId = req.session?.userId;
+      const email = req.session?.email;
+      
+      // Extract just the ID string if userId is an object
+      const userId = typeof sessionUserId === 'object' && sessionUserId?.id ? sessionUserId.id : sessionUserId;
+      
+      console.log('🎯 Start trial attempt:', {
+        sessionUserId,
+        extractedUserId: userId,
+        email,
+        hasSession: !!req.session,
+        sessionKeys: req.session ? Object.keys(req.session) : []
+      });
+      
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
       const user = await storage.getUserById(userId);
       if (!user) {
+        console.error('❌ User not found in database:', { userId, email });
         return res.status(404).json({ error: 'User not found' });
       }
       
@@ -406,9 +424,20 @@ export function setupAuthRoutes(app: Express) {
         return res.status(400).json({ error: 'Phone verification required' });
       }
 
+      console.log('✅ Creating Stripe checkout session for user:', user.email);
+      
+      // Create Stripe checkout session for trial
+      const { StripeService } = await import('./stripe-service.js');
+      const stripeService = new StripeService();
+      
+      const priceId = 'price_1RouBwD9Bo26CG1DAF1rkSZI'; // Core monthly price
+      const session = await stripeService.createTrialCheckoutSession(userId, priceId);
+      
+      console.log('✅ Checkout session created:', session.sessionId);
       res.json({
         success: true,
-        redirectUrl: '/pricing'
+        checkoutUrl: session.checkoutUrl,
+        sessionId: session.sessionId
       });
       
     } catch (error: any) {

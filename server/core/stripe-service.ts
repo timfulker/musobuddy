@@ -4,12 +4,15 @@ import { storage } from './storage';
 // Import centralized environment detection
 import { ENV } from './environment';
 
-// Initialize Stripe with test key for beta testing (only if available)
+// Initialize Stripe with secret key (check both test and live keys)
 let stripe: Stripe | null = null;
-if (process.env.STRIPE_TEST_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY, {
-    apiVersion: '2025-06-30.basil' as any,
-  });
+if (process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY) {
+  const secretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY;
+  if (secretKey) {
+    stripe = new Stripe(secretKey, {
+      apiVersion: '2025-06-30.basil' as any,
+    });
+  }
 }
 
 export class StripeService {
@@ -17,7 +20,7 @@ export class StripeService {
 
   async createTrialCheckoutSession(userId: string, priceId: string = 'price_1RouBwD9Bo26CG1DAF1rkSZI') {
     if (!this.stripe) {
-      throw new Error('Stripe not configured - please add STRIPE_TEST_SECRET_KEY environment variable');
+      throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY or STRIPE_TEST_SECRET_KEY environment variable');
     }
     
     try {
@@ -87,7 +90,7 @@ export class StripeService {
 
   async getSessionDetails(sessionId: string) {
     if (!this.stripe) {
-      throw new Error('Stripe not configured - please add STRIPE_TEST_SECRET_KEY environment variable');
+      throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY or STRIPE_TEST_SECRET_KEY environment variable');
     }
     
     try {
@@ -108,7 +111,7 @@ export class StripeService {
     const webhookId = Date.now().toString();
     
     if (!this.stripe) {
-      throw new Error('Stripe not configured - please add STRIPE_TEST_SECRET_KEY environment variable');
+      throw new Error('Stripe not configured - please add STRIPE_SECRET_KEY or STRIPE_TEST_SECRET_KEY environment variable');
     }
     
     try {
