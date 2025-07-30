@@ -11,6 +11,15 @@ export default function TrialSuccessPage() {
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
   const [isRestoringSession, setIsRestoringSession] = useState(false);
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('🎉 TRIAL SUCCESS PAGE LOADED');
+    console.log('🔍 URL:', window.location.href);
+    console.log('🔍 Search params:', window.location.search);
+    console.log('🔍 User authenticated:', !!user);
+    console.log('🔍 Loading state:', isLoading);
+  }, []);
 
   // Session restoration effect
   useEffect(() => {
@@ -167,7 +176,7 @@ export default function TrialSuccessPage() {
               </p>
             </div>
 
-            {/* Single Option: Set up Email */}
+            {/* Primary Action: Set up Email */}
             <Button
               onClick={handleSetupEmail}
               className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white"
@@ -176,6 +185,16 @@ export default function TrialSuccessPage() {
               <Mail className="h-5 w-5 mr-2" />
               Select Email Prefix
               <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+            
+            {/* Secondary Action: Skip to Dashboard */}
+            <Button
+              onClick={() => setLocation('/dashboard')}
+              variant="ghost"
+              className="w-full h-10 text-gray-600 hover:text-gray-800"
+            >
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              Skip for now - Go to Dashboard
             </Button>
 
             {/* Info text */}

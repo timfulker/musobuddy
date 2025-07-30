@@ -50,7 +50,11 @@ function Router() {
   }
 
   // Simple redirect without useEffect to prevent loops
-  if (isAuthenticated && window.location.pathname === '/') {
+  // Exception: Don't redirect if user is on trial-success page or coming from Stripe
+  const currentPath = window.location.pathname;
+  const hasStripeSession = window.location.search.includes('stripe_session');
+  
+  if (isAuthenticated && currentPath === '/' && !hasStripeSession) {
     window.location.href = '/dashboard';
     return null;
   }
