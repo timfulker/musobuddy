@@ -23,6 +23,13 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
   // Force production mode for testing - remove this line after testing
   const isProduction = true; // ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
   
+  console.log('🚨 SMS FUNCTION CALLED:', {
+    phoneNumber,
+    verificationCode,
+    isProduction,
+    timestamp: new Date().toISOString()
+  });
+  
   console.log('📱 SMS Config Check:', {
     isProduction,
     hasTwilioSid: !!process.env.TWILIO_ACCOUNT_SID,
@@ -31,20 +38,32 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
     twilioPhone: process.env.TWILIO_PHONE_NUMBER
   });
   
+  console.log('🔍 Checking if we enter production SMS path...');
+  
   if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
     try {
+      console.log('🔧 DEBUGGING: Creating Twilio client...');
+      console.log('🔧 Account SID (first 10 chars):', process.env.TWILIO_ACCOUNT_SID?.substring(0, 10));
+      console.log('🔧 Auth Token (first 10 chars):', process.env.TWILIO_AUTH_TOKEN?.substring(0, 10));
+      
       const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
       
+      console.log('🔧 Twilio client created successfully');
       console.log('📱 Attempting SMS send:', {
         to: phoneNumber,
-        from: process.env.TWILIO_PHONE_NUMBER
+        from: process.env.TWILIO_PHONE_NUMBER,
+        body: 'Your MusoBuddy verification code is: [CODE]'
       });
+      
+      console.log('🔧 About to call twilio.messages.create...');
       
       const message = await twilio.messages.create({
         body: `Your MusoBuddy verification code is: ${verificationCode}`,
         from: process.env.TWILIO_PHONE_NUMBER,
         to: phoneNumber
       });
+      
+      console.log('🔧 twilio.messages.create completed successfully');
       
       console.log('✅ SMS sent successfully, SID:', message.sid);
       
