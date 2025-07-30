@@ -2,11 +2,11 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Check, Music, Play, Trophy } from "lucide-react";
 
-export default function LandingPage() {
+export default function LandingPageBasecampGreen() {
   return (
     <div className="min-h-screen bg-white">
       {/* Announcement Bar */}
-      <div className="bg-purple-600 text-white text-center py-3 px-4">
+      <div className="bg-green-600 text-white text-center py-3 px-4">
         <p className="text-sm font-medium">
           14-day free trial - Professional gig management starts in minutes
         </p>
@@ -33,7 +33,7 @@ export default function LandingPage() {
             </nav>
             <div className="flex items-center space-x-4">
               <Link href="/signup">
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 font-medium">
+                <Button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 font-medium">
                   Start Free Trial
                 </Button>
               </Link>
@@ -54,7 +54,7 @@ export default function LandingPage() {
             </p>
             
             <Link href="/signup">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg font-medium mb-8">
+              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-medium mb-8">
                 Start Free Trial
               </Button>
             </Link>
@@ -87,7 +87,7 @@ export default function LandingPage() {
                 Your clients receive beautiful, branded documents that make you look like the serious professional you are.
               </p>
               
-              <div className="bg-gray-50 border-l-4 border-purple-600 p-6 mb-8">
+              <div className="bg-gray-50 border-l-4 border-green-600 p-6 mb-8">
                 <p className="text-gray-700 italic">
                   <strong>Real example:</strong> Wedding band books Saturday ceremony Friday morning - contract sent, 
                   signed, and filed before lunch.
@@ -96,23 +96,23 @@ export default function LandingPage() {
               
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-purple-600 mr-3 mt-1 flex-shrink-0" />
+                  <Check className="h-5 w-5 text-green-600 mr-3 mt-1 flex-shrink-0" />
                   <span className="text-gray-700">Instant PDF generation → Professional impression in minutes</span>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-purple-600 mr-3 mt-1 flex-shrink-0" />
+                  <Check className="h-5 w-5 text-green-600 mr-3 mt-1 flex-shrink-0" />
                   <span className="text-gray-700">Digital signatures → Faster bookings, fewer delays</span>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-purple-600 mr-3 mt-1 flex-shrink-0" />
+                  <Check className="h-5 w-5 text-green-600 mr-3 mt-1 flex-shrink-0" />
                   <span className="text-gray-700">Cloud hosting → Clients access contracts 24/7 anywhere</span>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-purple-600 mr-3 mt-1 flex-shrink-0" />
+                  <Check className="h-5 w-5 text-green-600 mr-3 mt-1 flex-shrink-0" />
                   <span className="text-gray-700">Custom branding → Your logo makes every document yours</span>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-purple-600 mr-3 mt-1 flex-shrink-0" />
+                  <Check className="h-5 w-5 text-green-600 mr-3 mt-1 flex-shrink-0" />
                   <span className="text-gray-700">Automatic filing → Never lose important contracts again</span>
                 </div>
               </div>
@@ -141,7 +141,7 @@ export default function LandingPage() {
                 No more embarrassing calls explaining why you can't make a confirmed booking.
               </p>
               
-              <div className="bg-white border-l-4 border-purple-600 p-6 mb-6">
+              <div className="bg-white border-l-4 border-green-600 p-6 mb-6">
                 <p className="text-gray-700 italic">
                   <strong>Real example:</strong> Private party books same Saturday as existing wedding - system flags conflict immediately, saving your reputation.
                 </p>
@@ -166,7 +166,7 @@ export default function LandingPage() {
                 owes what. Professional presentation means clients pay promptly and respect your business.
               </p>
               
-              <div className="bg-white border-l-4 border-purple-600 p-6 mb-6">
+              <div className="bg-white border-l-4 border-green-600 p-6 mb-6">
                 <p className="text-gray-700 italic">
                   <strong>Real example:</strong> Wedding gig finishes Sunday, invoice arrives Monday morning, payment clears Wednesday - all without you lifting a finger.
                 </p>
@@ -192,7 +192,7 @@ export default function LandingPage() {
               See how MusoBuddy works
             </h3>
             <Link href="/signup">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg font-medium mb-8">
+              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-medium mb-8">
                 Start Free Trial
               </Button>
             </Link>
@@ -248,7 +248,7 @@ export default function LandingPage() {
               That's less than what you charge for 30 minutes of performance time.
             </div>
             <Link href="/signup">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg font-medium mb-6">
+              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-medium mb-6">
                 Try it free for 14 days
               </Button>
             </Link>
@@ -331,7 +331,7 @@ export default function LandingPage() {
               just immediate professional results.
             </p>
             <Link href="/signup">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg font-medium">
+              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-medium">
                 Try it free for 14 days
               </Button>
             </Link>
@@ -358,11 +358,11 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h4 className="text-xl font-semibold mb-4">Get in Touch</h4>
             <p className="text-gray-300 mb-2">
-              📧 <a href="mailto:hello@musobuddy.com" className="text-purple-400 hover:text-purple-300">hello@musobuddy.com</a>
+              📧 <a href="mailto:hello@musobuddy.com" className="text-green-400 hover:text-green-300">hello@musobuddy.com</a>
             </p>
             <p className="text-gray-300 mb-2">📍 United Kingdom</p>
             <p className="text-gray-300 mb-4">🕒 Support: Monday-Friday, 9 AM - 6 PM GMT</p>
-            <p className="text-purple-400 italic">We actually respond to emails - usually within hours, not days.</p>
+            <p className="text-green-400 italic">We actually respond to emails - usually within hours, not days.</p>
           </div>
 
           {/* Legal Links */}
@@ -392,19 +392,19 @@ export default function LandingPage() {
             <h4 className="text-xl font-semibold mb-6">Trust Signals</h4>
             <div className="space-y-4 max-w-2xl mx-auto">
               <div className="flex items-center justify-center">
-                <Check className="h-5 w-5 text-purple-500 mr-3" />
+                <Check className="h-5 w-5 text-green-500 mr-3" />
                 <span className="text-gray-300"><strong>UK-Based & Compliant</strong> - Built for UK musicians, by UK musicians</span>
               </div>
               <div className="flex items-center justify-center">
-                <Check className="h-5 w-5 text-purple-500 mr-3" />
+                <Check className="h-5 w-5 text-green-500 mr-3" />
                 <span className="text-gray-300"><strong>Secure Cloud Storage</strong> - Enterprise-grade protection, 24/7 accessibility</span>
               </div>
               <div className="flex items-center justify-center">
-                <Check className="h-5 w-5 text-purple-500 mr-3" />
+                <Check className="h-5 w-5 text-green-500 mr-3" />
                 <span className="text-gray-300"><strong>No Long-Term Contracts</strong> - Cancel anytime, keep your data</span>
               </div>
               <div className="flex items-center justify-center">
-                <Check className="h-5 w-5 text-purple-500 mr-3" />
+                <Check className="h-5 w-5 text-green-500 mr-3" />
                 <span className="text-gray-300"><strong>Musician-Focused</strong> - Purpose-built for gig management, not generic business tools</span>
               </div>
             </div>
@@ -417,7 +417,7 @@ export default function LandingPage() {
               Download our free "Professional Musician's Admin Checklist" and see how 
               MusoBuddy handles every item automatically.
             </p>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3">
+            <Button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3">
               Download Free Checklist
             </Button>
           </div>
