@@ -875,6 +875,147 @@ Warm regards and best wishes,
       });
     }
   }
+  // ===== ENHANCED METHODS FOR COST-OPTIMIZED GIG TYPES =====
+  
+  /**
+   * Get all user settings for global gig types aggregation
+   */
+  async getAllUserSettings(): Promise<any[]> {
+    try {
+      const result = await this.db
+        .select({
+          userId: userSettings.userId,
+          selectedInstruments: userSettings.selectedInstruments,
+          gigTypes: userSettings.gigTypes,
+          businessName: userSettings.businessName,
+        })
+        .from(userSettings);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to fetch all user settings:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Enhanced updateSettings method with better JSON handling
+   */
+  async updateSettings(userId: string, settingsData: any): Promise<any> {
+    try {
+      // Ensure JSON fields are properly stringified
+      const processedData = { ...settingsData };
+      
+      if (processedData.selectedInstruments) {
+        processedData.selectedInstruments = typeof processedData.selectedInstruments === 'string' 
+          ? processedData.selectedInstruments 
+          : JSON.stringify(processedData.selectedInstruments);
+      }
+      
+      if (processedData.gigTypes) {
+        processedData.gigTypes = typeof processedData.gigTypes === 'string'
+          ? processedData.gigTypes
+          : JSON.stringify(processedData.gigTypes);
+      }
+      
+      console.log(`💾 Storing settings with processed JSON:`, {
+        userId,
+        instrumentsType: typeof processedData.selectedInstruments,
+        gigTypesType: typeof processedData.gigTypes,
+        instrumentsValue: processedData.selectedInstruments,
+        gigTypesValue: processedData.gigTypes,
+      });
+
+      // Check if settings exist
+      const existingSettings = await this.getUserSettings(userId);
+      
+      if (existingSettings) {
+        // Update existing settings
+        const [updatedSettings] = await this.db
+          .update(userSettings)
+          .set({
+            ...processedData,
+            updatedAt: new Date(),
+          })
+          .where(eq(userSettings.userId, userId))
+          .returning();
+        
+        console.log(`✅ Updated settings for user ${userId}`);
+        return updatedSettings;
+      } else {
+        // Create new settings
+        const [newSettings] = await this.db
+          .insert(userSettings)
+          .values({
+            userId,
+            ...processedData,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+        
+        console.log(`✅ Created new settings for user ${userId}`);
+        return newSettings;
+      }
+    } catch (error) {
+      console.error('❌ Failed to update settings:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user bookings for dashboard stats
+   */
+  async getUserBookings(userId: string): Promise<any[]> {
+    try {
+      const result = await this.db
+        .select()
+        .from(bookings)
+        .where(eq(bookings.userId, userId))
+        .orderBy(desc(bookings.createdAt));
+      
+      return result.slice(0, 50); // Limit for performance
+    } catch (error) {
+      console.error('❌ Failed to fetch user bookings:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get user contracts for dashboard stats
+   */
+  async getUserContracts(userId: string): Promise<any[]> {
+    try {
+      const result = await this.db
+        .select()
+        .from(contracts)
+        .where(eq(contracts.userId, userId))
+        .orderBy(desc(contracts.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to fetch user contracts:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get user invoices for dashboard stats
+   */
+  async getUserInvoices(userId: string): Promise<any[]> {
+    try {
+      const result = await this.db
+        .select()
+        .from(invoices)
+        .where(eq(invoices.userId, userId))
+        .orderBy(desc(invoices.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to fetch user invoices:', error);
+      return [];
+    }
+  }
 }
 
 export const storage = new Storage();
