@@ -18,8 +18,98 @@ export const requireAuth = (req: any, res: any, next: any) => {
  * REBUILT AUTHENTICATION ROUTES
  * Simple, working authentication without complexity
  */
+// CONSOLIDATED SMS SENDING FUNCTION
+async function sendVerificationSMS(phoneNumber: string, verificationCode: string) {
+  const isProduction = ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
+  
+  console.log('📱 SMS Config Check:', {
+    isProduction,
+    hasTwilioSid: !!process.env.TWILIO_ACCOUNT_SID,
+    hasTwilioToken: !!process.env.TWILIO_AUTH_TOKEN,
+    hasTwilioPhone: !!process.env.TWILIO_PHONE_NUMBER,
+    twilioPhone: process.env.TWILIO_PHONE_NUMBER
+  });
+  
+  if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+    try {
+      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      
+      console.log('📱 Attempting SMS send:', {
+        to: phoneNumber,
+        from: process.env.TWILIO_PHONE_NUMBER
+      });
+      
+      const message = await twilio.messages.create({
+        body: `Your MusoBuddy verification code is: ${verificationCode}`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: phoneNumber
+      });
+      
+      console.log('✅ SMS sent successfully, SID:', message.sid);
+      
+      return {
+        success: true,
+        message: 'Verification code sent to your phone',
+        showCode: false
+      };
+      
+    } catch (smsError: any) {
+      console.error('❌ SMS failed:', smsError);
+      console.error('❌ SMS Error Details:', {
+        code: smsError.code,
+        message: smsError.message,
+        moreInfo: smsError.moreInfo
+      });
+      
+      // Fallback to showing code if SMS fails
+      return {
+        success: false,
+        message: 'SMS failed - use code below',
+        showCode: true,
+        tempMessage: `SMS failed - use code: ${verificationCode}`
+      };
+    }
+  } else {
+    // Development mode or missing credentials
+    console.log('✅ Development mode or missing SMS credentials, showing code');
+    
+    return {
+      success: true,
+      message: 'Development mode - use code below',
+      showCode: true,
+      tempMessage: `Development mode - use code: ${verificationCode}`
+    };
+  }
+}
+
 export function setupAuthRoutes(app: Express) {
   console.log('🔐 Setting up rebuilt authentication routes...');
+
+  // DEBUG ENDPOINT - temporary for SMS configuration testing
+  app.get('/api/debug/sms-config', (req: any, res) => {
+    const config = {
+      timestamp: new Date().toISOString(),
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+        ENV_isProduction: ENV.isProduction,
+        ENV_isDevelopment: ENV.isDevelopment
+      },
+      twilio: {
+        hasAccountSid: !!process.env.TWILIO_ACCOUNT_SID,
+        hasAuthToken: !!process.env.TWILIO_AUTH_TOKEN,
+        hasPhoneNumber: !!process.env.TWILIO_PHONE_NUMBER,
+        phoneNumber: process.env.TWILIO_PHONE_NUMBER // Remove this in production!
+      },
+      shouldSendSMS: ENV.isProduction && 
+                     !!process.env.TWILIO_ACCOUNT_SID && 
+                     !!process.env.TWILIO_AUTH_TOKEN && 
+                     !!process.env.TWILIO_PHONE_NUMBER
+    };
+    
+    console.log('🔍 SMS Configuration Debug:', config);
+    res.json(config);
+  });
 
   // Regular login endpoint
   app.post('/api/auth/login', async (req: any, res) => {
@@ -85,49 +175,15 @@ export function setupAuthRoutes(app: Express) {
           });
         });
         
-        // Check if we're in production environment
-        const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT;
+        // Use consolidated SMS sending function
+        const smsResult = await sendVerificationSMS(user.phoneNumber, verificationCode);
         
-        if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-          // Production: Send real SMS
-          try {
-            const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-            
-            await twilio.messages.create({
-              body: `Your MusoBuddy verification code is: ${verificationCode}`,
-              from: process.env.TWILIO_PHONE_NUMBER,
-              to: user.phoneNumber
-            });
-            
-            console.log('✅ Verification SMS sent to:', user.phoneNumber);
-            
-            return res.json({
-              requiresVerification: true,
-              phoneNumber: user.phoneNumber,
-              message: 'Verification code sent to your phone'
-            });
-            
-          } catch (smsError) {
-            console.error('❌ SMS failed during login:', smsError);
-            // Fallback to showing code if SMS fails
-            return res.json({
-              requiresVerification: true,
-              phoneNumber: user.phoneNumber,
-              verificationCode: verificationCode,
-              tempMessage: 'SMS failed - use code: ' + verificationCode
-            });
-          }
-        } else {
-          // Development: Show code on screen
-          console.log('✅ Login verification (dev mode), code:', verificationCode);
-          
-          return res.json({
-            requiresVerification: true,
-            phoneNumber: user.phoneNumber,
-            verificationCode: verificationCode,
-            tempMessage: 'Development mode - use code: ' + verificationCode
-          });
-        }
+        return res.json({
+          requiresVerification: true,
+          phoneNumber: user.phoneNumber,
+          message: smsResult.message,
+          ...(smsResult.showCode && { verificationCode, tempMessage: smsResult.tempMessage })
+        });
       }
       
       // Phone already verified - complete login
@@ -428,44 +484,17 @@ export function setupAuthRoutes(app: Express) {
         });
       });
       
-      // Send SMS verification in production (using inline Twilio instead of SMS service)
-      const isProduction = ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
+      // Use consolidated SMS sending function
+      const smsResult = await sendVerificationSMS(phoneNumber, verificationCode);
       
-      if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-        try {
-          const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-          
-          await twilio.messages.create({
-            body: `Your MusoBuddy verification code is: ${verificationCode}`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: phoneNumber
-          });
-          
-          console.log('✅ Signup successful, SMS sent to:', phoneNumber);
-          res.json({
-            success: true,
-            userId,
-            message: 'Please check your phone for verification code'
-          });
-        } catch (smsError) {
-          console.error('❌ SMS failed:', smsError);
-          res.json({
-            success: true,
-            userId,
-            verificationCode,
-            tempMessage: 'SMS failed - use code: ' + verificationCode
-          });
-        }
-      } else {
-        // Development mode - return code for testing
-        console.log('✅ Signup successful (dev mode), code:', verificationCode);
-        res.json({
-          success: true,
-          userId,
-          verificationCode,
-          tempMessage: `Development mode - use code: ${verificationCode}`
-        });
-      }
+      console.log('✅ Signup successful, SMS result:', smsResult.success);
+      
+      res.json({
+        success: true,
+        userId,
+        message: smsResult.message,
+        ...(smsResult.showCode && { verificationCode, tempMessage: smsResult.tempMessage })
+      });
       
     } catch (error: any) {
       console.error('❌ Signup error:', error);
