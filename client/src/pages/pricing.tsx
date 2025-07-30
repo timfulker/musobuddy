@@ -111,7 +111,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center">
                   <Check className="w-4 h-4 text-green-500 mr-2" />
-                  No credit card required
+                  Credit card required for setup
                 </li>
               </ul>
               <Button 
