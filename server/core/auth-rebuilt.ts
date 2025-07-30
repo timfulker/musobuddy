@@ -18,44 +18,27 @@ export const requireAuth = (req: any, res: any, next: any) => {
  * REBUILT AUTHENTICATION ROUTES
  * Simple, working authentication without complexity
  */
-// CONSOLIDATED SMS SENDING FUNCTION
+// ENHANCED SMS SENDING FUNCTION WITH DETAILED ERROR CAPTURE
 async function sendVerificationSMS(phoneNumber: string, verificationCode: string) {
-  // Force production mode for testing - remove this line after testing
-  const isProduction = true; // ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
+  const isProduction = ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
   
-  console.log('🚨 SMS FUNCTION CALLED:', {
+  console.log('📱 SMS Send Attempt:', {
+    timestamp: new Date().toISOString(),
     phoneNumber,
-    verificationCode,
     isProduction,
-    timestamp: new Date().toISOString()
+    hasCredentials: {
+      accountSid: !!process.env.TWILIO_ACCOUNT_SID,
+      authToken: !!process.env.TWILIO_AUTH_TOKEN,
+      phoneNumber: !!process.env.TWILIO_PHONE_NUMBER
+    },
+    twilioFromNumber: process.env.TWILIO_PHONE_NUMBER
   });
-  
-  console.log('📱 SMS Config Check:', {
-    isProduction,
-    hasTwilioSid: !!process.env.TWILIO_ACCOUNT_SID,
-    hasTwilioToken: !!process.env.TWILIO_AUTH_TOKEN,
-    hasTwilioPhone: !!process.env.TWILIO_PHONE_NUMBER,
-    twilioPhone: process.env.TWILIO_PHONE_NUMBER
-  });
-  
-  console.log('🔍 Checking if we enter production SMS path...');
   
   if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
     try {
-      console.log('🔧 DEBUGGING: Creating Twilio client...');
-      console.log('🔧 Account SID (first 10 chars):', process.env.TWILIO_ACCOUNT_SID?.substring(0, 10));
-      console.log('🔧 Auth Token (first 10 chars):', process.env.TWILIO_AUTH_TOKEN?.substring(0, 10));
-      
       const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
       
-      console.log('🔧 Twilio client created successfully');
-      console.log('📱 Attempting SMS send:', {
-        to: phoneNumber,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        body: 'Your MusoBuddy verification code is: [CODE]'
-      });
-      
-      console.log('🔧 About to call twilio.messages.create...');
+      console.log('📱 Twilio API Call Starting...');
       
       const message = await twilio.messages.create({
         body: `Your MusoBuddy verification code is: ${verificationCode}`,
@@ -63,9 +46,15 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
         to: phoneNumber
       });
       
-      console.log('🔧 twilio.messages.create completed successfully');
-      
-      console.log('✅ SMS sent successfully, SID:', message.sid);
+      console.log('✅ SMS SENT SUCCESSFULLY:', {
+        sid: message.sid,
+        status: message.status,
+        to: message.to,
+        from: message.from,
+        dateCreated: message.dateCreated,
+        price: message.price,
+        priceUnit: message.priceUnit
+      });
       
       return {
         success: true,
@@ -74,28 +63,66 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
       };
       
     } catch (smsError: any) {
-      console.error('❌ SMS COMPREHENSIVE ERROR ANALYSIS:');
-      console.error('❌ Error Object:', smsError);
-      console.error('❌ Error Message:', smsError.message);
-      console.error('❌ Error Code:', smsError.code);
-      console.error('❌ Error Status:', smsError.status);
-      console.error('❌ More Info:', smsError.moreInfo);
-      console.error('❌ Details:', smsError.details);
-      console.error('❌ Full JSON:', JSON.stringify(smsError, null, 2));
+      // DETAILED ERROR LOGGING - This is what we need to see!
+      console.log('❌ TWILIO API ERROR - FULL DETAILS:');
+      console.log('❌ Error Code:', smsError.code);
+      console.log('❌ Error Message:', smsError.message);
+      console.log('❌ More Info:', smsError.moreInfo);
+      console.log('❌ Status:', smsError.status);
+      console.log('❌ Details:', smsError.details);
+      console.log('❌ Full Error Object:', JSON.stringify(smsError, null, 2));
       
-      // Fallback to showing code if SMS fails
+      // Check for specific Twilio error codes
+      let errorMessage = 'SMS delivery failed';
+      let shouldShowCode = true;
+      
+      switch (smsError.code) {
+        case 21211:
+          errorMessage = 'Invalid phone number format';
+          console.log('🔍 Phone number validation failed for:', phoneNumber);
+          break;
+        case 21214:
+          errorMessage = 'Phone number is not a mobile number';
+          break;
+        case 21408:
+          errorMessage = 'SMS permissions not enabled for this account';
+          break;
+        case 21610:
+          errorMessage = 'Phone number not verified (Trial account restriction)';
+          console.log('🔍 Trial account - phone number needs verification in Twilio console');
+          break;
+        case 20003:
+          errorMessage = 'Authentication failed - check Twilio credentials';
+          break;
+        case 21606:
+          errorMessage = 'The phone number is not currently reachable via SMS';
+          break;
+        default:
+          errorMessage = `Twilio API Error: ${smsError.message}`;
+      }
+      
       return {
         success: false,
-        message: 'SMS failed - use code below',
-        showCode: true,
-        tempMessage: `SMS failed - use code: ${verificationCode}`,
-        errorCode: smsError.code,
-        errorMessage: smsError.message
+        message: errorMessage,
+        showCode: shouldShowCode,
+        tempMessage: `SMS failed (${smsError.code}): ${errorMessage} - Use code: ${verificationCode}`,
+        twilioError: {
+          code: smsError.code,
+          message: smsError.message,
+          moreInfo: smsError.moreInfo
+        }
       };
     }
   } else {
     // Development mode or missing credentials
-    console.log('✅ Development mode or missing SMS credentials, showing code');
+    console.log('📱 Development Mode or Missing Credentials:', {
+      isProduction,
+      missingCredentials: {
+        accountSid: !process.env.TWILIO_ACCOUNT_SID,
+        authToken: !process.env.TWILIO_AUTH_TOKEN,
+        phoneNumber: !process.env.TWILIO_PHONE_NUMBER
+      }
+    });
     
     return {
       success: true,
@@ -679,6 +706,60 @@ export function setupAuthRoutes(app: Express) {
     } catch (error: any) {
       console.error('❌ Start trial error:', error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // RESEND VERIFICATION CODE ENDPOINT - currently missing!
+  app.post('/api/auth/resend-verification', async (req: any, res) => {
+    try {
+      const sessionUserId = req.session?.userId;
+      const sessionCode = req.session?.verificationCode;
+      
+      console.log('🔄 Resend verification attempt:', {
+        sessionUserId: sessionUserId,
+        hasSessionCode: !!sessionCode
+      });
+      
+      if (!sessionUserId) {
+        return res.status(400).json({ error: 'No user session found' });
+      }
+      
+      // Get user details
+      const user = await storage.getUserById(sessionUserId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Generate new verification code
+      const newVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Update session with new code
+      req.session.verificationCode = newVerificationCode;
+      
+      await new Promise((resolve, reject) => {
+        req.session.save((err: any) => {
+          if (err) reject(err);
+          else resolve(true);
+        });
+      });
+      
+      console.log('📱 Resending verification code to:', user.phoneNumber);
+      
+      // Use the consolidated SMS sending function
+      const smsResult = await sendVerificationSMS(user.phoneNumber, newVerificationCode);
+      
+      res.json({
+        success: true,
+        message: smsResult.message,
+        ...(smsResult.showCode && { 
+          verificationCode: newVerificationCode, 
+          tempMessage: smsResult.tempMessage 
+        })
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Resend verification error:', error);
+      res.status(500).json({ error: 'Failed to resend verification code' });
     }
   });
 
