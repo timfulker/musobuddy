@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -8,7 +8,7 @@ import { CalendarDays, Clock, MapPin, User, Mail, Phone, X, Edit, Trash } from '
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 
 interface ConflictResolutionDialogProps {
   isOpen: boolean;
@@ -27,8 +27,31 @@ export function ConflictResolutionDialog({
 }: ConflictResolutionDialogProps) {
   const [isResolving, setIsResolving] = useState(false);
   const [resolutionAction, setResolutionAction] = useState<string>('');
+  const [conflictingBookings, setConflictingBookings] = useState<any[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch full booking details for all conflicting bookings
+  const { data: allBookings } = useQuery({
+    queryKey: ['/api/bookings'],
+    enabled: isOpen && conflicts && conflicts.length > 0,
+    staleTime: 0,
+  });
+
+  // Update conflicting bookings when data is available
+  useEffect(() => {
+    if (allBookings && Array.isArray(allBookings) && conflicts && conflicts.length > 0) {
+      const fullConflictingBookings = conflicts
+        .map(conflict => {
+          // Find the full booking data by ID
+          const fullBooking = allBookings.find((booking: any) => booking.id === conflict.withBookingId);
+          return fullBooking || conflict; // Fallback to conflict data if booking not found
+        })
+        .filter(Boolean); // Remove any null/undefined entries
+      
+      setConflictingBookings(fullConflictingBookings);
+    }
+  }, [allBookings, conflicts]);
 
   const handleResolve = async (action: string, bookingId: string) => {
     try {
@@ -256,12 +279,12 @@ export function ConflictResolutionDialog({
           <div>
             <h3 className="text-lg font-semibold mb-3 text-orange-600">Conflicting Bookings</h3>
             <div className="space-y-3">
-              {conflicts && conflicts.length > 0 ? (
-                conflicts.map((conflict, index) => (
-                  <BookingCard key={conflict?.id || index} booking={conflict} isConflicting={false} />
+              {conflictingBookings && conflictingBookings.length > 0 ? (
+                conflictingBookings.map((booking, index) => (
+                  <BookingCard key={booking?.id || index} booking={booking} isConflicting={false} />
                 ))
               ) : (
-                <div className="text-gray-500 text-sm">No conflicting bookings found</div>
+                <div className="text-gray-500 text-sm">Loading conflicting booking details...</div>
               )}
             </div>
           </div>
