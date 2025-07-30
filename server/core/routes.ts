@@ -1334,6 +1334,100 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Get individual invoice for viewing
+  app.get('/api/invoices/:id/view', isAuthenticated, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(invoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      // Check if invoice belongs to the authenticated user
+      if (invoice.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      console.log(`✅ Retrieved invoice #${invoiceId} for user ${userId}`);
+      res.json(invoice);
+    } catch (error) {
+      console.error('❌ Failed to fetch invoice:', error);
+      res.status(500).json({ error: 'Failed to fetch invoice' });
+    }
+  });
+
+  // Get invoice PDF for viewing
+  app.get('/api/invoices/:id/pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice || invoice.userId !== userId) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      // Generate PDF using the existing PDF generator
+      const userSettings = await storage.getUserSettings(userId);
+      const { generateInvoicePDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+      
+      console.log(`✅ Generated PDF for invoice #${invoiceId}`);
+    } catch (error) {
+      console.error('❌ Failed to generate invoice PDF:', error);
+      res.status(500).json({ error: 'Failed to generate invoice PDF' });
+    }
+  });
+
+  // Download invoice PDF
+  app.get('/api/invoices/:id/download', isAuthenticated, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice || invoice.userId !== userId) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      // Generate PDF using the existing PDF generator
+      const userSettings = await storage.getUserSettings(userId);
+      const { generateInvoicePDF } = await import('./pdf-generator');
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+      
+      console.log(`✅ Downloaded PDF for invoice #${invoiceId}`);
+    } catch (error) {
+      console.error('❌ Failed to download invoice PDF:', error);
+      res.status(500).json({ error: 'Failed to download invoice PDF' });
+    }
+  });
+
   // Conflicts endpoint - UNIFIED with single data source
   app.get('/api/conflicts', isAuthenticated, async (req: any, res) => {
     try {

@@ -57,19 +57,19 @@ export default function Invoices() {
   
 
 
-  const { data: invoices = [], isLoading } = useQuery({
+  const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ['/api/invoices'],
   });
 
-  const { data: contracts = [] } = useQuery({
+  const { data: contracts = [] } = useQuery<any[]>({
     queryKey: ['/api/contracts'],
   });
 
-  const { data: userSettings } = useQuery({
+  const { data: userSettings } = useQuery<any>({
     queryKey: ['/api/settings'],
   });
 
-  const { data: enquiries = [] } = useQuery({
+  const { data: enquiries = [] } = useQuery<any[]>({
     queryKey: ['/api/bookings'],
   });
 
@@ -845,7 +845,7 @@ export default function Invoices() {
     window.open(`/view/invoices/${invoice.id}`, '_blank');
   };
 
-  const filteredInvoices = invoices.filter((invoice: Invoice) => {
+  const filteredInvoices = (invoices || []).filter((invoice: Invoice) => {
     const matchesSearch = searchQuery === "" || 
       invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1196,10 +1196,10 @@ export default function Invoices() {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Outstanding</p>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    £{invoices.filter((inv: Invoice) => inv.status === "sent").reduce((sum: number, inv: Invoice) => sum + Number(inv.amount), 0).toLocaleString()}
+                    £{(invoices || []).filter((inv: Invoice) => inv.status === "sent").reduce((sum: number, inv: Invoice) => sum + Number(inv.amount), 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {invoices.filter((inv: Invoice) => inv.status === "sent").length} invoices
+                    {(invoices || []).filter((inv: Invoice) => inv.status === "sent").length} invoices
                   </p>
                 </div>
                 <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
@@ -1213,7 +1213,7 @@ export default function Invoices() {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Overdue</p>
                   <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                    {invoices.filter((inv: Invoice) => inv.status === "overdue").length}
+                    {(invoices || []).filter((inv: Invoice) => inv.status === "overdue").length}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Need attention</p>
                 </div>
@@ -1228,7 +1228,7 @@ export default function Invoices() {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Paid This Month</p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    £{invoices.filter((inv: Invoice) => inv.status === "paid").reduce((sum: number, inv: Invoice) => sum + Number(inv.amount), 0).toLocaleString()}
+                    £{(invoices || []).filter((inv: Invoice) => inv.status === "paid").reduce((sum: number, inv: Invoice) => sum + Number(inv.amount), 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Great progress!</p>
                 </div>
@@ -1242,7 +1242,7 @@ export default function Invoices() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Invoices</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{invoices.length}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{(invoices || []).length}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">All time</p>
                 </div>
                 <FileText className="w-8 h-8 text-gray-600 dark:text-gray-400" />
