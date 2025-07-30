@@ -131,6 +131,12 @@ export default function UnifiedBookings() {
     retry: 2,
   }) as { data: any[], error?: any };
 
+  // Fetch conflict resolutions to check which conflicts are already resolved
+  const { data: conflictResolutions = [] } = useQuery({
+    queryKey: ["/api/conflicts/resolutions"],
+    retry: 2,
+  });
+
   // Backend conflicts loaded
 
   // Handle URL parameters for booking navigation from dashboard
@@ -1030,29 +1036,72 @@ export default function UnifiedBookings() {
                             filteredAndSortedBookings.some((filtered: any) => filtered.id === groupBooking.id)
                           );
                           
+                          // Check if this conflict group is already resolved
+                          const groupBookingIds = visibleGroupBookings.map((b: any) => b.id).sort((a: number, b: number) => a - b);
+                          const isResolved = (conflictResolutions || []).some((resolution: any) => {
+                            const resolutionBookingIds = JSON.parse(resolution.bookingIds || '[]').sort((a: number, b: number) => a - b);
+                            return JSON.stringify(resolutionBookingIds) === JSON.stringify(groupBookingIds);
+                          });
+                          
                           if (visibleGroupBookings.length > 1) {
                             // Render conflict group container
                             elements.push(
                               <div key={`conflict-group-${bookingDate}`} className="relative">
-                                {/* Conflict Group Header with Large Resolve Button */}
-                                <div className="flex items-center justify-between mb-2 p-3 bg-red-50 border border-red-200 rounded-t-lg">
+                                {/* Conflict Group Header with Smart Resolve Button */}
+                                <div className={`flex items-center justify-between mb-2 p-3 border rounded-t-lg ${
+                                  isResolved 
+                                    ? 'bg-green-50 border-green-200' 
+                                    : conflictGroup.severity === 'hard' 
+                                    ? 'bg-red-50 border-red-200' 
+                                    : 'bg-orange-50 border-orange-200'
+                                }`}>
                                   <div className="flex items-center gap-2">
-                                    <span className="text-red-700 font-medium">
-                                      ⚠️ Conflict Group - {new Date(booking.eventDate).toLocaleDateString()}
+                                    <span className={`font-medium ${
+                                      isResolved 
+                                        ? 'text-green-700' 
+                                        : conflictGroup.severity === 'hard' 
+                                        ? 'text-red-700' 
+                                        : 'text-orange-700'
+                                    }`}>
+                                      {isResolved ? '✅ Resolved Conflict Group' : '⚠️ Conflict Group'} - {new Date(booking.eventDate).toLocaleDateString()}
                                     </span>
-                                    <span className="text-sm text-red-600">
-                                      ({visibleGroupBookings.length} bookings)
+                                    <span className={`text-sm ${
+                                      isResolved 
+                                        ? 'text-green-600' 
+                                        : conflictGroup.severity === 'hard' 
+                                        ? 'text-red-600' 
+                                        : 'text-orange-600'
+                                    }`}>
+                                      ({visibleGroupBookings.length} bookings) {conflictGroup.severity === 'soft' ? '- Soft conflict' : '- Hard conflict'}
                                     </span>
                                   </div>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedBookingForConflict(booking);
-                                      setConflictResolutionDialogOpen(true);
-                                    }}
-                                    className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors"
-                                  >
-                                    Resolve All Conflicts
-                                  </button>
+                                  
+                                  {/* Smart Resolution Button Logic */}
+                                  {isResolved ? (
+                                    <span className="px-4 py-2 bg-green-100 text-green-700 font-medium rounded-md">
+                                      Resolved
+                                    </span>
+                                  ) : conflictGroup.severity === 'hard' ? (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedBookingForConflict(booking);
+                                        setConflictResolutionDialogOpen(true);
+                                      }}
+                                      className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors"
+                                    >
+                                      Edit/Reject Bookings
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedBookingForConflict(booking);
+                                        setConflictResolutionDialogOpen(true);
+                                      }}
+                                      className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-md transition-colors"
+                                    >
+                                      Resolve Soft Conflict
+                                    </button>
+                                  )}
                                 </div>
                                 
                                 {/* Grouped Bookings */}

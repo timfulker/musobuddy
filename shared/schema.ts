@@ -412,6 +412,18 @@ export const emailTemplates = pgTable("email_templates", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Conflict resolutions table - tracks when soft conflicts have been manually resolved
+export const conflictResolutions = pgTable("conflict_resolutions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  bookingIds: text("booking_ids").notNull(), // JSON array of booking IDs in the conflict group
+  conflictDate: timestamp("conflict_date").notNull(), // Date when the conflict occurs
+  resolvedAt: timestamp("resolved_at").defaultNow(),
+  resolvedBy: varchar("resolved_by").notNull(), // User who resolved the conflict
+  notes: text("notes"), // Optional notes about the resolution
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Client management table
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),

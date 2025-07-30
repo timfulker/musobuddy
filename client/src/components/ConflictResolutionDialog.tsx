@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, User, AlertTriangle, Edit, Trash2 } from "lucide-react";
+import { Calendar, Clock, MapPin, User, AlertTriangle, Edit, Trash2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface ConflictResolutionDialogProps {
@@ -30,6 +30,70 @@ export default function ConflictResolutionDialog({
 }: ConflictResolutionDialogProps) {
   const { toast } = useToast();
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [conflictSeverity, setConflictSeverity] = useState<'hard' | 'soft'>('soft');
+  const [conflictDate, setConflictDate] = useState<string>('');
+
+  // Get conflict resolutions to check if this conflict group is already resolved
+  const { data: resolutions = [] } = useQuery({
+    queryKey: ['/api/conflicts/resolutions'],
+    enabled: isOpen && conflictingBookings.length > 0,
+  });
+
+  // Check if the current conflict group is already resolved
+  const isResolved = resolutions.some((resolution: any) => {
+    const resolutionBookingIds = JSON.parse(resolution.bookingIds || '[]').sort((a: number, b: number) => a - b);
+    const currentBookingIds = conflictingBookings.map((b: any) => b.id).sort((a: number, b: number) => a - b);
+    return JSON.stringify(resolutionBookingIds) === JSON.stringify(currentBookingIds);
+  });
+
+  // Determine conflict severity based on time overlaps
+  useEffect(() => {
+    if (conflictingBookings.length >= 2) {
+      let hasTimeOverlap = false;
+      let date = '';
+      
+      // Check each pair for time overlaps
+      for (let i = 0; i < conflictingBookings.length; i++) {
+        for (let j = i + 1; j < conflictingBookings.length; j++) {
+          const booking1 = conflictingBookings[i];
+          const booking2 = conflictingBookings[j];
+          
+          // Set conflict date from first booking
+          if (!date && booking1.eventDate) {
+            date = new Date(booking1.eventDate).toISOString().split('T')[0];
+          }
+          
+          // Check if both bookings have times
+          if (booking1.eventTime && booking1.eventEndTime && booking2.eventTime && booking2.eventEndTime) {
+            // Convert times to minutes for comparison
+            const [start1Hours, start1Minutes] = booking1.eventTime.split(':').map(Number);
+            const [end1Hours, end1Minutes] = booking1.eventEndTime.split(':').map(Number);
+            const [start2Hours, start2Minutes] = booking2.eventTime.split(':').map(Number);
+            const [end2Hours, end2Minutes] = booking2.eventEndTime.split(':').map(Number);
+            
+            const start1 = start1Hours * 60 + start1Minutes;
+            const end1 = end1Hours * 60 + end1Minutes;
+            const start2 = start2Hours * 60 + start2Minutes;
+            const end2 = end2Hours * 60 + end2Minutes;
+            
+            // Check for overlap
+            if (start1 < end2 && end1 > start2) {
+              hasTimeOverlap = true;
+              break;
+            }
+          } else {
+            // Missing times = hard conflict
+            hasTimeOverlap = true;
+            break;
+          }
+        }
+        if (hasTimeOverlap) break;
+      }
+      
+      setConflictSeverity(hasTimeOverlap ? 'hard' : 'soft');
+      setConflictDate(date);
+    }
+  }, [conflictingBookings]);
 
   const deleteMutation = useMutation({
     mutationFn: async (bookingId: number) => {
@@ -76,6 +140,44 @@ export default function ConflictResolutionDialog({
     deleteMutation.mutate(booking.id);
   };
 
+  // Mutation for resolving soft conflicts
+  const resolveMutation = useMutation({
+    mutationFn: async (data: { bookingIds: number[]; conflictDate: string; notes?: string }) => {
+      return apiRequest('/api/conflicts/resolve', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts/resolutions'] });
+      toast({
+        title: "Conflict Resolved",
+        description: "Soft conflict has been marked as resolved",
+      });
+      onClose();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to resolve conflict",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleResolveConflict = () => {
+    if (conflictSeverity === 'soft' && conflictingBookings.length >= 2) {
+      const bookingIds = conflictingBookings.map(b => b.id);
+      resolveMutation.mutate({
+        bookingIds,
+        conflictDate,
+        notes: 'Soft conflict resolved by user'
+      });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
       weekday: 'long',
@@ -94,7 +196,22 @@ export default function ConflictResolutionDialog({
             Resolve Booking Conflicts
           </DialogTitle>
           <DialogDescription>
-            Multiple bookings are scheduled for the same time. Select which booking to keep.
+            {conflictSeverity === 'hard' ? (
+              <div className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-4 h-4" />
+                Hard conflict detected - bookings have overlapping times or missing time information. Edit or reject bookings to resolve.
+              </div>
+            ) : isResolved ? (
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle className="w-4 h-4" />
+                This conflict has been resolved. Individual booking conflicts remain visible for reference.
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-orange-600">
+                <AlertTriangle className="w-4 h-4" />
+                Soft conflict - bookings are on the same day but different times. You can resolve this conflict if acceptable.
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -190,13 +307,39 @@ export default function ConflictResolutionDialog({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button 
-            onClick={handleResolve}
-            disabled={!selectedBooking}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            Keep Selected Booking
-          </Button>
+          
+          {/* Show different buttons based on conflict type and resolution status */}
+          {conflictSeverity === 'soft' && !isResolved && (
+            <Button 
+              onClick={handleResolveConflict}
+              disabled={resolveMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {resolveMutation.isPending ? 'Resolving...' : 'Mark as Resolved'}
+            </Button>
+          )}
+          
+          {conflictSeverity === 'hard' && (
+            <Button 
+              onClick={handleResolve}
+              disabled={!selectedBooking}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Keep Selected Booking
+            </Button>
+          )}
+          
+          {isResolved && (
+            <Button 
+              variant="outline"
+              className="bg-green-50 text-green-700 border-green-200"
+              disabled
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Resolved
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

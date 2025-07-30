@@ -1749,6 +1749,93 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ error: 'Failed to detect conflicts' });
     }
   });
+
+  // ===== CONFLICT RESOLUTION ROUTES =====
+  
+  // Mark soft conflicts as resolved
+  app.post('/api/conflicts/resolve', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { bookingIds, conflictDate, notes } = req.body;
+      
+      if (!bookingIds || !Array.isArray(bookingIds) || bookingIds.length < 2) {
+        return res.status(400).json({ error: 'At least 2 booking IDs required' });
+      }
+      
+      console.log(`🎯 Resolving conflict for bookings:`, bookingIds, `on date:`, conflictDate);
+      
+      const resolution = await storage.createConflictResolution(
+        userId, 
+        bookingIds, 
+        new Date(conflictDate), 
+        notes
+      );
+      
+      console.log(`✅ Conflict resolved for bookings ${bookingIds.join(', ')}`);
+      res.json({ success: true, resolution });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to resolve conflict:', error);
+      res.status(500).json({ 
+        error: 'Failed to resolve conflict',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+  
+  // Get conflict resolutions for user
+  app.get('/api/conflicts/resolutions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const resolutions = await storage.getConflictResolutions(userId);
+      res.json(resolutions);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to fetch conflict resolutions:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch conflict resolutions',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+  
+  // Delete conflict resolution (unresolve)
+  app.delete('/api/conflicts/resolve', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { bookingIds } = req.body;
+      
+      if (!bookingIds || !Array.isArray(bookingIds)) {
+        return res.status(400).json({ error: 'Booking IDs required' });
+      }
+      
+      console.log(`🎯 Unresolving conflict for bookings:`, bookingIds);
+      
+      await storage.deleteConflictResolution(userId, bookingIds);
+      
+      console.log(`✅ Conflict resolution removed for bookings ${bookingIds.join(', ')}`);
+      res.json({ success: true });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to unresolve conflict:', error);
+      res.status(500).json({ 
+        error: 'Failed to unresolve conflict',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
   
   // Enhanced error logging middleware
   app.use((err: any, req: any, res: any, next: any) => {

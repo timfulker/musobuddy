@@ -1,5 +1,5 @@
 import { db } from "./database";
-import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments, clients } from "../../shared/schema";
+import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments, clients, conflictResolutions } from "../../shared/schema";
 import { eq, and, desc, sql, gte, lte, lt } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
@@ -874,6 +874,52 @@ Warm regards and best wishes,
         totalRevenue: "0.00"
       });
     }
+  }
+
+  // ===== CONFLICT RESOLUTION METHODS =====
+  
+  async createConflictResolution(userId: string, bookingIds: number[], conflictDate: Date, notes?: string) {
+    const result = await db.insert(conflictResolutions).values({
+      userId,
+      bookingIds: JSON.stringify(bookingIds),
+      conflictDate,
+      resolvedBy: userId,
+      notes,
+      createdAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async getConflictResolution(userId: string, bookingIds: number[]) {
+    // Sort booking IDs to ensure consistent comparison
+    const sortedIds = [...bookingIds].sort((a, b) => a - b);
+    const sortedIdsString = JSON.stringify(sortedIds);
+    
+    const result = await db.select().from(conflictResolutions)
+      .where(and(
+        eq(conflictResolutions.userId, userId),
+        eq(conflictResolutions.bookingIds, sortedIdsString)
+      ));
+    return result[0] || null;
+  }
+
+  async getConflictResolutions(userId: string) {
+    return await db.select().from(conflictResolutions)
+      .where(eq(conflictResolutions.userId, userId))
+      .orderBy(desc(conflictResolutions.resolvedAt));
+  }
+
+  async deleteConflictResolution(userId: string, bookingIds: number[]) {
+    const sortedIds = [...bookingIds].sort((a, b) => a - b);
+    const sortedIdsString = JSON.stringify(sortedIds);
+    
+    const result = await db.delete(conflictResolutions)
+      .where(and(
+        eq(conflictResolutions.userId, userId),
+        eq(conflictResolutions.bookingIds, sortedIdsString)
+      ))
+      .returning();
+    return result[0];
   }
 }
 
