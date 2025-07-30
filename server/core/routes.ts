@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 
 // ENHANCED AUTHENTICATION MIDDLEWARE - With debugging for development
-const isAuthenticated = (req: any, res: any, next: any) => {
+const isAuthenticated = async (req: any, res: any, next: any) => {
   console.log(`🔐 Auth check for ${req.method} ${req.path}`);
   console.log(`🔐 Session exists: ${!!req.session}`);
   console.log(`🔐 Session userId: ${req.session?.userId}`);
@@ -16,9 +16,30 @@ const isAuthenticated = (req: any, res: any, next: any) => {
     console.log('❌ Authentication failed - no userId in session');
     return res.status(401).json({ error: 'Authentication required' });
   }
-  
-  console.log(`✅ Authentication successful for user ${req.session.userId}`);
-  next();
+
+  try {
+    // CRITICAL SECURITY FIX: Validate user still exists in database
+    const user = await storage.getUserById(req.session.userId);
+    
+    if (!user) {
+      console.log(`❌ Authentication failed - user ${req.session.userId} no longer exists in database`);
+      // Clear the invalid session
+      req.session.destroy((err: any) => {
+        if (err) console.error('Session destroy error:', err);
+      });
+      return res.status(401).json({ error: 'User account no longer exists' });
+    }
+
+    // Store user object in request for other routes to use
+    req.user = user;
+    
+    console.log(`✅ Authentication successful for user ${req.session.userId} (${user.email})`);
+    next();
+    
+  } catch (error: any) {
+    console.error('❌ Authentication validation error:', error);
+    return res.status(500).json({ error: 'Authentication validation failed' });
+  }
 };
 
 export async function registerRoutes(app: Express) {
