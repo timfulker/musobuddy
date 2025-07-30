@@ -166,12 +166,19 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   
   try {
     if (data.selectedInstruments && typeof data.selectedInstruments === 'string') {
-      parsedInstruments = JSON.parse(data.selectedInstruments);
+      // Handle malformed JSON - clean it first
+      let cleanJson = data.selectedInstruments.trim();
+      if (cleanJson.startsWith('{') && !cleanJson.includes('[')) {
+        // Convert PostgreSQL array format to JSON array
+        cleanJson = cleanJson.replace(/^{/, '[').replace(/}$/, ']').replace(/"/g, '"');
+      }
+      parsedInstruments = JSON.parse(cleanJson);
     } else if (Array.isArray(data.selectedInstruments)) {
       parsedInstruments = data.selectedInstruments;
     }
   } catch (e) {
-    console.warn('Failed to parse selectedInstruments:', e);
+    console.warn('Failed to parse selectedInstruments:', e, 'Raw data:', data.selectedInstruments);
+    parsedInstruments = []; // Fallback to empty array
   }
   
   try {
@@ -309,12 +316,7 @@ export default function Settings() {
     refetchOnWindowFocus: false,
     select: (data) => {
       
-      console.log('🔥 Address fields:', {
-        addressLine1: data?.addressLine1,
-        city: data?.city,
-        county: data?.county,
-        postcode: data?.postcode,
-      });
+      // Remove excessive logging
       return data;
     },
   });
