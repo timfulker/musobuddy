@@ -125,6 +125,131 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // SIGNUP ENDPOINT - Create new user account
+  app.post('/api/auth/signup', async (req: any, res) => {
+    try {
+      const { firstName, lastName, email, phoneNumber, password } = req.body;
+      
+      console.log('📝 Signup attempt for:', email);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: 'User already exists' });
+      }
+      
+      // Validate required fields
+      if (!firstName || !lastName || !email || !phoneNumber || !password) {
+        return res.status(400).json({ error: 'All fields are required' });
+      }
+      
+      // Create new user
+      const userId = await storage.createUser({
+        firstName,
+        lastName,
+        email,
+        phoneNumber: (phoneNumber || '').replace(/\s+/g, ''), // Remove spaces safely
+        password,
+        phoneVerified: false,
+        isSubscribed: false
+      });
+      
+      // Generate verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store verification in session
+      req.session.userId = userId;
+      req.session.email = email;
+      req.session.verificationCode = verificationCode;
+      req.session.phoneNumber = phoneNumber;
+      
+      // Save session
+      await new Promise((resolve, reject) => {
+        req.session.save((err: any) => {
+          if (err) reject(err);
+          else resolve(true);
+        });
+      });
+      
+      // Send SMS verification in production
+      if (ENV.isProduction) {
+        const { SMSService } = await import('./sms-service');
+        const smsService = new SMSService();
+        await smsService.sendVerificationCode(phoneNumber, verificationCode);
+        
+        console.log('✅ Signup successful, SMS sent to:', phoneNumber);
+        res.json({
+          success: true,
+          userId,
+          message: 'Please check your phone for verification code'
+        });
+      } else {
+        // Development mode - return code for testing
+        console.log('✅ Signup successful (dev mode), code:', verificationCode);
+        res.json({
+          success: true,
+          userId,
+          verificationCode,
+          tempMessage: `Development mode - use code: ${verificationCode}`
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Signup error:', error);
+      res.status(500).json({ error: 'Signup failed' });
+    }
+  });
+
+  // VERIFICATION ENDPOINT - Verify phone number
+  app.post('/api/auth/verify', async (req: any, res) => {
+    try {
+      const { verificationCode } = req.body;
+      const sessionCode = req.session?.verificationCode;
+      const userId = req.session?.userId;
+      const email = req.session?.email;
+      
+      console.log('📱 Verification attempt:', { userId, providedCode: verificationCode, sessionCode });
+      
+      if (!userId || !sessionCode) {
+        return res.status(400).json({ error: 'No verification session found' });
+      }
+      
+      if (verificationCode !== sessionCode) {
+        return res.status(400).json({ error: 'Invalid verification code' });
+      }
+      
+      // Update user as phone verified
+      await storage.updateUser(userId, { phoneVerified: true });
+      
+      // Update session
+      req.session.phoneVerified = true;
+      
+      // Save session
+      await new Promise((resolve, reject) => {
+        req.session.save((err: any) => {
+          if (err) reject(err);
+          else resolve(true);
+        });
+      });
+      
+      console.log('✅ Phone verification successful for:', email);
+      
+      res.json({
+        success: true,
+        message: 'Phone verified successfully',
+        user: {
+          id: userId,
+          email,
+          phoneVerified: true
+        }
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Verification error:', error);
+      res.status(500).json({ error: 'Verification failed' });
+    }
+  });
+
   // Start trial route - moved from routes.ts
   app.post('/api/auth/start-trial', async (req: any, res) => {
     try {
