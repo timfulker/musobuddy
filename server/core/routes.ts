@@ -47,6 +47,10 @@ export async function registerRoutes(app: Express) {
     res.sendFile(path.join(process.cwd(), 'test-direct-login.html'));
   });
 
+  app.get('/dev-login', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'dev-login.html'));
+  });
+
   // ===== AUTHENTICATION ROUTES =====
   // Authentication routes registered directly above
 
