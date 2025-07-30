@@ -228,7 +228,7 @@ export default function EmailSetup() {
                   <div className="relative flex-1">
                     <Input
                       id="prefix"
-                      placeholder="timfulkermusic"
+                      placeholder="yourname"
                       value={prefix}
                       onChange={(e) => setPrefix(e.target.value.toLowerCase())}
                       className="pr-4"
