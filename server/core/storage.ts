@@ -898,41 +898,7 @@ Warm regards and best wishes,
     }
   }
 
-  /**
-   * Enhanced updateSettings method with better JSON handling
-   */
-  async updateSettings(userId: string, settingsData: any): Promise<any> {
-    try {
-      // Ensure JSON fields are properly stringified
-      const processedData = { ...settingsData };
-      
-      if (processedData.selectedInstruments) {
-        processedData.selectedInstruments = typeof processedData.selectedInstruments === 'string' 
-          ? processedData.selectedInstruments 
-          : JSON.stringify(processedData.selectedInstruments);
-      }
-      
-      if (processedData.gigTypes) {
-        processedData.gigTypes = typeof processedData.gigTypes === 'string'
-          ? processedData.gigTypes
-          : JSON.stringify(processedData.gigTypes);
-      }
-      
-      console.log(`💾 Storing settings with processed JSON:`, {
-        userId,
-        instrumentsType: typeof processedData.selectedInstruments,
-        gigTypesType: typeof processedData.gigTypes,
-        instrumentsValue: processedData.selectedInstruments,
-        gigTypesValue: processedData.gigTypes,
-      });
 
-      // Check if settings exist
-      const existingSettings = await this.getUserSettings(userId);
-      
-      if (existingSettings) {
-        // Update existing settings
-        const [updatedSettings] = await this.db
-          .update(userSettings)
           .set({
             ...processedData,
             updatedAt: new Date(),

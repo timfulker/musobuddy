@@ -649,6 +649,59 @@ async function startServer() {
       }
     });
 
+    // Regular user login endpoint
+    app.post('/api/auth/login', async (req: any, res) => {
+      try {
+        const { email, password } = req.body;
+        
+        console.log('🔐 Login attempt for:', email);
+        console.log('🔐 Password provided (first 3 chars):', password.substring(0, 3) + '...');
+        
+        // Test direct database lookup first
+        const dbUser = await storage.getUserByEmail(email);
+        console.log('🔍 User found in database:', dbUser ? 'YES' : 'NO');
+        if (dbUser) {
+          console.log('🔍 User ID:', dbUser.id);
+          console.log('🔍 User has password:', !!dbUser.password);
+          console.log('🔍 Password hash starts with:', dbUser.password?.substring(0, 10) + '...');
+        }
+        
+        // Use storage to authenticate user
+        console.log('🔍 Attempting authentication with storage.authenticateUser...');
+        const user = await storage.authenticateUser(email, password);
+        console.log('🔍 Authentication result:', user ? 'SUCCESS' : 'FAILED');
+        
+        if (!user) {
+          console.log('❌ Authentication failed for:', email);
+          return res.status(401).json({ error: 'Invalid email or password' });
+        }
+        
+        // Set session data
+        req.session.userId = user.id;
+        req.session.email = user.email;
+        req.session.isAuthenticated = true;
+        
+        console.log('✅ User login successful, session set:', {
+          userId: req.session.userId,
+          email: req.session.email,
+          sessionId: req.session.id
+        });
+        
+        res.json({ 
+          success: true, 
+          user: { 
+            id: user.id, 
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName
+          } 
+        });
+      } catch (error: any) {
+        console.error('❌ User login error:', error);
+        res.status(500).json({ error: 'Login failed' });
+      }
+    });
+
     // User authentication check endpoint
     app.get('/api/auth/user', async (req: any, res) => {
       try {
