@@ -122,10 +122,9 @@ export default function SignupPage() {
 
   const verificationMutation = useMutation({
     mutationFn: async (data: PhoneVerificationForm) => {
-      return apiRequest('/api/auth/verify-phone', {
+      return apiRequest('/api/auth/verify', {
         method: 'POST',
         body: JSON.stringify({
-          userId,
           verificationCode: data.verificationCode,
         }),
       });
