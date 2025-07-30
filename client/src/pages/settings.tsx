@@ -9,44 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+// Removed checkbox, label, badge imports - not needed without instrument selection
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Music, Settings as SettingsIcon, X, Plus, Search, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-// Core instruments displayed by default
-const CORE_INSTRUMENTS = [
-  "Piano", "Bass Guitar", "Guitar", "Drums", "Saxophone", "Violin", "Flute", "Vocals", "DJ"
-];
-
-// Comprehensive instrument database from CSV (available through search)
-const ALL_INSTRUMENTS = [
-  "Violin", "Viola", "Cello", "Double Bass", "Harp", "Classical Guitar", "Acoustic Guitar", 
-  "Electric Guitar", "Bass Guitar", "Banjo", "Mandolin", "Ukulele", "Zither", "Sitar", 
-  "Shamisen", "Erhu", "Koto", "Sarod", "Oud", "Balalaika", "Flute", "Piccolo", "Recorder", 
-  "Oboe", "English Horn", "Clarinet", "Bass Clarinet", "Bassoon", "Contrabassoon", 
-  "Alto Saxophone", "Tenor Saxophone", "Baritone Saxophone", "Soprano Saxophone", 
-  "Pan Flute", "Shakuhachi", "Dizi", "Ney", "Bansuri", "Didgeridoo", "Trumpet", "Cornet", 
-  "Flugelhorn", "Trombone", "Bass Trombone", "French Horn", "Tuba", "Sousaphone", 
-  "Euphonium", "Alto Horn", "Baritone Horn", "Bugle", "Piano", "Grand Piano", 
-  "Upright Piano", "Electric Piano", "Organ", "Pipe Organ", "Harmonium", "Harpsichord", 
-  "Clavichord", "Celesta", "Synthesizer", "Digital Keyboard", "Keytar", "Timpani", 
-  "Xylophone", "Glockenspiel", "Marimba", "Vibraphone", "Tubular Bells", "Steel Drums", 
-  "Crotales", "Snare Drum", "Bass Drum", "Cymbals", "Tambourine", "Triangle", "Castanets", 
-  "Woodblock", "Guiro", "Claves", "Cowbell", "Djembe", "Bongo Drums", "Conga Drums", 
-  "Tabla", "Cajón", "Agogo Bells", "Shekere", "Frame Drum", "Tabor", "Talking Drum", 
-  "Drum Machine", "Turntables", "Loop Station", "Modular Synth", "Theremin", "Lead Vocals", 
-  "Backing Vocals", "Beatboxing", "Overtone Singing", "Chanting", "Rebab", "Hardanger Fiddle", 
-  "Nyckelharpa", "Kamancheh", "Qanun", "Guzheng", "Yangqin", "Veena", "Pipa", "Domra", 
-  "Bagpipes", "Uilleann Pipes", "Sheng", "Hulusi", "Zurna", "Suona", "Accordion", 
-  "Concertina", "Melodica", "Jew's Harp", "Glass Harmonica", "Waterphone", "Hang Drum", 
-  "Kalimba", "Music Box", "Singing Bowl", "Rainstick", "DJ", "Vocals"
-];
+// Removed instrument constants - feature moved to documentation for future implementation
 
 // Theme configuration constants
 const THEME_TEMPLATES = [
@@ -100,9 +71,7 @@ const settingsFormSchema = z.object({
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
   bankDetails: z.string().optional().or(z.literal("")),
-  // Add the missing fields that we want to save
-  selectedInstruments: z.array(z.string()).optional(),
-  gigTypes: z.array(z.string()).optional(),
+  // Removed instrument and gig type fields - feature moved to documentation
   // Theme preferences
   themeTemplate: z.string().optional(),
   themeTone: z.string().optional(),
@@ -120,29 +89,7 @@ const settingsFormSchema = z.object({
 
 type SettingsFormData = z.infer<typeof settingsFormSchema>;
 
-// Enhanced gig suggestions with AI
-const generateGigSuggestions = async (instruments: string[]): Promise<string[]> => {
-  try {
-    const response = await fetch('/api/gig-suggestions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ instruments }),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch gig suggestions');
-    }
-
-    const data = await response.json();
-    return data.suggestions || [];
-  } catch (error) {
-    console.error('Error generating gig suggestions:', error);
-    return [];
-  }
-};
+// Removed AI gig suggestion function - feature moved to documentation for future implementation
 
 // API function for fetching settings
 const fetchSettings = async (): Promise<SettingsFormData> => {
@@ -160,42 +107,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
   const data = await response.json();
   
   
-  // Parse stringified JSON fields
-  let parsedInstruments = [];
-  let parsedGigTypes = [];
-  
-  try {
-    if (data.selectedInstruments && typeof data.selectedInstruments === 'string') {
-      // Handle malformed JSON - clean it first
-      let cleanJson = data.selectedInstruments.trim();
-      if (cleanJson.startsWith('{') && !cleanJson.includes('[')) {
-        // Convert PostgreSQL array format to JSON array
-        cleanJson = cleanJson.replace(/^{/, '[').replace(/}$/, ']').replace(/"/g, '"');
-      }
-      parsedInstruments = JSON.parse(cleanJson);
-    } else if (Array.isArray(data.selectedInstruments)) {
-      parsedInstruments = data.selectedInstruments;
-    }
-  } catch (e) {
-    console.warn('Failed to parse selectedInstruments:', e, 'Raw data:', data.selectedInstruments);
-    parsedInstruments = []; // Fallback to empty array
-  }
-  
-  try {
-    if (data.gigTypes && typeof data.gigTypes === 'string') {
-      // Handle both array format and PostgreSQL set format
-      if (data.gigTypes.startsWith('[')) {
-        parsedGigTypes = JSON.parse(data.gigTypes);
-      } else if (data.gigTypes.startsWith('{')) {
-        // PostgreSQL set format: {"item1","item2","item3"}
-        parsedGigTypes = data.gigTypes.slice(1, -1).split(',').map((item: string) => item.replace(/"/g, ''));
-      }
-    } else if (Array.isArray(data.gigTypes)) {
-      parsedGigTypes = data.gigTypes;
-    }
-  } catch (e) {
-    console.warn('Failed to parse gigTypes:', e);
-  }
+  // Removed instrument and gig type parsing - feature moved to documentation
   
   // Transform the data to match the expected form structure - include ALL fields
   return {
@@ -214,8 +126,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     nextInvoiceNumber: data.nextInvoiceNumber || 1,
     defaultTerms: data.defaultTerms || "",
     bankDetails: data.bankDetails || "",
-    selectedInstruments: parsedInstruments,
-    gigTypes: parsedGigTypes,
+    // Removed instrument and gig type fields
     // Theme preferences
     themeTemplate: data.themeTemplate || "classic",
     themeTone: data.themeTone || "formal",
@@ -263,22 +174,14 @@ export default function Settings() {
   const isMobile = !isDesktop;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // State for instrument selection
-  const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
-  const [gigTypes, setGigTypes] = useState<string[]>([]);
-  const [instrumentSearch, setInstrumentSearch] = useState("");
-  const [isGeneratingGigTypes, setIsGeneratingGigTypes] = useState(false);
-  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
-  const [customInstrument, setCustomInstrument] = useState("");
+  // Removed instrument selection state - feature moved to documentation
 
   // State for theme preview
   const [showThemePreview, setShowThemePreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [selectedCustomTitle, setSelectedCustomTitle] = useState("invoice");
-  const [customGig, setCustomGig] = useState("");
-  const [showInstrumentInput, setShowInstrumentInput] = useState(false);
-  const [showGigInput, setShowGigInput] = useState(false);
+  // Removed gig type input states
   
   // Track if form has been modified
   const [hasChanges, setHasChanges] = useState(false);
@@ -292,7 +195,7 @@ export default function Settings() {
     address: false,
     financial: false,
     bank: false,
-    instruments: false,
+    // removed instruments section
     themes: false,
   });
 
@@ -321,22 +224,7 @@ export default function Settings() {
     },
   });
 
-  // Load global gig types separately
-  const { data: globalGigTypes } = useQuery({
-    queryKey: ['global-gig-types'],
-    queryFn: async () => {
-      const response = await fetch('/api/global-gig-types', {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        return [];
-      }
-      const data = await response.json();
-      return data.gigTypes || [];
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: false,
-  });
+  // Removed global gig types query - feature moved to documentation
 
   // Save settings function - simplified version
   const saveSettings = useMutation({
@@ -370,39 +258,8 @@ export default function Settings() {
       // Don't reset the form immediately - let it keep the user's changes
       // The form will be updated when the settings query refreshes
       
-      // CRITICAL FIX: Update local state with saved data - parse JSON strings if needed
-      let savedInstruments = [];
-      let savedGigTypes = [];
-      
-      try {
-        if (typeof data.selectedInstruments === 'string') {
-          savedInstruments = JSON.parse(data.selectedInstruments);
-        } else if (Array.isArray(data.selectedInstruments)) {
-          savedInstruments = data.selectedInstruments;
-        }
-      } catch (e) {
-        console.warn('Failed to parse saved selectedInstruments:', e);
-      }
-      
-      try {
-        if (typeof data.gigTypes === 'string') {
-          savedGigTypes = JSON.parse(data.gigTypes);
-        } else if (Array.isArray(data.gigTypes)) {
-          savedGigTypes = data.gigTypes;
-        }
-      } catch (e) {
-        console.warn('Failed to parse saved gigTypes:', e);
-      }
-      
-      setSelectedInstruments(savedInstruments);
-      setGigTypes(savedGigTypes);
-      
       // Store the new data as initial data for comparison
-      setInitialData({
-        ...data,
-        selectedInstruments: data.selectedInstruments || [],
-        gigTypes: data.gigTypes || []
-      });
+      setInitialData(data);
       
       // Invalidate and refetch settings to get fresh data - but state variables already updated above
       queryClient.invalidateQueries({ queryKey: ['settings'] });
@@ -439,8 +296,7 @@ export default function Settings() {
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: settings.bankDetails || "",
-        selectedInstruments: settings.selectedInstruments || [],
-        gigTypes: settings.gigTypes || [],
+        // Removed instrument and gig type fields
       };
       
       
@@ -450,24 +306,12 @@ export default function Settings() {
         form.reset(formData);
       }
       
-      // ALWAYS update local state with database values - this fixes the disappearing bug
-      const instruments = Array.isArray(settings.selectedInstruments) ? settings.selectedInstruments : [];
-      setSelectedInstruments(instruments);
-      
-      // Always use settings gig types (they contain the saved data)
-      const gigTypesToUse = Array.isArray(settings.gigTypes) ? settings.gigTypes : [];
-      setGigTypes(gigTypesToUse);
-      
       // Store initial data for comparison
-      setInitialData({
-        ...settings,
-        selectedInstruments: instruments,
-        gigTypes: gigTypesToUse
-      });
+      setInitialData(settings);
       
       setHasChanges(false);
     }
-  }, [settings, globalGigTypes, form, saveSettings.isPending, hasChanges]);
+  }, [settings, form, saveSettings.isPending, hasChanges]);
 
   // Simple form watcher for detecting changes
   useEffect(() => {
@@ -480,106 +324,12 @@ export default function Settings() {
     return () => subscription.unsubscribe();
   }, [form, initialData]);
 
-  // Function to generate AI-powered gig types
-  const generateGigTypes = async (instruments: string[]) => {
-    if (!instruments.length) {
-      setGigTypes([]);
-      setAiSuggestions([]);
-      form.setValue('gigTypes', []);
-      setHasChanges(true);
-      return [];
-    }
-    
-    setIsGeneratingGigTypes(true);
-    try {
-      const suggestions = await generateGigSuggestions(instruments);
-      setAiSuggestions(suggestions);
-      
-      // Keep existing gig types and add new suggestions
-      const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
-      const combinedGigTypes = Array.from(new Set([...currentGigTypes, ...suggestions]));
-      
-      setGigTypes(combinedGigTypes);
-      form.setValue('gigTypes', combinedGigTypes);
-      setHasChanges(true);
-      
-      return suggestions;
-    } catch (error) {
-      console.error('Error generating gig suggestions:', error);
-      return [];
-    } finally {
-      setIsGeneratingGigTypes(false);
-    }
-  };
-
-  // Handle instrument selection changes
-  const handleInstrumentToggle = (instrument: string) => {
-    const currentInstruments = Array.isArray(selectedInstruments) ? selectedInstruments : [];
-    const newSelectedInstruments = currentInstruments.includes(instrument)
-      ? currentInstruments.filter(i => i !== instrument)
-      : [...currentInstruments, instrument];
-    
-    setSelectedInstruments(newSelectedInstruments);
-    form.setValue('selectedInstruments', newSelectedInstruments);
-    setHasChanges(true);
-  };
-
-  // Add custom instrument
-  const addCustomInstrument = () => {
-    const currentInstruments = Array.isArray(selectedInstruments) ? selectedInstruments : [];
-    if (customInstrument && !currentInstruments.includes(customInstrument)) {
-      const newInstruments = [...currentInstruments, customInstrument];
-      setSelectedInstruments(newInstruments);
-      form.setValue('selectedInstruments', newInstruments);
-      setCustomInstrument("");
-      setShowInstrumentInput(false);
-      setHasChanges(true);
-    }
-  };
-
-  // Add custom gig type
-  const addCustomGig = () => {
-    const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
-    if (customGig && !currentGigTypes.includes(customGig)) {
-      const newGigTypes = [...currentGigTypes, customGig];
-      setGigTypes(newGigTypes);
-      form.setValue('gigTypes', newGigTypes);
-      setCustomGig("");
-      setShowGigInput(false);
-      setHasChanges(true);
-    }
-  };
-
-  // Remove gig type
-  const removeGigType = (gigType: string) => {
-    const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
-    const newGigTypes = currentGigTypes.filter(g => g !== gigType);
-    setGigTypes(newGigTypes);
-    form.setValue('gigTypes', newGigTypes);
-    setHasChanges(true);
-  };
-
-  // Filter instruments based on search - show core instruments by default, all instruments when searching
-  const filteredInstruments = instrumentSearch.trim() 
-    ? ALL_INSTRUMENTS.filter(instrument =>
-        instrument.toLowerCase().includes(instrumentSearch.toLowerCase())
-      )
-    : CORE_INSTRUMENTS;
+  // Removed all instrument and gig type functions - feature moved to documentation
 
 
 
   const onSubmit = (data: SettingsFormData) => {
-    
-    
-    // Include instruments and gig types in the form data
-    const completeData = {
-      ...data,
-      selectedInstruments,
-      gigTypes,
-    };
-    
-    
-    saveSettings.mutate(completeData);
+    saveSettings.mutate(data);
   };
 
   if (settingsLoading) {
@@ -882,193 +632,7 @@ export default function Settings() {
                 </Collapsible>
               </Card>
 
-              {/* Instruments & Gig Types */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.instruments} onOpenChange={() => toggleSection('instruments')}>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                      <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-purple-600" />
-                          <span>Instruments & AI-Powered Gig Types</span>
-                        </div>
-                        {expandedSections.instruments ? 
-                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        }
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 space-y-6">
-                  
-                  {/* Instruments Section */}
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">Your Instruments</h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowInstrumentInput(!showInstrumentInput)}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:shadow-lg"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Custom
-                      </Button>
-                    </div>
-                    
-                    {/* Search Instruments */}
-                    <div className="relative mb-4">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        placeholder="Search 120+ instruments (showing core instruments by default)..."
-                        className="pl-10"
-                        value={instrumentSearch}
-                        onChange={(e) => setInstrumentSearch(e.target.value)}
-                      />
-                    </div>
-                    
-                    {/* Custom Instrument Input */}
-                    {showInstrumentInput && (
-                      <div className="flex gap-2 mb-4">
-                        <Input
-                          type="text"
-                          placeholder="Enter custom instrument"
-                          value={customInstrument}
-                          onChange={(e) => setCustomInstrument(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && addCustomInstrument()}
-                        />
-                        <Button
-                          type="button"
-                          onClick={addCustomInstrument}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Add
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowInstrumentInput(false)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                    
-                    {/* Instruments Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-64 overflow-y-auto">
-                      {filteredInstruments.map((instrument) => (
-                        <div key={instrument} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={instrument}
-                            checked={Array.isArray(selectedInstruments) && selectedInstruments.includes(instrument)}
-                            onCheckedChange={() => handleInstrumentToggle(instrument)}
-                          />
-                          <Label htmlFor={instrument} className="text-sm cursor-pointer">
-                            {instrument}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Selected Instruments */}
-                  {Array.isArray(selectedInstruments) && selectedInstruments.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Selected Instruments (click to remove):</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedInstruments.map((instrument) => (
-                          <Badge 
-                            key={instrument} 
-                            variant="secondary" 
-                            className="bg-purple-100 text-purple-800 cursor-pointer hover:bg-red-100 hover:text-red-800 transition-colors"
-                            onClick={() => handleInstrumentToggle(instrument)}
-                          >
-                            {instrument} <X className="w-3 h-3 ml-1" />
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* AI Gig Generation */}
-                  {Array.isArray(selectedInstruments) && selectedInstruments.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold">AI-Generated Gig Types</h3>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => generateGigTypes(selectedInstruments)}
-                          disabled={isGeneratingGigTypes}
-                          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:shadow-lg"
-                        >
-                          {isGeneratingGigTypes ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Generating...
-                            </>
-                          ) : (
-                            <>
-                              <SettingsIcon className="w-4 h-4 mr-2" />
-                              Generate New
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                      
-                      {/* AI Suggestions */}
-                      {aiSuggestions.length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="text-sm font-medium mb-2">Latest AI Suggestions (click to add):</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {aiSuggestions.filter(suggestion => !Array.isArray(gigTypes) || !gigTypes.includes(suggestion)).map((suggestion, index) => (
-                              <Badge
-                                key={index}
-                                variant="outline"
-                                className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 text-purple-800 cursor-pointer hover:bg-purple-100 transition-colors"
-                                onClick={() => {
-                                  const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
-                                  const newGigTypes = [...currentGigTypes, suggestion];
-                                  setGigTypes(newGigTypes);
-                                  form.setValue('gigTypes', newGigTypes);
-                                  setHasChanges(true);
-                                }}
-                              >
-                                + {suggestion}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Current Gig Types */}
-                      {Array.isArray(gigTypes) && gigTypes.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Your Gig Types (click to remove):</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {gigTypes.map((gigType) => (
-                              <Badge
-                                key={gigType}
-                                variant="secondary"
-                                className="bg-blue-100 text-blue-800 cursor-pointer hover:bg-red-100 hover:text-red-800 transition-colors"
-                                onClick={() => removeGigType(gigType)}
-                              >
-                                {gigType} <X className="w-3 h-3 ml-1" />
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
+
 
               {/* Email Settings */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
