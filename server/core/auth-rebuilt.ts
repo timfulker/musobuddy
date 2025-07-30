@@ -29,7 +29,7 @@ function formatPhoneNumber(phone: string): string {
   return '+44' + digits;
 }
 
-// ENHANCED SMS SENDING FUNCTION
+// FIXED SMS FUNCTION FOR ES MODULES
 async function sendVerificationSMS(phoneNumber: string, verificationCode: string) {
   const isProduction = ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
   
@@ -50,7 +50,10 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
     try {
       console.log('📱 ATTEMPTING TWILIO SMS...');
       
-      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      // FIXED: Use dynamic import instead of require()
+      const { default: twilio } = await import('twilio');
+      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      
       const formattedPhone = formatPhoneNumber(phoneNumber);
       
       console.log('📱 Twilio API call:', {
@@ -58,7 +61,7 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
         from: process.env.TWILIO_PHONE_NUMBER
       });
       
-      const message = await twilio.messages.create({
+      const message = await twilioClient.messages.create({
         body: `Your MusoBuddy verification code is: ${verificationCode}`,
         from: process.env.TWILIO_PHONE_NUMBER,
         to: formattedPhone
@@ -137,10 +140,13 @@ export function setupAuthRoutes(app: Express) {
       
       if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
         try {
-          const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+          // FIXED: Use dynamic import instead of require()
+          const { default: twilio } = await import('twilio');
+          const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+          
           const formattedPhone = formatPhoneNumber(phoneNumber);
           
-          const message = await twilio.messages.create({
+          const message = await twilioClient.messages.create({
             body: `MusoBuddy TEST: ${testCode}`,
             from: process.env.TWILIO_PHONE_NUMBER,
             to: formattedPhone
