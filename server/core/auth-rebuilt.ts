@@ -18,32 +18,79 @@ export const requireAuth = (req: any, res: any, next: any) => {
  * REBUILT AUTHENTICATION ROUTES
  * Simple, working authentication without complexity
  */
+// PHONE NUMBER FORMATTING FUNCTION
+function formatPhoneNumber(phone: string): string {
+  // Remove all non-digits
+  const digits = phone.replace(/\D/g, '');
+  
+  console.log('📞 Phone formatting:', {
+    original: phone,
+    digitsOnly: digits,
+    length: digits.length
+  });
+  
+  // Handle UK phone numbers specifically
+  if (digits.startsWith('44')) {
+    const formatted = '+' + digits;
+    console.log('📞 Already has UK country code:', formatted);
+    return formatted;
+  } else if (digits.startsWith('0')) {
+    const formatted = '+44' + digits.substring(1);
+    console.log('📞 UK number with leading 0:', formatted);
+    return formatted;
+  } else if (digits.startsWith('7') && digits.length === 11) {
+    const formatted = '+44' + digits;
+    console.log('📞 UK mobile without 0:', formatted);
+    return formatted;
+  }
+  
+  // Default: assume UK and add +44
+  const formatted = '+44' + digits;
+  console.log('📞 Default UK formatting:', formatted);
+  return formatted;
+}
+
 // ENHANCED SMS SENDING FUNCTION WITH DETAILED ERROR CAPTURE
 async function sendVerificationSMS(phoneNumber: string, verificationCode: string) {
   const isProduction = ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
   
-  console.log('📱 SMS Send Attempt:', {
+  console.log('🔍 SMS ATTEMPT - FULL DEBUG INFO:', {
     timestamp: new Date().toISOString(),
-    phoneNumber,
-    isProduction,
-    hasCredentials: {
-      accountSid: !!process.env.TWILIO_ACCOUNT_SID,
-      authToken: !!process.env.TWILIO_AUTH_TOKEN,
-      phoneNumber: !!process.env.TWILIO_PHONE_NUMBER
+    phoneNumber: phoneNumber,
+    formattedPhone: formatPhoneNumber(phoneNumber),
+    verificationCodeLength: verificationCode.length,
+    environment: {
+      isProduction,
+      NODE_ENV: process.env.NODE_ENV,
+      REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT
     },
-    twilioFromNumber: process.env.TWILIO_PHONE_NUMBER
+    twilioConfig: {
+      hasAccountSid: !!process.env.TWILIO_ACCOUNT_SID,
+      hasAuthToken: !!process.env.TWILIO_AUTH_TOKEN,
+      hasPhoneNumber: !!process.env.TWILIO_PHONE_NUMBER,
+      fromNumber: process.env.TWILIO_PHONE_NUMBER,
+      accountSidPrefix: process.env.TWILIO_ACCOUNT_SID?.substring(0, 8) + '...' || 'MISSING'
+    }
   });
   
   if (isProduction && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
     try {
+      console.log('📱 ATTEMPTING TWILIO SMS...');
+      
       const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
       
-      console.log('📱 Twilio API Call Starting...');
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      
+      console.log('📱 Twilio API call parameters:', {
+        to: formattedPhone,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        messageLength: `Your MusoBuddy verification code is: ${verificationCode}`.length
+      });
       
       const message = await twilio.messages.create({
         body: `Your MusoBuddy verification code is: ${verificationCode}`,
         from: process.env.TWILIO_PHONE_NUMBER,
-        to: phoneNumber
+        to: formattedPhone
       });
       
       console.log('✅ SMS SENT SUCCESSFULLY:', {
@@ -52,8 +99,8 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
         to: message.to,
         from: message.from,
         dateCreated: message.dateCreated,
-        price: message.price,
-        priceUnit: message.priceUnit
+        errorCode: message.errorCode,
+        errorMessage: message.errorMessage
       });
       
       return {
@@ -63,48 +110,46 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
       };
       
     } catch (smsError: any) {
-      // DETAILED ERROR LOGGING - This is what we need to see!
-      console.log('❌ TWILIO API ERROR - FULL DETAILS:');
+      console.log('❌ TWILIO ERROR - COMPLETE DETAILS:');
       console.log('❌ Error Code:', smsError.code);
       console.log('❌ Error Message:', smsError.message);
-      console.log('❌ More Info:', smsError.moreInfo);
-      console.log('❌ Status:', smsError.status);
-      console.log('❌ Details:', smsError.details);
+      console.log('❌ More Info URL:', smsError.moreInfo);
+      console.log('❌ Status Code:', smsError.status);
+      console.log('❌ Request ID:', smsError.requestId);
       console.log('❌ Full Error Object:', JSON.stringify(smsError, null, 2));
       
-      // Check for specific Twilio error codes
+      // Specific error handling
       let errorMessage = 'SMS delivery failed';
-      let shouldShowCode = true;
       
       switch (smsError.code) {
         case 21211:
-          errorMessage = 'Invalid phone number format';
-          console.log('🔍 Phone number validation failed for:', phoneNumber);
+          errorMessage = `Invalid phone number format: ${phoneNumber}`;
+          console.log('🔍 Phone number format issue. Trying to format:', phoneNumber);
           break;
         case 21214:
           errorMessage = 'Phone number is not a mobile number';
           break;
         case 21408:
-          errorMessage = 'SMS permissions not enabled for this account';
+          errorMessage = 'SMS permissions not enabled for this Twilio account';
           break;
         case 21610:
-          errorMessage = 'Phone number not verified (Trial account restriction)';
-          console.log('🔍 Trial account - phone number needs verification in Twilio console');
+          errorMessage = 'Phone number not verified in Twilio console (Trial account restriction)';
+          console.log('🔍 TRIAL ACCOUNT: Add', phoneNumber, 'to verified numbers in Twilio Console');
           break;
         case 20003:
           errorMessage = 'Authentication failed - check Twilio credentials';
           break;
         case 21606:
-          errorMessage = 'The phone number is not currently reachable via SMS';
+          errorMessage = 'Phone number is not currently reachable via SMS';
           break;
         default:
-          errorMessage = `Twilio API Error: ${smsError.message}`;
+          errorMessage = `Twilio API Error (${smsError.code}): ${smsError.message}`;
       }
       
       return {
         success: false,
         message: errorMessage,
-        showCode: shouldShowCode,
+        showCode: true,
         tempMessage: `SMS failed (${smsError.code}): ${errorMessage} - Use code: ${verificationCode}`,
         twilioError: {
           code: smsError.code,
@@ -114,15 +159,7 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
       };
     }
   } else {
-    // Development mode or missing credentials
-    console.log('📱 Development Mode or Missing Credentials:', {
-      isProduction,
-      missingCredentials: {
-        accountSid: !process.env.TWILIO_ACCOUNT_SID,
-        authToken: !process.env.TWILIO_AUTH_TOKEN,
-        phoneNumber: !process.env.TWILIO_PHONE_NUMBER
-      }
-    });
+    console.log('📱 Development mode or missing credentials');
     
     return {
       success: true,
@@ -743,10 +780,10 @@ export function setupAuthRoutes(app: Express) {
         });
       });
       
-      console.log('📱 Resending verification code to:', user.phoneNumber);
+      console.log('📱 Resending verification code to:', user.phoneNumber || 'N/A');
       
       // Use the consolidated SMS sending function
-      const smsResult = await sendVerificationSMS(user.phoneNumber, newVerificationCode);
+      const smsResult = await sendVerificationSMS(user.phoneNumber || '', newVerificationCode);
       
       res.json({
         success: true,
@@ -761,6 +798,27 @@ export function setupAuthRoutes(app: Express) {
       console.error('❌ Resend verification error:', error);
       res.status(500).json({ error: 'Failed to resend verification code' });
     }
+  });
+
+  // SMS DEBUG ENDPOINT - temporary for troubleshooting
+  app.get('/api/debug/sms-status', (req, res) => {
+    const config = {
+      timestamp: new Date().toISOString(),
+      environment: {
+        isProduction: ENV.isProduction,
+        NODE_ENV: process.env.NODE_ENV,
+        REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT
+      },
+      twilio: {
+        hasAccountSid: !!process.env.TWILIO_ACCOUNT_SID,
+        hasAuthToken: !!process.env.TWILIO_AUTH_TOKEN,
+        hasPhoneNumber: !!process.env.TWILIO_PHONE_NUMBER,
+        fromNumber: process.env.TWILIO_PHONE_NUMBER
+      }
+    };
+    
+    console.log('🔍 SMS Debug Config:', config);
+    res.json(config);
   });
 
   console.log('✅ Rebuilt authentication routes configured');
