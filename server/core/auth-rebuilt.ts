@@ -243,18 +243,36 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // GET USER
-  app.get('/api/auth/user', (req: any, res) => {
+  // GET USER - WITH DATABASE VALIDATION
+  app.get('/api/auth/user', async (req: any, res) => {
     if (!req.session?.userId) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
     
-    res.json({
-      id: req.session.userId,
-      email: req.session.email,
-      isAdmin: req.session.isAdmin || false,
-      phoneVerified: req.session.phoneVerified || false
-    });
+    try {
+      // CRITICAL SECURITY FIX: Validate user still exists in database
+      const user = await storage.getUserById(req.session.userId);
+      
+      if (!user) {
+        console.log(`❌ User ${req.session.userId} no longer exists - clearing session`);
+        req.session.destroy((err: any) => {
+          if (err) console.error('Session destroy error:', err);
+        });
+        return res.status(401).json({ error: 'User account no longer exists' });
+      }
+      
+      res.json({
+        id: req.session.userId,
+        email: req.session.email,
+        isAdmin: req.session.isAdmin || false,
+        phoneVerified: req.session.phoneVerified || false,
+        isSubscribed: user.isSubscribed || false,
+        isLifetime: user.isLifetime || false
+      });
+    } catch (error: any) {
+      console.error('❌ User validation error:', error);
+      res.status(500).json({ error: 'Authentication validation failed' });
+    }
   });
 
   // LOGOUT

@@ -68,7 +68,7 @@ export default function PricingPage() {
             Choose Your MusoBuddy Plan
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Professional tools for serious musicians. Start with a free 14-day trial to streamline your business with smart contracts, invoices, and client management.
+            Professional tools for serious musicians. Start with a 14-day trial (credit card required) to streamline your business with smart contracts, invoices, and client management.
           </p>
         </div>
 
