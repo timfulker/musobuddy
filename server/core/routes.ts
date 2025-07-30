@@ -5,6 +5,129 @@ import { storage } from "./storage";
 // ProductionAuthSystem removed - using direct route registration
 import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 
+// AI-powered gig type generation based on instruments
+function generateGigTypesForInstruments(instruments: string[]): string[] {
+  const suggestions = new Set<string>();
+  
+  // Mapping of instruments to likely gig types
+  const instrumentToGigTypes: Record<string, string[]> = {
+    // String instruments
+    'violin': ['Wedding Ceremony', 'Classical Concert', 'String Quartet', 'Chamber Music', 'Restaurant Background'],
+    'viola': ['String Quartet', 'Chamber Music', 'Classical Concert', 'Orchestra'],
+    'cello': ['Wedding Ceremony', 'String Quartet', 'Chamber Music', 'Solo Performance', 'Restaurant Background'],
+    'guitar': ['Wedding Reception', 'Acoustic Performance', 'Restaurant Background', 'Private Party', 'Solo Performance'],
+    'acoustic guitar': ['Wedding Ceremony', 'Acoustic Performance', 'Coffee Shop', 'Restaurant Background', 'Solo Performance'],
+    'electric guitar': ['Band Performance', 'Rock Concert', 'Private Party', 'Festival', 'Corporate Event'],
+    'bass guitar': ['Band Performance', 'Jazz Ensemble', 'Wedding Reception', 'Festival', 'Corporate Event'],
+    
+    // Brass instruments
+    'trumpet': ['Jazz Ensemble', 'Wedding Ceremony', 'Big Band', 'Classical Concert', 'Corporate Event'],
+    'trombone': ['Big Band', 'Jazz Ensemble', 'Wedding Reception', 'Corporate Event', 'Festival'],
+    'french horn': ['Classical Concert', 'Wedding Ceremony', 'Chamber Music', 'Orchestra'],
+    'tuba': ['Big Band', 'Classical Concert', 'Oktoberfest', 'Corporate Event'],
+    
+    // Woodwinds
+    'saxophone': ['Jazz Ensemble', 'Wedding Reception', 'Solo Performance', 'Corporate Event', 'Restaurant Background'],
+    'alto saxophone': ['Jazz Ensemble', 'Wedding Reception', 'Solo Performance', 'Corporate Event', 'Restaurant Background'],
+    'tenor saxophone': ['Jazz Ensemble', 'Wedding Reception', 'Solo Performance', 'Corporate Event', 'Restaurant Background'],
+    'clarinet': ['Classical Concert', 'Wedding Ceremony', 'Chamber Music', 'Jazz Ensemble'],
+    'flute': ['Wedding Ceremony', 'Classical Concert', 'Chamber Music', 'Solo Performance', 'Restaurant Background'],
+    'oboe': ['Classical Concert', 'Chamber Music', 'Wedding Ceremony', 'Orchestra'],
+    
+    // Piano/Keyboards
+    'piano': ['Wedding Reception', 'Solo Performance', 'Jazz Ensemble', 'Classical Concert', 'Restaurant Background', 'Bar/Lounge'],
+    'keyboard': ['Wedding Reception', 'Band Performance', 'Corporate Event', 'Private Party', 'Solo Performance'],
+    'organ': ['Wedding Ceremony', 'Church Service', 'Classical Concert', 'Jazz Ensemble'],
+    
+    // Vocals
+    'vocals': ['Wedding Reception', 'Solo Performance', 'Band Performance', 'Corporate Event', 'Private Party'],
+    'lead vocals': ['Band Performance', 'Wedding Reception', 'Solo Performance', 'Festival', 'Corporate Event'],
+    'backing vocals': ['Band Performance', 'Wedding Reception', 'Studio Session', 'Corporate Event'],
+    
+    // Drums/Percussion
+    'drums': ['Band Performance', 'Wedding Reception', 'Festival', 'Corporate Event', 'Private Party'],
+    'percussion': ['Band Performance', 'World Music', 'Wedding Reception', 'Corporate Event', 'Festival'],
+    
+    // Electronic/DJ
+    'dj': ['Wedding Reception', 'Corporate Event', 'Private Party', 'Club Night', 'Festival'],
+    'turntables': ['Wedding Reception', 'Corporate Event', 'Private Party', 'Club Night', 'DJ Set'],
+    
+    // Folk/Traditional
+    'bagpipes': ['Wedding Ceremony', 'Scottish Event', 'Cultural Festival', 'Memorial Service'],
+    'accordion': ['Folk Festival', 'Oktoberfest', 'Cultural Event', 'Wedding Reception'],
+    'fiddle': ['Folk Festival', 'Celtic Music', 'Wedding Reception', 'Cultural Event'],
+    'banjo': ['Folk Festival', 'Country Music', 'Wedding Reception', 'Outdoor Event'],
+    'mandolin': ['Folk Festival', 'Bluegrass', 'Acoustic Performance', 'Wedding Ceremony'],
+    'ukulele': ['Beach Wedding', 'Acoustic Performance', 'Children\'s Party', 'Outdoor Event']
+  };
+  
+  // General categories for common gig types
+  const allGigTypes = [
+    'Wedding Ceremony', 'Wedding Reception', 'Corporate Event', 'Private Party',
+    'Restaurant Background', 'Bar/Lounge', 'Hotel Event', 'Conference',
+    'Product Launch', 'Awards Ceremony', 'Charity Event', 'Birthday Party',
+    'Anniversary', 'Cocktail Reception', 'Garden Party', 'Art Gallery Opening',
+    'Fashion Show', 'Trade Show', 'Networking Event', 'Christmas Party',
+    'New Year\'s Eve', 'Valentine\'s Day', 'Easter Event', 'Summer Festival',
+    'Jazz Festival', 'Classical Concert', 'Solo Performance', 'Duo Performance',
+    'Trio Performance', 'Quartet Performance', 'Chamber Music', 'Orchestra',
+    'Big Band', 'Jazz Ensemble', 'Rock Concert', 'Pop Concert', 'Folk Festival',
+    'World Music', 'Cultural Festival', 'Religious Service', 'Memorial Service',
+    'Graduation Ceremony', 'School Event', 'University Event', 'Outdoor Concert',
+    'Beach Event', 'Park Concert', 'Street Performance', 'Busking',
+    'Studio Session', 'Recording Session', 'Music Video', 'Commercial',
+    'Theatre Performance', 'Musical Theatre', 'Opera', 'Cabaret',
+    'Dinner Theatre', 'Cruise Ship', 'Resort Entertainment', 'Casino',
+    'Sports Event', 'Marathon', 'Championship', 'Opening Ceremony'
+  ];
+  
+  // Add specific suggestions based on instruments
+  instruments.forEach(instrument => {
+    const key = instrument.toLowerCase();
+    if (instrumentToGigTypes[key]) {
+      instrumentToGigTypes[key].forEach(gig => suggestions.add(gig));
+    }
+  });
+  
+  // If no specific matches, add some general suggestions
+  if (suggestions.size === 0) {
+    ['Wedding Reception', 'Corporate Event', 'Private Party', 'Restaurant Background', 'Solo Performance'].forEach(gig => 
+      suggestions.add(gig)
+    );
+  }
+  
+  // Add contextual suggestions based on combinations
+  const instrumentList = instruments.map(i => i.toLowerCase());
+  
+  // Piano + vocals combinations
+  if (instrumentList.includes('piano') && (instrumentList.includes('vocals') || instrumentList.includes('lead vocals'))) {
+    ['Piano Bar', 'Jazz Lounge', 'Hotel Lobby', 'Wine Bar', 'Cocktail Hour'].forEach(gig => suggestions.add(gig));
+  }
+  
+  // Saxophone combinations
+  if (instrumentList.some(i => i.includes('saxophone'))) {
+    ['Jazz Club', 'Smooth Jazz Evening', 'Wine Tasting', 'Rooftop Event', 'Sunset Concert'].forEach(gig => suggestions.add(gig));
+  }
+  
+  // String quartet combinations
+  if (instrumentList.filter(i => ['violin', 'viola', 'cello'].includes(i)).length >= 2) {
+    ['String Quartet', 'Classical Wedding', 'Gallery Opening', 'High-End Corporate', 'Luxury Event'].forEach(gig => suggestions.add(gig));
+  }
+  
+  // DJ combinations
+  if (instrumentList.includes('dj')) {
+    ['Club Night', 'Dance Party', 'Festival DJ Set', 'After Party', 'Silent Disco'].forEach(gig => suggestions.add(gig));
+  }
+  
+  // Band combinations (multiple instruments)
+  if (instruments.length >= 3) {
+    ['Full Band Performance', 'Festival Main Stage', 'Concert Hall', 'Music Venue', 'Multi-Instrument Show'].forEach(gig => suggestions.add(gig));
+  }
+  
+  // Return up to 8 suggestions as array
+  return Array.from(suggestions).slice(0, 8);
+}
+
 // ENHANCED AUTHENTICATION MIDDLEWARE - With debugging for development
 const isAuthenticated = async (req: any, res: any, next: any) => {
   console.log(`🔐 Auth check for ${req.method} ${req.path}`);
@@ -1845,6 +1968,36 @@ export async function registerRoutes(app: Express) {
       console.error('❌ Failed to delete compliance document:', error);
       res.status(500).json({ 
         error: 'Failed to delete compliance document',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // ===== AI GIG SUGGESTIONS API =====
+  app.post('/api/gig-suggestions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { instruments } = req.body;
+      if (!instruments || !Array.isArray(instruments) || instruments.length === 0) {
+        return res.status(400).json({ error: 'Instruments array required' });
+      }
+      
+      console.log(`🎵 Generating AI gig suggestions for user ${userId} with instruments:`, instruments);
+      
+      // Simple AI-powered gig type generation based on instruments
+      const gigSuggestions = generateGigTypesForInstruments(instruments);
+      
+      console.log(`✅ Generated ${gigSuggestions.length} gig suggestions for user ${userId}`);
+      res.json({ suggestions: gigSuggestions });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to generate gig suggestions:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate gig suggestions',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }

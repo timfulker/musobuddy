@@ -181,7 +181,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
         parsedGigTypes = JSON.parse(data.gigTypes);
       } else if (data.gigTypes.startsWith('{')) {
         // PostgreSQL set format: {"item1","item2","item3"}
-        parsedGigTypes = data.gigTypes.slice(1, -1).split(',').map(item => item.replace(/"/g, ''));
+        parsedGigTypes = data.gigTypes.slice(1, -1).split(',').map((item: string) => item.replace(/"/g, ''));
       }
     } else if (Array.isArray(data.gigTypes)) {
       parsedGigTypes = data.gigTypes;
@@ -252,7 +252,8 @@ const generateThemePreview = async (themeSettings: any) => {
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isMobile } = useResponsive();
+  const { isDesktop } = useResponsive();
+  const isMobile = !isDesktop;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // State for instrument selection
@@ -291,7 +292,7 @@ export default function Settings() {
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section as keyof typeof prev]
     }));
   };
 
@@ -469,7 +470,7 @@ export default function Settings() {
       
       // Keep existing gig types and add new suggestions
       const currentGigTypes = Array.isArray(gigTypes) ? gigTypes : [];
-      const combinedGigTypes = [...new Set([...currentGigTypes, ...suggestions])];
+      const combinedGigTypes = Array.from(new Set([...currentGigTypes, ...suggestions]));
       
       setGigTypes(combinedGigTypes);
       form.setValue('gigTypes', combinedGigTypes);
