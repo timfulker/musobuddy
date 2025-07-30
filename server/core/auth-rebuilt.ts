@@ -20,7 +20,8 @@ export const requireAuth = (req: any, res: any, next: any) => {
  */
 // CONSOLIDATED SMS SENDING FUNCTION
 async function sendVerificationSMS(phoneNumber: string, verificationCode: string) {
-  const isProduction = ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
+  // Force production mode for testing - remove this line after testing
+  const isProduction = true; // ENV.isProduction || process.env.REPLIT_DEPLOYMENT;
   
   console.log('📱 SMS Config Check:', {
     isProduction,
@@ -54,19 +55,23 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
       };
       
     } catch (smsError: any) {
-      console.error('❌ SMS failed:', smsError);
-      console.error('❌ SMS Error Details:', {
-        code: smsError.code,
-        message: smsError.message,
-        moreInfo: smsError.moreInfo
-      });
+      console.error('❌ SMS COMPREHENSIVE ERROR ANALYSIS:');
+      console.error('❌ Error Object:', smsError);
+      console.error('❌ Error Message:', smsError.message);
+      console.error('❌ Error Code:', smsError.code);
+      console.error('❌ Error Status:', smsError.status);
+      console.error('❌ More Info:', smsError.moreInfo);
+      console.error('❌ Details:', smsError.details);
+      console.error('❌ Full JSON:', JSON.stringify(smsError, null, 2));
       
       // Fallback to showing code if SMS fails
       return {
         success: false,
         message: 'SMS failed - use code below',
         showCode: true,
-        tempMessage: `SMS failed - use code: ${verificationCode}`
+        tempMessage: `SMS failed - use code: ${verificationCode}`,
+        errorCode: smsError.code,
+        errorMessage: smsError.message
       };
     }
   } else {
@@ -109,6 +114,76 @@ export function setupAuthRoutes(app: Express) {
     
     console.log('🔍 SMS Configuration Debug:', config);
     res.json(config);
+  });
+
+  // TEST SMS ENDPOINT - force send SMS in development for testing
+  app.post('/api/debug/test-sms', async (req: any, res) => {
+    try {
+      const { phoneNumber } = req.body;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ error: 'Phone number required' });
+      }
+      
+      const testCode = '123456';
+      
+      console.log('🧪 TESTING SMS SEND - Force production mode');
+      
+      // Force SMS send regardless of environment
+      if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+        try {
+          const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+          
+          console.log('📱 Test SMS attempt:', {
+            to: phoneNumber,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            code: testCode
+          });
+          
+          const message = await twilio.messages.create({
+            body: `MusoBuddy TEST: Your verification code is: ${testCode}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: phoneNumber
+          });
+          
+          console.log('✅ TEST SMS sent successfully, SID:', message.sid);
+          
+          res.json({
+            success: true,
+            message: 'Test SMS sent successfully',
+            sid: message.sid,
+            testCode: testCode
+          });
+          
+        } catch (smsError: any) {
+          console.error('❌ TEST SMS failed:', smsError);
+          console.error('❌ Error Details:', {
+            code: smsError.code,
+            message: smsError.message,
+            moreInfo: smsError.moreInfo
+          });
+          
+          res.status(500).json({
+            success: false,
+            error: 'SMS test failed',
+            details: {
+              code: smsError.code,
+              message: smsError.message,
+              moreInfo: smsError.moreInfo
+            }
+          });
+        }
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Twilio credentials not configured'
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Test SMS endpoint error:', error);
+      res.status(500).json({ error: 'Test failed' });
+    }
   });
 
   // Regular login endpoint
@@ -176,7 +251,7 @@ export function setupAuthRoutes(app: Express) {
         });
         
         // Use consolidated SMS sending function
-        const smsResult = await sendVerificationSMS(user.phoneNumber, verificationCode);
+        const smsResult = await sendVerificationSMS(user.phoneNumber || '', verificationCode);
         
         return res.json({
           requiresVerification: true,
