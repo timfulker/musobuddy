@@ -1,8 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Check, Music, FileText, Mail, Calendar, CreditCard, Shield, Star, Play, Trophy, Clock, Users } from "lucide-react";
+import { Check, Music, Play, Trophy } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -200,205 +198,185 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-            
-            <div className="p-6 bg-red-50 dark:bg-red-900/20 rounded-lg">
-              <Shield className="h-12 w-12 text-red-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Compliance Tracking</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Manage insurance, licenses, and PAT testing with expiry alerts and automated compliance sharing.
-              </p>
+
+      {/* Video and CTA Section */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-12">
+            <Link href="/signup">
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-12 py-4 text-lg mb-8">
+                Free Trial
+              </Button>
+            </Link>
+          </div>
+          
+          <div className="mb-12">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Automate contracts and invoice generation
+            </h3>
+          </div>
+
+          <div className="max-w-3xl mx-auto mb-12">
+            <div className="bg-white dark:bg-gray-700 p-8 rounded-lg shadow-lg">
+              <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-600 rounded">
+                <Play className="h-16 w-16 text-purple-600" />
+                <span className="ml-4 text-lg text-gray-600 dark:text-gray-300">Main video (5 mins)</span>
+              </div>
             </div>
-            
-            <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-              <Star className="h-12 w-12 text-indigo-600 mb-4" />
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Client Management</h4>
-              <p className="text-gray-600 dark:text-gray-300">
-                Build relationships with automatic client history, repeat booking tracking, and professional communication.
-              </p>
+          </div>
+
+          <div className="mb-12">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Reclaim evenings from admin chaos
+            </h3>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
+              <div className="flex items-center justify-center h-32 bg-gray-100 dark:bg-gray-600 rounded mb-4">
+                <Play className="h-8 w-8 text-purple-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Contracts Explained</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300">VIDEO</p>
             </div>
+            <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
+              <div className="flex items-center justify-center h-32 bg-gray-100 dark:bg-gray-600 rounded mb-4">
+                <Play className="h-8 w-8 text-purple-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Invoices Explained</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300">VIDEO</p>
+            </div>
+            <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow">
+              <div className="flex items-center justify-center h-32 bg-gray-100 dark:bg-gray-600 rounded mb-4">
+                <Play className="h-8 w-8 text-purple-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Email to Bookings Explained</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300">VIDEO</p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Professional gig management for UK musicians - Less admin, more music
+            </h3>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="container mx-auto px-4 py-20 bg-gray-50 dark:bg-gray-800/50">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300">
-            Start with a 14-day free trial. No setup fees, no hidden costs.
-          </p>
-        </div>
+      <section id="pricing" className="py-20 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-12">
+            <Link href="/signup">
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-12 py-4 text-lg mb-8">
+                Free Trial
+              </Button>
+            </Link>
+          </div>
 
-        <div className="max-w-lg mx-auto">
-          <Card className="border-2 border-purple-200 shadow-xl relative">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <Badge className="bg-purple-600 text-white px-4 py-1">Most Popular</Badge>
+          <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg max-w-3xl mx-auto">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              Professional gig management from £9.99/month
+            </h3>
+            <div className="space-y-4 text-gray-600 dark:text-gray-300">
+              <p>
+                Save 10+ hours weekly on admin tasks while earning more through professional contracts and faster payments. 
+                That's less than what you charge for 30 minutes of performance time.
+              </p>
+              <p>Cancel anytime with one click - no contracts, no hassles, no questions asked</p>
+              <p>One missed gig due to poor admin costs more than an entire year of MusoBuddy.</p>
             </div>
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-2xl">Core Plan</CardTitle>
-              <div className="text-5xl font-bold text-purple-600 my-4">
-                £9.99
-                <span className="text-xl text-gray-500 font-normal">/month</span>
-              </div>
-              <CardDescription>Everything you need to manage your music business professionally</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Unlimited contracts & invoices",
-                  "Digital signature collection",
-                  "Personalized email address",
-                  "Automatic booking processing",
-                  "Calendar & conflict detection",
-                  "Client management system",
-                  "Compliance document tracking",
-                  "Cloud storage & backups",
-                  "Email support"
-                ].map((feature) => (
-                  <li key={feature} className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link href="/signup">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-lg py-3">
-                  Start Your Free Trial
-                </Button>
-              </Link>
-              <p className="text-center text-sm text-gray-500 mt-4">
-                14-day free trial • Then £9.99/month
-              </p>
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Trusted by Professional Musicians
-          </h2>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <Card className="border-0 shadow-lg">
-            <CardContent className="pt-6">
-              <div className="flex mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                ))}
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                "MusoBuddy transformed my business. I went from spending hours on admin to having 
-                everything automated. My clients love the professional contracts and I get paid faster."
+      {/* FAQ Section */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h3 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">FAQ Section</h3>
+          
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-700 p-6 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Q: I'm not tech-savvy - will this be complicated to set up?
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                A: Not at all. Most musicians create their first professional contract within 10 minutes of signing up. 
+                If you can send an email, you can use MusoBuddy. No training required, no complicated setup - just enter 
+                your gig details and watch professional documents appear.
               </p>
-              <div className="font-semibold">Sarah Johnson</div>
-              <div className="text-sm text-gray-500">Wedding & Event Pianist</div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="border-0 shadow-lg">
-            <CardContent className="pt-6">
-              <div className="flex mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                ))}
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                "The email integration is genius. Enquiries automatically become bookings, and the 
-                conflict detection has saved me from double-booking disasters multiple times."
+            <div className="bg-white dark:bg-gray-700 p-6 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Q: How quickly will I see results?
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                A: Immediately. Your first contract looks professional from day one, and clients notice the difference 
+                right away. Most musicians report feeling more organized within their first week and see improved payment 
+                times within their first month.
               </p>
-              <div className="font-semibold">Mike Davies</div>
-              <div className="text-sm text-gray-500">Jazz Trio Leader</div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="border-0 shadow-lg">
-            <CardContent className="pt-6">
-              <div className="flex mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                ))}
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                "Professional, reliable, and exactly what I needed. The compliance tracking alone 
-                has saved me thousands in potential insurance issues. Highly recommended."
+            <div className="bg-white dark:bg-gray-700 p-6 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Q: Is my client data secure?
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                A: Absolutely. We use bank-level encryption and UK-based secure servers. Your contracts are stored on 
+                enterprise-grade cloud storage with 24/7 accessibility. We never share your data with anyone, and you 
+                own all your information completely.
               </p>
-              <div className="font-semibold">Emma Thompson</div>
-              <div className="text-sm text-gray-500">Function Band Manager</div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+            </div>
 
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20 text-center bg-purple-600 text-white">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to Transform Your Music Business?
-          </h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join hundreds of professional musicians who've streamlined their business with MusoBuddy.
-          </p>
-          <Link href="/signup">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
-              Start Your Free Trial Today
-            </Button>
-          </Link>
-          <p className="text-sm mt-4 opacity-75">
-            14 days free • No commitment • Cancel anytime
-          </p>
+            <div className="bg-white dark:bg-gray-700 p-6 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Q: What if I need to cancel?
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                A: Cancel anytime with one click - no contracts, no cancellation fees, no questions asked. 
+                You keep access until your current billing period ends, and you can export all your data before leaving. 
+                We make it easy to leave because we're confident you'll want to stay.
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-700 p-6 rounded-lg">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Q: What support do you offer?
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                A: Email support typically responds within hours during UK business hours. We also have comprehensive 
+                help guides and video tutorials. Since the system is designed to be intuitive, most musicians rarely 
+                need support after their first few days.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center mt-12 bg-white dark:bg-gray-700 p-8 rounded-lg">
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+              Getting started takes less time than setting up your equipment. Enter your details, create your first 
+              contract, and send it to a client - all in under 10 minutes. No complicated setup, no learning curve, 
+              just immediate professional results. Try free for 14 days and see why musicians say it's the easiest 
+              business decision they've ever made.
+            </p>
+            <Link href="/signup">
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-12 py-4 text-lg">
+                Start Free Trial
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-gray-50 dark:bg-gray-900">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Music className="h-6 w-6 text-purple-600" />
-                <span className="text-xl font-bold">MusoBuddy</span>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400">
-                Professional music business management for the modern musician.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
-                <li><a href="#" className="hover:text-purple-600">Features</a></li>
-                <li><a href="#" className="hover:text-purple-600">Pricing</a></li>
-                <li><a href="#" className="hover:text-purple-600">Demo</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
-                <li><a href="#" className="hover:text-purple-600">Help Center</a></li>
-                <li><a href="#" className="hover:text-purple-600">Contact</a></li>
-                <li><a href="#" className="hover:text-purple-600">Status</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
-                <li><a href="#" className="hover:text-purple-600">Privacy</a></li>
-                <li><a href="#" className="hover:text-purple-600">Terms</a></li>
-                <li><a href="#" className="hover:text-purple-600">Security</a></li>
-              </ul>
-            </div>
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center mb-8">
+            <Music className="h-8 w-8 text-purple-400 mr-2" />
+            <span className="text-xl font-bold">MusoBuddy</span>
           </div>
-          
-          <div className="border-t mt-8 pt-8 text-center text-gray-600 dark:text-gray-400">
-            <p>&copy; 2025 MusoBuddy. All rights reserved.</p>
+          <div className="text-center text-gray-400">
+            <p>&copy; 2025 MusoBuddy. Professional gig management for UK musicians.</p>
           </div>
         </div>
       </footer>
