@@ -26,8 +26,9 @@ MusoBuddy is a comprehensive music business management platform that helps freel
 2. **Booking Management System** - Calendar view, conflict detection, status tracking, static gig type selection from 30 common types
 3. **Professional Invoice System** - PDF invoice generation with cloud storage and public viewing links
 4. **Email Templates** - Custom email templates with variable replacement for client communication
-5. **Cloud Document Storage** - 24/7 accessible contracts and invoices via Cloudflare R2 with permanent URLs
-6. **Client Address Book** - Client management with contact details and booking history
+5. **Compliance Document Management** - Manual upload and storage of insurance certificates, PAT testing, music licenses with expiry date tracking
+6. **Cloud Document Storage** - 24/7 accessible contracts, invoices, and compliance documents via Cloudflare R2 with permanent URLs
+7. **Client Address Book** - Client management with contact details and booking history
 
 ## UNIQUE DIFFERENTIATOR: 
 - **Music Industry Specialization**: Built specifically for musicians with UK compliance requirements, music-specific terminology, and gig-focused workflows
@@ -36,7 +37,7 @@ MusoBuddy is a comprehensive music business management platform that helps freel
 - **Static Gig Type System**: Reliable dropdown selection from 30 predefined gig types (Wedding Ceremony, Corporate Event, Private Party, etc.)
 
 ## PRICING MODEL: 
-- **Core Tier**: £9.99/month - Unlimited bookings, contracts, invoices, email templates, cloud storage, client management
+- **Core Tier**: £9.99/month - Unlimited bookings, contracts, invoices, email templates, compliance tracking, cloud storage, client management
 - **Trial Period**: 14-day free trial with credit card required for Core tier
 - **Payment Processing**: Stripe integration with test mode for beta testing
 - **Target Market**: UK musicians (pricing in GBP, phone verification via SMS)
