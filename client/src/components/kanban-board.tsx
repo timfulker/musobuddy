@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Eye, User, Calendar, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import type { Enquiry } from "@shared/schema";
-// Removed conflict-ui import - using new conflict system
 import { getDisplayStatus, mapOldStatusToStage } from "@/utils/workflow-system";
 import React, { useEffect, useState } from "react";
 import { getBorderAccent, getBadgeColors } from "@/utils/status-colors";
@@ -14,12 +13,9 @@ export default function ActionableEnquiries() {
   const { data: enquiries = [], isLoading, error } = useQuery({
     queryKey: ["/api/bookings"],
     queryFn: async () => {
-      
       const response = await fetch('/api/bookings', {
         credentials: 'include'
       });
-      
-      
       
       if (!response.ok) {
         console.error('❌ Bookings API error:', response.status, response.statusText);
@@ -27,153 +23,9 @@ export default function ActionableEnquiries() {
       }
       
       const data = await response.json();
-      
       return data;
     }
   });
-
-  const { data: conflicts = [] } = useQuery({
-    queryKey: ["/api/conflicts"],
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
-  });
-
-  // Track resolved conflicts using localStorage (same as events window)
-  const [resolvedConflicts, setResolvedConflicts] = useState<Set<number>>(new Set());
-
-  useEffect(() => {
-    // Load resolved conflicts from localStorage
-    const savedResolvedConflicts = localStorage.getItem('resolvedConflicts');
-    if (savedResolvedConflicts) {
-      try {
-        const parsed = JSON.parse(savedResolvedConflicts);
-        setResolvedConflicts(new Set(parsed));
-      } catch (error) {
-        // Error parsing resolved conflicts - handled gracefully
-      }
-    }
-  }, []);
-
-  // Debug logging - summary of all enquiries by status
-  useEffect(() => {
-    
-    
-    
-    
-    if (Array.isArray(enquiries) && enquiries.length > 0) {
-      const statusCounts = (enquiries as any[]).reduce((acc: any, enquiry: any) => {
-        acc[enquiry.status] = (acc[enquiry.status] || 0) + 1;
-        return acc;
-      }, {});
-      
-      
-      // Log first few enquiries for debugging
-      // First 3 enquiries debug removed for performance
-    } else {
-      
-    }
-  }, [enquiries, isLoading, error]);
-
-  // Detect conflicts for an enquiry (same logic as events window)
-  const detectConflicts = (enquiry: Enquiry) => {
-    if (!enquiry.eventDate) return [];
-    
-    const enquiryDate = new Date(enquiry.eventDate).toDateString();
-    
-    // Find all bookings on the same date - this is the primary conflict rule  
-    return (enquiries as any[])
-      .filter((other: Enquiry) => {
-        if (other.id === enquiry.id) return false;
-        if (!other.eventDate) return false;
-        
-        const otherDate = new Date(other.eventDate).toDateString();
-        return otherDate === enquiryDate; // Same day = conflict
-      })
-      .map((other: Enquiry) => {
-        // Default to soft conflict for same day
-        let hasTimeOverlap = false;
-        let severity = 'soft';
-        
-        // CRITICAL FIX: Missing times = Hard conflicts (red) because overlap cannot be determined
-        if (!enquiry.eventTime || !other.eventTime || 
-            enquiry.eventTime === '' || other.eventTime === '' ||
-            enquiry.eventTime === 'Time not specified' || other.eventTime === 'Time not specified') {
-          // If either booking has no time specified, it's a hard conflict
-          severity = 'hard';
-          hasTimeOverlap = false;
-        } else {
-          // Both bookings have times - check for actual overlap
-          try {
-            // Helper function to get start and end times
-            const getTimeRange = (timeStr: string, endTimeStr?: string): [number, number] => {
-              const parseTime = (time: string): number => {
-                // Handle various time formats: "20:00", "8pm", "8:00 PM", etc.
-                const cleanTime = time.toLowerCase().replace(/[^\d:apm]/g, '');
-                let hours = 0, minutes = 0;
-                
-                if (cleanTime.includes(':')) {
-                  const [h, m] = cleanTime.split(':');
-                  hours = parseInt(h, 10);
-                  minutes = parseInt(m.replace(/[^0-9]/g, ''), 10) || 0;
-                } else {
-                  hours = parseInt(cleanTime.replace(/[^0-9]/g, ''), 10);
-                }
-                
-                // Handle PM/AM
-                if (cleanTime.includes('pm') && hours < 12) hours += 12;
-                if (cleanTime.includes('am') && hours === 12) hours = 0;
-                
-                return hours * 60 + minutes;
-              };
-              
-              let startMinutes, endMinutes;
-              
-              if (timeStr.includes(' - ')) {
-                // Format: "20:00 - 22:00"
-                const [start, end] = timeStr.split(' - ');
-                startMinutes = parseTime(start);
-                endMinutes = parseTime(end);
-              } else if (endTimeStr) {
-                // Separate start and end time fields
-                startMinutes = parseTime(timeStr);
-                endMinutes = parseTime(endTimeStr);
-              } else {
-                // Only start time given - assume 2 hour duration
-                startMinutes = parseTime(timeStr);
-                endMinutes = startMinutes + 120; // Default 2 hour duration
-              }
-              
-              return [startMinutes, endMinutes];
-            };
-            
-            const [start1, end1] = getTimeRange(enquiry.eventTime, enquiry.eventEndTime || undefined);
-            const [start2, end2] = getTimeRange(other.eventTime, other.eventEndTime || undefined);
-            
-            // Proper overlap detection: start1 < end2 && end1 > start2
-            hasTimeOverlap = start1 < end2 && end1 > start2;
-            severity = hasTimeOverlap ? 'hard' : 'soft';
-            
-          } catch (error) {
-            // Parsing failed - treat as hard conflict for safety
-            severity = 'hard';
-          }
-        }
-        
-        return {
-          ...other,
-          type: 'booking',
-          hasTimeOverlap,
-          severity
-        };
-      })
-      .filter(Boolean);
-  };
-
-  const getEnquiryConflict = (enquiryId: number) => {
-    return (conflicts as any[]).find((conflict: any) => 
-      conflict.enquiryId === enquiryId && !conflict.resolved
-    );
-  };
 
   const formatDateBox = (dateString: string) => {
     if (!dateString) return { dayName: "", dayNum: "", monthYear: "" };
@@ -188,10 +40,6 @@ export default function ActionableEnquiries() {
     // Only truly new enquiries need responses
     return enquiry.status === "new";
   };
-
-  // Removed isCalendarImport function since we removed "This Week's Activity" column
-
-  // Removed isThisWeek function since we removed "This Week's Activity" column
 
   // Filter enquiries that need action (excluding resolved conflicts and completed gigs)
   const actionableEnquiries = (enquiries as any[]).filter((enquiry: any) => {
@@ -215,61 +63,12 @@ export default function ActionableEnquiries() {
     }
     
     // Only show truly new enquiries that haven't been acted upon
-    const conflicts = detectConflicts(enquiry);
-    const isResolved = resolvedConflicts.has(enquiry.id);
-    const hasUnresolvedConflicts = conflicts.length > 0 && !isResolved;
-    
     // Only include new status bookings that need responses
-    return (enquiry.status === 'new') || hasUnresolvedConflicts;
+    return (enquiry.status === 'new');
   });
-
-  // Removed thisWeekEnquiries filtering since we removed the "This Week's Activity" column
 
   const renderEnquiryCard = (enquiry: any, showUrgent = false) => {
     const dateBox = formatDateBox(enquiry.eventDate?.toString() || '');
-    const conflicts = detectConflicts(enquiry);
-    const isResolved = resolvedConflicts.has(enquiry.id);
-    
-    // Enhanced conflict detection with booking status awareness
-    const confirmedBookingConflicts = conflicts.filter((c: any) => c.type === 'booking');
-    const unconfirmedEnquiryConflicts = conflicts.filter((c: any) => c.type === 'enquiry');
-    
-    // Check if any conflicts have time overlaps
-    const hasTimeOverlap = conflicts.some((conflict: any) => conflict.hasTimeOverlap);
-    
-    // Simplified conflict analysis without external dependencies
-    const conflictAnalysis = {
-      hasTimeOverlap,
-      sameVenue: false,
-      sameClient: false,
-      confirmedBooking: confirmedBookingConflicts.length > 0,
-      unconfirmedEnquiry: unconfirmedEnquiryConflicts.length > 0,
-      conflictCount: conflicts.length,
-      conflictDetails: conflicts.length > 0 ? 
-        `${confirmedBookingConflicts.length} confirmed booking(s), ${unconfirmedEnquiryConflicts.length} unconfirmed enquiry(ies)` 
-        : 'No conflicts'
-    };
-    
-    // Simple severity calculation
-    const severity = hasTimeOverlap && confirmedBookingConflicts.length > 0 ? 'high' : 
-                     conflicts.length > 0 ? 'medium' : 'low';
-    const hasConflicts = conflicts.length > 0;
-    
-    // Debug logging for conflict detection (after variables are defined)
-    if (enquiry.title?.includes('Saxophone')) {
-      console.log('Debug - Saxophone enquiry:', {
-        id: enquiry.id,
-        title: enquiry.title,
-        eventDate: enquiry.eventDate,
-        eventTime: enquiry.eventTime,
-        eventEndTime: enquiry.eventEndTime,
-        conflicts: conflicts,
-        isResolved: isResolved,
-        severity: severity,
-        hasConflicts: hasConflicts,
-        needsResponse: needsResponse(enquiry)
-      });
-    }
     
     // Clean card styling - no color overlays, just left border (matching booking page)
     const getCardStyling = () => {
@@ -296,207 +95,131 @@ export default function ActionableEnquiries() {
       }
     };
     
-    // No conflict overlays - conflicts shown via badges only
-    const getConflictOverlay = () => {
-      return ''; // Always return empty - conflicts don't override card styling
-    };
-    
-    // Determine the appropriate badge text and color
-    const getBadgeInfo = () => {
-      // Debug logging to check badge generation
-      if (hasConflicts || needsResponse(enquiry)) {
-        // Badge generation debug removed for performance
-      }
-      
-      if (hasConflicts && isResolved) {
-        return {
-          text: "Conflict resolved",
-          variant: "outline" as const,
-          className: "text-green-700 border-green-500"
-        };
-      } else if (hasConflicts) {
-        if (severity === 'high') {
-          return {
-            text: "⚠️ Time conflict",
-            variant: "destructive" as const,
-            className: "text-red-700 bg-red-100 border-red-300"
-          };
-        } else if (severity === 'medium') {
-          return {
-            text: "⚠️ Scheduling conflict",
-            variant: "outline" as const,
-            className: "text-amber-700 bg-amber-100 border-amber-300"
-          };
-        } else {
-          return {
-            text: "⚠️ Potential conflict",
-            variant: "outline" as const,
-            className: "text-yellow-700 bg-yellow-100 border-yellow-300"
-          };
-        }
-      } else if (needsResponse(enquiry)) {
-        return {
-          text: "Needs response",
-          variant: "secondary" as const,
-          className: "text-blue-700 bg-blue-100 border-blue-300"
-        };
-      }
-      return null;
-    };
-    
-    const badgeInfo = getBadgeInfo();
-    
     return (
-      <Link key={enquiry.id} href={`/bookings?id=${enquiry.id}`}>
-        <Card className={`hover:shadow-md transition-all duration-200 cursor-pointer bg-white border-l-4 ${
-          getCardStyling()
-        }`}>
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              {/* Header with title and date */}
-              <div className="flex justify-between items-start gap-3">
-                <div className="text-lg font-bold text-green-600 dark:text-green-400 line-clamp-2 flex-1 min-w-0">
-                  {enquiry.title}
-                </div>
-                <div className="text-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2 flex-shrink-0 w-16 sm:w-20">
-                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">{dateBox.dayName}</div>
-                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{dateBox.dayNum}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{dateBox.monthYear}</div>
-                </div>
-              </div>
-              
-              {/* Price */}
-              <div className="font-semibold text-gray-900 dark:text-gray-100">
-                {enquiry.fee ? `£${enquiry.fee}` : "£TBC"}
-              </div>
-              
-              {/* Client and venue */}
-              <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center">
-                  <User className="w-4 h-4 mr-2" />
-                  <span>{enquiry.clientName}</span>
-                </div>
-                {enquiry.venue && (
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span className="truncate">{enquiry.venue}</span>
+      <Card key={enquiry.id} className={`bg-white hover:shadow-md transition-shadow border-l-4 ${getCardStyling()}`}>
+        <CardContent className="p-4">
+          <div className="flex items-start space-x-4">
+            {/* Date Box */}
+            <div className="flex-shrink-0 bg-gray-100 rounded-lg p-2 min-w-[60px] text-center">
+              <div className="text-xs font-medium text-gray-600">{dateBox.dayName}</div>
+              <div className="text-2xl font-bold text-gray-900">{dateBox.dayNum}</div>
+              <div className="text-xs text-gray-500">{dateBox.monthYear}</div>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-lg font-medium text-green-600 leading-tight">
+                    {enquiry.title || enquiry.eventType || 'Untitled Event'}
+                  </h4>
+                  
+                  <div className="text-sm text-gray-600 mt-1 space-y-1">
+                    {enquiry.clientName && (
+                      <div className="flex items-center">
+                        <User className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">{enquiry.clientName}</span>
+                      </div>
+                    )}
+                    
+                    {enquiry.venue && (
+                      <div className="flex items-center">
+                        <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">{enquiry.venue}</span>
+                      </div>
+                    )}
+                    
+                    {enquiry.eventTime && (
+                      <div className="text-xs text-gray-500">
+                        Time: {enquiry.eventTime}
+                        {enquiry.eventEndTime && ` - ${enquiry.eventEndTime}`}
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-2" />
-                  <span>
-                    {enquiry.eventTime && enquiry.eventEndTime
-                      ? `${enquiry.eventTime} - ${enquiry.eventEndTime}`
-                      : enquiry.eventTime
-                        ? enquiry.eventTime
-                        : enquiry.eventTime || '00:00 - 23:59'
-                    }
-                  </span>
                 </div>
-              </div>
-              
-              {/* Status indicators */}
-              <div className="flex flex-wrap gap-1">
-                {/* Conflict badge */}
-                {hasConflicts && (
-                  <Badge 
-                    variant="outline" 
-                    className={`text-xs ${
-                      conflicts.some(c => c.severity === 'hard') 
-                        ? 'text-red-700 bg-red-50 border-red-300'
-                        : 'text-orange-700 bg-orange-50 border-orange-300'
-                    }`}
-                  >
-                    ⚠️ Conflict
-                  </Badge>
-                )}
                 
-                {/* Response needed badge */}
-                {!hasConflicts && needsResponse(enquiry) && (
-                  <Badge variant="secondary" className="text-xs text-blue-700 bg-blue-100">
-                    Needs Response
-                  </Badge>
-                )}
-                
-                {enquiry.applyNowLink && (
-                  <Badge className="bg-green-100 text-green-800 text-xs">
-                    🎯 ENCORE
-                  </Badge>
-                )}
-                
-                <Badge variant="outline" className="text-xs">
-                  {enquiry.status.replace('_', ' ').toUpperCase()}
-                </Badge>
+                <div className="flex flex-col items-end space-y-2 ml-2">
+                  {enquiry.fee && (
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-900">
+                        {enquiry.fee === "TBC" ? "£TBC" : `£${enquiry.fee}`}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="secondary" className={getBadgeColors(enquiry.status)}>
+                      {getDisplayStatus(enquiry.status)}
+                    </Badge>
+                    
+                    <Link href={`/bookings?id=${enquiry.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Eye className="w-3 h-3 mr-1" />
+                        View
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </Link>
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
   if (isLoading) {
     return (
-      <Card className="shadow-sm">
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
         <CardHeader>
-          <CardTitle>Action Required</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-purple-600" />
+            <span>Action Required</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
-              ))}
-            </div>
+          <div className="text-center py-8">
+            <div className="animate-spin w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-2"></div>
+            <p className="text-gray-600">Loading enquiries...</p>
           </div>
         </CardContent>
       </Card>
     );
   }
 
+  if (error) {
+    return (
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+            <span>Error Loading</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-600">Failed to load enquiries. Please try refreshing the page.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (actionableEnquiries.length === 0) {
+    return null; // Don't show the component if there are no actionable items
+  }
+
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-6">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold">Action Required</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Link href="/bookings">
-              <Button variant="outline" size="sm" className="h-9">
-                <Eye className="w-4 h-4 mr-2" />
-                View All
-              </Button>
-            </Link>
-          </div>
-        </div>
+    <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Clock className="w-5 h-5 text-purple-600" />
+          <span>Action Required</span>
+          <Badge variant="secondary" className="ml-auto">
+            {actionableEnquiries.length} items
+          </Badge>
+        </CardTitle>
       </CardHeader>
-      
-      <CardContent>
-        {/* Single Column - Action Required Only */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2 text-orange-500" />
-              Needs Response
-            </h4>
-            <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-200">
-              {actionableEnquiries.length}
-            </Badge>
-          </div>
-          {/* Non-scrolling, dynamic grid layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {actionableEnquiries.map((enquiry: Enquiry) => 
-              renderEnquiryCard(enquiry, true)
-            )}
-          </div>
-          {actionableEnquiries.length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-sm">No enquiries need action</p>
-              <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
-            </div>
-          )}
-        </div>
+      <CardContent className="space-y-4">
+        {actionableEnquiries.map((enquiry) => renderEnquiryCard(enquiry))}
       </CardContent>
     </Card>
   );

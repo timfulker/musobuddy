@@ -134,7 +134,6 @@ export default function BookingCTAButtons() {
       count: needsResponse.length,
       color: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600",
       icon: MessageCircle,
-      description: "Enquiries waiting for your response",
       action: () => setLocation("/bookings"),
     },
     {
@@ -142,7 +141,6 @@ export default function BookingCTAButtons() {
       count: needsContract.length,
       color: "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600",
       icon: FileText,
-      description: "Negotiations ready for contracts",
       action: () => setLocation("/contracts"),
     },
     {
@@ -150,7 +148,6 @@ export default function BookingCTAButtons() {
       count: needsInvoice.length,
       color: "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600",
       icon: Receipt,
-      description: "Signed contracts ready for invoicing",
       action: () => setLocation("/invoices"),
     },
   ];
@@ -186,18 +183,17 @@ export default function BookingCTAButtons() {
               className={`w-full justify-between p-4 h-auto text-white shadow-md transition-all duration-200 ${button.color}`}
               variant="default"
             >
-              <div className="flex items-center space-x-3 min-w-0 flex-1">
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <div className="text-left min-w-0 flex-1">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center space-x-3">
+                  <Icon className="w-5 h-5 flex-shrink-0" />
                   <div className="font-medium text-sm sm:text-base leading-tight">{button.title}</div>
-                  <div className="text-xs opacity-90 leading-tight">{button.description}</div>
                 </div>
-              </div>
-              <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-                <Badge variant="secondary" className="bg-white/20 text-white">
-                  {button.count}
-                </Badge>
-                <ArrowRight className="w-4 h-4" />
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <div className="text-2xl font-bold text-white">
+                    {button.count}
+                  </div>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
               </div>
             </Button>
           );
