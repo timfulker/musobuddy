@@ -4,14 +4,16 @@ import { storage } from './storage';
 // Import centralized environment detection
 import { ENV } from './environment';
 
-// Initialize Stripe with secret key (check both test and live keys)
+// Initialize Stripe with test key first for beta testing, then fall back to live key
 let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY) {
-  const secretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY;
+if (process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY) {
+  const secretKey = process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
   if (secretKey) {
     stripe = new Stripe(secretKey, {
       apiVersion: '2025-06-30.basil' as any,
     });
+    
+    console.log('✅ Stripe initialized with:', secretKey.startsWith('sk_test_') ? 'TEST mode' : 'LIVE mode');
   }
 }
 
