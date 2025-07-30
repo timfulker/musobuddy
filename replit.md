@@ -134,8 +134,10 @@ The application is designed to be user-friendly while maintaining professional-g
 ## Recent Changes: Latest modifications with dates
 
 ### 2025-07-30 - Dashboard Responsiveness & Text Overlap Issues Completely Resolved
-- **Action Required Filtering Fixed**: ✅ Eliminated test mode logic that was showing resolved conflicts and already-actioned bookings in dashboard Action Required section
-- **Smart Booking Filtering**: ✅ Enhanced filtering to exclude completed, cancelled, and already confirmed bookings from action items - only shows genuine tasks needing attention
+- **CRITICAL ACTION REQUIRED FILTERING FIXED**: ✅ Completely overhauled filtering logic in both BookingCTAButtons and ActionableEnquiries components to exclude ALL actioned bookings
+- **Comprehensive Status Exclusion**: ✅ Now excludes completed, cancelled, confirmed, contract_sent, in_progress, awaiting_response, client_confirms from Action Required
+- **Document-Based Filtering**: ✅ Added logic to exclude bookings that already have contracts or invoices (indicating they've been actioned)
+- **Smart Booking Filtering**: ✅ Enhanced filtering to only show genuine "new" status bookings that haven't been responded to or actioned
 - **Resolved Conflicts Hidden**: ✅ Action Required section now properly hides bookings that have been resolved or no longer need immediate action
 - **Clean Return Logic**: ✅ Component returns null when no actionable items exist instead of showing test data with resolved conflicts
 - **Health Check Component Eliminated**: ✅ Removed HealthCheckComponent from contracts page - was appearing in development mode but not needed in production interface

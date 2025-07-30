@@ -185,7 +185,8 @@ export default function ActionableEnquiries() {
   };
 
   const needsResponse = (enquiry: Enquiry) => {
-    return enquiry.status === "new" || enquiry.status === "booking_in_progress";
+    // Only truly new enquiries need responses
+    return enquiry.status === "new";
   };
 
   // Removed isCalendarImport function since we removed "This Week's Activity" column
@@ -194,16 +195,32 @@ export default function ActionableEnquiries() {
 
   // Filter enquiries that need action (excluding resolved conflicts and completed gigs)
   const actionableEnquiries = (enquiries as any[]).filter((enquiry: any) => {
-    // Exclude completed and rejected gigs from action required
-    if (enquiry.status === 'completed' || enquiry.status === 'rejected') {
+    // Exclude all actioned statuses from action required
+    const excludeStatuses = [
+      'completed', 'rejected', 'cancelled', 'confirmed', 
+      'contract_sent', 'in_progress', 'awaiting_response', 
+      'client_confirms'
+    ];
+    
+    if (excludeStatuses.includes(enquiry.status)) {
       return false;
     }
     
+    // Check if enquiry has existing contracts or invoices (means it's been actioned)
+    const contracts = enquiry.contracts || [];
+    const invoices = enquiry.invoices || [];
+    
+    if (contracts.length > 0 || invoices.length > 0) {
+      return false;
+    }
+    
+    // Only show truly new enquiries that haven't been acted upon
     const conflicts = detectConflicts(enquiry);
     const isResolved = resolvedConflicts.has(enquiry.id);
     const hasUnresolvedConflicts = conflicts.length > 0 && !isResolved;
     
-    return needsResponse(enquiry) || hasUnresolvedConflicts;
+    // Only include new status bookings that need responses
+    return (enquiry.status === 'new') || hasUnresolvedConflicts;
   });
 
   // Removed thisWeekEnquiries filtering since we removed the "This Week's Activity" column

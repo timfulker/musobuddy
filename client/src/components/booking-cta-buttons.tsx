@@ -64,28 +64,62 @@ export default function BookingCTAButtons() {
   // Use contextual actions to determine what bookings need attention
   // Only show bookings that genuinely need action and aren't completed or cancelled
   const needsResponse = bookings.filter(
-    (booking) => 
-      (booking.status === "new" || booking.responseNeeded) && 
-      booking.status !== "completed" && 
-      booking.status !== "cancelled"
+    (booking) => {
+      // Exclude actioned bookings with these statuses
+      const excludeStatuses = [
+        "completed", "cancelled", "confirmed", "contract_sent", 
+        "in_progress", "awaiting_response", "client_confirms"
+      ];
+      
+      if (excludeStatuses.includes(booking.status)) {
+        return false;
+      }
+      
+      // Only show truly new bookings that need responses
+      return booking.status === "new";
+    }
   );
 
   const needsContract = bookings.filter(booking => {
-    // Don't show completed, cancelled, or already confirmed bookings
-    if (booking.status === "completed" || booking.status === "cancelled" || booking.status === "confirmed") {
+    // Exclude all actioned, completed, or resolved bookings
+    const excludeStatuses = [
+      "completed", "cancelled", "confirmed", "contract_sent"
+    ];
+    
+    if (excludeStatuses.includes(booking.status)) {
       return false;
     }
+    
+    // Check if booking has existing contracts
+    const contracts = booking.contracts || [];
+    if (contracts.length > 0) {
+      return false;
+    }
+    
+    // Only show bookings in client_confirms status that genuinely need contracts
     const actions = getContextualActions(booking);
-    return actions.some(action => action.id === 'create-contract' || action.id === 'send-contract');
+    return booking.status === "client_confirms" && 
+           actions.some(action => action.id === 'create-contract');
   });
 
   const needsInvoice = bookings.filter(booking => {
-    // Don't show completed or cancelled bookings
-    if (booking.status === "completed" || booking.status === "cancelled") {
+    // Exclude completed or cancelled bookings
+    const excludeStatuses = ["completed", "cancelled"];
+    
+    if (excludeStatuses.includes(booking.status)) {
       return false;
     }
+    
+    // Check if booking has existing invoices
+    const invoices = booking.invoices || [];
+    if (invoices.length > 0) {
+      return false;
+    }
+    
+    // Only show confirmed bookings that genuinely need invoices
     const actions = getContextualActions(booking);
-    return actions.some(action => action.id === 'create-invoice' || action.id === 'send-invoice');
+    return booking.status === "confirmed" && 
+           actions.some(action => action.id === 'create-invoice');
   });
 
   // Define contracts and invoices arrays for the template
