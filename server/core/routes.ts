@@ -431,12 +431,18 @@ export async function registerRoutes(app: Express) {
   // GlockApps deliverability test endpoint
   app.post('/api/test/glockapp-delivery', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.session?.userId;
       const { testId, templateId, seedEmails } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
 
       if (!testId || !templateId || !seedEmails || !Array.isArray(seedEmails)) {
         return res.status(400).json({ error: 'testId, templateId, and seedEmails array required' });
       }
+
+      console.log(`📧 Starting GlockApps test ${testId} for user ${userId} with ${seedEmails.length} addresses`);
 
       // Get user settings for professional signature
       const userSettings = await storage.getUserSettings(userId);
