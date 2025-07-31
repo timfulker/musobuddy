@@ -72,7 +72,6 @@ interface BookingDetailsDialogProps {
 export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpdate }: BookingDetailsDialogProps) {
   // Early return if no booking is provided to prevent warnings
   if (!booking) {
-    console.log('BookingDetailsDialog: No booking provided, returning null');
     return null;
   }
   

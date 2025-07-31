@@ -2043,13 +2043,15 @@ export async function registerRoutes(app: Express) {
   // Generate AI response for templates
   app.post('/api/ai/generate-response', isAuthenticated, async (req: any, res) => {
     // Set extended timeout for AI requests
-    req.setTimeout(120000); // 2 minutes
-    res.setTimeout(120000); // 2 minutes
+    const timeout = 120000; // 2 minutes
+    req.setTimeout(timeout);
+    res.setTimeout(timeout);
     
     try {
       const userId = req.session?.userId;
       
       if (!userId) {
+        console.log('❌ AI request without authentication');
         return res.status(401).json({ error: 'Authentication required' });
       }
 
@@ -2058,49 +2060,99 @@ export async function registerRoutes(app: Express) {
         action: req.body.action, 
         bookingId: req.body.bookingId, 
         hasCustomPrompt: !!req.body.customPrompt,
-        tone: req.body.tone 
+        tone: req.body.tone,
+        timestamp: new Date().toISOString()
       });
 
-      const { aiResponseGenerator } = await import('./ai-response-generator');
+      // Import the AI generator with proper error handling
+      let aiResponseGenerator;
+      try {
+        const aiModule = await import('./ai-response-generator');
+        aiResponseGenerator = aiModule.aiResponseGenerator;
+        
+        if (!aiResponseGenerator) {
+          throw new Error('AI response generator not found in module');
+        }
+        
+        console.log('✅ AI response generator imported successfully');
+      } catch (importError: any) {
+        console.error('❌ Failed to import AI response generator:', importError);
+        return res.status(500).json({ 
+          error: 'AI service initialization failed',
+          details: process.env.NODE_ENV === 'development' ? importError.message : 'Internal server error'
+        });
+      }
+
       const { action, bookingId, customPrompt, tone } = req.body;
 
       // Get booking context if bookingId provided
       let bookingContext = null;
       if (bookingId) {
-        console.log(`🔍 Fetching booking context for ID: ${bookingId}`);
-        const booking = await storage.getBooking(parseInt(bookingId));
-        if (booking) {
-          bookingContext = {
-            clientName: booking.clientName,
-            eventDate: booking.eventDate,
-            eventTime: booking.eventTime,
-            eventEndTime: booking.eventEndTime,
-            venue: booking.venue,
-            eventType: booking.eventType,
-            gigType: booking.gigType,
-            fee: booking.fee,
-            performanceDuration: booking.performanceDuration,
-            styles: booking.styles,
-            equipment: booking.equipment,
-            additionalInfo: booking.additionalInfo
-          };
-          console.log(`✅ Booking context loaded:`, { 
-            clientName: bookingContext.clientName, 
-            eventType: bookingContext.eventType,
-            gigType: bookingContext.gigType 
-          });
+        try {
+          console.log(`🔍 Fetching booking context for ID: ${bookingId}`);
+          const booking = await storage.getBooking(parseInt(bookingId));
+          if (booking) {
+            bookingContext = {
+              clientName: booking.clientName,
+              eventDate: booking.eventDate,
+              eventTime: booking.eventTime,
+              eventEndTime: booking.eventEndTime,
+              venue: booking.venue,
+              eventType: booking.eventType,
+              gigType: booking.gigType,
+              fee: booking.fee,
+              performanceDuration: booking.performanceDuration,
+              styles: booking.styles,
+              equipment: booking.equipment,
+              additionalInfo: booking.additionalInfo
+            };
+            console.log(`✅ Booking context loaded:`, { 
+              clientName: bookingContext.clientName, 
+              eventType: bookingContext.eventType,
+              gigType: bookingContext.gigType 
+            });
+          } else {
+            console.log(`⚠️ Booking #${bookingId} not found`);
+          }
+        } catch (bookingError: any) {
+          console.error('❌ Error fetching booking:', bookingError);
+          // Continue without booking context rather than failing
+          bookingContext = null;
         }
       }
 
       // Get user settings for personalization
-      console.log(`🔍 Fetching user settings for user: ${userId}`);
-      const userSettings = await storage.getUserSettings(userId);
-      console.log(`✅ User settings loaded:`, { 
-        primaryInstrument: userSettings?.primaryInstrument,
-        businessName: userSettings?.businessName 
-      });
+      let userSettings = null;
+      try {
+        console.log(`🔍 Fetching user settings for user: ${userId}`);
+        userSettings = await storage.getUserSettings(userId);
+        console.log(`✅ User settings loaded:`, { 
+          primaryInstrument: userSettings?.primaryInstrument,
+          businessName: userSettings?.businessName,
+          hasBusinessEmail: !!userSettings?.businessEmail
+        });
+      } catch (settingsError: any) {
+        console.error('❌ Error fetching user settings:', settingsError);
+        // Continue without user settings rather than failing
+        userSettings = null;
+      }
       
-      console.log(`🤖 Calling AI response generator...`);
+      // Validate request parameters
+      if (!action) {
+        return res.status(400).json({ 
+          error: 'Missing required parameter: action' 
+        });
+      }
+
+      if (!customPrompt && !bookingContext) {
+        return res.status(400).json({ 
+          error: 'Either customPrompt or bookingId is required for AI generation' 
+        });
+      }
+      
+      console.log(`🤖 Calling AI response generator with validated params...`);
+      
+      // Call AI service with comprehensive error handling
       const response = await aiResponseGenerator.generateEmailResponse({
         action: action || 'respond',
         bookingContext,
@@ -2111,19 +2163,198 @@ export async function registerRoutes(app: Express) {
 
       console.log(`✅ AI response generated successfully for user ${userId}`);
       
-      // Ensure we set proper content type
+      // Validate response before sending
+      if (!response || !response.subject || !response.emailBody) {
+        console.error('❌ Invalid AI response structure:', response);
+        return res.status(500).json({ 
+          error: 'AI service returned invalid response format' 
+        });
+      }
+      
+      // Ensure we set proper content type and return success
       res.setHeader('Content-Type', 'application/json');
-      res.status(200).json(response);
+      res.status(200).json({
+        subject: response.subject,
+        emailBody: response.emailBody,
+        smsBody: response.smsBody || 'Thank you for your booking inquiry!',
+        generatedAt: new Date().toISOString()
+      });
       
     } catch (error: any) {
       console.error('❌ AI response generation failed:', error);
       console.error('❌ Error stack:', error.stack);
+      console.error('❌ Full error object:', JSON.stringify(error, null, 2));
+      
+      // Determine error type and provide appropriate response
+      let errorMessage = 'Failed to generate AI response';
+      let statusCode = 500;
+      
+      if (error.message?.includes('API key')) {
+        errorMessage = 'AI service configuration error';
+        statusCode = 503;
+      } else if (error.message?.includes('rate limit')) {
+        errorMessage = 'AI service rate limit exceeded. Please try again in a moment.';
+        statusCode = 429;
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'AI request timed out. Please try again.';
+        statusCode = 504;
+      } else if (error.message?.includes('quota')) {
+        errorMessage = 'AI service quota exceeded';
+        statusCode = 503;
+      } else if (error.message?.includes('network') || error.message?.includes('connection')) {
+        errorMessage = 'Network error connecting to AI service';
+        statusCode = 503;
+      }
       
       // Ensure we always return JSON
       res.setHeader('Content-Type', 'application/json');
-      res.status(500).json({ 
-        error: 'Failed to generate AI response',
-        details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      res.status(statusCode).json({ 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // AI System Diagnostic endpoint
+  app.get('/api/ai/diagnostic', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      console.log(`🔍 AI diagnostic request from user: ${userId}`);
+      
+      const diagnostic: any = {
+        timestamp: new Date().toISOString(),
+        userId: userId,
+        checks: {}
+      };
+
+      // Check 1: OpenAI API Key
+      try {
+        const apiKey = process.env.OPENAI_API_KEY;
+        diagnostic.checks.apiKey = {
+          configured: !!apiKey,
+          length: apiKey?.length || 0,
+          startsCorrectly: apiKey?.startsWith('sk-') || false,
+          status: !apiKey ? 'missing' : 
+                  !apiKey.startsWith('sk-') ? 'invalid_format' :
+                  apiKey.length < 20 ? 'too_short' : 'valid'
+        };
+      } catch (error: any) {
+        diagnostic.checks.apiKey = {
+          status: 'error',
+          error: error.message
+        };
+      }
+
+      // Check 2: AI Module Import
+      try {
+        const aiModule = await import('./ai-response-generator');
+        const generator = aiModule.aiResponseGenerator;
+        
+        diagnostic.checks.aiModule = {
+          importSuccess: true,
+          generatorExists: !!generator,
+          generatorType: typeof generator,
+          status: !!generator ? 'available' : 'missing'
+        };
+      } catch (error: any) {
+        diagnostic.checks.aiModule = {
+          importSuccess: false,
+          error: error.message,
+          status: 'import_failed'
+        };
+      }
+
+      // Check 3: User Settings
+      try {
+        const userSettings = await storage.getUserSettings(userId);
+        diagnostic.checks.userSettings = {
+          exists: !!userSettings,
+          hasBusinessName: !!userSettings?.businessName,
+          hasInstrument: !!userSettings?.primaryInstrument,
+          instrument: userSettings?.primaryInstrument || 'none',
+          status: !!userSettings ? 'loaded' : 'missing'
+        };
+      } catch (error: any) {
+        diagnostic.checks.userSettings = {
+          status: 'error',
+          error: error.message
+        };
+      }
+
+      // Check 4: Test OpenAI Connection (if API key is valid)
+      if (diagnostic.checks.apiKey?.status === 'valid') {
+        try {
+          console.log('🧪 Testing OpenAI connection...');
+          
+          // Import and test the AI generator
+          const { aiResponseGenerator } = await import('./ai-response-generator');
+          
+          // Test with minimal request
+          const testResponse = await aiResponseGenerator.generateEmailResponse({
+            action: 'respond',
+            customPrompt: 'Generate a simple professional thank you message.',
+            tone: 'professional'
+          });
+          
+          diagnostic.checks.openaiConnection = {
+            connectionSuccess: true,
+            responseReceived: !!testResponse,
+            hasSubject: !!testResponse?.subject,
+            hasBody: !!testResponse?.emailBody,
+            status: 'working'
+          };
+          
+        } catch (error: any) {
+          diagnostic.checks.openaiConnection = {
+            connectionSuccess: false,
+            error: error.message,
+            errorType: error.constructor.name,
+            status: 'failed'
+          };
+        }
+      } else {
+        diagnostic.checks.openaiConnection = {
+          status: 'skipped',
+          reason: 'API key not valid'
+        };
+      }
+
+      // Overall status
+      const allChecks = Object.values(diagnostic.checks);
+      const hasErrors = allChecks.some((check: any) => 
+        check.status === 'error' || 
+        check.status === 'failed' || 
+        check.status === 'missing' ||
+        check.status === 'import_failed'
+      );
+      
+      diagnostic.overallStatus = hasErrors ? 'issues_detected' : 'healthy';
+      diagnostic.summary = {
+        apiKeyValid: diagnostic.checks.apiKey?.status === 'valid',
+        moduleLoaded: diagnostic.checks.aiModule?.status === 'available',
+        userSettingsLoaded: diagnostic.checks.userSettings?.status === 'loaded',
+        openaiWorking: diagnostic.checks.openaiConnection?.status === 'working'
+      };
+
+      console.log(`✅ AI diagnostic completed for user ${userId}:`, diagnostic.overallStatus);
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.json(diagnostic);
+      
+    } catch (error: any) {
+      console.error('❌ AI diagnostic failed:', error);
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({
+        error: 'Diagnostic failed',
+        message: error.message,
+        timestamp: new Date().toISOString()
       });
     }
   });
@@ -2137,7 +2368,8 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const { aiResponseGenerator } = await import('./ai-response-generator');
+      console.log(`🤖 Template variations request for user: ${userId}`);
+      
       const { templateName, templateBody, count = 3 } = req.body;
 
       if (!templateName || !templateBody) {

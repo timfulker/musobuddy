@@ -1,7 +1,26 @@
 import OpenAI from "openai";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Initialize OpenAI client with better error handling
+const initializeOpenAI = () => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  
+  if (!apiKey) {
+    console.error('❌ OPENAI_API_KEY environment variable is not set');
+    throw new Error('OpenAI API key is not configured');
+  }
+  
+  if (apiKey.length < 10) {
+    console.error('❌ OPENAI_API_KEY appears to be invalid (too short)');
+    throw new Error('OpenAI API key appears to be invalid');
+  }
+  
+  console.log('✅ OpenAI API key found and appears valid');
+  return new OpenAI({ 
+    apiKey,
+    timeout: 30000, // 30 second timeout
+    maxRetries: 2
+  });
+};
 
 interface BookingContext {
   clientName?: string;
@@ -20,7 +39,7 @@ interface BookingContext {
 
 interface UserSettings {
   businessName?: string;
-  email?: string;
+  businessEmail?: string;
   phone?: string;
   website?: string;
   addressLine1?: string;
@@ -28,7 +47,7 @@ interface UserSettings {
   county?: string;
   postcode?: string;
   primaryInstrument?: string;
-  availableGigTypes?: any[];
+  availableGigTypes?: any;
 }
 
 interface AIResponseRequest {
@@ -40,6 +59,14 @@ interface AIResponseRequest {
 }
 
 export class AIResponseGenerator {
+  private openai: OpenAI | null = null;
+  
+  private getOpenAIClient(): OpenAI {
+    if (!this.openai) {
+      this.openai = initializeOpenAI();
+    }
+    return this.openai;
+  }
   
   async generateEmailResponse(request: AIResponseRequest): Promise<{
     subject: string;
@@ -48,13 +75,25 @@ export class AIResponseGenerator {
   }> {
     const { action, bookingContext, userSettings, customPrompt, tone = 'professional' } = request;
     
-    const systemPrompt = this.buildSystemPrompt(userSettings, tone);
-    const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt);
+    console.log('🤖 Starting AI response generation...');
+    console.log('🤖 Request details:', {
+      action,
+      hasBookingContext: !!bookingContext,
+      hasUserSettings: !!userSettings,
+      hasCustomPrompt: !!customPrompt,
+      tone
+    });
     
     try {
-      console.log('🤖 Attempting OpenAI API call...');
-      console.log('🔑 API Key present:', !!process.env.OPENAI_API_KEY);
-      console.log('🔑 API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+      const openai = this.getOpenAIClient();
+      
+      const systemPrompt = this.buildSystemPrompt(userSettings, tone);
+      const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt);
+      
+      console.log('🤖 System prompt length:', systemPrompt.length);
+      console.log('🤖 User prompt length:', userPrompt.length);
+      
+      console.log('🤖 Making OpenAI API call...');
       
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -64,39 +103,74 @@ export class AIResponseGenerator {
         ],
         response_format: { type: "json_object" },
         temperature: 0.7,
-        max_tokens: 1000,
-        timeout: 30000 // 30 second timeout
+        max_tokens: 1500, // Increased from 1000
+        timeout: 30000
       });
 
       console.log('✅ OpenAI API response received');
-      const result = JSON.parse(response.choices[0].message.content || '{}');
+      console.log('🤖 Response usage:', response.usage);
       
-      return {
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No content received from OpenAI API');
+      }
+      
+      console.log('🤖 Raw response content length:', content.length);
+      
+      let result;
+      try {
+        result = JSON.parse(content);
+      } catch (parseError) {
+        console.error('❌ Failed to parse OpenAI response as JSON:', content);
+        throw new Error('Invalid JSON response from AI service');
+      }
+      
+      // Validate the response structure
+      if (!result.subject || !result.emailBody) {
+        console.error('❌ Invalid response structure:', result);
+        throw new Error('AI response missing required fields');
+      }
+      
+      const finalResponse = {
         subject: result.subject || "Re: Your Booking Inquiry",
         emailBody: result.emailBody || "Thank you for your inquiry.",
         smsBody: result.smsBody || "Thank you for your booking inquiry!"
       };
       
-    } catch (error) {
+      console.log('✅ AI response generated successfully');
+      console.log('🤖 Response preview:', {
+        subjectLength: finalResponse.subject.length,
+        emailBodyLength: finalResponse.emailBody.length,
+        smsBodyLength: finalResponse.smsBody.length
+      });
+      
+      return finalResponse;
+      
+    } catch (error: any) {
       console.error('❌ AI response generation failed:', error);
       console.error('❌ Error details:', {
         message: error.message,
         status: error.status,
         code: error.code,
-        type: error.type
+        type: error.type,
+        error: error.error
       });
       
       // Provide more specific error messages
       if (error.status === 401) {
-        throw new Error('OpenAI API key is invalid or missing');
+        throw new Error('OpenAI API key is invalid. Please check your API key configuration.');
       } else if (error.status === 429) {
-        throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+        throw new Error('OpenAI API rate limit exceeded. Please try again in a moment.');
       } else if (error.status === 502 || error.status === 503) {
         throw new Error('OpenAI API is temporarily unavailable. Please try again later.');
       } else if (error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
         throw new Error('Network connection error. Please check your internet connection.');
+      } else if (error.code === 'insufficient_quota') {
+        throw new Error('OpenAI API quota exceeded. Please check your OpenAI account billing.');
+      } else if (error.message.includes('timeout')) {
+        throw new Error('Request timed out. The AI service may be busy, please try again.');
       } else {
-        throw new Error(`Failed to generate AI response: ${error.message}`);
+        throw new Error(`AI service error: ${error.message || 'Unknown error occurred'}`);
       }
     }
   }
@@ -106,23 +180,24 @@ export class AIResponseGenerator {
     const primaryInstrument = userSettings?.primaryInstrument ? 
       this.getInstrumentDisplayName(userSettings.primaryInstrument) : "musician";
     
-    // Parse availableGigTypes from JSON string or array
+    // Parse availableGigTypes - handle both string and array formats
     let gigTypes: string[] = [];
     if (userSettings?.availableGigTypes) {
-      if (typeof userSettings.availableGigTypes === 'string') {
-        try {
+      try {
+        if (typeof userSettings.availableGigTypes === 'string') {
           gigTypes = JSON.parse(userSettings.availableGigTypes);
-        } catch (e) {
-          console.warn('Failed to parse availableGigTypes JSON:', userSettings.availableGigTypes);
+        } else if (Array.isArray(userSettings.availableGigTypes)) {
+          gigTypes = userSettings.availableGigTypes;
         }
-      } else if (Array.isArray(userSettings.availableGigTypes)) {
-        gigTypes = userSettings.availableGigTypes;
+      } catch (e) {
+        console.warn('Failed to parse availableGigTypes:', userSettings.availableGigTypes);
+        gigTypes = [];
       }
     }
     
     const businessInfo = userSettings ? `
 Business: ${businessName}
-Contact: ${userSettings.email}${userSettings.phone ? ` | ${userSettings.phone}` : ''}
+Contact: ${userSettings.businessEmail || 'N/A'}${userSettings.phone ? ` | ${userSettings.phone}` : ''}
 ${userSettings.website ? `Website: ${userSettings.website}` : ''}
 Primary Instrument: ${primaryInstrument}
 ${gigTypes.length > 0 ? `Specializes in: ${gigTypes.join(', ')}` : ''}
@@ -173,13 +248,6 @@ PRICING STRUCTURE GUIDELINES:
 - Include payment terms and booking process information
 - Present pricing confidently as the professional standard for the services offered
 
-EXAMPLE PACKAGE STRUCTURE (adapt to context):
-- Package 1: Basic service (2-2.5 hours) - Entry level pricing
-- Package 2: Standard service (2.5-3 hours) - Mid-tier pricing  
-- Package 3: Premium service (3-3.5 hours) - Higher pricing
-- Package 4: Comprehensive service (3.5-4 hours) - Top tier pricing
-- Additional services: DJ, MC, special requests - Separate pricing
-
 PROFESSIONAL DETAILS TO INCLUDE:
 - Equipment quality and setup capabilities
 - Public liability insurance coverage
@@ -188,7 +256,9 @@ PROFESSIONAL DETAILS TO INCLUDE:
 - Experience and professionalism
 - Payment terms (typically cash/bank transfer on day)
 - Contract security (Musician's Union Contract)
-- Repertoire and customization options`;
+- Repertoire and customization options
+
+IMPORTANT: Always return valid JSON. Do not include any text outside the JSON structure.`;
   }
 
   private buildUserPrompt(action: string, bookingContext?: BookingContext, customPrompt?: string): string {
@@ -197,13 +267,13 @@ PROFESSIONAL DETAILS TO INCLUDE:
 
 ${this.formatBookingContext(bookingContext)}
 
-Generate appropriate subject, email body, and SMS version.`;
+Generate appropriate subject, email body, and SMS version. Return only valid JSON.`;
     }
 
     const actionPrompts = {
       respond: "Generate a professional response to a new booking inquiry. Thank the client, confirm availability, and provide comprehensive pricing options and service details. Most clients don't mention fees in their initial enquiry, so proactively present your service packages and pricing structure.",
       thankyou: "Generate a thank you message after a successful event. Express gratitude, mention the event positively, and invite future bookings or reviews.",
-      followup: "Generate a follow-up message for an pending inquiry. Be polite but proactive about getting a response.",
+      followup: "Generate a follow-up message for a pending inquiry. Be polite but proactive about getting a response.",
       custom: "Generate a personalized response based on the booking context provided."
     };
 
@@ -211,7 +281,7 @@ Generate appropriate subject, email body, and SMS version.`;
 
 ${this.formatBookingContext(bookingContext)}
 
-Generate appropriate subject, email body, and SMS version.`;
+Generate appropriate subject, email body, and SMS version. Return only valid JSON.`;
   }
 
   private formatBookingContext(context?: BookingContext): string {
@@ -250,68 +320,86 @@ Generate appropriate subject, email body, and SMS version.`;
       'violin': 'Violin',
       'viola': 'Viola',
       'cello': 'Cello',
-      'double_bass': 'Double Bass',
       'saxophone': 'Saxophone',
       'trumpet': 'Trumpet',
       'trombone': 'Trombone',
       'clarinet': 'Clarinet',
       'flute': 'Flute',
       'drums': 'Drums',
-      'percussion': 'Percussion',
       'vocals': 'Vocals',
-      'harp': 'Harp',
-      'ukulele': 'Ukulele',
-      'mandolin': 'Mandolin',
-      'banjo': 'Banjo',
-      'harmonica': 'Harmonica',
-      'accordion': 'Accordion',
-      'dj': 'DJ',
-      'band': 'Band',
-      'duo': 'Duo',
-      'trio': 'Trio',
-      'quartet': 'Quartet',
-      'other': 'Other'
+      'other': 'Musician'
     };
+    
     return displayNames[instrument] || instrument;
   }
 
-  async generateTemplateVariations(
-    templateName: string, 
-    templateBody: string,
-    count: number = 3
-  ): Promise<Array<{ name: string; subject: string; emailBody: string; }>> {
+  async generateTemplateVariations(templateName: string, templateBody: string, count: number = 3): Promise<Array<{
+    name: string;
+    body: string;
+  }>> {
     try {
+      const openai = this.getOpenAIClient();
+      
+      const systemPrompt = `You are an expert at creating professional email template variations. Create ${count} variations of the provided template with different tones and approaches while maintaining the core message.
+
+RESPONSE FORMAT: Return valid JSON with this structure:
+{
+  "variations": [
+    {
+      "name": "Variation name (brief, descriptive)",
+      "body": "Template body with proper formatting"
+    }
+  ]
+}
+
+Guidelines:
+- Keep the core message and purpose intact
+- Vary the tone (professional, friendly, formal, etc.)
+- Use different opening and closing styles
+- Maintain appropriate email formatting
+- Include [Client Name], [Date], [Venue] and other template variables as in original
+- Return only valid JSON structure`;
+
+      const userPrompt = `Create ${count} variations of this email template:
+
+Template Name: ${templateName}
+Template Body: ${templateBody}
+
+Generate variations with different approaches while keeping the essential message and template variables intact.`;
+
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
-          {
-            role: "system",
-            content: `You are helping a musician create variations of email templates. 
-            Generate ${count} professional variations of the provided template.
-            Return JSON array with format: [{"name": "variation name", "subject": "subject", "emailBody": "body"}]`
-          },
-          {
-            role: "user", 
-            content: `Create ${count} variations of this template:
-            Name: ${templateName}
-            Body: ${templateBody}
-            
-            Make each variation have a different tone (professional, friendly, formal) while maintaining the core message.`
-          }
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.8
+        temperature: 0.8,
+        max_tokens: 1500
       });
 
-      const result = JSON.parse(response.choices[0].message.content || '{"variations": []}');
-      return result.variations || [];
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No content received from OpenAI API');
+      }
+
+      const result = JSON.parse(content);
       
-    } catch (error) {
+      if (!result.variations || !Array.isArray(result.variations)) {
+        throw new Error('Invalid response structure for template variations');
+      }
+
+      return result.variations.map((variation: any, index: number) => ({
+        name: variation.name || `${templateName} - Variation ${index + 1}`,
+        body: variation.body || templateBody
+      }));
+
+    } catch (error: any) {
       console.error('❌ Template variations generation failed:', error);
-      return [];
+      throw new Error(`Failed to generate template variations: ${error.message}`);
     }
   }
 }
 
-// Export an instance for use in routes
+// Export a singleton instance
 export const aiResponseGenerator = new AIResponseGenerator();
