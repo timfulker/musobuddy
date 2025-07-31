@@ -80,39 +80,18 @@ export function formatBooking(rawBooking: any): FormattedBooking {
   // MIGRATION LOGIC: Handle both old and new field names
   // Priority: new fields → old fields → fallback
   
-  // Event time mapping with migration support and time range splitting
-  let startTime = '';
-  let endTime = '';
-  
-  // Get the raw time value from various possible field names
-  let rawTimeValue = '';
+  // Event time mapping - clean separate fields only
   if (rawBooking.eventTime) {
-    rawTimeValue = rawBooking.eventTime;
+    formatted.eventTime = rawBooking.eventTime;
   } else if (rawBooking.event_start_time) {
-    rawTimeValue = rawBooking.event_start_time;
+    formatted.eventTime = rawBooking.event_start_time;
   } else if (rawBooking.eventStartTime) {
-    rawTimeValue = rawBooking.eventStartTime;
+    formatted.eventTime = rawBooking.eventStartTime;
+  } else {
+    formatted.eventTime = '';
   }
   
-  // Check if the time value contains a range (e.g., "18:00-20:00" or "18:00 - 20:00")
-  if (rawTimeValue && rawTimeValue.includes('-')) {
-    const timeRange = rawTimeValue.split('-').map(t => t.trim());
-    if (timeRange.length === 2) {
-      startTime = timeRange[0];
-      endTime = timeRange[1];
-    } else {
-      // Fallback: use the raw value as start time
-      startTime = rawTimeValue;
-    }
-  } else if (rawTimeValue) {
-    // Single time value, use as start time
-    startTime = rawTimeValue;
-  }
-  
-  // Set the formatted start time
-  formatted.eventTime = startTime;
-  
-  // Handle end time - check separate end time fields first, then use split range
+  // Event end time mapping - clean separate fields only
   if (rawBooking.eventEndTime) {
     formatted.eventEndTime = rawBooking.eventEndTime;
   } else if (rawBooking.event_end_time) {
@@ -121,11 +100,7 @@ export function formatBooking(rawBooking: any): FormattedBooking {
     formatted.eventEndTime = rawBooking.event_finish_time;
   } else if (rawBooking.eventFinishTime) {
     formatted.eventEndTime = rawBooking.eventFinishTime;
-  } else if (endTime) {
-    // Use the end time from the split range
-    formatted.eventEndTime = endTime;
   } else {
-    // Fallback to empty string for consistency
     formatted.eventEndTime = '';
   }
   
