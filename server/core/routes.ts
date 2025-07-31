@@ -1075,22 +1075,23 @@ export async function registerRoutes(app: Express) {
   });
 
   // Generate or get quick-add widget token for authenticated user
-  app.post('/api/generate-widget-token', async (req: any, res) => {
+  app.post('/api/generate-widget-token', isAuthenticated, async (req: any, res) => {
     try {
-      // Return detailed session info for debugging
-      if (!req.session?.userId) {
+      const userId = req.session?.userId || req.user?.id;
+
+      if (!userId) {
+        console.log('❌ Widget token generation failed: No user ID found');
         return res.status(401).json({ 
           error: 'Authentication required',
           debug: {
             sessionExists: !!req.session,
-            userId: req.session?.userId || null,
+            sessionUserId: req.session?.userId || null,
+            userExists: !!req.user,
             sessionId: req.sessionID || null,
             timestamp: new Date().toISOString()
           }
         });
       }
-
-      const userId = req.session.userId;
       
       // Check if user already has a token
       const user = await storage.getUserById(userId);

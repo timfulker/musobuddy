@@ -29,8 +29,7 @@ export function createSessionMiddleware() {
       secure: ENV.sessionSecure,
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: ENV.sessionSecure ? 'none' : 'lax',
-      domain: ENV.sessionDomain,
+      sameSite: 'lax', // FIXED: Use 'lax' for same-origin requests
     },
   });
 }

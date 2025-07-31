@@ -13,8 +13,9 @@ import { setupAuthRoutes } from "./core/auth-rebuilt";
 
 const app = express();
 
-// CRITICAL: Trust proxy BEFORE session middleware
+// CRITICAL FIX: Trust proxy BEFORE any middleware
 app.set('trust proxy', 1);
+console.log('🔧 Proxy trust enabled for Replit infrastructure');
 
 // Add health check endpoint for deployment validation
 app.get('/health', (req: Request, res: Response) => {
