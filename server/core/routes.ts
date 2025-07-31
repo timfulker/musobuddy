@@ -1980,6 +1980,98 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Create new invoice
+  app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log('📄 Invoice creation request:', {
+        body: req.body,
+        userId: userId
+      });
+      
+      // Validate required fields
+      if (!req.body.clientName || !req.body.issueDate || !req.body.dueDate) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: clientName, issueDate, and dueDate are required' 
+        });
+      }
+
+      // Generate invoice number if not provided
+      const invoiceNumber = req.body.invoiceNumber || 
+        `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+
+      const invoiceData = {
+        userId: userId,
+        invoiceNumber,
+        clientName: req.body.clientName,
+        clientEmail: req.body.clientEmail || null,
+        clientAddress: req.body.clientAddress || null,
+        clientPhone: req.body.clientPhone || null,
+        issueDate: req.body.issueDate,
+        dueDate: req.body.dueDate,
+        items: req.body.items || [],
+        subtotal: req.body.subtotal || "0.00",
+        tax: req.body.tax || "0.00",
+        total: req.body.total || "0.00",
+        notes: req.body.notes || null,
+        status: req.body.status || 'draft',
+        enquiryId: req.body.enquiryId || null
+      };
+      
+      const newInvoice = await storage.createInvoice(invoiceData);
+      console.log(`✅ Created invoice #${newInvoice.id} for user ${userId}`);
+      res.json(newInvoice);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to create invoice:', error);
+      res.status(500).json({ 
+        error: 'Failed to create invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Delete invoice
+  app.delete('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(invoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      // Verify invoice exists and belongs to user
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      if (invoice.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      await storage.deleteInvoice(invoiceId);
+      console.log(`✅ Deleted invoice #${invoiceId} for user ${userId}`);
+      res.json({ success: true });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to delete invoice:', error);
+      res.status(500).json({ 
+        error: 'Failed to delete invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // Get individual invoice for viewing
   app.get('/api/invoices/:id/view', isAuthenticated, async (req: any, res) => {
     try {

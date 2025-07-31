@@ -133,8 +133,11 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-01-31 - DASHBOARD UI SIMPLIFICATION + AI TEXT PARSING INTERFACE COMPLETE
+### 2025-01-31 - CRITICAL INVOICE DELETION BUG FIXED + AI TEXT PARSING INTERFACE COMPLETE
 
+- **CRITICAL INVOICE DELETION FIX**: ✅ Added missing DELETE `/api/invoices/:id` endpoint that was causing 404 errors when users attempted to delete invoices
+- **INVOICE CREATE ENDPOINT**: ✅ Added missing POST `/api/invoices` endpoint for invoice creation functionality
+- **COMPLETE INVOICE CRUD**: ✅ Invoice system now has full Create, Read, Update, Delete operations with proper authentication and validation
 - **DASHBOARD HEADER SIMPLIFIED**: ✅ Replaced dropdown menu with single "New Booking" button directing to main booking form for cleaner UX
 - **QUICK-ADD TRANSFORMATION**: ✅ Completely rebuilt quick-add page as AI-powered text parsing interface for WhatsApp/email inquiry extraction
 - **AI TEXT PARSING ENDPOINT**: ✅ Created `/api/bookings/parse-text` backend endpoint using existing email parsing AI functionality
@@ -145,7 +148,7 @@ The application is designed to be user-friendly while maintaining professional-g
 - **MOBILE-OPTIMIZED PARSING**: ✅ Text parsing interface fully responsive with proper mobile form handling
 - **USER WORKFLOW IMPROVEMENT**: ✅ Simplified dashboard navigation reduces cognitive load with direct "New Booking" access
 - **AI INTEGRATION LEVERAGE**: ✅ Reuses existing proven AI parsing logic from email webhook for consistent data extraction
-- **Status**: DASHBOARD SIMPLIFICATION + AI TEXT PARSING OPERATIONAL - Streamlined user interface with powerful AI message parsing capability
+- **Status**: INVOICE DELETION FIXED + AI TEXT PARSING OPERATIONAL - Critical invoice management bug resolved, streamlined user interface with powerful AI message parsing capability
 
 ### 2025-01-31 - CRITICAL GLOCKAPP TEST FIX - Storage Method Name Mismatch Resolved
 
