@@ -1027,11 +1027,15 @@ export async function registerRoutes(app: Express) {
   app.get('/api/get-widget-token', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session.userId;
+      console.log(`🔍 Get widget token requested for user: ${userId}`);
       
       const user = await storage.getUserById(userId);
+      console.log(`👤 User data: ${JSON.stringify({id: user?.id, email: user?.email, hasToken: !!user?.quickAddToken})}`);
+      
       if (user?.quickAddToken) {
         // Use the current app URL from the request headers
         const baseUrl = `${req.protocol}://${req.get('host')}`;
+        console.log(`✅ Returning existing token for user ${userId}: ${user.quickAddToken}`);
         return res.json({ 
           success: true,
           token: user.quickAddToken,
@@ -1039,6 +1043,7 @@ export async function registerRoutes(app: Express) {
         });
       }
       
+      console.log(`📭 No existing token found for user ${userId}`);
       res.json({ success: true, token: null, url: null });
       
     } catch (error: any) {
@@ -3644,4 +3649,5 @@ export async function registerRoutes(app: Express) {
   });
 
   console.log('✅ Clean routes registered successfully');
+  console.log('🔧 Widget token endpoints registered: /api/generate-widget-token, /api/get-widget-token');
 }
