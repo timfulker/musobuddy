@@ -902,24 +902,37 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Gig Type</FormLabel>
-                          <FormControl>
-                            {true ? (
-                              <Select onValueChange={field.onChange} value={field.value}>
+                          <div className="space-y-2">
+                            <Select onValueChange={(value) => {
+                              if (value !== 'custom') {
+                                field.onChange(value);
+                              }
+                            }} value={COMMON_GIG_TYPES.includes(field.value as any) ? field.value : 'custom'}>
+                              <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select gig type" />
+                                  <SelectValue placeholder="Select or type custom gig type" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                  {COMMON_GIG_TYPES.map((gigType, index) => (
-                                    <SelectItem key={index} value={gigType}>
-                                      {gigType}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <Input {...field} disabled={true} placeholder="Saxophone, DJ, etc." />
+                              </FormControl>
+                              <SelectContent>
+                                {COMMON_GIG_TYPES.filter(gigType => gigType !== 'Other').map((gigType, index) => (
+                                  <SelectItem key={index} value={gigType}>
+                                    {gigType}
+                                  </SelectItem>
+                                ))}
+                                <SelectItem value="custom">Custom - Type your own</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            
+                            {(!COMMON_GIG_TYPES.includes(field.value as any) || field.value === '') && (
+                              <FormControl>
+                                <Input 
+                                  placeholder="Type custom gig type"
+                                  value={COMMON_GIG_TYPES.includes(field.value as any) ? '' : field.value}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                />
+                              </FormControl>
                             )}
-                          </FormControl>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}

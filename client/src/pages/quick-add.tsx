@@ -270,21 +270,40 @@ export default function QuickAddPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Type of Gig</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="What type of performance?" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {COMMON_GIG_TYPES.map((gigType, index) => (
-                              <SelectItem key={index} value={gigType}>
-                                {gigType}
-                              </SelectItem>
-                            ))}
-                            <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="space-y-2">
+                          <Select onValueChange={(value) => {
+                            if (value !== 'custom') {
+                              field.onChange(value);
+                            }
+                          }} value={COMMON_GIG_TYPES.includes(field.value as any) ? field.value : 'custom'}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type or choose 'Custom' to type your own" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {COMMON_GIG_TYPES.filter(gigType => gigType !== 'Other').map((gigType, index) => (
+                                <SelectItem key={index} value={gigType}>
+                                  {gigType}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="custom">Custom - Type your own</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          
+                          {(!COMMON_GIG_TYPES.includes(field.value as any) || field.value === '') && (
+                            <FormControl>
+                              <Input 
+                                placeholder="Type custom gig type (e.g., Barn Dance, Quiz Night, Wake)"
+                                value={COMMON_GIG_TYPES.includes(field.value as any) ? '' : field.value}
+                                onChange={(e) => field.onChange(e.target.value)}
+                              />
+                            </FormControl>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Quick entry for unusual gig types not in the standard list
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
