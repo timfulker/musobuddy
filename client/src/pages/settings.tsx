@@ -382,6 +382,14 @@ export default function Settings() {
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: settings.bankDetails || "",
+        // AI Pricing Guide settings
+        aiPricingEnabled: settings.aiPricingEnabled !== false,
+        baseHourlyRate: settings.baseHourlyRate || 130,
+        minimumBookingHours: settings.minimumBookingHours || 2,
+        additionalHourRate: settings.additionalHourRate || 60,
+        djServiceRate: settings.djServiceRate || 300,
+        pricingNotes: settings.pricingNotes || "",
+        specialOffers: settings.specialOffers || "",
         // Instrument settings
         primaryInstrument: settings.primaryInstrument || "",
         bookingDisplayLimit: settings.bookingDisplayLimit || "50",
