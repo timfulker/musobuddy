@@ -428,6 +428,104 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Send template email with enhanced deliverability
+  app.post('/api/templates/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const { template, bookingId } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (!template || !template.subject || !template.emailBody) {
+        return res.status(400).json({ error: 'Template data required' });
+      }
+      
+      console.log(`📧 Sending template email for user: ${userId}, booking: ${bookingId}`);
+      
+      // Get booking data to extract client email
+      const booking = bookingId ? await storage.getBookingDetails(bookingId) : null;
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      
+      // Get user settings for business email
+      const userSettings = await storage.getUserSettings(userId);
+      if (!userSettings) {
+        return res.status(404).json({ error: 'User settings not found' });
+      }
+      
+      // Import email service
+      const { MailgunService } = await import('./services');
+      const emailService = new MailgunService();
+      
+      // Generate professional email signature
+      const signature = emailService.generateEmailSignature(userSettings);
+      const emailWithSignature = template.emailBody + signature;
+      
+      // Enhanced email data with deliverability improvements
+      const emailData = {
+        from: `${userSettings.businessName || 'MusoBuddy'} <noreply@mg.musobuddy.com>`,
+        to: booking.clientEmail,
+        subject: template.subject,
+        html: emailWithSignature,
+        text: emailService.htmlToPlainText(emailWithSignature), // Plain text version for better deliverability
+        replyTo: userSettings.businessEmail || userSettings.email,
+        headers: {
+          'Return-Path': 'bounces@mg.musobuddy.com',
+          'List-Unsubscribe': '<mailto:unsubscribe@mg.musobuddy.com>',
+          'X-Priority': '3',
+          'X-Mailer': 'MusoBuddy Email System v1.0'
+        },
+        tracking: {
+          'v:email-type': 'template',
+          'v:user-id': userId,
+          'v:booking-id': bookingId
+        },
+        emailType: 'template',
+        userId: userId
+      };
+      
+      // Send email
+      const result = await emailService.sendEmail(emailData);
+      
+      // Check if this was a thank you template and update booking status
+      const isThankYouTemplate = template.subject?.toLowerCase().includes('thank you') || 
+                               template.emailBody?.toLowerCase().includes('thank you for');
+      
+      if (isThankYouTemplate && bookingId) {
+        // Only mark as completed for past events
+        const eventDate = new Date(booking.eventDate);
+        const today = new Date();
+        if (eventDate < today) {
+          await storage.updateBookingStatus(bookingId, 'completed');
+          console.log(`✅ Thank you email sent - booking ${bookingId} marked as completed`);
+        }
+      } else if (bookingId) {
+        // For other templates, update status from 'new' to 'in_progress'
+        if (booking.status === 'new') {
+          await storage.updateBookingStatus(bookingId, 'in_progress');
+          console.log(`✅ Template email sent - booking ${bookingId} status updated to in_progress`);
+        }
+      }
+      
+      console.log(`✅ Template email sent successfully for user ${userId}`);
+      res.json({ 
+        success: true, 
+        message: 'Email sent successfully',
+        mailgunId: result.id 
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Template email error:', error);
+      res.status(500).json({ 
+        error: 'Failed to send template email',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // ===== CONTRACT DOWNLOAD ROUTE =====
   app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
     try {
