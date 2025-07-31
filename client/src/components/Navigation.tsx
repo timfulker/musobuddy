@@ -15,10 +15,10 @@ const Navigation = () => {
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: Home },
-    { path: '/enquiries', label: 'Enquiries', icon: MessageCircle },
+    { path: '/bookings', label: 'Bookings', icon: MessageCircle },
     { path: '/contracts', label: 'Contracts', icon: FileText },
     { path: '/invoices', label: 'Invoices', icon: Receipt },
-    { path: '/bookings', label: 'Bookings', icon: Calendar },
+    { path: '/calendar', label: 'Calendar', icon: Calendar },
     { path: '/compliance', label: 'Compliance', icon: ShieldCheck },
     { path: '/pricing', label: 'Upgrade', icon: Crown },
   ];

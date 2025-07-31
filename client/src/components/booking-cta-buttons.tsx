@@ -61,13 +61,7 @@ export default function BookingCTAButtons() {
 
   // Debug logging removed for performance
 
-  // Debug: Log total bookings and their statuses
-  console.log(`Total bookings: ${bookings.length}`);
-  const statusCounts = bookings.reduce((acc, booking) => {
-    acc[booking.status] = (acc[booking.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  console.log('Booking status counts:', statusCounts);
+  // Performance optimization: Debug logging removed
 
   // Use contextual actions to determine what bookings need attention
   // Only show bookings that genuinely need action and aren't completed or cancelled
