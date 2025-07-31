@@ -103,8 +103,7 @@ export class AIResponseGenerator {
         ],
         response_format: { type: "json_object" },
         temperature: 0.7,
-        max_tokens: 1500, // Increased from 1000
-        timeout: 30000
+        max_tokens: 1500
       });
 
       console.log('✅ OpenAI API response received');
