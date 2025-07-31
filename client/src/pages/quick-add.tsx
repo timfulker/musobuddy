@@ -26,7 +26,25 @@ export default function QuickAddPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    window.location.href = '/login?redirect=/quick-add';
+    return null;
+  }
 
   const form = useForm<TextParseFormData>({
     resolver: zodResolver(textParseFormSchema),

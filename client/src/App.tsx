@@ -71,7 +71,6 @@ function Router() {
       <Route path="/sign-contract/:id" component={SignContract} />
       <Route path="/view-contract/:id" component={ViewContract} />
       <Route path="/view-invoice/:id" component={ViewInvoice} />
-      <Route path="/quick-add" component={QuickAdd} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/logout" component={() => {
         // Client-side logout handler - clears cache and redirects
@@ -94,6 +93,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/bookings" component={Bookings} />
       <Route path="/new-booking" component={NewBooking} />
+      <Route path="/quick-add" component={QuickAdd} />
       <Route path="/address-book" component={AddressBook} />
       <Route path="/contracts" component={Contracts} />
       <Route path="/invoices" component={Invoices} />
