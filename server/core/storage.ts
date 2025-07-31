@@ -50,15 +50,31 @@ export class Storage {
   }
 
   async generateQuickAddToken(userId: string) {
-    // Generate a secure random token
-    const token = require('crypto').randomBytes(32).toString('hex');
-    
-    const result = await db.update(users)
-      .set({ quickAddToken: token, updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return result[0]?.quickAddToken || null;
+    try {
+      console.log(`🔧 Storage: Generating token for user ${userId}`);
+      
+      // Generate a secure random token
+      const token = require('crypto').randomBytes(32).toString('hex');
+      console.log(`🎲 Generated token: ${token.substring(0, 8)}...`);
+      
+      const result = await db.update(users)
+        .set({ quickAddToken: token, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      console.log(`💾 Database update result: ${result.length > 0 ? 'SUCCESS' : 'FAILED'}`);
+      
+      if (result.length === 0) {
+        console.error(`❌ No user found with ID ${userId} for token update`);
+        return null;
+      }
+      
+      return result[0]?.quickAddToken || null;
+      
+    } catch (error: any) {
+      console.error('❌ Storage error in generateQuickAddToken:', error);
+      throw error;
+    }
   }
 
   async authenticateUser(email: string, password: string) {

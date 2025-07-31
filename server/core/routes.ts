@@ -1058,9 +1058,20 @@ export async function registerRoutes(app: Express) {
       const userId = req.session.userId;
       console.log(`🎯 Widget token generation requested for user: ${userId}`);
       
+      // Validate user ID
+      if (!userId) {
+        console.error('❌ No user ID in session for widget token generation');
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
       // Check if user already has a token
       const user = await storage.getUserById(userId);
       console.log(`🔍 User found: ${!!user}, existing token: ${!!user?.quickAddToken}`);
+      
+      if (!user) {
+        console.error(`❌ User not found in database: ${userId}`);
+        return res.status(404).json({ error: 'User not found' });
+      }
       
       if (user?.quickAddToken) {
         // Use the current app URL from the request headers
@@ -1076,7 +1087,7 @@ export async function registerRoutes(app: Express) {
       // Generate new token
       console.log(`🔄 Generating new token for user ${userId}`);
       const token = await storage.generateQuickAddToken(userId);
-      console.log(`🎯 Token generation result: ${token}`);
+      console.log(`🎯 Token generation result: ${token ? 'SUCCESS' : 'FAILED'}`);
       
       if (!token) {
         console.error(`❌ Token generation failed for user ${userId}`);
@@ -1085,7 +1096,7 @@ export async function registerRoutes(app: Express) {
       
       // Use the current app URL from the request headers
       const baseUrl = `${req.protocol}://${req.get('host')}`;
-      console.log(`✅ Generated new token for user ${userId}: ${token}`);
+      console.log(`✅ Generated new token for user ${userId}: ${token.substring(0, 8)}...`);
       res.json({ 
         success: true,
         token: token,
@@ -1095,7 +1106,7 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error('❌ Widget token generation error:', error);
       console.error('❌ Error stack:', error.stack);
-      res.status(500).json({ error: 'Failed to generate widget token' });
+      res.status(500).json({ error: 'Failed to generate widget token', details: error.message });
     }
   });
   
