@@ -29,6 +29,7 @@ import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
+import { useGigTypes } from "@/hooks/useGigTypes";
 import type { Booking } from "@shared/schema";
 
 const bookingDetailsSchema = z.object({
@@ -70,6 +71,8 @@ interface BookingDetailsDialogProps {
 }
 
 export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpdate }: BookingDetailsDialogProps) {
+  const { gigTypes } = useGigTypes();
+  
   // Early return if no booking is provided to prevent warnings
   if (!booking) {
     return null;
@@ -907,14 +910,14 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                               if (value !== 'custom') {
                                 field.onChange(value);
                               }
-                            }} value={COMMON_GIG_TYPES.includes(field.value as any) ? field.value : 'custom'}>
+                            }} value={gigTypes.includes(field.value as any) ? field.value : 'custom'}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select or type custom gig type" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {COMMON_GIG_TYPES.filter(gigType => gigType !== 'Other').map((gigType, index) => (
+                                {gigTypes.filter(gigType => gigType !== 'Other').map((gigType, index) => (
                                   <SelectItem key={index} value={gigType}>
                                     {gigType}
                                   </SelectItem>
@@ -923,11 +926,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                               </SelectContent>
                             </Select>
                             
-                            {(!COMMON_GIG_TYPES.includes(field.value as any) || field.value === '') && (
+                            {(!gigTypes.includes(field.value as any) || field.value === '') && (
                               <FormControl>
                                 <Input 
                                   placeholder="Type custom gig type"
-                                  value={COMMON_GIG_TYPES.includes(field.value as any) ? '' : field.value}
+                                  value={gigTypes.includes(field.value as any) ? '' : field.value}
                                   onChange={(e) => field.onChange(e.target.value)}
                                 />
                               </FormControl>

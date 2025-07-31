@@ -86,6 +86,7 @@ const settingsFormSchema = z.object({
   // Instrument and gig type settings  
   primaryInstrument: z.string().optional().or(z.literal("")),
   secondaryInstruments: z.array(z.string()).optional().default([]),
+  customGigTypes: z.array(z.string()).optional().default([]),
   // Performance settings
   bookingDisplayLimit: z.enum(["50", "all"]).default("50"),
   // Removed instrument and gig type fields - feature moved to documentation
@@ -145,6 +146,10 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     bankDetails: data.bankDetails || "",
     // Instrument settings
     primaryInstrument: data.primaryInstrument || "",
+    secondaryInstruments: Array.isArray(data.secondaryInstruments) ? data.secondaryInstruments : 
+                          (typeof data.secondaryInstruments === 'string' ? JSON.parse(data.secondaryInstruments || '[]') : []),
+    customGigTypes: Array.isArray(data.customGigTypes) ? data.customGigTypes : 
+                    (typeof data.customGigTypes === 'string' ? JSON.parse(data.customGigTypes || '[]') : []),
     // Performance settings
     bookingDisplayLimit: data.bookingDisplayLimit || "50",
     // Theme preferences
@@ -212,7 +217,8 @@ export default function Settings() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   const [selectedCustomTitle, setSelectedCustomTitle] = useState("invoice");
-  // Removed gig type input states
+  // Custom gig type input state
+  const [customGigTypeInput, setCustomGigTypeInput] = useState('');
   
   // Track if form has been modified
   const [hasChanges, setHasChanges] = useState(false);
@@ -227,6 +233,7 @@ export default function Settings() {
     financial: false,
     bank: false,
     pricing: false, // AI Pricing Guide section
+    gigTypes: false, // Custom gig types management section
     performance: false,
     instruments: true, // Open by default for new instrument context feature
     themes: false,
@@ -237,6 +244,34 @@ export default function Settings() {
       ...prev,
       [section]: !prev[section as keyof typeof prev]
     }));
+  };
+
+  // Handle adding custom gig type
+  const handleAddCustomGigType = () => {
+    const trimmedInput = customGigTypeInput.trim();
+    if (!trimmedInput) return;
+
+    const currentCustomTypes = form.getValues('customGigTypes') || [];
+    
+    // Check if already exists
+    if (currentCustomTypes.includes(trimmedInput)) {
+      toast({
+        title: "Duplicate Gig Type",
+        description: "This gig type already exists in your custom list.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Add to form data
+    const updatedTypes = [...currentCustomTypes, trimmedInput];
+    form.setValue('customGigTypes', updatedTypes);
+    setCustomGigTypeInput('');
+    
+    toast({
+      title: "Custom Gig Type Added",
+      description: `"${trimmedInput}" has been added to your custom gig types.`,
+    });
   };
 
   const form = useForm<SettingsFormData>({
@@ -262,14 +297,21 @@ export default function Settings() {
   // Save settings function - simplified version
   const saveSettings = useMutation({
     mutationFn: async (data: SettingsFormData) => {
-      
+      // Ensure arrays are properly formatted for JSON transmission
+      const processedData = {
+        ...data,
+        secondaryInstruments: Array.isArray(data.secondaryInstruments) ? 
+          data.secondaryInstruments : [],
+        customGigTypes: Array.isArray(data.customGigTypes) ? 
+          data.customGigTypes : []
+      };
       
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(processedData),
         credentials: 'include', // This is crucial for session cookies
       });
       
@@ -1287,6 +1329,114 @@ export default function Settings() {
                           </div>
                         </div>
                       )}
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Custom Gig Types */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <Collapsible open={expandedSections.gigTypes} onOpenChange={() => toggleSection('gigTypes')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Music className="w-5 h-5 text-purple-600" />
+                          <span>Gig Types Management</span>
+                        </div>
+                        {expandedSections.gigTypes ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
+                        View available gig types for your instruments and add custom ones
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-6">
+                      {/* Available Gig Types Display */}
+                      {(selectedInstrument || form.watch('secondaryInstruments')?.length > 0) && availableGigTypes.length > 0 && (
+                        <div className="space-y-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Available Gig Types for Your Instruments</h4>
+                          <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                              {availableGigTypes.map((gigType, index) => (
+                                <div key={index} className="bg-white dark:bg-slate-700 px-3 py-2 rounded-md border text-center">
+                                  {gigType}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                              These gig types are available in booking forms and AI will use them for contextual template generation.
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Custom Gig Types Management */}
+                      <FormField
+                        control={form.control}
+                        name="customGigTypes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Your Custom Gig Types</FormLabel>
+                            <div className="space-y-3">
+                              {/* Display existing custom gig types */}
+                              {field.value && Array.isArray(field.value) && field.value.length > 0 && (
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                                  <div className="flex flex-wrap gap-2">
+                                    {field.value.map((gigType: string, index: number) => (
+                                      <div key={index} className="flex items-center bg-white dark:bg-slate-700 px-3 py-1 rounded-full border text-sm">
+                                        <span>{gigType}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updated = field.value.filter((_: string, i: number) => i !== index);
+                                            field.onChange(updated);
+                                          }}
+                                          className="ml-2 text-red-500 hover:text-red-700 text-xs"
+                                        >
+                                          ×
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Add new custom gig type */}
+                              <div className="flex gap-2">
+                                <Input 
+                                  placeholder="Add custom gig type (e.g., Masonic Lodge, Burlesque Show, Quiz Night)"
+                                  value={customGigTypeInput}
+                                  onChange={(e) => setCustomGigTypeInput(e.target.value)}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddCustomGigType();
+                                    }
+                                  }}
+                                />
+                                <Button 
+                                  type="button" 
+                                  onClick={handleAddCustomGigType}
+                                  disabled={!customGigTypeInput.trim()}
+                                  size="sm"
+                                  className="px-4"
+                                >
+                                  Add
+                                </Button>
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                Add specialized gig types unique to your business. These will be saved to your account and available in booking forms.
+                              </div>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>

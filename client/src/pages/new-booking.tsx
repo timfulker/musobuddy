@@ -15,6 +15,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
+import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
 
 // Enhanced schema for full booking creation
@@ -51,6 +52,7 @@ export default function NewBookingPage() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { gigTypes } = useGigTypes();
   
   // Get existing bookings for enquiry auto-fill
   const { data: bookings = [] } = useQuery({
@@ -415,14 +417,14 @@ export default function NewBookingPage() {
                             if (value !== 'custom') {
                               field.onChange(value);
                             }
-                          }} value={COMMON_GIG_TYPES.includes(field.value as any) ? field.value : 'custom'}>
+                          }} value={gigTypes.includes(field.value as any) ? field.value : 'custom'}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select gig type or choose 'Custom' to type your own" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {COMMON_GIG_TYPES.filter(gigType => gigType !== 'Other').map((gigType, index) => (
+                              {gigTypes.filter(gigType => gigType !== 'Other').map((gigType, index) => (
                                 <SelectItem key={index} value={gigType}>
                                   {gigType}
                                 </SelectItem>
@@ -431,11 +433,11 @@ export default function NewBookingPage() {
                             </SelectContent>
                           </Select>
                           
-                          {(!COMMON_GIG_TYPES.includes(field.value as any) || field.value === '') && (
+                          {(!gigTypes.includes(field.value as any) || field.value === '') && (
                             <FormControl>
                               <Input 
                                 placeholder="Type custom gig type (e.g., Burlesque Show, Masonic Lodge, School Assembly)"
-                                value={COMMON_GIG_TYPES.includes(field.value as any) ? '' : field.value}
+                                value={gigTypes.includes(field.value as any) ? '' : field.value}
                                 onChange={(e) => field.onChange(e.target.value)}
                               />
                             </FormControl>
