@@ -298,32 +298,32 @@ export default function AdminPanel() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      <div className={`flex-1 ${isDesktop ? "lg:pl-64" : ""}`}>
+      <div className={`flex-1 min-w-0 ${isDesktop ? "lg:pl-64" : ""}`}>
         <DashboardHeader />
         
         {!isDesktop && (
           <MobileNav />
         )}
 
-        <main className="p-6">
+        <main className="p-3 sm:p-6 max-w-full overflow-x-hidden">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Crown className="h-8 w-8 text-yellow-500" />
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+              <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
               Admin Panel
             </h1>
-            <p className="text-muted-foreground">System overview and user management</p>
+            <p className="text-muted-foreground text-sm sm:text-base">System overview and user management</p>
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="beta">Beta Testers</TabsTrigger>
-              <TabsTrigger value="system">System</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+              <TabsTrigger value="beta" className="text-xs sm:text-sm">Beta Testers</TabsTrigger>
+              <TabsTrigger value="system" className="text-xs sm:text-sm">System</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -373,7 +373,7 @@ export default function AdminPanel() {
                 </Card>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Platform Health</CardTitle>
@@ -567,15 +567,16 @@ export default function AdminPanel() {
                 <CardContent>
                   {selectedUsers.length > 0 && (
                     <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <span className="text-sm font-medium">
                           {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
                         </span>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto">
                           <Button 
                             size="sm" 
                             variant="outline" 
                             onClick={() => setSelectedUsers([])}
+                            className="flex-1 sm:flex-none"
                           >
                             Clear Selection
                           </Button>
@@ -584,6 +585,7 @@ export default function AdminPanel() {
                             variant="destructive" 
                             onClick={handleBulkDelete}
                             disabled={bulkDeleteMutation.isPending}
+                            className="flex-1 sm:flex-none"
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
                             Delete Selected
@@ -612,58 +614,58 @@ export default function AdminPanel() {
                       )}
                       
                       {filteredUsers.map((user) => (
-                        <div key={user.id} className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={selectedUsers.includes(user.id)}
-                            onChange={() => handleSelectUser(user.id)}
-                            className="rounded"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                              <div>
-                                <div className="font-medium">
-                                  {user.firstName} {user.lastName}
-                                </div>
-                                <div className="text-sm text-muted-foreground">{user.email}</div>
+                        <div key={user.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-3 flex-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedUsers.includes(user.id)}
+                              onChange={() => handleSelectUser(user.id)}
+                              className="rounded flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">
+                                {user.firstName} {user.lastName}
+                              </div>
+                              <div className="text-sm text-muted-foreground truncate">{user.email}</div>
+                              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                <Badge className={getTierBadge(user.tier)}>
+                                  {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
+                                </Badge>
+                                {user.isAdmin && (
+                                  <Badge variant="outline" className="text-yellow-600 border-yellow-200">
+                                    Admin
+                                  </Badge>
+                                )}
+                                {user.isBetaTester && (
+                                  <Badge variant="outline" className="text-blue-600 border-blue-200">
+                                    Beta Tester
+                                  </Badge>
+                                )}
+                                <span className="text-xs text-muted-foreground hidden sm:inline">
+                                  ID: {user.id}
+                                </span>
                               </div>
                             </div>
-                            <div className="mt-2 flex items-center gap-2 flex-wrap">
-                              <Badge className={getTierBadge(user.tier)}>
-                                {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)}
-                              </Badge>
-                              {user.isAdmin && (
-                                <Badge variant="outline" className="text-yellow-600 border-yellow-200">
-                                  Admin
-                                </Badge>
-                              )}
-                              {user.isBetaTester && (
-                                <Badge variant="outline" className="text-blue-600 border-blue-200">
-                                  Beta Tester
-                                </Badge>
-                              )}
-                              <span className="text-xs text-muted-foreground">
-                                ID: {user.id}
-                              </span>
-                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 justify-end sm:justify-start flex-shrink-0">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleEditUser(user)}
+                              className="text-xs sm:text-sm"
                             >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              <span className="hidden sm:inline">Edit</span>
                             </Button>
                             <Button
                               variant="destructive"
                               size="sm"
                               onClick={() => deleteUserMutation.mutate(user.id)}
                               disabled={deleteUserMutation.isPending}
+                              className="text-xs sm:text-sm"
                             >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              <span className="hidden sm:inline">Delete</span>
                             </Button>
                           </div>
                         </div>
