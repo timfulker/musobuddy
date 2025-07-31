@@ -28,6 +28,12 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
     queryKey: ['/api/conflicts'],
   });
 
+  const { data: resolutions = [] } = useQuery({
+    queryKey: ['/api/conflicts/resolutions'],
+  });
+
+  const resolutionsArray = resolutions as any[];
+
   const backendConflicts = conflicts as BackendConflict[];
 
   const handleConflictTypeClick = (severity: string) => {
@@ -52,7 +58,7 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
     );
   }
 
-  // Get unique conflicts for display
+  // Get unique conflicts for display and filter out resolved ones
   const uniqueMap = new Map();
   backendConflicts.forEach((conflict: BackendConflict) => {
     const key = [conflict.bookingId, conflict.withBookingId].sort().join('-');
@@ -60,7 +66,37 @@ export default function ConflictsWidget({ onFilterByConflictType }: ConflictsWid
       uniqueMap.set(key, conflict);
     }
   });
-  const uniqueConflicts = Array.from(uniqueMap.values());
+  
+  // Filter out resolved conflicts
+  const unresolvedConflicts = Array.from(uniqueMap.values()).filter((conflict: BackendConflict) => {
+    // Check if this conflict pair is in the resolutions
+    const isResolved = resolutionsArray.some((resolution: any) => {
+      if (!resolution?.bookingIds) return false;
+      
+      try {
+        let resolutionBookingIds;
+        if (typeof resolution.bookingIds === 'string') {
+          resolutionBookingIds = JSON.parse(resolution.bookingIds);
+        } else if (Array.isArray(resolution.bookingIds)) {
+          resolutionBookingIds = resolution.bookingIds;
+        } else {
+          return false;
+        }
+        
+        const conflictBookingIds = [conflict.bookingId, conflict.withBookingId].sort((a, b) => a - b);
+        const sortedResolutionIds = resolutionBookingIds.sort((a: number, b: number) => a - b);
+        
+        return JSON.stringify(sortedResolutionIds) === JSON.stringify(conflictBookingIds);
+      } catch (error) {
+        console.warn('Error parsing resolution bookingIds:', error);
+        return false;
+      }
+    });
+    
+    return !isResolved;
+  });
+  
+  const uniqueConflicts = unresolvedConflicts;
 
   // Group conflicts by severity for counter display
   const conflictCounts = {
