@@ -48,6 +48,7 @@ interface UserSettings {
   county?: string;
   postcode?: string;
   primaryInstrument?: string;
+  secondaryInstruments?: string[] | string;
   availableGigTypes?: any;
   // AI Pricing Guide fields
   aiPricingEnabled?: boolean;
@@ -220,6 +221,29 @@ INSTRUMENT-SPECIFIC GUIDANCE:
 ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` : ''}
 ` : '';
 
+    // Check if user offers DJ services (primary or secondary instrument)
+    let secondaryInstruments: string[] = [];
+    if (userSettings?.secondaryInstruments) {
+      try {
+        if (typeof userSettings.secondaryInstruments === 'string') {
+          secondaryInstruments = JSON.parse(userSettings.secondaryInstruments);
+        } else if (Array.isArray(userSettings.secondaryInstruments)) {
+          secondaryInstruments = userSettings.secondaryInstruments;
+        }
+      } catch (e) {
+        console.warn('Failed to parse secondaryInstruments:', userSettings.secondaryInstruments);
+        secondaryInstruments = [];
+      }
+    }
+    
+    const hasDJServices = userSettings?.primaryInstrument === 'dj' || secondaryInstruments.includes('dj');
+    
+    console.log('🎵 DJ Service Detection:', {
+      primaryInstrument: userSettings?.primaryInstrument,
+      secondaryInstruments,
+      hasDJServices
+    });
+    
     // Build pricing structure from user settings
     const baseRate = userSettings?.baseHourlyRate || 130;
     const minimumHours = userSettings?.minimumBookingHours || 2;
@@ -231,15 +255,20 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
     const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
     
-    // Calculate common packages
-    const packages = [
+    // Calculate common packages - only include DJ packages if user offers DJ services
+    const basePackages = [
       `${minimumHours} hours ${primaryInstrument}: ${basePriceStr}`,
       `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate}`,
-      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2)}`,
+      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2)}`
+    ];
+    
+    const djPackages = hasDJServices ? [
       `${minimumHours} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + djRate}`,
       `${minimumHours + 1} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + additionalHourRate + djRate}`,
       `${minimumHours + 2} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + (additionalHourRate * 2) + djRate}`
-    ];
+    ] : [];
+    
+    const packages = [...basePackages, ...djPackages];
 
     const pricingSection = pricingEnabled ? `
 PRICING STRUCTURE GUIDELINES:
@@ -248,12 +277,13 @@ PRICING STRUCTURE GUIDELINES:
 - Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
 - Use this pricing structure for ${primaryInstrument}/instrumental performances:
   * Base rate: ${minimumHours} hours of live performance - ${basePriceStr}
-  * Additional hours: ${additionalHourStr}
-  * DJ Services: ${djServiceStr}
+  * Additional hours: ${additionalHourStr}${hasDJServices ? `
+  * DJ Services: ${djServiceStr}` : ''}
   * Example calculations:
     ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
-- Present 3-4 package options starting from ${minimumHours} hours, clearly showing ${primaryInstrument} performance + any additional services
-- Mention additional services like DJ capabilities, MC services, equipment details when relevant
+- Present 3-4 package options starting from ${minimumHours} hours, clearly showing ${primaryInstrument} performance${hasDJServices ? ' + any additional services' : ''}${hasDJServices ? `
+- Mention DJ capabilities when relevant - you offer DJ services as an additional service` : ''}
+- Mention equipment details, setup capabilities, and venue requirements when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
 - Always mention that packages can be customized to client requirements
 - Include payment terms and booking process information

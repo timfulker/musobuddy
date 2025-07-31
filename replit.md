@@ -133,6 +133,18 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-01-31 - AI DJ SERVICE FILTERING COMPLETE - Smart Instrument Detection for Template Generation
+
+- **CRITICAL AI BUG FIXED**: ✅ AI template generation now only mentions DJ services when user has selected DJ as primary or secondary instrument
+- **INTELLIGENT INSTRUMENT DETECTION**: ✅ AI system checks both primaryInstrument and secondaryInstruments fields from user settings before including DJ pricing
+- **CONDITIONAL PRICING PACKAGES**: ✅ DJ pricing combinations only appear in AI responses when user actually offers DJ services
+- **SECONDARY INSTRUMENTS INTEGRATION**: ✅ AI properly parses secondaryInstruments JSON array to detect DJ capabilities
+- **CLEAN TEMPLATE GENERATION**: ✅ Saxophone-only users no longer receive DJ pricing mentions in AI-generated responses
+- **DEBUG LOGGING ADDED**: ✅ Enhanced logging to verify DJ service detection is working correctly during AI response generation
+- **BUSINESS LOGIC PROTECTION**: ✅ Prevents confusion where AI suggests services the musician doesn't actually provide
+- **USER SETTINGS ACCURACY**: ✅ AI template system now accurately reflects user's actual instrument capabilities and service offerings
+- **Status**: AI DJ FILTERING OPERATIONAL - Template generation accurately reflects user's selected instruments only
+
 ### 2025-01-31 - BOOKING DISPLAY LOGIC ENHANCED - Future Bookings Protection + Manual Gig Entry Complete
 
 - **CRITICAL BOOKING DISPLAY FIX**: ✅ Changed "Last 50 bookings" to "All future bookings + 50 past bookings" to prevent future gigs from being hidden
