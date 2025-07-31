@@ -70,6 +70,12 @@ interface BookingDetailsDialogProps {
 }
 
 export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpdate }: BookingDetailsDialogProps) {
+  // Early return if no booking is provided to prevent warnings
+  if (!booking) {
+    console.log('BookingDetailsDialog: No booking provided, returning null');
+    return null;
+  }
+  
   const [customFields, setCustomFields] = useState<Array<{id: string, name: string, value: string}>>([]);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldValue, setNewFieldValue] = useState("");
@@ -169,16 +175,9 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   // Initialize form when booking changes
   useEffect(() => {
     if (booking) {
-      // Debug: Log the actual booking data to see what's coming from the server
-      console.log('🔍 BookingDetailsDialog: Raw booking data received:', {
-        id: booking.id,
-        clientName: booking.clientName,
-        eventTime: booking.eventTime,
-        eventEndTime: booking.eventEndTime,
-        hasEventTime: !!booking.eventTime,
-        hasEventEndTime: !!booking.eventEndTime,
-        eventTimeType: typeof booking.eventTime,
-        eventEndTimeType: typeof booking.eventEndTime
+      console.log('📋 Loading booking data into form:', { 
+        id: booking.id, 
+        clientName: booking.clientName 
       });
       
       const bookingData = {
@@ -217,6 +216,11 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
       setHasChanges(false);
       
       // Initialize custom fields - customFields doesn't exist in schema yet
+      setCustomFields([]);
+    } else {
+      // Reset form when no booking is provided
+      form.reset();
+      setInitialData(null);
       setCustomFields([]);
     }
   }, [booking, form]);

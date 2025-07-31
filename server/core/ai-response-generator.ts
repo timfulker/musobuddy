@@ -313,4 +313,5 @@ Generate appropriate subject, email body, and SMS version.`;
   }
 }
 
+// Export an instance for use in routes
 export const aiResponseGenerator = new AIResponseGenerator();
