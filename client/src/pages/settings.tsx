@@ -297,8 +297,15 @@ export default function Settings() {
     form.setValue('primaryInstrument', instrument);
     setHasChanges(true);
     
-    // Also update the gig types in the backend
-    updateInstrumentAndGigTypes(instrument, gigTypes);
+    console.log(`🎵 Instrument changed to: ${instrument}`);
+    console.log(`🎵 Form value set to:`, form.getValues('primaryInstrument'));
+    
+    // Note: We don't call the separate endpoint here anymore
+    // The instrument will be saved when the main form is submitted
+    toast({
+      title: "Instrument Selected",
+      description: `Set to ${getInstrumentDisplayName(instrument)}. Remember to save your settings!`,
+    });
   };
 
   // API function to update instrument and gig types

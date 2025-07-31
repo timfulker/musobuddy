@@ -174,27 +174,18 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // For testing - return mock settings to fix JSON parsing
-      const mockSettings = {
-        businessName: "Test Business",
-        businessEmail: "test@example.com",
-        phone: "+44 1234 567890",
-        // Removed instrument and gig type fields
-        businessAddress: "",
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        county: "",
-        postcode: "",
-        website: "",
-        taxNumber: "",
-        emailFromName: "",
-        nextInvoiceNumber: 1,
-        defaultTerms: "",
-        bankDetails: ""
-      };
+      console.log(`🔍 Fetching settings for user: ${userId}`);
       
-      res.json(mockSettings);
+      // Fetch actual user settings from database
+      const userSettings = await storage.getUserSettings(userId);
+      
+      console.log(`✅ Settings retrieved for user ${userId}:`, {
+        businessName: userSettings?.businessName,
+        primaryInstrument: userSettings?.primaryInstrument,
+        hasSettings: !!userSettings
+      });
+      
+      res.json(userSettings || {});
     } catch (error: any) {
       console.error('❌ Settings fetch error:', error);
       res.status(500).json({ error: 'Failed to fetch settings' });
@@ -208,8 +199,15 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const { storage } = await import('./storage');
+      console.log(`💾 Saving settings for user: ${userId}`);
+      console.log(`🎵 Instrument in request:`, req.body.primaryInstrument);
+      
       const result = await storage.updateSettings(userId, req.body);
+      
+      console.log(`✅ Settings saved successfully for user ${userId}`, {
+        primaryInstrument: result?.primaryInstrument,
+        businessName: result?.businessName
+      });
       
       res.json(result);
     } catch (error: any) {
@@ -247,45 +245,6 @@ export async function registerRoutes(app: Express) {
   });
 
   // Session restoration route moved to auth-rebuilt.ts to avoid duplication
-
-  // ===== SETTINGS API =====
-  app.get('/api/settings', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-      
-      console.log(`⚙️ Fetching settings for user: ${userId}`);
-      
-      const settings = await storage.getUserSettings(userId);
-      
-      if (!settings) {
-        // Return default empty settings instead of 404
-        console.log(`📝 No settings found for user ${userId}, returning defaults`);
-        return res.json({
-          userId: userId,
-          businessName: '',
-          businessEmail: '',
-          businessAddress: '',
-          phone: '',
-          website: '',
-          bankDetails: '',
-          defaultTerms: ''
-        });
-      }
-      
-      console.log(`✅ Settings found for user ${userId}`);
-      res.json(settings);
-      
-    } catch (error: any) {
-      console.error('❌ Failed to fetch user settings:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch user settings',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-  });
 
   app.patch('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
