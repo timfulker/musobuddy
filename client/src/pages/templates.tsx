@@ -1129,20 +1129,34 @@ export default function Templates() {
       {/* AI Response Editing Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Edit3 className="w-5 h-5 mr-2 text-blue-600" />
-              Edit AI Generated Response
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Make any changes you need before sending this response to your client
-            </p>
+          <DialogHeader className="pb-6 border-b border-gray-100">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                <Edit3 className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Edit AI Response
+                </DialogTitle>
+                <p className="text-sm text-gray-600 mt-1 flex items-center">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                  Perfect your AI-generated content before sending to your client
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">AI Powered</div>
+                <div className="text-xs text-purple-600 font-semibold">Ready to Edit</div>
+              </div>
+            </div>
           </DialogHeader>
           
           {editingContent && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-subject">Email Subject</Label>
+            <div className="space-y-6 pt-6">
+              <div className="space-y-2">
+                <Label htmlFor="edit-subject" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <span className="inline-block w-1 h-4 bg-purple-500 rounded-full mr-2"></span>
+                  Email Subject
+                </Label>
                 <Input
                   id="edit-subject"
                   value={editingContent.subject}
@@ -1151,53 +1165,78 @@ export default function Templates() {
                     subject: e.target.value
                   })}
                   placeholder="Email subject line"
-                  className="mt-1"
+                  className="border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200"
                 />
               </div>
               
-              <div>
-                <Label htmlFor="edit-email-body">Email Body</Label>
-                <Textarea
-                  id="edit-email-body"
-                  value={editingContent.emailBody}
-                  onChange={(e) => setEditingContent({
-                    ...editingContent,
-                    emailBody: e.target.value
-                  })}
-                  placeholder="Your email message here..."
-                  rows={12}
-                  className="mt-1 font-mono text-sm"
-                />
+              <div className="space-y-2">
+                <Label htmlFor="edit-email-body" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <span className="inline-block w-1 h-4 bg-blue-500 rounded-full mr-2"></span>
+                  Email Body
+                </Label>
+                <div className="relative">
+                  <Textarea
+                    id="edit-email-body"
+                    value={editingContent.emailBody}
+                    onChange={(e) => setEditingContent({
+                      ...editingContent,
+                      emailBody: e.target.value
+                    })}
+                    placeholder="Your email message here..."
+                    rows={12}
+                    className="font-mono text-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 resize-none"
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs text-gray-400 bg-white px-2 py-1 rounded border">
+                    {editingContent.emailBody.length} characters
+                  </div>
+                </div>
               </div>
               
               {editingContent.smsBody && (
-                <div>
-                  <Label htmlFor="edit-sms-body">SMS Body (Optional)</Label>
-                  <Textarea
-                    id="edit-sms-body"
-                    value={editingContent.smsBody}
-                    onChange={(e) => setEditingContent({
-                      ...editingContent,
-                      smsBody: e.target.value
-                    })}
-                    placeholder="Your SMS message here..."
-                    rows={3}
-                    className="mt-1"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="edit-sms-body" className="text-sm font-semibold text-gray-700 flex items-center">
+                    <span className="inline-block w-1 h-4 bg-green-500 rounded-full mr-2"></span>
+                    SMS Body (Optional)
+                  </Label>
+                  <div className="relative">
+                    <Textarea
+                      id="edit-sms-body"
+                      value={editingContent.smsBody}
+                      onChange={(e) => setEditingContent({
+                        ...editingContent,
+                        smsBody: e.target.value
+                      })}
+                      placeholder="Your SMS message here..."
+                      rows={3}
+                      className="border-gray-200 focus:border-green-500 focus:ring-green-500/20 transition-all duration-200"
+                    />
+                    <div className="absolute bottom-2 right-2 text-xs text-gray-400 bg-white px-2 py-1 rounded border">
+                      {editingContent.smsBody.length}/160
+                    </div>
+                  </div>
                 </div>
               )}
               
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button variant="outline" onClick={() => {
-                  setShowEditDialog(false);
-                  setEditingContent(null);
-                }}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveEditedResponse} className="bg-blue-600 hover:bg-blue-700">
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Use Edited Response
-                </Button>
+              <div className="flex justify-between items-center pt-6 border-t border-gray-100">
+                <div className="text-xs text-gray-500 flex items-center">
+                  <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse"></span>
+                  Changes will be applied to your response preview
+                </div>
+                <div className="flex space-x-3">
+                  <Button variant="outline" onClick={() => {
+                    setShowEditDialog(false);
+                    setEditingContent(null);
+                  }} className="px-6">
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSaveEditedResponse} 
+                    className="bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 hover:from-purple-600 hover:via-blue-600 hover:to-indigo-700 px-6 shadow-lg transition-all duration-200"
+                  >
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    Use Edited Response
+                  </Button>
+                </div>
               </div>
             </div>
           )}
