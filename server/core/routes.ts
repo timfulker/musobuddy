@@ -2812,6 +2812,9 @@ export async function registerRoutes(app: Express) {
       
       // Send invitation email
       try {
+        const { MailgunService } = await import('./services');
+        const emailService = new MailgunService();
+        
         await emailService.sendEmail({
           to: email,
           from: process.env.FROM_EMAIL || 'noreply@musobuddy.com',
