@@ -457,6 +457,28 @@ export default function Settings() {
     }
   };
 
+  // Load existing widget token on page load
+  useEffect(() => {
+    const loadWidgetToken = async () => {
+      try {
+        const response = await fetch('/api/get-widget-token', {
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.url) {
+            setWidgetUrl(data.url);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading widget token:', error);
+      }
+    };
+    
+    loadWidgetToken();
+  }, []);
+
   // Initialize form when settings are loaded - CRITICAL FIX for instruments and gig types disappearing
   useEffect(() => {
     if (settings && !saveSettings.isPending) {

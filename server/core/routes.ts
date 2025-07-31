@@ -1023,6 +1023,30 @@ export async function registerRoutes(app: Express) {
   
   // ===== WIDGET TOKEN MANAGEMENT =====
   
+  // Get existing widget token for authenticated user
+  app.get('/api/get-widget-token', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      
+      const user = await storage.getUserById(userId);
+      if (user?.quickAddToken) {
+        // Use the current app URL from the request headers
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        return res.json({ 
+          success: true,
+          token: user.quickAddToken,
+          url: `${baseUrl}/widget/${user.quickAddToken}`
+        });
+      }
+      
+      res.json({ success: true, token: null, url: null });
+      
+    } catch (error: any) {
+      console.error('❌ Widget token retrieval error:', error);
+      res.status(500).json({ error: 'Failed to retrieve widget token' });
+    }
+  });
+  
   // Generate or get quick-add widget token for authenticated user
   app.post('/api/generate-widget-token', isAuthenticated, async (req: any, res) => {
     try {
@@ -1031,10 +1055,12 @@ export async function registerRoutes(app: Express) {
       // Check if user already has a token
       const user = await storage.getUserById(userId);
       if (user?.quickAddToken) {
+        // Use the current app URL from the request headers
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
         return res.json({ 
           success: true,
           token: user.quickAddToken,
-          url: `${process.env.REPLIT_DEV_DOMAIN || 'https://musobuddy.replit.app'}/widget/${user.quickAddToken}`
+          url: `${baseUrl}/widget/${user.quickAddToken}`
         });
       }
       
@@ -1044,10 +1070,12 @@ export async function registerRoutes(app: Express) {
         return res.status(500).json({ error: 'Failed to generate widget token' });
       }
       
+      // Use the current app URL from the request headers
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
       res.json({ 
         success: true,
         token: token,
-        url: `${process.env.REPLIT_DEV_DOMAIN || 'https://musobuddy.replit.app'}/widget/${token}`
+        url: `${baseUrl}/widget/${token}`
       });
       
     } catch (error: any) {
