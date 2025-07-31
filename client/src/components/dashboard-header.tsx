@@ -2,16 +2,10 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, ChevronDown, FileText, Zap } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Link } from "wouter";
 import NotificationsDropdown from "@/components/notifications-dropdown";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export default function DashboardHeader() {
   const { user } = useAuth();
@@ -48,30 +42,13 @@ export default function DashboardHeader() {
           <NotificationsDropdown />
           
           {/* Quick Actions */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">New Enquiry</span>
-                <span className="sm:hidden">New</span>
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href="/bookings?action=new" className="flex items-center w-full">
-                  <FileText className="w-4 h-4 mr-2" />
-                  New Enquiry Form
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/quick-add" className="flex items-center w-full">
-                  <Zap className="w-4 h-4 mr-2" />
-                  Quick Add
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Link href="/bookings?action=new">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">New Booking</span>
+              <span className="sm:hidden">New</span>
+            </Button>
+          </Link>
         </div>
       </div>
     </header>

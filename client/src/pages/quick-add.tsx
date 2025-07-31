@@ -6,104 +6,75 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Calendar, MessageSquare, Plus, CheckCircle, Home, Crown } from "lucide-react";
+import { Bot, MessageSquare, CheckCircle, Home, Sparkles } from "lucide-react";
 import { Link } from "wouter";
-import { insertEnquirySchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { COMMON_GIG_TYPES } from "@shared/gig-types";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { useGigTypes } from "@/hooks/useGigTypes";
 import { z } from "zod";
 
-const quickAddFormSchema = z.object({
-  clientName: z.string().optional(),
-  clientEmail: z.string().email().optional().or(z.literal("")),
-  clientPhone: z.string().optional(),
-  eventDate: z.string().optional(),
-  venue: z.string().optional(),
-  estimatedValue: z.string().optional(),
-  travelExpense: z.string().optional(),
-  notes: z.string().optional(),
-  source: z.string().optional(),
-  contactMethod: z.string().optional(),
-  gigType: z.string().optional(),
+const textParseFormSchema = z.object({
+  messageText: z.string().min(10, "Message must be at least 10 characters long"),
+  clientContact: z.string().min(1, "Please specify who this message is from"),
+  clientAddress: z.string().optional(),
 });
 
-type QuickAddFormData = z.infer<typeof quickAddFormSchema>;
+type TextParseFormData = z.infer<typeof textParseFormSchema>;
 
 export default function QuickAddPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { gigTypes } = useGigTypes();
-  
-  // Get existing bookings for context
-  const { data: bookings = [] } = useQuery({
-    queryKey: ['/api/bookings'],
-  });
-  
-  const bookingsArray = Array.isArray(bookings) ? bookings : [];
 
-  const form = useForm<QuickAddFormData>({
-    resolver: zodResolver(quickAddFormSchema),
+  const form = useForm<TextParseFormData>({
+    resolver: zodResolver(textParseFormSchema),
     defaultValues: {
-      clientName: "",
-      clientEmail: "",
-      clientPhone: "",
-      eventDate: "",
-      venue: "",
-      estimatedValue: "",
-      travelExpense: "",
-      notes: "",
-      source: "",
-      contactMethod: "",
-      gigType: "",
+      messageText: "",
+      clientContact: "",
+      clientAddress: "",
     },
   });
 
-  const createEnquiryMutation = useMutation({
-    mutationFn: async (data: QuickAddFormData) => {
-      const enquiryData = {
-        title: `Enquiry from ${data.clientName}`,
-        clientName: data.clientName,
-        clientEmail: data.clientEmail || null,
-        clientPhone: data.clientPhone || null,
-        eventDate: data.eventDate ? new Date(data.eventDate) : new Date(),
-        venue: data.venue || null,
-        estimatedValue: data.estimatedValue ? parseFloat(data.estimatedValue) : null,
-        travelExpense: data.travelExpense ? parseFloat(data.travelExpense) : null,
-        notes: data.notes ? `${data.notes}\n\nContact Method - ${data.contactMethod || 'Not specified'}` : `Contact Method - ${data.contactMethod || 'Not specified'}`,
-        status: "new" as const,
+  const parseMessageMutation = useMutation({
+    mutationFn: async (data: TextParseFormData) => {
+      setIsParsing(true);
+      
+      // Use the existing email parsing API to extract booking details
+      const parseData = {
+        emailContent: data.messageText,
+        fromEmail: data.clientContact,
+        clientAddress: data.clientAddress || null
       };
-      const response = await apiRequest('POST', '/api/bookings', enquiryData);
+      
+      const response = await apiRequest('POST', '/api/bookings/parse-text', parseData);
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (parsedBooking) => {
       setIsSubmitted(true);
+      setIsParsing(false);
       toast({
         title: "Success!",
-        description: "Enquiry has been added to your system",
+        description: "Message parsed and booking created successfully",
       });
     },
     onError: (error) => {
-      console.error("Quick Add Error:", error);
+      console.error("Text Parse Error:", error);
+      setIsParsing(false);
       toast({
         title: "Error",
-        description: "Failed to add enquiry. Please try again.",
+        description: "Failed to parse message. Please check the text and try again.",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: QuickAddFormData) => {
-    createEnquiryMutation.mutate(data);
+  const onSubmit = (data: TextParseFormData) => {
+    parseMessageMutation.mutate(data);
   };
 
-  const handleAddAnother = () => {
+  const handleParseAnother = () => {
     setIsSubmitted(false);
     form.reset();
   };
@@ -117,14 +88,14 @@ export default function QuickAddPage() {
               <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">Enquiry Added!</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Booking Created!</h2>
               <p className="text-gray-600">
-                Your booking enquiry has been successfully added to MusoBuddy.
+                Your message has been parsed and a booking created successfully.
               </p>
               <div className="space-y-2">
-                <Button onClick={handleAddAnother} className="w-full">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Another Enquiry
+                <Button onClick={handleParseAnother} className="w-full">
+                  <Bot className="w-4 h-4 mr-2" />
+                  Parse Another Message
                 </Button>
                 <Link href="/">
                   <Button variant="outline" className="w-full">
@@ -151,247 +122,33 @@ export default function QuickAddPage() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quick Add Enquiry</h1>
-          <p className="text-gray-600">Add a new booking enquiry to your MusoBuddy system</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Parse Message to Booking</h1>
+          <p className="text-gray-600">Paste WhatsApp messages, emails, or text enquiries to automatically create bookings</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              Enquiry Details
+              <Sparkles className="w-5 h-5" />
+              AI Message Parser
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="clientName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Client Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter client name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="source"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Source</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Where did this enquiry come from?" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                            <SelectItem value="SMS">SMS</SelectItem>
-                            <SelectItem value="Phone Call">Phone Call</SelectItem>
-                            <SelectItem value="Email">Email</SelectItem>
-                            <SelectItem value="In Person">In Person</SelectItem>
-                            <SelectItem value="Social Media">Social Media</SelectItem>
-                            <SelectItem value="Website">Website</SelectItem>
-                            <SelectItem value="Referral">Referral</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="contactMethod"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Method</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="How to contact them?" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Phone">Phone</SelectItem>
-                            <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                            <SelectItem value="Email">Email</SelectItem>
-                            <SelectItem value="SMS">SMS</SelectItem>
-                            <SelectItem value="Social Media">Social Media</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="clientPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter phone number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="clientEmail"
+                  name="messageText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="Enter email address" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="gigType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Type of Gig</FormLabel>
-                        <div className="space-y-2">
-                          <Select onValueChange={(value) => {
-                            if (value !== 'custom') {
-                              field.onChange(value);
-                            }
-                          }} value={gigTypes.includes(field.value as any) ? field.value : 'custom'}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select type or choose 'Custom' to type your own" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {gigTypes.filter(gigType => gigType !== 'Other').map((gigType, index) => (
-                                <SelectItem key={index} value={gigType}>
-                                  {gigType}
-                                </SelectItem>
-                              ))}
-                              <SelectItem value="custom">Custom - Type your own</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          
-                          {(!gigTypes.includes(field.value as any) || field.value === '') && (
-                            <FormControl>
-                              <Input 
-                                placeholder="Type custom gig type (e.g., Barn Dance, Quiz Night, Wake)"
-                                value={gigTypes.includes(field.value as any) ? '' : field.value}
-                                onChange={(e) => field.onChange(e.target.value)}
-                              />
-                            </FormControl>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Quick entry for unusual gig types not in the standard list
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="eventDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Event Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="venue"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Venue</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter venue name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="estimatedValue"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Performance Fee (£)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="0.00" 
-                            step="0.01"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="travelExpense"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Travel Expense (£)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="0.00" 
-                            step="0.01"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Message / Notes</FormLabel>
+                      <FormLabel>Message to Parse</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Enter the original enquiry message or any additional notes..." 
-                          className="min-h-[100px]"
+                          placeholder="Paste WhatsApp message, email, or text enquiry here...
+
+Example:
+'Hi Tim, we'd love to book you for our wedding on June 15th at The Manor House. Looking for ceremony music from 2-4pm. What would be your fee? Thanks, Sarah & John (07123 456789)'"
+                          className="min-h-[200px]"
                           {...field} 
                         />
                       </FormControl>
@@ -400,22 +157,68 @@ export default function QuickAddPage() {
                   )}
                 />
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="clientContact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Who is this message from?</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="e.g., Sarah & John, wedding@venue.com, +447123456789"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clientAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Address (Optional)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Client's address if known"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <Button 
                   type="submit" 
-                  className="w-full" 
-                  disabled={createEnquiryMutation.isPending}
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700" 
+                  disabled={isParsing || parseMessageMutation.isPending}
                 >
-                  {createEnquiryMutation.isPending ? "Adding Enquiry..." : "Add Enquiry"}
+                  {isParsing ? (
+                    <>
+                      <Bot className="w-4 h-4 mr-2 animate-spin" />
+                      Parsing Message...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Parse & Create Booking
+                    </>
+                  )}
                 </Button>
               </form>
             </Form>
           </CardContent>
         </Card>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-semibold text-blue-900 mb-2">💡 Pro Tip</h3>
-          <p className="text-blue-800 text-sm">
-            Save this page as a home screen shortcut for quick access when you receive enquiries on the go!
+        <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+          <h3 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">✨ How It Works</h3>
+          <p className="text-purple-800 dark:text-purple-200 text-sm">
+            Our AI will extract client details, dates, venues, and requirements from your message to automatically create a structured booking.
           </p>
         </div>
       </div>

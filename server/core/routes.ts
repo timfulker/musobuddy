@@ -1145,6 +1145,88 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Parse text message to create booking (Quick Add functionality)
+  app.post('/api/bookings/parse-text', isAuthenticated, async (req: any, res) => {
+    try {
+      const { emailContent, fromEmail, clientAddress } = req.body;
+      const userId = req.session.userId;
+      
+      console.log(`🤖 Text parsing request from user ${userId}`);
+      console.log(`📝 Message length: ${emailContent?.length || 0} characters`);
+      console.log(`📧 From: ${fromEmail}`);
+      
+      if (!emailContent || !fromEmail) {
+        return res.status(400).json({ error: 'Message content and sender information are required' });
+      }
+
+      // Use the existing AI parsing function from webhook handler
+      const { parseEmailWithAI } = await import('../index');
+      
+      try {
+        const parsedData = await parseEmailWithAI(emailContent, `Quick Add from ${fromEmail}`);
+        
+        // Create booking with parsed data
+        const bookingData = {
+          userId: userId,
+          title: `Enquiry from ${parsedData.clientName || fromEmail}`,
+          clientName: parsedData.clientName || fromEmail,
+          clientEmail: parsedData.clientEmail || (fromEmail.includes('@') ? fromEmail : null),
+          clientPhone: parsedData.clientPhone || null,
+          clientAddress: clientAddress || parsedData.clientAddress || null,
+          eventDate: parsedData.eventDate || new Date(),
+          eventTime: parsedData.eventTime || null,
+          eventEndTime: parsedData.eventEndTime || null,
+          venue: parsedData.venue || null,
+          venueAddress: parsedData.venueAddress || null,
+          gigType: parsedData.gigType || parsedData.eventType || null,
+          performanceFee: parsedData.fee || parsedData.estimatedValue || parsedData.budget || null,
+          travelExpense: parsedData.travelExpense || null,
+          notes: `Original message:\n\n${emailContent}`,
+          status: 'new'
+        };
+
+        const newBooking = await storage.createBooking(bookingData);
+        console.log(`✅ Created booking #${newBooking.id} from text parsing for user ${userId}`);
+        
+        res.json({ 
+          success: true, 
+          booking: newBooking,
+          message: 'Booking created successfully from text parsing'
+        });
+
+      } catch (aiError: any) {
+        console.error('❌ AI parsing failed, creating basic booking:', aiError);
+        
+        // Fallback: Create basic booking without AI parsing
+        const basicBookingData = {
+          userId: userId,
+          title: `Message from ${fromEmail}`,
+          clientName: fromEmail,
+          clientEmail: fromEmail.includes('@') ? fromEmail : null,
+          clientAddress: clientAddress || null,
+          notes: `Original message:\n\n${emailContent}`,
+          status: 'new'
+        };
+
+        const newBooking = await storage.createBooking(basicBookingData);
+        console.log(`✅ Created basic booking #${newBooking.id} (AI parsing failed) for user ${userId}`);
+        
+        res.json({ 
+          success: true, 
+          booking: newBooking,
+          message: 'Booking created successfully (manual review needed)'
+        });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Text parsing error:', error);
+      res.status(500).json({ 
+        error: 'Failed to parse text and create booking',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // ===== CONTRACTS ROUTES =====
   
   // Get all contracts for authenticated user

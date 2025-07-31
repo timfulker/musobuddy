@@ -133,20 +133,19 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-01-31 - CRITICAL BOOKING CREATION FIX - Frontend Endpoints Updated + Admin Page Responsiveness Complete
+### 2025-01-31 - DASHBOARD UI SIMPLIFICATION + AI TEXT PARSING INTERFACE COMPLETE
 
-- **CRITICAL BUG FIXED**: ✅ Updated frontend components to use correct `/api/bookings` endpoint instead of legacy `/api/enquiries`
-- **CLEAN ARCHITECTURE APPROACH**: ✅ Removed duplicate endpoint maintenance by updating frontend to match existing backend API
-- **BOOKING CREATION RESTORED**: ✅ New booking creation from new-booking.tsx, quick-add.tsx, and BookingDetailsDialog.tsx now functional
-- **ENDPOINT CONSISTENCY**: ✅ All booking operations now use unified `/api/bookings` endpoint for clean, maintainable code
-- **AUTHENTICATION PRESERVED**: ✅ Booking creation requires authentication and properly handles user session validation
-- **LEGACY CODE CLEANUP**: ✅ Eliminated outdated `/api/enquiries` references from when enquiries page existed separately
-- **ADMIN PAGE RESPONSIVENESS COMPLETE**: ✅ Fixed all layout issues causing interface cutoff and poor mobile display
-- **MOBILE-FIRST DESIGN**: ✅ Tabs reorganized to 2x2 grid on mobile with responsive statistics cards and user management layout
-- **RESPONSIVE ACTION BUTTONS**: ✅ Edit/Delete buttons show icons only on mobile, full text on desktop with proper sizing
-- **BULK OPERATIONS MOBILE**: ✅ Selection controls adapt to mobile with stacked layout and full-width buttons
-- **TEXT OVERFLOW PREVENTION**: ✅ Added min-w-0 and truncate classes preventing text overflow in user information
-- **Status**: BOOKING CREATION SYSTEM OPERATIONAL + ADMIN PAGE FULLY RESPONSIVE - Core functionality restored with professional mobile interface
+- **DASHBOARD HEADER SIMPLIFIED**: ✅ Replaced dropdown menu with single "New Booking" button directing to main booking form for cleaner UX
+- **QUICK-ADD TRANSFORMATION**: ✅ Completely rebuilt quick-add page as AI-powered text parsing interface for WhatsApp/email inquiry extraction
+- **AI TEXT PARSING ENDPOINT**: ✅ Created `/api/bookings/parse-text` backend endpoint using existing email parsing AI functionality
+- **CLIENT ADDRESS FIELD**: ✅ Added client address input field to text parsing form as requested for complete booking information
+- **SMART PARSING FALLBACK**: ✅ AI parsing attempts first, falls back to basic booking creation if AI fails for reliability
+- **PROFESSIONAL TEXT INTERFACE**: ✅ Beautiful gradient-styled form with purple branding, example text, and clear instructions
+- **BOOKING CREATION CONSISTENCY**: ✅ All frontend components now use unified `/api/bookings` endpoint for clean architecture
+- **MOBILE-OPTIMIZED PARSING**: ✅ Text parsing interface fully responsive with proper mobile form handling
+- **USER WORKFLOW IMPROVEMENT**: ✅ Simplified dashboard navigation reduces cognitive load with direct "New Booking" access
+- **AI INTEGRATION LEVERAGE**: ✅ Reuses existing proven AI parsing logic from email webhook for consistent data extraction
+- **Status**: DASHBOARD SIMPLIFICATION + AI TEXT PARSING OPERATIONAL - Streamlined user interface with powerful AI message parsing capability
 
 ### 2025-01-31 - CRITICAL GLOCKAPP TEST FIX - Storage Method Name Mismatch Resolved
 
