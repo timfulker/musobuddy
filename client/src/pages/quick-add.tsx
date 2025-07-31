@@ -79,7 +79,7 @@ export default function QuickAddPage() {
         notes: data.notes ? `${data.notes}\n\nContact Method - ${data.contactMethod || 'Not specified'}` : `Contact Method - ${data.contactMethod || 'Not specified'}`,
         status: "new" as const,
       };
-      const response = await apiRequest('POST', '/api/enquiries/quick-add', enquiryData);
+      const response = await apiRequest('POST', '/api/bookings', enquiryData);
       return await response.json();
     },
     onSuccess: () => {

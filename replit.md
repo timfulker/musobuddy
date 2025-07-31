@@ -133,14 +133,14 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-01-31 - CRITICAL BOOKING CREATION FIX - Missing API Endpoint Added + Admin Page Responsiveness Complete
+### 2025-01-31 - CRITICAL BOOKING CREATION FIX - Frontend Endpoints Updated + Admin Page Responsiveness Complete
 
-- **CRITICAL BUG FIXED**: ✅ Added missing `/api/enquiries` POST endpoint that was causing 404 errors when creating new bookings
-- **FRONTEND-BACKEND COMPATIBILITY**: ✅ Frontend components use `/api/enquiries` while backend had only `/api/bookings` - added alias endpoint
+- **CRITICAL BUG FIXED**: ✅ Updated frontend components to use correct `/api/bookings` endpoint instead of legacy `/api/enquiries`
+- **CLEAN ARCHITECTURE APPROACH**: ✅ Removed duplicate endpoint maintenance by updating frontend to match existing backend API
 - **BOOKING CREATION RESTORED**: ✅ New booking creation from new-booking.tsx, quick-add.tsx, and BookingDetailsDialog.tsx now functional
-- **API ENDPOINT MAPPING**: ✅ Both `/api/bookings` and `/api/enquiries` POST endpoints now map to same booking creation logic
-- **AUTHENTICATION PRESERVED**: ✅ Both endpoints require authentication and properly handle user session validation
-- **ERROR HANDLING CONSISTENT**: ✅ Both endpoints provide identical error responses and success logging
+- **ENDPOINT CONSISTENCY**: ✅ All booking operations now use unified `/api/bookings` endpoint for clean, maintainable code
+- **AUTHENTICATION PRESERVED**: ✅ Booking creation requires authentication and properly handles user session validation
+- **LEGACY CODE CLEANUP**: ✅ Eliminated outdated `/api/enquiries` references from when enquiries page existed separately
 - **ADMIN PAGE RESPONSIVENESS COMPLETE**: ✅ Fixed all layout issues causing interface cutoff and poor mobile display
 - **MOBILE-FIRST DESIGN**: ✅ Tabs reorganized to 2x2 grid on mobile with responsive statistics cards and user management layout
 - **RESPONSIVE ACTION BUTTONS**: ✅ Edit/Delete buttons show icons only on mobile, full text on desktop with proper sizing

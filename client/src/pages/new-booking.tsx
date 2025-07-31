@@ -132,7 +132,7 @@ export default function NewBookingPage() {
         travelExpense: data.travelExpense ? parseFloat(data.travelExpense) : null,
         status: "new" as const,
       };
-      const response = await apiRequest('/api/enquiries', {
+      const response = await apiRequest('/api/bookings', {
         method: 'POST',
         body: JSON.stringify(bookingData),
       });

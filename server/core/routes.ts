@@ -1116,22 +1116,6 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ALIAS: Create new enquiry (frontend compatibility - maps to booking creation)
-  app.post('/api/enquiries', isAuthenticated, async (req: any, res) => {
-    try {
-      const bookingData = {
-        ...req.body,
-        userId: req.session.userId
-      };
-      const newBooking = await storage.createBooking(bookingData);
-      console.log(`✅ Created enquiry/booking #${newBooking.id} for user ${req.session.userId}`);
-      res.json(newBooking);
-    } catch (error) {
-      console.error('❌ Failed to create enquiry/booking:', error);
-      res.status(500).json({ error: 'Failed to create booking' });
-    }
-  });
-
   // Update booking
   app.patch('/api/bookings/:id', isAuthenticated, async (req: any, res) => {
     try {
