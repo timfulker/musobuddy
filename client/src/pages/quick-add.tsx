@@ -119,7 +119,7 @@ export default function QuickAddPage() {
                   <Bot className="w-4 h-4 mr-2" />
                   Parse Another Message
                 </Button>
-                <Link href="/">
+                <Link href="/dashboard">
                   <Button variant="outline" className="w-full">
                     <Home className="w-4 h-4 mr-2" />
                     Go to Dashboard
