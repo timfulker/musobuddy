@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Calendar, ArrowLeft, Save, Crown } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { insertEnquirySchema } from "@shared/schema";
@@ -44,6 +44,7 @@ const fullBookingSchema = z.object({
   contactPhone: z.string().optional(),
   parkingInfo: z.string().optional(),
   notes: z.string().optional(),
+  travelExpense: z.string().optional(),
 });
 
 type FullBookingFormData = z.infer<typeof fullBookingSchema>;
@@ -96,7 +97,7 @@ export default function NewBookingPage() {
       contactPhone: "",
       parkingInfo: "",
       notes: "",
-
+      travelExpense: "",
     },
   });
 
@@ -128,6 +129,7 @@ export default function NewBookingPage() {
         contactPhone: data.contactPhone || null,
         parkingInfo: data.parkingInfo || null,
         notes: data.notes || null,
+        travelExpense: data.travelExpense ? parseFloat(data.travelExpense) : null,
         status: "new" as const,
       };
       const response = await apiRequest('/api/enquiries', {
@@ -159,38 +161,56 @@ export default function NewBookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/bookings">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Bookings
-              </Button>
-            </Link>
-            <h1 className="text-3xl font-bold">New Booking</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50">
+      <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8">
+        {/* Enhanced Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl opacity-5"></div>
+          <div className="relative bg-white/80 backdrop-blur-sm border border-purple-100 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <Link href="/bookings">
+                  <Button variant="outline" size="sm" className="bg-white/50 hover:bg-white/80 border-purple-200 text-purple-700 hover:text-purple-800">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Bookings
+                  </Button>
+                </Link>
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    New Booking
+                  </h1>
+                  <p className="text-gray-600 mt-1">Create a new performance booking</p>
+                </div>
+              </div>
+              <div className="hidden md:flex items-center space-x-2 text-purple-600">
+                <Calendar className="w-8 h-8" />
+              </div>
+            </div>
           </div>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Client Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Client Information</CardTitle>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-purple-100">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-lg border-b border-purple-100">
+                <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">1</span>
+                  </div>
+                  Client Information
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="clientName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Name *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Client Name *</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -202,9 +222,9 @@ export default function NewBookingPage() {
                     name="clientEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Email</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" />
+                          <Input {...field} type="email" className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -216,9 +236,9 @@ export default function NewBookingPage() {
                     name="clientPhone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Phone</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -230,9 +250,9 @@ export default function NewBookingPage() {
                     name="contactPerson"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Person</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Contact Person</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -245,9 +265,9 @@ export default function NewBookingPage() {
                   name="clientAddress"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Client Address</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700">Client Address</FormLabel>
                       <FormControl>
-                        <Textarea {...field} rows={2} />
+                        <Textarea {...field} rows={2} className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20 resize-none" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,20 +277,25 @@ export default function NewBookingPage() {
             </Card>
 
             {/* Event Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Details</CardTitle>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-blue-100">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-t-lg border-b border-blue-100">
+                <CardTitle className="text-xl font-semibold text-blue-800 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">2</span>
+                  </div>
+                  Event Details
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormField
                     control={form.control}
                     name="eventDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Event Date *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Event Date *</FormLabel>
                         <FormControl>
-                          <Input {...field} type="date" />
+                          <Input {...field} type="date" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -282,9 +307,9 @@ export default function NewBookingPage() {
                     name="eventTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Time</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Start Time</FormLabel>
                         <FormControl>
-                          <Input {...field} type="time" />
+                          <Input {...field} type="time" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -296,9 +321,9 @@ export default function NewBookingPage() {
                     name="eventEndTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Time</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">End Time</FormLabel>
                         <FormControl>
-                          <Input {...field} type="time" />
+                          <Input {...field} type="time" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -306,15 +331,15 @@ export default function NewBookingPage() {
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="venue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Venue *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Venue *</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -326,9 +351,9 @@ export default function NewBookingPage() {
                     name="fee"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Performance Fee (£)</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Performance Fee (£)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="number" step="0.01" />
+                          <Input {...field} type="number" step="0.01" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -336,17 +361,17 @@ export default function NewBookingPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="travelExpense"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Travel Expense (£)</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Travel Expense (£)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="number" step="0.01" placeholder="0.00" />
+                          <Input {...field} type="number" step="0.01" placeholder="0.00" className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20" />
                         </FormControl>
-                        <FormDescription>
+                        <FormDescription className="text-xs text-gray-500">
                           Fixed travel charge for this booking (optional)
                         </FormDescription>
                         <FormMessage />
@@ -360,9 +385,9 @@ export default function NewBookingPage() {
                   name="venueAddress"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Venue Address</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700">Venue Address</FormLabel>
                       <FormControl>
-                        <Textarea {...field} rows={2} />
+                        <Textarea {...field} rows={2} className="bg-white/70 border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 resize-none" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -372,11 +397,16 @@ export default function NewBookingPage() {
             </Card>
 
             {/* Performance Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance Details</CardTitle>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-green-100">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b border-green-100">
+                <CardTitle className="text-xl font-semibold text-green-800 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">3</span>
+                  </div>
+                  Performance Details
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -513,11 +543,16 @@ export default function NewBookingPage() {
             </Card>
 
             {/* Additional Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Details</CardTitle>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-orange-100">
+              <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-lg border-b border-orange-100">
+                <CardTitle className="text-xl font-semibold text-orange-800 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">4</span>
+                  </div>
+                  Additional Details
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -564,19 +599,38 @@ export default function NewBookingPage() {
               </CardContent>
             </Card>
 
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-4">
-              <Link href="/bookings">
-                <Button variant="outline">Cancel</Button>
-              </Link>
-              <Button 
-                type="submit" 
-                className="bg-purple-600 hover:bg-purple-700"
-                disabled={createBookingMutation.isPending}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {createBookingMutation.isPending ? "Creating..." : "Create Booking"}
-              </Button>
+            {/* Enhanced Action Buttons */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl opacity-5"></div>
+              <div className="relative bg-white/80 backdrop-blur-sm border border-purple-100 rounded-2xl p-6 shadow-lg">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-gray-600">
+                    Ready to create your booking?
+                  </div>
+                  <div className="flex gap-4">
+                    <Link href="/bookings">
+                      <Button variant="outline" className="bg-white/50 hover:bg-white/80 border-gray-300">
+                        Cancel
+                      </Button>
+                    </Link>
+                    <Button 
+                      type="submit" 
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                      disabled={createBookingMutation.isPending}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {createBookingMutation.isPending ? (
+                        <>
+                          <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2"></div>
+                          Creating...
+                        </>
+                      ) : (
+                        "Create Booking"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           </form>
         </Form>
