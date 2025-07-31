@@ -434,38 +434,58 @@ export async function registerRoutes(app: Express) {
       const userId = req.session?.userId;
       const { testId, templateId, seedEmails } = req.body;
 
+      console.log(`🔍 GlockApps test request - userId: ${userId}, testId: ${testId}, templateId: ${templateId}, seedEmails count: ${seedEmails?.length}`);
+
       if (!userId) {
+        console.log('❌ Authentication failed - no userId');
         return res.status(401).json({ error: 'Authentication required' });
       }
 
       if (!testId || !templateId || !seedEmails || !Array.isArray(seedEmails)) {
+        console.log('❌ Validation failed:', { testId, templateId, seedEmailsType: typeof seedEmails, isArray: Array.isArray(seedEmails) });
         return res.status(400).json({ error: 'testId, templateId, and seedEmails array required' });
       }
 
       console.log(`📧 Starting GlockApps test ${testId} for user ${userId} with ${seedEmails.length} addresses`);
 
       // Get user settings for professional signature
+      console.log('🔍 Fetching user settings...');
       const userSettings = await storage.getUserSettings(userId);
+      console.log('✅ User settings fetched:', { businessName: userSettings?.businessName, hasSettings: !!userSettings });
+
+      console.log('🔍 Fetching templates...');
       const templates = await storage.getEmailTemplates(userId);
+      console.log('✅ Templates fetched:', { count: templates?.length, templateIds: templates?.map(t => t.id) });
+
       const template = templates.find(t => t.id === parseInt(templateId));
+      console.log('🔍 Template lookup:', { requestedId: parseInt(templateId), found: !!template, templateName: template?.name });
       
       if (!template) {
+        console.log('❌ Template not found');
         return res.status(404).json({ error: 'Template not found' });
       }
 
       // Import email service
+      console.log('🔍 Importing email service...');
       const { MailgunService } = await import('./services');
       const emailService = new MailgunService();
+      console.log('✅ Email service imported');
       
       // Generate professional email signature
+      console.log('🔍 Generating email signature...');
       const signature = emailService.generateEmailSignature(userSettings);
       const emailWithSignature = template.emailBody + signature;
+      console.log('✅ Email with signature prepared');
       
       const results = [];
+      console.log(`📧 Starting to send to ${seedEmails.length} addresses...`);
       
       // Send to each seed email with enhanced deliverability
-      for (const seedEmail of seedEmails) {
+      for (let i = 0; i < seedEmails.length; i++) {
+        const seedEmail = seedEmails[i];
         try {
+          console.log(`📧 Sending ${i + 1}/${seedEmails.length} to ${seedEmail}`);
+          
           const emailData = {
             from: `${userSettings.businessName || 'MusoBuddy'} <noreply@mg.musobuddy.com>`,
             to: seedEmail.trim(),
@@ -492,26 +512,30 @@ export async function registerRoutes(app: Express) {
 
           const result = await emailService.sendEmail(emailData);
           results.push({ email: seedEmail, status: 'sent', messageId: result.id });
+          console.log(`✅ Sent ${i + 1}/${seedEmails.length} to ${seedEmail} - ID: ${result.id}`);
           
         } catch (error: any) {
-          console.error(`Failed to send to ${seedEmail}:`, error);
+          console.error(`❌ Failed to send ${i + 1}/${seedEmails.length} to ${seedEmail}:`, error.message);
           results.push({ email: seedEmail, status: 'failed', error: error.message });
         }
       }
 
-      console.log(`📧 GlockApps test ${testId} completed - sent to ${seedEmails.length} addresses`);
+      const totalSent = results.filter(r => r.status === 'sent').length;
+      const totalFailed = results.filter(r => r.status === 'failed').length;
+      console.log(`✅ GlockApps test ${testId} completed - sent: ${totalSent}, failed: ${totalFailed}`);
       
       res.json({ 
         success: true, 
         testId,
-        totalSent: results.filter(r => r.status === 'sent').length,
-        totalFailed: results.filter(r => r.status === 'failed').length,
+        totalSent,
+        totalFailed,
         results 
       });
 
     } catch (error: any) {
       console.error('❌ GlockApps test error:', error);
-      res.status(500).json({ error: error.message });
+      console.error('❌ Error stack:', error.stack);
+      res.status(500).json({ error: error.message || 'Internal server error' });
     }
   });
 
