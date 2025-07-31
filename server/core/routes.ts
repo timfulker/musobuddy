@@ -2472,6 +2472,175 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Admin Create User endpoint
+  app.post('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Check if user is admin
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const { email, firstName, lastName, password, tier, isAdmin, isBetaTester } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: 'User with this email already exists' });
+      }
+      
+      // Create new user with admin-specified settings
+      const userData = {
+        email,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        password, // This will be hashed by the storage layer
+        tier: tier || 'free',
+        isAdmin: isAdmin || false,
+        isBetaTester: isBetaTester || false,
+        betaStartDate: isBetaTester ? new Date().toISOString() : null,
+        betaEndDate: isBetaTester ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null // 30 days
+      };
+      
+      const newUser = await storage.createUser(userData);
+      
+      console.log(`✅ Admin created new user: ${email} (Beta: ${isBetaTester}, Admin: ${isAdmin})`);
+      res.json({ 
+        success: true, 
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          tier: newUser.tier,
+          isAdmin: newUser.isAdmin,
+          isBetaTester: newUser.isBetaTester
+        }
+      });
+    } catch (error: any) {
+      console.error('❌ Admin create user error:', error);
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  // Admin Update User endpoint
+  app.put('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminUserId = req.session?.userId;
+      if (!adminUserId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Check if user is admin
+      const adminUser = await storage.getUser(adminUserId);
+      if (!adminUser?.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const { userId } = req.params;
+      const { email, firstName, lastName, password, tier, isAdmin, isBetaTester } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+      
+      // Get existing user
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Prepare update data
+      const updateData: any = {
+        email,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        tier: tier || 'free',
+        isAdmin: isAdmin || false,
+        isBetaTester: isBetaTester || false
+      };
+      
+      // Only update password if provided
+      if (password && password.trim()) {
+        updateData.password = password;
+      }
+      
+      // Set beta dates if becoming beta tester
+      if (isBetaTester && !existingUser.isBetaTester) {
+        updateData.betaStartDate = new Date().toISOString();
+        updateData.betaEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      } else if (!isBetaTester && existingUser.isBetaTester) {
+        updateData.betaStartDate = null;
+        updateData.betaEndDate = null;
+      }
+      
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      console.log(`✅ Admin updated user: ${email} (Beta: ${isBetaTester}, Admin: ${isAdmin})`);
+      res.json({ 
+        success: true, 
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          tier: updatedUser.tier,
+          isAdmin: updatedUser.isAdmin,
+          isBetaTester: updatedUser.isBetaTester
+        }
+      });
+    } catch (error: any) {
+      console.error('❌ Admin update user error:', error);
+      res.status(500).json({ error: 'Failed to update user' });
+    }
+  });
+
+  // Admin Delete User endpoint
+  app.delete('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminUserId = req.session?.userId;
+      if (!adminUserId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Check if user is admin
+      const adminUser = await storage.getUser(adminUserId);
+      if (!adminUser?.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const { userId } = req.params;
+      
+      // Prevent admin from deleting themselves
+      if (userId === adminUserId) {
+        return res.status(400).json({ error: 'Cannot delete your own account' });
+      }
+      
+      // Get user before deletion for logging
+      const userToDelete = await storage.getUser(userId);
+      if (!userToDelete) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      await storage.deleteUser(userId);
+      
+      console.log(`✅ Admin deleted user: ${userToDelete.email}`);
+      res.json({ success: true, message: 'User deleted successfully' });
+    } catch (error: any) {
+      console.error('❌ Admin delete user error:', error);
+      res.status(500).json({ error: 'Failed to delete user' });
+    }
+  });
+
   // Enhanced error logging middleware
   app.use((err: any, req: any, res: any, next: any) => {
     console.error('🔥 Server Error:', {
