@@ -57,13 +57,17 @@ export class ConflictEngine {
     booking2: BookingInfo, 
     eventDate: Date
   ): ConflictDetectionResult {
-    // If either booking lacks time info, assume same-day warning
-    if (!booking1.eventStartTime || !booking2.eventStartTime) {
+    // CRITICAL: If either booking lacks COMPLETE time info (start AND end), treat as HARD conflict
+    // We cannot make assumptions about duration - must have both start and end times
+    const hasCompleteTime1 = booking1.eventStartTime && booking1.eventFinishTime;
+    const hasCompleteTime2 = booking2.eventStartTime && booking2.eventFinishTime;
+    
+    if (!hasCompleteTime1 || !hasCompleteTime2) {
       return {
         hasConflict: true,
-        severity: 'warning',
+        severity: 'critical',
         type: 'same_day',
-        message: 'Same day booking - times not specified',
+        message: 'Same day booking - incomplete time information (requires both start and end times)',
         details: { booking1, booking2 }
       };
     }
@@ -73,20 +77,27 @@ export class ConflictEngine {
     const start2 = this.parseTime(booking2.eventStartTime, eventDate);
 
     if (!start1 || !start2) {
-      return this.noConflict(booking1, booking2);
+      return {
+        hasConflict: true,
+        severity: 'critical',
+        type: 'same_day',
+        message: 'Same day booking - invalid start time format',
+        details: { booking1, booking2 }
+      };
     }
 
-    // Parse end times (default to 2 hours if not specified)
-    const end1 = booking1.eventFinishTime 
-      ? this.parseTime(booking1.eventFinishTime, eventDate)
-      : new Date(start1.getTime() + (2 * 60 * 60 * 1000)); // +2 hours
-
-    const end2 = booking2.eventFinishTime 
-      ? this.parseTime(booking2.eventFinishTime, eventDate)
-      : new Date(start2.getTime() + (2 * 60 * 60 * 1000)); // +2 hours
+    // Parse end times (both are required - no assumptions)
+    const end1 = this.parseTime(booking1.eventFinishTime, eventDate);
+    const end2 = this.parseTime(booking2.eventFinishTime, eventDate);
 
     if (!end1 || !end2) {
-      return this.noConflict(booking1, booking2);
+      return {
+        hasConflict: true,
+        severity: 'critical',
+        type: 'same_day',
+        message: 'Same day booking - invalid end time format',
+        details: { booking1, booking2 }
+      };
     }
 
     // Check for time overlap
@@ -106,7 +117,7 @@ export class ConflictEngine {
       };
     }
 
-    // Same day but no time overlap
+    // Same day but no time overlap - soft conflict
     return {
       hasConflict: true,
       severity: 'warning',

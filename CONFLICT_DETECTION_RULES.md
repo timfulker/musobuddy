@@ -24,8 +24,15 @@ The system then analyzes the specific times to determine conflict severity:
 - **Action Required**: One booking must be cancelled or rescheduled
 - **UI Display**: Red "Conflict" badge, red dot indicator
 
+#### **INCOMPLETE TIME INFORMATION (Also Hard Conflict)**
+- **When**: Any booking missing start OR end time on same day
+- **Reason**: Cannot determine overlap without complete time information
+- **NO ASSUMPTIONS**: System does not assume 2-hour duration or any default
+- **Action Required**: Edit booking to add missing start/end times before conflict assessment
+- **UI Display**: Red "Conflict" badge (same as time overlap)
+
 ### 🟡 **SOFT CONFLICTS (Amber/Warning)**  
-- **When**: Two bookings on same day but no time overlap
+- **When**: Two bookings on same day but no time overlap (BOTH bookings must have complete start AND end times)
 - **Example**:
   - Booking A: 14:00 - 17:00
   - Booking B: 19:00 - 22:00

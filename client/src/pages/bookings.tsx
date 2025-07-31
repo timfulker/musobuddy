@@ -216,11 +216,14 @@ export default function UnifiedBookings() {
             let severity = 'soft'; // Default to soft conflict for same day
             let hasTimeOverlap = false;
             
-            // CRITICAL FIX: Missing times = Hard conflicts (red) because overlap cannot be determined
+            // CRITICAL FIX: Incomplete time info = Hard conflicts (red) because overlap cannot be determined
+            // Must have BOTH start and end times to properly assess conflicts
             if (!booking.eventTime || !other.eventTime || 
+                !booking.eventEndTime || !other.eventEndTime ||
                 booking.eventTime === '' || other.eventTime === '' ||
+                booking.eventEndTime === '' || other.eventEndTime === '' ||
                 booking.eventTime === 'Time not specified' || other.eventTime === 'Time not specified') {
-              // If either booking has no time specified, it's a hard conflict
+              // If either booking lacks complete time info, it's a hard conflict
               severity = 'hard';
               hasTimeOverlap = false; // Not a time overlap, but still hard conflict
             } else {

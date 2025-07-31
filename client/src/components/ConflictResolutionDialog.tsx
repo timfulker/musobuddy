@@ -88,19 +88,18 @@ export default function ConflictResolutionDialog({
             const start1 = start1Hours * 60 + start1Minutes;
             const start2 = start2Hours * 60 + start2Minutes;
             
-            let end1 = start1 + 120; // Default 2-hour duration if no end time
-            let end2 = start2 + 120; // Default 2-hour duration if no end time
-            
-            // Use actual end times if available
-            if (booking1.eventEndTime) {
-              const [end1Hours, end1Minutes] = booking1.eventEndTime.split(':').map(Number);
-              end1 = end1Hours * 60 + end1Minutes;
+            // CRITICAL: If either booking lacks end time, treat as hard conflict
+            // No assumptions about duration - both start and end times required
+            if (!booking1.eventEndTime || !booking2.eventEndTime) {
+              hasTimeOverlap = true; // Treat as hard conflict
+              break;
             }
             
-            if (booking2.eventEndTime) {
-              const [end2Hours, end2Minutes] = booking2.eventEndTime.split(':').map(Number);
-              end2 = end2Hours * 60 + end2Minutes;
-            }
+            const [end1Hours, end1Minutes] = booking1.eventEndTime.split(':').map(Number);
+            const [end2Hours, end2Minutes] = booking2.eventEndTime.split(':').map(Number);
+            
+            const end1 = end1Hours * 60 + end1Minutes;
+            const end2 = end2Hours * 60 + end2Minutes;
             
             // Check for actual time overlap
             if (start1 < end2 && end1 > start2) {

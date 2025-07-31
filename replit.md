@@ -133,6 +133,17 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-01-31 - CRITICAL CONFLICT DETECTION RULE FIXED - Incomplete Time Information Now Treated as Hard Conflicts
+- **DANGEROUS 2-HOUR ASSUMPTION ELIMINATED**: ✅ Removed arbitrary 2-hour duration assumption for bookings missing end times
+- **HARD CONFLICT RULE IMPLEMENTED**: ✅ Any booking missing start OR end time on same day now treated as hard (red) conflict
+- **NO DURATION ASSUMPTIONS**: ✅ System no longer makes any assumptions about booking duration - requires complete time information
+- **BACKEND LOGIC UPDATED**: ✅ Updated conflict-engine.ts to require both start and end times for proper conflict assessment
+- **FRONTEND LOGIC UPDATED**: ✅ Updated ConflictResolutionDialog.tsx and bookings.tsx to treat incomplete times as hard conflicts
+- **CONFLICT DETECTION RULES UPDATED**: ✅ Documentation updated to reflect new rule: incomplete time = hard conflict until edited
+- **USER EXPERIENCE IMPROVED**: ✅ Users must now provide complete time information before system can assess conflicts properly
+- **TECHNICAL RATIONALE**: ✅ Without both start and end times, overlap calculation is impossible - safer to flag as critical than make false assumptions
+- **Status**: CONFLICT DETECTION RULES PROPERLY IMPLEMENTED - No more arbitrary duration assumptions, complete time information required for accurate conflict assessment
+
 ### 2025-07-30 - Dashboard Responsiveness & Text Overlap Issues Completely Resolved
 - **CRITICAL ACTION REQUIRED FILTERING FIXED**: ✅ Completely overhauled filtering logic in both BookingCTAButtons and ActionableEnquiries components to exclude ALL actioned bookings
 - **Comprehensive Status Exclusion**: ✅ Now excludes completed, cancelled, confirmed, contract_sent, in_progress, awaiting_response, client_confirms from Action Required
