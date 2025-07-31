@@ -2044,6 +2044,102 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== AI RESPONSE GENERATION ROUTES =====
+  
+  // Generate AI response for templates
+  app.post('/api/ai/generate-response', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { aiResponseGenerator } = await import('./ai-response-generator');
+      const { action, bookingId, customPrompt, tone } = req.body;
+
+      console.log(`🤖 AI response generation request for user: ${userId}, action: ${action}`);
+      
+      // Get booking context if bookingId provided
+      let bookingContext = null;
+      if (bookingId) {
+        const booking = await storage.getBooking(parseInt(bookingId));
+        if (booking) {
+          bookingContext = {
+            clientName: booking.clientName,
+            eventDate: booking.eventDate,
+            eventTime: booking.eventTime,
+            eventEndTime: booking.eventEndTime,
+            venue: booking.venue,
+            eventType: booking.eventType,
+            fee: booking.fee,
+            performanceDuration: booking.performanceDuration,
+            styles: booking.styles,
+            equipment: booking.equipment,
+            additionalInfo: booking.additionalInfo
+          };
+        }
+      }
+
+      // Get user settings for personalization
+      const userSettings = await storage.getUserSettings(userId);
+      
+      const response = await aiResponseGenerator.generateEmailResponse({
+        action: action || 'respond',
+        bookingContext,
+        userSettings,
+        customPrompt,
+        tone: tone || 'professional'
+      });
+
+      console.log(`✅ AI response generated for user ${userId}`);
+      res.json(response);
+      
+    } catch (error: any) {
+      console.error('❌ AI response generation failed:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate AI response',
+        details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
+  // Generate template variations using AI
+  app.post('/api/ai/template-variations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { aiResponseGenerator } = await import('./ai-response-generator');
+      const { templateName, templateBody, count = 3 } = req.body;
+
+      if (!templateName || !templateBody) {
+        return res.status(400).json({ error: 'Template name and body required' });
+      }
+
+      console.log(`🤖 Template variations request for user: ${userId}, template: ${templateName}`);
+      
+      const variations = await aiResponseGenerator.generateTemplateVariations(
+        templateName,
+        templateBody,
+        Math.min(count, 5) // Limit to 5 variations max
+      );
+
+      console.log(`✅ Generated ${variations.length} template variations for user ${userId}`);
+      res.json({ variations });
+      
+    } catch (error: any) {
+      console.error('❌ Template variations generation failed:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate template variations',
+        details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
+    }
+  });
+
   // Removed AI gig suggestions endpoint - feature moved to documentation
 
   // Catch-all middleware to ensure API routes always return JSON

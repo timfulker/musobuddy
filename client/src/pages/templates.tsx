@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit3, Trash2, Star, Menu } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit3, Trash2, Star, Menu, Wand2, Sparkles, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/sidebar';
 import MobileNav from '@/components/mobile-nav';
@@ -36,6 +37,18 @@ export default function Templates() {
     emailBody: string;
     template: EmailTemplate;
   } | null>(null);
+  
+  // AI-related state
+  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiTone, setAiTone] = useState<'professional' | 'friendly' | 'formal' | 'casual'>('professional');
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [aiGenerated, setAiGenerated] = useState<{
+    subject: string;
+    emailBody: string;
+    smsBody?: string;
+  } | null>(null);
+  
   const { toast } = useToast();
   
   // Check if we're responding to a specific booking
@@ -467,6 +480,105 @@ export default function Templates() {
     }
   };
 
+  // AI Generation Functions
+  const handleGenerateAIResponse = async () => {
+    if (!bookingData && !customPrompt) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide either booking context or a custom prompt for AI generation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await fetch('/api/ai/generate-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: action || 'respond',
+          bookingId: bookingId || null,
+          customPrompt: customPrompt || null,
+          tone: aiTone
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setAiGenerated(result);
+        
+        toast({
+          title: "AI Response Generated",
+          description: "Your personalized response has been created. Review and edit as needed.",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "AI Generation Failed",
+          description: error.error || "Failed to generate AI response. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('AI generation error:', error);
+      toast({
+        title: "AI Error",
+        description: "Failed to connect to AI service. Please check your internet connection.",
+        variant: "destructive",
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleUseAIGenerated = () => {
+    if (!aiGenerated) return;
+    
+    // Create a temporary template from AI-generated content
+    const aiTemplate: EmailTemplate = {
+      id: -1,
+      name: 'AI Generated Response',
+      subject: aiGenerated.subject,
+      emailBody: aiGenerated.emailBody,
+      smsBody: aiGenerated.smsBody || '',
+      isDefault: false,
+      isAutoRespond: false,
+      createdAt: new Date().toISOString()
+    };
+
+    // Show preview with AI-generated content
+    setPreviewData({
+      subject: aiGenerated.subject,
+      emailBody: aiGenerated.emailBody,
+      template: aiTemplate
+    });
+    setShowPreview(true);
+    setShowAIDialog(false);
+    setAiGenerated(null);
+    setCustomPrompt('');
+  };
+
+  const handleSaveAIAsTemplate = () => {
+    if (!aiGenerated) return;
+    
+    // Pre-fill the create template dialog with AI-generated content
+    setFormData({
+      name: `AI Generated - ${action || 'Response'}`,
+      subject: aiGenerated.subject,
+      emailBody: aiGenerated.emailBody,
+      smsBody: aiGenerated.smsBody || '',
+      isAutoRespond: false
+    });
+    
+    setShowAIDialog(false);
+    setAiGenerated(null);
+    setIsCreateDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile menu toggle */}
@@ -496,10 +608,20 @@ export default function Templates() {
                 }
               </p>
             </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Template
-            </Button>
+            <div className="flex space-x-2">
+              <Button 
+                onClick={() => setShowAIDialog(true)}
+                variant="outline"
+                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none hover:from-purple-600 hover:to-blue-600"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI Generate
+              </Button>
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Template
+              </Button>
+            </div>
           </div>
 
           {/* Booking Context */}
@@ -813,6 +935,133 @@ export default function Templates() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Generation Dialog */}
+      <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Bot className="w-5 h-5 mr-2 text-purple-600" />
+              AI Response Generator
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Generate intelligent, personalized responses using AI based on your booking context and preferences
+            </p>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Booking Context Display */}
+            {bookingData && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-800 mb-2">Using Booking Context:</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
+                  <span><strong>Client:</strong> {bookingData.clientName}</span>
+                  <span><strong>Date:</strong> {bookingData.eventDate ? new Date(bookingData.eventDate).toLocaleDateString('en-GB') : 'TBD'}</span>
+                  <span><strong>Event:</strong> {bookingData.eventType || 'General enquiry'}</span>
+                  <span><strong>Venue:</strong> {bookingData.venue || 'TBD'}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Tone Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="ai-tone">Response Tone</Label>
+              <Select value={aiTone} onValueChange={(value: 'professional' | 'friendly' | 'formal' | 'casual') => setAiTone(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select tone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="professional">Professional & Business-like</SelectItem>
+                  <SelectItem value="friendly">Friendly & Warm</SelectItem>
+                  <SelectItem value="formal">Formal & Traditional</SelectItem>
+                  <SelectItem value="casual">Casual & Relaxed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Custom Prompt */}
+            <div className="space-y-2">
+              <Label htmlFor="custom-prompt">
+                Custom Instructions (Optional)
+              </Label>
+              <Textarea
+                id="custom-prompt"
+                placeholder="e.g., 'Include multiple package options with different durations and pricing', 'Mention ceremony and reception services', 'Ask about specific music preferences'..."
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-gray-500">
+                Provide specific instructions for what to include in the response. AI will use your booking context and business details automatically.
+              </p>
+            </div>
+
+            {/* AI Generated Content Preview */}
+            {aiGenerated && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-semibold text-green-800 mb-2">Generated Response:</h4>
+                <div className="space-y-3">
+                  <div>
+                    <strong className="text-sm text-green-700">Subject:</strong>
+                    <p className="text-sm bg-white p-2 rounded border mt-1">{aiGenerated.subject}</p>
+                  </div>
+                  <div>
+                    <strong className="text-sm text-green-700">Email Body:</strong>
+                    <div className="text-sm bg-white p-3 rounded border mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                      {aiGenerated.emailBody}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-2 mt-4">
+                  <Button onClick={handleUseAIGenerated} className="bg-green-600 hover:bg-green-700">
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    Use This Response
+                  </Button>
+                  <Button onClick={handleSaveAIAsTemplate} variant="outline">
+                    Save as Template
+                  </Button>
+                  <Button 
+                    onClick={() => setAiGenerated(null)} 
+                    variant="ghost" 
+                    size="sm"
+                  >
+                    Regenerate
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => {
+                setShowAIDialog(false);
+                setAiGenerated(null);
+                setCustomPrompt('');
+              }}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleGenerateAIResponse}
+                disabled={aiLoading}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+              >
+                {aiLoading ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate AI Response
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
         </div>
