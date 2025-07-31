@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -141,11 +142,26 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
         clientName: booking.clientName 
       });
       
+      // Parse time values - handle time ranges like "13:30 - 15:30"
+      const parseTimeValue = (timeValue: string) => {
+        if (!timeValue) return "";
+        // If it's a time range, extract just the start time
+        const timeRange = timeValue.split(' - ');
+        return timeRange[0].trim();
+      };
+
+      const parseEndTimeValue = (timeValue: string) => {
+        if (!timeValue) return "";
+        // If it's a time range, extract the end time
+        const timeRange = timeValue.split(' - ');
+        return timeRange.length > 1 ? timeRange[1].trim() : "";
+      };
+
       const bookingData = {
         clientName: booking.clientName || "",
         eventDate: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : "",
-        eventTime: booking.eventTime || "",
-        eventEndTime: booking.eventEndTime || "",
+        eventTime: parseTimeValue(booking.eventTime || ""),
+        eventEndTime: parseEndTimeValue(booking.eventTime || "") || booking.eventEndTime || "",
         venue: booking.venue || "",
         fee: booking.fee || "",
         clientEmail: booking.clientEmail || "",
@@ -671,7 +687,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
 
   return (
     <Dialog open={open} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col" aria-describedby="booking-details-description">
         {/* Sticky Header */}
         <div className="sticky top-0 bg-white z-10 border-b pb-4 pr-12">
           <DialogHeader>
@@ -679,6 +695,9 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
               <Info className="h-5 w-5" />
               Booking Details - {booking.clientName}
             </DialogTitle>
+            <DialogDescription id="booking-details-description">
+              Edit and manage booking information for {booking.clientName}
+            </DialogDescription>
           </DialogHeader>
           
           {/* Action Buttons */}
