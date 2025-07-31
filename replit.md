@@ -133,6 +133,16 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-01-31 - AI PRICING CONSISTENCY FIXED - Contradictory Price Information Resolved
+
+- **PRICING CONTRADICTION ISSUE IDENTIFIED**: ✅ Found AI system was generating contradictory pricing information due to conflicting guidance in system prompt
+- **SYSTEMATIC PRICING RULES IMPLEMENTED**: ✅ Updated AI prompt to enforce consistent pricing progression (shorter durations = lower prices, longer = higher prices)
+- **SPECIFIC EXAMPLE REMOVED**: ✅ Removed hardcoded price example (£260-£380) that was causing confusion and mixed messaging
+- **CONSISTENCY ENFORCEMENT ADDED**: ✅ Added explicit rules requiring logical price progression in all AI-generated responses
+- **USER PROMPT ENHANCED**: ✅ Updated action prompts to emphasize pricing consistency and logical structure
+- **BUSINESS CONTEXT PRESERVED**: ✅ Maintained professional pricing guidance while eliminating contradictory information
+- **Status**: AI PRICING SYSTEM CONSISTENT - Generated responses now follow logical pricing progression without contradictory information
+
 ### 2025-01-31 - CRITICAL FIXES DEPLOYED - AI System & Dialog Issues Resolved
 
 - **AI EXPORT ISSUE FIXED**: ✅ Fixed duplicate export declaration in ai-response-generator.ts that was causing import failures

@@ -239,13 +239,15 @@ PRICING STRUCTURE GUIDELINES:
 - IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
 - For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
 - Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
-- Provide 3-5 package options with different durations (e.g., 2-4 hours) with specific price points
+- Provide 3-4 package options with different durations starting from 2 hours
 - Mention additional services like DJ capabilities, MC services, equipment details when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
-- Structure pricing from basic to comprehensive packages (e.g., £260 for 2 hours up to £380 for 4 hours)
+- Structure pricing progressively: shorter durations at lower price points, longer durations at higher price points
+- CONSISTENCY RULE: Ensure all pricing within the same response follows logical progression (shorter = less expensive, longer = more expensive)
 - Always mention that packages can be customized to client requirements
 - Include payment terms and booking process information
 - Present pricing confidently as the professional standard for the services offered
+- Do not mix different pricing scales or give contradictory price points in the same response
 
 PROFESSIONAL DETAILS TO INCLUDE:
 - Equipment quality and setup capabilities
@@ -270,7 +272,7 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     }
 
     const actionPrompts = {
-      respond: "Generate a professional response to a new booking inquiry. Thank the client, confirm availability, and provide comprehensive pricing options and service details. Most clients don't mention fees in their initial enquiry, so proactively present your service packages and pricing structure.",
+      respond: "Generate a professional response to a new booking inquiry. Thank the client, confirm availability, and provide comprehensive pricing options with CONSISTENT pricing structure (shorter durations = lower prices, longer durations = higher prices). Most clients don't mention fees in their initial enquiry, so proactively present your service packages and pricing structure. Ensure all prices within the response follow logical progression.",
       thankyou: "Generate a thank you message after a successful event. Express gratitude, mention the event positively, and invite future bookings or reviews.",
       followup: "Generate a follow-up message for a pending inquiry. Be polite but proactive about getting a response.",
       custom: "Generate a personalized response based on the booking context provided."
