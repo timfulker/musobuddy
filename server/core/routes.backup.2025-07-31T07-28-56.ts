@@ -4,7 +4,6 @@ import { storage } from "./storage";
 // Session middleware imported inline
 // ProductionAuthSystem removed - using direct route registration
 import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
-import { aiResponseGenerator } from './ai-response-generator.js';
 
 // Removed AI gig generation function - feature moved to documentation
 
@@ -2039,83 +2038,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ===== AI RESPONSE GENERATION ROUTES (MINIMAL WORKING VERSION) =====
-  
-  // Simple test to verify AI system is reachable
-  app.get('/api/ai/status', (req, res) => {
-    try {
-      res.json({
-        status: 'AI routes loaded',
-        timestamp: new Date().toISOString(),
-        openaiConfigured: !!process.env.OPENAI_API_KEY
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // AI diagnostic endpoint - simplified
-  app.get('/api/ai/diagnostic', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.session?.userId;
-      
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const diagnostic = {
-        timestamp: new Date().toISOString(),
-        userId: userId,
-        checks: {
-          apiKey: {
-            configured: !!process.env.OPENAI_API_KEY,
-            status: process.env.OPENAI_API_KEY ? 'present' : 'missing'
-          },
-          authentication: {
-            status: 'working',
-            userId: userId
-          }
-        }
-      };
-
-      // Try to import AI module
-      try {
-        const aiModule = await import('./ai-response-generator');
-        diagnostic.checks.aiModule = {
-          status: !!aiModule.aiResponseGenerator ? 'loaded' : 'missing'
-        };
-      } catch (importError: any) {
-        diagnostic.checks.aiModule = {
-          status: 'import_failed',
-          error: importError.message
-        };
-      }
-
-      // Try to get user settings
-      try {
-        const userSettings = await storage.getUserSettings(userId);
-        diagnostic.checks.userSettings = {
-          status: !!userSettings ? 'loaded' : 'missing',
-          hasInstrument: !!userSettings?.primaryInstrument
-        };
-      } catch (settingsError: any) {
-        diagnostic.checks.userSettings = {
-          status: 'error',
-          error: settingsError.message
-        };
-      }
-
-      res.json(diagnostic);
-      
-    } catch (error: any) {
-      console.error('❌ AI diagnostic error:', error);
-      res.status(500).json({
-        error: 'Diagnostic failed',
-        details: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
+  // ===== AI RESPONSE GENERATION ROUTES =====
   
   // Simple AI test endpoint
   app.post('/api/ai/test', isAuthenticated, async (req: any, res) => {
@@ -2221,8 +2144,8 @@ export async function registerRoutes(app: Express) {
               fee: booking.fee,
               performanceDuration: booking.performanceDuration,
               styles: booking.styles,
-              equipment: (booking as any).equipment || null,
-              additionalInfo: (booking as any).additionalInfo || null
+              equipment: booking.equipment,
+              additionalInfo: booking.additionalInfo
             };
             console.log(`✅ Booking context loaded:`, { 
               clientName: bookingContext.clientName, 
@@ -2273,8 +2196,8 @@ export async function registerRoutes(app: Express) {
       // Call AI service with comprehensive error handling
       const response = await aiResponseGenerator.generateEmailResponse({
         action: action || 'respond',
-        bookingContext: bookingContext || undefined,
-        userSettings: userSettings || undefined,
+        bookingContext,
+        userSettings,
         customPrompt,
         tone: tone || 'professional'
       });
