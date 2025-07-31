@@ -243,7 +243,11 @@ PRICING STRUCTURE GUIDELINES:
   * Base rate: 2 hours of live performance - approximately £260
   * Additional hours: £60 per hour beyond the initial 2 hours
   * DJ Services: Add £300 to any package that includes DJ services
-  * Example calculations: 3 hours sax = £320 (£260 + £60), 3 hours sax + DJ = £620 (£260 + £60 + £300)
+  * Example calculations: 
+    - 2 hours sax + DJ = £560 (£260 + £300)
+    - 3 hours sax = £320 (£260 + £60)
+    - 3 hours sax + DJ = £620 (£260 + £60 + £300)
+    - 4 hours sax + DJ = £680 (£260 + £120 + £300)
 - Present 3-4 package options starting from 2 hours, clearly showing saxophone performance + any additional services
 - Mention additional services like DJ capabilities, MC services, equipment details when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
