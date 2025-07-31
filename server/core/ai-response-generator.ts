@@ -372,6 +372,7 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
       'clarinet': 'Clarinet',
       'flute': 'Flute',
       'drums': 'Drums',
+      'dj': 'DJ',
       'vocals': 'Vocals',
       'other': 'Musician'
     };

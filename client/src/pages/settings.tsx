@@ -83,8 +83,9 @@ const settingsFormSchema = z.object({
   pricingNotes: z.string().optional().or(z.literal("")),
   specialOffers: z.string().optional().or(z.literal("")),
   bankDetails: z.string().optional().or(z.literal("")),
-  // Instrument and gig type settings
+  // Instrument and gig type settings  
   primaryInstrument: z.string().optional().or(z.literal("")),
+  secondaryInstruments: z.array(z.string()).optional().default([]),
   // Performance settings
   bookingDisplayLimit: z.enum(["50", "all"]).default("50"),
   // Removed instrument and gig type fields - feature moved to documentation
@@ -392,6 +393,7 @@ export default function Settings() {
         specialOffers: settings.specialOffers || "",
         // Instrument settings
         primaryInstrument: settings.primaryInstrument || "",
+        secondaryInstruments: settings.secondaryInstruments || [],
         bookingDisplayLimit: settings.bookingDisplayLimit || "50",
         // Theme settings
         themeTemplate: settings.themeTemplate || "classic",
@@ -1150,6 +1152,64 @@ export default function Settings() {
                             <div className="text-xs text-gray-500 mt-1">
                               This helps AI generate appropriate pricing and service packages for your {selectedInstrument ? getInstrumentDisplayName(selectedInstrument) : 'instrument'} gigs
                             </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Secondary Instruments */}
+                      <FormField
+                        control={form.control}
+                        name="secondaryInstruments"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Secondary Instruments</FormLabel>
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap gap-2">
+                                {field.value?.map((instrument, index) => (
+                                  <div key={index} className="flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
+                                    <span>{getInstrumentDisplayName(instrument)}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = field.value?.filter((_, i) => i !== index) || [];
+                                        field.onChange(updated);
+                                      }}
+                                      className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                              <Select 
+                                onValueChange={(value) => {
+                                  if (value && !field.value?.includes(value) && value !== form.watch('primaryInstrument')) {
+                                    const updated = [...(field.value || []), value];
+                                    field.onChange(updated);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Add secondary instrument" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {getAvailableInstruments()
+                                    .filter(instrument => 
+                                      instrument !== form.watch('primaryInstrument') && 
+                                      !field.value?.includes(instrument)
+                                    )
+                                    .map((instrument) => (
+                                      <SelectItem key={instrument} value={instrument}>
+                                        {getInstrumentDisplayName(instrument)}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Add other instruments you play. AI will consider these for multi-service bookings.
+                            </div>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />

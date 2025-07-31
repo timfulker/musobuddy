@@ -214,6 +214,52 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         commonVenues: ["Music schools", "Private homes", "Studios", "Online"]
       }
     ]
+  },
+  {
+    instrument: "dj",
+    displayName: "DJ",
+    gigTypes: [
+      {
+        id: "wedding-dj",
+        name: "Wedding DJ",
+        description: "Full DJ service for wedding receptions and celebrations",
+        defaultDuration: "4-6 hours",
+        priceRange: "£400-800",
+        commonVenues: ["Hotels", "Wedding venues", "Marquees", "Function rooms"]
+      },
+      {
+        id: "party-dj",
+        name: "Party DJ",
+        description: "DJ entertainment for private parties and celebrations",
+        defaultDuration: "3-5 hours",
+        priceRange: "£300-600",
+        commonVenues: ["Private homes", "Function rooms", "Clubs", "Outdoor venues"]
+      },
+      {
+        id: "corporate-dj",
+        name: "Corporate DJ",
+        description: "Professional DJ services for corporate events and functions",
+        defaultDuration: "2-4 hours",
+        priceRange: "£350-700",
+        commonVenues: ["Hotels", "Conference centers", "Corporate venues", "Function rooms"]
+      },
+      {
+        id: "club-dj",
+        name: "Club DJ",
+        description: "DJ performance at nightclubs and music venues",
+        defaultDuration: "3-6 hours",
+        priceRange: "£200-500",
+        commonVenues: ["Nightclubs", "Music venues", "Bars", "Event spaces"]
+      },
+      {
+        id: "mobile-disco",
+        name: "Mobile Disco",
+        description: "Complete mobile disco service with lighting and sound",
+        defaultDuration: "3-5 hours",
+        priceRange: "£300-600",
+        commonVenues: ["Community halls", "Schools", "Private venues", "Outdoor events"]
+      }
+    ]
   }
 ];
 
