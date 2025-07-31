@@ -1011,29 +1011,32 @@ export default function Settings() {
                           )}
                         />
 
-                        <FormField
-                          control={form.control}
-                          name="djServiceRate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium">DJ Service Rate (£)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.01" 
-                                  {...field} 
-                                  value={field.value?.toString() || ""}
-                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
-                                  placeholder="300.00" 
-                                />
-                              </FormControl>
-                              <div className="text-xs text-muted-foreground">
-                                Additional charge for DJ services
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {/* DJ Service Rate - only show if DJ is primary or secondary instrument */}
+                        {(form.watch('primaryInstrument') === 'dj' || form.watch('secondaryInstruments')?.includes('dj')) && (
+                          <FormField
+                            control={form.control}
+                            name="djServiceRate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium">DJ Service Rate (£)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    step="0.01" 
+                                    {...field} 
+                                    value={field.value?.toString() || ""}
+                                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
+                                    placeholder="300.00" 
+                                  />
+                                </FormControl>
+                                <div className="text-xs text-muted-foreground">
+                                  Additional charge for DJ services
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                       </div>
 
                       <FormField
@@ -1088,9 +1091,9 @@ export default function Settings() {
                           <div>
                             <h4 className="font-medium text-amber-900 dark:text-amber-100">Current Pricing Examples</h4>
                             <div className="text-sm text-amber-700 dark:text-amber-300 mt-1 space-y-1">
-                              <div>• 2 hours sax: £{form.watch('baseHourlyRate') * form.watch('minimumBookingHours')}</div>
-                              <div>• 3 hours sax: £{form.watch('baseHourlyRate') * form.watch('minimumBookingHours') + form.watch('additionalHourRate')}</div>
-                              <div>• 2 hours sax + DJ: £{form.watch('baseHourlyRate') * form.watch('minimumBookingHours') + form.watch('djServiceRate')}</div>
+                              <div>• 2 hours sax: £{(Number(form.watch('baseHourlyRate')) * Number(form.watch('minimumBookingHours'))).toFixed(0)}</div>
+                              <div>• 3 hours sax: £{(Number(form.watch('baseHourlyRate')) * Number(form.watch('minimumBookingHours')) + Number(form.watch('additionalHourRate'))).toFixed(0)}</div>
+                              <div>• 2 hours sax + DJ: £{(Number(form.watch('baseHourlyRate')) * Number(form.watch('minimumBookingHours')) + Number(form.watch('djServiceRate'))).toFixed(0)}</div>
                             </div>
                           </div>
                         </div>
@@ -1173,6 +1176,17 @@ export default function Settings() {
                                       onClick={() => {
                                         const updated = field.value?.filter((_, i) => i !== index) || [];
                                         field.onChange(updated);
+                                        
+                                        // Update available gig types when secondary instruments change
+                                        const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
+                                        const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
+                                          const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
+                                          return [...acc, ...instrumentGigTypes];
+                                        }, [] as string[]);
+                                        
+                                        // Remove duplicates
+                                        const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+                                        setAvailableGigTypes(uniqueGigTypes);
                                       }}
                                       className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
                                     >
@@ -1186,6 +1200,17 @@ export default function Settings() {
                                   if (value && !field.value?.includes(value) && value !== form.watch('primaryInstrument')) {
                                     const updated = [...(field.value || []), value];
                                     field.onChange(updated);
+                                    
+                                    // Update available gig types when secondary instruments change
+                                    const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
+                                    const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
+                                      const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
+                                      return [...acc, ...instrumentGigTypes];
+                                    }, [] as string[]);
+                                    
+                                    // Remove duplicates
+                                    const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+                                    setAvailableGigTypes(uniqueGigTypes);
                                   }
                                 }}
                               >
@@ -1214,10 +1239,10 @@ export default function Settings() {
                         )}
                       />
 
-                      {/* Show available gig types when instrument is selected */}
-                      {selectedInstrument && availableGigTypes.length > 0 && (
+                      {/* Show available gig types when instruments are selected */}
+                      {(selectedInstrument || form.watch('secondaryInstruments')?.length > 0) && availableGigTypes.length > 0 && (
                         <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg">
-                          <h4 className="text-sm font-medium mb-2">Available Gig Types for {getInstrumentDisplayName(selectedInstrument)}</h4>
+                          <h4 className="text-sm font-medium mb-2">Available Gig Types for Your Instruments</h4>
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             {availableGigTypes.map((gigType, index) => (
                               <div key={index} className="bg-white dark:bg-slate-700 px-2 py-1 rounded border">
