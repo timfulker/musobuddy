@@ -53,7 +53,7 @@ export default function LandingPageBasecampGreen() {
               Book Gigs, Create Contracts, Send Invoices - All In One Platform
             </h2>
             <p className="text-2xl text-gray-700 max-w-3xl mx-auto mb-12 leading-relaxed">
-              Less admin, more music. Professional gig management made ridiculously simple for UK musicians.
+              Professional gig management made ridiculously simple for UK musicians. Less admin, more music.
             </p>
             
             <Link href="/signup">
