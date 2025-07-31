@@ -256,7 +256,7 @@ PROFESSIONAL DETAILS TO INCLUDE:
 - Flexibility for venue requirements
 - Experience and professionalism
 - Payment terms (typically cash/bank transfer on day)
-- Contract security (Musician's Union Contract)
+- Professional contract provided for booking security
 - Repertoire and customization options
 
 IMPORTANT: Always return valid JSON. Do not include any text outside the JSON structure.`;
