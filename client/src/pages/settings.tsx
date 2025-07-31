@@ -1011,8 +1011,12 @@ export default function Settings() {
                           )}
                         />
 
-                        {/* DJ Service Rate - always show for testing */}
-                        {true && (
+                        {/* DJ Service Rate - only show if DJ is primary or secondary instrument */}
+                        {(() => {
+                          const primaryInstrument = form.watch('primaryInstrument');
+                          const secondaryInstruments = form.watch('secondaryInstruments') || [];
+                          return primaryInstrument === 'dj' || secondaryInstruments.includes('dj');
+                        })() && (
                           <FormField
                             control={form.control}
                             name="djServiceRate"
@@ -1144,11 +1148,13 @@ export default function Settings() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {getAvailableInstruments().map((instrument) => (
-                                  <SelectItem key={instrument} value={instrument}>
-                                    {getInstrumentDisplayName(instrument)}
-                                  </SelectItem>
-                                ))}
+                                {getAvailableInstruments()
+                                  .filter(instrument => !form.watch('secondaryInstruments')?.includes(instrument))
+                                  .map((instrument) => (
+                                    <SelectItem key={instrument} value={instrument}>
+                                      {getInstrumentDisplayName(instrument)}
+                                    </SelectItem>
+                                  ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1168,34 +1174,60 @@ export default function Settings() {
                             <FormLabel className="text-sm font-medium">Secondary Instruments</FormLabel>
                             <div className="space-y-2">
                               <div className="flex flex-wrap gap-2">
-                                {field.value?.map((instrument, index) => (
-                                  <div key={index} className="flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
-                                    <span>{getInstrumentDisplayName(instrument)}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const updated = field.value?.filter((_, i) => i !== index) || [];
-                                        field.onChange(updated);
-                                        
-                                        // Update available gig types when secondary instruments change
-                                        const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
-                                        const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                          const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
-                                          return [...acc, ...instrumentGigTypes];
-                                        }, [] as string[]);
-                                        
-                                        // Remove duplicates
-                                        const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
-                                        setAvailableGigTypes(uniqueGigTypes);
-                                      }}
-                                      className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
-                                    >
-                                      ×
-                                    </button>
-                                  </div>
-                                ))}
+                                {field.value?.length > 0 ? (
+                                  field.value?.map((instrument, index) => (
+                                    <div key={index} className="flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
+                                      <span>{getInstrumentDisplayName(instrument)}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const updated = field.value?.filter((_, i) => i !== index) || [];
+                                          field.onChange(updated);
+                                          
+                                          // Update available gig types when secondary instruments change
+                                          const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
+                                          const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
+                                            const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
+                                            return [...acc, ...instrumentGigTypes];
+                                          }, [] as string[]);
+                                          
+                                          // Remove duplicates
+                                          const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+                                          setAvailableGigTypes(uniqueGigTypes);
+                                        }}
+                                        className="ml-2 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="text-sm text-gray-500 italic">No secondary instruments selected</div>
+                                )}
+                                {/* Add a "Clear All" button if there are secondary instruments */}
+                                {field.value?.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      field.onChange([]);
+                                      // Update available gig types when all secondary instruments are removed
+                                      const allInstruments = [form.watch('primaryInstrument')].filter(Boolean);
+                                      const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
+                                        const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
+                                        return [...acc, ...instrumentGigTypes];
+                                      }, [] as string[]);
+                                      
+                                      const uniqueGigTypes = Array.from(new Set(combinedGigTypes));
+                                      setAvailableGigTypes(uniqueGigTypes);
+                                    }}
+                                    className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 underline"
+                                  >
+                                    Clear All
+                                  </button>
+                                )}
                               </div>
                               <Select 
+                                value="" // Always reset to empty after selection
                                 onValueChange={(value) => {
                                   if (value && !field.value?.includes(value) && value !== form.watch('primaryInstrument')) {
                                     const updated = [...(field.value || []), value];
@@ -1232,7 +1264,7 @@ export default function Settings() {
                               </Select>
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
-                              Add other instruments you play. AI will consider these for multi-service bookings.
+                              Add other instruments you play. AI will consider these for multi-service bookings. Click the × to remove individual instruments or "Clear All" to remove all secondary instruments.
                             </div>
                             <FormMessage />
                           </FormItem>
