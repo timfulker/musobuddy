@@ -2040,6 +2040,47 @@ export async function registerRoutes(app: Express) {
 
   // ===== AI RESPONSE GENERATION ROUTES =====
   
+  // Simple AI test endpoint
+  app.post('/api/ai/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      console.log(`🧪 AI test endpoint called by user: ${userId}`);
+      
+      // Import and test the AI generator with minimal request
+      const { aiResponseGenerator } = await import('./ai-response-generator');
+      
+      const testResponse = await aiResponseGenerator.generateEmailResponse({
+        action: 'respond',
+        customPrompt: 'Generate a simple professional thank you message for a wedding inquiry.',
+        tone: 'professional'
+      });
+      
+      console.log('✅ AI test successful:', testResponse);
+      
+      res.json({
+        success: true,
+        test: 'AI generation working',
+        response: testResponse,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error: any) {
+      console.error('❌ AI test failed:', error);
+      
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Generate AI response for templates
   app.post('/api/ai/generate-response', isAuthenticated, async (req: any, res) => {
     // Set extended timeout for AI requests

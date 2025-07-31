@@ -17,6 +17,7 @@ const initializeOpenAI = () => {
   console.log('✅ OpenAI API key found and appears valid');
   return new OpenAI({ 
     apiKey,
+    timeout: 30000, // 30 second timeout at client level
     maxRetries: 2
   });
 };
