@@ -281,7 +281,7 @@ CRITICAL PRICING RULES:
 - All quoted prices must include travel costs but present as clean totals only
 - Do NOT use phrases like "inclusive of all expenses" or "including travel" - just show clean package prices
 - ALWAYS include VAT status: "All prices are VAT-exempt as a sole trader" or similar based on business structure
-- Use simple formatting without excessive punctuation: "2 hours saxophone: £290" (NOT "**2 hours Saxophone Performance**: £290")
+- Use simple formatting without excessive punctuation: "2 hours saxophone: £290" (NEVER use **asterisks**)
 - Use these complete package options for ${primaryInstrument} performances:
     ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
 - Present 3-4 package options starting from ${minimumHours} hours, showing total inclusive pricing${hasDJServices ? `
@@ -323,6 +323,8 @@ GUIDELINES:
 - For email body, use \\n\\n for paragraph breaks
 - Keep SMS version concise but complete
 - Never make up details not provided in the booking context
+- FORMATTING: Do NOT use asterisks (**) or bold markup in any text - use plain text only
+- Present pricing as simple text: "2 hours saxophone: £290" without any ** formatting
 
 ${pricingSection}
 
