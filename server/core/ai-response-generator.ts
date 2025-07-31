@@ -255,17 +255,19 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
     const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
     
-    // Calculate common packages - only include DJ packages if user offers DJ services
+    // Calculate common packages with travel included - only include DJ packages if user offers DJ services
+    const standardTravelCost = 60; // Default travel cost assumption
+    
     const basePackages = [
-      `${minimumHours} hours ${primaryInstrument}: ${basePriceStr}`,
-      `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate}`,
-      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2)}`
+      `${minimumHours} hours ${primaryInstrument}: £${baseRate * minimumHours + standardTravelCost} (inclusive of all expenses)`,
+      `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate + standardTravelCost} (inclusive of all expenses)`,
+      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2) + standardTravelCost} (inclusive of all expenses)`
     ];
     
     const djPackages = hasDJServices ? [
-      `${minimumHours} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + djRate}`,
-      `${minimumHours + 1} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + additionalHourRate + djRate}`,
-      `${minimumHours + 2} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + (additionalHourRate * 2) + djRate}`
+      `${minimumHours} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + djRate + standardTravelCost} (inclusive of all expenses)`,
+      `${minimumHours + 1} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + additionalHourRate + djRate + standardTravelCost} (inclusive of all expenses)`,
+      `${minimumHours + 2} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + (additionalHourRate * 2) + djRate + standardTravelCost} (inclusive of all expenses)`
     ] : [];
     
     const packages = [...basePackages, ...djPackages];
@@ -275,20 +277,20 @@ PRICING STRUCTURE GUIDELINES:
 - IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
 - For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
 - Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
-- Use this pricing structure for ${primaryInstrument}/instrumental performances:
-  * Base rate: ${minimumHours} hours of live performance - ${basePriceStr}
-  * Additional hours: ${additionalHourStr}${hasDJServices ? `
-  * DJ Services: ${djServiceStr}` : ''}
-  * Example calculations:
+- Present pricing as complete package totals that are inclusive of all expenses (travel, setup, equipment, etc.)
+- NEVER break down pricing into hourly rates or separate travel expenses - only show total package prices
+- ALWAYS state that prices are "inclusive of all expenses" to clarify what's included
+- ALWAYS include VAT status: "All prices are VAT-exempt as a sole trader" or similar based on business structure
+- Use these complete package options for ${primaryInstrument} performances:
     ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
-- Present 3-4 package options starting from ${minimumHours} hours, clearly showing ${primaryInstrument} performance${hasDJServices ? ' + any additional services' : ''}${hasDJServices ? `
+- Present 3-4 package options starting from ${minimumHours} hours, showing total inclusive pricing${hasDJServices ? `
 - Mention DJ capabilities when relevant - you offer DJ services as an additional service` : ''}
 - Mention equipment details, setup capabilities, and venue requirements when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
 - Always mention that packages can be customized to client requirements
 - Include payment terms and booking process information
 - Present pricing confidently as the professional standard for the services offered
-- Ensure all pricing calculations follow the base rate + hourly + service add-ons structure
+- Emphasize that all quoted prices include travel, setup, equipment, and all associated costs
 ${userSettings?.pricingNotes ? `- Additional pricing notes: ${userSettings.pricingNotes}` : ''}
 ${userSettings?.specialOffers ? `- Special offers to mention: ${userSettings.specialOffers}` : ''}` : `
 PRICING POLICY:
@@ -374,14 +376,18 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     if (context.eventType) details.push(`Event Type: ${context.eventType}`);
     if (context.gigType) details.push(`Gig Type: ${context.gigType}`);
     if (context.fee) details.push(`Performance Fee: £${context.fee}`);
-    if (context.travelExpense) details.push(`Travel Expense: £${context.travelExpense}`);
     if (context.performanceDuration) details.push(`Duration: ${context.performanceDuration}`);
     if (context.styles) details.push(`Music Styles: ${context.styles}`);
     if (context.equipment) details.push(`Equipment: ${context.equipment}`);
     if (context.additionalInfo) details.push(`Additional Info: ${context.additionalInfo}`);
 
+    // Add travel expense instruction if provided, but not as a separate line item
+    const travelInstruction = context.travelExpense 
+      ? `\n\nSPECIAL PRICING INSTRUCTION: Include £${context.travelExpense} travel cost in all quoted prices. Present as total inclusive pricing, not as separate travel charges.`
+      : '';
+
     return details.length > 0 
-      ? `BOOKING DETAILS:\n${details.join('\n')}`
+      ? `BOOKING DETAILS:\n${details.join('\n')}${travelInstruction}`
       : "No specific booking details provided.";
   }
 
