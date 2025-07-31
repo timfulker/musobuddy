@@ -2725,6 +2725,56 @@ export async function registerRoutes(app: Express) {
             <strong>ZIP:</strong> Any 5 digits
           </p>
         </div>
+        
+        <div style="background: #f0f9ff; border: 1px solid #0284c7; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #0284c7;">Your 4-Week Beta Testing Program</h3>
+          <p style="margin-bottom: 15px;">As a beta tester, your feedback is crucial for perfecting MusoBuddy. Here's your testing roadmap:</p>
+          
+          <div style="margin: 15px 0;">
+            <h4 style="color: #0284c7; margin-bottom: 10px;">Key Features to Test:</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #333;">
+              <li><strong>AI-Powered Booking Management:</strong> Test AI inquiry parsing and conflict detection</li>
+              <li><strong>Smart Email Responses:</strong> Use AI quote generation with your pricing settings</li>
+              <li><strong>Professional Contracts:</strong> Generate and test digital signature workflows</li>
+              <li><strong>Invoice Management:</strong> Create invoices with payment tracking</li>
+              <li><strong>Compliance Tracking:</strong> Upload and manage insurance/PAT certificates</li>
+              <li><strong>Travel Cost Integration:</strong> Verify travel expenses are included in quotes but hidden from clients</li>
+            </ul>
+          </div>
+          
+          <div style="margin: 15px 0;">
+            <h4 style="color: #0284c7; margin-bottom: 10px;">Weekly Focus Areas:</h4>
+            <div style="font-size: 14px; color: #555;">
+              <strong>Week 1:</strong> Signup, dashboard, basic booking management<br>
+              <strong>Week 2:</strong> AI features, contracts, and invoice systems<br>
+              <strong>Week 3:</strong> Client management and email communications<br>
+              <strong>Week 4:</strong> Real-world workflow testing and integration
+            </div>
+          </div>
+          
+          <div style="margin: 15px 0;">
+            <h4 style="color: #0284c7; margin-bottom: 10px;">What We Need From You:</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #333; font-size: 14px;">
+              <li>Weekly feedback reports on your testing experience</li>
+              <li>Bug reports with detailed steps to reproduce issues</li>
+              <li>Feature suggestions based on your music business needs</li>
+              <li>Assessment of time savings and professional improvements</li>
+              <li>Final evaluation: Would you pay £14.99/month for this system?</li>
+            </ul>
+          </div>
+          
+          <div style="background: #dcfce7; border: 1px solid #16a34a; border-radius: 6px; padding: 15px; margin: 15px 0;">
+            <h4 style="color: #16a34a; margin: 0 0 8px 0;">Your Reward:</h4>
+            <p style="margin: 0; color: #15803d; font-weight: 500;">
+              Complete 4 weeks of testing with regular feedback and receive:<br>
+              <strong>1 Year Free Premium Subscription (worth £167.88)</strong>
+            </p>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 15px;">
+            <strong>Important:</strong> Test thoroughly and provide honest feedback - both positive and negative insights help us improve MusoBuddy for the entire UK music community.
+          </p>
+        </div>
       ` : '';
       
       const emailHtml = `
