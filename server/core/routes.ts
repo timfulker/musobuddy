@@ -2201,7 +2201,7 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      const { action, bookingId, customPrompt, tone } = req.body;
+      const { action, bookingId, customPrompt, tone, travelExpense } = req.body;
 
       // Get booking context if bookingId provided
       let bookingContext = null;
@@ -2222,7 +2222,8 @@ export async function registerRoutes(app: Express) {
               performanceDuration: booking.performanceDuration,
               styles: booking.styles,
               equipment: (booking as any).equipment || null,
-              additionalInfo: (booking as any).additionalInfo || null
+              additionalInfo: (booking as any).additionalInfo || null,
+              travelExpense: booking.travelExpense || (travelExpense ? parseFloat(travelExpense) : null)
             };
             console.log(`✅ Booking context loaded:`, { 
               clientName: bookingContext.clientName, 

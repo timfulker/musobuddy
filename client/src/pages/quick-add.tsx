@@ -25,6 +25,7 @@ const quickAddFormSchema = z.object({
   eventDate: z.string().optional(),
   venue: z.string().optional(),
   estimatedValue: z.string().optional(),
+  travelExpense: z.string().optional(),
   notes: z.string().optional(),
   source: z.string().optional(),
   contactMethod: z.string().optional(),
@@ -54,6 +55,7 @@ export default function QuickAddPage() {
       eventDate: "",
       venue: "",
       estimatedValue: "",
+      travelExpense: "",
       notes: "",
       source: "",
       contactMethod: "",
@@ -71,6 +73,7 @@ export default function QuickAddPage() {
         eventDate: data.eventDate ? new Date(data.eventDate) : new Date(),
         venue: data.venue || null,
         estimatedValue: data.estimatedValue ? parseFloat(data.estimatedValue) : null,
+        travelExpense: data.travelExpense ? parseFloat(data.travelExpense) : null,
         notes: data.notes ? `${data.notes}\n\nContact Method - ${data.contactMethod || 'Not specified'}` : `Contact Method - ${data.contactMethod || 'Not specified'}`,
         status: "new" as const,
       };
@@ -322,11 +325,32 @@ export default function QuickAddPage() {
                     name="estimatedValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price Quoted</FormLabel>
+                        <FormLabel>Performance Fee (£)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
-                            placeholder="£0" 
+                            placeholder="0.00" 
+                            step="0.01"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="travelExpense"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Travel Expense (£)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="0.00" 
                             step="0.01"
                             {...field} 
                           />

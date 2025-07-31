@@ -313,6 +313,7 @@ export const bookings = pgTable("bookings", {
   
   // Financial tracking
   quotedAmount: decimal("quoted_amount", { precision: 10, scale: 2 }), // Amount quoted to client
+  travelExpense: decimal("travel_expense", { precision: 10, scale: 2 }), // Fixed travel charge for this booking
   depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }), // Deposit amount if required
   finalAmount: decimal("final_amount", { precision: 10, scale: 2 }), // Final agreed amount
   

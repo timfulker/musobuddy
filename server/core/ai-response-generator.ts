@@ -31,6 +31,7 @@ interface BookingContext {
   eventType?: string;
   gigType?: string;
   fee?: number;
+  travelExpense?: number;
   performanceDuration?: string;
   styles?: string;
   equipment?: string;
@@ -294,12 +295,13 @@ ${pricingSection}
 PROFESSIONAL DETAILS TO INCLUDE:
 - Equipment quality and setup capabilities
 - Public liability insurance coverage
-- Travel and setup included in pricing
+- Travel costs and setup logistics
 - Flexibility for venue requirements
 - Experience and professionalism
 - Payment terms (typically cash/bank transfer on day)
 - Professional contract provided for booking security
 - Repertoire and customization options
+- Include travel expenses in total quote when applicable
 
 IMPORTANT: Always return valid JSON. Do not include any text outside the JSON structure.`;
   }
@@ -341,7 +343,8 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     if (context.venue) details.push(`Venue: ${context.venue}`);
     if (context.eventType) details.push(`Event Type: ${context.eventType}`);
     if (context.gigType) details.push(`Gig Type: ${context.gigType}`);
-    if (context.fee) details.push(`Fee: £${context.fee}`);
+    if (context.fee) details.push(`Performance Fee: £${context.fee}`);
+    if (context.travelExpense) details.push(`Travel Expense: £${context.travelExpense}`);
     if (context.performanceDuration) details.push(`Duration: ${context.performanceDuration}`);
     if (context.styles) details.push(`Music Styles: ${context.styles}`);
     if (context.equipment) details.push(`Equipment: ${context.equipment}`);

@@ -43,6 +43,7 @@ export default function Templates() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiTone, setAiTone] = useState<'professional' | 'friendly' | 'formal' | 'casual'>('professional');
   const [customPrompt, setCustomPrompt] = useState('');
+  const [travelExpense, setTravelExpense] = useState('');
   const [aiGenerated, setAiGenerated] = useState<{
     subject: string;
     emailBody: string;
@@ -507,7 +508,8 @@ export default function Templates() {
           action: action || 'respond',
           bookingId: bookingId || null,
           customPrompt: customPrompt || null,
-          tone: aiTone
+          tone: aiTone,
+          travelExpense: travelExpense || null
         })
       });
       
@@ -1010,6 +1012,30 @@ export default function Templates() {
               </p>
             </div>
 
+            {/* Travel Expense */}
+            <div className="space-y-2">
+              <Label htmlFor="travel-expense" className="flex items-center">
+                <span>Travel Expense (Optional)</span>
+                <span className="ml-2 text-xs text-gray-500">- Fixed price for this booking</span>
+              </Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
+                <Input
+                  id="travel-expense"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={travelExpense}
+                  onChange={(e) => setTravelExpense(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <p className="text-xs text-gray-500">
+                Add a fixed travel charge for this specific booking (e.g., £25 for travel to venue). This will be included in the AI-generated pricing quote.
+              </p>
+            </div>
+
             {/* AI Generated Content Preview */}
             {aiGenerated && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -1052,6 +1078,7 @@ export default function Templates() {
                 setShowAIDialog(false);
                 setAiGenerated(null);
                 setCustomPrompt('');
+                setTravelExpense('');
               }}>
                 Cancel
               </Button>
