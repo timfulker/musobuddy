@@ -939,7 +939,8 @@ export default function Settings() {
                                   type="number" 
                                   step="0.01" 
                                   {...field} 
-                                  value={field.value || ""}
+                                  value={field.value?.toString() || ""}
+                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
                                   placeholder="130.00" 
                                 />
                               </FormControl>
@@ -962,7 +963,8 @@ export default function Settings() {
                                   type="number" 
                                   step="0.5" 
                                   {...field} 
-                                  value={field.value || ""}
+                                  value={field.value?.toString() || ""}
+                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
                                   placeholder="2.0" 
                                 />
                               </FormControl>
@@ -987,7 +989,8 @@ export default function Settings() {
                                   type="number" 
                                   step="0.01" 
                                   {...field} 
-                                  value={field.value || ""}
+                                  value={field.value?.toString() || ""}
+                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
                                   placeholder="60.00" 
                                 />
                               </FormControl>
@@ -1010,7 +1013,8 @@ export default function Settings() {
                                   type="number" 
                                   step="0.01" 
                                   {...field} 
-                                  value={field.value || ""}
+                                  value={field.value?.toString() || ""}
+                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : "")}
                                   placeholder="300.00" 
                                 />
                               </FormControl>
