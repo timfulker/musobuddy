@@ -1053,7 +1053,17 @@ export async function registerRoutes(app: Express) {
   });
   
   // Generate or get quick-add widget token for authenticated user
-  app.post('/api/generate-widget-token', isAuthenticated, async (req: any, res) => {
+  app.post('/api/generate-widget-token', async (req: any, res) => {
+    // Manual authentication check with detailed logging
+    console.log(`🎯 Widget token generation request received`);
+    console.log(`🔍 Session exists: ${!!req.session}`);
+    console.log(`🔍 Session userId: ${req.session?.userId}`);
+    console.log(`🔍 Session email: ${req.session?.email}`);
+    
+    if (!req.session?.userId) {
+      console.log('❌ Authentication failed - no userId in session');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     try {
       const userId = req.session.userId;
       console.log(`🎯 Widget token generation requested for user: ${userId}`);
