@@ -169,6 +169,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   // Initialize form when booking changes
   useEffect(() => {
     if (booking) {
+      // Debug: Log the actual booking data to see what's coming from the server
+      console.log('🔍 BookingDetailsDialog: Raw booking data received:', {
+        id: booking.id,
+        clientName: booking.clientName,
+        eventTime: booking.eventTime,
+        eventEndTime: booking.eventEndTime,
+        hasEventTime: !!booking.eventTime,
+        hasEventEndTime: !!booking.eventEndTime,
+        eventTimeType: typeof booking.eventTime,
+        eventEndTimeType: typeof booking.eventEndTime
+      });
+      
       const bookingData = {
         clientName: booking.clientName || "",
         eventDate: booking.eventDate ? new Date(booking.eventDate).toISOString().split('T')[0] : "",
