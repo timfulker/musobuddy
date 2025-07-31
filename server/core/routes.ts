@@ -1024,7 +1024,7 @@ export async function registerRoutes(app: Express) {
   // ===== BOOKING ROUTES =====
   
   // Get all bookings for authenticated user - CLEAN IMPLEMENTATION
-  app.get('/api/bookings', async (req: any, res) => {
+  app.get('/api/bookings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
       

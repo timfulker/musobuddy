@@ -649,7 +649,7 @@ app.post('/api/webhook/mailgun',
 });
 
 // AI email parsing function
-async function parseEmailWithAI(emailBody: string, subject: string): Promise<any> {
+export async function parseEmailWithAI(emailBody: string, subject: string): Promise<any> {
   const openai = process.env.OPENAI_EMAIL_PARSING_KEY ? 
     new (await import('openai')).default({ apiKey: process.env.OPENAI_EMAIL_PARSING_KEY }) : null;
     
