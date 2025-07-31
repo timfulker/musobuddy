@@ -239,15 +239,18 @@ PRICING STRUCTURE GUIDELINES:
 - IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
 - For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
 - Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
-- Provide 3-4 package options with different durations starting from 2 hours
+- Use this pricing structure for Saxon/instrumental performances:
+  * Base rate: 2 hours of live performance - approximately £260
+  * Additional hours: £60 per hour beyond the initial 2 hours
+  * DJ Services: Add £300 to any package that includes DJ services
+  * Example calculations: 3 hours sax = £320 (£260 + £60), 3 hours sax + DJ = £620 (£260 + £60 + £300)
+- Present 3-4 package options starting from 2 hours, clearly showing saxophone performance + any additional services
 - Mention additional services like DJ capabilities, MC services, equipment details when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
-- Structure pricing progressively: shorter durations at lower price points, longer durations at higher price points
-- CONSISTENCY RULE: Ensure all pricing within the same response follows logical progression (shorter = less expensive, longer = more expensive)
 - Always mention that packages can be customized to client requirements
 - Include payment terms and booking process information
 - Present pricing confidently as the professional standard for the services offered
-- Do not mix different pricing scales or give contradictory price points in the same response
+- Ensure all pricing calculations follow the base rate + hourly + service add-ons structure
 
 PROFESSIONAL DETAILS TO INCLUDE:
 - Equipment quality and setup capabilities
