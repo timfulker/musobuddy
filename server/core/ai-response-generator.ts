@@ -281,6 +281,7 @@ CRITICAL PRICING RULES:
 - All quoted prices must include travel costs but present as clean totals only
 - Do NOT use phrases like "inclusive of all expenses" or "including travel" - just show clean package prices
 - ALWAYS include VAT status: "All prices are VAT-exempt as a sole trader" or similar based on business structure
+- Use simple formatting without excessive punctuation: "2 hours saxophone: £290" (NOT "**2 hours Saxophone Performance**: £290")
 - Use these complete package options for ${primaryInstrument} performances:
     ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
 - Present 3-4 package options starting from ${minimumHours} hours, showing total inclusive pricing${hasDJServices ? `
@@ -291,6 +292,7 @@ CRITICAL PRICING RULES:
 - Include payment terms and booking process information
 - Present pricing confidently as the professional standard for the services offered
 - CRITICAL: Present prices as clean totals without mentioning what's included (travel, setup, etc.)
+- Use simple text formatting for pricing: "2 hours saxophone: £290" without asterisks, bold markup, or excessive punctuation
 ${userSettings?.pricingNotes ? `- Additional pricing notes: ${userSettings.pricingNotes}` : ''}
 ${userSettings?.specialOffers ? `- Special offers to mention: ${userSettings.specialOffers}` : ''}` : `
 PRICING POLICY:
