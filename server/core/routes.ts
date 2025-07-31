@@ -663,7 +663,7 @@ export async function registerRoutes(app: Express) {
       }
       
       // Import booking formatter
-      const { formatBookings } = await import('./booking-formatter.js');
+      const { formatBookings } = await import('./booking-formatter');
       
       // Get user settings to check display limit preference
       const userSettings = await storage.getUserSettings(userId);
@@ -701,7 +701,7 @@ export async function registerRoutes(app: Express) {
       }
       
       // Import booking formatter
-      const { formatBooking } = await import('./booking-formatter.js');
+      const { formatBooking } = await import('./booking-formatter');
       
       // Format booking consistently
       const formattedBooking = formatBooking(rawBooking);
