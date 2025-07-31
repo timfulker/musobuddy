@@ -133,6 +133,19 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
+### 2025-01-31 - BOOKING DISPLAY LOGIC ENHANCED - Future Bookings Protection + Manual Gig Entry Complete
+
+- **CRITICAL BOOKING DISPLAY FIX**: ✅ Changed "Last 50 bookings" to "All future bookings + 50 past bookings" to prevent future gigs from being hidden
+- **SMART FILTERING IMPLEMENTED**: ✅ Backend now separates future vs past bookings, ensuring all upcoming gigs are always visible regardless of total booking count
+- **USER INTERFACE UPDATED**: ✅ Settings page now clearly shows "All future bookings + 50 past bookings (Recommended)" vs "Show all bookings" options
+- **BUSINESS LOGIC PROTECTION**: ✅ System now prevents scenario where 50+ future bookings would cause some to be hidden from view
+- **MANUAL GIG TYPE ENTRY COMPLETE**: ✅ All booking forms (new-booking.tsx, quick-add.tsx, BookingDetailsDialog.tsx) now support hybrid dropdown/text input for custom gig types
+- **CUSTOM GIG SUPPORT**: ✅ Users can now enter non-standard gigs like "Burlesque Show", "Masonic Lodge", "School Assembly" by selecting "Custom - Type your own"
+- **COMPREHENSIVE GIG DATABASE**: ✅ Expanded static gig types from 6 to 29+ comprehensive performance categories (wedding, corporate, private, hospitality, education)
+- **NO API DEPENDENCY**: ✅ All gig types stored statically for maximum reliability, no performance impact from API calls
+- **TYPESCRIPT COMPATIBILITY**: ✅ Fixed all type checking issues with hybrid dropdown/input system using proper type assertions
+- **Status**: BOOKING DISPLAY PROTECTION + MANUAL GIG ENTRY OPERATIONAL - Future bookings always visible, custom gig types supported across all forms
+
 ### 2025-01-31 - SETTINGS FORM PRICING CALCULATIONS & DJ FIELD REACTIVITY FIXED
 
 - **CRITICAL PRICING BUG FIXED**: ✅ Fixed string concatenation bug causing £25,060 instead of £310 in pricing examples

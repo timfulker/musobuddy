@@ -1333,7 +1333,7 @@ export default function Settings() {
                                     className="text-purple-600"
                                   />
                                   <label htmlFor="limit-50" className="text-sm font-medium cursor-pointer">
-                                    Last 50 bookings (Recommended)
+                                    All future bookings + 50 past bookings (Recommended)
                                   </label>
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -1353,7 +1353,7 @@ export default function Settings() {
                               </div>
                             </FormControl>
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Choose how many bookings to display for better performance. Showing all bookings may slow down loading if you have many historical bookings.
+                              Choose your booking display preference. The recommended setting shows all upcoming gigs plus recent history, ensuring you never miss future bookings.
                             </div>
                             <FormMessage />
                           </FormItem>

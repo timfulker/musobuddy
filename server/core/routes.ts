@@ -676,10 +676,27 @@ export async function registerRoutes(app: Express) {
       let sortedBookings = rawBookings
         .sort((a: any, b: any) => new Date(b.eventDate || 0).getTime() - new Date(a.eventDate || 0).getTime());
       
-      // Apply display limit only if set to "50" (not "all")
+      // Apply display limit based on user preference
       if (displayLimit === "50") {
-        sortedBookings = sortedBookings.slice(0, 50);
+        // Smart filtering: All future bookings + 50 past bookings
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        
+        const futureBookings = sortedBookings.filter((booking: any) => {
+          const eventDate = new Date(booking.eventDate || 0);
+          return eventDate >= today;
+        });
+        
+        const pastBookings = sortedBookings.filter((booking: any) => {
+          const eventDate = new Date(booking.eventDate || 0);
+          return eventDate < today;
+        }).slice(0, 50); // Only take 50 most recent past bookings
+        
+        // Combine future + limited past bookings and re-sort
+        sortedBookings = [...futureBookings, ...pastBookings]
+          .sort((a: any, b: any) => new Date(b.eventDate || 0).getTime() - new Date(a.eventDate || 0).getTime());
       }
+      // If displayLimit === "all", show all bookings (no filtering)
       
       // Format bookings consistently
       const formattedBookings = formatBookings(sortedBookings);
