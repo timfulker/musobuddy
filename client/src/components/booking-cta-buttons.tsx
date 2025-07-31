@@ -180,7 +180,7 @@ export default function BookingCTAButtons() {
             <Button
               key={index}
               onClick={button.action}
-              className={`w-full justify-start p-4 h-auto text-white shadow-md transition-all duration-200 min-w-[360px] ${button.color}`}
+              className={`w-full justify-start p-4 h-auto text-white shadow-md transition-all duration-200 ${button.color}`}
               variant="default"
             >
               <div className="flex items-center w-full">
