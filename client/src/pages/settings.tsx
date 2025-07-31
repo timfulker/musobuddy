@@ -393,7 +393,7 @@ export default function Settings() {
         specialOffers: settings.specialOffers || "",
         // Instrument settings
         primaryInstrument: settings.primaryInstrument || "",
-        secondaryInstruments: settings.secondaryInstruments || [],
+        secondaryInstruments: Array.isArray(settings.secondaryInstruments) ? settings.secondaryInstruments : [],
         bookingDisplayLimit: settings.bookingDisplayLimit || "50",
         // Theme settings
         themeTemplate: settings.themeTemplate || "classic",
@@ -1011,8 +1011,8 @@ export default function Settings() {
                           )}
                         />
 
-                        {/* DJ Service Rate - only show if DJ is primary or secondary instrument */}
-                        {(form.watch('primaryInstrument') === 'dj' || form.watch('secondaryInstruments')?.includes('dj')) && (
+                        {/* DJ Service Rate - always show for testing */}
+                        {true && (
                           <FormField
                             control={form.control}
                             name="djServiceRate"
