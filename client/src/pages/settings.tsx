@@ -939,6 +939,7 @@ export default function Settings() {
                                   type="number" 
                                   step="0.01" 
                                   {...field} 
+                                  value={field.value || ""}
                                   placeholder="130.00" 
                                 />
                               </FormControl>
@@ -961,6 +962,7 @@ export default function Settings() {
                                   type="number" 
                                   step="0.5" 
                                   {...field} 
+                                  value={field.value || ""}
                                   placeholder="2.0" 
                                 />
                               </FormControl>
@@ -985,6 +987,7 @@ export default function Settings() {
                                   type="number" 
                                   step="0.01" 
                                   {...field} 
+                                  value={field.value || ""}
                                   placeholder="60.00" 
                                 />
                               </FormControl>
@@ -1007,6 +1010,7 @@ export default function Settings() {
                                   type="number" 
                                   step="0.01" 
                                   {...field} 
+                                  value={field.value || ""}
                                   placeholder="300.00" 
                                 />
                               </FormControl>
@@ -1028,6 +1032,7 @@ export default function Settings() {
                             <FormControl>
                               <Textarea 
                                 {...field} 
+                                value={field.value || ""}
                                 placeholder="Special pricing information, package deals, or other notes to include in quotes"
                                 rows={3} 
                               />
@@ -1049,6 +1054,7 @@ export default function Settings() {
                             <FormControl>
                               <Textarea 
                                 {...field} 
+                                value={field.value || ""}
                                 placeholder="Limited time offers, seasonal discounts, or promotional packages"
                                 rows={3} 
                               />
