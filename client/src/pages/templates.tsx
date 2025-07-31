@@ -615,6 +615,92 @@ export default function Templates() {
     setIsCreateDialogOpen(true);
   };
 
+  // GlockApps test function
+  const runGlockAppsTest = async () => {
+    if (templates.length === 0) {
+      toast({
+        title: "No Templates",
+        description: "Please create a template first to run the GlockApps deliverability test.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Run GlockApps deliverability test?\n\nThis will send your first template to 91 test email addresses across Gmail, Outlook, Yahoo, and European providers.\n\nTest ID: 2025-07-31-12:25:46:357t\n\nCheck your GlockApps dashboard in 5-10 minutes for results.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      toast({
+        title: "Starting GlockApps Test",
+        description: "Sending emails to 91 test addresses...",
+      });
+
+      // GlockApps seed list (from CSV)
+      const seedEmails = [
+        "elizabeaver@auth.glockdb.com", "juliarspivey@aol.com", "davidvcampbell@aol.com", "lynettedweyand@protonmail.com",
+        "bbarretthenryhe@gmail.com", "luisl417@yahoo.com", "jerrybrucedath@gmail.com", "verify79@web.de",
+        "simonetgrimard@laposte.net", "irenem@userflowhq.com", "comwhitttakarticjt@gmx.de", "verifynewssl@zoho.com",
+        "yadiraalfordbj@hotmail.com", "dannakbond@aol.com", "allanb@glockapps.awsapps.com", "eliza@spamcombat.com",
+        "eugenedandy576@gmail.com", "pprestondasavis@gmx.com", "alisonnlawrence@gmail.com", "verifycom79@gmx.com",
+        "b2bdeliver79@mail.com", "romanespor11@icloud.com", "joereddison@outlook.com", "martin@glockapps.tech",
+        "verify79@buyemailsoftware.com", "gailllitle@att.net", "jeffsayerss@yahoo.com", "johnnyjonesjake@hotmail.com",
+        "heavenpeck@freenet.de", "virginia@buyemailsoftware.com", "creissantdubois@laposte.net", "tristonreevestge@outlook.com.br",
+        "irene@postmasterpro.email", "jessicalisa6054@gmail.com", "blaircourtneye@outlook.com", "lashawnrheidrick@yahoo.com",
+        "loganalan654@gmail.com", "assa@auth.glockdb.com", "emilliesunnyk@gmail.com", "williamhensley54@yahoo.com",
+        "debrajhammons@outlook.com", "racheljavierera@hotmail.com", "williamhbishopp@yahoo.com", "anmeiyudobaihq@gmx.de",
+        "cierawilliamsonwq@gmail.com", "frankdesalvo@mailo.com", "jamesjng@outlook.com", "davidkdoyle@hotmail.com",
+        "gd@desktopemail.com", "bookerttubbs@zohomail.eu", "lenorebayerd@gmail.com", "taverasbrianvg@gmail.com",
+        "johntberman@yahoo.com", "raphaelewiley@aol.com", "keenanblooms@gmail.com", "carollpooool@outlook.com",
+        "catherinedwilsonn@aol.com", "mbell@fastdirectorysubmitter.com", "martinawm@gemings.awsapps.com", "luanajortega@yahoo.com",
+        "markjenningson@hotmail.com", "naomimartinsn@hotmail.com", "brittanyrocha@outlook.de", "larrycellis@aol.com",
+        "madeleinecagleks@gmail.com", "geraldmbautista@outlook.com", "williamtkozlowsk@gmail.com", "aileenjamesua@outlook.com",
+        "paul@userflowhq.com", "carlbilly605@gmail.com", "alfredohoffman@fastdirectorysubmitter.com", "tinamallahancr@gmail.com",
+        "verifyde79@gmx.de", "andrewheggins@mailo.com", "johnsimonskh@gmail.com", "jurgeneberhartdd@web.de",
+        "bobbybagdgddwins@mailo.com", "elizabethbetty6054@gmail.com", "deweymadddax@currently.com", "leoefraser@yahoo.com",
+        "glencabrera@outlook.fr", "clyde@trustycheck.pro", "candacechall@aol.com", "augustinlidermann@t-online.de",
+        "wilcoxginax@gmail.com", "daishacorwingx@gmail.com", "louiepettydr@gmail.com", "carloscohenm@freenet.de",
+        "michaelrwoodd@yahoo.com", "fredmrivenburg@aol.com"
+      ];
+
+      const response = await fetch('/api/test/glockapp-delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testId: '2025-07-31-12:25:46:357t',
+          templateId: templates[0].id.toString(),
+          seedEmails: seedEmails
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Test failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "GlockApps Test Completed!",
+        description: `✅ ${result.totalSent} emails sent successfully. Check your GlockApps dashboard in 5-10 minutes for deliverability results.`,
+      });
+
+      console.log('GlockApps test results:', result);
+
+    } catch (error: any) {
+      console.error('GlockApps test error:', error);
+      toast({
+        title: "Test Failed",
+        description: error.message || "Failed to run GlockApps test",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile menu toggle */}
@@ -645,6 +731,15 @@ export default function Templates() {
               </p>
             </div>
             <div className="flex space-x-2">
+              <Button 
+                onClick={() => runGlockAppsTest()}
+                variant="outline"
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-none hover:from-green-600 hover:to-emerald-600"
+                disabled={loading || templates.length === 0}
+              >
+                <Bot className="w-4 h-4 mr-2" />
+                GlockApps Test
+              </Button>
               <Button 
                 onClick={() => setShowAIDialog(true)}
                 variant="outline"
