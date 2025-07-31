@@ -2487,6 +2487,7 @@ export async function registerRoutes(app: Express) {
       }
       
       const { email, firstName, lastName, password, tier, isAdmin, isBetaTester } = req.body;
+      console.log('🔍 Admin create user request:', { email, firstName, lastName, tier, isAdmin, isBetaTester });
       
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
@@ -2498,19 +2499,33 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: 'User with this email already exists' });
       }
       
-      // Create new user with admin-specified settings
+      // Create new user with admin-specified settings - ensure all required fields
       const userData = {
-        email,
+        email: email.trim(),
         firstName: firstName || '',
         lastName: lastName || '',
         password, // This will be hashed by the storage layer
         tier: tier || 'free',
-        isAdmin: isAdmin || false,
-        isBetaTester: isBetaTester || false,
-        betaStartDate: isBetaTester ? new Date().toISOString() : null,
-        betaEndDate: isBetaTester ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null // 30 days
+        plan: 'free', // Required field
+        isAdmin: Boolean(isAdmin),
+        isBetaTester: Boolean(isBetaTester),
+        isActive: true, // Default active
+        isSubscribed: false, // Default not subscribed
+        isLifetime: false, // Default not lifetime
+        phoneVerified: false, // Default not verified
+        trialStatus: 'inactive', // Default trial status
+        accountStatus: 'active', // Default account status
+        fraudScore: 0, // Default fraud score
+        onboardingCompleted: false, // Default onboarding
+        loginAttempts: 0, // Default login attempts
+        forcePasswordChange: false, // Default no force change
+        betaFeedbackCount: 0, // Default feedback count
+        notificationPreferences: { email: true, sms: false, push: true },
+        betaStartDate: isBetaTester ? new Date() : null,
+        betaEndDate: isBetaTester ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null
       };
       
+      console.log('🔍 Creating user with data:', userData);
       const newUser = await storage.createUser(userData);
       
       console.log(`✅ Admin created new user: ${email} (Beta: ${isBetaTester}, Admin: ${isAdmin})`);
@@ -2527,8 +2542,9 @@ export async function registerRoutes(app: Express) {
         }
       });
     } catch (error: any) {
-      console.error('❌ Admin create user error:', error);
-      res.status(500).json({ error: 'Failed to create user' });
+      console.error('❌ Admin create user error:', error.message);
+      console.error('❌ Full error:', error);
+      res.status(500).json({ error: `Failed to create user: ${error.message}` });
     }
   });
 
