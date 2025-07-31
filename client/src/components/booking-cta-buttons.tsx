@@ -61,6 +61,14 @@ export default function BookingCTAButtons() {
 
   // Debug logging removed for performance
 
+  // Debug: Log total bookings and their statuses
+  console.log(`Total bookings: ${bookings.length}`);
+  const statusCounts = bookings.reduce((acc, booking) => {
+    acc[booking.status] = (acc[booking.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  console.log('Booking status counts:', statusCounts);
+
   // Use contextual actions to determine what bookings need attention
   // Only show bookings that genuinely need action and aren't completed or cancelled
   const needsResponse = bookings.filter(
@@ -118,8 +126,15 @@ export default function BookingCTAButtons() {
     
     // Only show confirmed bookings that genuinely need invoices
     const actions = getContextualActions(booking);
-    return booking.status === "confirmed" && 
+    const needsInvoiceAction = booking.status === "confirmed" && 
            actions.some(action => action.id === 'create-invoice');
+    
+    // Debug logging for invoice counting
+    if (needsInvoiceAction) {
+      console.log(`Booking needs invoice: ${booking.id} - ${booking.clientName} - Status: ${booking.status}`);
+    }
+    
+    return needsInvoiceAction;
   });
 
   // Define contracts and invoices arrays for the template
