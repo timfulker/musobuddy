@@ -223,6 +223,12 @@ export function getGigTypesForInstrument(instrument: string): GigType[] {
   return preset?.gigTypes || [];
 }
 
+// Helper function to get gig type names for a specific instrument (returns strings)
+export function getGigTypeNamesForInstrument(instrument: string): string[] {
+  const preset = INSTRUMENT_GIG_PRESETS.find(p => p.instrument === instrument);
+  return preset?.gigTypes.map(gt => gt.name) || [];
+}
+
 // Helper function to get all available instruments
 export function getAvailableInstruments(): string[] {
   return INSTRUMENT_GIG_PRESETS.map(preset => preset.instrument);

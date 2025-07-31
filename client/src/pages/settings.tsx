@@ -20,7 +20,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // Import instrument presets
-import { INSTRUMENT_GIG_PRESETS, getGigTypesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
+import { INSTRUMENT_GIG_PRESETS, getGigTypeNamesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
 
 // Theme configuration constants
 const THEME_TEMPLATES = [
@@ -290,7 +290,7 @@ export default function Settings() {
   // Handler for instrument selection
   const handleInstrumentChange = (instrument: string) => {
     setSelectedInstrument(instrument);
-    const gigTypes = getGigTypesForInstrument(instrument);
+    const gigTypes = getGigTypeNamesForInstrument(instrument);
     setAvailableGigTypes(gigTypes);
     
     // Update the form with the selected instrument
@@ -377,7 +377,7 @@ export default function Settings() {
       // Set up instrument state
       if (settings.primaryInstrument) {
         setSelectedInstrument(settings.primaryInstrument);
-        const gigTypes = getGigTypesForInstrument(settings.primaryInstrument);
+        const gigTypes = getGigTypeNamesForInstrument(settings.primaryInstrument);
         setAvailableGigTypes(gigTypes);
       }
       
