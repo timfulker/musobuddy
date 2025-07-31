@@ -106,14 +106,16 @@ GUIDELINES:
 - Never make up details not provided in the booking context
 
 PRICING STRUCTURE GUIDELINES:
+- IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
 - For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
 - Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
-- Provide 3-5 package options with different durations (e.g., 2-4 hours) and corresponding price points
+- Provide 3-5 package options with different durations (e.g., 2-4 hours) with specific price points
 - Mention additional services like DJ capabilities, MC services, equipment details when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
-- Structure pricing from basic to comprehensive packages
+- Structure pricing from basic to comprehensive packages (e.g., £260 for 2 hours up to £380 for 4 hours)
 - Always mention that packages can be customized to client requirements
 - Include payment terms and booking process information
+- Present pricing confidently as the professional standard for the services offered
 
 EXAMPLE PACKAGE STRUCTURE (adapt to context):
 - Package 1: Basic service (2-2.5 hours) - Entry level pricing
@@ -143,7 +145,7 @@ Generate appropriate subject, email body, and SMS version.`;
     }
 
     const actionPrompts = {
-      respond: "Generate a professional response to a new booking inquiry. Thank the client, confirm availability, provide any necessary details, and outline next steps.",
+      respond: "Generate a professional response to a new booking inquiry. Thank the client, confirm availability, and provide comprehensive pricing options and service details. Most clients don't mention fees in their initial enquiry, so proactively present your service packages and pricing structure.",
       thankyou: "Generate a thank you message after a successful event. Express gratitude, mention the event positively, and invite future bookings or reviews.",
       followup: "Generate a follow-up message for an pending inquiry. Be polite but proactive about getting a response.",
       custom: "Generate a personalized response based on the booking context provided."
