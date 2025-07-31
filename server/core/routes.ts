@@ -1076,11 +1076,21 @@ export async function registerRoutes(app: Express) {
 
   // Generate or get quick-add widget token for authenticated user
   app.post('/api/generate-widget-token', isAuthenticated, async (req: any, res) => {
+    const requestId = Date.now().toString();
+    
     try {
+      console.log(`🔧 [${requestId}] Widget token generation request started`);
+      console.log(`🔧 [${requestId}] Session data:`, {
+        sessionExists: !!req.session,
+        userId: req.session?.userId || null,
+        sessionId: req.sessionID || null,
+        timestamp: new Date().toISOString()
+      });
+      
       const userId = req.session?.userId || req.user?.id;
 
       if (!userId) {
-        console.log('❌ Widget token generation failed: No user ID found');
+        console.log(`❌ [${requestId}] Authentication failed - no userId in session`);
         return res.status(401).json({ 
           error: 'Authentication required',
           debug: {
@@ -1092,44 +1102,90 @@ export async function registerRoutes(app: Express) {
           }
         });
       }
+
+      console.log(`✅ [${requestId}] Authentication successful for user: ${userId}`);
       
       // Check if user already has a token
+      console.log(`🔍 [${requestId}] Checking if user ${userId} exists in database...`);
       const user = await storage.getUserById(userId);
       
       if (!user) {
+        console.log(`❌ [${requestId}] User ${userId} not found in database`);
         return res.status(404).json({ error: 'User not found' });
       }
       
+      console.log(`✅ [${requestId}] User found:`, {
+        id: user.id,
+        email: user.email,
+        hasExistingToken: !!user.quickAddToken,
+        existingTokenLength: user.quickAddToken?.length || 0
+      });
+      
       if (user?.quickAddToken) {
-        // Use the current app URL from the request headers
         const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const widgetUrl = `${baseUrl}/widget/${user.quickAddToken}`;
+        
+        console.log(`✅ [${requestId}] Returning existing token for user ${userId}`);
         return res.json({ 
           success: true,
           token: user.quickAddToken,
-          url: `${baseUrl}/widget/${user.quickAddToken}`
+          url: widgetUrl
         });
       }
       
       // Generate new token
-      const token = await storage.generateQuickAddToken(userId);
+      console.log(`🎲 [${requestId}] Generating new token for user ${userId}...`);
       
-      if (!token) {
-        return res.status(500).json({ error: 'Failed to generate widget token' });
+      try {
+        const token = await storage.generateQuickAddToken(userId);
+        console.log(`🎲 [${requestId}] Storage.generateQuickAddToken returned:`, {
+          token: token ? `${token.substring(0, 8)}...` : null,
+          tokenType: typeof token,
+          tokenLength: token?.length || 0
+        });
+        
+        if (!token) {
+          console.log(`❌ [${requestId}] Token generation returned null/falsy value`);
+          return res.status(500).json({ 
+            error: 'Failed to generate widget token',
+            details: 'Storage method returned null'
+          });
+        }
+        
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const widgetUrl = `${baseUrl}/widget/${token}`;
+        
+        console.log(`✅ [${requestId}] Token generated successfully for user ${userId}`);
+        console.log(`✅ [${requestId}] Widget URL: ${widgetUrl}`);
+        
+        res.json({ 
+          success: true,
+          token: token,
+          url: widgetUrl
+        });
+        
+      } catch (tokenError: any) {
+        console.error(`❌ [${requestId}] Token generation error:`, {
+          message: tokenError.message,
+          stack: tokenError.stack,
+          name: tokenError.name
+        });
+        throw tokenError; // Re-throw to be caught by outer catch
       }
       
-      // Use the current app URL from the request headers
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      res.json({ 
-        success: true,
-        token: token,
-        url: `${baseUrl}/widget/${token}`
+    } catch (error: any) {
+      console.error(`❌ [${requestId}] Widget generation error:`, {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5),
+        name: error.name,
+        code: error.code
       });
       
-    } catch (error: any) {
       res.status(500).json({ 
         error: 'Failed to generate widget token', 
-        details: error.message,
-        stack: error.stack?.split('\n').slice(0, 3)
+        details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+        requestId: requestId,
+        timestamp: new Date().toISOString()
       });
     }
   });

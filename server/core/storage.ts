@@ -2,6 +2,7 @@ import { db } from "./database";
 import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments, clients, conflictResolutions } from "../../shared/schema";
 import { eq, and, desc, sql, gte, lte, lt } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import { randomBytes } from 'crypto';
 
 export class Storage {
   private db = db;
@@ -50,29 +51,70 @@ export class Storage {
   }
 
   async generateQuickAddToken(userId: string) {
+    const requestId = Date.now().toString();
+    
     try {
-      console.log(`🔧 Storage: Generating token for user ${userId}`);
+      console.log(`🔧 [${requestId}] Storage: Generating token for user ${userId}`);
+      console.log(`🔧 [${requestId}] User ID type: ${typeof userId}, length: ${userId?.length}`);
       
-      // Generate a secure random token
-      const token = require('crypto').randomBytes(32).toString('hex');
-      console.log(`🎲 Generated token: ${token.substring(0, 8)}...`);
+      // FIXED: Use proper ES6 import instead of require()
+      const token = randomBytes(32).toString('hex');
+      console.log(`🎲 [${requestId}] Generated token: ${token.substring(0, 8)}... (length: ${token.length})`);
       
-      const result = await db.update(users)
-        .set({ quickAddToken: token, updatedAt: new Date() })
-        .where(eq(users.id, userId))
-        .returning();
+      // Verify user exists first
+      console.log(`🔍 [${requestId}] Verifying user exists before token update...`);
+      const existingUser = await db.select().from(users).where(eq(users.id, userId));
       
-      console.log(`💾 Database update result: ${result.length > 0 ? 'SUCCESS' : 'FAILED'}`);
-      
-      if (result.length === 0) {
-        console.error(`❌ No user found with ID ${userId} for token update`);
+      if (existingUser.length === 0) {
+        console.error(`❌ [${requestId}] User ${userId} not found in database before token update`);
         return null;
       }
       
-      return result[0]?.quickAddToken || null;
+      console.log(`✅ [${requestId}] User ${userId} found, proceeding with token update...`);
+      
+      // Update user with new token
+      const result = await db.update(users)
+        .set({ 
+          quickAddToken: token, 
+          updatedAt: new Date() 
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      console.log(`💾 [${requestId}] Database update result:`, {
+        resultCount: result.length,
+        success: result.length > 0,
+        returnedToken: result[0]?.quickAddToken ? `${result[0].quickAddToken.substring(0, 8)}...` : null
+      });
+      
+      if (result.length === 0) {
+        console.error(`❌ [${requestId}] No rows updated for user ${userId} - user may not exist`);
+        return null;
+      }
+      
+      const returnedToken = result[0]?.quickAddToken;
+      
+      if (!returnedToken) {
+        console.error(`❌ [${requestId}] Token was not saved to database - returned object missing quickAddToken`);
+        return null;
+      }
+      
+      if (returnedToken !== token) {
+        console.error(`❌ [${requestId}] Token mismatch - generated: ${token.substring(0, 8)}..., returned: ${returnedToken.substring(0, 8)}...`);
+        return null;
+      }
+      
+      console.log(`✅ [${requestId}] Token generation successful for user ${userId}`);
+      return returnedToken;
       
     } catch (error: any) {
-      console.error('❌ Storage error in generateQuickAddToken:', error);
+      console.error(`❌ [${requestId}] Storage error in generateQuickAddToken:`, {
+        userId,
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        stack: error.stack?.split('\n').slice(0, 3)
+      });
       throw error;
     }
   }
