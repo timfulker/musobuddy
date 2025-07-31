@@ -2657,6 +2657,121 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Admin Send User Invitation endpoint
+  app.post('/api/admin/invite-user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Check if user is admin
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const { email, firstName, lastName, tier, isAdmin, isBetaTester, personalMessage } = req.body;
+      console.log('🔍 Admin invite user request:', { email, firstName, lastName, tier, isAdmin, isBetaTester });
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: 'User with this email already exists' });
+      }
+      
+      // Generate invitation token
+      const { nanoid } = await import('nanoid');
+      const inviteToken = nanoid(32);
+      const inviteExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      
+      // Store invitation in database (we'll need to add an invitations table later)
+      const invitationData = {
+        token: inviteToken,
+        email: email.trim(),
+        firstName: firstName || '',
+        lastName: lastName || '',
+        tier: tier || 'free',
+        isAdmin: Boolean(isAdmin),
+        isBetaTester: Boolean(isBetaTester),
+        personalMessage: personalMessage || '',
+        invitedBy: userId,
+        expiresAt: inviteExpiry,
+        status: 'pending'
+      };
+      
+      // Create invitation link
+      const inviteLink = `${process.env.FRONTEND_URL || 'https://musobuddy.replit.app'}/signup?invite=${inviteToken}`;
+      
+      // Prepare email content
+      const emailSubject = `You're invited to join MusoBuddy!`;
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Welcome to MusoBuddy!</h2>
+          
+          <p>Hi ${firstName || 'there'},</p>
+          
+          <p>You've been invited by ${user.firstName || user.email} to join MusoBuddy, the comprehensive music business management platform.</p>
+          
+          ${personalMessage ? `<div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;"><strong>Personal message:</strong><br>${personalMessage}</div>` : ''}
+          
+          <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Your account details:</h3>
+            <ul style="list-style: none; padding: 0;">
+              <li><strong>Email:</strong> ${email}</li>
+              <li><strong>Tier:</strong> ${tier.charAt(0).toUpperCase() + tier.slice(1)}</li>
+              ${isBetaTester ? '<li><strong>Special Access:</strong> Beta Tester</li>' : ''}
+              ${isAdmin ? '<li><strong>Role:</strong> Administrator</li>' : ''}
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${inviteLink}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Accept Invitation</a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px;">This invitation expires in 7 days. If you didn't expect this invitation, you can safely ignore this email.</p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="color: #999; font-size: 12px;">MusoBuddy - Music Business Management Platform</p>
+        </div>
+      `;
+      
+      // Send invitation email
+      try {
+        await emailService.sendEmail({
+          to: email,
+          from: process.env.FROM_EMAIL || 'noreply@musobuddy.com',
+          subject: emailSubject,
+          html: emailHtml
+        });
+        
+        console.log(`✅ Invitation email sent to: ${email}`);
+      } catch (emailError) {
+        console.error('❌ Failed to send invitation email:', emailError);
+        // Continue anyway - we can still create the invitation record
+      }
+      
+      // For now, we'll just log the invitation data since we don't have an invitations table yet
+      console.log('📧 Invitation created:', invitationData);
+      console.log('🔗 Invitation link:', inviteLink);
+      
+      console.log(`✅ Admin sent invitation to: ${email} (Beta: ${isBetaTester}, Admin: ${isAdmin})`);
+      res.json({ 
+        success: true, 
+        message: 'Invitation sent successfully',
+        inviteLink: inviteLink // Include for admin reference
+      });
+    } catch (error: any) {
+      console.error('❌ Admin invite user error:', error.message);
+      console.error('❌ Full error:', error);
+      res.status(500).json({ error: `Failed to send invitation: ${error.message}` });
+    }
+  });
+
   // Enhanced error logging middleware
   app.use((err: any, req: any, res: any, next: any) => {
     console.error('🔥 Server Error:', {

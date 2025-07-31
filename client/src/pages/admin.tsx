@@ -29,7 +29,8 @@ import {
   UserPlus,
   Search,
   Trash2,
-  Edit
+  Edit,
+  Mail
 } from "lucide-react";
 
 interface AdminOverview {
@@ -59,6 +60,7 @@ export default function AdminPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [newUserOpen, setNewUserOpen] = useState(false);
   const [editUserOpen, setEditUserOpen] = useState(false);
+  const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [userFilter, setUserFilter] = useState('all');
   const [userSearch, setUserSearch] = useState('');
@@ -80,6 +82,15 @@ export default function AdminPanel() {
     tier: 'free',
     isAdmin: false,
     isBetaTester: false
+  });
+  const [inviteForm, setInviteForm] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    tier: 'free',
+    isAdmin: false,
+    isBetaTester: false,
+    personalMessage: ''
   });
   const { isDesktop } = useResponsive();
   const { toast } = useToast();
@@ -195,6 +206,39 @@ export default function AdminPanel() {
     },
   });
 
+  const inviteUserMutation = useMutation({
+    mutationFn: (inviteData: any) => apiRequest('/api/admin/invite-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inviteData),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/overview"] });
+      setInviteUserOpen(false);
+      setInviteForm({
+        email: '',
+        firstName: '',
+        lastName: '',
+        tier: 'free',
+        isAdmin: false,
+        isBetaTester: false,
+        personalMessage: ''
+      });
+      toast({
+        title: "Invitation sent successfully",
+        description: "The user will receive an email invitation to join MusoBuddy.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error sending invitation",
+        description: error.message || "Failed to send invitation",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateUser = () => {
     if (!newUserForm.email) {
       toast({
@@ -213,6 +257,18 @@ export default function AdminPanel() {
       return;
     }
     createUserMutation.mutate(newUserForm);
+  };
+
+  const handleInviteUser = () => {
+    if (!inviteForm.email) {
+      toast({
+        title: "Email required",
+        description: "Please enter an email address for the invitation",
+        variant: "destructive",
+      });
+      return;
+    }
+    inviteUserMutation.mutate(inviteForm);
   };
 
   const handleEditUser = (user: AdminUser) => {
@@ -460,107 +516,206 @@ export default function AdminPanel() {
                           <SelectItem value="enterprise">Enterprise Tier</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Dialog open={newUserOpen} onOpenChange={setNewUserOpen}>
-                        <DialogTrigger asChild>
-                          <Button className="flex items-center gap-2">
-                            <UserPlus className="h-4 w-4" />
-                            Add User
-                          </Button>
-                        </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Add New User</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                              id="email"
-                              placeholder="user@example.com"
-                              value={newUserForm.email}
-                              onChange={(e) => setNewUserForm(prev => ({ ...prev, email: e.target.value }))}
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                              <Label htmlFor="firstName">First Name</Label>
-                              <Input
-                                id="firstName"
-                                placeholder="John"
-                                value={newUserForm.firstName}
-                                onChange={(e) => setNewUserForm(prev => ({ ...prev, firstName: e.target.value }))}
-                              />
+                      <div className="flex gap-2">
+                        <Dialog open={inviteUserOpen} onOpenChange={setInviteUserOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              Send Invite
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Send User Invitation</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid gap-2">
+                                <Label htmlFor="invite-email">Email</Label>
+                                <Input
+                                  id="invite-email"
+                                  placeholder="user@example.com"
+                                  value={inviteForm.email}
+                                  onChange={(e) => setInviteForm(prev => ({ ...prev, email: e.target.value }))}
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                  <Label htmlFor="invite-firstName">First Name (Optional)</Label>
+                                  <Input
+                                    id="invite-firstName"
+                                    placeholder="John"
+                                    value={inviteForm.firstName}
+                                    onChange={(e) => setInviteForm(prev => ({ ...prev, firstName: e.target.value }))}
+                                  />
+                                </div>
+                                <div className="grid gap-2">
+                                  <Label htmlFor="invite-lastName">Last Name (Optional)</Label>
+                                  <Input
+                                    id="invite-lastName"
+                                    placeholder="Doe"
+                                    value={inviteForm.lastName}
+                                    onChange={(e) => setInviteForm(prev => ({ ...prev, lastName: e.target.value }))}
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="invite-tier">Initial Subscription Tier</Label>
+                                <Select value={inviteForm.tier} onValueChange={(value) => setInviteForm(prev => ({ ...prev, tier: value }))}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select tier" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="free">Free</SelectItem>
+                                    <SelectItem value="core">Core</SelectItem>
+                                    <SelectItem value="premium">Premium</SelectItem>
+                                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="invite-isAdmin"
+                                    checked={inviteForm.isAdmin}
+                                    onChange={(e) => setInviteForm(prev => ({ ...prev, isAdmin: e.target.checked }))}
+                                    className="rounded"
+                                  />
+                                  <Label htmlFor="invite-isAdmin">Admin privileges</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="invite-isBetaTester"
+                                    checked={inviteForm.isBetaTester}
+                                    onChange={(e) => setInviteForm(prev => ({ ...prev, isBetaTester: e.target.checked }))}
+                                    className="rounded"
+                                  />
+                                  <Label htmlFor="invite-isBetaTester">Beta tester access</Label>
+                                </div>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="invite-message">Personal Message (Optional)</Label>
+                                <Input
+                                  id="invite-message"
+                                  placeholder="Welcome to MusoBuddy! You've been invited to..."
+                                  value={inviteForm.personalMessage}
+                                  onChange={(e) => setInviteForm(prev => ({ ...prev, personalMessage: e.target.value }))}
+                                />
+                              </div>
                             </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor="lastName">Last Name</Label>
-                              <Input
-                                id="lastName"
-                                placeholder="Doe"
-                                value={newUserForm.lastName}
-                                onChange={(e) => setNewUserForm(prev => ({ ...prev, lastName: e.target.value }))}
-                              />
+                            <div className="flex justify-end gap-2">
+                              <Button variant="outline" onClick={() => setInviteUserOpen(false)}>
+                                Cancel
+                              </Button>
+                              <Button onClick={handleInviteUser} disabled={inviteUserMutation.isPending}>
+                                {inviteUserMutation.isPending ? 'Sending...' : 'Send Invitation'}
+                              </Button>
                             </div>
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="password">Temporary Password</Label>
-                            <Input
-                              id="password"
-                              type="password"
-                              placeholder="Enter temporary password for user"
-                              value={newUserForm.password}
-                              onChange={(e) => setNewUserForm(prev => ({ ...prev, password: e.target.value }))}
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="tier">Subscription Tier</Label>
-                            <Select value={newUserForm.tier} onValueChange={(value) => setNewUserForm(prev => ({ ...prev, tier: value }))}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select tier" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="free">Free</SelectItem>
-                                <SelectItem value="core">Core</SelectItem>
-                                <SelectItem value="premium">Premium</SelectItem>
-                                <SelectItem value="enterprise">Enterprise</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                id="isAdmin"
-                                checked={newUserForm.isAdmin}
-                                onChange={(e) => setNewUserForm(prev => ({ ...prev, isAdmin: e.target.checked }))}
-                                className="rounded"
-                              />
-                              <Label htmlFor="isAdmin">Admin privileges</Label>
+                          </DialogContent>
+                        </Dialog>
+                        <Dialog open={newUserOpen} onOpenChange={setNewUserOpen}>
+                          <DialogTrigger asChild>
+                            <Button className="flex items-center gap-2">
+                              <UserPlus className="h-4 w-4" />
+                              Add User
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Add New User</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid gap-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                  id="email"
+                                  placeholder="user@example.com"
+                                  value={newUserForm.email}
+                                  onChange={(e) => setNewUserForm(prev => ({ ...prev, email: e.target.value }))}
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                  <Label htmlFor="firstName">First Name</Label>
+                                  <Input
+                                    id="firstName"
+                                    placeholder="John"
+                                    value={newUserForm.firstName}
+                                    onChange={(e) => setNewUserForm(prev => ({ ...prev, firstName: e.target.value }))}
+                                  />
+                                </div>
+                                <div className="grid gap-2">
+                                  <Label htmlFor="lastName">Last Name</Label>
+                                  <Input
+                                    id="lastName"
+                                    placeholder="Doe"
+                                    value={newUserForm.lastName}
+                                    onChange={(e) => setNewUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="password">Temporary Password</Label>
+                                <Input
+                                  id="password"
+                                  type="password"
+                                  placeholder="Enter temporary password for user"
+                                  value={newUserForm.password}
+                                  onChange={(e) => setNewUserForm(prev => ({ ...prev, password: e.target.value }))}
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="tier">Subscription Tier</Label>
+                                <Select value={newUserForm.tier} onValueChange={(value) => setNewUserForm(prev => ({ ...prev, tier: value }))}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select tier" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="free">Free</SelectItem>
+                                    <SelectItem value="core">Core</SelectItem>
+                                    <SelectItem value="premium">Premium</SelectItem>
+                                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="isAdmin"
+                                    checked={newUserForm.isAdmin}
+                                    onChange={(e) => setNewUserForm(prev => ({ ...prev, isAdmin: e.target.checked }))}
+                                    className="rounded"
+                                  />
+                                  <Label htmlFor="isAdmin">Admin privileges</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="isBetaTester"
+                                    checked={newUserForm.isBetaTester}
+                                    onChange={(e) => setNewUserForm(prev => ({ ...prev, isBetaTester: e.target.checked }))}
+                                    className="rounded"
+                                  />
+                                  <Label htmlFor="isBetaTester">Beta Tester (4-week trial with 1 year free subscription)</Label>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                id="isBetaTester"
-                                checked={newUserForm.isBetaTester}
-                                onChange={(e) => setNewUserForm(prev => ({ ...prev, isBetaTester: e.target.checked }))}
-                                className="rounded"
-                              />
-                              <Label htmlFor="isBetaTester">Beta Tester (4-week trial with 1 year free subscription)</Label>
+                            <div className="flex justify-end gap-2">
+                              <Button variant="outline" onClick={() => setNewUserOpen(false)}>
+                                Cancel
+                              </Button>
+                              <Button 
+                                onClick={handleCreateUser}
+                                disabled={createUserMutation.isPending}
+                              >
+                                {createUserMutation.isPending ? "Creating..." : "Create User"}
+                              </Button>
                             </div>
-                          </div>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setNewUserOpen(false)}>
-                            Cancel
-                          </Button>
-                          <Button 
-                            onClick={handleCreateUser}
-                            disabled={createUserMutation.isPending}
-                          >
-                            {createUserMutation.isPending ? "Creating..." : "Create User"}
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
