@@ -48,7 +48,11 @@ export default function QuickAddPage() {
         clientAddress: data.clientAddress || null
       };
       
-      const response = await apiRequest('POST', '/api/bookings/parse-text', parseData);
+      const response = await apiRequest('/api/bookings/parse-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parseData)
+      });
       return await response.json();
     },
     onSuccess: (parsedBooking) => {

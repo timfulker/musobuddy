@@ -2400,6 +2400,78 @@ export async function registerRoutes(app: Express) {
     }
   });
   
+  // ===== ADMIN ROUTES =====
+  
+  // Admin Overview endpoint
+  app.get('/api/admin/overview', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Check if user is admin
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const stats = await storage.getStats();
+      const overview = {
+        totalUsers: stats.userCount || 0,
+        totalBookings: stats.bookingCount || 0,
+        totalContracts: stats.contractCount || 0,
+        totalInvoices: stats.invoiceCount || 0,
+        activeUsers: stats.activeUserCount || 0,
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json(overview);
+    } catch (error: any) {
+      console.error('❌ Admin overview error:', error);
+      res.status(500).json({ error: 'Failed to fetch admin overview' });
+    }
+  });
+
+  // Admin Users List endpoint
+  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Check if user is admin
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      const allUsers = await storage.getAllUsers();
+      
+      // Format users for admin panel
+      const formattedUsers = allUsers.map(user => ({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || user.first_name || '',
+        lastName: user.lastName || user.last_name || '', 
+        tier: user.tier || 'free',
+        isAdmin: user.isAdmin || user.is_admin || false,
+        isBetaTester: user.isBetaTester || user.is_beta_tester || false,
+        betaStartDate: user.betaStartDate || user.beta_start_date || null,
+        betaEndDate: user.betaEndDate || user.beta_end_date || null,
+        betaFeedbackCount: user.betaFeedbackCount || user.beta_feedback_count || 0,
+        createdAt: user.createdAt || user.created_at || new Date().toISOString()
+      }));
+      
+      console.log(`✅ Retrieved ${formattedUsers.length} users for admin panel`);
+      res.json(formattedUsers);
+    } catch (error: any) {
+      console.error('❌ Admin users error:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
   // Enhanced error logging middleware
   app.use((err: any, req: any, res: any, next: any) => {
     console.error('🔥 Server Error:', {

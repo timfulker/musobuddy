@@ -229,7 +229,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] }); // Phase 3: Use main bookings table
-      queryClient.invalidateQueries({ queryKey: ['/api/enquiries'] }); // Keep for backwards compatibility
+      // Cache invalidation handled by main /api/bookings
       toast({
         title: "Success",
         description: "Booking details updated successfully",

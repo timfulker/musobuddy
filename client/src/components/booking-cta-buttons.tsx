@@ -129,10 +129,7 @@ export default function BookingCTAButtons() {
     const needsInvoiceAction = booking.status === "confirmed" && 
            actions.some(action => action.id === 'create-invoice');
     
-    // Debug logging for invoice counting
-    if (needsInvoiceAction) {
-      console.log(`Booking needs invoice: ${booking.id} - ${booking.clientName} - Status: ${booking.status}`);
-    }
+    // Removed excessive debug logging for performance
     
     return needsInvoiceAction;
   });
