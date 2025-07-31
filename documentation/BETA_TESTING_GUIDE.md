@@ -1,9 +1,24 @@
 # MusoBuddy Beta Testing Guide
-**4-Week Beta Testing Program | January 2025**
+**4-Week Beta Testing Program | July 2025 - Updated Version**
 
 ## Welcome Beta Testers!
 
 Thank you for participating in the MusoBuddy beta testing program. Your feedback over the next 4 weeks will help us create the best music business management platform for UK musicians. In return for your thorough testing and feedback, you'll receive **1 year free Premium subscription** (worth £167.88) after the beta period.
+
+## Current Platform Features
+
+MusoBuddy now includes comprehensive business management tools:
+
+**Core Systems:**
+- Advanced booking management with conflict detection
+- Professional contract generation with digital signatures
+- Invoice management with payment tracking
+- Compliance document management with expiry alerts
+- AI-powered email responses with contextual generation
+- User-configurable pricing guides for accurate quotes
+- Travel expense integration (automatically included in pricing)
+- Custom gig type management
+- Stripe payment integration for subscriptions
 
 ## Your Beta Tester Details
 
@@ -56,22 +71,24 @@ Thank you for participating in the MusoBuddy beta testing program. Your feedback
 ## Core Features Testing
 
 ### 3. Booking Management
-**What to test:** Creating, managing, and tracking bookings
+**What to test:** Advanced booking system with AI features
 **How to test:**
 1. Create several test bookings with different:
-   - Event types (wedding, corporate, private party)
-   - Venues and locations
-   - Dates and times
-   - Fee structures
-2. Test bulk operations (select multiple bookings)
-3. Use search and filter functions
-4. Test conflict detection with overlapping bookings
+   - Custom gig types (use both preset and custom options)
+   - Venues and locations with travel distances
+   - Dates and times (test conflict detection)
+   - Fee structures and pricing guides
+2. Test the "Quick Add" booking feature
+3. Use AI inquiry parsing to extract booking details from emails
+4. Test booking status changes and CTA buttons
+5. Use search and filter functions with multiple criteria
+6. Test conflict detection with overlapping bookings (hard/soft conflicts)
 
 **What to report:**
-- Does the booking system cover your real-world needs?
-- Are any essential booking fields missing?
-- How intuitive is the conflict detection?
-- What additional booking features would help your business?
+- Does the advanced booking system cover your real-world needs?
+- How useful is the AI inquiry parsing feature?
+- Is the conflict detection system helpful for preventing double-bookings?
+- What additional booking automation would help your business?
 
 ### 4. Contract System
 **What to test:** Contract generation and management
@@ -118,20 +135,23 @@ Thank you for participating in the MusoBuddy beta testing program. Your feedback
 - How could client communication be improved?
 - Rate the address book functionality (1-10)
 
-### 7. Email System
-**What to test:** Email templates and communication
+### 7. AI-Powered Email System
+**What to test:** Advanced email templates with AI generation
 **How to test:**
-1. Send booking confirmations
-2. Test email templates for different scenarios
-3. Create custom email templates
-4. Test compliance document sharing
-5. Send contract and invoice emails
+1. Use AI response generation for client inquiries
+2. Test email templates with contextual AI editing
+3. Configure pricing guides in settings for accurate AI quotes
+4. Test AI parsing of client emails for booking details
+5. Send booking confirmations with AI-generated responses
+6. Test compliance document sharing via email
+7. Send contract and invoice emails with AI assistance
 
 **What to report:**
-- Are the email templates professional and appropriate?
-- What email scenarios are missing?
-- How could email customization be improved?
-- Rate email system vs your current process (1-10)
+- How accurate and professional are the AI-generated responses?
+- Does the AI pricing system work well with your business model?
+- Are the email templates appropriate for your client communications?
+- How useful is the AI email parsing for extracting booking information?
+- Rate AI email system vs manual email writing (1-10)
 
 ### 8. Compliance Documents
 **What to test:** Document management and sharing
@@ -186,16 +206,19 @@ Thank you for participating in the MusoBuddy beta testing program. Your feedback
 ## Business Integration Testing
 
 ### 11. Real-World Workflow
-**What to test:** Complete business scenarios
+**What to test:** Complete business scenarios with AI assistance
 **How to test:**
-1. Simulate a complete booking process: enquiry → booking → contract → performance → invoice → payment
-2. Test handling difficult client scenarios
-3. Create typical monthly business volume
-4. Use your actual business information where safe
+1. Simulate a complete booking process: AI inquiry parsing → booking → AI quote generation → contract → performance → invoice → payment tracking
+2. Test the AI pricing system with your actual rates and travel costs
+3. Use AI email responses for different client scenarios
+4. Test subscription management and payment processing
+5. Create typical monthly business volume using AI assistance
+6. Use your actual business information where safe
 
 **What to report:**
-- Does this workflow match your real business process?
-- What steps are missing from your typical workflow?
+- Does the AI-enhanced workflow match your real business process?
+- How much time does the AI assistance save compared to manual methods?
+- Are the AI-generated quotes accurate for your business model?
 - Would this save you time compared to current methods?
 - What's the biggest improvement over your current system?
 
@@ -244,10 +267,39 @@ Thank you for participating in the MusoBuddy beta testing program. Your feedback
 - Revenue impact possibilities
 
 **Overall Assessment:**
-- Would you pay £9.99/month for this system?
+- Would you pay £14.99/month for this AI-enhanced system?
 - What would make this essential for your business?
 - What would prevent you from using this?
+- How valuable is the AI assistance compared to manual methods?
 - Net Promoter Score: Would you recommend this to other musicians? (0-10)
+
+---
+
+## Latest Features to Test (July 2025)
+
+### AI Response Generation
+**What to test:** AI-powered client communication
+**Priority Areas:**
+1. Test AI quote generation with your pricing guide settings
+2. Verify travel costs are included in quotes but not displayed to clients
+3. Test AI response editing and customization
+4. Check AI accuracy for different gig types and scenarios
+
+### Admin Dashboard (if applicable)
+**What to test:** User management features
+**How to test:**
+1. If you have admin access, test the user invitation system
+2. Review user management capabilities
+3. Test system monitoring features
+4. Evaluate admin workflow efficiency
+
+### Payment Integration
+**What to test:** Stripe subscription system
+**How to test:**
+1. Use the provided test credit cards for subscription testing
+2. Test different subscription tiers (Free, Core, Premium)
+3. Verify payment processing and subscription management
+4. Test subscription upgrade/downgrade flows
 
 ---
 
