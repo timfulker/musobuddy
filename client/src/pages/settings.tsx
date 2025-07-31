@@ -417,27 +417,34 @@ export default function Settings() {
       
       
       
-      // Only reset form if this is initial load, not after save
-      if (!hasChanges) {
-        form.reset(formData);
-      }
+      // Always reset form with loaded data - this is necessary for form to be editable
+      form.reset(formData);
       
       // Store initial data for comparison
-      setInitialData(settings);
+      setInitialData(formData);
       
+      // Reset change tracking after form is initialized
       setHasChanges(false);
     }
-  }, [settings, form, saveSettings.isPending, hasChanges]);
+  }, [settings, form, saveSettings.isPending]);
 
-  // Simple form watcher for detecting changes
+  // Simple form watcher for detecting changes - only start watching after initial data is loaded
   useEffect(() => {
     if (!initialData) return;
+
+    let subscription: any = null;
     
-    const subscription = form.watch(() => {
-      setHasChanges(true);
-    });
+    // Add a small delay to ensure form is fully initialized before starting to watch
+    const timeoutId = setTimeout(() => {
+      subscription = form.watch(() => {
+        setHasChanges(true);
+      });
+    }, 100);
     
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeoutId);
+      if (subscription) subscription.unsubscribe();
+    };
   }, [form, initialData]);
 
   // Removed all instrument and gig type functions - feature moved to documentation
