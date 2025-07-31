@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText, Loader2 } from "lucide-react";
+import { Info, Plus, X, Edit3, Calendar, Clock, MapPin, User, Phone, Mail, Music, Upload, FileText, Loader2, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { COMMON_GIG_TYPES } from "@shared/gig-types";
@@ -704,15 +704,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
           <div className="space-y-6">
           <Form {...form}>
             <form className="space-y-6">
-              {/* Basic Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Basic Information
+              {/* Section 1: Basic Information - Purple Theme */}
+              <Card className="border-purple-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">1</span>
+                    </div>
+                    <Calendar className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Basic Information</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="p-6 bg-purple-50 rounded-b-lg border-t-0">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -816,15 +819,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Client Contact Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Client Contact Information
+              {/* Section 2: Client Contact Information - Blue Theme */}
+              <Card className="border-blue-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">2</span>
+                    </div>
+                    <User className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Client Contact Information</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="p-6 bg-blue-50 rounded-b-lg border-t-0 grid gap-4">
                   <FormField
                     control={form.control}
                     name="clientEmail"
@@ -871,15 +877,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Event Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Music className="h-5 w-5" />
-                    Event Details
+              {/* Section 3: Event Details - Green Theme */}
+              <Card className="border-green-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">3</span>
+                    </div>
+                    <Music className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Event Details</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="p-6 bg-green-50 rounded-b-lg border-t-0 grid gap-4">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -969,15 +978,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Venue Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5" />
-                    Venue Information
+              {/* Section 4: Venue Information - Orange Theme */}
+              <Card className="border-orange-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">4</span>
+                    </div>
+                    <MapPin className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Venue Information</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="p-6 bg-orange-50 rounded-b-lg border-t-0 grid gap-4">
                   <FormField
                     control={form.control}
                     name="venueAddress"
@@ -1051,15 +1063,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Timing & Setup */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Timing & Setup
+              {/* Section 5: Timing & Setup - Indigo Theme */}
+              <Card className="border-indigo-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">5</span>
+                    </div>
+                    <Clock className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Timing & Setup</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="p-6 bg-indigo-50 rounded-b-lg border-t-0 grid gap-4">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -1120,12 +1135,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Equipment & Special Requests */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Equipment & Special Requests</CardTitle>
+              {/* Section 6: Equipment & Special Requests - Pink Theme */}
+              <Card className="border-pink-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">6</span>
+                    </div>
+                    <Settings className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Equipment & Special Requests</span>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="p-6 bg-pink-50 rounded-b-lg border-t-0 grid gap-4">
                   <FormField
                     control={form.control}
                     name="equipmentRequirements"
@@ -1156,16 +1177,19 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Performance Details - TEMPLATE VARIABLES */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Music className="h-5 w-5" />
-                    Performance Details
-                    <span className="text-sm font-normal text-blue-600 ml-2">📧 Template Variables</span>
+              {/* Section 7: Performance Details - TEMPLATE VARIABLES - Teal Theme */}
+              <Card className="border-teal-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">7</span>
+                    </div>
+                    <Music className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Performance Details</span>
+                    <span className="text-sm font-normal bg-white/20 px-3 py-1 rounded-full ml-2">📧 Template Variables</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="p-6 bg-teal-50 rounded-b-lg border-t-0 grid gap-4">
                   <FormField
                     control={form.control}
                     name="performanceDuration"
@@ -1210,12 +1234,18 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Custom Fields */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Custom Fields</CardTitle>
+              {/* Section 8: Custom Fields - Gray Theme */}
+              <Card className="border-gray-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">8</span>
+                    </div>
+                    <Edit3 className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Custom Fields</span>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-6 bg-gray-50 rounded-b-lg border-t-0 space-y-4">
                   {customFields.map((field) => (
                     <div key={field.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1">
@@ -1257,18 +1287,21 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                 </CardContent>
               </Card>
 
-              {/* Comprehensive Document Management */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Booking Documents
+              {/* Section 9: Comprehensive Document Management - Violet Theme */}
+              <Card className="border-violet-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <span className="text-white font-bold text-lg">9</span>
+                    </div>
+                    <FileText className="h-6 w-6" />
+                    <span className="text-xl font-semibold">Booking Documents</span>
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-white/90 text-sm mt-2">
                     Upload contracts, invoices, and other booking-related documents. Use AI parsing to extract and populate booking details.
                   </p>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-6 bg-violet-50 rounded-b-lg border-t-0 space-y-4">
                   {/* Document Type Selection */}
                   <div className="space-y-2">
                     <Label>Document Type</Label>
