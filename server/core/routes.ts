@@ -2083,6 +2083,10 @@ export async function registerRoutes(app: Express) {
   
   // Generate AI response for templates
   app.post('/api/ai/generate-response', isAuthenticated, async (req: any, res) => {
+    // Set extended timeout for AI requests
+    req.setTimeout(120000); // 2 minutes
+    res.setTimeout(120000); // 2 minutes
+    
     try {
       const userId = req.session?.userId;
       
@@ -2090,14 +2094,21 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      console.log(`🤖 AI response generation request for user: ${userId}`);
+      console.log(`🤖 Request body:`, { 
+        action: req.body.action, 
+        bookingId: req.body.bookingId, 
+        hasCustomPrompt: !!req.body.customPrompt,
+        tone: req.body.tone 
+      });
+
       const { aiResponseGenerator } = await import('./ai-response-generator');
       const { action, bookingId, customPrompt, tone } = req.body;
 
-      console.log(`🤖 AI response generation request for user: ${userId}, action: ${action}`);
-      
       // Get booking context if bookingId provided
       let bookingContext = null;
       if (bookingId) {
+        console.log(`🔍 Fetching booking context for ID: ${bookingId}`);
         const booking = await storage.getBooking(parseInt(bookingId));
         if (booking) {
           bookingContext = {
@@ -2107,18 +2118,30 @@ export async function registerRoutes(app: Express) {
             eventEndTime: booking.eventEndTime,
             venue: booking.venue,
             eventType: booking.eventType,
+            gigType: booking.gigType,
             fee: booking.fee,
             performanceDuration: booking.performanceDuration,
             styles: booking.styles,
             equipment: booking.equipment,
             additionalInfo: booking.additionalInfo
           };
+          console.log(`✅ Booking context loaded:`, { 
+            clientName: bookingContext.clientName, 
+            eventType: bookingContext.eventType,
+            gigType: bookingContext.gigType 
+          });
         }
       }
 
       // Get user settings for personalization
+      console.log(`🔍 Fetching user settings for user: ${userId}`);
       const userSettings = await storage.getUserSettings(userId);
+      console.log(`✅ User settings loaded:`, { 
+        primaryInstrument: userSettings?.primaryInstrument,
+        businessName: userSettings?.businessName 
+      });
       
+      console.log(`🤖 Calling AI response generator...`);
       const response = await aiResponseGenerator.generateEmailResponse({
         action: action || 'respond',
         bookingContext,
@@ -2127,11 +2150,18 @@ export async function registerRoutes(app: Express) {
         tone: tone || 'professional'
       });
 
-      console.log(`✅ AI response generated for user ${userId}`);
-      res.json(response);
+      console.log(`✅ AI response generated successfully for user ${userId}`);
+      
+      // Ensure we set proper content type
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).json(response);
       
     } catch (error: any) {
       console.error('❌ AI response generation failed:', error);
+      console.error('❌ Error stack:', error.stack);
+      
+      // Ensure we always return JSON
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ 
         error: 'Failed to generate AI response',
         details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'

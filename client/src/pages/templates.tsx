@@ -493,12 +493,16 @@ export default function Templates() {
 
     setAiLoading(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      
       const response = await fetch('/api/ai/generate-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
+        signal: controller.signal,
         body: JSON.stringify({
           action: action || 'respond',
           bookingId: bookingId || null,
@@ -506,6 +510,8 @@ export default function Templates() {
           tone: aiTone
         })
       });
+      
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const result = await response.json();
@@ -525,9 +531,15 @@ export default function Templates() {
       }
     } catch (error) {
       console.error('AI generation error:', error);
+      
+      let errorMessage = "Failed to connect to AI service. Please check your internet connection.";
+      if (error.name === 'AbortError') {
+        errorMessage = "AI request timed out. The system may be processing a complex request. Please try again.";
+      }
+      
       toast({
         title: "AI Error",
-        description: "Failed to connect to AI service. Please check your internet connection.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

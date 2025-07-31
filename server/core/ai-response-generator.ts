@@ -52,6 +52,10 @@ export class AIResponseGenerator {
     const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt);
     
     try {
+      console.log('🤖 Attempting OpenAI API call...');
+      console.log('🔑 API Key present:', !!process.env.OPENAI_API_KEY);
+      console.log('🔑 API Key length:', process.env.OPENAI_API_KEY?.length || 0);
+      
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -60,9 +64,11 @@ export class AIResponseGenerator {
         ],
         response_format: { type: "json_object" },
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 1000,
+        timeout: 30000 // 30 second timeout
       });
 
+      console.log('✅ OpenAI API response received');
       const result = JSON.parse(response.choices[0].message.content || '{}');
       
       return {
@@ -73,7 +79,25 @@ export class AIResponseGenerator {
       
     } catch (error) {
       console.error('❌ AI response generation failed:', error);
-      throw new Error('Failed to generate AI response');
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+        type: error.type
+      });
+      
+      // Provide more specific error messages
+      if (error.status === 401) {
+        throw new Error('OpenAI API key is invalid or missing');
+      } else if (error.status === 429) {
+        throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+      } else if (error.status === 502 || error.status === 503) {
+        throw new Error('OpenAI API is temporarily unavailable. Please try again later.');
+      } else if (error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
+        throw new Error('Network connection error. Please check your internet connection.');
+      } else {
+        throw new Error(`Failed to generate AI response: ${error.message}`);
+      }
     }
   }
 
