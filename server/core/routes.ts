@@ -446,7 +446,7 @@ export async function registerRoutes(app: Express) {
 
       // Get user settings for professional signature
       const userSettings = await storage.getUserSettings(userId);
-      const templates = await storage.getTemplates(userId);
+      const templates = await storage.getEmailTemplates(userId);
       const template = templates.find(t => t.id === parseInt(templateId));
       
       if (!template) {
