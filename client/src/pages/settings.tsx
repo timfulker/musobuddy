@@ -223,6 +223,7 @@ export default function Settings() {
   // Widget token state
   const [widgetUrl, setWidgetUrl] = useState<string>('');
   const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   
   // Track if form has been modified
   const [hasChanges, setHasChanges] = useState(false);
@@ -295,9 +296,28 @@ export default function Settings() {
       const data = await response.json();
       setWidgetUrl(data.url);
       
+      // Generate QR code for the widget URL
+      if (data.url) {
+        try {
+          const qrResponse = await fetch('/api/generate-qr-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: data.url }),
+            credentials: 'include',
+          });
+          
+          if (qrResponse.ok) {
+            const qrData = await qrResponse.json();
+            setQrCodeUrl(qrData.qrCodeDataUrl);
+          }
+        } catch (qrError) {
+          console.error('Failed to generate QR code:', qrError);
+        }
+      }
+      
       toast({
         title: "Widget URL Generated",
-        description: "Your booking widget URL is ready to use!",
+        description: "Your booking widget URL and QR code are ready to use!",
       });
     } catch (error) {
       console.error('Error generating widget URL:', error);
@@ -469,6 +489,23 @@ export default function Settings() {
           const data = await response.json();
           if (data.url) {
             setWidgetUrl(data.url);
+            
+            // Generate QR code for existing widget URL
+            try {
+              const qrResponse = await fetch('/api/generate-qr-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: data.url }),
+                credentials: 'include',
+              });
+              
+              if (qrResponse.ok) {
+                const qrData = await qrResponse.json();
+                setQrCodeUrl(qrData.qrCodeDataUrl);
+              }
+            } catch (qrError) {
+              console.error('Failed to generate QR code:', qrError);
+            }
           }
         }
       } catch (error) {
@@ -1683,6 +1720,30 @@ export default function Settings() {
                               </div>
                             </div>
                             
+                            {/* QR Code Display */}
+                            {qrCodeUrl && (
+                              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                <h5 className="font-medium text-blue-900 dark:text-blue-100 text-sm mb-3">QR Code for Mobile Access</h5>
+                                <div className="flex items-start space-x-4">
+                                  <img 
+                                    src={qrCodeUrl} 
+                                    alt="Widget QR Code" 
+                                    className="w-32 h-32 border border-gray-200 dark:border-gray-600 rounded-lg bg-white"
+                                  />
+                                  <div className="flex-1">
+                                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                                      Clients can scan this QR code with their phone to quickly access your booking form.
+                                    </p>
+                                    <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                                      <li>• Perfect for business cards or flyers</li>
+                                      <li>• Print and display at events</li>
+                                      <li>• Share in social media posts</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
                             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
                               <h5 className="font-medium text-green-900 dark:text-green-100 text-sm mb-2">How to use your widget:</h5>
                               <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">

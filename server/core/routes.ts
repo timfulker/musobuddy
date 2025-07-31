@@ -5,6 +5,7 @@ import { storage } from "./storage";
 // ProductionAuthSystem removed - using direct route registration
 import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 import { aiResponseGenerator } from './ai-response-generator.js';
+import QRCode from 'qrcode';
 
 // Removed AI gig generation function - feature moved to documentation
 
@@ -3727,6 +3728,33 @@ export async function registerRoutes(app: Express) {
   });
 
   // Removed AI gig suggestions endpoint - feature moved to documentation
+
+  // QR Code generation endpoint
+  app.post('/api/generate-qr-code', isAuthenticated, async (req: any, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+      
+      // Generate QR code as data URL
+      const qrCodeDataUrl = await QRCode.toDataURL(url, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      
+      res.json({ qrCodeDataUrl });
+      
+    } catch (error: any) {
+      console.error('QR code generation error:', error);
+      res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+  });
 
   // Catch-all middleware to ensure API routes always return JSON
   app.use('/api/*', (req: any, res: any) => {
