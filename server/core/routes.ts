@@ -428,6 +428,87 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // GlockApps deliverability test endpoint
+  app.post('/api/test/glockapp-delivery', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { testId, templateId, seedEmails } = req.body;
+
+      if (!testId || !templateId || !seedEmails || !Array.isArray(seedEmails)) {
+        return res.status(400).json({ error: 'testId, templateId, and seedEmails array required' });
+      }
+
+      // Get user settings for professional signature
+      const userSettings = await storage.getUserSettings(userId);
+      const templates = await storage.getTemplates(userId);
+      const template = templates.find(t => t.id === parseInt(templateId));
+      
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Import email service
+      const { MailgunService } = await import('./services');
+      const emailService = new MailgunService();
+      
+      // Generate professional email signature
+      const signature = emailService.generateEmailSignature(userSettings);
+      const emailWithSignature = template.emailBody + signature;
+      
+      const results = [];
+      
+      // Send to each seed email with enhanced deliverability
+      for (const seedEmail of seedEmails) {
+        try {
+          const emailData = {
+            from: `${userSettings.businessName || 'MusoBuddy'} <noreply@mg.musobuddy.com>`,
+            to: seedEmail.trim(),
+            subject: `[GlockApps Test ${testId}] ${template.subject}`,
+            html: emailWithSignature,
+            text: emailService.htmlToPlainText(emailWithSignature),
+            replyTo: userSettings.businessEmail || userSettings.email,
+            headers: {
+              'Return-Path': 'bounces@mg.musobuddy.com',
+              'List-Unsubscribe': '<mailto:unsubscribe@mg.musobuddy.com>',
+              'X-Priority': '3',
+              'X-Mailer': 'MusoBuddy Email System v1.0',
+              'X-GlockApps-Test': testId
+            },
+            tracking: {
+              'test-id': testId,
+              'test-type': 'glockapp-delivery',
+              'user-id': userId,
+              'template-id': templateId
+            },
+            emailType: 'glockapp-test',
+            userId: userId
+          };
+
+          const result = await emailService.sendEmail(emailData);
+          results.push({ email: seedEmail, status: 'sent', messageId: result.id });
+          
+        } catch (error: any) {
+          console.error(`Failed to send to ${seedEmail}:`, error);
+          results.push({ email: seedEmail, status: 'failed', error: error.message });
+        }
+      }
+
+      console.log(`📧 GlockApps test ${testId} completed - sent to ${seedEmails.length} addresses`);
+      
+      res.json({ 
+        success: true, 
+        testId,
+        totalSent: results.filter(r => r.status === 'sent').length,
+        totalFailed: results.filter(r => r.status === 'failed').length,
+        results 
+      });
+
+    } catch (error: any) {
+      console.error('❌ GlockApps test error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Send template email with enhanced deliverability
   app.post('/api/templates/send-email', isAuthenticated, async (req: any, res) => {
     try {
