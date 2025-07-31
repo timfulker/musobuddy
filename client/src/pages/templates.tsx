@@ -50,6 +50,14 @@ export default function Templates() {
     smsBody?: string;
   } | null>(null);
   
+  // AI editing state
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingContent, setEditingContent] = useState<{
+    subject: string;
+    emailBody: string;
+    smsBody?: string;
+  } | null>(null);
+  
   const { toast } = useToast();
   
   // Check if we're responding to a specific booking
@@ -535,7 +543,7 @@ export default function Templates() {
       console.error('AI generation error:', error);
       
       let errorMessage = "Failed to connect to AI service. Please check your internet connection.";
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         errorMessage = "AI request timed out. The system may be processing a complex request. Please try again.";
       }
       
@@ -552,26 +560,40 @@ export default function Templates() {
   const handleUseAIGenerated = () => {
     if (!aiGenerated) return;
     
-    // Create a temporary template from AI-generated content
-    const aiTemplate: EmailTemplate = {
-      id: -1,
-      name: 'AI Generated Response',
+    // Open editing dialog with AI-generated content
+    setEditingContent({
       subject: aiGenerated.subject,
       emailBody: aiGenerated.emailBody,
-      smsBody: aiGenerated.smsBody || '',
+      smsBody: aiGenerated.smsBody || ''
+    });
+    setShowEditDialog(true);
+    setShowAIDialog(false);
+  };
+
+  const handleSaveEditedResponse = () => {
+    if (!editingContent) return;
+    
+    // Create a temporary template from edited content
+    const aiTemplate: EmailTemplate = {
+      id: -1,
+      name: 'AI Generated Response (Edited)',
+      subject: editingContent.subject,
+      emailBody: editingContent.emailBody,
+      smsBody: editingContent.smsBody || '',
       isDefault: false,
       isAutoRespond: false,
       createdAt: new Date().toISOString()
     };
 
-    // Show preview with AI-generated content
+    // Show preview with edited content
     setPreviewData({
-      subject: aiGenerated.subject,
-      emailBody: aiGenerated.emailBody,
+      subject: editingContent.subject,
+      emailBody: editingContent.emailBody,
       template: aiTemplate
     });
     setShowPreview(true);
-    setShowAIDialog(false);
+    setShowEditDialog(false);
+    setEditingContent(null);
     setAiGenerated(null);
     setCustomPrompt('');
   };
@@ -1055,8 +1077,8 @@ export default function Templates() {
                 
                 <div className="flex space-x-2 mt-4">
                   <Button onClick={handleUseAIGenerated} className="bg-green-600 hover:bg-green-700">
-                    <Wand2 className="w-4 h-4 mr-2" />
-                    Use This Response
+                    <Edit3 className="w-4 h-4 mr-2" />
+                    Edit & Use Response
                   </Button>
                   <Button onClick={handleSaveAIAsTemplate} variant="outline">
                     Save as Template
@@ -1101,6 +1123,84 @@ export default function Templates() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Response Editing Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit3 className="w-5 h-5 mr-2 text-blue-600" />
+              Edit AI Generated Response
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Make any changes you need before sending this response to your client
+            </p>
+          </DialogHeader>
+          
+          {editingContent && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-subject">Email Subject</Label>
+                <Input
+                  id="edit-subject"
+                  value={editingContent.subject}
+                  onChange={(e) => setEditingContent({
+                    ...editingContent,
+                    subject: e.target.value
+                  })}
+                  placeholder="Email subject line"
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="edit-email-body">Email Body</Label>
+                <Textarea
+                  id="edit-email-body"
+                  value={editingContent.emailBody}
+                  onChange={(e) => setEditingContent({
+                    ...editingContent,
+                    emailBody: e.target.value
+                  })}
+                  placeholder="Your email message here..."
+                  rows={12}
+                  className="mt-1 font-mono text-sm"
+                />
+              </div>
+              
+              {editingContent.smsBody && (
+                <div>
+                  <Label htmlFor="edit-sms-body">SMS Body (Optional)</Label>
+                  <Textarea
+                    id="edit-sms-body"
+                    value={editingContent.smsBody}
+                    onChange={(e) => setEditingContent({
+                      ...editingContent,
+                      smsBody: e.target.value
+                    })}
+                    placeholder="Your SMS message here..."
+                    rows={3}
+                    className="mt-1"
+                  />
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => {
+                  setShowEditDialog(false);
+                  setEditingContent(null);
+                }}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEditedResponse} className="bg-blue-600 hover:bg-blue-700">
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Use Edited Response
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
         </div>
