@@ -97,7 +97,7 @@ export class AIResponseGenerator {
     try {
       const openai = this.getOpenAIClient();
       
-      const systemPrompt = this.buildSystemPrompt(userSettings, tone);
+      const systemPrompt = this.buildSystemPrompt(userSettings, tone, bookingContext);
       const userPrompt = this.buildUserPrompt(action, bookingContext, customPrompt);
       
       console.log('🤖 System prompt length:', systemPrompt.length);
@@ -184,7 +184,7 @@ export class AIResponseGenerator {
     }
   }
 
-  private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional'): string {
+  private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional', bookingContext?: BookingContext): string {
     const businessName = userSettings?.businessName || "the performer";
     const primaryInstrument = userSettings?.primaryInstrument ? 
       this.getInstrumentDisplayName(userSettings.primaryInstrument) : "musician";
@@ -255,31 +255,31 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
     const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
     
-    // Calculate common packages with travel included - only include DJ packages if user offers DJ services
-    const standardTravelCost = 60; // Default travel cost assumption
+    // Calculate common packages with travel included - use actual travel expense if provided
+    const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 60; // Default to £60 if no specific travel cost
     
     const basePackages = [
-      `${minimumHours} hours ${primaryInstrument}: £${baseRate * minimumHours + standardTravelCost} (inclusive of all expenses)`,
-      `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate + standardTravelCost} (inclusive of all expenses)`,
-      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2) + standardTravelCost} (inclusive of all expenses)`
+      `${minimumHours} hours ${primaryInstrument}: £${baseRate * minimumHours + travelCost}`,
+      `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate + travelCost}`,
+      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2) + travelCost}`
     ];
     
     const djPackages = hasDJServices ? [
-      `${minimumHours} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + djRate + standardTravelCost} (inclusive of all expenses)`,
-      `${minimumHours + 1} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + additionalHourRate + djRate + standardTravelCost} (inclusive of all expenses)`,
-      `${minimumHours + 2} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + (additionalHourRate * 2) + djRate + standardTravelCost} (inclusive of all expenses)`
+      `${minimumHours} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + djRate + travelCost}`,
+      `${minimumHours + 1} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + additionalHourRate + djRate + travelCost}`,
+      `${minimumHours + 2} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + (additionalHourRate * 2) + djRate + travelCost}`
     ] : [];
     
     const packages = [...basePackages, ...djPackages];
 
     const pricingSection = pricingEnabled ? `
-PRICING STRUCTURE GUIDELINES:
+CRITICAL PRICING RULES:
 - IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
 - For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
 - Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
-- Present pricing as complete package totals that are inclusive of all expenses (travel, setup, equipment, etc.)
-- NEVER break down pricing into hourly rates or separate travel expenses - only show total package prices
-- ALWAYS state that prices are "inclusive of all expenses" to clarify what's included
+- NEVER MENTION TRAVEL COSTS, TRAVEL EXPENSES, OR TRAVEL CHARGES TO CLIENTS
+- All quoted prices must include travel costs but present as clean totals only
+- Do NOT use phrases like "inclusive of all expenses" or "including travel" - just show clean package prices
 - ALWAYS include VAT status: "All prices are VAT-exempt as a sole trader" or similar based on business structure
 - Use these complete package options for ${primaryInstrument} performances:
     ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
@@ -290,7 +290,7 @@ PRICING STRUCTURE GUIDELINES:
 - Always mention that packages can be customized to client requirements
 - Include payment terms and booking process information
 - Present pricing confidently as the professional standard for the services offered
-- Emphasize that all quoted prices include travel, setup, equipment, and all associated costs
+- CRITICAL: Present prices as clean totals without mentioning what's included (travel, setup, etc.)
 ${userSettings?.pricingNotes ? `- Additional pricing notes: ${userSettings.pricingNotes}` : ''}
 ${userSettings?.specialOffers ? `- Special offers to mention: ${userSettings.specialOffers}` : ''}` : `
 PRICING POLICY:
@@ -381,9 +381,9 @@ Generate appropriate subject, email body, and SMS version. Return only valid JSO
     if (context.equipment) details.push(`Equipment: ${context.equipment}`);
     if (context.additionalInfo) details.push(`Additional Info: ${context.additionalInfo}`);
 
-    // Add travel expense instruction if provided, but not as a separate line item
+    // Add travel expense instruction if provided, but never mention travel to client
     const travelInstruction = context.travelExpense 
-      ? `\n\nSPECIAL PRICING INSTRUCTION: Include £${context.travelExpense} travel cost in all quoted prices. Present as total inclusive pricing, not as separate travel charges.`
+      ? `\n\nCRITICAL PRICING INSTRUCTION: Add £${context.travelExpense} to ALL quoted prices. NEVER mention travel, travel costs, or expenses to the client. Present only clean total prices.`
       : '';
 
     return details.length > 0 
