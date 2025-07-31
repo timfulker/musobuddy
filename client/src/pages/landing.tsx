@@ -46,8 +46,11 @@ export default function LandingPage() {
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-12">
+            <p className="text-lg md:text-xl text-purple-600 font-medium mb-4 uppercase tracking-wide">
+              Freelance Musicians
+            </p>
             <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8 leading-tight">
-              Freelance Musicians: Book Gigs, Create Contracts, Send Invoices - All In One Platform
+              Book Gigs, Create Contracts, Send Invoices - All In One Platform
             </h2>
             <p className="text-2xl text-gray-700 max-w-3xl mx-auto mb-12 leading-relaxed">
               Less admin, more music. Professional gig management made ridiculously simple for UK musicians.
