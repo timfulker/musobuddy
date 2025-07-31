@@ -21,6 +21,7 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
     instrument: "saxophone",
     displayName: "Saxophone",
     gigTypes: [
+      // Wedding Events
       {
         id: "wedding-ceremony",
         name: "Wedding Ceremony",
@@ -38,6 +39,23 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         commonVenues: ["Hotels", "Wedding venues", "Marquees", "Function rooms"]
       },
       {
+        id: "wedding-drinks-reception",
+        name: "Wedding Drinks Reception",
+        description: "Background music during cocktail hour and drinks reception",
+        defaultDuration: "1-2 hours",
+        priceRange: "£200-350",
+        commonVenues: ["Hotels", "Wedding venues", "Outdoor venues", "Gardens"]
+      },
+      {
+        id: "wedding-breakfast",
+        name: "Wedding Breakfast",
+        description: "Musical accompaniment during wedding meal service",
+        defaultDuration: "1-2 hours",
+        priceRange: "£250-400",
+        commonVenues: ["Hotels", "Wedding venues", "Restaurants", "Marquees"]
+      },
+      // Corporate Events
+      {
         id: "corporate-event",
         name: "Corporate Event",
         description: "Professional entertainment for corporate functions",
@@ -46,12 +64,78 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         commonVenues: ["Hotels", "Conference centers", "Corporate offices", "Restaurants"]
       },
       {
+        id: "product-launch",
+        name: "Product Launch",
+        description: "Musical entertainment for product launch events",
+        defaultDuration: "1-2 hours",
+        priceRange: "£300-500",
+        commonVenues: ["Conference centers", "Hotels", "Exhibition venues", "Corporate offices"]
+      },
+      {
+        id: "awards-ceremony",
+        name: "Awards Ceremony",
+        description: "Musical accompaniment for corporate awards and recognition events",
+        defaultDuration: "2-3 hours",
+        priceRange: "£350-550",
+        commonVenues: ["Hotels", "Conference centers", "Theaters", "Function rooms"]
+      },
+      {
+        id: "conference-entertainment",
+        name: "Conference Entertainment",
+        description: "Entertainment during conference breaks and networking events",
+        defaultDuration: "1-3 hours",
+        priceRange: "£250-400",
+        commonVenues: ["Conference centers", "Hotels", "Exhibition venues", "Corporate venues"]
+      },
+      // Private Events
+      {
         id: "private-party",
         name: "Private Party",
         description: "Entertainment for private celebrations and parties",
         defaultDuration: "2-3 hours",
         priceRange: "£200-350",
         commonVenues: ["Private homes", "Function rooms", "Restaurants", "Clubs"]
+      },
+      {
+        id: "birthday-party",
+        name: "Birthday Party",
+        description: "Musical entertainment for birthday celebrations",
+        defaultDuration: "2-3 hours",
+        priceRange: "£200-350",
+        commonVenues: ["Private homes", "Function rooms", "Restaurants", "Hotels"]
+      },
+      {
+        id: "anniversary-celebration",
+        name: "Anniversary Celebration",
+        description: "Musical entertainment for wedding anniversaries and milestone celebrations",
+        defaultDuration: "2-3 hours",
+        priceRange: "£250-400",
+        commonVenues: ["Private homes", "Hotels", "Restaurants", "Function rooms"]
+      },
+      {
+        id: "retirement-party",
+        name: "Retirement Party",
+        description: "Musical entertainment for retirement celebrations",
+        defaultDuration: "2-3 hours",
+        priceRange: "£200-350",
+        commonVenues: ["Function rooms", "Hotels", "Restaurants", "Community centers"]
+      },
+      // Hospitality & Entertainment
+      {
+        id: "restaurant-performance",
+        name: "Restaurant Performance",
+        description: "Background music for restaurant dining experiences",
+        defaultDuration: "2-4 hours",
+        priceRange: "£150-300",
+        commonVenues: ["Restaurants", "Wine bars", "Bistros", "Hotel restaurants"]
+      },
+      {
+        id: "hotel-lounge",
+        name: "Hotel Lounge Performance",
+        description: "Background music for hotel lounges and bars",
+        defaultDuration: "2-4 hours",
+        priceRange: "£200-350",
+        commonVenues: ["Hotel lounges", "Cocktail bars", "Wine bars", "Resort venues"]
       },
       {
         id: "jazz-club",
@@ -62,12 +146,136 @@ export const INSTRUMENT_GIG_PRESETS: InstrumentPreset[] = [
         commonVenues: ["Jazz clubs", "Music venues", "Bars", "Restaurants"]
       },
       {
+        id: "cruise-ship",
+        name: "Cruise Ship Performance",
+        description: "Entertainment aboard cruise ships and maritime venues",
+        defaultDuration: "2-4 hours",
+        priceRange: "£300-600",
+        commonVenues: ["Cruise ships", "Yacht clubs", "Marina venues", "Boat parties"]
+      },
+      // Religious & Memorial Services
+      {
         id: "funeral-service",
         name: "Funeral Service",
         description: "Musical tribute for funeral and memorial services",
         defaultDuration: "30-60 minutes",
         priceRange: "£150-250",
         commonVenues: ["Churches", "Crematoriums", "Funeral homes", "Outdoor venues"]
+      },
+      {
+        id: "memorial-service",
+        name: "Memorial Service",
+        description: "Musical tribute for memorial and celebration of life services",
+        defaultDuration: "30-90 minutes",
+        priceRange: "£150-300",
+        commonVenues: ["Churches", "Community centers", "Function rooms", "Outdoor venues"]
+      },
+      {
+        id: "christening-baptism",
+        name: "Christening/Baptism",
+        description: "Musical accompaniment for christening and baptism ceremonies",
+        defaultDuration: "30-60 minutes",
+        priceRange: "£150-250",
+        commonVenues: ["Churches", "Private homes", "Outdoor venues", "Community centers"]
+      },
+      // Educational & Tuition
+      {
+        id: "private-lessons",
+        name: "Private Saxophone Lessons",
+        description: "One-on-one saxophone instruction and tuition",
+        defaultDuration: "30-60 minutes",
+        priceRange: "£30-60",
+        commonVenues: ["Private homes", "Music schools", "Studios", "Online"]
+      },
+      {
+        id: "group-lessons",
+        name: "Group Saxophone Lessons",
+        description: "Small group saxophone instruction",
+        defaultDuration: "45-90 minutes",
+        priceRange: "£20-40 per person",
+        commonVenues: ["Music schools", "Community centers", "Schools", "Studios"]
+      },
+      {
+        id: "masterclass",
+        name: "Saxophone Masterclass",
+        description: "Advanced instruction and performance coaching",
+        defaultDuration: "1-3 hours",
+        priceRange: "£100-300",
+        commonVenues: ["Music schools", "Universities", "Conservatoires", "Workshops"]
+      },
+      {
+        id: "school-workshop",
+        name: "School Workshop",
+        description: "Educational saxophone workshops for schools",
+        defaultDuration: "1-2 hours",
+        priceRange: "£150-350",
+        commonVenues: ["Schools", "Colleges", "Universities", "Music centers"]
+      },
+      // Performance & Recording
+      {
+        id: "concert-performance",
+        name: "Concert Performance",
+        description: "Formal concert and recital performances",
+        defaultDuration: "1-2 hours",
+        priceRange: "£200-500",
+        commonVenues: ["Concert halls", "Theaters", "Music venues", "Churches"]
+      },
+      {
+        id: "festival-performance",
+        name: "Festival Performance",
+        description: "Performance at music festivals and outdoor events",
+        defaultDuration: "30-90 minutes",
+        priceRange: "£200-600",
+        commonVenues: ["Festival stages", "Outdoor venues", "Parks", "Event grounds"]
+      },
+      {
+        id: "recording-session",
+        name: "Recording Session",
+        description: "Studio recording and session work",
+        defaultDuration: "2-8 hours",
+        priceRange: "£100-400",
+        commonVenues: ["Recording studios", "Home studios", "Rehearsal rooms"]
+      },
+      {
+        id: "session-musician",
+        name: "Session Musician",
+        description: "Backup musician for other artists and bands",
+        defaultDuration: "2-4 hours",
+        priceRange: "£150-400",
+        commonVenues: ["Music venues", "Theaters", "Recording studios", "Concert halls"]
+      },
+      // Specialty Events
+      {
+        id: "charity-event",
+        name: "Charity Event",
+        description: "Musical entertainment for charity fundraisers and benefit events",
+        defaultDuration: "1-3 hours",
+        priceRange: "£150-350",
+        commonVenues: ["Function rooms", "Hotels", "Community centers", "Outdoor venues"]
+      },
+      {
+        id: "open-day",
+        name: "Open Day Entertainment",
+        description: "Musical entertainment for business and venue open days",
+        defaultDuration: "2-4 hours",
+        priceRange: "£200-400",
+        commonVenues: ["Showrooms", "Garden centers", "Business premises", "Shopping centers"]
+      },
+      {
+        id: "graduation-ceremony",
+        name: "Graduation Ceremony",
+        description: "Musical accompaniment for graduation and academic ceremonies",
+        defaultDuration: "1-3 hours",
+        priceRange: "£250-450",
+        commonVenues: ["Universities", "Schools", "Colleges", "Graduation venues"]
+      },
+      {
+        id: "seasonal-event",
+        name: "Seasonal Event",
+        description: "Christmas, New Year and seasonal celebration entertainment",
+        defaultDuration: "2-4 hours",
+        priceRange: "£250-500",
+        commonVenues: ["Hotels", "Restaurants", "Function rooms", "Corporate venues"]
       }
     ]
   },
