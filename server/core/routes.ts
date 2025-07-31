@@ -1051,12 +1051,16 @@ export async function registerRoutes(app: Express) {
   app.post('/api/generate-widget-token', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session.userId;
+      console.log(`🎯 Widget token generation requested for user: ${userId}`);
       
       // Check if user already has a token
       const user = await storage.getUserById(userId);
+      console.log(`🔍 User found: ${!!user}, existing token: ${!!user?.quickAddToken}`);
+      
       if (user?.quickAddToken) {
         // Use the current app URL from the request headers
         const baseUrl = `${req.protocol}://${req.get('host')}`;
+        console.log(`✅ Returning existing token for user ${userId}`);
         return res.json({ 
           success: true,
           token: user.quickAddToken,
@@ -1065,13 +1069,18 @@ export async function registerRoutes(app: Express) {
       }
       
       // Generate new token
+      console.log(`🔄 Generating new token for user ${userId}`);
       const token = await storage.generateQuickAddToken(userId);
+      console.log(`🎯 Token generation result: ${token}`);
+      
       if (!token) {
+        console.error(`❌ Token generation failed for user ${userId}`);
         return res.status(500).json({ error: 'Failed to generate widget token' });
       }
       
       // Use the current app URL from the request headers
       const baseUrl = `${req.protocol}://${req.get('host')}`;
+      console.log(`✅ Generated new token for user ${userId}: ${token}`);
       res.json({ 
         success: true,
         token: token,
@@ -1080,6 +1089,7 @@ export async function registerRoutes(app: Express) {
       
     } catch (error: any) {
       console.error('❌ Widget token generation error:', error);
+      console.error('❌ Error stack:', error.stack);
       res.status(500).json({ error: 'Failed to generate widget token' });
     }
   });
