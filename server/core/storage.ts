@@ -43,6 +43,24 @@ export class Storage {
     return result[0] || null;
   }
 
+  async getUserByQuickAddToken(token: string) {
+    const result = await db.select().from(users)
+      .where(eq(users.quickAddToken, token));
+    return result[0] || null;
+  }
+
+  async generateQuickAddToken(userId: string) {
+    // Generate a secure random token
+    const token = require('crypto').randomBytes(32).toString('hex');
+    
+    const result = await db.update(users)
+      .set({ quickAddToken: token, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result[0]?.quickAddToken || null;
+  }
+
   async authenticateUser(email: string, password: string) {
     const user = await this.getUserByEmail(email);
     if (!user || !user.password) {

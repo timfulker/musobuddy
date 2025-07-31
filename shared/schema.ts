@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   betaFeedbackCount: integer("beta_feedback_count").default(0),
   stripeCustomerId: text("stripe_customer_id"),
   emailPrefix: text("email_prefix").unique(), // For personalized email addresses like tim-leads@mg.musobuddy.com
+  quickAddToken: text("quick_add_token").unique(), // Unique token for quick-add booking widget
   // SaaS Trial Management Fields
   phoneNumber: varchar("phone_number", { length: 20 }).unique(),
   phoneVerified: boolean("phone_verified").default(false),

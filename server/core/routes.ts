@@ -1021,6 +1021,41 @@ export async function registerRoutes(app: Express) {
     }
   });
   
+  // ===== WIDGET TOKEN MANAGEMENT =====
+  
+  // Generate or get quick-add widget token for authenticated user
+  app.post('/api/generate-widget-token', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      
+      // Check if user already has a token
+      const user = await storage.getUserById(userId);
+      if (user?.quickAddToken) {
+        return res.json({ 
+          success: true,
+          token: user.quickAddToken,
+          url: `${process.env.REPLIT_DEV_DOMAIN || 'https://musobuddy.replit.app'}/widget/${user.quickAddToken}`
+        });
+      }
+      
+      // Generate new token
+      const token = await storage.generateQuickAddToken(userId);
+      if (!token) {
+        return res.status(500).json({ error: 'Failed to generate widget token' });
+      }
+      
+      res.json({ 
+        success: true,
+        token: token,
+        url: `${process.env.REPLIT_DEV_DOMAIN || 'https://musobuddy.replit.app'}/widget/${token}`
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Widget token generation error:', error);
+      res.status(500).json({ error: 'Failed to generate widget token' });
+    }
+  });
+  
   // ===== BOOKING ROUTES =====
   
   // Get all bookings for authenticated user - CLEAN IMPLEMENTATION
@@ -1145,30 +1180,66 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Parse text message to create booking (Quick Add functionality)
-  app.post('/api/bookings/parse-text', isAuthenticated, async (req: any, res) => {
+  // ===== WIDGET API ROUTES (Public - no authentication required) =====
+  
+  // Verify widget token
+  app.get('/api/widget/verify/:token', async (req, res) => {
     try {
-      const { emailContent, fromEmail, clientAddress } = req.body;
-      const userId = req.session.userId;
+      const { token } = req.params;
       
-      console.log(`🤖 Text parsing request from user ${userId}`);
-      console.log(`📝 Message length: ${emailContent?.length || 0} characters`);
-      console.log(`📧 From: ${fromEmail}`);
-      
-      if (!emailContent || !fromEmail) {
-        return res.status(400).json({ error: 'Message content and sender information are required' });
+      if (!token) {
+        return res.json({ valid: false, error: 'No token provided' });
       }
 
-      // Use the existing AI parsing function from webhook handler
+      const user = await storage.getUserByQuickAddToken(token);
+      
+      if (!user) {
+        return res.json({ valid: false, error: 'Invalid token' });
+      }
+
+      res.json({ 
+        valid: true, 
+        userName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email?.split('@')[0] || 'Musician'
+      });
+    } catch (error: any) {
+      console.error('❌ Widget token verification error:', error);
+      res.json({ valid: false, error: 'Verification failed' });
+    }
+  });
+
+  // Create booking via widget (no authentication required)
+  app.post('/api/widget/create-booking', async (req, res) => {
+    try {
+      const { emailContent, fromEmail, clientAddress, token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ error: 'Widget token is required' });
+      }
+      
+      if (!emailContent || !fromEmail) {
+        return res.status(400).json({ error: 'Message content and contact information are required' });
+      }
+
+      // Get user by token
+      const user = await storage.getUserByQuickAddToken(token);
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid widget token' });
+      }
+
+      console.log(`🎯 Widget booking request for user ${user.id} (${user.email})`);
+      console.log(`📝 Message length: ${emailContent?.length || 0} characters`);
+      console.log(`📧 From: ${fromEmail}`);
+
+      // Use the existing AI parsing function
       const { parseEmailWithAI } = await import('../index');
       
       try {
-        const parsedData = await parseEmailWithAI(emailContent, `Quick Add from ${fromEmail}`);
+        const parsedData = await parseEmailWithAI(emailContent, `Widget request from ${fromEmail}`);
         
         // Create booking with parsed data
         const bookingData = {
-          userId: userId,
-          title: `Enquiry from ${parsedData.clientName || fromEmail}`,
+          userId: user.id,
+          title: `Widget Enquiry from ${parsedData.clientName || fromEmail}`,
           clientName: parsedData.clientName || fromEmail,
           clientEmail: parsedData.clientEmail || (fromEmail.includes('@') ? fromEmail : null),
           clientPhone: parsedData.clientPhone || null,
@@ -1181,47 +1252,47 @@ export async function registerRoutes(app: Express) {
           gigType: parsedData.gigType || parsedData.eventType || null,
           performanceFee: parsedData.fee || parsedData.estimatedValue || parsedData.budget || null,
           travelExpense: parsedData.travelExpense || null,
-          notes: `Original message:\n\n${emailContent}`,
+          notes: `Widget message:\n\n${emailContent}`,
           status: 'new'
         };
 
         const newBooking = await storage.createBooking(bookingData);
-        console.log(`✅ Created booking #${newBooking.id} from text parsing for user ${userId}`);
+        console.log(`✅ Created widget booking #${newBooking.id} for user ${user.id}`);
         
         res.json({ 
           success: true, 
           booking: newBooking,
-          message: 'Booking created successfully from text parsing'
+          message: 'Booking request received successfully'
         });
 
       } catch (aiError: any) {
-        console.error('❌ AI parsing failed, creating basic booking:', aiError);
+        console.error('❌ Widget AI parsing failed, creating basic booking:', aiError);
         
         // Fallback: Create basic booking without AI parsing
         const basicBookingData = {
-          userId: userId,
-          title: `Message from ${fromEmail}`,
+          userId: user.id,
+          title: `Widget Message from ${fromEmail}`,
           clientName: fromEmail,
           clientEmail: fromEmail.includes('@') ? fromEmail : null,
           clientAddress: clientAddress || null,
-          notes: `Original message:\n\n${emailContent}`,
+          notes: `Widget message:\n\n${emailContent}`,
           status: 'new'
         };
 
         const newBooking = await storage.createBooking(basicBookingData);
-        console.log(`✅ Created basic booking #${newBooking.id} (AI parsing failed) for user ${userId}`);
+        console.log(`✅ Created basic widget booking #${newBooking.id} for user ${user.id}`);
         
         res.json({ 
           success: true, 
           booking: newBooking,
-          message: 'Booking created successfully (manual review needed)'
+          message: 'Booking request received successfully'
         });
       }
 
     } catch (error: any) {
-      console.error('❌ Text parsing error:', error);
+      console.error('❌ Widget booking creation error:', error);
       res.status(500).json({ 
-        error: 'Failed to parse text and create booking',
+        error: 'Failed to create booking request',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }

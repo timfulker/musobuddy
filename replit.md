@@ -73,3 +73,11 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **CLEANUP**: Fixed remaining 404 errors from `/api/enquiries` by updating final schema imports and component references
 - **RESULT**: All components now consistently use `/api/bookings` endpoint with proper error handling
 - **STATUS**: Backend API fully modernized and consistent
+
+### STANDALONE BOOKING WIDGET IMPLEMENTED (July 31, 2025)
+- **NEW FEATURE**: Replaced authenticated quick-add with token-based widget system that works without login
+- **DATABASE SCHEMA**: Added `quick_add_token` column to users table for unique widget URLs
+- **WIDGET API ENDPOINTS**: New public endpoints for token-based booking creation and token management
+- **SETTINGS PAGE**: Added widget URL generation and management section for users
+- **OLD SYSTEM REMOVED**: Cleaned up authenticated quick-add routes and components to avoid conflicts
+- **STATUS**: Users can now generate unique URLs for standalone booking widgets that clients can use without creating accounts

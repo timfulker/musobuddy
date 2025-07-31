@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -220,6 +220,10 @@ export default function Settings() {
   // Custom gig type input state
   const [customGigTypeInput, setCustomGigTypeInput] = useState('');
   
+  // Widget token state
+  const [widgetUrl, setWidgetUrl] = useState<string>('');
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+  
   // Track if form has been modified
   const [hasChanges, setHasChanges] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
@@ -234,6 +238,7 @@ export default function Settings() {
     bank: false,
     pricing: false, // AI Pricing Guide section
     gigTypes: false, // Custom gig types management section
+    widget: false, // Widget URL management section
     performance: false,
     instruments: true, // Open by default for new instrument context feature
     themes: false,
@@ -272,6 +277,55 @@ export default function Settings() {
       title: "Custom Gig Type Added",
       description: `"${trimmedInput}" has been added to your custom gig types.`,
     });
+  };
+
+  // Generate widget token and URL
+  const generateWidgetUrl = async () => {
+    setIsGeneratingToken(true);
+    try {
+      const response = await fetch('/api/generate-widget-token', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate widget token');
+      }
+      
+      const data = await response.json();
+      setWidgetUrl(data.url);
+      
+      toast({
+        title: "Widget URL Generated",
+        description: "Your booking widget URL is ready to use!",
+      });
+    } catch (error) {
+      console.error('Error generating widget URL:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate widget URL. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingToken(false);
+    }
+  };
+
+  // Copy widget URL to clipboard
+  const copyWidgetUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(widgetUrl);
+      toast({
+        title: "Copied!",
+        description: "Widget URL copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy URL to clipboard",
+        variant: "destructive",
+      });
+    }
   };
 
   const form = useForm<SettingsFormData>({
@@ -1509,6 +1563,116 @@ export default function Settings() {
                           </FormItem>
                         )}
                       />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Widget URL Management */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <Collapsible open={expandedSections.widget} onOpenChange={() => toggleSection('widget')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Link className="w-5 h-5 text-purple-600" />
+                          <span>Booking Widget</span>
+                        </div>
+                        {expandedSections.widget ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
+                        Share a direct booking form with your clients
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <Link className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-blue-900 dark:text-blue-100">Standalone Booking Widget</h4>
+                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                              Generate a unique URL that clients can use to send booking requests directly to you. 
+                              No login required - perfect for sharing on your website or in your email signature.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        {!widgetUrl ? (
+                          <div className="text-center p-6">
+                            <p className="text-gray-600 dark:text-gray-400 mb-4">
+                              You don't have a booking widget URL yet. Generate one to start accepting direct booking requests.
+                            </p>
+                            <Button
+                              type="button"
+                              onClick={generateWidgetUrl}
+                              disabled={isGeneratingToken}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              {isGeneratingToken ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <Link className="w-4 h-4 mr-2" />
+                                  Generate Widget URL
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+                                Your Booking Widget URL
+                              </label>
+                              <div className="flex items-center space-x-2">
+                                <Input
+                                  value={widgetUrl}
+                                  readOnly
+                                  className="flex-1 font-mono text-sm bg-gray-50 dark:bg-gray-800"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={copyWidgetUrl}
+                                  className="shrink-0"
+                                >
+                                  <Copy className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => window.open(widgetUrl, '_blank')}
+                                  className="shrink-0"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                              <h5 className="font-medium text-green-900 dark:text-green-100 text-sm mb-2">How to use your widget:</h5>
+                              <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">
+                                <li>• Share this URL directly with potential clients</li>
+                                <li>• Add it to your website or email signature</li>
+                                <li>• Clients can send booking requests without creating an account</li>
+                                <li>• All requests appear in your dashboard automatically</li>
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
