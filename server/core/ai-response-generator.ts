@@ -48,6 +48,14 @@ interface UserSettings {
   postcode?: string;
   primaryInstrument?: string;
   availableGigTypes?: any;
+  // AI Pricing Guide fields
+  aiPricingEnabled?: boolean;
+  baseHourlyRate?: number;
+  minimumBookingHours?: number;
+  additionalHourRate?: number;
+  djServiceRate?: number;
+  pricingNotes?: string;
+  specialOffers?: string;
 }
 
 interface AIResponseRequest {
@@ -211,6 +219,52 @@ INSTRUMENT-SPECIFIC GUIDANCE:
 ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` : ''}
 ` : '';
 
+    // Build pricing structure from user settings
+    const baseRate = userSettings?.baseHourlyRate || 130;
+    const minimumHours = userSettings?.minimumBookingHours || 2;
+    const additionalHourRate = userSettings?.additionalHourRate || 60;
+    const djRate = userSettings?.djServiceRate || 300;
+    const pricingEnabled = userSettings?.aiPricingEnabled !== false;
+    
+    const basePriceStr = `£${baseRate * minimumHours}`;
+    const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
+    const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
+    
+    // Calculate common packages
+    const packages = [
+      `${minimumHours} hours ${primaryInstrument}: ${basePriceStr}`,
+      `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate}`,
+      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2)}`,
+      `${minimumHours} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + djRate}`,
+      `${minimumHours + 1} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + additionalHourRate + djRate}`,
+      `${minimumHours + 2} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + (additionalHourRate * 2) + djRate}`
+    ];
+
+    const pricingSection = pricingEnabled ? `
+PRICING STRUCTURE GUIDELINES:
+- IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
+- For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
+- Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
+- Use this pricing structure for ${primaryInstrument}/instrumental performances:
+  * Base rate: ${minimumHours} hours of live performance - ${basePriceStr}
+  * Additional hours: ${additionalHourStr}
+  * DJ Services: ${djServiceStr}
+  * Example calculations:
+    ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
+- Present 3-4 package options starting from ${minimumHours} hours, clearly showing ${primaryInstrument} performance + any additional services
+- Mention additional services like DJ capabilities, MC services, equipment details when relevant
+- Include professional details about insurance, equipment quality, and venue requirements
+- Always mention that packages can be customized to client requirements
+- Include payment terms and booking process information
+- Present pricing confidently as the professional standard for the services offered
+- Ensure all pricing calculations follow the base rate + hourly + service add-ons structure
+${userSettings?.pricingNotes ? `- Additional pricing notes: ${userSettings.pricingNotes}` : ''}
+${userSettings?.specialOffers ? `- Special offers to mention: ${userSettings.specialOffers}` : ''}` : `
+PRICING POLICY:
+- Pricing information is handled separately - focus on availability and service details
+- Do not include specific pricing in your response unless specifically requested
+- Mention that detailed pricing can be provided separately`;
+
     return `You are an AI assistant helping a professional musician generate email responses for booking inquiries. 
 
 ${businessInfo}
@@ -235,26 +289,7 @@ GUIDELINES:
 - Keep SMS version concise but complete
 - Never make up details not provided in the booking context
 
-PRICING STRUCTURE GUIDELINES:
-- IMPORTANT: Most clients don't mention fees in initial enquiries - always proactively provide pricing options
-- For wedding enquiries, offer multiple service packages with clear duration and pricing tiers
-- Include options for different event segments (ceremony, drinks reception, wedding breakfast, evening entertainment)
-- Use this pricing structure for Saxon/instrumental performances:
-  * Base rate: 2 hours of live performance - approximately £260
-  * Additional hours: £60 per hour beyond the initial 2 hours
-  * DJ Services: Add £300 to any package that includes DJ services
-  * Example calculations: 
-    - 2 hours sax + DJ = £560 (£260 + £300)
-    - 3 hours sax = £320 (£260 + £60)
-    - 3 hours sax + DJ = £620 (£260 + £60 + £300)
-    - 4 hours sax + DJ = £680 (£260 + £120 + £300)
-- Present 3-4 package options starting from 2 hours, clearly showing saxophone performance + any additional services
-- Mention additional services like DJ capabilities, MC services, equipment details when relevant
-- Include professional details about insurance, equipment quality, and venue requirements
-- Always mention that packages can be customized to client requirements
-- Include payment terms and booking process information
-- Present pricing confidently as the professional standard for the services offered
-- Ensure all pricing calculations follow the base rate + hourly + service add-ons structure
+${pricingSection}
 
 PROFESSIONAL DETAILS TO INCLUDE:
 - Equipment quality and setup capabilities

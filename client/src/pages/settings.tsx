@@ -73,6 +73,15 @@ const settingsFormSchema = z.object({
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
+  
+  // AI Pricing Guide fields
+  aiPricingEnabled: z.boolean().default(true),
+  baseHourlyRate: z.coerce.number().min(0, "Base hourly rate must be positive").default(130),
+  minimumBookingHours: z.coerce.number().min(0.5, "Minimum booking hours must be at least 30 minutes").default(2),
+  additionalHourRate: z.coerce.number().min(0, "Additional hour rate must be positive").default(60),
+  djServiceRate: z.coerce.number().min(0, "DJ service rate must be positive").default(300),
+  pricingNotes: z.string().optional().or(z.literal("")),
+  specialOffers: z.string().optional().or(z.literal("")),
   bankDetails: z.string().optional().or(z.literal("")),
   // Instrument and gig type settings
   primaryInstrument: z.string().optional().or(z.literal("")),
@@ -150,6 +159,15 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     themeShowQrCode: data.themeShowQrCode || false,
     themeShowTerms: data.themeShowTerms !== false, // Default to true
     themeCustomTitle: data.themeCustomTitle || "",
+    
+    // AI Pricing Guide fields
+    aiPricingEnabled: data.aiPricingEnabled ?? true,
+    baseHourlyRate: data.baseHourlyRate || 130,
+    minimumBookingHours: data.minimumBookingHours || 2,
+    additionalHourRate: data.additionalHourRate || 60,
+    djServiceRate: data.djServiceRate || 300,
+    pricingNotes: data.pricingNotes || "",
+    specialOffers: data.specialOffers || "",
   };
 };
 
@@ -207,6 +225,7 @@ export default function Settings() {
     address: false,
     financial: false,
     bank: false,
+    pricing: false, // AI Pricing Guide section
     performance: false,
     instruments: true, // Open by default for new instrument context feature
     themes: false,
@@ -843,6 +862,212 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* AI Pricing Guide */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <Collapsible open={expandedSections.pricing} onOpenChange={() => toggleSection('pricing')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Music className="w-5 h-5 text-purple-600" />
+                          <span>AI Pricing Guide</span>
+                        </div>
+                        {expandedSections.pricing ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-6">
+                      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <Music className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-purple-900 dark:text-purple-100">Smart Quote Generation</h4>
+                            <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                              Configure your pricing structure for AI-powered quote generation. These settings help the AI create accurate, professional quotes automatically.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="aiPricingEnabled"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base font-medium">Enable AI Pricing</FormLabel>
+                              <div className="text-sm text-muted-foreground">
+                                Allow AI to generate pricing information in quotes and responses
+                              </div>
+                            </div>
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="baseHourlyRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">Base Hourly Rate (£)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.01" 
+                                  {...field} 
+                                  placeholder="130.00" 
+                                />
+                              </FormControl>
+                              <div className="text-xs text-muted-foreground">
+                                Used to calculate the base price (Rate × Minimum Hours)
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="minimumBookingHours"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">Minimum Booking Hours</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.5" 
+                                  {...field} 
+                                  placeholder="2.0" 
+                                />
+                              </FormControl>
+                              <div className="text-xs text-muted-foreground">
+                                Minimum number of hours for any booking
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="additionalHourRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">Additional Hour Rate (£)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.01" 
+                                  {...field} 
+                                  placeholder="60.00" 
+                                />
+                              </FormControl>
+                              <div className="text-xs text-muted-foreground">
+                                Rate per hour beyond the minimum booking
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="djServiceRate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">DJ Service Rate (£)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.01" 
+                                  {...field} 
+                                  placeholder="300.00" 
+                                />
+                              </FormControl>
+                              <div className="text-xs text-muted-foreground">
+                                Additional charge for DJ services
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="pricingNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Pricing Notes</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                placeholder="Special pricing information, package deals, or other notes to include in quotes"
+                                rows={3} 
+                              />
+                            </FormControl>
+                            <div className="text-xs text-muted-foreground">
+                              Additional pricing information for AI to include in quotes
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="specialOffers"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Current Special Offers</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                placeholder="Limited time offers, seasonal discounts, or promotional packages"
+                                rows={3} 
+                              />
+                            </FormControl>
+                            <div className="text-xs text-muted-foreground">
+                              Special offers for AI to mention in responses when appropriate
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-5 h-5 rounded-full bg-amber-200 dark:bg-amber-700 flex items-center justify-center mt-0.5">
+                            <span className="text-xs font-bold text-amber-800 dark:text-amber-200">£</span>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-amber-900 dark:text-amber-100">Current Pricing Examples</h4>
+                            <div className="text-sm text-amber-700 dark:text-amber-300 mt-1 space-y-1">
+                              <div>• 2 hours sax: £{form.watch('baseHourlyRate') * form.watch('minimumBookingHours')}</div>
+                              <div>• 3 hours sax: £{form.watch('baseHourlyRate') * form.watch('minimumBookingHours') + form.watch('additionalHourRate')}</div>
+                              <div>• 2 hours sax + DJ: £{form.watch('baseHourlyRate') * form.watch('minimumBookingHours') + form.watch('djServiceRate')}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>

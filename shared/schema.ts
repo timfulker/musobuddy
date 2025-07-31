@@ -399,6 +399,20 @@ export const userSettings = pgTable("user_settings", {
   themeShowQrCode: boolean("theme_show_qr_code").default(false), // Show QR code for social media
   themeShowTerms: boolean("theme_show_terms").default(true), // Show terms and conditions
   themeCustomTitle: varchar("theme_custom_title"), // Custom title instead of "Invoice"
+  
+  // AI Pricing Guide for intelligent quote generation
+  aiPricingEnabled: boolean("ai_pricing_enabled").default(true), // Enable AI pricing recommendations
+  baseHourlyRate: decimal("base_hourly_rate", { precision: 10, scale: 2 }).default("130.00"), // £130/hour base rate
+  minimumBookingHours: decimal("minimum_booking_hours", { precision: 3, scale: 1 }).default("2.0"), // 2 hour minimum
+  additionalHourRate: decimal("additional_hour_rate", { precision: 10, scale: 2 }).default("60.00"), // £60 for additional hours
+  djServiceRate: decimal("dj_service_rate", { precision: 10, scale: 2 }).default("300.00"), // £300 for DJ service
+  travelSurchargeEnabled: boolean("travel_surcharge_enabled").default(false), // Enable travel surcharges (Phase 2)
+  localTravelRadius: integer("local_travel_radius").default(20), // Free travel within 20 miles
+  customPricingPackages: jsonb("custom_pricing_packages").default('[]'), // Array of custom packages {name, hours, price, description}
+  pricingNotes: text("pricing_notes"), // Custom notes about pricing for AI to include
+  specialOffers: text("special_offers"), // Current special offers for AI to mention
+  seasonalPricing: jsonb("seasonal_pricing").default('{}'), // Seasonal pricing adjustments {summer: 1.1, winter: 0.9}
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
