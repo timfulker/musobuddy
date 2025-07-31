@@ -539,6 +539,167 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Simple GET route to run full GlockApps test - just visit the URL
+  app.get('/api/test/run-glockapp-full', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).send('<html><body><h1>❌ Not logged in</h1><p>Please log into MusoBuddy first</p></body></html>');
+      }
+
+      console.log(`🚀 Starting automated GlockApps test for user ${userId}`);
+
+      // All 91 GlockApps seed emails
+      const allSeedEmails = [
+        "elizabeaver@auth.glockdb.com", "juliarspivey@aol.com", "davidvcampbell@aol.com", "lynettedweyand@protonmail.com",
+        "bbarretthenryhe@gmail.com", "luisl417@yahoo.com", "jerrybrucedath@gmail.com", "verify79@web.de",
+        "simonetgrimard@laposte.net", "irenem@userflowhq.com", "comwhitttakarticjt@gmx.de", "verifynewssl@zoho.com",
+        "yadiraalfordbj@hotmail.com", "dannakbond@aol.com", "allanb@glockapps.awsapps.com", "eliza@spamcombat.com",
+        "eugenedandy576@gmail.com", "pprestondasavis@gmx.com", "alisonnlawrence@gmail.com", "verifycom79@gmx.com",
+        "b2bdeliver79@mail.com", "romanespor11@icloud.com", "joereddison@outlook.com", "martin@glockapps.tech",
+        "verify79@buyemailsoftware.com", "gailllitle@att.net", "jeffsayerss@yahoo.com", "johnnyjonesjake@hotmail.com",
+        "heavenpeck@freenet.de", "virginia@buyemailsoftware.com", "creissantdubois@laposte.net", "tristonreevestge@outlook.com.br",
+        "irene@postmasterpro.email", "jessicalisa6054@gmail.com", "blaircourtneye@outlook.com", "lashawnrheidrick@yahoo.com",
+        "loganalan654@gmail.com", "assa@auth.glockdb.com", "emilliesunnyk@gmail.com", "williamhensley54@yahoo.com",
+        "debrajhammons@outlook.com", "racheljavierera@hotmail.com", "williamhbishopp@yahoo.com", "anmeiyudobaihq@gmx.de",
+        "cierawilliamsonwq@gmail.com", "frankdesalvo@mailo.com", "jamesjng@outlook.com", "davidkdoyle@hotmail.com",
+        "gd@desktopemail.com", "bookerttubbs@zohomail.eu", "lenorebayerd@gmail.com", "taverasbrianvg@gmail.com",
+        "johntberman@yahoo.com", "raphaelewiley@aol.com", "keenanblooms@gmail.com", "carollpooool@outlook.com",
+        "catherinedwilsonn@aol.com", "mbell@fastdirectorysubmitter.com", "martinawm@gemings.awsapps.com", "luanajortega@yahoo.com",
+        "markjenningson@hotmail.com", "naomimartinsn@hotmail.com", "brittanyrocha@outlook.de", "larrycellis@aol.com",
+        "madeleinecagleks@gmail.com", "geraldmbautista@outlook.com", "williamtkozlowsk@gmail.com", "aileenjamesua@outlook.com",
+        "paul@userflowhq.com", "carlbilly605@gmail.com", "alfredohoffman@fastdirectorysubmitter.com", "tinamallahancr@gmail.com",
+        "verifyde79@gmx.de", "andrewheggins@mailo.com", "johnsimonskh@gmail.com", "jurgeneberhartdd@web.de",
+        "bobbybagdgddwins@mailo.com", "elizabethbetty6054@gmail.com", "deweymadddax@currently.com", "leoefraser@yahoo.com",
+        "glencabrera@outlook.fr", "clyde@trustycheck.pro", "candacechall@aol.com", "augustinlidermann@t-online.de",
+        "wilcoxginax@gmail.com", "daishacorwingx@gmail.com", "louiepettydr@gmail.com", "carloscohenm@freenet.de",
+        "michaelrwoodd@yahoo.com", "fredmrivenburg@aol.com"
+      ];
+
+      // Get user settings and templates
+      const userSettings = await storage.getUserSettings(userId);
+      const templates = await storage.getEmailTemplates(userId);
+      const template = templates[0]; // Use first template
+
+      if (!template) {
+        return res.status(400).send('<html><body><h1>❌ No templates found</h1><p>Create an email template first</p></body></html>');
+      }
+
+      // Import email service
+      const { MailgunService } = await import('./services');
+      const emailService = new MailgunService();
+      
+      // Generate email signature
+      const signature = emailService.generateEmailSignature(userSettings);
+      const emailWithSignature = template.emailBody + signature;
+      
+      let htmlResponse = `
+        <html><head><title>GlockApps Test Results</title><style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+          .success { color: green; } .error { color: red; } .info { color: blue; }
+          .result { padding: 10px; margin: 5px 0; border-left: 4px solid #ddd; }
+        </style></head><body>
+        <h1>🚀 GlockApps Deliverability Test</h1>
+        <p><strong>Test ID:</strong> 2025-07-31-12:25:46:357t</p>
+        <p><strong>Template:</strong> ${template.name} - "${template.subject}"</p>
+        <p><strong>Total Addresses:</strong> ${allSeedEmails.length}</p>
+        <div class="info">📧 Sending emails in batches of 25...</div>
+      `;
+
+      // Split into batches of 25
+      const batchSize = 25;
+      const batches = [];
+      for (let i = 0; i < allSeedEmails.length; i += batchSize) {
+        batches.push(allSeedEmails.slice(i, i + batchSize));
+      }
+
+      let totalSent = 0;
+      let totalFailed = 0;
+      
+      // Send each batch
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        console.log(`📧 Processing batch ${i + 1}/${batches.length} (${batch.length} emails)`);
+        
+        htmlResponse += `<div class="info">📦 Processing batch ${i + 1}/${batches.length} (${batch.length} emails)...</div>`;
+        
+        try {
+          // Send to each email in this batch
+          for (const seedEmail of batch) {
+            try {
+              const emailData = {
+                from: `${userSettings.businessName || 'MusoBuddy'} <noreply@mg.musobuddy.com>`,
+                to: seedEmail.trim(),
+                subject: `[GlockApps Test 2025-07-31-12:25:46:357t] ${template.subject}`,
+                html: emailWithSignature,
+                text: emailService.htmlToPlainText(emailWithSignature),
+                replyTo: userSettings.businessEmail || userSettings.email,
+                headers: {
+                  'Return-Path': 'bounces@mg.musobuddy.com',
+                  'List-Unsubscribe': '<mailto:unsubscribe@mg.musobuddy.com>',
+                  'X-Priority': '3',
+                  'X-Mailer': 'MusoBuddy Email System v1.0',
+                  'X-GlockApps-Test': '2025-07-31-12:25:46:357t'
+                },
+                tracking: {
+                  'test-id': '2025-07-31-12:25:46:357t',
+                  'test-type': 'glockapp-delivery',
+                  'user-id': userId,
+                  'template-id': template.id
+                },
+                emailType: 'glockapp-test',
+                userId: userId
+              };
+
+              await emailService.sendEmail(emailData);
+              totalSent++;
+              console.log(`✅ Sent to ${seedEmail}`);
+              
+            } catch (error: any) {
+              totalFailed++;
+              console.error(`❌ Failed to send to ${seedEmail}:`, error.message);
+            }
+          }
+
+          htmlResponse += `<div class="success">✅ Batch ${i + 1} completed</div>`;
+          
+          // Small delay between batches
+          if (i < batches.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+          
+        } catch (error: any) {
+          totalFailed += batch.length;
+          htmlResponse += `<div class="error">❌ Batch ${i + 1} failed: ${error.message}</div>`;
+          console.error(`❌ Batch ${i + 1} error:`, error);
+        }
+      }
+
+      htmlResponse += `
+        <h2>🎉 Test Completed!</h2>
+        <div class="result">
+          <strong>Final Results:</strong><br>
+          ✅ Successfully sent: ${totalSent}<br>
+          ❌ Failed: ${totalFailed}<br>
+          📊 Total: ${allSeedEmails.length}
+        </div>
+        <div class="info">
+          <p>📧 Check your GlockApps dashboard in 5-10 minutes for deliverability results.</p>
+          <p><a href="/dashboard">← Back to MusoBuddy Dashboard</a></p>
+        </div>
+        </body></html>
+      `;
+
+      console.log(`🎉 GlockApps test completed - ${totalSent} sent, ${totalFailed} failed`);
+      res.send(htmlResponse);
+
+    } catch (error: any) {
+      console.error('❌ Automated GlockApps test error:', error);
+      res.status(500).send(`<html><body><h1>❌ Test Failed</h1><p>${error.message}</p></body></html>`);
+    }
+  });
+
   // Send template email with enhanced deliverability
   app.post('/api/templates/send-email', isAuthenticated, async (req: any, res) => {
     try {
