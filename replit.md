@@ -133,19 +133,20 @@ The application is designed to be user-friendly while maintaining professional-g
 
 ## Recent Changes: Latest modifications with dates
 
-### 2025-01-31 - ADMIN PAGE RESPONSIVENESS COMPLETELY FIXED - Professional Mobile Interface Enhanced
+### 2025-01-31 - CRITICAL BOOKING CREATION FIX - Missing API Endpoint Added + Admin Page Responsiveness Complete
 
-- **CRITICAL RESPONSIVENESS FIXES APPLIED**: ✅ Fixed Admin page layout issues causing interface cutoff and poor mobile display
-- **RESPONSIVE CONTAINER STRUCTURE**: ✅ Added proper min-w-0 to flex containers preventing overflow and horizontal scrolling issues
-- **MOBILE-FIRST TAB LAYOUT**: ✅ Tabs reorganized to 2x2 grid on mobile (grid-cols-2 sm:grid-cols-4) with proper text sizing (text-xs sm:text-sm)
-- **RESPONSIVE STATISTICS CARDS**: ✅ Overview cards now use grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 for optimal display across all screen sizes
-- **ENHANCED USER MANAGEMENT LAYOUT**: ✅ User cards converted to flex-col sm:flex-row responsive layout with proper content wrapping
-- **MOBILE-OPTIMIZED ACTION BUTTONS**: ✅ Edit/Delete buttons show icons only on mobile, full text on desktop with responsive sizing
-- **IMPROVED BULK SELECTION CONTROLS**: ✅ Bulk operations toolbar adapts to mobile with stacked layout and full-width buttons
-- **PADDING AND SPACING OPTIMIZATION**: ✅ Reduced padding from p-6 to p-3 sm:p-6 for better mobile space utilization
-- **TEXT TRUNCATION PREVENTION**: ✅ Added min-w-0 and truncate classes to prevent text overflow in user information
-- **HEADER RESPONSIVENESS**: ✅ Admin panel title and crown icon scale appropriately (h-6 w-6 sm:h-8 sm:w-8)
-- **Status**: ADMIN PAGE FULLY RESPONSIVE - Professional interface works seamlessly across desktop, tablet, and mobile devices
+- **CRITICAL BUG FIXED**: ✅ Added missing `/api/enquiries` POST endpoint that was causing 404 errors when creating new bookings
+- **FRONTEND-BACKEND COMPATIBILITY**: ✅ Frontend components use `/api/enquiries` while backend had only `/api/bookings` - added alias endpoint
+- **BOOKING CREATION RESTORED**: ✅ New booking creation from new-booking.tsx, quick-add.tsx, and BookingDetailsDialog.tsx now functional
+- **API ENDPOINT MAPPING**: ✅ Both `/api/bookings` and `/api/enquiries` POST endpoints now map to same booking creation logic
+- **AUTHENTICATION PRESERVED**: ✅ Both endpoints require authentication and properly handle user session validation
+- **ERROR HANDLING CONSISTENT**: ✅ Both endpoints provide identical error responses and success logging
+- **ADMIN PAGE RESPONSIVENESS COMPLETE**: ✅ Fixed all layout issues causing interface cutoff and poor mobile display
+- **MOBILE-FIRST DESIGN**: ✅ Tabs reorganized to 2x2 grid on mobile with responsive statistics cards and user management layout
+- **RESPONSIVE ACTION BUTTONS**: ✅ Edit/Delete buttons show icons only on mobile, full text on desktop with proper sizing
+- **BULK OPERATIONS MOBILE**: ✅ Selection controls adapt to mobile with stacked layout and full-width buttons
+- **TEXT OVERFLOW PREVENTION**: ✅ Added min-w-0 and truncate classes preventing text overflow in user information
+- **Status**: BOOKING CREATION SYSTEM OPERATIONAL + ADMIN PAGE FULLY RESPONSIVE - Core functionality restored with professional mobile interface
 
 ### 2025-01-31 - CRITICAL GLOCKAPP TEST FIX - Storage Method Name Mismatch Resolved
 
