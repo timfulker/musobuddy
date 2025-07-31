@@ -2709,6 +2709,24 @@ export async function registerRoutes(app: Express) {
       
       // Prepare email content
       const emailSubject = `You're invited to join MusoBuddy!`;
+      const betaTesterTestCards = isBetaTester ? `
+        <div style="background: #e8f4ff; border: 1px solid #0066cc; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #0066cc;">Beta Tester - Payment Testing Information</h3>
+          <p style="margin-bottom: 15px;"><strong>Use these test credit cards for subscription testing:</strong></p>
+          <div style="font-family: monospace; background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 10px 0;">
+            <div style="margin-bottom: 8px;"><strong>Visa (Success):</strong> 4242 4242 4242 4242</div>
+            <div style="margin-bottom: 8px;"><strong>Visa (Declined):</strong> 4000 0000 0000 0002</div>
+            <div style="margin-bottom: 8px;"><strong>Mastercard:</strong> 5555 5555 5555 4444</div>
+            <div style="margin-bottom: 8px;"><strong>American Express:</strong> 3782 8224 6310 005</div>
+          </div>
+          <p style="color: #666; font-size: 14px; margin-top: 15px;">
+            <strong>CVC:</strong> Any 3 digits (4 for Amex)<br>
+            <strong>Expiry:</strong> Any future date<br>
+            <strong>ZIP:</strong> Any 5 digits
+          </p>
+        </div>
+      ` : '';
+      
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">Welcome to MusoBuddy!</h2>
@@ -2728,6 +2746,8 @@ export async function registerRoutes(app: Express) {
               ${isAdmin ? '<li><strong>Role:</strong> Administrator</li>' : ''}
             </ul>
           </div>
+          
+          ${betaTesterTestCards}
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${inviteLink}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Accept Invitation</a>
