@@ -335,6 +335,41 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Instrument settings endpoint
+  app.post('/api/settings/instrument', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const { primaryInstrument, availableGigTypes } = req.body;
+      
+      console.log(`🎵 Updating instrument settings for user: ${userId}`, { primaryInstrument, gigTypesCount: availableGigTypes?.length });
+      
+      // Update instrument settings
+      const updatedSettings = await storage.updateSettings(userId, {
+        primaryInstrument,
+        availableGigTypes: JSON.stringify(availableGigTypes)
+      });
+      
+      console.log(`✅ Instrument settings updated for user ${userId}`);
+      res.json({ 
+        success: true, 
+        primaryInstrument,
+        availableGigTypes,
+        gigTypesCount: availableGigTypes?.length || 0
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to update instrument settings:', error);
+      res.status(500).json({ 
+        error: 'Failed to update instrument settings',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // ===== EMAIL TEMPLATES API =====
   app.get('/api/templates', isAuthenticated, async (req: any, res) => {
     try {

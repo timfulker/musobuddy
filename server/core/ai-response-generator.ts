@@ -10,6 +10,7 @@ interface BookingContext {
   eventEndTime?: string;
   venue?: string;
   eventType?: string;
+  gigType?: string;
   fee?: number;
   performanceDuration?: string;
   styles?: string;
@@ -26,6 +27,8 @@ interface UserSettings {
   city?: string;
   county?: string;
   postcode?: string;
+  primaryInstrument?: string;
+  availableGigTypes?: any[];
 }
 
 interface AIResponseRequest {
@@ -76,15 +79,44 @@ export class AIResponseGenerator {
 
   private buildSystemPrompt(userSettings?: UserSettings, tone: string = 'professional'): string {
     const businessName = userSettings?.businessName || "the performer";
+    const primaryInstrument = userSettings?.primaryInstrument ? 
+      this.getInstrumentDisplayName(userSettings.primaryInstrument) : "musician";
+    
+    // Parse availableGigTypes from JSON string or array
+    let gigTypes: string[] = [];
+    if (userSettings?.availableGigTypes) {
+      if (typeof userSettings.availableGigTypes === 'string') {
+        try {
+          gigTypes = JSON.parse(userSettings.availableGigTypes);
+        } catch (e) {
+          console.warn('Failed to parse availableGigTypes JSON:', userSettings.availableGigTypes);
+        }
+      } else if (Array.isArray(userSettings.availableGigTypes)) {
+        gigTypes = userSettings.availableGigTypes;
+      }
+    }
+    
     const businessInfo = userSettings ? `
 Business: ${businessName}
 Contact: ${userSettings.email}${userSettings.phone ? ` | ${userSettings.phone}` : ''}
 ${userSettings.website ? `Website: ${userSettings.website}` : ''}
+Primary Instrument: ${primaryInstrument}
+${gigTypes.length > 0 ? `Specializes in: ${gigTypes.join(', ')}` : ''}
+` : '';
+
+    const instrumentContext = userSettings?.primaryInstrument ? `
+INSTRUMENT-SPECIFIC GUIDANCE:
+- You are responding as a professional ${primaryInstrument} player
+- Tailor your service packages to ${primaryInstrument}-specific gigs and pricing
+- Reference ${primaryInstrument} capabilities and repertoire in your responses
+- Consider typical ${primaryInstrument} gig requirements (equipment, setup, acoustics)
+${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` : ''}
 ` : '';
 
     return `You are an AI assistant helping a professional musician generate email responses for booking inquiries. 
 
 ${businessInfo}
+${instrumentContext}
 
 TONE: ${tone} - maintain this tone throughout the response.
 
@@ -171,6 +203,7 @@ Generate appropriate subject, email body, and SMS version.`;
     }
     if (context.venue) details.push(`Venue: ${context.venue}`);
     if (context.eventType) details.push(`Event Type: ${context.eventType}`);
+    if (context.gigType) details.push(`Gig Type: ${context.gigType}`);
     if (context.fee) details.push(`Fee: £${context.fee}`);
     if (context.performanceDuration) details.push(`Duration: ${context.performanceDuration}`);
     if (context.styles) details.push(`Music Styles: ${context.styles}`);
@@ -180,6 +213,42 @@ Generate appropriate subject, email body, and SMS version.`;
     return details.length > 0 
       ? `BOOKING DETAILS:\n${details.join('\n')}`
       : "No specific booking details provided.";
+  }
+
+  private getInstrumentDisplayName(instrument: string): string {
+    const displayNames: { [key: string]: string } = {
+      'acoustic_guitar': 'Acoustic Guitar',
+      'electric_guitar': 'Electric Guitar',
+      'classical_guitar': 'Classical Guitar',
+      'bass_guitar': 'Bass Guitar',
+      'piano': 'Piano',
+      'keyboard': 'Keyboard',
+      'violin': 'Violin',
+      'viola': 'Viola',
+      'cello': 'Cello',
+      'double_bass': 'Double Bass',
+      'saxophone': 'Saxophone',
+      'trumpet': 'Trumpet',
+      'trombone': 'Trombone',
+      'clarinet': 'Clarinet',
+      'flute': 'Flute',
+      'drums': 'Drums',
+      'percussion': 'Percussion',
+      'vocals': 'Vocals',
+      'harp': 'Harp',
+      'ukulele': 'Ukulele',
+      'mandolin': 'Mandolin',
+      'banjo': 'Banjo',
+      'harmonica': 'Harmonica',
+      'accordion': 'Accordion',
+      'dj': 'DJ',
+      'band': 'Band',
+      'duo': 'Duo',
+      'trio': 'Trio',
+      'quartet': 'Quartet',
+      'other': 'Other'
+    };
+    return displayNames[instrument] || instrument;
   }
 
   async generateTemplateVariations(

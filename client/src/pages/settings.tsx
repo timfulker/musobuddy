@@ -14,11 +14,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-// Removed instrument constants - feature moved to documentation for future implementation
+// Import instrument presets
+import { INSTRUMENT_GIG_PRESETS, getGigTypesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
 
 // Theme configuration constants
 const THEME_TEMPLATES = [
@@ -72,6 +74,8 @@ const settingsFormSchema = z.object({
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
   bankDetails: z.string().optional().or(z.literal("")),
+  // Instrument and gig type settings
+  primaryInstrument: z.string().optional().or(z.literal("")),
   // Performance settings
   bookingDisplayLimit: z.enum(["50", "all"]).default("50"),
   // Removed instrument and gig type fields - feature moved to documentation
@@ -129,7 +133,10 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     nextInvoiceNumber: data.nextInvoiceNumber || 1,
     defaultTerms: data.defaultTerms || "",
     bankDetails: data.bankDetails || "",
-    // Removed instrument and gig type fields
+    // Instrument settings
+    primaryInstrument: data.primaryInstrument || "",
+    // Performance settings
+    bookingDisplayLimit: data.bookingDisplayLimit || "50",
     // Theme preferences
     themeTemplate: data.themeTemplate || "classic",
     themeTone: data.themeTone || "formal",
@@ -177,7 +184,9 @@ export default function Settings() {
   const isMobile = !isDesktop;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Removed instrument selection state - feature moved to documentation
+  // Instrument and gig type state
+  const [availableGigTypes, setAvailableGigTypes] = useState<string[]>([]);
+  const [selectedInstrument, setSelectedInstrument] = useState<string>("");
 
   // State for theme preview
   const [showThemePreview, setShowThemePreview] = useState(false);
@@ -199,7 +208,7 @@ export default function Settings() {
     financial: false,
     bank: false,
     performance: false,
-    // removed instruments section
+    instruments: true, // Open by default for new instrument context feature
     themes: false,
   });
 
@@ -278,6 +287,53 @@ export default function Settings() {
     },
   });
 
+  // Handler for instrument selection
+  const handleInstrumentChange = (instrument: string) => {
+    setSelectedInstrument(instrument);
+    const gigTypes = getGigTypesForInstrument(instrument);
+    setAvailableGigTypes(gigTypes);
+    
+    // Update the form with the selected instrument
+    form.setValue('primaryInstrument', instrument);
+    setHasChanges(true);
+    
+    // Also update the gig types in the backend
+    updateInstrumentAndGigTypes(instrument, gigTypes);
+  };
+
+  // API function to update instrument and gig types
+  const updateInstrumentAndGigTypes = async (instrument: string, gigTypes: string[]) => {
+    try {
+      const response = await fetch('/api/settings/instrument', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          primaryInstrument: instrument,
+          availableGigTypes: gigTypes,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update instrument settings');
+      }
+
+      toast({
+        title: "Instrument Updated",
+        description: `Set to ${getInstrumentDisplayName(instrument)} with ${gigTypes.length} gig types`,
+      });
+    } catch (error) {
+      console.error('Error updating instrument settings:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update instrument settings",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Initialize form when settings are loaded - CRITICAL FIX for instruments and gig types disappearing
   useEffect(() => {
     if (settings && !saveSettings.isPending) {
@@ -300,8 +356,30 @@ export default function Settings() {
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
         bankDetails: settings.bankDetails || "",
-        // Removed instrument and gig type fields
+        // Instrument settings
+        primaryInstrument: settings.primaryInstrument || "",
+        bookingDisplayLimit: settings.bookingDisplayLimit || "50",
+        // Theme settings
+        themeTemplate: settings.themeTemplate || "classic",
+        themeTone: settings.themeTone || "professional",
+        themeFont: settings.themeFont || "roboto",
+        themeAccentColor: settings.themeAccentColor || "#673ab7",
+        themeLogoUrl: settings.themeLogoUrl || "",
+        themeSignatureUrl: settings.themeSignatureUrl || "",
+        themeBanner: settings.themeBanner || "",
+        themeShowSetlist: settings.themeShowSetlist || false,
+        themeShowRiderNotes: settings.themeShowRiderNotes || false,
+        themeShowQrCode: settings.themeShowQrCode || false,
+        themeShowTerms: settings.themeShowTerms !== false,
+        themeCustomTitle: settings.themeCustomTitle || "",
       };
+      
+      // Set up instrument state
+      if (settings.primaryInstrument) {
+        setSelectedInstrument(settings.primaryInstrument);
+        const gigTypes = getGigTypesForInstrument(settings.primaryInstrument);
+        setAvailableGigTypes(gigTypes);
+      }
       
       
       
@@ -758,6 +836,83 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* Instrument Settings */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <Collapsible open={expandedSections.instruments} onOpenChange={() => toggleSection('instruments')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Music className="w-5 h-5 text-purple-600" />
+                          <span>Instrument & AI Context</span>
+                        </div>
+                        {expandedSections.instruments ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
+                        Set your primary instrument for contextual AI template generation
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="primaryInstrument"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Primary Instrument</FormLabel>
+                            <Select 
+                              value={field.value || selectedInstrument} 
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                handleInstrumentChange(value);
+                              }}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select your primary instrument" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {getAvailableInstruments().map((instrument) => (
+                                  <SelectItem key={instrument} value={instrument}>
+                                    {getInstrumentDisplayName(instrument)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            <div className="text-xs text-gray-500 mt-1">
+                              This helps AI generate appropriate pricing and service packages for your {selectedInstrument ? getInstrumentDisplayName(selectedInstrument) : 'instrument'} gigs
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Show available gig types when instrument is selected */}
+                      {selectedInstrument && availableGigTypes.length > 0 && (
+                        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg">
+                          <h4 className="text-sm font-medium mb-2">Available Gig Types for {getInstrumentDisplayName(selectedInstrument)}</h4>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            {availableGigTypes.map((gigType, index) => (
+                              <div key={index} className="bg-white dark:bg-slate-700 px-2 py-1 rounded border">
+                                {gigType}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-2">
+                            These gig types will be available in booking forms and AI will use them for contextual template generation.
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>

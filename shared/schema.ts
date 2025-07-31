@@ -375,6 +375,9 @@ export const userSettings = pgTable("user_settings", {
   homePostcode: varchar("home_postcode"), // For distance calculations
   // Performance settings
   bookingDisplayLimit: varchar("booking_display_limit").default("50"), // "50" for last 50 bookings, "all" for no limit
+  // Instrument and gig type settings
+  primaryInstrument: varchar("primary_instrument"), // saxophone, guitar, piano, violin, drums, etc.
+  availableGigTypes: jsonb("available_gig_types"), // Array of available gig types for this instrument
   // AI-powered instrument and gig type system
   selectedInstruments: text("selected_instruments"), // JSON array of selected instruments from CSV
   aiGeneratedGigTypes: text("ai_generated_gig_types"), // JSON array of AI-generated gig types
