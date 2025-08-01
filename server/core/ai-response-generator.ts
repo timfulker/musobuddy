@@ -258,6 +258,10 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     // Calculate common packages with travel included - use actual travel expense if provided
     const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 60; // Default to £60 if no specific travel cost
     
+    // FIXED: Correct pricing calculation per user specification:
+    // 2 hours: 2 × baseRate + travel = 2 × £125 + £60 = £310
+    // 3 hours: 2 × baseRate + 1 × additionalRate + travel = 2 × £125 + £60 + £60 = £370
+    // 4 hours: 2 × baseRate + 2 × additionalRate + travel = 2 × £125 + 2 × £60 + £60 = £430
     const basePackages = [
       `${minimumHours} hours ${primaryInstrument}: £${baseRate * minimumHours + travelCost}`,
       `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate + travelCost}`,
