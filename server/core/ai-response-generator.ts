@@ -251,8 +251,8 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     const djRate = parseFloat(userSettings?.djServiceRate?.toString() || '300');
     const pricingEnabled = userSettings?.aiPricingEnabled !== false;
     
-    // Calculate travel cost first - ensure it's a number
-    const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 75; // Use booking-specific travel cost
+    // Calculate travel cost from booking context - MUST use the actual value in the Travel Expense field
+    const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 0; // Use actual booking travel expense, no default
     
     // Debug pricing calculation
     console.log('🎵 Pricing Debug:', {
@@ -273,10 +273,10 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
     const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
     
-    // FIXED: Correct pricing calculation per user specification:
-    // 2 hours: 2 × baseRate + travel = 2 × £125 + £75 = £325
-    // 3 hours: 2 × baseRate + 1 × additionalRate + travel = 2 × £125 + £60 + £75 = £385
-    // 4 hours: 2 × baseRate + 2 × additionalRate + travel = 2 × £125 + £120 + £75 = £445
+    // FIXED: Correct pricing calculation using dynamic travel expense:
+    // 2 hours: 2 × baseRate + travelExpense = 2 × £125 + [Travel Expense Field Value]
+    // 3 hours: 2 × baseRate + 1 × additionalRate + travelExpense  
+    // 4 hours: 2 × baseRate + 2 × additionalRate + travelExpense
     const basePackages = [
       `${minimumHours} hours ${primaryInstrument}: £${baseRate * minimumHours + travelCost}`,
       `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate + travelCost}`,
