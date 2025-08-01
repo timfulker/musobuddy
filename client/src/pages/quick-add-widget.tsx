@@ -210,7 +210,7 @@ export default function QuickAddWidget() {
                       <FormLabel>Your Message</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Hi! I'd like to book you for my wedding on June 15th, 2025. The venue is Oak Manor Hotel, and we'd like a duo performance for the ceremony and reception. Could you let me know your availability and pricing? Thanks!"
+                          placeholder="Tell us about your event - date, venue, type of performance, number of guests, and any special requirements..."
                           className="min-h-[120px]"
                           {...field}
                         />
@@ -228,7 +228,7 @@ export default function QuickAddWidget() {
                       <FormLabel>Your Name & Contact</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Sarah Johnson (sarah@email.com or phone number)"
+                          placeholder="Your name (email or phone number)"
                           {...field}
                         />
                       </FormControl>
