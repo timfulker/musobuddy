@@ -165,19 +165,56 @@ button, input, select, textarea {
   --destructive-foreground: hsl(210, 20%, 98%);
   --ring: #ffd500;  /* basecamp yellow for focus rings */
   --radius: 1rem;
-  --chart-1: hsl(262, 83%, 72%);
-  --chart-2: hsl(252, 83%, 82%);
-  --chart-3: hsl(272, 83%, 62%);
-  --chart-4: hsl(242, 83%, 82%);
-  --chart-5: hsl(282, 83%, 62%);
+  --chart-1: #ffd500;
+  --chart-2: #ffdb33;
+  --chart-3: #e6c200;
+  --chart-4: #ccaa00;
+  --chart-5: #b39900;
   --sidebar-background: hsl(0, 0%, 98%);
-  --sidebar-foreground: hsl(224, 71.4%, 4.1%);
-  --sidebar-primary: hsl(262, 83%, 72%);
-  --sidebar-primary-foreground: hsl(210, 20%, 98%);
-  --sidebar-accent: hsl(220, 14.3%, 95.9%);
-  --sidebar-accent-foreground: hsl(220.9, 39.3%, 11%);
+  --sidebar-foreground: #2d2d2d;
+  --sidebar-primary: #2d2d2d;
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: #ffd500;
+  --sidebar-accent-foreground: #2d2d2d;
   --sidebar-border: hsl(220, 13%, 91%);
-  --sidebar-ring: hsl(262, 83%, 72%);
+  --sidebar-ring: #ffd500;
+}
+
+.dark {
+  /* Basecamp-inspired dark theme */
+  --background: #1e1e1e;  /* dark background */
+  --foreground: #ffffff;  /* white text for dark mode */
+  --muted: hsl(217, 10%, 25%);
+  --muted-foreground: #cccccc;  /* lighter gray for dark mode */
+  --popover: #2d2d2d;
+  --popover-foreground: #ffffff;
+  --card: #2d2d2d;  /* dark cards */
+  --card-foreground: #ffffff;
+  --border: hsl(217, 10%, 40%);
+  --input: hsl(217, 10%, 40%);
+  --primary: #ffffff;  /* white for primary in dark mode */
+  --primary-foreground: #2d2d2d;  /* dark text on white buttons */
+  --secondary: hsl(217, 10%, 25%);
+  --secondary-foreground: #ffffff;
+  --accent: #ffd500;  /* keep the basecamp yellow */
+  --accent-foreground: #2d2d2d;  /* dark text on yellow */
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(210, 20%, 98%);
+  --ring: #ffd500;  /* basecamp yellow for focus rings */
+  --radius: 1rem;
+  --chart-1: #ffd500;
+  --chart-2: #ffdb33;
+  --chart-3: #e6c200;
+  --chart-4: #ccaa00;
+  --chart-5: #b39900;
+  --sidebar-background: #1a1a1a;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #2d2d2d;
+  --sidebar-accent: #ffd500;
+  --sidebar-accent-foreground: #2d2d2d;
+  --sidebar-border: hsl(217, 10%, 40%);
+  --sidebar-ring: #ffd500;
 }
 
 .dark {
