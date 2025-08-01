@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -222,6 +223,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* User Profile */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          {/* Theme Toggle and Logout Row */}
+          <div className="flex items-center justify-between mb-3">
+            <ThemeToggle />
+            <button 
+              onClick={handleLogout}
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded transition-colors"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm">Logout</span>
+            </button>
+          </div>
+          
+          {/* User Info */}
           <div className="flex items-center space-x-3">
             {user?.profileImageUrl ? (
               <img 
@@ -240,14 +255,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-400">Musician</p>
             </div>
-            <button 
-              onClick={handleLogout}
-              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm">Logout</span>
-            </button>
           </div>
         </div>
       </div>
