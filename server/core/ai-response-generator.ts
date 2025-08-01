@@ -244,15 +244,15 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
       hasDJServices
     });
     
-    // Build pricing structure from user settings
-    const baseRate = userSettings?.baseHourlyRate || 125; // Fixed: Use user's £125 rate, not £130 default
-    const minimumHours = userSettings?.minimumBookingHours || 2;
-    const additionalHourRate = userSettings?.additionalHourRate || 60;
-    const djRate = userSettings?.djServiceRate || 300;
+    // Build pricing structure from user settings - ensure all rates are numbers
+    const baseRate = parseFloat(userSettings?.baseHourlyRate?.toString() || '125'); // Fixed: Convert to number
+    const minimumHours = parseInt(userSettings?.minimumBookingHours?.toString() || '2');
+    const additionalHourRate = parseFloat(userSettings?.additionalHourRate?.toString() || '60'); // Fixed: Convert to number
+    const djRate = parseFloat(userSettings?.djServiceRate?.toString() || '300');
     const pricingEnabled = userSettings?.aiPricingEnabled !== false;
     
-    // Calculate travel cost first
-    const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 40; // Use booking-specific travel cost
+    // Calculate travel cost first - ensure it's a number
+    const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 75; // Use booking-specific travel cost
     
     // Debug pricing calculation
     console.log('🎵 Pricing Debug:', {
@@ -274,9 +274,9 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
     
     // FIXED: Correct pricing calculation per user specification:
-    // 2 hours: 2 × baseRate + travel = 2 × £125 + £40 = £290
-    // 3 hours: 2 × baseRate + 1 × additionalRate + travel = 2 × £125 + £60 + £40 = £350
-    // 4 hours: 2 × baseRate + 2 × additionalRate + travel = 2 × £125 + £120 + £40 = £410
+    // 2 hours: 2 × baseRate + travel = 2 × £125 + £75 = £325
+    // 3 hours: 2 × baseRate + 1 × additionalRate + travel = 2 × £125 + £60 + £75 = £385
+    // 4 hours: 2 × baseRate + 2 × additionalRate + travel = 2 × £125 + £120 + £75 = £445
     const basePackages = [
       `${minimumHours} hours ${primaryInstrument}: £${baseRate * minimumHours + travelCost}`,
       `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate + travelCost}`,
