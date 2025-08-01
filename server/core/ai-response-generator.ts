@@ -304,10 +304,13 @@ CRITICAL PRICING RULES:
 - WARNING: If you modify these prices in any way, the response will be rejected
 - INSTRUCTION: These prices already include ALL costs - do not add anything to them
 - CRITICAL: Use EXACTLY these prices - DO NOT CALCULATE OR MODIFY:
-    ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
+    - 2 hours saxophone: £${twoHoursPrice}
+    - 3 hours saxophone: £${threeHoursPrice}
+    - 4 hours saxophone: £${fourHoursPrice}
 - FORBIDDEN: DO NOT add travel costs, setup fees, or any other charges to these prices
 - FORBIDDEN: DO NOT perform any mathematical operations on these prices
 - MANDATORY: Copy these exact price figures into your response without changes
+- EXAMPLE: "2 hours Saxophone: £${twoHoursPrice}" (use this exact format and number)
 - Present 3-4 package options starting from 2 hours, showing total inclusive pricing${hasDJServices ? `
 - Mention DJ capabilities when relevant - you offer DJ services as an additional service` : ''}
 - Mention equipment details, setup capabilities, and venue requirements when relevant
