@@ -705,7 +705,7 @@ export async function registerRoutes(app: Express) {
   app.post('/api/templates/send-email', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId;
-      const { template, bookingId } = req.body;
+      const { template, bookingId, recipient } = req.body;
       
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
@@ -717,16 +717,24 @@ export async function registerRoutes(app: Express) {
       
       console.log(`📧 Sending template email for user: ${userId}, booking: ${bookingId}`);
       
-      // Get booking data to extract client email
-      const booking = bookingId ? await storage.getBookingDetails(bookingId) : null;
-      if (!booking) {
-        return res.status(404).json({ error: 'Booking not found' });
-      }
-      
       // Get user settings for business email
       const userSettings = await storage.getUserSettings(userId);
       if (!userSettings) {
         return res.status(404).json({ error: 'User settings not found' });
+      }
+      
+      // Get recipient email (from booking or direct recipient)
+      let recipientEmail = recipient;
+      if (bookingId && !recipientEmail) {
+        const booking = await storage.getBookingDetails(bookingId);
+        if (!booking) {
+          return res.status(404).json({ error: 'Booking not found' });
+        }
+        recipientEmail = booking.clientEmail;
+      }
+      
+      if (!recipientEmail) {
+        return res.status(400).json({ error: 'Recipient email required' });
       }
       
       // Import email service
@@ -737,64 +745,38 @@ export async function registerRoutes(app: Express) {
       const signature = emailService.generateEmailSignature(userSettings);
       const emailWithSignature = template.emailBody + signature;
       
-      // Enhanced email data with deliverability improvements
+      // Send the email
       const emailData = {
         from: `${userSettings.businessName || 'MusoBuddy'} <noreply@mg.musobuddy.com>`,
-        to: booking.clientEmail,
+        to: recipientEmail.trim(),
         subject: template.subject,
         html: emailWithSignature,
-        text: emailService.htmlToPlainText(emailWithSignature), // Plain text version for better deliverability
-        replyTo: userSettings.businessEmail || userSettings.email,
-        headers: {
-          'Return-Path': 'bounces@mg.musobuddy.com',
-          'List-Unsubscribe': '<mailto:unsubscribe@mg.musobuddy.com>',
-          'X-Priority': '3',
-          'X-Mailer': 'MusoBuddy Email System v1.0'
-        },
-        tracking: {
-          'v:email-type': 'template',
-          'v:user-id': userId,
-          'v:booking-id': bookingId
-        },
-        emailType: 'template',
-        userId: userId
+        text: emailService.htmlToPlainText(emailWithSignature),
+        replyTo: userSettings.businessEmail || userSettings.email
       };
       
-      // Send email
       const result = await emailService.sendEmail(emailData);
       
-      // Check if this was a thank you template and update booking status
-      const isThankYouTemplate = template.subject?.toLowerCase().includes('thank you') || 
-                               template.emailBody?.toLowerCase().includes('thank you for');
-      
-      if (isThankYouTemplate && bookingId) {
-        // Only mark as completed for past events
-        const eventDate = new Date(booking.eventDate);
-        const today = new Date();
-        if (eventDate < today) {
-          await storage.updateBookingStatus(bookingId, 'completed');
-          console.log(`✅ Thank you email sent - booking ${bookingId} marked as completed`);
-        }
-      } else if (bookingId) {
-        // For other templates, update status from 'new' to 'in_progress'
-        if (booking.status === 'new') {
-          await storage.updateBookingStatus(bookingId, 'in_progress');
-          console.log(`✅ Template email sent - booking ${bookingId} status updated to in_progress`);
-        }
+      if (result.success) {
+        console.log(`✅ Template email sent successfully to ${recipientEmail}`);
+        res.json({ 
+          success: true, 
+          message: 'Email sent successfully',
+          messageId: result.messageId 
+        });
+      } else {
+        console.error(`❌ Template email failed: ${result.error}`);
+        res.status(500).json({ 
+          success: false, 
+          error: result.error 
+        });
       }
-      
-      console.log(`✅ Template email sent successfully for user ${userId}`);
-      res.json({ 
-        success: true, 
-        message: 'Email sent successfully',
-        mailgunId: result.id 
-      });
       
     } catch (error: any) {
       console.error('❌ Template email error:', error);
       res.status(500).json({ 
-        error: 'Failed to send template email',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        success: false, 
+        error: error.message || 'Failed to send email' 
       });
     }
   });

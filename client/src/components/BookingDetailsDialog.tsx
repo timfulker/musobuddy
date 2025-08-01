@@ -137,10 +137,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   // Initialize form when booking changes
   useEffect(() => {
     if (booking) {
-      console.log('📋 Loading booking data into form:', { 
-        id: booking.id, 
-        clientName: booking.clientName 
-      });
+      // Reduced logging for production
       
       // Parse time values - handle time ranges like "13:30 - 15:30"
       const parseTimeValue = (timeValue: string) => {
@@ -679,11 +676,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
   };
 
   if (!booking) {
-    console.log('BookingDetailsDialog: No booking provided', { open, booking });
     return null;
   }
-  
-  console.log('BookingDetailsDialog rendering with booking:', booking);
 
   return (
     <Dialog open={open} onOpenChange={handleCancel}>
