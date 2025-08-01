@@ -134,6 +134,45 @@ export class AIResponseGenerator {
         throw new Error('Invalid JSON response from AI service');
       }
       
+      // POST-PROCESSING: Force correct pricing if AI ignores instructions
+      if (userSettings?.aiPricingEnabled !== false) {
+        const BHR = Number(userSettings?.baseHourlyRate) || 125;
+        const AHR = Number(userSettings?.additionalHourRate) || 60;
+        const T = Number(bookingContext?.travelExpense) || 0;
+        
+        const twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + T;
+        const threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + T;
+        const fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + T;
+        
+        console.log('🔧 POST-PROCESSING: Enforcing correct pricing...', {
+          correct: { twoHours: twoHoursPrice, threeHours: threeHoursPrice, fourHours: fourHoursPrice }
+        });
+        
+        // Replace any incorrect pricing with correct calculations
+        const correctPrices = [
+          { pattern: /2\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `2 hours Saxophone: £${twoHoursPrice}` },
+          { pattern: /3\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `3 hours Saxophone: £${threeHoursPrice}` },
+          { pattern: /4\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `4 hours Saxophone: £${fourHoursPrice}` }
+        ];
+        
+        correctPrices.forEach(({ pattern, replacement }) => {
+          if (result.emailBody) {
+            const before = result.emailBody;
+            result.emailBody = result.emailBody.replace(pattern, replacement);
+            if (before !== result.emailBody) {
+              console.log('🔧 CORRECTED pricing in email body');
+            }
+          }
+          if (result.smsBody) {
+            const before = result.smsBody;
+            result.smsBody = result.smsBody.replace(pattern, replacement);
+            if (before !== result.smsBody) {
+              console.log('🔧 CORRECTED pricing in SMS body');
+            }
+          }
+        });
+      }
+
       // Validate the response structure
       if (!result.subject || !result.emailBody) {
         console.error('❌ Invalid response structure:', result);
