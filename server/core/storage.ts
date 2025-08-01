@@ -1,5 +1,5 @@
 import { db } from "./database";
-import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments, clients, conflictResolutions } from "../../shared/schema";
+import { bookings, contracts, invoices, users, sessions, userSettings, emailTemplates, complianceDocuments, clients, conflictResolutions, unparseableMessages } from "../../shared/schema";
 import { eq, and, desc, sql, gte, lte, lt } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { randomBytes } from 'crypto';
@@ -994,6 +994,57 @@ Warm regards and best wishes,
         eq(conflictResolutions.userId, userId),
         eq(conflictResolutions.bookingIds, sortedIdsString)
       ))
+      .returning();
+    return result[0];
+  }
+
+  // ===== UNPARSEABLE MESSAGES METHODS =====
+  
+  async createUnparseableMessage(data: {
+    userId: string;
+    source: string;
+    fromContact?: string;
+    rawMessage: string;
+    clientAddress?: string;
+    parsingErrorDetails?: string;
+  }) {
+    const result = await db.insert(unparseableMessages).values({
+      ...data,
+      createdAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async getUnparseableMessages(userId: string) {
+    return await db.select().from(unparseableMessages)
+      .where(eq(unparseableMessages.userId, userId))
+      .orderBy(desc(unparseableMessages.createdAt));
+  }
+
+  async getUnparseableMessage(id: number) {
+    const result = await db.select().from(unparseableMessages)
+      .where(eq(unparseableMessages.id, id));
+    return result[0] || null;
+  }
+
+  async updateUnparseableMessage(id: number, updates: {
+    status?: string;
+    reviewNotes?: string;
+    convertedToBookingId?: number;
+  }) {
+    const result = await db.update(unparseableMessages)
+      .set({ 
+        ...updates, 
+        reviewedAt: new Date() 
+      })
+      .where(eq(unparseableMessages.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteUnparseableMessage(id: number) {
+    const result = await db.delete(unparseableMessages)
+      .where(eq(unparseableMessages.id, id))
       .returning();
     return result[0];
   }

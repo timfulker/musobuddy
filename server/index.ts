@@ -488,6 +488,43 @@ app.post('/api/webhook/mailgun',
         console.log(`🔍 [${requestId}] AI parsing failed for ${fromField} - using fallback data`);
       }
       
+      // Check if message is too vague or completely unparseable
+      const isCompletelyUnparseable = !bodyField || 
+                                    !bodyField.includes(' ') || 
+                                    bodyField.length < 20 || 
+                                    /^(hi|hello|test|.{1,10})$/i.test(bodyField.trim());
+      
+      // Store unparseable message for manual review if completely unparseable
+      if (isCompletelyUnparseable) {
+        try {
+          // Import storage methods
+          const { storage } = await import('./core/storage');
+          
+          await storage.createUnparseableMessage({
+            userId: "43963086", // Default admin user for now, will be corrected after user lookup
+            source: 'email',
+            fromContact: `${clientName} <${clientEmail}>`,
+            rawMessage: bodyField || 'No message content',
+            clientAddress: null,
+            parsingErrorDetails: `AI parsing failed: ${aiError?.message || 'Unknown error'}`
+          });
+          
+          console.log(`📋 [${requestId}] Saved unparseable email for manual review from ${fromField}`);
+          
+          // Return success to prevent Mailgun retries
+          return res.json({
+            success: true,
+            savedForReview: true,
+            message: 'Message saved for manual review',
+            requestId: requestId,
+            fromEmail: clientEmail
+          });
+        } catch (storageError: any) {
+          console.error(`❌ [${requestId}] Failed to save unparseable message:`, storageError);
+          // Continue with fallback creation instead
+        }
+      }
+      
       aiResult = { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
     }
     

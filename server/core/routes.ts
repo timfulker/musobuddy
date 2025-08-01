@@ -1401,27 +1401,52 @@ export async function registerRoutes(app: Express) {
         });
 
       } catch (aiError: any) {
-        console.error('❌ Widget AI parsing failed, creating basic booking:', aiError);
+        console.error('❌ Widget AI parsing failed, saving as unparseable message:', aiError);
         
-        // Fallback: Create basic booking without AI parsing
-        const basicBookingData = {
-          userId: user.id,
-          title: `Widget Message from ${fromEmail}`,
-          clientName: fromEmail,
-          clientEmail: fromEmail.includes('@') ? fromEmail : null,
-          clientAddress: clientAddress || null,
-          notes: `Widget message:\n\n${emailContent}`,
-          status: 'new'
-        };
+        // Check if message is too vague or completely unparseable
+        const isCompletelyUnparseable = !emailContent.includes(' ') || 
+                                      emailContent.length < 20 || 
+                                      /^(hi|hello|test|.{1,10})$/i.test(emailContent.trim());
+                                      
+        if (isCompletelyUnparseable) {
+          // Store as unparseable message for user review
+          const unparseableMessage = await storage.createUnparseableMessage({
+            userId: user.id,
+            source: 'widget',
+            fromContact: fromEmail,
+            rawMessage: emailContent,
+            clientAddress: clientAddress || null,
+            parsingErrorDetails: `AI parsing failed: ${aiError.message || 'Unknown error'}`
+          });
+          
+          console.log(`📋 Saved unparseable widget message #${unparseableMessage.id} for user review`);
+          
+          res.json({ 
+            success: true, 
+            savedForReview: true,
+            message: 'Message received and saved for review. You will be contacted shortly.'
+          });
+        } else {
+          // Create basic booking for partially parseable messages
+          const basicBookingData = {
+            userId: user.id,
+            title: `Widget Message from ${fromEmail}`,
+            clientName: fromEmail,
+            clientEmail: fromEmail.includes('@') ? fromEmail : null,
+            clientAddress: clientAddress || null,
+            notes: `Widget message (AI parsing failed):\n\n${emailContent}`,
+            status: 'new'
+          };
 
-        const newBooking = await storage.createBooking(basicBookingData);
-        console.log(`✅ Created basic widget booking #${newBooking.id} for user ${user.id}`);
-        
-        res.json({ 
-          success: true, 
-          booking: newBooking,
-          message: 'Booking request received successfully'
-        });
+          const newBooking = await storage.createBooking(basicBookingData);
+          console.log(`✅ Created basic widget booking #${newBooking.id} for user ${user.id}`);
+          
+          res.json({ 
+            success: true, 
+            booking: newBooking,
+            message: 'Booking request received successfully'
+          });
+        }
       }
 
     } catch (error: any) {
@@ -1430,6 +1455,124 @@ export async function registerRoutes(app: Express) {
         error: 'Failed to create booking request',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
+    }
+  });
+
+  // ===== UNPARSEABLE MESSAGES ROUTES =====
+  
+  // Get all unparseable messages for user
+  app.get('/api/unparseable-messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const messages = await storage.getUnparseableMessages(userId);
+      console.log(`✅ Retrieved ${messages.length} unparseable messages for user ${userId}`);
+      res.json(messages);
+    } catch (error: any) {
+      console.error('❌ Failed to fetch unparseable messages:', error);
+      res.status(500).json({ error: 'Failed to fetch unparseable messages' });
+    }
+  });
+
+  // Update unparseable message (mark as reviewed, add notes, etc.)
+  app.patch('/api/unparseable-messages/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const messageId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Verify message belongs to user
+      const message = await storage.getUnparseableMessage(messageId);
+      if (!message || message.userId !== userId) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      const updatedMessage = await storage.updateUnparseableMessage(messageId, req.body);
+      console.log(`✅ Updated unparseable message #${messageId} for user ${userId}`);
+      res.json(updatedMessage);
+    } catch (error: any) {
+      console.error('❌ Failed to update unparseable message:', error);
+      res.status(500).json({ error: 'Failed to update unparseable message' });
+    }
+  });
+
+  // Convert unparseable message to booking
+  app.post('/api/unparseable-messages/:id/convert', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const messageId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Get the unparseable message
+      const message = await storage.getUnparseableMessage(messageId);
+      if (!message || message.userId !== userId) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      // Create booking from the raw message
+      const bookingData = {
+        userId: userId,
+        title: `Manual Conversion from ${message.fromContact}`,
+        clientName: message.fromContact || 'Unknown Client',
+        clientEmail: message.fromContact?.includes('@') ? message.fromContact : null,
+        clientAddress: message.clientAddress || null,
+        notes: `Manually converted from unparseable message:\n\n${message.rawMessage}`,
+        status: 'new',
+        ...req.body // Allow override with manual data
+      };
+
+      const newBooking = await storage.createBooking(bookingData);
+      
+      // Update the unparseable message to mark it as converted
+      await storage.updateUnparseableMessage(messageId, {
+        status: 'converted',
+        convertedToBookingId: newBooking.id,
+        reviewNotes: req.body.reviewNotes || 'Manually converted to booking'
+      });
+
+      console.log(`✅ Converted unparseable message #${messageId} to booking #${newBooking.id}`);
+      res.json({ 
+        success: true, 
+        booking: newBooking,
+        message: 'Successfully converted to booking'
+      });
+    } catch (error: any) {
+      console.error('❌ Failed to convert unparseable message:', error);
+      res.status(500).json({ error: 'Failed to convert message to booking' });
+    }
+  });
+
+  // Delete unparseable message
+  app.delete('/api/unparseable-messages/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      const messageId = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Verify message belongs to user
+      const message = await storage.getUnparseableMessage(messageId);
+      if (!message || message.userId !== userId) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      await storage.deleteUnparseableMessage(messageId);
+      console.log(`✅ Deleted unparseable message #${messageId} for user ${userId}`);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('❌ Failed to delete unparseable message:', error);
+      res.status(500).json({ error: 'Failed to delete unparseable message' });
     }
   });
 

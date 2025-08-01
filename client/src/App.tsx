@@ -28,6 +28,7 @@ import Admin from "@/pages/admin";
 import Feedback from "@/pages/feedback";
 import Pricing from "@/pages/pricing";
 import EmailSetup from "@/pages/email-setup";
+import UnparseableMessages from "@/pages/unparseable-messages";
 import LandingPage from "@/pages/landing";
 import SignupPage from "@/pages/signup";
 import TrialSuccessPage from "@/pages/trial-success";
@@ -101,6 +102,7 @@ function Router() {
       <Route path="/compliance" component={Compliance} />
       <Route path="/settings" component={Settings} />
       <Route path="/templates" component={Templates} />
+      <Route path="/unparseable-messages" component={UnparseableMessages} />
       <Route path="/user-guide" component={UserGuide} />
       <Route path="/feedback" component={Feedback} />
       <Route path="/email-setup" component={EmailSetup} />

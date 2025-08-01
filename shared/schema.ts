@@ -515,6 +515,22 @@ export const feedback = pgTable("feedback", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Unparseable messages table - stores messages that AI couldn't parse
+export const unparseableMessages = pgTable("unparseable_messages", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  source: varchar("source").notNull(), // 'widget', 'email', 'manual'
+  fromContact: varchar("from_contact"), // Email, phone, or name of sender
+  rawMessage: text("raw_message").notNull(), // The original unparsed message
+  clientAddress: text("client_address"), // Optional address if provided
+  parsingErrorDetails: text("parsing_error_details"), // Why AI couldn't parse it
+  status: varchar("status").default("pending"), // 'pending', 'reviewed', 'converted', 'discarded'
+  reviewNotes: text("review_notes"), // User notes from manual review
+  convertedToBookingId: integer("converted_to_booking_id"), // If manually converted to booking
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   contracts: many(contracts),
@@ -721,6 +737,12 @@ export const insertUserAuditLogSchema = createInsertSchema(userAuditLogs).omit({
   createdAt: true,
 });
 
+export const insertUnparseableMessageSchema = createInsertSchema(unparseableMessages).omit({
+  id: true,
+  createdAt: true,
+  reviewedAt: true,
+});
+
 
 
 
@@ -757,6 +779,8 @@ export type Feedback = typeof feedback.$inferSelect;
 export type InsertUserActivity = z.infer<typeof insertUserActivitySchema>;
 export type UserActivity = typeof userActivity.$inferSelect;
 export type InsertUserLoginHistory = z.infer<typeof insertUserLoginHistorySchema>;
+export type InsertUnparseableMessage = z.infer<typeof insertUnparseableMessageSchema>;
+export type UnparseableMessage = typeof unparseableMessages.$inferSelect;
 export type UserLoginHistory = typeof userLoginHistory.$inferSelect;
 export type InsertUserMessage = z.infer<typeof insertUserMessageSchema>;
 export type UserMessage = typeof userMessages.$inferSelect;

@@ -210,7 +210,7 @@ export default function QuickAddWidget() {
                       <FormLabel>Your Message</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Tell us about your event - date, venue, type of performance, number of guests, and any special requirements..."
+                          placeholder="Tell us about your event - date and rough area/venue would be helpful..."
                           className="min-h-[120px]"
                           {...field}
                         />

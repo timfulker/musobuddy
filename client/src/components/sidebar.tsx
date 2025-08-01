@@ -20,7 +20,8 @@ import {
   BookOpen,
   Crown,
   Mail,
-  Lock
+  Lock,
+  AlertTriangle
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -173,6 +174,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           )}>
             <MessageSquare className="w-5 h-5" />
             <span>Templates</span>
+          </Link>
+          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
+            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
+            isActive("/unparseable-messages") 
+              ? "bg-purple-600 text-white font-medium" 
+              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+          )}>
+            <AlertTriangle className="w-5 h-5" />
+            <span>Review Messages</span>
           </Link>
           <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
             "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
