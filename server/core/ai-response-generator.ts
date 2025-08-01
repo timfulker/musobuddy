@@ -244,50 +244,48 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
       hasDJServices
     });
     
-    // Build pricing structure from user settings - ensure all rates are numbers
-    const baseRate = parseFloat(userSettings?.baseHourlyRate?.toString() || '125'); // Fixed: Convert to number
-    const minimumHours = parseInt(userSettings?.minimumBookingHours?.toString() || '2');
-    const additionalHourRate = parseFloat(userSettings?.additionalHourRate?.toString() || '60'); // Fixed: Convert to number
-    const djRate = parseFloat(userSettings?.djServiceRate?.toString() || '300');
+    // Build pricing structure from user settings - FORCE NUMBER CONVERSION
+    const BHR = Number(userSettings?.baseHourlyRate) || 125; // Basic Hourly Rate
+    const AHR = Number(userSettings?.additionalHourRate) || 60; // Additional Hourly Rate  
+    const T = Number(bookingContext?.travelExpense) || 0; // Travel cost
     const pricingEnabled = userSettings?.aiPricingEnabled !== false;
     
-    // Calculate travel cost from booking context - MUST use the actual value in the Travel Expense field
-    const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 0; // Use actual booking travel expense, no default
+    // HARD-CODED PRICE CALCULATION: P = (BHR*2) + ((N-2) x AHR) + T
+    function calculatePrice(N: number): number {
+      return (BHR * 2) + ((N - 2) * AHR) + T;
+    }
     
-    // Debug pricing calculation - ensure all calculations use numbers
-    const twoHoursPrice = baseRate * minimumHours + travelCost;
-    const threeHoursPrice = baseRate * minimumHours + additionalHourRate + travelCost;
-    const fourHoursPrice = baseRate * minimumHours + (additionalHourRate * 2) + travelCost;
+    const twoHoursPrice = calculatePrice(2);   // (125*2) + ((2-2)*60) + T = 250 + 0 + T
+    const threeHoursPrice = calculatePrice(3); // (125*2) + ((3-2)*60) + T = 250 + 60 + T  
+    const fourHoursPrice = calculatePrice(4);  // (125*2) + ((4-2)*60) + T = 250 + 120 + T
     
-    console.log('🎵 Pricing Debug:', {
-      baseRate: `${baseRate} (type: ${typeof baseRate})`,
-      minimumHours: `${minimumHours} (type: ${typeof minimumHours})`, 
-      additionalHourRate: `${additionalHourRate} (type: ${typeof additionalHourRate})`,
-      travelCost: `${travelCost} (type: ${typeof travelCost})`,
-      bookingTravelExpense: bookingContext?.travelExpense,
-      userBaseRate: userSettings?.baseHourlyRate,
-      calculatedPrices: {
-        twoHours: twoHoursPrice,
-        threeHours: threeHoursPrice,
-        fourHours: fourHoursPrice
+    console.log('🎵 HARD-CODED PRICING CALCULATION:', {
+      formula: 'P = (BHR*2) + ((N-2) × AHR) + T',
+      BHR: `${BHR} (type: ${typeof BHR})`,
+      AHR: `${AHR} (type: ${typeof AHR})`,
+      T: `${T} (type: ${typeof T})`,
+      calculations: {
+        '2hrs': `(${BHR}*2) + ((2-2)*${AHR}) + ${T} = ${twoHoursPrice}`,
+        '3hrs': `(${BHR}*2) + ((3-2)*${AHR}) + ${T} = ${threeHoursPrice}`,
+        '4hrs': `(${BHR}*2) + ((4-2)*${AHR}) + ${T} = ${fourHoursPrice}`
       }
     });
     
-    const basePriceStr = `£${baseRate * minimumHours}`;
-    const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
-    const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
+    const basePriceStr = `£${BHR * 2}`;
+    const additionalHourStr = `£${AHR} per hour beyond the 2-hour minimum`;
+    const djServiceStr = `£300 additional charge when combined with ${primaryInstrument}`;
     
-    // FIXED: Use pre-calculated prices to ensure consistency
+    // FIXED: Use hard-coded pricing formula results
     const basePackages = [
-      `${minimumHours} hours ${primaryInstrument}: £${twoHoursPrice}`,
-      `${minimumHours + 1} hours ${primaryInstrument}: £${threeHoursPrice}`,
-      `${minimumHours + 2} hours ${primaryInstrument}: £${fourHoursPrice}`
+      `2 hours ${primaryInstrument}: £${twoHoursPrice}`,
+      `3 hours ${primaryInstrument}: £${threeHoursPrice}`,
+      `4 hours ${primaryInstrument}: £${fourHoursPrice}`
     ];
     
     const djPackages = hasDJServices ? [
-      `${minimumHours} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + djRate + travelCost}`,
-      `${minimumHours + 1} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + additionalHourRate + djRate + travelCost}`,
-      `${minimumHours + 2} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + (additionalHourRate * 2) + djRate + travelCost}`
+      `2 hours ${primaryInstrument} + DJ: £${twoHoursPrice + 300}`,
+      `3 hours ${primaryInstrument} + DJ: £${threeHoursPrice + 300}`,
+      `4 hours ${primaryInstrument} + DJ: £${fourHoursPrice + 300}`
     ] : [];
     
     const packages = [...basePackages, ...djPackages];
@@ -304,7 +302,7 @@ CRITICAL PRICING RULES:
 - Use simple formatting without excessive punctuation: "2 hours saxophone: £290" (NEVER use **asterisks**)
 - Use these complete package options for ${primaryInstrument} performances:
     ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
-- Present 3-4 package options starting from ${minimumHours} hours, showing total inclusive pricing${hasDJServices ? `
+- Present 3-4 package options starting from 2 hours, showing total inclusive pricing${hasDJServices ? `
 - Mention DJ capabilities when relevant - you offer DJ services as an additional service` : ''}
 - Mention equipment details, setup capabilities, and venue requirements when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
