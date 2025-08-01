@@ -83,3 +83,12 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **PRODUCTION VERIFIED**: Successfully tested on deployed production instance at musobuddy.replit.app
 - **CRYPTO IMPORT FIX**: Resolved ES module compatibility issue with randomBytes import
 - **SESSION HANDLING**: Fixed production session configuration for proper authentication flow
+
+### ENHANCED FALLBACK SYSTEM WITH PRICE ENQUIRY DETECTION (August 1, 2025)
+- **FORWARDED EMAIL SUPPORT**: Fallback system works for all incoming emails including forwarded messages
+- **AI PRICE DETECTION**: Enhanced AI parser detects price enquiries ("how much", "what do you charge", etc.)
+- **MESSAGE CATEGORIZATION**: Automatic classification into "price_enquiry", "vague", and "general" types
+- **DATABASE SCHEMA**: Added `message_type` column to unparseable_messages table
+- **FRONTEND ENHANCEMENT**: Review Messages page shows color-coded type badges (💰 Price, ❓ Vague, 📝 General)
+- **SMART ROUTING**: Price enquiries bypass booking creation and save for custom pricing responses
+- **PRODUCTION FIX**: Resolved "cn is not defined" error in unparseable messages page
