@@ -254,18 +254,22 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     // Calculate travel cost from booking context - MUST use the actual value in the Travel Expense field
     const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 0; // Use actual booking travel expense, no default
     
-    // Debug pricing calculation
+    // Debug pricing calculation - ensure all calculations use numbers
+    const twoHoursPrice = baseRate * minimumHours + travelCost;
+    const threeHoursPrice = baseRate * minimumHours + additionalHourRate + travelCost;
+    const fourHoursPrice = baseRate * minimumHours + (additionalHourRate * 2) + travelCost;
+    
     console.log('🎵 Pricing Debug:', {
-      baseRate,
-      minimumHours, 
-      additionalHourRate,
-      travelCost,
+      baseRate: `${baseRate} (type: ${typeof baseRate})`,
+      minimumHours: `${minimumHours} (type: ${typeof minimumHours})`, 
+      additionalHourRate: `${additionalHourRate} (type: ${typeof additionalHourRate})`,
+      travelCost: `${travelCost} (type: ${typeof travelCost})`,
       bookingTravelExpense: bookingContext?.travelExpense,
       userBaseRate: userSettings?.baseHourlyRate,
       calculatedPrices: {
-        twoHours: baseRate * minimumHours + travelCost,
-        threeHours: baseRate * minimumHours + additionalHourRate + travelCost,
-        fourHours: baseRate * minimumHours + (additionalHourRate * 2) + travelCost
+        twoHours: twoHoursPrice,
+        threeHours: threeHoursPrice,
+        fourHours: fourHoursPrice
       }
     });
     
@@ -273,14 +277,11 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
     const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
     
-    // FIXED: Correct pricing calculation using dynamic travel expense:
-    // 2 hours: 2 × baseRate + travelExpense = 2 × £125 + [Travel Expense Field Value]
-    // 3 hours: 2 × baseRate + 1 × additionalRate + travelExpense  
-    // 4 hours: 2 × baseRate + 2 × additionalRate + travelExpense
+    // FIXED: Use pre-calculated prices to ensure consistency
     const basePackages = [
-      `${minimumHours} hours ${primaryInstrument}: £${baseRate * minimumHours + travelCost}`,
-      `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate + travelCost}`,
-      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2) + travelCost}`
+      `${minimumHours} hours ${primaryInstrument}: £${twoHoursPrice}`,
+      `${minimumHours + 1} hours ${primaryInstrument}: £${threeHoursPrice}`,
+      `${minimumHours + 2} hours ${primaryInstrument}: £${fourHoursPrice}`
     ];
     
     const djPackages = hasDJServices ? [
