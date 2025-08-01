@@ -247,8 +247,7 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     // Build pricing structure from user settings - FORCE NUMBER CONVERSION
     const BHR = Number(userSettings?.baseHourlyRate) || 125; // Basic Hourly Rate
     const AHR = Number(userSettings?.additionalHourRate) || 60; // Additional Hourly Rate  
-    const oneWayTravel = Number(bookingContext?.travelExpense) || 0; // One-way travel cost from booking
-    const T = oneWayTravel * 2; // Total travel cost (round trip = one-way × 2)
+    const T = Number(bookingContext?.travelExpense) || 0; // Total travel cost (already includes round trip)
     const pricingEnabled = userSettings?.aiPricingEnabled !== false;
     
     // HARD-CODED PRICE CALCULATION: P = (BHR*2) + ((N-2) x AHR) + T
@@ -264,8 +263,7 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
       formula: 'P = (BHR*2) + ((N-2) × AHR) + T',
       BHR: `${BHR} (type: ${typeof BHR})`,
       AHR: `${AHR} (type: ${typeof AHR})`,
-      oneWayTravel: `${oneWayTravel} (from booking field)`,
-      T: `${T} (round trip = ${oneWayTravel} × 2)`,
+      T: `${T} (total travel expense from booking field)`,
       calculations: {
         '2hrs': `(${BHR}*2) + ((2-2)*${AHR}) + ${T} = ${twoHoursPrice}`,
         '3hrs': `(${BHR}*2) + ((3-2)*${AHR}) + ${T} = ${threeHoursPrice}`,
