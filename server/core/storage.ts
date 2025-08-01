@@ -1006,10 +1006,12 @@ Warm regards and best wishes,
     fromContact?: string;
     rawMessage: string;
     clientAddress?: string;
+    messageType?: string;
     parsingErrorDetails?: string;
   }) {
     const result = await db.insert(unparseableMessages).values({
       ...data,
+      messageType: data.messageType || 'general',
       createdAt: new Date()
     }).returning();
     return result[0];

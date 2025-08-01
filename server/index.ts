@@ -477,6 +477,38 @@ app.post('/api/webhook/mailgun',
       if (isProblematicEmail) {
         console.log(`🔍 [${requestId}] AI parsing completed for ${fromField} - result:`, JSON.stringify(aiResult, null, 2));
       }
+      
+      // Check if this is a price enquiry and handle appropriately
+      if (aiResult.isPriceEnquiry || aiResult.messageType === 'price_enquiry') {
+        try {
+          // Import storage methods for price enquiry handling
+          const { storage } = await import('./core/storage');
+          
+          await storage.createUnparseableMessage({
+            userId: "43963086", // Will be corrected after user lookup
+            source: 'email',
+            fromContact: `${clientName} <${clientEmail}>`,
+            rawMessage: bodyField,
+            clientAddress: null,
+            messageType: 'price_enquiry',
+            parsingErrorDetails: 'Price enquiry detected - needs custom response with pricing'
+          });
+          
+          console.log(`💰 [${requestId}] Saved price enquiry for custom response from ${fromField}`);
+          
+          // Return success but note it's saved for price response
+          return res.json({
+            success: true,
+            savedForPricing: true,
+            message: 'Price enquiry saved for custom response',
+            requestId: requestId,
+            fromEmail: clientEmail
+          });
+        } catch (storageError: any) {
+          console.error(`❌ [${requestId}] Failed to save price enquiry:`, storageError);
+          // Continue with normal booking creation if storage fails
+        }
+      }
     } catch (aiError: any) {
       console.error(`❌ [${requestId}] AI parsing failed:`, {
         message: aiError?.message,
@@ -506,6 +538,7 @@ app.post('/api/webhook/mailgun',
             fromContact: `${clientName} <${clientEmail}>`,
             rawMessage: bodyField || 'No message content',
             clientAddress: null,
+            messageType: 'vague',
             parsingErrorDetails: `AI parsing failed: ${aiError?.message || 'Unknown error'}`
           });
           
@@ -525,7 +558,7 @@ app.post('/api/webhook/mailgun',
         }
       }
       
-      aiResult = { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
+      aiResult = { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null, messageType: "general", isPriceEnquiry: false };
     }
     
     console.log(`📧 [${requestId}] Recipient field:`, recipientField);
@@ -715,6 +748,17 @@ IMPORTANT FEE PARSING INSTRUCTIONS:
 - Handle formats like "£250Between" or "£250 Between" - extract just "£250"
 - Look for phrases like "fee will be", "cost is", "budget", "price"
 
+PRICE ENQUIRY DETECTION:
+Detect if this is primarily a price/quote request by looking for phrases like:
+- "how much", "what do you charge", "price", "quote", "cost", "rate", "fee"
+- "pricing", "budget", "rates", "charges", "quotation"
+- Messages asking about availability AND pricing together
+
+MESSAGE CLASSIFICATION:
+- vague: Messages under 20 characters, just "hi", "hello", "test", or no clear intent
+- price_enquiry: Messages primarily asking about pricing/rates/costs
+- general: Normal booking enquiries with event details
+
 Extract in JSON format:
 {
   "eventDate": "YYYY-MM-DD or null",
@@ -726,7 +770,9 @@ Extract in JSON format:
   "fee": "amount with £ symbol if found, or null",
   "budget": "budget range or amount if mentioned, or null",
   "estimatedValue": "any other monetary value mentioned, or null",
-  "applyNowLink": "URL or null"
+  "applyNowLink": "URL or null",
+  "messageType": "general/price_enquiry/vague",
+  "isPriceEnquiry": true/false
 }`;
 
     const response = await openai.chat.completions.create({
@@ -742,7 +788,7 @@ Extract in JSON format:
     return aiResult;
   } catch (error) {
     console.log('🤖 AI parsing failed, using fallback');
-    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null };
+    return { eventDate: null, eventTime: null, venue: null, eventType: null, gigType: null, clientPhone: null, fee: null, budget: null, estimatedValue: null, applyNowLink: null, messageType: "general", isPriceEnquiry: false };
   }
 }
 

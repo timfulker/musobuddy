@@ -524,6 +524,7 @@ export const unparseableMessages = pgTable("unparseable_messages", {
   rawMessage: text("raw_message").notNull(), // The original unparsed message
   clientAddress: text("client_address"), // Optional address if provided
   parsingErrorDetails: text("parsing_error_details"), // Why AI couldn't parse it
+  messageType: varchar("message_type").default("general"), // 'general', 'price_enquiry', 'vague'
   status: varchar("status").default("pending"), // 'pending', 'reviewed', 'converted', 'discarded'
   reviewNotes: text("review_notes"), // User notes from manual review
   convertedToBookingId: integer("converted_to_booking_id"), // If manually converted to booking

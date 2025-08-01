@@ -156,6 +156,18 @@ export default function UnparseableMessages() {
                     From: {message.fromContact}
                   </CardTitle>
                   <div className="flex items-center gap-2">
+                    {(message as any).messageType && (
+                      <Badge variant="outline" className={cn(
+                        "text-xs",
+                        (message as any).messageType === 'price_enquiry' ? "border-purple-300 text-purple-800 bg-purple-50" :
+                        (message as any).messageType === 'vague' ? "border-orange-300 text-orange-800 bg-orange-50" :
+                        "border-gray-300 text-gray-800 bg-gray-50"
+                      )}>
+                        {(message as any).messageType === 'price_enquiry' ? '💰 Price' :
+                         (message as any).messageType === 'vague' ? '❓ Vague' :
+                         '📝 General'}
+                      </Badge>
+                    )}
                     <Badge className={getStatusColor(message.status)}>
                       {message.status}
                     </Badge>
