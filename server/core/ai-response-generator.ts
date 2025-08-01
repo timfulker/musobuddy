@@ -245,11 +245,20 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
     });
     
     // Build pricing structure from user settings
-    const baseRate = userSettings?.baseHourlyRate || 130;
+    const baseRate = userSettings?.baseHourlyRate || 125; // Fixed: Use user's £125 rate, not £130 default
     const minimumHours = userSettings?.minimumBookingHours || 2;
     const additionalHourRate = userSettings?.additionalHourRate || 60;
     const djRate = userSettings?.djServiceRate || 300;
     const pricingEnabled = userSettings?.aiPricingEnabled !== false;
+    
+    // Debug pricing calculation
+    console.log('🎵 Pricing Debug:', {
+      baseRate,
+      minimumHours,
+      additionalHourRate,
+      travelCost: bookingContext?.travelExpense || 60,
+      userBaseRate: userSettings?.baseHourlyRate
+    });
     
     const basePriceStr = `£${baseRate * minimumHours}`;
     const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
