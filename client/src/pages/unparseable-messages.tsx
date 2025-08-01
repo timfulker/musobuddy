@@ -8,6 +8,7 @@ import { MessageSquare, Eye, Trash2, ArrowRight, Calendar } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Layout } from "@/components/layout";
 
 interface UnparseableMessage {
   id: number;
@@ -111,17 +112,20 @@ export default function UnparseableMessages() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading unparseable messages...</p>
+      <Layout>
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading unparseable messages...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <Layout>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Unparseable Messages</h1>
@@ -308,6 +312,7 @@ export default function UnparseableMessages() {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 }
