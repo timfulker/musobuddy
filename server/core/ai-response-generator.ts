@@ -301,9 +301,13 @@ CRITICAL PRICING RULES:
 - ALWAYS include VAT status: "All prices are VAT-exempt as a sole trader" or similar based on business structure
 - Use simple formatting without excessive punctuation: "2 hours saxophone: £290" (NEVER use **asterisks**)
 - ABSOLUTELY CRITICAL: Do NOT perform any mathematical calculations - use the exact prices provided above
-- MANDATORY: Use ONLY these exact pre-calculated package prices (DO NOT recalculate):
+- WARNING: If you modify these prices in any way, the response will be rejected
+- INSTRUCTION: These prices already include ALL costs - do not add anything to them
+- CRITICAL: Use EXACTLY these prices - DO NOT CALCULATE OR MODIFY:
     ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
-- CRITICAL: These prices are final - DO NOT add, subtract, or modify them in any way
+- FORBIDDEN: DO NOT add travel costs, setup fees, or any other charges to these prices
+- FORBIDDEN: DO NOT perform any mathematical operations on these prices
+- MANDATORY: Copy these exact price figures into your response without changes
 - Present 3-4 package options starting from 2 hours, showing total inclusive pricing${hasDJServices ? `
 - Mention DJ capabilities when relevant - you offer DJ services as an additional service` : ''}
 - Mention equipment details, setup capabilities, and venue requirements when relevant
