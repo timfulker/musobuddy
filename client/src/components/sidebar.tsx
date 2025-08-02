@@ -96,7 +96,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/dashboard") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
@@ -105,7 +105,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/bookings") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <Inbox className="w-5 h-5" />
             <span>Bookings</span>
@@ -114,7 +114,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/address-book") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <Users className="w-5 h-5" />
             <span>Address Book</span>
@@ -123,7 +123,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/contracts") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <FileText className="w-5 h-5" />
             <span>Contracts</span>
@@ -133,7 +133,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/invoices") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <PoundSterling className="w-5 h-5" />
             <span>Invoices</span>
@@ -143,7 +143,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/compliance") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <Shield className="w-5 h-5" />
             <span>Compliance</span>
@@ -152,7 +152,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/pricing") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <Crown className="w-5 h-5" />
             <span>Upgrade ⭐</span>
@@ -162,7 +162,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/settings") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <Settings className="w-5 h-5" />
             <span>Settings</span>
@@ -171,7 +171,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/templates") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <MessageSquare className="w-5 h-5" />
             <span>Templates</span>
@@ -180,7 +180,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/unparseable-messages") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <AlertTriangle className="w-5 h-5" />
             <span>Review Messages</span>
@@ -189,7 +189,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
             isActive("/user-guide") 
               ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
           )}>
             <BookOpen className="w-5 h-5" />
             <span>User Guide</span>
@@ -200,7 +200,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
               isActive("/feedback") 
                 ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
             )}>
               <MessageSquare className="w-5 h-5" />
               <span>Beta Feedback</span>
@@ -213,7 +213,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
               isActive("/admin") 
                 ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
             )}>
               <Crown className="w-5 h-5" />
               <span>Admin</span>
