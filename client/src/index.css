@@ -155,29 +155,29 @@ button, input, select, textarea {
   --card-foreground: #000000;
   --border: #dee2e6;  /* light gray border */
   --input: #dee2e6;
-  --primary: #ffc107;  /* basecamp yellow primary */
+  --primary: #ffeb3b;  /* basecamp bright yellow primary */
   --primary-foreground: #000000;
   --secondary: #f8f9fa;
   --secondary-foreground: #000000;
-  --accent: #ffc107;  /* basecamp yellow from image */
+  --accent: #ffeb3b;  /* basecamp yellow from image */
   --accent-foreground: #000000;
   --destructive: #dc3545;  /* red for errors */
   --destructive-foreground: #ffffff;
-  --ring: #ffc107;  /* yellow focus rings */
+  --ring: #ffeb3b;  /* yellow focus rings */
   --radius: 0.375rem;  /* smaller radius for clean look */
   --chart-1: #28a745;  /* green */
-  --chart-2: #ffc107;  /* yellow */
+  --chart-2: #ffeb3b;  /* yellow */
   --chart-3: #000000;  /* black */
   --chart-4: #6c757d;  /* gray */
   --chart-5: #dee2e6;  /* light gray */
   --sidebar-background: #ffffff;
   --sidebar-foreground: #000000;
-  --sidebar-primary: #ffc107;  /* yellow for active items */
+  --sidebar-primary: #ffeb3b;  /* yellow for active items */
   --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #ffc107;  /* yellow accent */
+  --sidebar-accent: #ffeb3b;  /* yellow accent */
   --sidebar-accent-foreground: #000000;
   --sidebar-border: #dee2e6;
-  --sidebar-ring: #ffc107;
+  --sidebar-ring: #ffeb3b;
 }
 
 /* Original Purple Theme - from backup file */
@@ -243,29 +243,29 @@ button, input, select, textarea {
   --card-foreground: #ffffff;
   --border: #333333;  /* dark gray borders */
   --input: #333333;
-  --primary: #ffc107;  /* yellow for dark mode */
+  --primary: #ffeb3b;  /* yellow for dark mode */
   --primary-foreground: #000000;
   --secondary: #1a1a1a;
   --secondary-foreground: #ffffff;
-  --accent: #ffc107;  /* keep the yellow */
+  --accent: #ffeb3b;  /* keep the yellow */
   --accent-foreground: #000000;
   --destructive: #dc3545;
   --destructive-foreground: #ffffff;
-  --ring: #ffc107;  /* yellow focus rings */
+  --ring: #ffeb3b;  /* yellow focus rings */
   --radius: 0.375rem;
-  --chart-1: #ffc107;  /* yellow */
-  --chart-2: #ffc107;  /* yellow */
+  --chart-1: #ffeb3b;  /* yellow */
+  --chart-2: #ffeb3b;  /* yellow */
   --chart-3: #ffffff;  /* white */
   --chart-4: #a0a0a0;  /* light gray */
   --chart-5: #333333;  /* dark gray */
   --sidebar-background: #000000;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #ffc107;  /* yellow for active items */
+  --sidebar-primary: #ffeb3b;  /* yellow for active items */
   --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #ffc107;
+  --sidebar-accent: #ffeb3b;
   --sidebar-accent-foreground: #000000;
   --sidebar-border: #333333;
-  --sidebar-ring: #ffc107;
+  --sidebar-ring: #ffeb3b;
 }
 
 /* Purple Theme Dark Mode - from backup file */
@@ -334,7 +334,7 @@ button, input, select, textarea {
 @layer utilities {
   /* Basecamp theme utilities - yellow/green/black */
   .bg-basecamp-yellow {
-    background-color: #ffc107;
+    background-color: #ffeb3b;
   }
   
   .bg-basecamp-green {
@@ -342,15 +342,15 @@ button, input, select, textarea {
   }
   
   .bg-basecamp-yellow\/20 {
-    background-color: rgba(255, 193, 7, 0.2);
+    background-color: rgba(255, 235, 59, 0.2);
   }
   
   .bg-basecamp-yellow\/10 {
-    background-color: rgba(255, 193, 7, 0.1);
+    background-color: rgba(255, 235, 59, 0.1);
   }
   
   .text-basecamp-yellow {
-    color: #ffc107;
+    color: #ffeb3b;
   }
   
   .text-basecamp-green {
@@ -358,11 +358,11 @@ button, input, select, textarea {
   }
   
   .hover\:bg-basecamp-yellow\/20:hover {
-    background-color: rgba(255, 193, 7, 0.2);
+    background-color: rgba(255, 235, 59, 0.2);
   }
   
   .hover\:bg-basecamp-yellow\/10:hover {
-    background-color: rgba(255, 193, 7, 0.1);
+    background-color: rgba(255, 235, 59, 0.1);
   }
   
   /* Custom scrollbars for Basecamp theme */
@@ -377,12 +377,12 @@ button, input, select, textarea {
   }
   
   .basecamp-scrollbar::-webkit-scrollbar-thumb {
-    background: #ffc107;
+    background: #ffeb3b;
     border-radius: 4px;
   }
   
   .basecamp-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #e6ac00;
+    background: #fdd835;
   }
   
   /* Dark mode scrollbars for Basecamp theme */
@@ -391,21 +391,21 @@ button, input, select, textarea {
   }
   
   .dark .basecamp-scrollbar::-webkit-scrollbar-thumb {
-    background: #ffc107;
+    background: #ffeb3b;
   }
   
   .dark .basecamp-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #e6ac00;
+    background: #fdd835;
   }
   
   /* Firefox scrollbar styling */
   .basecamp-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #ffc107 #f1f1f1;
+    scrollbar-color: #ffeb3b #f1f1f1;
   }
   
   .dark .basecamp-scrollbar {
-    scrollbar-color: #ffc107 #2d2d2d;
+    scrollbar-color: #ffeb3b #2d2d2d;
   }
 }
 
@@ -504,12 +504,12 @@ button, input, select, textarea {
 
 /* Basecamp theme scrollbars (default when no purple-theme class) */
 ::-webkit-scrollbar-thumb {
-  background: #ffc107;
+  background: #ffeb3b;
   border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #e6ac00;
+  background: #fdd835;
 }
 
 /* Clean filter container styling - remove purple lines */
