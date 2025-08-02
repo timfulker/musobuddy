@@ -479,7 +479,7 @@ button, input, select, textarea {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Custom scrollbar for webkit browsers - Superhuman style */
+/* Custom scrollbar for webkit browsers - Theme aware */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -492,13 +492,24 @@ button, input, select, textarea {
   background: hsl(215, 27.9%, 16.9%);
 }
 
-::-webkit-scrollbar-thumb {
+/* Purple theme scrollbars */
+.purple-theme ::-webkit-scrollbar-thumb {
   background: hsl(262, 83%, 72%);
   border-radius: 6px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.purple-theme ::-webkit-scrollbar-thumb:hover {
   background: hsl(263, 70%, 65%);
+}
+
+/* Basecamp theme scrollbars (default when no purple-theme class) */
+::-webkit-scrollbar-thumb {
+  background: #ffc107;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e6ac00;
 }
 
 /* Clean filter container styling - remove purple lines */
