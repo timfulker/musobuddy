@@ -81,13 +81,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
       );
     } else {
-      // Purple theme (original) - smaller rounded corners, purple accents
+      // Purple theme (original) - exact behavior from backup
       return cn(
         baseClass,
-        "rounded-md",
+        "rounded-lg", // 8px border radius as documented
         isActive(path) 
-          ? "bg-purple-600 text-white shadow-sm" 
-          : "text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-900 dark:hover:text-purple-300"
+          ? "bg-purple-600 text-white shadow-sm" // Purple background for active state
+          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" // Light gray on hover, no purple hover
       );
     }
   };
@@ -105,8 +105,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div 
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col",
-          "font-inter shadow-sm",
+          "fixed left-0 top-0 h-full w-64 transition-transform duration-300 ease-in-out flex flex-col",
+          "shadow-sm",
+          // Font family changes based on theme
+          useBasecampTheme ? "font-inter" : "font-sans",
+          // Background changes based on theme  
+          useBasecampTheme 
+            ? "bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700"
+            : "bg-gray-50 dark:bg-slate-900 border-r border-gray-300 dark:border-slate-700",
           // Always show on desktop (768px+), slide on mobile
           "transform",
           isDesktop ? "translate-x-0 z-30" : (isOpen ? "translate-x-0 z-50" : "-translate-x-full z-50")
@@ -123,7 +129,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
 
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+        <div className={cn(
+          "p-6 border-b",
+          useBasecampTheme 
+            ? "border-slate-200 dark:border-slate-700"
+            : "border-gray-300 dark:border-slate-700"
+        )}>
           <div className="flex items-center space-x-3">
             <img 
               src={logoImage} 
@@ -202,7 +213,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className={cn(
+          "absolute bottom-0 left-0 right-0 p-4 border-t",
+          useBasecampTheme 
+            ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+            : "border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
+        )}>
           {/* Theme Toggle and Design Toggle Row */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
