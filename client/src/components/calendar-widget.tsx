@@ -11,13 +11,13 @@ export default function CalendarWidget() {
     queryKey: ["/api/bookings"],
   });
 
-  // Filter for upcoming bookings within the next two weeks (no limit for dynamic sizing)
+  // Filter for upcoming bookings within the next two weeks including today (no limit for dynamic sizing)
   const bookings = (allBookings as any[]).filter((booking: Booking) => {
     if (!booking.eventDate) return false;
     const eventDate = new Date(booking.eventDate);
     const today = new Date();
     const twoWeeksFromNow = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0); // Start of today to include today's gigs
     twoWeeksFromNow.setHours(0, 0, 0, 0);
     twoWeeksFromNow.setDate(today.getDate() + 14);
     return eventDate >= today && eventDate <= twoWeeksFromNow;
@@ -75,11 +75,12 @@ export default function CalendarWidget() {
 
   // Get upcoming bookings (no need to combine with enquiries as they're now in the same table)
   const getUpcomingGigs = () => {
-    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
     
-    // Filter and sort upcoming bookings (no limit for dynamic sizing)
+    // Filter and sort upcoming bookings including today's gigs (no limit for dynamic sizing)
     return bookings
-      .filter((booking: Booking) => booking.eventDate && new Date(booking.eventDate) >= now)
+      .filter((booking: Booking) => booking.eventDate && new Date(booking.eventDate) >= today)
       .sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
       .map((booking: Booking) => ({
         id: booking.id,
