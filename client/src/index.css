@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Use system fonts for purple theme consistency */
 
 @tailwind base;
 @tailwind components;
@@ -144,44 +144,6 @@ button, input, select, textarea {
 }
 
 :root {
-  /* Basecamp-inspired green/yellow/black theme */
-  --background: #ffffff;  /* pure white background */
-  --foreground: #000000;  /* pure black text */
-  --muted: #f8f9fa;  /* very light gray */
-  --muted-foreground: #6c757d;  /* medium gray */
-  --popover: #ffffff;
-  --popover-foreground: #000000;
-  --card: #ffffff;
-  --card-foreground: #000000;
-  --border: #dee2e6;  /* light gray border */
-  --input: #dee2e6;
-  --primary: #ffd700;  /* basecamp bright yellow primary */
-  --primary-foreground: #000000;
-  --secondary: #f8f9fa;
-  --secondary-foreground: #000000;
-  --accent: #ffd700;  /* basecamp yellow from image */
-  --accent-foreground: #000000;
-  --destructive: #dc3545;  /* red for errors */
-  --destructive-foreground: #ffffff;
-  --ring: #ffd700;  /* yellow focus rings */
-  --radius: 0.375rem;  /* smaller radius for clean look */
-  --chart-1: #28a745;  /* green */
-  --chart-2: #ffd700;  /* yellow */
-  --chart-3: #000000;  /* black */
-  --chart-4: #6c757d;  /* gray */
-  --chart-5: #dee2e6;  /* light gray */
-  --sidebar-background: #ffffff;
-  --sidebar-foreground: #000000;
-  --sidebar-primary: #ffd700;  /* yellow for active items */
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #ffd700;  /* yellow accent */
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #dee2e6;
-  --sidebar-ring: #ffd700;
-}
-
-/* Original Purple Theme - from backup file */
-.purple-theme {
   /* Primary Purple Colors from backup */
   --background: hsl(0, 0%, 100%);  /* Pure white */
   --foreground: hsl(224, 71.4%, 4.1%);  /* Primary text color */
@@ -314,9 +276,6 @@ button, input, select, textarea {
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
   --sidebar-border: hsl(215, 27.9%, 16.9%);
   --sidebar-ring: hsl(263, 70%, 65%);
-  
-  /* Original font family - system fonts instead of Inter */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 
@@ -332,80 +291,30 @@ button, input, select, textarea {
 }
 
 @layer utilities {
-  /* Basecamp theme utilities - yellow/green/black */
-  .bg-basecamp-yellow {
-    background-color: #ffd700;
-  }
-  
-  .bg-basecamp-green {
-    background-color: #28a745;
-  }
-  
-  .bg-basecamp-yellow\/20 {
-    background-color: rgba(255, 215, 0, 0.2);
-  }
-  
-  .bg-basecamp-yellow\/10 {
-    background-color: rgba(255, 215, 0, 0.1);
-  }
-  
-  .text-basecamp-yellow {
-    color: #ffd700;
-  }
-  
-  .text-basecamp-green {
-    color: #28a745;
-  }
-  
-  .hover\:bg-basecamp-yellow\/20:hover {
-    background-color: rgba(255, 215, 0, 0.2);
-  }
-  
-  .hover\:bg-basecamp-yellow\/10:hover {
-    background-color: rgba(255, 215, 0, 0.1);
-  }
-  
-  /* Custom scrollbars for Basecamp theme */
-  .basecamp-scrollbar::-webkit-scrollbar {
+  /* Purple theme scrollbars */
+  .purple-theme::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   
-  .basecamp-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
+  .purple-theme::-webkit-scrollbar-track {
+    background: hsl(220, 14.3%, 95.9%);
     border-radius: 4px;
   }
   
-  .basecamp-scrollbar::-webkit-scrollbar-thumb {
-    background: #ffd700;
+  .purple-theme::-webkit-scrollbar-thumb {
+    background: hsl(262, 83%, 72%);
     border-radius: 4px;
   }
   
-  .basecamp-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #ffcc02;
+  .purple-theme::-webkit-scrollbar-thumb:hover {
+    background: hsl(262, 83%, 65%);
   }
   
-  /* Dark mode scrollbars for Basecamp theme */
-  .dark .basecamp-scrollbar::-webkit-scrollbar-track {
-    background: #2d2d2d;
-  }
-  
-  .dark .basecamp-scrollbar::-webkit-scrollbar-thumb {
-    background: #ffd700;
-  }
-  
-  .dark .basecamp-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #ffcc02;
-  }
-  
-  /* Firefox scrollbar styling */
-  .basecamp-scrollbar {
+  /* Firefox scrollbar styling for purple theme */
+  .purple-theme {
     scrollbar-width: thin;
-    scrollbar-color: #ffd700 #f1f1f1;
-  }
-  
-  .dark .basecamp-scrollbar {
-    scrollbar-color: #ffd700 #2d2d2d;
+    scrollbar-color: hsl(262, 83%, 72%) hsl(220, 14.3%, 95.9%);
   }
 }
 

@@ -118,3 +118,11 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **CALENDAR WIDGET**: Modified to include today's bookings in upcoming gigs display
 - **ADDRESS BOOK**: Added missing `/api/clients` endpoints to prevent 404 errors
 - **CLIENT MANAGEMENT**: Basic API structure in place with populate-from-bookings functionality
+
+### PURPLE THEME RESTORATION (August 2, 2025)
+- **BASECAMP THEME REMOVAL**: Completely removed Basecamp theme and theme switcher functionality
+- **PURPLE THEME ONLY**: Restored original purple color scheme as primary theme
+- **CSS CLEANUP**: Removed all Basecamp-specific colors, utilities, and scrollbar styles
+- **COMPONENT UPDATES**: Removed theme toggle button and Palette icon from sidebar
+- **SIMPLIFIED STYLING**: Now uses single purple theme with proper dark mode support
+- **SYSTEM FONTS**: Removed Inter font dependency, using system fonts for consistency

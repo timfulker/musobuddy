@@ -46,9 +46,7 @@ export default {
         accent: {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-foreground)",
-          yellow: "#ffd500",  // basecamp yellow
         },
-        "basecamp-yellow": "#ffd500",  // basecamp yellow as direct color
         neutral: {
           light: "#f5f5f5",  // light backgrounds
         },

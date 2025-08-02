@@ -21,8 +21,7 @@ import {
   Crown,
   Mail,
   Lock,
-  AlertTriangle,
-  Palette
+  AlertTriangle
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -37,34 +36,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
-  const [useBasecampTheme, setUseBasecampTheme] = useState(() => {
-    const saved = localStorage.getItem('useBasecampTheme');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-
+  // Remove Basecamp theme completely - always use purple theme
   useEffect(() => {
-    localStorage.setItem('useBasecampTheme', JSON.stringify(useBasecampTheme));
-    
-    // Apply or remove the purple-theme class to the document
-    if (useBasecampTheme) {
-      document.documentElement.classList.remove('purple-theme');
-      // Add Basecamp scrollbar styling to body
-      document.body.classList.add('basecamp-scrollbar');
-    } else {
-      document.documentElement.classList.add('purple-theme');
-      // Remove Basecamp scrollbar styling from body
-      document.body.classList.remove('basecamp-scrollbar');
-    }
-  }, [useBasecampTheme]);
-
-  // Initial theme setup on component mount
-  useEffect(() => {
-    if (!useBasecampTheme) {
-      document.documentElement.classList.add('purple-theme');
-      document.body.classList.remove('basecamp-scrollbar');
-    } else {
-      document.body.classList.add('basecamp-scrollbar');
-    }
+    document.documentElement.classList.add('purple-theme');
+    document.body.classList.remove('basecamp-scrollbar');
   }, []);
 
   const handleLogout = () => {
@@ -220,23 +195,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* User Profile */}
-        <div className={cn(
-          "absolute bottom-0 left-0 right-0 p-4 border-t",
-          useBasecampTheme 
-            ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-            : "border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900"
-        )}>
-          {/* Theme Toggle and Design Toggle Row */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
+          {/* Theme Toggle Row */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               <ThemeToggle />
-              <button
-                onClick={() => setUseBasecampTheme(!useBasecampTheme)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-                title={`Switch to ${useBasecampTheme ? 'Purple Theme' : 'Basecamp Green'} design`}
-              >
-                <Palette className={cn("w-4 h-4", useBasecampTheme ? "text-yellow-600" : "text-purple-600")} />
-              </button>
             </div>
             <button 
               onClick={handleLogout}
