@@ -5,52 +5,44 @@ import { Link } from "wouter";
 
 export default function QuickActions() {
   return (
-    <Card className="bg-white rounded-2xl shadow-soft border-0">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-2xl font-bold text-slate-800">Quick Actions</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <Link href="/bookings?action=new">
           <Button 
-            className="w-full justify-start bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-4 rounded-xl shadow-soft transition-all border-0"
+            variant="outline" 
+            className="w-full justify-start bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
           >
-            <Plus className="w-5 h-5 mr-3" />
+            <Plus className="w-4 h-4 mr-3" />
             New Enquiry
           </Button>
         </Link>
         <Link href="/quick-add">
           <Button 
             variant="outline" 
-            className="w-full justify-start bg-white hover:bg-slate-50 text-slate-800 border-slate-200 py-4 rounded-xl font-medium transition-all"
+            className="w-full justify-start bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
           >
-            <Zap className="w-5 h-5 mr-3" />
+            <Zap className="w-4 h-4 mr-3" />
             Quick Add
           </Button>
         </Link>
         <Link href="/contracts?action=new">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start bg-white hover:bg-slate-50 text-slate-800 border-slate-200 py-4 rounded-xl font-medium transition-all"
-          >
-            <FileText className="w-5 h-5 mr-3" />
+          <Button variant="outline" className="w-full justify-start hover:bg-gray-50">
+            <FileText className="w-4 h-4 mr-3" />
             Generate Contract
           </Button>
         </Link>
         <Link href="/invoices?action=new">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start bg-white hover:bg-slate-50 text-slate-800 border-slate-200 py-4 rounded-xl font-medium transition-all"
-          >
-            <DollarSign className="w-5 h-5 mr-3" />
+          <Button variant="outline" className="w-full justify-start hover:bg-gray-50">
+            <DollarSign className="w-4 h-4 mr-3" />
             Create Invoice
           </Button>
         </Link>
         <Link href="/calendar?action=block">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start bg-white hover:bg-slate-50 text-slate-800 border-slate-200 py-4 rounded-xl font-medium transition-all"
-          >
-            <CalendarPlus className="w-5 h-5 mr-3" />
+          <Button variant="outline" className="w-full justify-start hover:bg-gray-50">
+            <CalendarPlus className="w-4 h-4 mr-3" />
             Mark Unavailable
           </Button>
         </Link>

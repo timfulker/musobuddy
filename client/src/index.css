@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -144,162 +142,77 @@ button, input, select, textarea {
 }
 
 :root {
-  /* Basecamp-inspired clean design theme */
-  --background: #f5f5f5;  /* neutral light background */
-  --foreground: #2d2d2d;  /* primary dark text */
+  /* Superhuman-inspired light theme */
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(224, 71.4%, 4.1%);
   --muted: hsl(220, 14.3%, 95.9%);
-  --muted-foreground: #666666;  /* softer gray */
+  --muted-foreground: hsl(220, 8.9%, 46.1%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: #2d2d2d;
+  --popover-foreground: hsl(224, 71.4%, 4.1%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: #2d2d2d;
+  --card-foreground: hsl(224, 71.4%, 4.1%);
   --border: hsl(220, 13%, 91%);
   --input: hsl(220, 13%, 91%);
-  --primary: #2d2d2d;  /* basecamp dark */
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(220, 14.3%, 95.9%);
-  --secondary-foreground: #2d2d2d;
-  --accent: #ffd500;  /* basecamp yellow */
-  --accent-foreground: #2d2d2d;
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: #ffd500;  /* basecamp yellow for focus rings */
-  --radius: 1rem;
-  --chart-1: #ffd500;
-  --chart-2: #ffdb33;
-  --chart-3: #e6c200;
-  --chart-4: #ccaa00;
-  --chart-5: #b39900;
-  --sidebar-background: hsl(0, 0%, 98%);
-  --sidebar-foreground: #2d2d2d;
-  --sidebar-primary: #2d2d2d;
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: #ffd500;
-  --sidebar-accent-foreground: #2d2d2d;
-  --sidebar-border: hsl(220, 13%, 91%);
-  --sidebar-ring: #ffd500;
-}
-
-/* Original Purple Theme - Classic MusoBuddy Colors */
-.purple-theme {
-  /* Original purple color scheme */
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(222.2, 84%, 4.9%);
-  --muted: hsl(210, 40%, 96%);
-  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(222.2, 84%, 4.9%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(222.2, 84%, 4.9%);
-  --border: hsl(214.3, 31.8%, 91.4%);
-  --input: hsl(214.3, 31.8%, 91.4%);
-  --primary: hsl(262.1, 83.3%, 57.8%);  /* classic purple */
+  --primary: hsl(262, 83%, 72%);
   --primary-foreground: hsl(210, 20%, 98%);
   --secondary: hsl(220, 14.3%, 95.9%);
   --secondary-foreground: hsl(220.9, 39.3%, 11%);
-  --accent: hsl(262.1, 83.3%, 57.8%);  /* purple accent */
-  --accent-foreground: hsl(210, 20%, 98%);
+  --accent: hsl(220, 14.3%, 95.9%);
+  --accent-foreground: hsl(220.9, 39.3%, 11%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(262.1, 83.3%, 57.8%);  /* purple for focus rings */
-  --radius: 0.5rem;  /* smaller radius for classic look */
-  --chart-1: hsl(262.1, 83.3%, 57.8%);
-  --chart-2: hsl(262.1, 70%, 65%);
-  --chart-3: hsl(262.1, 60%, 70%);
-  --chart-4: hsl(262.1, 50%, 75%);
-  --chart-5: hsl(262.1, 40%, 80%);
-  --sidebar-background: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(222.2, 84%, 4.9%);
-  --sidebar-primary: hsl(262.1, 83.3%, 57.8%);
+  --ring: hsl(262, 83%, 72%);
+  --radius: 0.75rem;
+  --chart-1: hsl(262, 83%, 72%);
+  --chart-2: hsl(252, 83%, 82%);
+  --chart-3: hsl(272, 83%, 62%);
+  --chart-4: hsl(242, 83%, 82%);
+  --chart-5: hsl(282, 83%, 62%);
+  --sidebar-background: hsl(0, 0%, 98%);
+  --sidebar-foreground: hsl(224, 71.4%, 4.1%);
+  --sidebar-primary: hsl(262, 83%, 72%);
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
-  --sidebar-accent: hsl(262.1, 83.3%, 57.8%);
-  --sidebar-accent-foreground: hsl(210, 20%, 98%);
-  --sidebar-border: hsl(214.3, 31.8%, 91.4%);
-  --sidebar-ring: hsl(262.1, 83.3%, 57.8%);
-  
-  /* Original font family - system fonts instead of Inter */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --sidebar-accent: hsl(220, 14.3%, 95.9%);
+  --sidebar-accent-foreground: hsl(220.9, 39.3%, 11%);
+  --sidebar-border: hsl(220, 13%, 91%);
+  --sidebar-ring: hsl(262, 83%, 72%);
 }
 
 .dark {
-  /* Basecamp-inspired dark theme */
-  --background: #1e1e1e;  /* dark background */
-  --foreground: #ffffff;  /* white text for dark mode */
-  --muted: hsl(217, 10%, 25%);
-  --muted-foreground: #cccccc;  /* lighter gray for dark mode */
-  --popover: #2d2d2d;
-  --popover-foreground: #ffffff;
-  --card: #2d2d2d;  /* dark cards */
-  --card-foreground: #ffffff;
-  --border: hsl(217, 10%, 40%);
-  --input: hsl(217, 10%, 40%);
-  --primary: #ffffff;  /* white for primary in dark mode */
-  --primary-foreground: #2d2d2d;  /* dark text on white buttons */
-  --secondary: hsl(217, 10%, 25%);
-  --secondary-foreground: #ffffff;
-  --accent: #ffd500;  /* keep the basecamp yellow */
-  --accent-foreground: #2d2d2d;  /* dark text on yellow */
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: #ffd500;  /* basecamp yellow for focus rings */
-  --radius: 1rem;
-  --chart-1: #ffd500;
-  --chart-2: #ffdb33;
-  --chart-3: #e6c200;
-  --chart-4: #ccaa00;
-  --chart-5: #b39900;
-  --sidebar-background: #1a1a1a;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #ffffff;
-  --sidebar-primary-foreground: #2d2d2d;
-  --sidebar-accent: #ffd500;
-  --sidebar-accent-foreground: #2d2d2d;
-  --sidebar-border: hsl(217, 10%, 40%);
-  --sidebar-ring: #ffd500;
-}
-
-/* Purple Theme Dark Mode */
-.purple-theme.dark {
-  /* Original purple color scheme dark mode */
-  --background: hsl(222.2, 84%, 4.9%);
+  /* Superhuman-inspired dark theme */
+  --background: hsl(224, 71.4%, 4.1%);
   --foreground: hsl(210, 20%, 98%);
-  --muted: hsl(217.2, 32.6%, 17.5%);
-  --muted-foreground: hsl(215, 20.2%, 65.1%);
-  --popover: hsl(222.2, 84%, 4.9%);
+  --muted: hsl(215, 27.9%, 16.9%);
+  --muted-foreground: hsl(217.9, 10.6%, 64.9%);
+  --popover: hsl(224, 71.4%, 4.1%);
   --popover-foreground: hsl(210, 20%, 98%);
-  --card: hsl(222.2, 84%, 4.9%);
+  --card: hsl(224, 71.4%, 4.1%);
   --card-foreground: hsl(210, 20%, 98%);
-  --border: hsl(217.2, 32.6%, 17.5%);
-  --input: hsl(217.2, 32.6%, 17.5%);
-  --primary: hsl(262.1, 83.3%, 57.8%);  /* classic purple */
+  --border: hsl(215, 27.9%, 16.9%);
+  --input: hsl(215, 27.9%, 16.9%);
+  --primary: hsl(263, 70%, 65%);
   --primary-foreground: hsl(210, 20%, 98%);
-  --secondary: hsl(217.2, 32.6%, 17.5%);
+  --secondary: hsl(215, 27.9%, 16.9%);
   --secondary-foreground: hsl(210, 20%, 98%);
-  --accent: hsl(262.1, 83.3%, 57.8%);  /* purple accent */
+  --accent: hsl(215, 27.9%, 16.9%);
   --accent-foreground: hsl(210, 20%, 98%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(262.1, 83.3%, 57.8%);  /* purple for focus rings */
-  --radius: 0.5rem;  /* smaller radius for classic look */
-  --chart-1: hsl(262.1, 83.3%, 57.8%);
-  --chart-2: hsl(262.1, 70%, 65%);
-  --chart-3: hsl(262.1, 60%, 70%);
-  --chart-4: hsl(262.1, 50%, 75%);
-  --chart-5: hsl(262.1, 40%, 80%);
-  --sidebar-background: hsl(222.2, 84%, 4.9%);
+  --ring: hsl(263, 70%, 65%);
+  --chart-1: hsl(263, 70%, 65%);
+  --chart-2: hsl(253, 70%, 75%);
+  --chart-3: hsl(273, 70%, 55%);
+  --chart-4: hsl(243, 70%, 75%);
+  --chart-5: hsl(283, 70%, 55%);
+  --sidebar-background: hsl(224, 71.4%, 4.1%);
   --sidebar-foreground: hsl(210, 20%, 98%);
-  --sidebar-primary: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-primary: hsl(263, 70%, 65%);
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
-  --sidebar-accent: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-accent: hsl(215, 27.9%, 16.9%);
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
-  --sidebar-border: hsl(217.2, 32.6%, 17.5%);
-  --sidebar-ring: hsl(262.1, 83.3%, 57.8%);
-  
-  /* Original font family - system fonts instead of Inter */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --sidebar-border: hsl(215, 27.9%, 16.9%);
+  --sidebar-ring: hsl(263, 70%, 65%);
 }
-
-
 
 @layer base {
   * {
