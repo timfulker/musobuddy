@@ -86,8 +86,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         baseClass,
         "rounded-md",
         isActive(path) 
-          ? "bg-primary text-primary-foreground shadow-sm" 
-          : "text-foreground hover:bg-accent/10 hover:text-accent-foreground"
+          ? "bg-purple-600 text-white shadow-sm" 
+          : "text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-900 dark:hover:text-purple-300"
       );
     }
   };
