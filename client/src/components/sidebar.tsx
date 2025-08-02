@@ -48,8 +48,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     // Apply or remove the purple-theme class to the document
     if (useBasecampTheme) {
       document.documentElement.classList.remove('purple-theme');
+      // Add Basecamp scrollbar styling to body
+      document.body.classList.add('basecamp-scrollbar');
     } else {
       document.documentElement.classList.add('purple-theme');
+      // Remove Basecamp scrollbar styling from body
+      document.body.classList.remove('basecamp-scrollbar');
     }
   }, [useBasecampTheme]);
 
@@ -57,6 +61,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   useEffect(() => {
     if (!useBasecampTheme) {
       document.documentElement.classList.add('purple-theme');
+      document.body.classList.remove('basecamp-scrollbar');
+    } else {
+      document.body.classList.add('basecamp-scrollbar');
     }
   }, []);
 

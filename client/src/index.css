@@ -364,6 +364,49 @@ button, input, select, textarea {
   .hover\:bg-basecamp-yellow\/10:hover {
     background-color: rgba(255, 193, 7, 0.1);
   }
+  
+  /* Custom scrollbars for Basecamp theme */
+  .basecamp-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .basecamp-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  .basecamp-scrollbar::-webkit-scrollbar-thumb {
+    background: #ffc107;
+    border-radius: 4px;
+  }
+  
+  .basecamp-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #e6ac00;
+  }
+  
+  /* Dark mode scrollbars for Basecamp theme */
+  .dark .basecamp-scrollbar::-webkit-scrollbar-track {
+    background: #2d2d2d;
+  }
+  
+  .dark .basecamp-scrollbar::-webkit-scrollbar-thumb {
+    background: #ffc107;
+  }
+  
+  .dark .basecamp-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #e6ac00;
+  }
+  
+  /* Firefox scrollbar styling */
+  .basecamp-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #ffc107 #f1f1f1;
+  }
+  
+  .dark .basecamp-scrollbar {
+    scrollbar-color: #ffc107 #2d2d2d;
+  }
 }
 
 /* Force React Day Picker to use full width */
