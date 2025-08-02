@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
+import { useTheme } from "@/hooks/useTheme";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -35,6 +37,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
+  const { theme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -42,6 +45,26 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const isActive = (path: string) => {
     return location === path;
+  };
+
+  const getNavItemClasses = (path: string) => {
+    const baseClasses = "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors";
+    
+    if (isActive(path)) {
+      return cn(
+        baseClasses,
+        theme === "basecamp" 
+          ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
+          : "bg-purple-600 text-white"
+      );
+    }
+    
+    return cn(
+      baseClasses,
+      theme === "basecamp"
+        ? "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
+        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+    );
   };
 
   return (
@@ -75,132 +98,71 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-          <div className="flex items-center space-x-3">
-            <img 
-              src={logoImage} 
-              alt="MusoBuddy Logo" 
-              className="w-10 h-10 object-contain rounded-lg shadow-lg"
-            />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">MusoBuddy</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Less admin, more music</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <img 
+                src={logoImage} 
+                alt="MusoBuddy Logo" 
+                className="w-10 h-10 object-contain rounded-lg shadow-lg"
+              />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">MusoBuddy</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Less admin, more music</p>
+              </div>
             </div>
+            <ThemeToggle />
           </div>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
-          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors",
-            isActive("/dashboard") 
-              ? "bg-purple-600 text-white" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/dashboard")}>
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
           </Link>
-          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/bookings") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/bookings")}>
             <Inbox className="w-5 h-5" />
             <span>Bookings</span>
           </Link>
-          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/address-book") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/address-book")}>
             <Users className="w-5 h-5" />
             <span>Address Book</span>
           </Link>
-          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/contracts") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/contracts")}>
             <FileText className="w-5 h-5" />
             <span>Contracts</span>
           </Link>
-
-          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/invoices") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/invoices")}>
             <PoundSterling className="w-5 h-5" />
             <span>Invoices</span>
           </Link>
-
-
-          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/compliance") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/compliance")}>
             <Shield className="w-5 h-5" />
             <span>Compliance</span>
           </Link>
-          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/pricing") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/pricing")}>
             <Crown className="w-5 h-5" />
             <span>Upgrade ⭐</span>
           </Link>
-
-          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/settings") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/settings")}>
             <Settings className="w-5 h-5" />
             <span>Settings</span>
           </Link>
-          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/templates") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/templates")}>
             <MessageSquare className="w-5 h-5" />
             <span>Templates</span>
           </Link>
-          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/unparseable-messages") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/unparseable-messages")}>
             <AlertTriangle className="w-5 h-5" />
             <span>Review Messages</span>
           </Link>
-          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-            isActive("/user-guide") 
-              ? "bg-purple-600 text-white font-medium" 
-              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-          )}>
+          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/user-guide")}>
             <BookOpen className="w-5 h-5" />
             <span>User Guide</span>
           </Link>
           {/* Beta Feedback section - only show for beta testers and admin */}
           {(user?.isBetaTester || user?.isAdmin) && (
-            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-              "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-              isActive("/feedback") 
-                ? "bg-purple-600 text-white font-medium" 
-                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-            )}>
+            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/feedback")}>
               <MessageSquare className="w-5 h-5" />
               <span>Beta Feedback</span>
             </Link>
@@ -208,12 +170,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           
           {/* Admin section - only show for admin users */}
           {user?.isAdmin && (
-            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-              "flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors",
-              isActive("/admin") 
-                ? "bg-purple-600 text-white font-medium" 
-                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-            )}>
+            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/admin")}>
               <Crown className="w-5 h-5" />
               <span>Admin</span>
             </Link>
@@ -230,8 +187,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+              <div className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center",
+                theme === "basecamp" ? "bg-basecamp-yellow" : "bg-purple-600"
+              )}>
+                <User className={cn(
+                  "w-5 h-5",
+                  theme === "basecamp" ? "text-slate-900" : "text-white"
+                )} />
               </div>
             )}
             <div className="flex-1">

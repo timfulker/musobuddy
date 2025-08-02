@@ -61,6 +61,7 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        "basecamp-yellow": "#ffd500",
       },
       keyframes: {
         "accordion-down": {
