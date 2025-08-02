@@ -103,7 +103,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 
 ### DUAL THEME SYSTEM IMPLEMENTATION (August 2, 2025)
 - **THEME SWITCHER**: Added dual theme system with palette icon toggle in sidebar footer
-- **BASECAMP THEME**: Updated to use predominantly yellow (#ffc107) with green accents, eliminating all purple elements
+- **BASECAMP THEME**: Updated to use predominantly golden yellow (#ffd700) with green accents, eliminating all purple elements
 - **PURPLE THEME**: Maintained original purple theme specifications from backup file for legacy users
 - **COMPONENT UPDATES**: Systematically replaced purple colors with yellow/green/black across all components (sidebar, mobile-nav, booking-cta-buttons, calendar-widget, support-chat, admin-analytics, booking-progress-tags, onboarding-email-setup, kanban-board, BookingStatusDialog, BookingDetailsDialog)
 - **SCROLLBAR STYLING**: Implemented theme-aware scrollbar colors - yellow for Basecamp theme, purple for legacy theme
