@@ -655,7 +655,7 @@ export default function Settings() {
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent ml-12 md:ml-0">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent ml-12 md:ml-0">
                 Settings
               </h1>
             </div>
@@ -678,7 +678,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Building className="w-5 h-5 text-purple-600" />
+                          <Building className="w-5 h-5 text-primary" />
                           <span>Business Information</span>
                         </div>
                         {expandedSections.business ? 
@@ -868,7 +868,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Mail className="w-5 h-5 text-purple-600" />
+                          <Mail className="w-5 h-5 text-primary" />
                           <span>Lead Email Management</span>
                         </div>
                         {expandedSections.email ? 
@@ -921,7 +921,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Globe className="w-5 h-5 text-purple-600" />
+                          <Globe className="w-5 h-5 text-primary" />
                           <span>Email Settings</span>
                         </div>
                         {expandedSections.contact ? 
@@ -958,7 +958,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Hash className="w-5 h-5 text-purple-600" />
+                          <Hash className="w-5 h-5 text-primary" />
                           <span>Invoice Settings</span>
                         </div>
                         {expandedSections.financial ? 
@@ -1009,7 +1009,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <CreditCard className="w-5 h-5 text-purple-600" />
+                          <CreditCard className="w-5 h-5 text-primary" />
                           <span>Bank Details</span>
                         </div>
                         {expandedSections.bank ? 
@@ -1046,7 +1046,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-purple-600" />
+                          <Music className="w-5 h-5 text-primary" />
                           <span>AI Pricing Guide</span>
                         </div>
                         {expandedSections.pricing ? 
@@ -1058,12 +1058,12 @@ export default function Settings() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="p-6 space-y-6">
-                      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                      <div className="bg-primary/5 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
                         <div className="flex items-start space-x-3">
-                          <Music className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <Music className="w-5 h-5 text-primary mt-0.5" />
                           <div>
-                            <h4 className="font-medium text-purple-900 dark:text-purple-100">Smart Quote Generation</h4>
-                            <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                            <h4 className="font-medium text-primary-900 dark:text-primary/10">Smart Quote Generation</h4>
+                            <p className="text-sm text-primary/90 dark:text-primary-300 mt-1">
                               Configure your pricing structure for AI-powered quote generation. These settings help the AI create accurate, professional quotes automatically.
                             </p>
                           </div>
@@ -1269,7 +1269,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-purple-600" />
+                          <Music className="w-5 h-5 text-primary" />
                           <span>Instrument & AI Context</span>
                         </div>
                         {expandedSections.instruments ? 
@@ -1454,7 +1454,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-purple-600" />
+                          <Music className="w-5 h-5 text-primary" />
                           <span>Gig Types Management</span>
                         </div>
                         {expandedSections.gigTypes ? 
@@ -1562,7 +1562,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <SettingsIcon className="w-5 h-5 text-purple-600" />
+                          <SettingsIcon className="w-5 h-5 text-primary" />
                           <span>Performance Settings</span>
                         </div>
                         {expandedSections.performance ? 
@@ -1593,7 +1593,7 @@ export default function Settings() {
                                     value="50"
                                     checked={field.value === "50"}
                                     onChange={() => field.onChange("50")}
-                                    className="text-purple-600"
+                                    className="text-primary"
                                   />
                                   <label htmlFor="limit-50" className="text-sm font-medium cursor-pointer">
                                     All future bookings + 50 past bookings (Recommended)
@@ -1607,7 +1607,7 @@ export default function Settings() {
                                     value="all"
                                     checked={field.value === "all"}
                                     onChange={() => field.onChange("all")}
-                                    className="text-purple-600"
+                                    className="text-primary"
                                   />
                                   <label htmlFor="limit-all" className="text-sm font-medium cursor-pointer">
                                     Show all bookings
@@ -1634,7 +1634,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Link className="w-5 h-5 text-purple-600" />
+                          <Link className="w-5 h-5 text-primary" />
                           <span>Booking Widget</span>
                         </div>
                         {expandedSections.widget ? 
@@ -1672,7 +1672,7 @@ export default function Settings() {
                               type="button"
                               onClick={generateWidgetUrl}
                               disabled={isGeneratingToken}
-                              className="bg-purple-600 hover:bg-purple-700"
+                              className="bg-primary hover:bg-primary/90"
                             >
                               {isGeneratingToken ? (
                                 <>
@@ -1768,7 +1768,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <SettingsIcon className="w-5 h-5 text-purple-600" />
+                          <SettingsIcon className="w-5 h-5 text-primary" />
                           <span>Invoice & Contract Themes</span>
                         </div>
                         {expandedSections.themes ? 
@@ -1797,8 +1797,8 @@ export default function Settings() {
                               <FormControl>
                                 <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
                                   field.value === template.id
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                    ? 'border-primary/50 bg-primary/5 dark:bg-primary-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-primary-300'
                                 }`}>
                                   <input
                                     type="radio"
@@ -1834,8 +1834,8 @@ export default function Settings() {
                               <FormControl>
                                 <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
                                   field.value === tone.id
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                    ? 'border-primary/50 bg-primary/5 dark:bg-primary-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-primary-300'
                                 }`}>
                                   <input
                                     type="radio"
@@ -1871,8 +1871,8 @@ export default function Settings() {
                               <FormControl>
                                 <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
                                   field.value === font.id
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                    ? 'border-primary/50 bg-primary/5 dark:bg-primary-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-primary-300'
                                 }`}>
                                   <input
                                     type="radio"
@@ -1953,8 +1953,8 @@ export default function Settings() {
                           }}
                           className={`p-2 text-sm rounded-lg border transition-all ${
                             selectedCustomTitle === title.id
-                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                              : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                              ? 'border-primary/50 bg-primary/5 dark:bg-primary-900/20'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-primary-300'
                           }`}
                         >
                           {title.label}
@@ -2115,7 +2115,7 @@ export default function Settings() {
                         setIsGeneratingPreview(false);
                       }}
                       disabled={isGeneratingPreview}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg transition-all"
+                      className="bg-gradient-to-r from-primary to-blue-600 text-white hover:shadow-lg transition-all"
                     >
                       {isGeneratingPreview ? (
                         <>
@@ -2149,7 +2149,7 @@ export default function Settings() {
                   }}
                   className={`px-8 py-2 border-0 transition-all duration-300 ${
                     hasChanges && !saveSettings.isPending
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:scale-105'
+                      ? 'bg-gradient-to-r from-primary to-blue-600 text-white hover:shadow-lg hover:scale-105'
                       : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                   }`}
                 >

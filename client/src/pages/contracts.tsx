@@ -623,7 +623,7 @@ export default function Contracts() {
       case "draft": return "bg-gray-100 text-gray-800";
       case "sent": return "bg-blue-100 text-blue-800";
       case "signed": return "bg-green-100 text-green-800";
-      case "completed": return "bg-purple-100 text-purple-800";
+      case "completed": return "bg-primary/10 text-primary";
       case "unsigned": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
@@ -733,7 +733,7 @@ export default function Contracts() {
 
               <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
                 <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700">
+                  <Button className="bg-primary hover:bg-primary/90">
                     <FileText className="w-4 h-4 mr-2" />
                     Generate Contract
                   </Button>
@@ -1138,7 +1138,7 @@ export default function Contracts() {
                     <p className="text-gray-500 text-lg">No contracts found</p>
                     <p className="text-gray-400">Generate your first contract from a qualified enquiry</p>
                     <Button 
-                      className="mt-4 bg-purple-600 hover:bg-purple-700"
+                      className="mt-4 bg-primary hover:bg-primary/90"
                       onClick={() => setIsDialogOpen(true)}
                     >
                       <FileText className="w-4 h-4 mr-2" />
@@ -1232,7 +1232,7 @@ export default function Contracts() {
                               <Button 
                                 size="sm" 
                                 variant="outline"
-                                className="text-xs whitespace-nowrap text-purple-600 hover:text-purple-700 border-purple-300"
+                                className="text-xs whitespace-nowrap text-primary hover:text-primary/80 border-primary/30"
                                 onClick={() => handleTestContractAPI(contract)}
                               >
                                 🧪 Test API

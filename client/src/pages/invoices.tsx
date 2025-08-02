@@ -456,7 +456,7 @@ export default function Invoices() {
       case "sent": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
       case "paid": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
       case "overdue": return "bg-red-500 text-white font-bold dark:bg-red-600 dark:text-red-100";
-      case "archived": return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+      case "archived": return "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary";
       default: return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
     }
   };
@@ -1467,7 +1467,7 @@ export default function Invoices() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[60px]" 
+                        className="text-xs text-primary hover:text-primary/80 whitespace-nowrap min-w-[60px]" 
                         onClick={() => handleEditInvoice(invoice)}
                       >
                         <Edit className="w-3 h-3 mr-1" />
@@ -1510,7 +1510,7 @@ export default function Invoices() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[60px]" 
+                        className="text-xs text-primary hover:text-primary/80 whitespace-nowrap min-w-[60px]" 
                         onClick={() => handleEditInvoice(invoice)}
                       >
                         <Edit className="w-3 h-3 mr-1" />
@@ -1553,7 +1553,7 @@ export default function Invoices() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="text-xs text-purple-600 hover:text-purple-700 whitespace-nowrap min-w-[60px]" 
+                        className="text-xs text-primary hover:text-primary/80 whitespace-nowrap min-w-[60px]" 
                         onClick={() => handleEditInvoice(invoice)}
                       >
                         <Edit className="w-3 h-3 mr-1" />
@@ -1681,7 +1681,7 @@ export default function Invoices() {
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="text-xs text-purple-600 hover:text-purple-700" 
+                    className="text-xs text-primary hover:text-primary/80" 
                     onClick={() => handleEditInvoice(invoice)}
                   >
                     <Edit className="w-3 h-3 mr-1" />
@@ -1724,7 +1724,7 @@ export default function Invoices() {
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="text-xs text-purple-600 hover:text-purple-700" 
+                    className="text-xs text-primary hover:text-primary/80" 
                     onClick={() => handleEditInvoice(invoice)}
                   >
                     <Edit className="w-3 h-3 mr-1" />
@@ -1767,7 +1767,7 @@ export default function Invoices() {
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="text-xs text-purple-600 hover:text-purple-700" 
+                    className="text-xs text-primary hover:text-primary/80" 
                     onClick={() => handleEditInvoice(invoice)}
                   >
                     <Edit className="w-3 h-3 mr-1" />

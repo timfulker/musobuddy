@@ -322,8 +322,8 @@ export default function UserGuide() {
             <div className="hidden md:block w-80 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
               <div className="p-4">
                 <h2 className="font-bold mb-6 flex items-center gap-3 text-lg text-gray-800 dark:text-gray-200">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                    <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
+                    <BookOpen className="h-5 w-5 text-primary dark:text-purple-400" />
                   </div>
                   Getting Started
                 </h2>
@@ -334,7 +334,7 @@ export default function UserGuide() {
                       variant={selectedStep === step.id ? "default" : "ghost"}
                       className={`w-full justify-start h-auto p-4 rounded-lg transition-all duration-200 ${
                         selectedStep === step.id 
-                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg' 
+                          ? 'bg-gradient-to-r bg-primary text-white shadow-lg' 
                           : 'hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
                       }`}
                       onClick={() => setSelectedStep(step.id)}
@@ -379,8 +379,8 @@ export default function UserGuide() {
               <div className="md:hidden mb-4">
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <h2 className="font-bold mb-4 flex items-center gap-3 text-lg text-gray-800 dark:text-gray-200">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                      <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
+                      <BookOpen className="h-5 w-5 text-primary dark:text-purple-400" />
                     </div>
                     Getting Started
                   </h2>
@@ -391,7 +391,7 @@ export default function UserGuide() {
                         variant={selectedStep === step.id ? "default" : "ghost"}
                         className={`w-full justify-start h-auto p-3 rounded-lg transition-all duration-200 ${
                           selectedStep === step.id 
-                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg' 
+                            ? 'bg-gradient-to-r bg-primary text-white shadow-lg' 
                             : 'hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
                         }`}
                         onClick={() => setSelectedStep(step.id)}
@@ -432,7 +432,7 @@ export default function UserGuide() {
               {currentStep && (
                 <div className="max-w-4xl mx-auto">
                   <Card className="shadow-lg border-0">
-                    <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                    <CardHeader className="bg-gradient-to-r bg-primary text-white">
                       <div className="flex items-center gap-4">
                         <div className="p-2 md:p-3 bg-white/20 rounded-lg">
                           {currentStep.icon}
@@ -448,13 +448,13 @@ export default function UserGuide() {
                         {/* Step-by-step Instructions */}
                         <div>
                           <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Target className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
+                            <Target className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                             Step-by-step Instructions
                           </h3>
                           <div className="space-y-3">
                             {currentStep.steps.map((step, index) => (
-                              <div key={index} className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                                <div className="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs md:text-sm font-bold">
+                              <div key={index} className="flex items-start gap-3 p-3 bg-gradient-to-r bg-primary/10 dark:bg-primary/20 rounded-lg border border-primary/30 dark:border-primary/40">
+                                <div className="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 bg-primary text-white rounded-full flex items-center justify-center text-xs md:text-sm font-bold">
                                   {index + 1}
                                 </div>
                                 <p className="text-gray-700 dark:text-gray-300 pt-1 text-sm md:text-base">{step}</p>
@@ -514,7 +514,7 @@ export default function UserGuide() {
                               {selectedStep !== 'email-setup' && (
                                 <Button
                                   variant="outline"
-                                  className="border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-400 dark:hover:bg-purple-900/20 flex-1 md:flex-none"
+                                  className="border-purple-300 text-primary hover:bg-purple-50 dark:border-purple-600 dark:text-purple-400 dark:hover:bg-purple-900/20 flex-1 md:flex-none"
                                   onClick={() => {
                                     const currentIndex = guideSteps.findIndex(s => s.id === selectedStep);
                                     if (currentIndex > 0) {
@@ -528,7 +528,7 @@ export default function UserGuide() {
                               
                               {selectedStep !== 'client-management' && (
                                 <Button
-                                  className="bg-purple-600 hover:bg-purple-700 shadow-md flex-1 md:flex-none"
+                                  className="bg-primary hover:bg-purple-700 shadow-md flex-1 md:flex-none"
                                   onClick={() => {
                                     const currentIndex = guideSteps.findIndex(s => s.id === selectedStep);
                                     if (currentIndex < guideSteps.length - 1) {

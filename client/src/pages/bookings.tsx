@@ -613,7 +613,7 @@ export default function UnifiedBookings() {
       case 'new': return 'bg-blue-100 text-blue-800';
       case 'awaiting_response': return 'bg-yellow-100 text-yellow-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'contract_sent': return 'bg-purple-100 text-purple-800';
+      case 'contract_sent': return 'bg-primary/10 text-primary';
       case 'completed': return 'bg-gray-100 text-gray-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-blue-100 text-blue-800';
@@ -838,7 +838,7 @@ export default function UnifiedBookings() {
                   </div>
                   
                   <Link href="/new-booking">
-                    <Button className="bg-purple-600 hover:bg-purple-700">
+                    <Button className="bg-primary hover:bg-primary/90">
                       <Plus className="w-4 h-4 mr-2" />
                       New Booking
                     </Button>

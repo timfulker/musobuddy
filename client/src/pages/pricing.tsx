@@ -66,7 +66,7 @@ export default function PricingPage() {
   const hasAccess = (subscriptionStatus as any)?.hasAccess || false;
 
   const pricingContent = (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-6">
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-white p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -132,9 +132,9 @@ export default function PricingPage() {
           </Card>
 
           {/* Core Plan */}
-          <Card className="border-2 border-purple-500 relative">
+          <Card className="border-2 border-primary/50 relative">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Badge className="bg-purple-500">
+              <Badge className="bg-primary/50">
                 <Star className="w-3 h-3 mr-1" />
                 Most Popular
               </Badge>
@@ -172,7 +172,7 @@ export default function PricingPage() {
                 </li>
               </ul>
               <Button 
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                className="w-full bg-primary hover:bg-primary/90"
                 onClick={() => handleSubscribe('price_1RouBwD9Bo26CG1DAF1rkSZI')}
                 disabled={loading || currentPlan === 'core' || hasAccess}
               >

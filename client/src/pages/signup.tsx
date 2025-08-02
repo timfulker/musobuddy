@@ -222,7 +222,7 @@ export default function SignupPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-              <Music className="h-8 w-8 text-purple-600" />
+              <Music className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
             </Link>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -380,7 +380,7 @@ export default function SignupPage() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    className="w-full bg-primary hover:bg-primary/90"
                     disabled={signupMutation.isPending}
                   >
                     {signupMutation.isPending ? "Creating Account..." : "Create Account"}
@@ -392,7 +392,7 @@ export default function SignupPage() {
 
               <div className="text-center text-sm text-gray-600 dark:text-gray-400">
                 Already have an account?{" "}
-                <Link href="/login" className="text-purple-600 hover:underline">
+                <Link href="/login" className="text-primary hover:underline">
                   Sign in
                 </Link>
               </div>
@@ -417,7 +417,7 @@ export default function SignupPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-              <Music className="h-8 w-8 text-purple-600" />
+              <Music className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
             </Link>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -431,7 +431,7 @@ export default function SignupPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Phone className="h-5 w-5 text-purple-600" />
+                <Phone className="h-5 w-5 text-primary" />
                 <span>Phone Verification</span>
               </CardTitle>
               <CardDescription>
@@ -472,7 +472,7 @@ export default function SignupPage() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    className="w-full bg-primary hover:bg-primary/90"
                     disabled={verificationMutation.isPending}
                   >
                     {verificationMutation.isPending ? "Verifying..." : "Verify Phone Number"}
@@ -503,7 +503,7 @@ export default function SignupPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-              <Music className="h-8 w-8 text-purple-600" />
+              <Music className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold text-gray-900 dark:text-white">MusoBuddy</span>
             </Link>
             <div className="mb-4">
@@ -520,7 +520,7 @@ export default function SignupPage() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle>Start Your Free Trial</CardTitle>
-              <div className="text-4xl font-bold text-purple-600 my-4">
+              <div className="text-4xl font-bold text-primary my-4">
                 14 Days Free
               </div>
               <CardDescription>
@@ -537,7 +537,7 @@ export default function SignupPage() {
 
               <Button
                 onClick={onStartTrial}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-lg py-3"
+                className="w-full bg-primary hover:bg-primary/90 text-lg py-3"
                 disabled={startTrialMutation.isPending}
               >
                 {startTrialMutation.isPending ? "Setting up trial..." : "Start My Free Trial"}
