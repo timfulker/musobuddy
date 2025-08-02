@@ -155,12 +155,49 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      // Return basic stats - will enhance later
+      // Calculate actual dashboard statistics
+      const [bookings, invoices] = await Promise.all([
+        storage.getBookings(userId),
+        storage.getInvoices(userId)
+      ]);
+      
+      // Calculate current month's first day
+      const now = new Date();
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // Filter bookings for current month
+      const thisMonthBookings = bookings.filter((booking: any) => {
+        const bookingDate = new Date(booking.eventDate);
+        return bookingDate >= currentMonthStart && bookingDate <= now;
+      });
+      
+      // Calculate monthly revenue from this month's bookings
+      const monthlyRevenue = thisMonthBookings.reduce((total: number, booking: any) => {
+        return total + (parseFloat(booking.fee?.toString() || '0') || 0);
+      }, 0);
+      
+      // Count active bookings (confirmed + awaiting_response + contract_sent)
+      const activeBookings = bookings.filter((booking: any) => 
+        ['confirmed', 'awaiting_response', 'contract_sent'].includes(booking.status)
+      ).length;
+      
+      // Calculate pending invoices (sent but not paid)
+      const pendingInvoices = invoices
+        .filter((invoice: any) => invoice.status === 'sent')
+        .reduce((total: number, invoice: any) => total + (parseFloat(invoice.amount?.toString() || '0') || 0), 0);
+      
+      // Count overdue invoices
+      const overdueInvoices = invoices.filter((invoice: any) => {
+        if (invoice.status !== 'sent') return false;
+        const dueDate = new Date(invoice.dueDate || invoice.createdAt);
+        return dueDate < now;
+      }).length;
+      
       res.json({
-        totalBookings: 0,
-        completedBookings: 0,
-        pendingContracts: 0,
-        totalRevenue: 0
+        monthlyRevenue: Math.round(monthlyRevenue),
+        activeBookings,
+        pendingInvoices: Math.round(pendingInvoices),
+        overdueInvoices
       });
     } catch (error: any) {
       console.error('❌ Dashboard stats error:', error);
