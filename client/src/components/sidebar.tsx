@@ -53,25 +53,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const getNavLinkClass = (path: string) => {
     const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
     
-    if (useBasecampTheme) {
-      // Basecamp theme - green/yellow/black colors
-      return cn(
-        baseClass,
-        "rounded-lg",
-        isActive(path) 
-          ? "bg-basecamp-yellow text-black shadow-sm" 
-          : "text-black dark:text-white hover:bg-basecamp-yellow/20 hover:text-black dark:hover:bg-basecamp-yellow/10 dark:hover:text-white"
-      );
-    } else {
-      // Purple theme (original) - exact behavior from backup
-      return cn(
-        baseClass,
-        "rounded-lg", // 8px border radius as documented
-        isActive(path) 
-          ? "bg-purple-600 text-white shadow-sm" // Purple background for active state
-          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" // Light gray on hover, no purple hover
-      );
-    }
+    // Purple theme (original) - exact behavior from backup
+    return cn(
+      baseClass,
+      "rounded-lg", // 8px border radius as documented
+      isActive(path) 
+        ? "bg-purple-600 text-white shadow-sm" // Purple background for active state
+        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" // Light gray on hover, no purple hover
+    );
   };
 
   return (
@@ -88,13 +77,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div 
         className={cn(
           "fixed left-0 top-0 h-full w-64 transition-transform duration-300 ease-in-out flex flex-col",
-          "shadow-sm",
-          // Font family changes based on theme
-          useBasecampTheme ? "font-inter" : "font-sans",
-          // Background changes based on theme  
-          useBasecampTheme 
-            ? "bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700"
-            : "bg-gray-50 dark:bg-slate-900 border-r border-gray-300 dark:border-slate-700",
+          "shadow-sm font-sans",
+          "bg-gray-50 dark:bg-slate-900 border-r border-gray-300 dark:border-slate-700",
           // Always show on desktop (768px+), slide on mobile
           "transform",
           isDesktop ? "translate-x-0 z-30" : (isOpen ? "translate-x-0 z-50" : "-translate-x-full z-50")
@@ -111,12 +95,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
 
         {/* Header */}
-        <div className={cn(
-          "p-6 border-b",
-          useBasecampTheme 
-            ? "border-slate-200 dark:border-slate-700"
-            : "border-gray-300 dark:border-slate-700"
-        )}>
+        <div className="p-6 border-b border-gray-300 dark:border-slate-700">
           <div className="flex items-center space-x-3">
             <img 
               src={logoImage} 
