@@ -134,45 +134,6 @@ export class AIResponseGenerator {
         throw new Error('Invalid JSON response from AI service');
       }
       
-      // POST-PROCESSING: Force correct pricing if AI ignores instructions
-      if (userSettings?.aiPricingEnabled !== false) {
-        const BHR = Number(userSettings?.baseHourlyRate) || 125;
-        const AHR = Number(userSettings?.additionalHourRate) || 60;
-        const T = Number(bookingContext?.travelExpense) || 0;
-        
-        const twoHoursPrice = (BHR * 2) + ((2 - 2) * AHR) + T;
-        const threeHoursPrice = (BHR * 2) + ((3 - 2) * AHR) + T;
-        const fourHoursPrice = (BHR * 2) + ((4 - 2) * AHR) + T;
-        
-        console.log('🔧 POST-PROCESSING: Enforcing correct pricing...', {
-          correct: { twoHours: twoHoursPrice, threeHours: threeHoursPrice, fourHours: fourHoursPrice }
-        });
-        
-        // Replace any incorrect pricing with correct calculations
-        const correctPrices = [
-          { pattern: /2\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `2 hours Saxophone: £${twoHoursPrice}` },
-          { pattern: /3\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `3 hours Saxophone: £${threeHoursPrice}` },
-          { pattern: /4\s*hours?\s*saxophone:?\s*£\d+/gi, replacement: `4 hours Saxophone: £${fourHoursPrice}` }
-        ];
-        
-        correctPrices.forEach(({ pattern, replacement }) => {
-          if (result.emailBody) {
-            const before = result.emailBody;
-            result.emailBody = result.emailBody.replace(pattern, replacement);
-            if (before !== result.emailBody) {
-              console.log('🔧 CORRECTED pricing in email body');
-            }
-          }
-          if (result.smsBody) {
-            const before = result.smsBody;
-            result.smsBody = result.smsBody.replace(pattern, replacement);
-            if (before !== result.smsBody) {
-              console.log('🔧 CORRECTED pricing in SMS body');
-            }
-          }
-        });
-      }
-
       // Validate the response structure
       if (!result.subject || !result.emailBody) {
         console.error('❌ Invalid response structure:', result);
@@ -283,48 +244,30 @@ ${gigTypes.length > 0 ? `- Highlight your expertise in: ${gigTypes.join(', ')}` 
       hasDJServices
     });
     
-    // Build pricing structure from user settings - FORCE NUMBER CONVERSION
-    const BHR = Number(userSettings?.baseHourlyRate) || 125; // Basic Hourly Rate
-    const AHR = Number(userSettings?.additionalHourRate) || 60; // Additional Hourly Rate  
-    const T = Number(bookingContext?.travelExpense) || 0; // Total travel cost (already includes round trip)
+    // Build pricing structure from user settings
+    const baseRate = userSettings?.baseHourlyRate || 130;
+    const minimumHours = userSettings?.minimumBookingHours || 2;
+    const additionalHourRate = userSettings?.additionalHourRate || 60;
+    const djRate = userSettings?.djServiceRate || 300;
     const pricingEnabled = userSettings?.aiPricingEnabled !== false;
     
-    // HARD-CODED PRICE CALCULATION: P = (BHR*2) + ((N-2) x AHR) + T
-    function calculatePrice(N: number): number {
-      return (BHR * 2) + ((N - 2) * AHR) + T;
-    }
+    const basePriceStr = `£${baseRate * minimumHours}`;
+    const additionalHourStr = `£${additionalHourRate} per hour beyond the ${minimumHours}-hour minimum`;
+    const djServiceStr = `£${djRate} additional charge when combined with ${primaryInstrument}`;
     
-    const twoHoursPrice = calculatePrice(2);   // (125*2) + ((2-2)*60) + T = 250 + 0 + T
-    const threeHoursPrice = calculatePrice(3); // (125*2) + ((3-2)*60) + T = 250 + 60 + T  
-    const fourHoursPrice = calculatePrice(4);  // (125*2) + ((4-2)*60) + T = 250 + 120 + T
+    // Calculate common packages with travel included - use actual travel expense if provided
+    const travelCost = bookingContext?.travelExpense ? parseFloat(bookingContext.travelExpense.toString()) : 60; // Default to £60 if no specific travel cost
     
-    console.log('🎵 HARD-CODED PRICING CALCULATION:', {
-      formula: 'P = (BHR*2) + ((N-2) × AHR) + T',
-      BHR: `${BHR} (type: ${typeof BHR})`,
-      AHR: `${AHR} (type: ${typeof AHR})`,
-      T: `${T} (total travel expense from booking field)`,
-      calculations: {
-        '2hrs': `(${BHR}*2) + ((2-2)*${AHR}) + ${T} = ${twoHoursPrice}`,
-        '3hrs': `(${BHR}*2) + ((3-2)*${AHR}) + ${T} = ${threeHoursPrice}`,
-        '4hrs': `(${BHR}*2) + ((4-2)*${AHR}) + ${T} = ${fourHoursPrice}`
-      }
-    });
-    
-    const basePriceStr = `£${BHR * 2}`;
-    const additionalHourStr = `£${AHR} per hour beyond the 2-hour minimum`;
-    const djServiceStr = `£300 additional charge when combined with ${primaryInstrument}`;
-    
-    // FIXED: Use hard-coded pricing formula results
     const basePackages = [
-      `2 hours ${primaryInstrument}: £${twoHoursPrice}`,
-      `3 hours ${primaryInstrument}: £${threeHoursPrice}`,
-      `4 hours ${primaryInstrument}: £${fourHoursPrice}`
+      `${minimumHours} hours ${primaryInstrument}: £${baseRate * minimumHours + travelCost}`,
+      `${minimumHours + 1} hours ${primaryInstrument}: £${baseRate * minimumHours + additionalHourRate + travelCost}`,
+      `${minimumHours + 2} hours ${primaryInstrument}: £${baseRate * minimumHours + (additionalHourRate * 2) + travelCost}`
     ];
     
     const djPackages = hasDJServices ? [
-      `2 hours ${primaryInstrument} + DJ: £${twoHoursPrice + 300}`,
-      `3 hours ${primaryInstrument} + DJ: £${threeHoursPrice + 300}`,
-      `4 hours ${primaryInstrument} + DJ: £${fourHoursPrice + 300}`
+      `${minimumHours} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + djRate + travelCost}`,
+      `${minimumHours + 1} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + additionalHourRate + djRate + travelCost}`,
+      `${minimumHours + 2} hours ${primaryInstrument} + DJ: £${baseRate * minimumHours + (additionalHourRate * 2) + djRate + travelCost}`
     ] : [];
     
     const packages = [...basePackages, ...djPackages];
@@ -339,18 +282,9 @@ CRITICAL PRICING RULES:
 - Do NOT use phrases like "inclusive of all expenses" or "including travel" - just show clean package prices
 - ALWAYS include VAT status: "All prices are VAT-exempt as a sole trader" or similar based on business structure
 - Use simple formatting without excessive punctuation: "2 hours saxophone: £290" (NEVER use **asterisks**)
-- ABSOLUTELY CRITICAL: Do NOT perform any mathematical calculations - use the exact prices provided above
-- WARNING: If you modify these prices in any way, the response will be rejected
-- INSTRUCTION: These prices already include ALL costs - do not add anything to them
-- CRITICAL: Use EXACTLY these prices - DO NOT CALCULATE OR MODIFY:
-    - 2 hours saxophone: £${twoHoursPrice}
-    - 3 hours saxophone: £${threeHoursPrice}
-    - 4 hours saxophone: £${fourHoursPrice}
-- FORBIDDEN: DO NOT add travel costs, setup fees, or any other charges to these prices
-- FORBIDDEN: DO NOT perform any mathematical operations on these prices
-- MANDATORY: Copy these exact price figures into your response without changes
-- EXAMPLE: "2 hours Saxophone: £${twoHoursPrice}" (use this exact format and number)
-- Present 3-4 package options starting from 2 hours, showing total inclusive pricing${hasDJServices ? `
+- Use these complete package options for ${primaryInstrument} performances:
+    ${packages.map(pkg => `- ${pkg}`).join('\n    ')}
+- Present 3-4 package options starting from ${minimumHours} hours, showing total inclusive pricing${hasDJServices ? `
 - Mention DJ capabilities when relevant - you offer DJ services as an additional service` : ''}
 - Mention equipment details, setup capabilities, and venue requirements when relevant
 - Include professional details about insurance, equipment quality, and venue requirements
