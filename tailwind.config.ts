@@ -5,10 +5,19 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Inter"', 'system-ui', 'sans-serif'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: '1rem',
+        '2xl': '1.5rem',
+      },
+      boxShadow: {
+        soft: '0 2px 12px rgba(0, 0, 0, 0.05)',
+        'soft-lg': '0 4px 20px rgba(0, 0, 0, 0.08)',
       },
       colors: {
         background: "var(--background)",
@@ -24,6 +33,7 @@ export default {
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
+          dark: "#2d2d2d",  // basecamp dark text
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -36,6 +46,11 @@ export default {
         accent: {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-foreground)",
+          yellow: "#ffd500",  // basecamp yellow
+        },
+        "basecamp-yellow": "#ffd500",  // basecamp yellow as direct color
+        neutral: {
+          light: "#f5f5f5",  // light backgrounds
         },
         destructive: {
           DEFAULT: "var(--destructive)",
