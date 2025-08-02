@@ -44,7 +44,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   useEffect(() => {
     localStorage.setItem('useBasecampTheme', JSON.stringify(useBasecampTheme));
+    
+    // Apply or remove the purple-theme class to the document
+    if (useBasecampTheme) {
+      document.documentElement.classList.remove('purple-theme');
+    } else {
+      document.documentElement.classList.add('purple-theme');
+    }
   }, [useBasecampTheme]);
+
+  // Initial theme setup on component mount
+  useEffect(() => {
+    if (!useBasecampTheme) {
+      document.documentElement.classList.add('purple-theme');
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -55,23 +69,25 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   };
 
   const getNavLinkClass = (path: string) => {
-    const baseClass = "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200";
+    const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
     
     if (useBasecampTheme) {
-      // Basecamp theme
+      // Basecamp theme - rounded corners, yellow accents
       return cn(
         baseClass,
+        "rounded-lg",
         isActive(path) 
           ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
           : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
       );
     } else {
-      // Purple theme (original)
+      // Purple theme (original) - smaller rounded corners, purple accents
       return cn(
         baseClass,
+        "rounded-md",
         isActive(path) 
-          ? "bg-purple-600 text-white shadow-sm" 
-          : "text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-900 dark:hover:text-purple-200"
+          ? "bg-primary text-primary-foreground shadow-sm" 
+          : "text-foreground hover:bg-accent/10 hover:text-accent-foreground"
       );
     }
   };
@@ -194,7 +210,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <button
                 onClick={() => setUseBasecampTheme(!useBasecampTheme)}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-                title={`Switch to ${useBasecampTheme ? 'Purple' : 'Basecamp'} theme`}
+                title={`Switch to ${useBasecampTheme ? 'Original Purple' : 'Basecamp Yellow'} design`}
               >
                 <Palette className={cn("w-4 h-4", useBasecampTheme ? "text-yellow-600" : "text-purple-600")} />
               </button>
