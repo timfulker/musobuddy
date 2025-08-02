@@ -21,7 +21,8 @@ import {
   Crown,
   Mail,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  Palette
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -36,6 +37,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
+  const [useBasecampTheme, setUseBasecampTheme] = useState(() => {
+    const saved = localStorage.getItem('useBasecampTheme');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('useBasecampTheme', JSON.stringify(useBasecampTheme));
+  }, [useBasecampTheme]);
 
   const handleLogout = () => {
     logout();
@@ -43,6 +52,28 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const isActive = (path: string) => {
     return location === path;
+  };
+
+  const getNavLinkClass = (path: string) => {
+    const baseClass = "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200";
+    
+    if (useBasecampTheme) {
+      // Basecamp theme
+      return cn(
+        baseClass,
+        isActive(path) 
+          ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
+          : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
+      );
+    } else {
+      // Purple theme (original)
+      return cn(
+        baseClass,
+        isActive(path) 
+          ? "bg-purple-600 text-white shadow-sm" 
+          : "text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-900 dark:hover:text-purple-200"
+      );
+    }
   };
 
   return (
@@ -92,116 +123,54 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
-          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/dashboard") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/dashboard")}>
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
           </Link>
-          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/bookings") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/bookings")}>
             <Inbox className="w-5 h-5" />
             <span>Bookings</span>
           </Link>
-          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/address-book") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/address-book")}>
             <Users className="w-5 h-5" />
             <span>Address Book</span>
           </Link>
-          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/contracts") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/contracts")}>
             <FileText className="w-5 h-5" />
             <span>Contracts</span>
           </Link>
-
-          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/invoices") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/invoices")}>
             <PoundSterling className="w-5 h-5" />
             <span>Invoices</span>
           </Link>
 
-          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/compliance") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/compliance")}>
             <Shield className="w-5 h-5" />
             <span>Compliance</span>
           </Link>
-          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/pricing") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/pricing")}>
             <Crown className="w-5 h-5" />
             <span>Upgrade ⭐</span>
           </Link>
-
-          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/settings") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/settings")}>
             <Settings className="w-5 h-5" />
             <span>Settings</span>
           </Link>
-          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/templates") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/templates")}>
             <MessageSquare className="w-5 h-5" />
             <span>Templates</span>
           </Link>
-          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/unparseable-messages") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/unparseable-messages")}>
             <AlertTriangle className="w-5 h-5" />
             <span>Review Messages</span>
           </Link>
-          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-            "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-            isActive("/user-guide") 
-              ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-              : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-          )}>
+          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/user-guide")}>
             <BookOpen className="w-5 h-5" />
             <span>User Guide</span>
           </Link>
           {/* Beta Feedback section - only show for beta testers and admin */}
           {(user?.isBetaTester || user?.isAdmin) && (
-            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-              "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-              isActive("/feedback") 
-                ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-                : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-            )}>
+            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/feedback")}>
               <MessageSquare className="w-5 h-5" />
               <span>Beta Feedback</span>
             </Link>
@@ -209,12 +178,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           
           {/* Admin section - only show for admin users */}
           {user?.isAdmin && (
-            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={cn(
-              "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200",
-              isActive("/admin") 
-                ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-                : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-            )}>
+            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/admin")}>
               <Crown className="w-5 h-5" />
               <span>Admin</span>
             </Link>
@@ -223,9 +187,18 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* User Profile */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-          {/* Theme Toggle and Logout Row */}
+          {/* Theme Toggle and Design Toggle Row */}
           <div className="flex items-center justify-between mb-3">
-            <ThemeToggle />
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <button
+                onClick={() => setUseBasecampTheme(!useBasecampTheme)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+                title={`Switch to ${useBasecampTheme ? 'Purple' : 'Basecamp'} theme`}
+              >
+                <Palette className={cn("w-4 h-4", useBasecampTheme ? "text-yellow-600" : "text-purple-600")} />
+              </button>
+            </div>
             <button 
               onClick={handleLogout}
               className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-2 py-1 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
