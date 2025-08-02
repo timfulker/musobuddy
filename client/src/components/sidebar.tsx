@@ -185,7 +185,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span>User Guide</span>
           </Link>
           {/* Beta Feedback section - only show for beta testers and admin */}
-          {(user?.isBetaTester || user?.isAdmin) && (
+          {((user as any)?.isBetaTester || (user as any)?.isAdmin) && (
             <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/feedback")}>
               <MessageSquare className="w-5 h-5" />
               <span>Beta Feedback</span>
@@ -193,7 +193,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           )}
           
           {/* Admin section - only show for admin users */}
-          {user?.isAdmin && (
+          {(user as any)?.isAdmin && (
             <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/admin")}>
               <Crown className="w-5 h-5" />
               <span>Admin</span>
@@ -227,9 +227,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           
           {/* User Info */}
           <div className="flex items-center space-x-3">
-            {user?.profileImageUrl ? (
+            {(user as any)?.profileImageUrl ? (
               <img 
-                src={user.profileImageUrl} 
+                src={(user as any).profileImageUrl} 
                 alt="Profile" 
                 className="w-10 h-10 rounded-full object-cover shadow-sm"
               />
@@ -240,7 +240,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
             <div className="flex-1">
               <p className="text-sm font-medium text-slate-900 dark:text-white">
-                {user?.firstName || user?.email || "User"}
+                {(user as any)?.firstName || (user as any)?.email || "User"}
               </p>
               <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Musician</p>
             </div>

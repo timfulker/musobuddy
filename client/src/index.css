@@ -180,42 +180,52 @@ button, input, select, textarea {
   --sidebar-ring: #ffd500;
 }
 
-/* Original Purple Theme - Classic MusoBuddy Colors */
+/* Original Purple Theme - from backup file */
 .purple-theme {
-  /* Original purple color scheme */
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(222.2, 84%, 4.9%);
-  --muted: hsl(210, 40%, 96%);
-  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(222.2, 84%, 4.9%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(222.2, 84%, 4.9%);
-  --border: hsl(214.3, 31.8%, 91.4%);
-  --input: hsl(214.3, 31.8%, 91.4%);
-  --primary: hsl(262.1, 83.3%, 57.8%);  /* classic purple */
-  --primary-foreground: hsl(210, 20%, 98%);
-  --secondary: hsl(220, 14.3%, 95.9%);
-  --secondary-foreground: hsl(220.9, 39.3%, 11%);
-  --accent: hsl(262.1, 83.3%, 57.8%);  /* purple accent */
-  --accent-foreground: hsl(210, 20%, 98%);
-  --destructive: hsl(0, 84.2%, 60.2%);
+  /* Primary Purple Colors from backup */
+  --background: hsl(0, 0%, 100%);  /* Pure white */
+  --foreground: hsl(224, 71.4%, 4.1%);  /* Primary text color */
+  --primary: hsl(262, 83%, 72%);  /* Main brand purple */
+  --primary-foreground: hsl(210, 20%, 98%);  /* Text on purple backgrounds */
+  
+  /* Secondary Colors */
+  --secondary: hsl(220, 14.3%, 95.9%);  /* Light gray backgrounds */
+  --secondary-foreground: hsl(220.9, 39.3%, 11%);  /* Dark text */
+  --muted: hsl(220, 14.3%, 95.9%);  /* Subtle backgrounds */
+  --muted-foreground: hsl(220, 8.9%, 46.1%);  /* Subdued text */
+  --border: hsl(220, 13%, 91%);  /* Light borders */
+  --input: hsl(220, 13%, 91%);  /* Input field borders */
+  
+  /* Accent & Status Colors */
+  --accent: hsl(220, 14.3%, 95.9%);  /* Hover states */
+  --accent-foreground: hsl(220.9, 39.3%, 11%);
+  --destructive: hsl(0, 84.2%, 60.2%);  /* Error/delete actions */
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(262.1, 83.3%, 57.8%);  /* purple for focus rings */
-  --radius: 0.5rem;  /* smaller radius for classic look */
-  --chart-1: hsl(262.1, 83.3%, 57.8%);
-  --chart-2: hsl(262.1, 70%, 65%);
-  --chart-3: hsl(262.1, 60%, 70%);
-  --chart-4: hsl(262.1, 50%, 75%);
-  --chart-5: hsl(262.1, 40%, 80%);
-  --sidebar-background: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(222.2, 84%, 4.9%);
-  --sidebar-primary: hsl(262.1, 83.3%, 57.8%);
+  --ring: hsl(262, 83%, 72%);  /* Focus ring color */
+  --radius: 0.5rem;  /* Medium radius for classic look */
+  
+  /* Popover and Card */
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(224, 71.4%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(224, 71.4%, 4.1%);
+  
+  /* Chart Colors */
+  --chart-1: hsl(262, 83%, 72%);
+  --chart-2: hsl(252, 83%, 82%);
+  --chart-3: hsl(272, 83%, 62%);
+  --chart-4: hsl(242, 83%, 82%);
+  --chart-5: hsl(282, 83%, 62%);
+  
+  /* Sidebar-Specific Colors */
+  --sidebar-background: hsl(0, 0%, 98%);  /* Off-white */
+  --sidebar-foreground: hsl(224, 71.4%, 4.1%);
+  --sidebar-primary: hsl(262, 83%, 72%);  /* Purple for active items */
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
-  --sidebar-accent: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-accent: hsl(262, 83%, 72%);
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
-  --sidebar-border: hsl(214.3, 31.8%, 91.4%);
-  --sidebar-ring: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-border: hsl(220, 13%, 91%);  /* Light border */
+  --sidebar-ring: hsl(262, 83%, 72%);
   
   /* Original font family - system fonts instead of Inter */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -258,42 +268,52 @@ button, input, select, textarea {
   --sidebar-ring: #ffd500;
 }
 
-/* Purple Theme Dark Mode */
+/* Purple Theme Dark Mode - from backup file */
 .purple-theme.dark {
-  /* Original purple color scheme dark mode */
-  --background: hsl(222.2, 84%, 4.9%);
-  --foreground: hsl(210, 20%, 98%);
-  --muted: hsl(217.2, 32.6%, 17.5%);
-  --muted-foreground: hsl(215, 20.2%, 65.1%);
-  --popover: hsl(222.2, 84%, 4.9%);
-  --popover-foreground: hsl(210, 20%, 98%);
-  --card: hsl(222.2, 84%, 4.9%);
-  --card-foreground: hsl(210, 20%, 98%);
-  --border: hsl(217.2, 32.6%, 17.5%);
-  --input: hsl(217.2, 32.6%, 17.5%);
-  --primary: hsl(262.1, 83.3%, 57.8%);  /* classic purple */
+  /* Dark theme colors from backup */
+  --background: hsl(224, 71.4%, 4.1%);  /* Very dark blue */
+  --foreground: hsl(210, 20%, 98%);  /* Light text */
+  --primary: hsl(263, 70%, 65%);  /* Slightly muted purple */
   --primary-foreground: hsl(210, 20%, 98%);
-  --secondary: hsl(217.2, 32.6%, 17.5%);
+  
+  /* Secondary and muted dark colors */
+  --secondary: hsl(215, 27.9%, 16.9%);  /* Dark gray */
   --secondary-foreground: hsl(210, 20%, 98%);
-  --accent: hsl(262.1, 83.3%, 57.8%);  /* purple accent */
+  --muted: hsl(215, 27.9%, 16.9%);  /* Dark gray */
+  --muted-foreground: hsl(215, 20.2%, 65.1%);
+  --border: hsl(215, 27.9%, 16.9%);  /* Dark borders */
+  --input: hsl(215, 27.9%, 16.9%);
+  
+  /* Accent and status colors for dark mode */
+  --accent: hsl(215, 27.9%, 16.9%);
   --accent-foreground: hsl(210, 20%, 98%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(262.1, 83.3%, 57.8%);  /* purple for focus rings */
-  --radius: 0.5rem;  /* smaller radius for classic look */
-  --chart-1: hsl(262.1, 83.3%, 57.8%);
-  --chart-2: hsl(262.1, 70%, 65%);
-  --chart-3: hsl(262.1, 60%, 70%);
-  --chart-4: hsl(262.1, 50%, 75%);
-  --chart-5: hsl(262.1, 40%, 80%);
-  --sidebar-background: hsl(222.2, 84%, 4.9%);
+  --ring: hsl(263, 70%, 65%);  /* Purple focus ring */
+  --radius: 0.5rem;
+  
+  /* Popover and card for dark mode */
+  --popover: hsl(224, 71.4%, 4.1%);
+  --popover-foreground: hsl(210, 20%, 98%);
+  --card: hsl(224, 71.4%, 4.1%);
+  --card-foreground: hsl(210, 20%, 98%);
+  
+  /* Chart colors for dark mode */
+  --chart-1: hsl(263, 70%, 65%);
+  --chart-2: hsl(253, 70%, 75%);
+  --chart-3: hsl(273, 70%, 55%);
+  --chart-4: hsl(243, 70%, 75%);
+  --chart-5: hsl(283, 70%, 55%);
+  
+  /* Sidebar dark mode colors */
+  --sidebar-background: hsl(224, 71.4%, 4.1%);
   --sidebar-foreground: hsl(210, 20%, 98%);
-  --sidebar-primary: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-primary: hsl(263, 70%, 65%);
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
-  --sidebar-accent: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-accent: hsl(263, 70%, 65%);
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
-  --sidebar-border: hsl(217.2, 32.6%, 17.5%);
-  --sidebar-ring: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-border: hsl(215, 27.9%, 16.9%);
+  --sidebar-ring: hsl(263, 70%, 65%);
   
   /* Original font family - system fonts instead of Inter */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -308,6 +328,33 @@ button, input, select, textarea {
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Basecamp theme utilities */
+  .bg-basecamp-yellow {
+    background-color: #ffd500;
+  }
+  
+  .bg-basecamp-yellow\/20 {
+    background-color: rgba(255, 213, 0, 0.2);
+  }
+  
+  .bg-basecamp-yellow\/10 {
+    background-color: rgba(255, 213, 0, 0.1);
+  }
+  
+  .text-basecamp-yellow {
+    color: #ffd500;
+  }
+  
+  .hover\:bg-basecamp-yellow\/20:hover {
+    background-color: rgba(255, 213, 0, 0.2);
+  }
+  
+  .hover\:bg-basecamp-yellow\/10:hover {
+    background-color: rgba(255, 213, 0, 0.1);
   }
 }
 
