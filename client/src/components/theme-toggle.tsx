@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { useTheme } from "@/hooks/useTheme";
-import { Palette, Zap } from "lucide-react";
+import { Moon, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useTheme } from './theme-provider';
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -8,15 +8,12 @@ export function ThemeToggle() {
   return (
     <Button
       variant="ghost"
-      size="sm"
-      onClick={() => setTheme(theme === "purple" ? "basecamp" : "purple")}
-      className="h-9 w-9 px-0"
+      size="icon"
+      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+      className="w-9 h-9"
     >
-      {theme === "purple" ? (
-        <Zap className="h-4 w-4 text-yellow-600" />
-      ) : (
-        <Palette className="h-4 w-4 text-purple-600" />
-      )}
+      <Moon className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Sun className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       <span className="sr-only">Toggle theme</span>
     </Button>
   );

@@ -21,11 +21,11 @@ import {
   Crown,
   Mail,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  Palette
 } from "lucide-react";
 import logoImage from "/musobuddy-logo-purple.png";
 import { useResponsive } from "@/hooks/useResponsive";
-import { useTheme } from "@/hooks/useTheme";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface SidebarProps {
@@ -37,7 +37,28 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
-  const { theme } = useTheme();
+  const [useBasecampTheme, setUseBasecampTheme] = useState(() => {
+    const saved = localStorage.getItem('useBasecampTheme');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('useBasecampTheme', JSON.stringify(useBasecampTheme));
+    
+    // Apply or remove the purple-theme class to the document
+    if (useBasecampTheme) {
+      document.documentElement.classList.remove('purple-theme');
+    } else {
+      document.documentElement.classList.add('purple-theme');
+    }
+  }, [useBasecampTheme]);
+
+  // Initial theme setup on component mount
+  useEffect(() => {
+    if (!useBasecampTheme) {
+      document.documentElement.classList.add('purple-theme');
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -47,24 +68,28 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     return location === path;
   };
 
-  const getNavItemClasses = (path: string) => {
-    const baseClasses = "flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-colors";
+  const getNavLinkClass = (path: string) => {
+    const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
     
-    if (isActive(path)) {
+    if (useBasecampTheme) {
+      // Basecamp theme - rounded corners, yellow accents
       return cn(
-        baseClasses,
-        theme === "basecamp" 
+        baseClass,
+        "rounded-lg",
+        isActive(path) 
           ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-          : "bg-purple-600 text-white"
+          : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
+      );
+    } else {
+      // Purple theme (original) - smaller rounded corners, purple accents
+      return cn(
+        baseClass,
+        "rounded-md",
+        isActive(path) 
+          ? "bg-purple-600 text-white shadow-sm" 
+          : "text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-900 dark:hover:text-purple-300"
       );
     }
-    
-    return cn(
-      baseClasses,
-      theme === "basecamp"
-        ? "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
-        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-    );
   };
 
   return (
@@ -80,7 +105,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div 
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-xl border-r border-gray-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col sidebar-consistent",
+          "fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col",
+          "font-inter shadow-sm",
           // Always show on desktop (768px+), slide on mobile
           "transform",
           isDesktop ? "translate-x-0 z-30" : (isOpen ? "translate-x-0 z-50" : "-translate-x-full z-50")
@@ -90,79 +116,77 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {!isDesktop && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
           >
-            <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <X className="w-5 h-5 text-slate-700 dark:text-slate-300" />
           </button>
         )}
 
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <img 
-                src={logoImage} 
-                alt="MusoBuddy Logo" 
-                className="w-10 h-10 object-contain rounded-lg shadow-lg"
-              />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">MusoBuddy</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Less admin, more music</p>
-              </div>
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center space-x-3">
+            <img 
+              src={logoImage} 
+              alt="MusoBuddy Logo" 
+              className="w-10 h-10 object-contain rounded-lg"
+            />
+            <div>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">MusoBuddy</h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Less admin, more music</p>
             </div>
-            <ThemeToggle />
           </div>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
-          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/dashboard")}>
+          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/dashboard")}>
             <Home className="w-5 h-5" />
             <span>Dashboard</span>
           </Link>
-          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/bookings")}>
+          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/bookings")}>
             <Inbox className="w-5 h-5" />
             <span>Bookings</span>
           </Link>
-          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/address-book")}>
+          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/address-book")}>
             <Users className="w-5 h-5" />
             <span>Address Book</span>
           </Link>
-          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/contracts")}>
+          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/contracts")}>
             <FileText className="w-5 h-5" />
             <span>Contracts</span>
           </Link>
-          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/invoices")}>
+          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/invoices")}>
             <PoundSterling className="w-5 h-5" />
             <span>Invoices</span>
           </Link>
-          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/compliance")}>
+
+          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/compliance")}>
             <Shield className="w-5 h-5" />
             <span>Compliance</span>
           </Link>
-          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/pricing")}>
+          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/pricing")}>
             <Crown className="w-5 h-5" />
             <span>Upgrade ⭐</span>
           </Link>
-          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/settings")}>
+          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/settings")}>
             <Settings className="w-5 h-5" />
             <span>Settings</span>
           </Link>
-          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/templates")}>
+          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/templates")}>
             <MessageSquare className="w-5 h-5" />
             <span>Templates</span>
           </Link>
-          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/unparseable-messages")}>
+          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/unparseable-messages")}>
             <AlertTriangle className="w-5 h-5" />
             <span>Review Messages</span>
           </Link>
-          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/user-guide")}>
+          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/user-guide")}>
             <BookOpen className="w-5 h-5" />
             <span>User Guide</span>
           </Link>
           {/* Beta Feedback section - only show for beta testers and admin */}
           {(user?.isBetaTester || user?.isAdmin) && (
-            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/feedback")}>
+            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/feedback")}>
               <MessageSquare className="w-5 h-5" />
               <span>Beta Feedback</span>
             </Link>
@@ -170,7 +194,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           
           {/* Admin section - only show for admin users */}
           {user?.isAdmin && (
-            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={getNavItemClasses("/admin")}>
+            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/admin")}>
               <Crown className="w-5 h-5" />
               <span>Admin</span>
             </Link>
@@ -178,39 +202,48 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          {/* Theme Toggle and Design Toggle Row */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <button
+                onClick={() => setUseBasecampTheme(!useBasecampTheme)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+                title={`Switch to ${useBasecampTheme ? 'Original Purple' : 'Basecamp Yellow'} design`}
+              >
+                <Palette className={cn("w-4 h-4", useBasecampTheme ? "text-yellow-600" : "text-purple-600")} />
+              </button>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-2 py-1 rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm font-medium">Logout</span>
+            </button>
+          </div>
+          
+          {/* User Info */}
           <div className="flex items-center space-x-3">
             {user?.profileImageUrl ? (
               <img 
                 src={user.profileImageUrl} 
                 alt="Profile" 
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-10 h-10 rounded-full object-cover shadow-sm"
               />
             ) : (
-              <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center",
-                theme === "basecamp" ? "bg-basecamp-yellow" : "bg-purple-600"
-              )}>
-                <User className={cn(
-                  "w-5 h-5",
-                  theme === "basecamp" ? "text-slate-900" : "text-white"
-                )} />
+              <div className="w-10 h-10 bg-slate-600 dark:bg-slate-700 rounded-full flex items-center justify-center shadow-sm">
+                <User className="w-5 h-5 text-white" />
               </div>
             )}
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {user?.firstName || user?.email || "User"}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Musician</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Musician</p>
             </div>
-            <button 
-              onClick={handleLogout}
-              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 rounded transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm">Logout</span>
-            </button>
           </div>
         </div>
       </div>
