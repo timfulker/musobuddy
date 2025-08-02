@@ -72,13 +72,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
     
     if (useBasecampTheme) {
-      // Basecamp theme - rounded corners, yellow accents
+      // Basecamp theme - green/yellow/black colors
       return cn(
         baseClass,
         "rounded-lg",
         isActive(path) 
-          ? "bg-basecamp-yellow text-slate-900 shadow-sm" 
-          : "text-slate-700 dark:text-slate-300 hover:bg-basecamp-yellow/20 hover:text-slate-900 dark:hover:bg-basecamp-yellow/10 dark:hover:text-slate-200"
+          ? "bg-basecamp-green text-white shadow-sm" 
+          : "text-black dark:text-white hover:bg-basecamp-green/20 hover:text-black dark:hover:bg-basecamp-green/10 dark:hover:text-white"
       );
     } else {
       // Purple theme (original) - exact behavior from backup
@@ -226,9 +226,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <button
                 onClick={() => setUseBasecampTheme(!useBasecampTheme)}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
-                title={`Switch to ${useBasecampTheme ? 'Original Purple' : 'Basecamp Yellow'} design`}
+                title={`Switch to ${useBasecampTheme ? 'Purple Theme' : 'Basecamp Green'} design`}
               >
-                <Palette className={cn("w-4 h-4", useBasecampTheme ? "text-yellow-600" : "text-purple-600")} />
+                <Palette className={cn("w-4 h-4", useBasecampTheme ? "text-green-600" : "text-purple-600")} />
               </button>
             </div>
             <button 

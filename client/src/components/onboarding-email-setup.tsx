@@ -232,7 +232,7 @@ export default function OnboardingEmailSetup({ onComplete, onSkip }: OnboardingE
             </div>
           </div>
           <div className="flex gap-3">
-            <ArrowRight className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+            <ArrowRight className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-medium">Never Miss Opportunities</p>
               <p className="text-sm text-gray-600">All inquiries captured even when you're away</p>

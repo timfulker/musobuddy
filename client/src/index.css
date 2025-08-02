@@ -144,40 +144,40 @@ button, input, select, textarea {
 }
 
 :root {
-  /* Basecamp-inspired clean design theme */
-  --background: #f5f5f5;  /* neutral light background */
-  --foreground: #2d2d2d;  /* primary dark text */
-  --muted: hsl(220, 14.3%, 95.9%);
-  --muted-foreground: #666666;  /* softer gray */
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: #2d2d2d;
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: #2d2d2d;
-  --border: hsl(220, 13%, 91%);
-  --input: hsl(220, 13%, 91%);
-  --primary: #2d2d2d;  /* basecamp dark */
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(220, 14.3%, 95.9%);
-  --secondary-foreground: #2d2d2d;
-  --accent: #ffd500;  /* basecamp yellow */
-  --accent-foreground: #2d2d2d;
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: #ffd500;  /* basecamp yellow for focus rings */
-  --radius: 1rem;
-  --chart-1: #ffd500;
-  --chart-2: #ffdb33;
-  --chart-3: #e6c200;
-  --chart-4: #ccaa00;
-  --chart-5: #b39900;
-  --sidebar-background: hsl(0, 0%, 98%);
-  --sidebar-foreground: #2d2d2d;
-  --sidebar-primary: #2d2d2d;
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: #ffd500;
-  --sidebar-accent-foreground: #2d2d2d;
-  --sidebar-border: hsl(220, 13%, 91%);
-  --sidebar-ring: #ffd500;
+  /* Basecamp-inspired green/yellow/black theme */
+  --background: #ffffff;  /* pure white background */
+  --foreground: #000000;  /* pure black text */
+  --muted: #f8f9fa;  /* very light gray */
+  --muted-foreground: #6c757d;  /* medium gray */
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --border: #dee2e6;  /* light gray border */
+  --input: #dee2e6;
+  --primary: #28a745;  /* basecamp green from image */
+  --primary-foreground: #ffffff;
+  --secondary: #f8f9fa;
+  --secondary-foreground: #000000;
+  --accent: #ffc107;  /* basecamp yellow from image */
+  --accent-foreground: #000000;
+  --destructive: #dc3545;  /* red for errors */
+  --destructive-foreground: #ffffff;
+  --ring: #28a745;  /* green focus rings */
+  --radius: 0.375rem;  /* smaller radius for clean look */
+  --chart-1: #28a745;  /* green */
+  --chart-2: #ffc107;  /* yellow */
+  --chart-3: #000000;  /* black */
+  --chart-4: #6c757d;  /* gray */
+  --chart-5: #dee2e6;  /* light gray */
+  --sidebar-background: #ffffff;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #28a745;  /* green for active items */
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffc107;  /* yellow accent */
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #dee2e6;
+  --sidebar-ring: #28a745;
 }
 
 /* Original Purple Theme - from backup file */
@@ -232,40 +232,40 @@ button, input, select, textarea {
 }
 
 .dark {
-  /* Basecamp-inspired dark theme */
-  --background: #1e1e1e;  /* dark background */
-  --foreground: #ffffff;  /* white text for dark mode */
-  --muted: hsl(217, 10%, 25%);
-  --muted-foreground: #cccccc;  /* lighter gray for dark mode */
-  --popover: #2d2d2d;
+  /* Basecamp dark theme - green/yellow/white */
+  --background: #000000;  /* pure black background */
+  --foreground: #ffffff;  /* white text */
+  --muted: #1a1a1a;  /* very dark gray */
+  --muted-foreground: #a0a0a0;  /* light gray */
+  --popover: #1a1a1a;
   --popover-foreground: #ffffff;
-  --card: #2d2d2d;  /* dark cards */
+  --card: #1a1a1a;  /* dark cards */
   --card-foreground: #ffffff;
-  --border: hsl(217, 10%, 40%);
-  --input: hsl(217, 10%, 40%);
-  --primary: #ffffff;  /* white for primary in dark mode */
-  --primary-foreground: #2d2d2d;  /* dark text on white buttons */
-  --secondary: hsl(217, 10%, 25%);
+  --border: #333333;  /* dark gray borders */
+  --input: #333333;
+  --primary: #34ce57;  /* lighter green for dark mode */
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
   --secondary-foreground: #ffffff;
-  --accent: #ffd500;  /* keep the basecamp yellow */
-  --accent-foreground: #2d2d2d;  /* dark text on yellow */
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: #ffd500;  /* basecamp yellow for focus rings */
-  --radius: 1rem;
-  --chart-1: #ffd500;
-  --chart-2: #ffdb33;
-  --chart-3: #e6c200;
-  --chart-4: #ccaa00;
-  --chart-5: #b39900;
-  --sidebar-background: #1a1a1a;
+  --accent: #ffc107;  /* keep the yellow */
+  --accent-foreground: #000000;
+  --destructive: #dc3545;
+  --destructive-foreground: #ffffff;
+  --ring: #34ce57;  /* green focus rings */
+  --radius: 0.375rem;
+  --chart-1: #34ce57;  /* light green */
+  --chart-2: #ffc107;  /* yellow */
+  --chart-3: #ffffff;  /* white */
+  --chart-4: #a0a0a0;  /* light gray */
+  --chart-5: #333333;  /* dark gray */
+  --sidebar-background: #000000;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #ffffff;
-  --sidebar-primary-foreground: #2d2d2d;
-  --sidebar-accent: #ffd500;
-  --sidebar-accent-foreground: #2d2d2d;
-  --sidebar-border: hsl(217, 10%, 40%);
-  --sidebar-ring: #ffd500;
+  --sidebar-primary: #34ce57;  /* light green for active items */
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #ffc107;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #333333;
+  --sidebar-ring: #34ce57;
 }
 
 /* Purple Theme Dark Mode - from backup file */
@@ -332,29 +332,37 @@ button, input, select, textarea {
 }
 
 @layer utilities {
-  /* Basecamp theme utilities */
+  /* Basecamp theme utilities - green/yellow/black */
+  .bg-basecamp-green {
+    background-color: #28a745;
+  }
+  
   .bg-basecamp-yellow {
-    background-color: #ffd500;
+    background-color: #ffc107;
   }
   
-  .bg-basecamp-yellow\/20 {
-    background-color: rgba(255, 213, 0, 0.2);
+  .bg-basecamp-green\/20 {
+    background-color: rgba(40, 167, 69, 0.2);
   }
   
-  .bg-basecamp-yellow\/10 {
-    background-color: rgba(255, 213, 0, 0.1);
+  .bg-basecamp-green\/10 {
+    background-color: rgba(40, 167, 69, 0.1);
+  }
+  
+  .text-basecamp-green {
+    color: #28a745;
   }
   
   .text-basecamp-yellow {
-    color: #ffd500;
+    color: #ffc107;
   }
   
-  .hover\:bg-basecamp-yellow\/20:hover {
-    background-color: rgba(255, 213, 0, 0.2);
+  .hover\:bg-basecamp-green\/20:hover {
+    background-color: rgba(40, 167, 69, 0.2);
   }
   
-  .hover\:bg-basecamp-yellow\/10:hover {
-    background-color: rgba(255, 213, 0, 0.1);
+  .hover\:bg-basecamp-green\/10:hover {
+    background-color: rgba(40, 167, 69, 0.1);
   }
 }
 

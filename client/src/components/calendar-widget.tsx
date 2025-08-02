@@ -55,7 +55,7 @@ export default function CalendarWidget() {
       case 'client_confirms': return "bg-blue-50 text-blue-900 border-blue-200";
       case 'confirmed': return "bg-green-50 text-green-900 border-green-200";
       case 'rejected': return "bg-red-50 text-red-900 border-red-200";
-      case 'completed': return "bg-purple-50 text-purple-900 border-purple-200";
+      case 'completed': return "bg-green-50 text-green-900 border-green-200";
       default: return "bg-gray-50 text-gray-900 border-gray-200";
     }
   };
@@ -68,7 +68,7 @@ export default function CalendarWidget() {
       case 'client_confirms': return "text-blue-600";
       case 'confirmed': return "text-green-600";
       case 'rejected': return "text-red-600";
-      case 'completed': return "text-purple-600";
+      case 'completed': return "text-green-600";
       default: return "text-gray-600";
     }
   };
