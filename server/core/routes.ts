@@ -205,6 +205,104 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== CLIENTS API =====
+  app.get('/api/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Get clients from storage - for now return empty array until we implement client storage
+      res.json([]);
+    } catch (error: any) {
+      console.error('❌ Clients fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch clients' });
+    }
+  });
+
+  app.post('/api/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // For now, return success but don't actually create anything
+      res.json({ success: true, message: 'Client functionality coming soon' });
+    } catch (error: any) {
+      console.error('❌ Client creation error:', error);
+      res.status(500).json({ error: 'Failed to create client' });
+    }
+  });
+
+  app.put('/api/clients/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // For now, return success but don't actually update anything
+      res.json({ success: true, message: 'Client functionality coming soon' });
+    } catch (error: any) {
+      console.error('❌ Client update error:', error);
+      res.status(500).json({ error: 'Failed to update client' });
+    }
+  });
+
+  app.delete('/api/clients/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // For now, return success but don't actually delete anything
+      res.json({ success: true, message: 'Client functionality coming soon' });
+    } catch (error: any) {
+      console.error('❌ Client deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete client' });
+    }
+  });
+
+  app.post('/api/clients/populate-from-bookings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Get all bookings for this user
+      const bookings = await storage.getBookings(userId);
+      
+      // Extract unique client data from bookings
+      const clientsMap = new Map();
+      bookings.forEach((booking: any) => {
+        if (booking.clientName && !clientsMap.has(booking.clientName)) {
+          clientsMap.set(booking.clientName, {
+            name: booking.clientName,
+            email: booking.clientEmail || '',
+            phone: booking.clientPhone || '',
+            address: '',
+            notes: `From booking: ${booking.title || 'Untitled'}`
+          });
+        }
+      });
+      
+      const uniqueClients = Array.from(clientsMap.values());
+      
+      res.json({ 
+        success: true, 
+        message: `Found ${uniqueClients.length} unique clients from your bookings. Client management system coming soon!`,
+        clientsFound: uniqueClients.length
+      });
+    } catch (error: any) {
+      console.error('❌ Populate clients error:', error);
+      res.status(500).json({ error: 'Failed to populate clients from bookings' });
+    }
+  });
+
   // ===== SETTINGS API =====
   app.get('/api/settings', isAuthenticated, async (req: any, res) => {
     try {

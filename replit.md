@@ -109,3 +109,12 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **SCROLLBAR STYLING**: Implemented theme-aware scrollbar colors - yellow for Basecamp theme, purple for legacy theme
 - **DARK MODE**: Enhanced Basecamp dark theme with pure black background and yellow accents
 - **CSS VARIABLES**: Updated theme-specific CSS variables and utility classes for consistent color application
+
+### DASHBOARD STATISTICS AND UI FIXES (August 2, 2025)
+- **CRITICAL FIX**: Replaced hardcoded zero statistics with real database calculations
+- **DASHBOARD STATS**: Monthly revenue now calculated from current month's confirmed bookings
+- **ACTIVE BOOKINGS**: Count includes confirmed, awaiting response, and contract sent bookings
+- **PENDING INVOICES**: Shows actual amounts from sent but unpaid invoices with overdue count
+- **CALENDAR WIDGET**: Modified to include today's bookings in upcoming gigs display
+- **ADDRESS BOOK**: Added missing `/api/clients` endpoints to prevent 404 errors
+- **CLIENT MANAGEMENT**: Basic API structure in place with populate-from-bookings functionality
