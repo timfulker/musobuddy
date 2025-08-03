@@ -23,6 +23,63 @@ import { useTheme, themes, type ThemeName } from "@/hooks/useTheme";
 // Import instrument presets
 import { INSTRUMENT_GIG_PRESETS, getGigTypeNamesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
 
+// Theme templates for PDF generation
+const THEME_TEMPLATES = [
+  {
+    id: 'professional',
+    label: 'Professional',
+    description: 'Clean business style with formal layout'
+  },
+  {
+    id: 'friendly',
+    label: 'Friendly',
+    description: 'Warm and approachable tone'
+  },
+  {
+    id: 'musical',
+    label: 'Musical',
+    description: 'Creative style with music focus'
+  }
+];
+
+const THEME_TONES = [
+  {
+    id: 'formal',
+    label: 'Formal',
+    description: 'Professional business language'
+  },
+  {
+    id: 'friendly',
+    label: 'Friendly',
+    description: 'Warm and personable tone'
+  },
+  {
+    id: 'creative',
+    label: 'Creative',
+    description: 'Artistic and expressive style'
+  }
+];
+
+const THEME_FONTS = [
+  {
+    id: 'serif',
+    label: 'Serif',
+    description: 'Traditional, formal appearance'
+  },
+  {
+    id: 'sans-serif',
+    label: 'Sans Serif',
+    description: 'Modern, clean appearance'
+  },
+  {
+    id: 'script',
+    label: 'Script',
+    description: 'Elegant, handwritten style'
+  }
+];
+
+const THEME_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+
 
 
 // Schema for form validation - includes all fields we want to save
