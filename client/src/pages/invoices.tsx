@@ -1485,10 +1485,9 @@ export default function Invoices() {
                       </Button>
                       <Button 
                         size="sm" 
-                        variant="outline" 
-                        className="text-xs whitespace-nowrap min-w-[60px]" 
+                        className="text-xs whitespace-nowrap text-white min-w-[60px]" 
                         style={{ 
-                          color: colors.primary, 
+                          backgroundColor: colors.primary, 
                           borderColor: colors.primary 
                         }}
                         onClick={() => handleEditInvoice(invoice)}
@@ -1540,10 +1539,9 @@ export default function Invoices() {
                       </Button>
                       <Button 
                         size="sm" 
-                        variant="outline" 
-                        className="text-xs whitespace-nowrap min-w-[60px]" 
+                        className="text-xs whitespace-nowrap text-white min-w-[60px]" 
                         style={{ 
-                          color: colors.primary, 
+                          backgroundColor: colors.primary, 
                           borderColor: colors.primary 
                         }}
                         onClick={() => handleEditInvoice(invoice)}
@@ -1587,16 +1585,10 @@ export default function Invoices() {
                       </Button>
                       <Button 
                         size="sm" 
-                        variant="outline" 
-                        className={`text-xs whitespace-nowrap min-w-[60px] ${
-                          theme.id === 'purple' || theme.id === 'midnight-blue' 
-                            ? 'text-white' 
-                            : 'text-primary hover:text-primary/80'
-                        }`}
-                        style={{
-                          backgroundColor: theme.id === 'purple' || theme.id === 'midnight-blue' ? colors.primary : undefined,
-                          color: theme.id === 'purple' || theme.id === 'midnight-blue' ? 'white' : colors.primary,
-                          borderColor: colors.primary
+                        className="text-xs whitespace-nowrap text-white min-w-[60px]" 
+                        style={{ 
+                          backgroundColor: colors.primary, 
+                          borderColor: colors.primary 
                         }}
                         onClick={() => handleEditInvoice(invoice)}
                       >
