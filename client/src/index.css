@@ -1255,3 +1255,19 @@ html body [class*="theme-"] .sidebar .bg-primary span {
   visibility: visible !important;
   display: flex !important;
 }
+
+/* Fix sidebar inactive link visibility for dark themes */
+.theme-midnight-blue .sidebar a:not(.bg-primary),
+.theme-midnight-blue .sidebar a:not(.bg-primary) *,
+.theme-purple .sidebar a:not(.bg-primary),
+.theme-purple .sidebar a:not(.bg-primary) * {
+  color: rgb(148 163 184) !important; /* slate-400 */
+}
+
+/* Hover states for sidebar links in dark themes */
+.theme-midnight-blue .sidebar a:not(.bg-primary):hover,
+.theme-midnight-blue .sidebar a:not(.bg-primary):hover *,
+.theme-purple .sidebar a:not(.bg-primary):hover,
+.theme-purple .sidebar a:not(.bg-primary):hover * {
+  color: rgb(203 213 225) !important; /* slate-300 */
+}

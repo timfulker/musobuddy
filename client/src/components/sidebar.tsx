@@ -55,7 +55,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       "rounded-lg", // 8px border radius as documented
       isActive(path) 
         ? "bg-primary text-white shadow-sm" // Active state: theme color background with white text
-        : "text-slate-700 dark:text-slate-300 hover:bg-primary/10 hover:text-white" // Inactive: dark text with white text on hover
+        : "text-slate-700 dark:text-slate-300 hover:bg-primary/10 hover:text-slate-700 dark:hover:text-slate-200" // Inactive: ensure proper contrast
     );
   };
 
