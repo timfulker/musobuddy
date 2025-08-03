@@ -220,12 +220,13 @@ export const contracts = pgTable("contracts", {
   // Contract management
   status: varchar("status").notNull().default("draft"), // draft, sent, signed, completed
   signedAt: timestamp("signed_at"),
+  sentAt: timestamp("sent_at"), // When contract was sent
   
-  // PHASE 2: Automatic reminder system (commented out for manual-only phase 1)
-  // reminderEnabled: boolean("reminder_enabled").default(false),
-  // reminderDays: integer("reminder_days").default(3), // Days between reminders
-  // lastReminderSent: timestamp("last_reminder_sent"),
-  // reminderCount: integer("reminder_count").default(0),
+  // PHASE 2: Automatic reminder system (now enabled in database)
+  reminderEnabled: boolean("reminder_enabled").default(false),
+  reminderDays: integer("reminder_days").default(3), // Days between reminders
+  lastReminderSent: timestamp("last_reminder_sent"),
+  reminderCount: integer("reminder_count").default(0),
   
   // Cloud storage for documents and signing pages
   cloudStorageUrl: text("cloud_storage_url"), // URL for contract PDF
