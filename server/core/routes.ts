@@ -7,6 +7,284 @@ import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 import { aiResponseGenerator } from './ai-response-generator.js';
 import QRCode from 'qrcode';
 
+// Theme preview HTML generator
+function generateThemePreviewHTML(themeSettings: any): string {
+  const {
+    template,
+    tone,
+    font,
+    accentColor,
+    customTitle,
+    showSetlist,
+    showRiderNotes,
+    showQrCode,
+    showTerms,
+    businessName,
+    businessAddress,
+    businessPhone,
+    businessEmail
+  } = themeSettings;
+
+  // Font families mapping
+  const fontFamily = {
+    'times': '"Times New Roman", serif',
+    'arial': 'Arial, sans-serif',
+    'helvetica': 'Helvetica, sans-serif',
+    'georgia': 'Georgia, serif',
+    'roboto': '"Roboto", sans-serif'
+  }[font] || '"Roboto", sans-serif';
+
+  // Template styles
+  const templateStyles = {
+    classic: {
+      headerBg: accentColor,
+      headerColor: '#ffffff',
+      borderStyle: `3px solid ${accentColor}`,
+      sectionHeaderColor: accentColor
+    },
+    modern: {
+      headerBg: `linear-gradient(135deg, ${accentColor}, #667eea)`,
+      headerColor: '#ffffff',
+      borderStyle: `2px solid ${accentColor}`,
+      sectionHeaderColor: accentColor
+    },
+    minimal: {
+      headerBg: '#f8f9fa',
+      headerColor: accentColor,
+      borderStyle: `1px solid ${accentColor}`,
+      sectionHeaderColor: accentColor
+    }
+  }[template] || {
+    headerBg: accentColor,
+    headerColor: '#ffffff',
+    borderStyle: `3px solid ${accentColor}`,
+    sectionHeaderColor: accentColor
+  };
+
+  // Tone-based content
+  const toneContent = {
+    professional: {
+      greeting: 'Dear Client,',
+      closing: 'Thank you for your business.',
+      terms: 'Payment is due within 30 days of invoice date. Late fees may apply.'
+    },
+    friendly: {
+      greeting: 'Hi there!',
+      closing: 'Looking forward to working with you!',
+      terms: 'Payment due in 30 days - just drop me a line if you have any questions!'
+    },
+    creative: {
+      greeting: 'Hey music lover!',
+      closing: 'Let\'s make some magic happen!',
+      terms: 'Payment due within 30 days. Can\'t wait to rock your event!'
+    }
+  }[tone] || {
+    greeting: 'Dear Client,',
+    closing: 'Thank you for your business.',
+    terms: 'Payment is due within 30 days of invoice date.'
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Theme Preview - ${customTitle}</title>
+      <style>
+        body {
+          font-family: ${fontFamily};
+          line-height: 1.6;
+          color: #333;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 30px;
+          background: white;
+        }
+        .header {
+          background: ${templateStyles.headerBg};
+          color: ${templateStyles.headerColor};
+          text-align: center;
+          padding: 30px;
+          border-radius: 8px;
+          margin-bottom: 40px;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          font-weight: bold;
+        }
+        .header h2 {
+          margin: 10px 0 0 0;
+          font-size: 16px;
+          opacity: 0.9;
+        }
+        .business-info {
+          text-align: center;
+          margin-bottom: 30px;
+          padding: 20px;
+          background: #f8f9fa;
+          border-radius: 8px;
+        }
+        .section {
+          margin-bottom: 30px;
+          padding: 20px;
+          border: ${templateStyles.borderStyle};
+          border-radius: 8px;
+        }
+        .section h3 {
+          color: ${templateStyles.sectionHeaderColor};
+          margin-top: 0;
+          font-size: 18px;
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 10px;
+        }
+        .details-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          margin: 20px 0;
+        }
+        .detail-item {
+          margin-bottom: 10px;
+        }
+        .label {
+          font-weight: bold;
+          color: #555;
+        }
+        .value {
+          color: #333;
+          margin-left: 10px;
+        }
+        .fee-highlight {
+          background: #f0f8ff;
+          padding: 20px;
+          border-radius: 8px;
+          text-align: center;
+          margin: 20px 0;
+          border: 2px solid ${accentColor};
+        }
+        .fee-amount {
+          font-size: 24px;
+          font-weight: bold;
+          color: ${accentColor};
+        }
+        .optional-section {
+          background: #f9f9f9;
+          padding: 15px;
+          border-radius: 6px;
+          margin: 15px 0;
+          border-left: 4px solid ${accentColor};
+        }
+        .terms {
+          background: #f9f9f9;
+          padding: 20px;
+          border-radius: 8px;
+          font-size: 14px;
+          border: 1px solid #ddd;
+        }
+        .preview-badge {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: ${accentColor};
+          color: white;
+          padding: 10px 15px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: bold;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+      </style>
+    </head>
+    <body>
+      <div class="preview-badge">THEME PREVIEW</div>
+      
+      <div class="header">
+        <h1>${customTitle.toUpperCase()}</h1>
+        <h2>Preview of ${template} template with ${tone} tone</h2>
+      </div>
+
+      <div class="business-info">
+        <h3>${businessName}</h3>
+        <p>${businessAddress}</p>
+        <p>${businessPhone} • ${businessEmail}</p>
+      </div>
+
+      <div class="section">
+        <h3>Sample Event Details</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="label">Event:</span>
+            <span class="value">Wedding Reception</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Date:</span>
+            <span class="value">Saturday, June 15, 2024</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Time:</span>
+            <span class="value">6:00 PM - 11:00 PM</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Venue:</span>
+            <span class="value">Grand Ballroom Hotel</span>
+          </div>
+        </div>
+        
+        <div class="fee-highlight">
+          <div class="fee-amount">£650.00</div>
+          <p>Total Performance Fee</p>
+        </div>
+      </div>
+
+      ${showSetlist ? `
+      <div class="section optional-section">
+        <h3>Setlist</h3>
+        <p>• First Dance: "Perfect" - Ed Sheeran</p>
+        <p>• Reception Set: Mix of classic hits and modern favorites</p>
+        <p>• Last Dance: "Don't Stop Me Now" - Queen</p>
+      </div>
+      ` : ''}
+
+      ${showRiderNotes ? `
+      <div class="section optional-section">
+        <h3>Technical Requirements</h3>
+        <p>• Power supply: 2x 13A sockets required</p>
+        <p>• Space requirements: 3m x 2m minimum</p>
+        <p>• Load-in time: 1 hour before performance</p>
+      </div>
+      ` : ''}
+
+      ${showQrCode ? `
+      <div class="section optional-section">
+        <h3>Quick Links</h3>
+        <p>Scan QR code for playlist requests and social media</p>
+        <div style="text-align: center; padding: 20px;">
+          <div style="width: 100px; height: 100px; background: #f0f0f0; border: 2px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;">
+            QR CODE
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
+      <div class="section">
+        <p>${toneContent.greeting}</p>
+        <p>This preview shows how your ${customTitle.toLowerCase()} will look with the selected theme settings. Your actual documents will include real booking details and personalized content.</p>
+        <p>${toneContent.closing}</p>
+      </div>
+
+      ${showTerms ? `
+      <div class="terms">
+        <h4>Terms & Conditions</h4>
+        <p>${toneContent.terms}</p>
+        <p>Cancellation policy: 48 hours notice required for full refund.</p>
+      </div>
+      ` : ''}
+    </body>
+    </html>
+  `;
+}
+
 // Removed AI gig generation function - feature moved to documentation
 
 // ENHANCED AUTHENTICATION MIDDLEWARE - With debugging for development
@@ -4013,6 +4291,77 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error('QR code generation error:', error);
       res.status(500).json({ error: 'Failed to generate QR code' });
+    }
+  });
+
+  // Theme preview endpoint
+  app.post('/api/theme-preview', isAuthenticated, async (req: any, res) => {
+    try {
+      const { 
+        template = 'classic',
+        tone = 'professional', 
+        font = 'roboto',
+        accentColor = '#673ab7',
+        customTitle = 'Invoice',
+        showSetlist = false,
+        showRiderNotes = false,
+        showQrCode = false,
+        showTerms = true,
+        businessName = 'Your Business',
+        businessAddress = 'Your Address',
+        businessPhone = 'Your Phone',
+        businessEmail = 'your@email.com'
+      } = req.body;
+
+      console.log('🎨 Generating theme preview with settings:', { template, tone, font, accentColor });
+
+      // Generate theme preview PDF using Puppeteer
+      const puppeteer = await import('puppeteer');
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+
+      const page = await browser.newPage();
+      
+      // Generate theme-aware HTML
+      const html = generateThemePreviewHTML({
+        template,
+        tone,
+        font,
+        accentColor,
+        customTitle,
+        showSetlist,
+        showRiderNotes,
+        showQrCode,
+        showTerms,
+        businessName,
+        businessAddress,
+        businessPhone,
+        businessEmail
+      });
+
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+      });
+
+      await browser.close();
+
+      console.log('✅ Theme preview PDF generated:', pdfBuffer.length, 'bytes');
+
+      // Return PDF as blob
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="theme-preview.pdf"');
+      res.send(pdfBuffer);
+
+    } catch (error: any) {
+      console.error('❌ Theme preview generation error:', error);
+      res.status(500).json({ error: 'Failed to generate theme preview' });
     }
   });
 
