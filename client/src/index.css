@@ -205,37 +205,45 @@ body {
 /* Remove theme-specific overrides - now handled by universal rules above */
 
 /* Ensure inactive sidebar items are visible with proper contrast */
-[class*="theme-"] .sidebar a:not(.bg-primary) {
+[class*="theme-"] .sidebar a:not(.bg-primary),
+[class*="theme-"] .sidebar a:not(.bg-primary) *,
+[class*="theme-"] .sidebar button:not(.bg-primary),
+[class*="theme-"] .sidebar button:not(.bg-primary) * {
   color: #334155 !important; /* slate-700 for good contrast */
 }
 
-[class*="theme-"] .dark .sidebar a:not(.bg-primary) {
+[class*="theme-"] .dark .sidebar a:not(.bg-primary),
+[class*="theme-"] .dark .sidebar a:not(.bg-primary) *,
+[class*="theme-"] .dark .sidebar button:not(.bg-primary),
+[class*="theme-"] .dark .sidebar button:not(.bg-primary) * {
   color: #cbd5e1 !important; /* slate-300 for dark mode */
 }
 
 /* Hover states for inactive items - theme color background with white text */
-[class*="theme-"] .sidebar a:hover:not(.bg-primary) {
+[class*="theme-"] .sidebar a:hover:not(.bg-primary),
+[class*="theme-"] .sidebar a:hover:not(.bg-primary) *,
+[class*="theme-"] .sidebar button:hover:not(.bg-primary),
+[class*="theme-"] .sidebar button:hover:not(.bg-primary) * {
   background-color: var(--theme-primary) !important;
   color: white !important;
 }
 
-/* Active states - full theme color background */
-[class*="theme-"] .sidebar .bg-primary {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-}
-
-/* Theme-specific text color overrides for selected items */
-/* Dark themes need white text for readability */
+/* CRITICAL: Active states with maximum specificity for selected items */
+html[class*="theme-"] .sidebar .bg-primary,
+html[class*="theme-"] .sidebar .bg-primary *,
+html[class*="theme-"] .sidebar .bg-primary span,
+html[class*="theme-"] .sidebar .bg-primary div,
+html[class*="theme-"] .sidebar a.bg-primary,
+html[class*="theme-"] .sidebar a.bg-primary *,
+html[class*="theme-"] .sidebar button.bg-primary,
+html[class*="theme-"] .sidebar button.bg-primary *,
+body[class*="theme-"] .sidebar .bg-primary,
+body[class*="theme-"] .sidebar .bg-primary *,
+.theme-midnight-blue .sidebar .bg-primary,
+.theme-midnight-blue .sidebar .bg-primary *,
 .theme-purple .sidebar .bg-primary,
-.theme-midnight-blue .sidebar .bg-primary {
-  color: white !important;
-}
-
-/* Light themes can use white text too for consistency */
-.theme-ocean-blue .sidebar .bg-primary,
-.theme-forest-green .sidebar .bg-primary,
-.theme-clean-pro-audio .sidebar .bg-primary {
+.theme-purple .sidebar .bg-primary * {
+  background-color: var(--theme-primary) !important;
   color: white !important;
 }
 
@@ -1121,4 +1129,22 @@ a[class*="purple"]:hover,
   color: white !important;
   border-color: #6b7280 !important;
   border-width: 2px !important;
+}
+
+/* FINAL OVERRIDE: Force white text on ALL selected sidebar items */
+/* This rule has the highest specificity and should override everything */
+html body [class*="theme-"] .sidebar .bg-primary,
+html body [class*="theme-"] .sidebar .bg-primary *,
+html body .theme-midnight-blue .sidebar .bg-primary,
+html body .theme-midnight-blue .sidebar .bg-primary *,
+html body .theme-purple .sidebar .bg-primary,
+html body .theme-purple .sidebar .bg-primary *,
+html body .theme-ocean-blue .sidebar .bg-primary,
+html body .theme-ocean-blue .sidebar .bg-primary *,
+html body .theme-forest-green .sidebar .bg-primary,
+html body .theme-forest-green .sidebar .bg-primary *,
+html body .theme-clean-pro-audio .sidebar .bg-primary,
+html body .theme-clean-pro-audio .sidebar .bg-primary * {
+  color: white !important;
+  background-color: var(--theme-primary) !important;
 }
