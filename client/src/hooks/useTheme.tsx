@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type ThemeName = 'purple' | 'retro-vinyl' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio';
+export type ThemeName = 'purple' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio';
 
 export interface Theme {
   id: ThemeName;
@@ -40,24 +40,7 @@ export const themes: Record<ThemeName, Theme> = {
       body: 'system-ui, sans-serif'
     }
   },
-  'retro-vinyl': {
-    id: 'retro-vinyl',
-    name: 'Retro Vinyl',
-    description: 'Warm vintage aesthetic with cream and orange tones',
-    colors: {
-      primary: '#d17b0f',
-      secondary: '#578d8c',
-      accent: '#c9e3d4',
-      background: '#f5e9dc',
-      surface: '#ffffff',
-      text: '#40342a',
-      textSecondary: '#6b5b4e'
-    },
-    fonts: {
-      heading: '"DM Serif Display", serif',
-      body: '"Work Sans", sans-serif'
-    }
-  },
+
   'ocean-blue': {
     id: 'ocean-blue',
     name: 'Ocean Blue',

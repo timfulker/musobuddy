@@ -22,24 +22,7 @@
 }
 
 /* Theme-specific styles */
-.theme-retro-vinyl {
-  --theme-primary: #d17b0f !important;
-  --theme-secondary: #578d8c !important;
-  --theme-accent: #c9e3d4 !important;
-  --theme-background: #f5e9dc !important;
-  --theme-surface: #ffffff !important;
-  --theme-text: #40342a !important;
-  --theme-text-secondary: #6b5b4e !important;
-  --theme-font-heading: "DM Serif Display", serif !important;
-  --theme-font-body: "Work Sans", sans-serif !important;
-}
 
-/* Force retro vinyl theme application */
-.theme-retro-vinyl body {
-  background-color: #f5e9dc !important;
-  color: #40342a !important;
-  font-family: "Work Sans", sans-serif !important;
-}
 
 .theme-ocean-blue {
   --theme-primary: #0ea5e9;
@@ -90,28 +73,88 @@ body {
   color: var(--theme-text) !important;
 }
 
-/* Specific retro vinyl overrides - Maximum specificity */
-html.theme-retro-vinyl,
-html.theme-retro-vinyl body,
-.theme-retro-vinyl,
-.theme-retro-vinyl *,
-.theme-retro-vinyl .bg-background,
-.theme-retro-vinyl .min-h-screen,
-.theme-retro-vinyl .layout-consistent,
-.theme-retro-vinyl .main-content,
-.theme-retro-vinyl div,
-.theme-retro-vinyl main,
-.theme-retro-vinyl section {
-  background-color: #f5e9dc !important;
-  color: #40342a !important;
+/* Force theme colors on buttons and UI elements */
+.bg-primary {
+  background-color: var(--theme-primary) !important;
 }
 
-/* Override any remaining white backgrounds */
-.theme-retro-vinyl .bg-white,
-.theme-retro-vinyl .bg-card,
-.theme-retro-vinyl .bg-popover {
-  background-color: #ffffff !important;
+.text-primary {
+  color: var(--theme-primary) !important;
 }
+
+.border-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--theme-secondary) !important;
+}
+
+.text-secondary {
+  color: var(--theme-secondary) !important;
+}
+
+/* Theme-specific button and menu overrides */
+.theme-ocean-blue .bg-primary,
+.theme-ocean-blue button[class*="bg-primary"] {
+  background-color: #0ea5e9 !important;
+}
+
+.theme-ocean-blue .text-primary {
+  color: #0ea5e9 !important;
+}
+
+.theme-forest-green .bg-primary,
+.theme-forest-green button[class*="bg-primary"] {
+  background-color: #16a34a !important;
+}
+
+.theme-forest-green .text-primary {
+  color: #16a34a !important;
+}
+
+.theme-clean-pro-audio .bg-primary,
+.theme-clean-pro-audio button[class*="bg-primary"] {
+  background-color: #e53935 !important;
+}
+
+.theme-clean-pro-audio .text-primary {
+  color: #e53935 !important;
+}
+
+/* Comprehensive theme overrides for all UI elements */
+[class*="theme-"] .bg-violet-600,
+[class*="theme-"] .bg-purple-600,
+[class*="theme-"] .bg-primary {
+  background-color: var(--theme-primary) !important;
+}
+
+[class*="theme-"] .text-violet-600,
+[class*="theme-"] .text-purple-600,
+[class*="theme-"] .text-primary {
+  color: var(--theme-primary) !important;
+}
+
+[class*="theme-"] .border-violet-600,
+[class*="theme-"] .border-purple-600,
+[class*="theme-"] .border-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+/* Force override any hardcoded purple colors */
+[class*="theme-"] button,
+[class*="theme-"] .sidebar,
+[class*="theme-"] nav a,
+[class*="theme-"] .menu-item {
+  color: inherit !important;
+}
+
+[class*="theme-"] button[class*="primary"],
+[class*="theme-"] .primary-button {
+  background-color: var(--theme-primary) !important;
+}
+
+
 
 /* Ocean blue theme overrides */
 html.theme-ocean-blue,
