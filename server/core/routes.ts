@@ -2038,91 +2038,173 @@ export async function registerRoutes(app: Express) {
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
       
-      // CRITICAL FIX: Generate and store PDF immediately after contract creation
+      // ENHANCED AI PDF GENERATION WITH COMPREHENSIVE ERROR HANDLING
       try {
-        console.log('🎨 Generating PDF for newly created contract...');
+        console.log('🤖 Starting AI PDF generation with diagnostics...');
+        console.log('📊 AI PDF Generation Metrics:', {
+          timestamp: new Date().toISOString(),
+          userId: req.session?.userId,
+          contractTheme: contractData.contractTheme,
+          hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+          keyFormat: process.env.OPENAI_API_KEY?.substring(0, 7) + '...'
+        });
         
-        // Get user settings for PDF generation
+        // Validate OpenAI API key first
+        if (!process.env.OPENAI_API_KEY) {
+          console.warn('⚠️ OpenAI API key missing - falling back to standard PDF');
+          throw new Error('OpenAI API key not configured');
+        }
+        
+        // Get user settings with validation
         const userSettings = await storage.getUserSettings(req.session.userId);
+        if (!userSettings) {
+          console.warn('⚠️ User settings missing - using defaults');
+        }
         
-        // Generate PDF using AI-powered PDF generator
-        console.log('🤖 Using AI-powered PDF generation for contract theme:', contractData.contractTheme);
+        // Import AI PDF builder with error handling
+        let generateAIPDF;
+        try {
+          const aiModule = await import('./ai-pdf-builder');
+          generateAIPDF = aiModule.generateAIPDF;
+          
+          if (!generateAIPDF) {
+            throw new Error('generateAIPDF function not found in module');
+          }
+        } catch (importError: any) {
+          console.error('❌ Failed to import AI PDF builder:', importError);
+          throw new Error('AI PDF builder module failed to load');
+        }
         
-        const { generateAIPDF } = await import('./ai-pdf-builder');
+        // Prepare AI PDF data with comprehensive validation
         const pdfData = {
           type: 'contract' as const,
-          client: newContract.clientName,
-          eventDate: newContract.eventDate,
-          venue: newContract.venue,
-          fee: newContract.fee,
-          theme: newContract.contractTheme as 'professional' | 'friendly' | 'musical',
+          client: newContract.clientName || 'Unknown Client',
+          eventDate: newContract.eventDate || new Date().toISOString(),
+          venue: newContract.venue || 'TBD',
+          fee: newContract.fee || '0.00',
+          theme: (newContract.contractTheme as 'professional' | 'friendly' | 'musical') || 'professional',
           sections: [
             {
-              title: 'Performance Details',
-              content: `Date: ${newContract.eventDate}\nTime: ${newContract.eventTime} - ${newContract.eventEndTime}\nVenue: ${newContract.venue || 'TBD'}\nFee: £${newContract.fee}`
+              title: 'Event Details',
+              content: `Date: ${new Date(newContract.eventDate).toLocaleDateString('en-GB')}\nTime: ${newContract.eventTime || 'TBD'} - ${newContract.eventEndTime || 'TBD'}\nVenue: ${newContract.venue || 'TBD'}\nAddress: ${newContract.venueAddress || 'TBD'}`
+            },
+            {
+              title: 'Performance Fee',
+              content: `Performance Fee: £${newContract.fee}\nDeposit: £${newContract.deposit || '0.00'}\nBalance Due: £${(parseFloat(newContract.fee) - parseFloat(newContract.deposit || '0')).toFixed(2)}`
             },
             {
               title: 'Payment Terms',
-              content: newContract.paymentInstructions || 'Payment due within 30 days of performance date.'
+              content: newContract.paymentInstructions || 'Payment due within 30 days of performance date. Payment methods: Bank transfer or cash on the day.'
             },
             {
               title: 'Equipment & Requirements',
-              content: newContract.equipmentRequirements || 'Standard performance setup required.'
+              content: newContract.equipmentRequirements || 'Standard performance setup required. Power supply: 2x 13A sockets. Space required: 3m x 2m minimum.'
+            },
+            {
+              title: 'Special Requirements', 
+              content: newContract.specialRequirements || 'No special requirements specified.'
             }
           ],
           branding: {
             businessName: userSettings?.businessName || 'MusoBuddy User',
-            footerText: `Contract ${newContract.contractNumber}`,
+            footerText: `Contract ${newContract.contractNumber} | Generated ${new Date().toLocaleDateString('en-GB')}`
           }
         };
         
-        const pdfBuffer = await generateAIPDF(pdfData);
+        console.log('🤖 AI PDF data prepared:', {
+          type: pdfData.type,
+          client: pdfData.client,
+          theme: pdfData.theme,
+          sectionsCount: pdfData.sections.length
+        });
         
-        console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+        // Generate PDF with timeout protection
+        const pdfBuffer = await Promise.race([
+          generateAIPDF(pdfData),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('AI PDF generation timeout')), 60000)
+          )
+        ]) as Buffer;
         
-        // Upload PDF to cloud storage
-        const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
-        const cloudResult = await uploadContractToCloud(newContract, userSettings);
+        console.log('✅ AI PDF generated successfully:', pdfBuffer.length, 'bytes');
         
-        if (cloudResult.success) {
-          console.log('✅ Contract PDF uploaded to cloud storage:', cloudResult.url);
+        // Upload PDF to cloud storage with error handling
+        try {
+          const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
           
-          // CRITICAL FIX: Also create and upload signing page to R2
-          console.log('📝 Creating contract signing page for R2 cloud storage...');
-          const signingPageResult = await uploadContractSigningPage(newContract, userSettings);
+          // Upload main PDF
+          const cloudResult = await uploadContractToCloud(newContract, userSettings);
           
-          if (signingPageResult.success) {
-            console.log('✅ Contract signing page uploaded to R2:', signingPageResult.url);
+          if (cloudResult.success) {
+            console.log('✅ Contract PDF uploaded to cloud:', cloudResult.url);
             
-            // Update contract with both PDF and signing page URLs
-            const updatedContract = await storage.updateContract(newContract.id, {
-              cloudStorageUrl: cloudResult.url,
-              cloudStorageKey: cloudResult.key,
-              signingPageUrl: signingPageResult.url,
-              signingPageKey: signingPageResult.storageKey
-            });
+            // Upload signing page
+            const signingPageResult = await uploadContractSigningPage(newContract, userSettings);
             
-            res.json(updatedContract);
+            if (signingPageResult.success) {
+              console.log('✅ Contract signing page uploaded:', signingPageResult.url);
+              
+              // Update contract with both URLs
+              const updatedContract = await storage.updateContract(newContract.id, {
+                cloudStorageUrl: cloudResult.url,
+                cloudStorageKey: cloudResult.key,
+                signingPageUrl: signingPageResult.url,
+                signingPageKey: signingPageResult.storageKey
+              });
+              
+              return res.json(updatedContract);
+            } else {
+              console.warn('⚠️ PDF uploaded but signing page failed');
+              
+              const updatedContract = await storage.updateContract(newContract.id, {
+                cloudStorageUrl: cloudResult.url,
+                cloudStorageKey: cloudResult.key
+              });
+              
+              return res.json(updatedContract);
+            }
           } else {
-            console.log('⚠️ PDF uploaded but signing page upload failed');
-            
-            // Update contract with just PDF URL
+            throw new Error('Cloud upload failed: ' + cloudResult.error);
+          }
+          
+        } catch (uploadError: any) {
+          console.error('❌ Cloud upload failed:', uploadError.message);
+          // Continue without cloud URLs - return contract anyway
+          return res.json(newContract);
+        }
+        
+      } catch (aiError: any) {
+        console.error('❌ AI PDF generation failed:', aiError.message);
+        console.error('Stack:', aiError.stack);
+        
+        // FALLBACK: Try standard PDF generation
+        try {
+          console.log('🔄 Falling back to standard PDF generation...');
+          const { generateContractPDF } = await import('./pdf-generator');
+          const userSettings = await storage.getUserSettings(req.session.userId);
+          const fallbackPdfBuffer = await generateContractPDF(newContract, userSettings);
+          
+          // Upload fallback PDF
+          const { uploadContractToCloud } = await import('./cloud-storage');
+          const cloudResult = await uploadContractToCloud(newContract, userSettings);
+          
+          if (cloudResult.success) {
             const updatedContract = await storage.updateContract(newContract.id, {
               cloudStorageUrl: cloudResult.url,
               cloudStorageKey: cloudResult.key
             });
             
-            res.json(updatedContract);
+            console.log('✅ Fallback PDF generation successful');
+            return res.json(updatedContract);
           }
-        } else {
-          console.log('⚠️ PDF generated but cloud upload failed, returning contract without cloud URL');
-          res.json(newContract);
+          
+        } catch (fallbackError: any) {
+          console.error('❌ Fallback PDF generation also failed:', fallbackError.message);
         }
         
-      } catch (pdfError: any) {
-        console.error('⚠️ PDF generation failed, but contract was created:', pdfError.message);
-        // Still return the contract even if PDF generation fails
-        res.json(newContract);
+        // If everything fails, still return the contract (user can generate PDF later)
+        console.log('⚠️ Both AI and fallback PDF generation failed - returning contract without PDF');
+        return res.json(newContract);
       }
     } catch (error: any) {
       console.error('❌ Failed to create contract:', error);
@@ -2152,6 +2234,113 @@ export async function registerRoutes(app: Express) {
           details: error?.message || 'Unknown database error'
         });
       }
+    }
+  });
+
+  // DEBUG ENDPOINTS FOR AI PDF GENERATION TESTING
+  app.get('/debug/openai', async (req, res) => {
+    try {
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      console.log('🧪 Testing OpenAI connection...');
+      const start = Date.now();
+      
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: "Respond with 'OpenAI connection successful'" }],
+        max_tokens: 20
+      });
+      
+      const duration = Date.now() - start;
+      
+      res.json({
+        success: true,
+        response: completion.choices[0]?.message?.content,
+        duration: `${duration}ms`,
+        model: completion.model,
+        usage: completion.usage
+      });
+    } catch (error: any) {
+      console.error('❌ OpenAI test failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        hasApiKey: !!process.env.OPENAI_API_KEY,
+        keyPreview: process.env.OPENAI_API_KEY?.substring(0, 7) + '...'
+      });
+    }
+  });
+
+  app.get('/debug/puppeteer', async (req, res) => {
+    try {
+      const puppeteer = (await import('puppeteer')).default;
+      console.log('🧪 Testing Puppeteer...');
+      
+      const browser = await puppeteer.launch({
+        headless: true,
+        executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      
+      const page = await browser.newPage();
+      await page.setContent('<h1>Test PDF</h1><p>Puppeteer working!</p>');
+      
+      const pdf = await page.pdf({ format: 'A4' });
+      await browser.close();
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.send(pdf);
+    } catch (error: any) {
+      console.error('❌ Puppeteer test failed:', error);
+      res.status(500).json({
+        error: error.message,
+        chromiumPath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium'
+      });
+    }
+  });
+
+  app.get('/debug/ai-pdf-simple', async (req, res) => {
+    try {
+      const { generateAIPDF } = await import('./ai-pdf-builder');
+      
+      const testData = {
+        type: 'contract' as const,
+        client: 'Debug Test Client',
+        eventDate: '01/01/2024',
+        venue: 'Test Venue',
+        fee: '£100.00',
+        theme: 'professional' as const,
+        sections: [
+          {
+            title: 'Test Section',
+            content: 'This is a simple test to verify AI PDF generation works.'
+          }
+        ],
+        branding: {
+          businessName: 'Debug Test',
+          footerText: 'Debug Contract'
+        }
+      };
+      
+      console.log('🧪 Testing AI PDF with simple data...');
+      const startTime = Date.now();
+      
+      const pdfBuffer = await generateAIPDF(testData);
+      const duration = Date.now() - startTime;
+      
+      console.log(`✅ AI PDF generated in ${duration}ms, size: ${pdfBuffer.length} bytes`);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="debug-test.pdf"');
+      res.send(pdfBuffer);
+      
+    } catch (error: any) {
+      console.error('❌ AI PDF simple test failed:', error);
+      res.status(500).json({
+        error: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      });
     }
   });
 
