@@ -170,7 +170,7 @@ export default function NewBookingPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <Link href="/bookings">
-                  <Button variant="outline" size="sm" className="bg-white/50 hover:bg-white/80 border-primary-200 text-primary/90 hover:text-primary-800">
+                  <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 border-primary text-white hover:text-white">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Bookings
                   </Button>
