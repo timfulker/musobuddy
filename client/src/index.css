@@ -56,9 +56,9 @@
 
 /* Apply theme to body and typography */
 body {
-  background-color: var(--theme-background);
-  color: var(--theme-text);
-  font-family: var(--theme-font-body);
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+  font-family: var(--theme-font-body) !important;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 

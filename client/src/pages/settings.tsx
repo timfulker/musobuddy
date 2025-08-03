@@ -1371,7 +1371,7 @@ export default function Settings() {
                                       // Update available gig types when all secondary instruments are removed
                                       const allInstruments = [form.watch('primaryInstrument')].filter(Boolean);
                                       const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                        const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
+                                        const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
                                         return [...acc, ...instrumentGigTypes];
                                       }, [] as string[]);
                                       

@@ -121,6 +121,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     
     // Set CSS custom properties
+    console.log(`🎨 Applying theme: ${currentTheme}`, theme.colors);
     root.style.setProperty('--theme-primary', theme.colors.primary);
     root.style.setProperty('--theme-secondary', theme.colors.secondary);
     root.style.setProperty('--theme-accent', theme.colors.accent);
@@ -130,6 +131,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--theme-text-secondary', theme.colors.textSecondary);
     root.style.setProperty('--theme-font-heading', theme.fonts.heading);
     root.style.setProperty('--theme-font-body', theme.fonts.body);
+    
+    // Force apply background color immediately to body
+    document.body.style.backgroundColor = theme.colors.background;
+    document.body.style.color = theme.colors.text;
 
     // Add theme class for conditional styling to both html and body
     root.className = root.className.replace(/theme-\w+/g, '');
@@ -144,6 +149,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [currentTheme]);
 
   const setTheme = (theme: ThemeName) => {
+    console.log(`🎨 Theme switching from ${currentTheme} to ${theme}`);
     setCurrentTheme(theme);
   };
 
