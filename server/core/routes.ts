@@ -2095,14 +2095,70 @@ export async function registerRoutes(app: Express) {
         return res.json(newContract);
       }
       
-      // GUARANTEED WORKING: Generate standard PDF only - no AI processing 
-      console.log('📄 Contract created successfully, generating standard PDF...');
+      // Generate PDF with AI page break optimization (no themes, just smart breaks)
+      console.log('📄 Contract created successfully, generating PDF with AI page break optimization...');
       
       try {
         const userSettings = await storage.getUserSettings(req.session.userId);
-        const { uploadContractToCloud } = await import('./cloud-storage');
         
-        const cloudResult = await uploadContractToCloud(newContract, userSettings);
+        // Prepare contract sections for AI page break optimization
+        const contractSections = [
+          {
+            title: 'Event Details',
+            content: `Date: ${new Date(newContract.eventDate).toLocaleDateString('en-GB')}\nTime: ${newContract.eventTime || 'TBD'} - ${newContract.eventEndTime || 'TBD'}\nVenue: ${newContract.venue || 'TBD'}\nAddress: ${newContract.venueAddress || 'TBD'}`
+          },
+          {
+            title: 'Performance Fee',
+            content: `Performance Fee: £${newContract.fee}\nDeposit: £${newContract.deposit || '0.00'}\nBalance Due: £${(parseFloat(newContract.fee) - parseFloat(newContract.deposit || '0')).toFixed(2)}`
+          },
+          {
+            title: 'Payment Terms',
+            content: newContract.paymentInstructions || 'Payment due within 30 days of performance date. Payment methods: Bank transfer or cash on the day.'
+          },
+          {
+            title: 'Equipment & Requirements',
+            content: newContract.equipmentRequirements || 'Standard performance setup required. Power supply: 2x 13A sockets. Space required: 3m x 2m minimum.'
+          },
+          {
+            title: 'Special Requirements', 
+            content: newContract.specialRequirements || 'No special requirements specified.'
+          },
+          {
+            title: 'Terms & Conditions',
+            content: 'This contract constitutes the entire agreement between parties. Any modifications must be agreed in writing. Cancellation policy: Full fee due if cancelled within 48 hours of event.'
+          },
+          {
+            title: 'Signatures',
+            content: 'By signing below, both parties agree to the terms outlined in this contract.'
+          }
+        ];
+
+        let optimizedSections = contractSections; // Default fallback
+        
+        try {
+          // Try AI page break optimization
+          const { optimizePageBreaks } = await import('./ai-page-breaks');
+          optimizedSections = await optimizePageBreaks(contractSections);
+          console.log('✅ AI page break optimization successful');
+        } catch (aiError: any) {
+          console.warn('❌ AI page break optimization failed, using standard sections:', aiError.message);
+        }
+        
+        // Generate PDF with optimized sections if available
+        const { generateContractPDFWithOptimizedBreaks, generateContractPDF } = await import('./pdf-generator');
+        
+        let pdfBuffer;
+        if (optimizedSections !== contractSections) {
+          // Use optimized sections
+          pdfBuffer = await generateContractPDFWithOptimizedBreaks(newContract, userSettings, optimizedSections);
+        } else {
+          // Fallback to standard generation
+          pdfBuffer = await generateContractPDF(newContract, userSettings);
+        }
+        
+        // Upload to cloud storage
+        const { uploadContractToCloud } = await import('./cloud-storage');
+        const cloudResult = await uploadContractToCloud(newContract, userSettings, pdfBuffer);
         
         if (cloudResult.success) {
           const updatedContract = await storage.updateContract(newContract.id, {
@@ -2110,14 +2166,15 @@ export async function registerRoutes(app: Express) {
             cloudStorageKey: cloudResult.key
           });
           
-          console.log('✅ Standard PDF uploaded successfully');
+          console.log('✅ PDF with AI page break optimization uploaded successfully');
           return res.json(updatedContract);
         } else {
           console.error('❌ Cloud upload failed:', cloudResult.error);
           return res.json(newContract);
         }
       } catch (pdfError: any) {
-        console.error('❌ Standard PDF generation failed:', pdfError.message);
+        console.error('❌ PDF generation failed:', pdfError.message);
+        // Always return the contract even if PDF fails
         return res.json(newContract);
       }
     } catch (error: any) {

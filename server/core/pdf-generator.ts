@@ -118,6 +118,188 @@ function getLogoBase64(): string {
 
 
 
+// Generate HTML using AI-optimized sections
+function generateContractHTMLWithOptimizedSections(
+  contract: Contract,
+  userSettings: UserSettings | null,
+  optimizedSections: Array<{title: string; content: string}>,
+  signatureDetails?: {
+    signedAt: Date;
+    signatureName?: string;
+    clientIpAddress?: string;
+  }
+): string {
+  const businessName = userSettings?.businessName || 'MusoBuddy';
+  const addressParts = [];
+  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
+  if (userSettings?.city) addressParts.push(userSettings.city);
+  if (userSettings?.county) addressParts.push(userSettings.county);
+  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
+  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
+  const businessPhone = userSettings?.phone || '';
+  const businessEmail = userSettings?.businessEmail || '';
+  
+  const logoBase64 = getLogoBase64();
+  const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto; margin-bottom: 20px;" alt="MusoBuddy Logo" />` : '';
+  
+  const themeStyles = getThemeStyles();
+  
+  // Generate sections from optimized content
+  const sectionsHtml = optimizedSections.map(section => `
+    <div class="contract-section avoid-break">
+      <h3>${section.title}</h3>
+      <div class="section-content">
+        ${section.content.split('\n').map(line => `<p>${line}</p>`).join('')}
+      </div>
+    </div>
+  `).join('\n');
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Performance Contract ${contract.contractNumber}</title>
+      <style>
+        body {
+          font-family: ${themeStyles.fontFamily};
+          line-height: 1.6;
+          color: ${themeStyles.textColor};
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: ${themeStyles.backgroundColor};
+        }
+        .header {
+          text-align: center;
+          border-bottom: 3px solid ${themeStyles.accentColor};
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .contract-section {
+          margin-bottom: 30px;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .section-content p {
+          margin: 8px 0;
+        }
+        .signature-section {
+          margin-top: 50px;
+          border-top: 1px solid #ccc;
+          padding-top: 30px;
+          page-break-before: auto;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .signature-box {
+          border: 1px solid #333;
+          padding: 20px;
+          margin: 20px 0;
+          background-color: #f9f9f9;
+        }
+        .signed-box {
+          border: 2px solid #4CAF50;
+          background-color: #e8f5e8;
+        }
+        .avoid-break {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .amount {
+          font-weight: bold;
+          color: #2563eb;
+        }
+        .status-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: bold;
+          text-transform: uppercase;
+        }
+        .status-signed {
+          background-color: #dcfce7;
+          color: #166534;
+        }
+        .status-sent {
+          background-color: #fef3c7;
+          color: #92400e;
+        }
+        h3 {
+          color: ${themeStyles.accentColor};
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 5px;
+          page-break-after: avoid;
+          break-after: avoid;
+        }
+        @media print {
+          .signature-section {
+            page-break-before: always;
+            break-before: page;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        ${logoHtml}
+        <h1 style="color: ${themeStyles.accentColor};">Performance Agreement</h1>
+        <h2 style="color: ${themeStyles.textColor};">${contract.contractNumber}</h2>
+        <div class="status-badge ${contract.status === 'signed' ? 'status-signed' : 'status-sent'}">
+          ${contract.status.toUpperCase()}
+        </div>
+      </div>
+
+      <div class="contract-section avoid-break">
+        <h3>Performer Details</h3>
+        <div class="section-content">
+          <p><strong>${businessName}</strong></p>
+          ${businessAddress ? `<p>${businessAddress}</p>` : ''}
+          ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
+          ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
+        </div>
+      </div>
+
+      <div class="contract-section avoid-break">
+        <h3>Client Details</h3>
+        <div class="section-content">
+          <p><strong>Name:</strong> ${contract.clientName}</p>
+          <p><strong>Email:</strong> ${contract.clientEmail}</p>
+          ${contract.clientPhone ? `<p><strong>Phone:</strong> ${contract.clientPhone}</p>` : ''}
+          ${contract.clientAddress ? `<p><strong>Address:</strong> ${contract.clientAddress}</p>` : ''}
+        </div>
+      </div>
+
+      ${sectionsHtml}
+
+      <div class="signature-section">
+        <h3>Signatures</h3>
+        ${signatureDetails ? `
+          <div class="signature-box signed-box">
+            <h4>✓ Digitally Signed by Client</h4>
+            <p><strong>Signed by:</strong> ${signatureDetails.signatureName || contract.clientName}</p>
+            <p><strong>Date:</strong> ${signatureDetails.signedAt.toLocaleDateString('en-GB')}</p>
+            <p><strong>Time:</strong> ${signatureDetails.signedAt.toLocaleTimeString('en-GB')}</p>
+            ${signatureDetails.clientIpAddress ? `<p><strong>IP Address:</strong> ${signatureDetails.clientIpAddress}</p>` : ''}
+          </div>
+        ` : `
+          <div class="signature-box">
+            <p><strong>Client Signature:</strong> _________________________________</p>
+            <p><strong>Date:</strong> _________________</p>
+          </div>
+        `}
+        
+        <div class="signature-box">
+          <p><strong>Performer Signature:</strong> ${businessName}</p>
+          <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB')}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 // Simple professional styling only
 function getThemeStyles() {
   return {
