@@ -2089,17 +2089,17 @@ export async function registerRoutes(app: Express) {
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
       
-      // Return contract immediately if AI PDF generation disabled for testing
+      // Return contract immediately if PDF generation disabled for testing
       if (req.body.skipPdfGeneration) {
         console.log('⚠️ Skipping PDF generation as requested');
         return res.json(newContract);
       }
       
-      // SIMPLIFIED: Generate standard PDF immediately, then enhance with AI in background
-      console.log('📄 Contract created successfully, generating standard PDF immediately...');
+      // SIMPLIFIED: Generate standard PDF only - no AI themes
+      console.log('📄 Contract created successfully, generating standard PDF...');
       
       try {
-        // Generate standard PDF first for immediate availability
+        // Generate standard PDF using the working PDF generator
         const userSettings = await storage.getUserSettings(req.session.userId);
         const { uploadContractToCloud } = await import('./cloud-storage');
         
@@ -2111,222 +2111,15 @@ export async function registerRoutes(app: Express) {
             cloudStorageKey: cloudResult.key
           });
           
-          console.log('✅ Standard PDF uploaded successfully, now starting AI enhancement...');
-          
-          // Start AI enhancement in background (don't await)
-          const pdfData = {
-            type: 'contract' as const,
-            client: newContract.clientName || 'Unknown Client',
-            eventDate: newContract.eventDate || new Date().toISOString(),
-            venue: newContract.venue || 'TBD',
-            fee: newContract.fee || '0.00',
-            theme: (newContract.contractTheme as 'professional' | 'friendly' | 'musical') || 'professional',
-            sections: [
-              {
-                title: 'Event Details',
-                content: `Date: ${new Date(newContract.eventDate).toLocaleDateString('en-GB')}\nTime: ${newContract.eventTime || 'TBD'} - ${newContract.eventEndTime || 'TBD'}\nVenue: ${newContract.venue || 'TBD'}\nAddress: ${newContract.venueAddress || 'TBD'}`
-              },
-              {
-                title: 'Performance Fee',
-                content: `Performance Fee: £${newContract.fee}\nDeposit: £${newContract.deposit || '0.00'}\nBalance Due: £${(parseFloat(newContract.fee) - parseFloat(newContract.deposit || '0')).toFixed(2)}`
-              },
-              {
-                title: 'Payment Terms',
-                content: newContract.paymentInstructions || 'Payment due within 30 days of performance date. Payment methods: Bank transfer or cash on the day.'
-              },
-              {
-                title: 'Equipment & Requirements',
-                content: newContract.equipmentRequirements || 'Standard performance setup required. Power supply: 2x 13A sockets. Space required: 3m x 2m minimum.'
-              },
-              {
-                title: 'Special Requirements', 
-                content: newContract.specialRequirements || 'No special requirements specified.'
-              }
-            ],
-            branding: {
-              businessName: userSettings?.businessName || 'MusoBuddy User',
-              footerText: `Contract ${newContract.contractNumber} | Generated ${new Date().toLocaleDateString('en-GB')}`
-            }
-          };
-          
-          generateBackgroundAIPDF(newContract.id, pdfData, req.session.userId)
-            .catch(bgError => {
-              console.error('❌ Background AI enhancement failed:', bgError.message);
-            });
-          
+          console.log('✅ Standard PDF uploaded successfully');
           return res.json(updatedContract);
+        } else {
+          console.error('❌ Cloud upload failed:', cloudResult.error);
+          return res.json(newContract);
         }
       } catch (pdfError: any) {
         console.error('❌ Standard PDF generation failed:', pdfError.message);
-      }
-      
-      // Fallback: Return contract without PDF
-      return res.json(newContract);
-      
-      // ENHANCED AI PDF GENERATION WITH COMPREHENSIVE ERROR HANDLING
-      try {
-        console.log('🤖 Starting AI PDF generation with diagnostics...');
-        console.log('📊 AI PDF Generation Metrics:', {
-          timestamp: new Date().toISOString(),
-          userId: req.session?.userId,
-          contractTheme: contractData.contractTheme,
-          hasOpenAIKey: !!process.env.OPENAI_API_KEY,
-          keyFormat: process.env.OPENAI_API_KEY?.substring(0, 7) + '...'
-        });
-        
-        // Validate OpenAI API key first
-        if (!process.env.OPENAI_API_KEY) {
-          console.warn('⚠️ OpenAI API key missing - falling back to standard PDF');
-          throw new Error('OpenAI API key not configured');
-        }
-        
-        // Get user settings with validation
-        const userSettings = await storage.getUserSettings(req.session.userId);
-        if (!userSettings) {
-          console.warn('⚠️ User settings missing - using defaults');
-        }
-        
-        // Import AI PDF builder with error handling
-        let generateAIPDF;
-        try {
-          const aiModule = await import('./ai-pdf-builder');
-          generateAIPDF = aiModule.generateAIPDF;
-          
-          if (!generateAIPDF) {
-            throw new Error('generateAIPDF function not found in module');
-          }
-        } catch (importError: any) {
-          console.error('❌ Failed to import AI PDF builder:', importError);
-          throw new Error('AI PDF builder module failed to load');
-        }
-        
-        // Prepare AI PDF data with comprehensive validation
-        const pdfData = {
-          type: 'contract' as const,
-          client: newContract.clientName || 'Unknown Client',
-          eventDate: newContract.eventDate || new Date().toISOString(),
-          venue: newContract.venue || 'TBD',
-          fee: newContract.fee || '0.00',
-          theme: (newContract.contractTheme as 'professional' | 'friendly' | 'musical') || 'professional',
-          sections: [
-            {
-              title: 'Event Details',
-              content: `Date: ${new Date(newContract.eventDate).toLocaleDateString('en-GB')}\nTime: ${newContract.eventTime || 'TBD'} - ${newContract.eventEndTime || 'TBD'}\nVenue: ${newContract.venue || 'TBD'}\nAddress: ${newContract.venueAddress || 'TBD'}`
-            },
-            {
-              title: 'Performance Fee',
-              content: `Performance Fee: £${newContract.fee}\nDeposit: £${newContract.deposit || '0.00'}\nBalance Due: £${(parseFloat(newContract.fee) - parseFloat(newContract.deposit || '0')).toFixed(2)}`
-            },
-            {
-              title: 'Payment Terms',
-              content: newContract.paymentInstructions || 'Payment due within 30 days of performance date. Payment methods: Bank transfer or cash on the day.'
-            },
-            {
-              title: 'Equipment & Requirements',
-              content: newContract.equipmentRequirements || 'Standard performance setup required. Power supply: 2x 13A sockets. Space required: 3m x 2m minimum.'
-            },
-            {
-              title: 'Special Requirements', 
-              content: newContract.specialRequirements || 'No special requirements specified.'
-            }
-          ],
-          branding: {
-            businessName: userSettings?.businessName || 'MusoBuddy User',
-            footerText: `Contract ${newContract.contractNumber} | Generated ${new Date().toLocaleDateString('en-GB')}`
-          }
-        };
-        
-        console.log('🤖 AI PDF data prepared:', {
-          type: pdfData.type,
-          client: pdfData.client,
-          theme: pdfData.theme,
-          sectionsCount: pdfData.sections.length
-        });
-        
-        // Generate PDF with timeout protection and detailed error logging
-        console.log('🤖 Calling generateAIPDF with timeout protection...');
-        const pdfBuffer = await Promise.race([
-          generateAIPDF(pdfData).catch(aiErr => {
-            console.error('❌ AI PDF generation internal error:', aiErr.message);
-            console.error('❌ AI PDF stack trace:', aiErr.stack?.split('\n').slice(0, 3));
-            throw aiErr;
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('AI PDF generation timeout after 60 seconds')), 60000)
-          )
-        ]) as Buffer;
-        
-        console.log('✅ AI PDF generated successfully:', pdfBuffer.length, 'bytes');
-        
-        // Upload PDF to cloud storage with error handling
-        try {
-          const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
-          
-          // Upload main PDF
-          const cloudResult = await uploadContractToCloud(newContract, userSettings);
-          
-          if (cloudResult.success) {
-            console.log('✅ Contract PDF uploaded to cloud:', cloudResult.url);
-            
-            // Upload signing page
-            const signingPageResult = await uploadContractSigningPage(newContract, userSettings);
-            
-            if (signingPageResult.success) {
-              console.log('✅ Contract signing page uploaded:', signingPageResult.url);
-              
-              // Update contract with both URLs
-              const updatedContract = await storage.updateContract(newContract.id, {
-                cloudStorageUrl: cloudResult.url,
-                cloudStorageKey: cloudResult.key,
-                signingPageUrl: signingPageResult.url,
-                signingPageKey: signingPageResult.storageKey
-              });
-              
-              return res.json(updatedContract);
-            } else {
-              console.warn('⚠️ PDF uploaded but signing page failed');
-              
-              const updatedContract = await storage.updateContract(newContract.id, {
-                cloudStorageUrl: cloudResult.url,
-                cloudStorageKey: cloudResult.key
-              });
-              
-              return res.json(updatedContract);
-            }
-          } else {
-            throw new Error('Cloud upload failed: ' + cloudResult.error);
-          }
-          
-        } catch (uploadError: any) {
-          console.error('❌ Cloud upload failed:', uploadError.message);
-          // Continue without cloud URLs - return contract anyway
-          return res.json(newContract);
-        }
-        
-      } catch (aiError: any) {
-        console.error('❌ AI PDF generation failed:', {
-          message: aiError.message,
-          type: aiError.constructor.name,
-          code: aiError.code,
-          timestamp: new Date().toISOString()
-        });
-        console.error('❌ AI PDF Stack trace:', aiError.stack?.split('\n').slice(0, 5));
-        
-        // GRACEFUL HANDLING: Return contract immediately, generate AI PDF in background
-        console.log('⚠️ AI PDF generation slow/failed - returning contract immediately');
-        console.log('📄 AI PDF will be generated in background and attached to contract');
-        
-        // Start background AI PDF generation (don't await)
-        generateBackgroundAIPDF(newContract.id, pdfData, req.session.userId)
-          .catch(bgError => {
-            console.error('❌ Background AI PDF generation failed:', bgError.message);
-          });
-        
-        return res.json({
-          ...newContract,
-          pdfGenerationStatus: 'processing',
-          pdfMessage: 'Contract created successfully. AI-themed PDF is being generated in the background.'
-        });
+        return res.json(newContract);
       }
     } catch (error: any) {
       console.error('❌ Failed to create contract:', error);
