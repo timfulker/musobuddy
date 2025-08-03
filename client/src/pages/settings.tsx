@@ -80,6 +80,29 @@ const THEME_FONTS = [
 
 const THEME_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
+const CUSTOM_TITLES = [
+  {
+    id: 'contract',
+    label: 'Performance Contract'
+  },
+  {
+    id: 'agreement',
+    label: 'Performance Agreement'
+  },
+  {
+    id: 'booking',
+    label: 'Booking Contract'
+  },
+  {
+    id: 'service',
+    label: 'Service Agreement'
+  },
+  {
+    id: 'custom',
+    label: 'Custom Title'
+  }
+];
+
 
 
 // Schema for form validation - includes all fields we want to save
