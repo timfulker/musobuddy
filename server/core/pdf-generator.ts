@@ -50,58 +50,7 @@ function getLogoBase64(): string {
   }
 }
 
-// Theme-specific titles and language
-function getThemeTitle(theme: string): string {
-  switch (theme) {
-    case 'professional':
-      return 'Performance Agreement';
-    case 'friendly':
-      return 'Music Performance Contract';
-    case 'musical':
-      return '🎵 Performance Contract 🎵';
-    default:
-      return 'Performance Contract';
-  }
-}
 
-function getThemeTermsTitle(theme: string): string {
-  switch (theme) {
-    case 'professional':
-      return 'Terms and Conditions';
-    case 'friendly':
-      return 'Important Details';
-    case 'musical':
-      return 'The Small Print (But Important Stuff!)';
-    default:
-      return 'Terms and Conditions';
-  }
-}
-
-function getThemePaymentTitle(theme: string): string {
-  switch (theme) {
-    case 'professional':
-      return 'Payment Terms & Conditions';
-    case 'friendly':
-      return 'Payment & Money Matters';
-    case 'musical':
-      return 'Payment & The Business Side of Things';
-    default:
-      return 'Payment Terms & Conditions';
-  }
-}
-
-function getThemeBoxColor(theme: string): string {
-  switch (theme) {
-    case 'professional':
-      return '#f8fafc'; // Light blue-gray
-    case 'friendly':
-      return '#f0fdf4'; // Light green
-    case 'musical':
-      return '#faf5ff'; // Light purple
-    default:
-      return '#f0f8ff';
-  }
-}
 
 // Simple professional styling only
 function getThemeStyles() {
@@ -137,9 +86,8 @@ function generateContractHTML(
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto; margin-bottom: 20px;" alt="MusoBuddy Logo" />` : '';
   
-  // Theme-based styling
-  const theme = (contract as any).contractTheme || 'professional';
-  const themeStyles = getThemeStyles(theme);
+  // Professional styling
+  const themeStyles = getThemeStyles();
   
   return `
     <!DOCTYPE html>
@@ -229,7 +177,7 @@ function generateContractHTML(
     <body>
       <div class="header">
         ${logoHtml}
-        <h1 style="color: ${themeStyles.accentColor};">${getThemeTitle(theme)}</h1>
+        <h1 style="color: ${themeStyles.accentColor};">Performance Agreement</h1>
         <h2 style="color: ${themeStyles.textColor};">${contract.contractNumber}</h2>
         <div class="status-badge ${contract.status === 'signed' ? 'status-signed' : 'status-sent'}">
           ${contract.status.toUpperCase()}
@@ -288,10 +236,10 @@ function generateContractHTML(
       </div>
 
       <div class="terms">
-        <h3 style="color: ${themeStyles.accentColor};">${getThemeTermsTitle(theme)}</h3>
+        <h3 style="color: ${themeStyles.accentColor};">Terms and Conditions</h3>
         
-        <div style="margin-top: 20px; padding: 15px; background-color: ${getThemeBoxColor(theme)}; border-radius: 5px; font-size: 14px;">
-          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">${getThemePaymentTitle(theme)}</h4>
+        <div style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;">
+          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Payment Terms</h4>
           <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
           <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
           ${contract.deposit ? `<p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>` : ''}
@@ -544,7 +492,7 @@ function generateInvoiceHTML(
         .payment-info {
           margin-top: 40px;
           padding: 20px;
-          background-color: ${getThemeBoxColor(theme)};
+          background-color: #f8fafc;
           border-radius: 8px;
         }
         .payment-info h3 {

@@ -427,7 +427,7 @@ export default function Invoices() {
       performanceDate: data.performanceDate || null,
       performanceFee: data.performanceFee?.trim() || null,
       depositPaid: data.depositPaid?.trim() || null,
-      invoiceTheme: data.invoiceTheme || "professional", // Include theme selection
+
     };
     
     
@@ -1080,74 +1080,7 @@ export default function Invoices() {
                       />
                     </div>
 
-                    {/* Theme Selection with Previews */}
-                    <FormField
-                      control={form.control}
-                      name="invoiceTheme"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Invoice Theme</FormLabel>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                            {[
-                              { 
-                                id: "professional", 
-                                label: "Professional & Formal", 
-                                description: "Business-like, respectful, structured. Perfect for corporate events and high-end clients.",
-                                preview: "/api/theme-preview-static/professional"
-                              },
-                              { 
-                                id: "friendly", 
-                                label: "Friendly & Informal", 
-                                description: "Warm, personal, chatty. Great for smaller events and return clients.",
-                                preview: "/api/theme-preview-static/friendly"
-                              },
-                              { 
-                                id: "musical", 
-                                label: "Musical & Creative", 
-                                description: "Creative, fun, expressive. Perfect for music festivals and creative events.",
-                                preview: "/api/theme-preview-static/musical"
-                              }
-                            ].map((theme) => (
-                              <div
-                                key={theme.id}
-                                className={`relative border-2 rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${
-                                  field.value === theme.id
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
-                                    : 'border-gray-200 dark:border-gray-700'
-                                }`}
-                                onClick={() => field.onChange(theme.id)}
-                              >
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <h4 className="font-medium text-sm">{theme.label}</h4>
-                                    <div className={`w-4 h-4 border rounded-full ${
-                                      field.value === theme.id
-                                        ? 'bg-blue-500 border-blue-500'
-                                        : 'border-gray-300'
-                                    }`}>
-                                      {field.value === theme.id && (
-                                        <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    {theme.description}
-                                  </p>
-                                  <div className="mt-2">
-                                    <img
-                                      src={theme.preview}
-                                      alt={`${theme.label} theme preview`}
-                                      className="w-full h-20 object-cover rounded border"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+
 
                     <div className="flex justify-end gap-3">
                       <Button type="button" variant="outline" onClick={handleDialogClose}>

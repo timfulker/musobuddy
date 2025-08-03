@@ -114,7 +114,7 @@ export default function Contracts() {
       equipmentRequirements: "",
       specialRequirements: "",
       status: "draft",
-      contractTheme: "professional",
+
       // PHASE 2: Automated reminders (removed for manual-only phase 1)
       // reminderEnabled: false,
       // reminderDays: 3,
@@ -1050,69 +1050,7 @@ export default function Contracts() {
                         </div>
                       </div>
 
-                      {/* Contract Theme Selection */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                          Contract Theme & Style
-                        </h3>
-                        <p className="text-sm text-gray-600">Choose how your contract appears to clients. Each theme has a different tone and visual style.</p>
-                        
-                        <FormField
-                          control={form.control}
-                          name="contractTheme"
-                          render={({ field }) => (
-                            <FormItem className="space-y-4">
-                              <FormControl>
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                                  {CONTRACT_THEMES.map((theme) => (
-                                    <label key={theme.id} className={`relative block cursor-pointer rounded-lg border-2 transition-all ${
-                                      field.value === theme.id
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                        : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
-                                    }`}>
-                                      <input
-                                        type="radio"
-                                        name="contractTheme"
-                                        value={theme.id}
-                                        checked={field.value === theme.id}
-                                        onChange={(e) => field.onChange(e.target.value)}
-                                        className="sr-only"
-                                      />
-                                      
-                                      {/* Theme Preview Image */}
-                                      <div className="aspect-[4/3] overflow-hidden rounded-t-lg">
-                                        <img
-                                          src={theme.preview}
-                                          alt={`${theme.label} theme preview`}
-                                          className="w-full h-full object-cover object-top"
-                                          loading="lazy"
-                                        />
-                                      </div>
-                                      
-                                      {/* Theme Info */}
-                                      <div className="p-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <h4 className="font-medium text-sm">{theme.label}</h4>
-                                          {field.value === theme.id && (
-                                            <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
-                                              <div className="w-2 h-2 rounded-full bg-white" />
-                                            </div>
-                                          )}
-                                        </div>
-                                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                                          {theme.description}
-                                        </p>
-                                      </div>
-                                    </label>
-                                  ))}
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+
 
 
 
