@@ -36,6 +36,7 @@ const invoiceFormSchema = z.object({
   performanceDate: z.string().optional(),
   performanceFee: z.string().optional(),
   depositPaid: z.string().optional(),
+  invoiceTheme: z.string().default("professional"), // Add theme selection
 });
 
 export default function Invoices() {
@@ -87,6 +88,7 @@ export default function Invoices() {
       performanceDate: "",
       performanceFee: "",
       depositPaid: "",
+      invoiceTheme: "professional",
     },
   });
 
@@ -137,6 +139,7 @@ export default function Invoices() {
                 performanceDate: performanceDate,
                 performanceFee: booking.fee || "",
                 depositPaid: "",
+                invoiceTheme: "professional",
               });
               
               toast({
@@ -1077,6 +1080,30 @@ export default function Invoices() {
                         )}
                       />
                     </div>
+
+                    {/* Theme Selection */}
+                    <FormField
+                      control={form.control}
+                      name="invoiceTheme"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Invoice Theme</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value || "professional"}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select theme style" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="professional">🔵 Professional & Formal</SelectItem>
+                              <SelectItem value="friendly">🟢 Friendly & Informal</SelectItem>
+                              <SelectItem value="musical">🟣 Musical & Creative</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="flex justify-end gap-3">
                       <Button type="button" variant="outline" onClick={handleDialogClose}>
