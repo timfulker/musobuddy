@@ -418,7 +418,7 @@ export default function UnifiedBookings() {
       let bValue = b[sortField];
       
       // Handle different data types
-      if (sortField === 'eventDate') {
+      if (sortField === 'eventDate' || sortField === 'createdAt') {
         aValue = aValue ? new Date(aValue) : new Date(0);
         bValue = bValue ? new Date(bValue) : new Date(0);
       } else if (sortField === 'fee') {
@@ -974,6 +974,14 @@ export default function UnifiedBookings() {
                         className="h-8"
                       >
                         Venue {sortField === 'venue' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      </Button>
+                      <Button
+                        variant={sortField === 'createdAt' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleSort('createdAt')}
+                        className="h-8"
+                      >
+                        Date Added {sortField === 'createdAt' && (sortDirection === 'asc' ? '↑' : '↓')}
                       </Button>
                     </div>
                   </div>
