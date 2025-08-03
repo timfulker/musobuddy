@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import type { Contract, Invoice, UserSettings } from '@shared/schema';
+import Anthropic from '@anthropic-ai/sdk';
 
 export async function generateContractPDF(
   contract: Contract,
@@ -308,12 +309,90 @@ function generateContractHTML(
   `;
 }
 
+// AI-powered invoice layout optimization using Anthropic
+async function optimizeInvoiceLayout(invoice: Invoice, userSettings: UserSettings | null): Promise<string> {
+  try {
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+
+    const invoiceData = {
+      invoiceNumber: invoice.invoiceNumber,
+      businessName: userSettings?.businessName || 'Tim Fulker',
+      businessAddress: `${userSettings?.addressLine1 || ''}, ${userSettings?.city || ''}, ${userSettings?.county || ''}, ${userSettings?.postcode || ''}`.replace(/^,\s*|,\s*$/g, ''),
+      businessPhone: userSettings?.phone || '',
+      businessEmail: userSettings?.businessEmail || '',
+      businessWebsite: userSettings?.website || '',
+      clientName: invoice.clientName,
+      clientEmail: invoice.clientEmail,
+      clientAddress: invoice.clientAddress,
+      venueAddress: invoice.venueAddress,
+      invoiceDate: new Date(invoice.createdAt).toLocaleDateString('en-GB'),
+      dueDate: new Date(invoice.dueDate).toLocaleDateString('en-GB'),
+      performanceDate: invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : 'TBD',
+      amount: invoice.amount,
+      depositPaid: invoice.depositPaid || '0.00',
+      bankDetails: userSettings?.bankDetails || '',
+      defaultTerms: userSettings?.defaultTerms || '',
+      status: invoice.status || 'draft'
+    };
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4000,
+      messages: [{
+        role: "user",
+        content: `You are a professional invoice designer. Create a clean, professional HTML invoice template that fixes these common formatting issues:
+
+1. Poor alignment and spacing
+2. Bad page breaks
+3. Inconsistent typography
+4. Unprofessional layout structure
+5. Poor visual hierarchy
+
+REQUIREMENTS:
+- Clean, professional business appearance
+- Proper spacing and alignment
+- Smart page break handling (avoid breaking in middle of content blocks)
+- Clear visual hierarchy
+- Modern but conservative styling
+- Ensure all content fits properly on A4 page
+- Use professional typography (Arial/Helvetica family)
+- Consistent margins and padding
+- Clear section separations
+
+Invoice Data:
+${JSON.stringify(invoiceData, null, 2)}
+
+Generate a complete HTML document with embedded CSS that creates a professional, well-formatted invoice. Include:
+- Professional header with business details and invoice number
+- Clear billing section (FROM/TO)
+- Clean table for performance details
+- Professional total calculation area
+- Payment information section
+- Terms and conditions
+- Professional footer
+
+Focus on visual balance, proper spacing, and ensuring content doesn't break poorly across pages.`
+      }]
+    });
+
+    const optimizedHtml = response.content[0].text;
+    console.log('✅ AI-optimized invoice layout generated');
+    return optimizedHtml;
+  } catch (error) {
+    console.error('❌ AI optimization failed, using fallback:', error);
+    // Fallback to original function if AI fails
+    return generateInvoiceHTML(invoice, null, userSettings);
+  }
+}
+
 export async function generateInvoicePDF(
   invoice: Invoice,
   userSettings: UserSettings | null,
   contract?: any
 ): Promise<Buffer> {
-  console.log('Starting invoice PDF generation for:', invoice.invoiceNumber);
+  console.log('Starting AI-enhanced invoice PDF generation for:', invoice.invoiceNumber);
   
   // RESTORED: Working Puppeteer configuration from previous version
   const browser = await puppeteer.launch({
@@ -324,10 +403,28 @@ export async function generateInvoicePDF(
   
   try {
     const page = await browser.newPage();
-    const html = generateInvoiceHTML(invoice, contract, userSettings);
+    
+    // Use AI-optimized layout if available
+    let html: string;
+    if (process.env.ANTHROPIC_API_KEY) {
+      console.log('🤖 Generating AI-optimized invoice layout...');
+      html = await optimizeInvoiceLayout(invoice, userSettings);
+    } else {
+      console.log('📄 Using standard invoice template...');
+      html = generateInvoiceHTML(invoice, contract, userSettings);
+    }
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
-    const pdf = await page.pdf({ format: 'A4', printBackground: true });
+    const pdf = await page.pdf({ 
+      format: 'A4', 
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        right: '15mm', 
+        bottom: '20mm',
+        left: '15mm'
+      }
+    });
     
     console.log('Invoice PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
