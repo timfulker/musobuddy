@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -35,9 +35,7 @@ const settingsSchema = z.object({
   paymentTerms: z.string().optional(),
   defaultGigTypes: z.array(z.string()).optional(),
   selectedInstruments: z.array(z.string()).optional(),
-  // Essential contract/invoice theme fields
-  contractTheme: z.enum(['professional', 'friendly', 'musical']).default('professional'),
-  invoiceTheme: z.enum(['professional', 'friendly', 'musical']).default('professional'),
+
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -104,8 +102,7 @@ export default function Settings() {
       paymentTerms: "",
       defaultGigTypes: [],
       selectedInstruments: [],
-      contractTheme: 'professional',
-      invoiceTheme: 'professional',
+
     },
   });
 
@@ -134,8 +131,7 @@ export default function Settings() {
         paymentTerms: settings.paymentTerms || "",
         defaultGigTypes: settings.defaultGigTypes || [],
         selectedInstruments: settings.selectedInstruments || [],
-        contractTheme: settings.contractTheme || 'professional',
-        invoiceTheme: settings.invoiceTheme || 'professional',
+
       });
       
       setSelectedInstruments(settings.selectedInstruments || []);
@@ -498,67 +494,7 @@ export default function Settings() {
                   </Collapsible>
                 </Card>
 
-                {/* Theme Selection */}
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                  <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4">
-                    <CardTitle className="flex items-center space-x-2 text-lg">
-                      <Palette className="w-5 h-5 text-primary" />
-                      <span>Document Themes</span>
-                    </CardTitle>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      Choose themes for your contracts and invoices
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="contractTheme"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contract Theme</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select contract theme" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="professional">Professional</SelectItem>
-                                <SelectItem value="friendly">Friendly</SelectItem>
-                                <SelectItem value="musical">Musical</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
-                      <FormField
-                        control={form.control}
-                        name="invoiceTheme"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Invoice Theme</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select invoice theme" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="professional">Professional</SelectItem>
-                                <SelectItem value="friendly">Friendly</SelectItem>
-                                <SelectItem value="musical">Musical</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
 
                 {/* Instrument Selection */}
                 <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
