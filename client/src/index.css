@@ -10,9 +10,9 @@
   --radius: 0.5rem;
   
   /* Default Purple Theme */
-  --theme-primary: #673ab7;
-  --theme-secondary: #9c27b0;
-  --theme-accent: #3f51b5;
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
   --theme-background: #f8fafc;
   --theme-surface: #ffffff;
   --theme-text: #1e293b;
@@ -23,6 +23,15 @@
 
 /* Theme-specific styles */
 
+.theme-purple {
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-text: #1e293b;
+  --theme-text-secondary: #64748b;
+}
 
 .theme-ocean-blue {
   --theme-primary: #0ea5e9;

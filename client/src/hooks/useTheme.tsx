@@ -27,9 +27,9 @@ export const themes: Record<ThemeName, Theme> = {
     name: 'Classic Purple',
     description: 'Original professional purple theme',
     colors: {
-      primary: '#673ab7',
-      secondary: '#9c27b0',
-      accent: '#3f51b5',
+      primary: '#8b5cf6',
+      secondary: '#a855f7',
+      accent: '#6366f1',
       background: '#f8fafc',
       surface: '#ffffff',
       text: '#1e293b',
