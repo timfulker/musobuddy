@@ -5,50 +5,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CRITICAL FIX: Button text colors for purple and midnight blue themes - ONLY TARGET BUTTONS */
-/* Target ONLY buttons with primary backgrounds to ensure white text */
-body.theme-purple button.bg-primary,
-body.theme-midnight-blue button.bg-primary,
-html.theme-purple button.bg-primary,
-html.theme-midnight-blue button.bg-primary {
-  color: white !important;
-}
-
-/* Force all child elements in primary BUTTONS ONLY to have white text */
-body.theme-purple button.bg-primary *,
-body.theme-midnight-blue button.bg-primary *,
-html.theme-purple button.bg-primary *,
-html.theme-midnight-blue button.bg-primary * {
-  color: white !important;
-}
-
-/* OUTLINE BUTTON FIX: Ensure outline buttons with text-primary are readable in dark themes */
-body.theme-purple button[class*="text-primary"],
-body.theme-midnight-blue button[class*="text-primary"],
-html.theme-purple button[class*="text-primary"],
-html.theme-midnight-blue button[class*="text-primary"] {
-  color: var(--theme-primary) !important;
-  border-color: var(--theme-primary) !important;
-}
-
-/* Ensure outline buttons with text-primary have proper hover states */
-body.theme-purple button[class*="text-primary"]:hover,
-body.theme-midnight-blue button[class*="text-primary"]:hover,
-html.theme-purple button[class*="text-primary"]:hover,
-html.theme-midnight-blue button[class*="text-primary"]:hover {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-  border-color: var(--theme-primary) !important;
-}
-
-/* Force child elements in outline buttons to inherit proper colors */
-body.theme-purple button[class*="text-primary"] *,
-body.theme-midnight-blue button[class*="text-primary"] *,
-html.theme-purple button[class*="text-primary"] *,
-html.theme-midnight-blue button[class*="text-primary"] * {
-  color: inherit !important;
-}
-
 /* Theme CSS Variables */
 :root {
   --radius: 0.5rem;
