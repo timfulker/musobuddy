@@ -266,6 +266,10 @@ export const invoices = pgTable("invoices", {
   paidAt: timestamp("paid_at"),
   cloudStorageUrl: text("cloud_storage_url"),
   cloudStorageKey: text("cloud_storage_key"),
+  
+  // Theme selection for invoice styling
+  invoiceTheme: varchar("invoice_theme").default("professional"), // professional, friendly, musical
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

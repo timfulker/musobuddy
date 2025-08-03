@@ -95,7 +95,7 @@ export class MailgunService {
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
       to: invoice.clientEmail,
-      subject: subject || `Invoice ${invoice.invoiceNumber}`,
+      subject: subject || this.getThemeInvoiceEmailContent((invoice as any).invoiceTheme || 'professional', invoice.clientName).subject + ` - ${invoice.invoiceNumber}`,
       html: this.generateInvoiceEmailHTML(invoice, userSettings, pdfUrl),
       // Email deliverability improvements - additive only
       'h:Reply-To': userSettings?.businessEmail || `noreply@${domain}`,
@@ -785,12 +785,165 @@ export class MailgunService {
     }
   }
 
+  // Theme-specific email content generator for invoices
+  getThemeInvoiceEmailContent(theme: string, clientName: string) {
+    switch (theme) {
+      case 'professional':
+        return {
+          subject: 'Invoice - Payment Due',
+          introduction: '<p>I trust this email finds you well.</p>',
+          body: 'Please find your invoice attached for the recent musical performance. Payment is requested within the specified timeframe as outlined in our agreement.',
+          buttonText: 'Download Invoice',
+          signature: 'Kind regards',
+          accentColor: '#1e40af'
+        };
+      case 'friendly':
+        return {
+          subject: 'Your Invoice is Ready! 💰',
+          introduction: '<p>Hope you\'re having a wonderful day!</p>',
+          body: 'Thank you so much for choosing me for your event! It was an absolute pleasure performing for you and your guests. Here\'s your invoice for the performance.',
+          buttonText: 'Get Your Invoice',
+          signature: 'Thanks again for a great event',
+          accentColor: '#059669'
+        };
+      case 'musical':
+        return {
+          subject: '🎵 Invoice Time - Thanks for Rocking! 🎵',
+          introduction: '<p>Hey there, music lover!</p>',
+          body: 'What an amazing gig that was! Thanks for letting me share the music with your crowd. Here\'s the invoice for our awesome musical collaboration.',
+          buttonText: '🎵 Download Invoice 🎵',
+          signature: 'Keep the music alive',
+          accentColor: '#7c3aed'
+        };
+      default:
+        return {
+          subject: 'Invoice ${invoice.invoiceNumber}',
+          introduction: '',
+          body: 'Please find your invoice attached.',
+          buttonText: 'Download Invoice PDF',
+          signature: 'Best regards',
+          accentColor: '#059669'
+        };
+    }
+  }
+
+  // Theme-specific styling for invoice PDFs
+  getInvoiceThemeStyles(theme: string) {
+    switch (theme) {
+      case 'professional':
+        return {
+          fontFamily: "'Times New Roman', serif",
+          accentColor: '#1e40af',
+          textColor: '#1f2937',
+          backgroundColor: '#ffffff',
+          headerBackground: '#f8fafc',
+          tableHeaderBackground: '#f1f5f9',
+          totalBackground: '#dbeafe',
+          paymentSectionBackground: '#f8fafc',
+          borderColor: '#e2e8f0'
+        };
+      case 'friendly':
+        return {
+          fontFamily: "'Georgia', serif",
+          accentColor: '#059669',
+          textColor: '#374151',
+          backgroundColor: '#fefefe',
+          headerBackground: '#f0fdf4',
+          tableHeaderBackground: '#ecfdf5',
+          totalBackground: '#d1fae5',
+          paymentSectionBackground: '#f0fdf4',
+          borderColor: '#d1d5db'
+        };
+      case 'musical':
+        return {
+          fontFamily: "'Trebuchet MS', sans-serif",
+          accentColor: '#7c3aed',
+          textColor: '#6b7280',
+          backgroundColor: '#fafafa',
+          headerBackground: '#faf5ff',
+          tableHeaderBackground: '#f3e8ff',
+          totalBackground: '#e9d5ff',
+          paymentSectionBackground: '#faf5ff',
+          borderColor: '#d1d5db'
+        };
+      default:
+        return {
+          fontFamily: 'Arial, sans-serif',
+          accentColor: '#059669',
+          textColor: '#1f2937',
+          backgroundColor: '#ffffff',
+          headerBackground: '#f8f9fa',
+          tableHeaderBackground: '#f8f9fa',
+          totalBackground: '#f8f9fa',
+          paymentSectionBackground: '#f8f9fa',
+          borderColor: '#ddd'
+        };
+    }
+  }
+
+  getInvoiceThemeTitle(theme: string): string {
+    switch (theme) {
+      case 'professional':
+        return 'INVOICE';
+      case 'friendly':
+        return 'Invoice for Your Event';
+      case 'musical':
+        return '🎵 INVOICE 🎵';
+      default:
+        return 'INVOICE';
+    }
+  }
+
+  getInvoiceThemePaymentTitle(theme: string): string {
+    switch (theme) {
+      case 'professional':
+        return 'Payment Instructions';
+      case 'friendly':
+        return 'Payment Details';
+      case 'musical':
+        return 'Let\'s Talk Payment 🎵';
+      default:
+        return 'Payment Instructions';
+    }
+  }
+
+  getInvoiceThemePaymentText(theme: string): string {
+    switch (theme) {
+      case 'professional':
+        return 'Please remit payment by the due date specified above. Payment should be made in accordance with the terms outlined in our performance agreement.';
+      case 'friendly':
+        return 'Payment is due by the date shown above. Thank you for making this process easy and straightforward!';
+      case 'musical':
+        return 'Time to settle up! Payment is due by the date above. Thanks for keeping the business side smooth so we can focus on the music!';
+      default:
+        return 'Please remit payment by the due date above.';
+    }
+  }
+
+  getInvoiceThemeThankYou(theme: string): string {
+    switch (theme) {
+      case 'professional':
+        return 'Thank you for your business and the opportunity to provide musical services for your event.';
+      case 'friendly':
+        return 'Thank you so much for choosing me for your special event. It was wonderful performing for you!';
+      case 'musical':
+        return 'Thanks for letting me rock your event! Here\'s to many more musical collaborations! 🎵';
+      default:
+        return 'Thank you for your business!';
+    }
+  }
+
   generateInvoiceEmailHTML(invoice: any, userSettings: any, pdfUrl: string) {
+    // Get theme-specific email content for invoices
+    const theme = (invoice as any).invoiceTheme || 'professional';
+    const themeContent = this.getThemeInvoiceEmailContent(theme, invoice.clientName);
+    
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <h2>Invoice ${invoice.invoiceNumber}</h2>
+        <h2 style="color: ${themeContent.accentColor};">${themeContent.subject}</h2>
         <p>Dear ${invoice.clientName},</p>
-        <p>Please find your invoice attached.</p>
+        ${themeContent.introduction}
+        <p>${themeContent.body}</p>
         
         <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
           <h3>Invoice Details:</h3>
@@ -801,12 +954,12 @@ export class MailgunService {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${pdfUrl}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            Download Invoice PDF
+          <a href="${pdfUrl}" style="background: ${themeContent.accentColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            ${themeContent.buttonText}
           </a>
         </div>
         
-        <p>Best regards,<br>
+        <p>${themeContent.signature}<br>
         ${userSettings?.businessName || 'MusoBuddy'}</p>
       </div>
     `;
@@ -1331,22 +1484,71 @@ export class CloudStorageService {
 
 
   private generateInvoiceHTML(invoice: any, userSettings: any): string {
+    // Get theme-specific styling for invoices
+    const theme = (invoice as any).invoiceTheme || 'professional';
+    const themeStyles = this.getInvoiceThemeStyles(theme);
+    
     return `
 <!DOCTYPE html>
 <html>
 <head>
     <style>
-        body { font-family: Arial, sans-serif; }
-        .header { text-align: center; margin-bottom: 40px; }
+        body { 
+          font-family: ${themeStyles.fontFamily}; 
+          color: ${themeStyles.textColor};
+          background-color: ${themeStyles.backgroundColor};
+          line-height: 1.6;
+        }
+        .header { 
+          text-align: center; 
+          margin-bottom: 40px; 
+          padding: 20px;
+          background-color: ${themeStyles.headerBackground};
+          border-radius: 8px;
+        }
+        .header h1 {
+          color: ${themeStyles.accentColor};
+          margin: 0 0 10px 0;
+          font-size: 2.5rem;
+        }
+        .header h2 {
+          color: ${themeStyles.textColor};
+          margin: 0;
+          font-size: 1.5rem;
+        }
         .invoice-details { margin: 30px 0; }
-        .table { width: 100%; border-collapse: collapse; }
-        .table th, .table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .total { background: #f8f9fa; font-weight: bold; }
+        .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .table th, .table td { 
+          border: 1px solid ${themeStyles.borderColor}; 
+          padding: 12px; 
+          text-align: left; 
+        }
+        .table th {
+          background-color: ${themeStyles.tableHeaderBackground};
+          color: ${themeStyles.accentColor};
+          font-weight: bold;
+        }
+        .total { 
+          background: ${themeStyles.totalBackground}; 
+          font-weight: bold; 
+          color: ${themeStyles.accentColor};
+        }
+        .payment-section {
+          margin-top: 40px;
+          padding: 20px;
+          background-color: ${themeStyles.paymentSectionBackground};
+          border-radius: 8px;
+          border-left: 4px solid ${themeStyles.accentColor};
+        }
+        .payment-section h3 {
+          color: ${themeStyles.accentColor};
+          margin-top: 0;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>INVOICE</h1>
+        <h1>${this.getInvoiceThemeTitle(theme)}</h1>
         <h2>${invoice.invoiceNumber}</h2>
     </div>
 
@@ -1380,10 +1582,10 @@ export class CloudStorageService {
         </tbody>
     </table>
 
-    <div style="margin-top: 40px;">
-        <h3>Payment Instructions</h3>
-        <p>Please remit payment by the due date above.</p>
-        <p>Thank you for your business!</p>
+    <div class="payment-section">
+        <h3>${this.getInvoiceThemePaymentTitle(theme)}</h3>
+        <p>${this.getInvoiceThemePaymentText(theme)}</p>
+        <p>${this.getInvoiceThemeThankYou(theme)}</p>
     </div>
 </body>
 </html>
