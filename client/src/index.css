@@ -30,6 +30,9 @@
   --theme-surface: #ffffff;
   --theme-text: #1e293b;
   --theme-text-secondary: #64748b;
+  --theme-gradient-start: #8b5cf6;
+  --theme-gradient-mid: #a855f7;
+  --theme-gradient-end: #6366f1;
 }
 
 .theme-ocean-blue {
@@ -40,6 +43,9 @@
   --theme-surface: #ffffff;
   --theme-text: #0c4a6e;
   --theme-text-secondary: #075985;
+  --theme-gradient-start: #0ea5e9;
+  --theme-gradient-mid: #0284c7;
+  --theme-gradient-end: #38bdf8;
 }
 
 .theme-forest-green {
@@ -50,6 +56,9 @@
   --theme-surface: #ffffff;
   --theme-text: #14532d;
   --theme-text-secondary: #166534;
+  --theme-gradient-start: #16a34a;
+  --theme-gradient-mid: #15803d;
+  --theme-gradient-end: #22c55e;
 }
 
 .theme-clean-pro-audio {
@@ -62,6 +71,9 @@
   --theme-text-secondary: #555555;
   --theme-font-heading: "IBM Plex Sans", sans-serif;
   --theme-font-body: "IBM Plex Sans", sans-serif;
+  --theme-gradient-start: #e53935;
+  --theme-gradient-mid: #2c2c2c;
+  --theme-gradient-end: #ffeb3b;
 }
 
 .theme-midnight-blue {
@@ -74,6 +86,9 @@
   --theme-text-secondary: #4a5568;
   --theme-font-heading: system-ui, sans-serif;
   --theme-font-body: system-ui, sans-serif;
+  --theme-gradient-start: #191970;
+  --theme-gradient-mid: #1e1e3f;
+  --theme-gradient-end: #4169e1;
 }
 
 /* Apply theme to body and typography */
@@ -932,4 +947,24 @@ html.theme-midnight-blue button:not(.theme-button-text) *,
 .theme-purple button:not(.theme-button-text) *,
 .theme-midnight-blue button:not(.theme-button-text) * {
   color: inherit !important;
+}
+
+/* THEME-AWARE GRADIENT UTILITIES */
+/* Background gradients that adapt to current theme */
+.bg-theme-gradient {
+  background: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-mid), var(--theme-gradient-end)) !important;
+}
+
+.bg-theme-gradient-subtle {
+  background: linear-gradient(to right, var(--theme-primary), var(--theme-gradient-mid)) !important;
+  opacity: 0.1;
+}
+
+/* Text gradients that adapt to current theme */
+.text-theme-gradient {
+  background: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-end)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }

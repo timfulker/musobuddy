@@ -165,7 +165,7 @@ export default function NewBookingPage() {
       <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8">
         {/* Enhanced Header */}
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-yellow-500 to-blue-600 rounded-2xl opacity-5"></div>
+          <div className="absolute inset-0 bg-theme-gradient-subtle rounded-2xl"></div>
           <div className="relative bg-white/80 backdrop-blur-sm border border-primary/10 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
@@ -176,7 +176,7 @@ export default function NewBookingPage() {
                   </Button>
                 </Link>
                 <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-600 bg-clip-text text-transparent">
+                  <h1 className="text-4xl font-bold text-theme-gradient">
                     New Booking
                   </h1>
                   <p className="text-gray-600 mt-1">Create a new performance booking</p>
@@ -601,7 +601,7 @@ export default function NewBookingPage() {
 
             {/* Enhanced Action Buttons */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary via-yellow-500 to-blue-600 rounded-2xl opacity-5"></div>
+              <div className="absolute inset-0 bg-theme-gradient-subtle rounded-2xl"></div>
               <div className="relative bg-white/80 backdrop-blur-sm border border-primary/10 rounded-2xl p-6 shadow-lg">
                 <div className="flex justify-between items-center">
                   <div className="text-sm text-gray-600">
@@ -615,7 +615,7 @@ export default function NewBookingPage() {
                     </Link>
                     <Button 
                       type="submit" 
-                      className="bg-gradient-to-r from-primary to-primary-600 hover:from-primary/90 hover:to-primary-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                      className="bg-theme-gradient hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                       disabled={createBookingMutation.isPending}
                     >
                       <Save className="w-4 h-4 mr-2" />
