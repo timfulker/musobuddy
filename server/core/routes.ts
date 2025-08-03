@@ -2728,9 +2728,9 @@ export async function registerRoutes(app: Express) {
       });
       
       // Validate required fields
-      if (!req.body.clientName || !req.body.issueDate || !req.body.dueDate) {
+      if (!req.body.clientName || !req.body.dueDate) {
         return res.status(400).json({ 
-          error: 'Missing required fields: clientName, issueDate, and dueDate are required' 
+          error: 'Missing required fields: clientName and dueDate are required' 
         });
       }
 
@@ -2745,15 +2745,18 @@ export async function registerRoutes(app: Express) {
         clientEmail: req.body.clientEmail || null,
         clientAddress: req.body.clientAddress || null,
         clientPhone: req.body.clientPhone || null,
-        issueDate: req.body.issueDate,
+        ccEmail: req.body.ccEmail || null,
+        venueAddress: req.body.venueAddress || null,
+        amount: req.body.amount || "0.00",
         dueDate: req.body.dueDate,
-        items: req.body.items || [],
-        subtotal: req.body.subtotal || "0.00",
-        tax: req.body.tax || "0.00",
-        total: req.body.total || "0.00",
-        notes: req.body.notes || null,
-        status: req.body.status || 'draft',
-        enquiryId: req.body.enquiryId || null
+        performanceDate: req.body.performanceDate || null,
+        performanceFee: req.body.performanceFee || null,
+        depositPaid: req.body.depositPaid || "0.00",
+        eventDate: req.body.performanceDate || null, // Map performanceDate to eventDate
+        fee: req.body.performanceFee || req.body.amount || "0.00",
+        invoiceTheme: req.body.invoiceTheme || "professional",
+        contractId: req.body.contractId || null,
+        status: req.body.status || 'draft'
       };
       
       const newInvoice = await storage.createInvoice(invoiceData);
