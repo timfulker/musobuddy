@@ -412,7 +412,7 @@ export async function generateInvoicePDF(
   invoice: Invoice,
   userSettings: UserSettings | null,
   contract?: any,
-  useAI: boolean = true
+  useAI: boolean = false
 ): Promise<Buffer> {
   console.log('Starting invoice PDF generation for:', invoice.invoiceNumber);
   
