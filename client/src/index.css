@@ -1178,15 +1178,19 @@ html body [class*="theme-"] .sidebar .bg-primary span {
   color: white !important;
 }
 
-/* TARGETED FIX: Only buttons outside sidebar need white text on midnight blue theme */
+/* TARGETED FIX: Only buttons outside sidebar need white text on dark themes */
 .theme-midnight-blue button:not(.sidebar button),
-.theme-midnight-blue button:not(.sidebar *) {
+.theme-midnight-blue button:not(.sidebar *),
+.theme-purple button:not(.sidebar button),
+.theme-purple button:not(.sidebar *) {
   color: white !important;
 }
 
 /* Force white text on button contents (but exclude sidebar) */
 .theme-midnight-blue button:not(.sidebar button) *,
-.theme-midnight-blue button:not(.sidebar *) * {
+.theme-midnight-blue button:not(.sidebar *) *,
+.theme-purple button:not(.sidebar button) *,
+.theme-purple button:not(.sidebar *) * {
   color: white !important;
 }
 
@@ -1194,15 +1198,38 @@ html body [class*="theme-"] .sidebar .bg-primary span {
 .theme-midnight-blue main button,
 .theme-midnight-blue .container button,
 .theme-midnight-blue .content button,
-.theme-midnight-blue [class*="page"] button {
-  background-color: #191970 !important;
+.theme-midnight-blue [class*="page"] button,
+.theme-purple main button,
+.theme-purple .container button,
+.theme-purple .content button,
+.theme-purple [class*="page"] button {
   color: white !important;
 }
 
-/* Target button text content specifically */
+/* Purple theme gets its own color */
+.theme-purple main button,
+.theme-purple .container button,
+.theme-purple .content button,
+.theme-purple [class*="page"] button {
+  background-color: #8b5cf6 !important;
+}
+
+/* Midnight blue theme gets its color */
+.theme-midnight-blue main button,
+.theme-midnight-blue .container button,
+.theme-midnight-blue .content button,
+.theme-midnight-blue [class*="page"] button {
+  background-color: #191970 !important;
+}
+
+/* Target button text content specifically for both themes */
 .theme-midnight-blue main button span,
 .theme-midnight-blue .container button span,
 .theme-midnight-blue .content button span,
-.theme-midnight-blue [class*="page"] button span {
+.theme-midnight-blue [class*="page"] button span,
+.theme-purple main button span,
+.theme-purple .container button span,
+.theme-purple .content button span,
+.theme-purple [class*="page"] button span {
   color: white !important;
 }
