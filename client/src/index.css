@@ -232,6 +232,22 @@ body {
   background-color: #191970 !important;
 }
 
+/* Force white text on active/selected navigation items for all themes */
+[class*="theme-"] .bg-primary,
+[class*="theme-"] .bg-primary *,
+[class*="theme-"] [class*="bg-primary"] {
+  color: white !important;
+}
+
+/* Specific override for midnight blue active states */
+.theme-midnight-blue .bg-primary,
+.theme-midnight-blue .bg-primary *,
+.theme-midnight-blue [class*="bg-primary"],
+.theme-midnight-blue [class*="bg-primary"] * {
+  background-color: #191970 !important;
+  color: white !important;
+}
+
 /* Additional specific overrides for navigation components */
 [class*="theme-"] .hover\:bg-muted:hover {
   background-color: var(--theme-primary) !important;
