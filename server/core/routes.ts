@@ -2095,56 +2095,73 @@ export async function registerRoutes(app: Express) {
         return res.json(newContract);
       }
       
-      // TEMPORARY: Skip AI PDF during creation to prevent timeouts, generate in background
-      console.log('📄 Contract created successfully, starting background AI PDF generation...');
+      // SIMPLIFIED: Generate standard PDF immediately, then enhance with AI in background
+      console.log('📄 Contract created successfully, generating standard PDF immediately...');
       
-      // Start background AI PDF generation immediately (don't await)
-      const userSettings = await storage.getUserSettings(req.session.userId);
-      const pdfData = {
-        type: 'contract' as const,
-        client: newContract.clientName || 'Unknown Client',
-        eventDate: newContract.eventDate || new Date().toISOString(),
-        venue: newContract.venue || 'TBD',
-        fee: newContract.fee || '0.00',
-        theme: (newContract.contractTheme as 'professional' | 'friendly' | 'musical') || 'professional',
-        sections: [
-          {
-            title: 'Event Details',
-            content: `Date: ${new Date(newContract.eventDate).toLocaleDateString('en-GB')}\nTime: ${newContract.eventTime || 'TBD'} - ${newContract.eventEndTime || 'TBD'}\nVenue: ${newContract.venue || 'TBD'}\nAddress: ${newContract.venueAddress || 'TBD'}`
-          },
-          {
-            title: 'Performance Fee',
-            content: `Performance Fee: £${newContract.fee}\nDeposit: £${newContract.deposit || '0.00'}\nBalance Due: £${(parseFloat(newContract.fee) - parseFloat(newContract.deposit || '0')).toFixed(2)}`
-          },
-          {
-            title: 'Payment Terms',
-            content: newContract.paymentInstructions || 'Payment due within 30 days of performance date. Payment methods: Bank transfer or cash on the day.'
-          },
-          {
-            title: 'Equipment & Requirements',
-            content: newContract.equipmentRequirements || 'Standard performance setup required. Power supply: 2x 13A sockets. Space required: 3m x 2m minimum.'
-          },
-          {
-            title: 'Special Requirements', 
-            content: newContract.specialRequirements || 'No special requirements specified.'
-          }
-        ],
-        branding: {
-          businessName: userSettings?.businessName || 'MusoBuddy User',
-          footerText: `Contract ${newContract.contractNumber} | Generated ${new Date().toLocaleDateString('en-GB')}`
+      try {
+        // Generate standard PDF first for immediate availability
+        const userSettings = await storage.getUserSettings(req.session.userId);
+        const { uploadContractToCloud } = await import('./cloud-storage');
+        
+        const cloudResult = await uploadContractToCloud(newContract, userSettings);
+        
+        if (cloudResult.success) {
+          const updatedContract = await storage.updateContract(newContract.id, {
+            cloudStorageUrl: cloudResult.url,
+            cloudStorageKey: cloudResult.key
+          });
+          
+          console.log('✅ Standard PDF uploaded successfully, now starting AI enhancement...');
+          
+          // Start AI enhancement in background (don't await)
+          const pdfData = {
+            type: 'contract' as const,
+            client: newContract.clientName || 'Unknown Client',
+            eventDate: newContract.eventDate || new Date().toISOString(),
+            venue: newContract.venue || 'TBD',
+            fee: newContract.fee || '0.00',
+            theme: (newContract.contractTheme as 'professional' | 'friendly' | 'musical') || 'professional',
+            sections: [
+              {
+                title: 'Event Details',
+                content: `Date: ${new Date(newContract.eventDate).toLocaleDateString('en-GB')}\nTime: ${newContract.eventTime || 'TBD'} - ${newContract.eventEndTime || 'TBD'}\nVenue: ${newContract.venue || 'TBD'}\nAddress: ${newContract.venueAddress || 'TBD'}`
+              },
+              {
+                title: 'Performance Fee',
+                content: `Performance Fee: £${newContract.fee}\nDeposit: £${newContract.deposit || '0.00'}\nBalance Due: £${(parseFloat(newContract.fee) - parseFloat(newContract.deposit || '0')).toFixed(2)}`
+              },
+              {
+                title: 'Payment Terms',
+                content: newContract.paymentInstructions || 'Payment due within 30 days of performance date. Payment methods: Bank transfer or cash on the day.'
+              },
+              {
+                title: 'Equipment & Requirements',
+                content: newContract.equipmentRequirements || 'Standard performance setup required. Power supply: 2x 13A sockets. Space required: 3m x 2m minimum.'
+              },
+              {
+                title: 'Special Requirements', 
+                content: newContract.specialRequirements || 'No special requirements specified.'
+              }
+            ],
+            branding: {
+              businessName: userSettings?.businessName || 'MusoBuddy User',
+              footerText: `Contract ${newContract.contractNumber} | Generated ${new Date().toLocaleDateString('en-GB')}`
+            }
+          };
+          
+          generateBackgroundAIPDF(newContract.id, pdfData, req.session.userId)
+            .catch(bgError => {
+              console.error('❌ Background AI enhancement failed:', bgError.message);
+            });
+          
+          return res.json(updatedContract);
         }
-      };
+      } catch (pdfError: any) {
+        console.error('❌ Standard PDF generation failed:', pdfError.message);
+      }
       
-      generateBackgroundAIPDF(newContract.id, pdfData, req.session.userId)
-        .catch(bgError => {
-          console.error('❌ Background AI PDF generation failed:', bgError.message);
-        });
-      
-      return res.json({
-        ...newContract,
-        pdfGenerationStatus: 'processing',
-        pdfMessage: 'Contract created successfully. AI-themed PDF is being generated in the background.'
-      });
+      // Fallback: Return contract without PDF
+      return res.json(newContract);
       
       // ENHANCED AI PDF GENERATION WITH COMPREHENSIVE ERROR HANDLING
       try {
