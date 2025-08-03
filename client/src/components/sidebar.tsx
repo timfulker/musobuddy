@@ -48,14 +48,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const getNavLinkClass = (path: string) => {
     const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
+    const theme = getCurrentTheme();
     
-    // Fixed styling for better visibility across all themes
     return cn(
       baseClass,
-      "rounded-lg", // 8px border radius as documented
+      "rounded-lg",
       isActive(path) 
-        ? "bg-primary text-white shadow-sm" // Active state: theme color background with white text
-        : "text-slate-700 dark:text-slate-300 hover:bg-primary/10 hover:text-slate-700 dark:hover:text-slate-200" // Inactive: ensure proper contrast
+        ? theme === 'midnight-blue' || theme === 'purple' 
+          ? "bg-primary text-white shadow-sm" // Purple/Midnight Blue: white text on colored background
+          : "bg-primary text-black shadow-sm" // Other themes: black text on colored background
+        : "hover:bg-primary/10" // Inactive: just hover effect, text color handled by inline styles
     );
   };
 
@@ -68,11 +70,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   };
 
   const getInactiveStyle = () => {
-    const theme = getCurrentTheme();
-    if (theme === 'midnight-blue' || theme === 'purple') {
-      return { color: 'rgb(148, 163, 184)' }; // Force slate-400 color
-    }
-    return {};
+    // ALL inactive menu items should be black text (visible against white sidebar background)
+    return { color: 'rgb(51, 65, 85)' }; // slate-700 - dark text for visibility
   };
 
   return (
