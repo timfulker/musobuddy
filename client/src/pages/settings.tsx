@@ -25,9 +25,9 @@ import { INSTRUMENT_GIG_PRESETS, getGigTypeNamesForInstrument, getAvailableInstr
 
 // Theme configuration constants
 const THEME_TEMPLATES = [
-  { id: "classic", label: "Classic Business", description: "Professional and traditional invoice format" },
-  { id: "modern", label: "Modern Creative", description: "Clean and contemporary design" },
-  { id: "minimal", label: "Minimal Clean", description: "Simple and elegant style" },
+  { id: "professional", label: "Professional & Formal", description: "Business-like, structured. Perfect for corporate events and high-end weddings" },
+  { id: "friendly", label: "Friendly & Informal", description: "Warm, personal. Great for smaller weddings and return clients" },
+  { id: "musical", label: "Musical & Creative", description: "Quirky, expressive. Ideal for fellow musicians and creative events" },
 ];
 
 const THEME_TONES = [

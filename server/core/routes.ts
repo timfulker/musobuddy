@@ -25,64 +25,53 @@ function generateThemePreviewHTML(themeSettings: any): string {
     businessEmail
   } = themeSettings;
 
-  // Font families mapping
-  const fontFamily = {
-    'times': '"Times New Roman", serif',
-    'arial': 'Arial, sans-serif',
-    'helvetica': 'Helvetica, sans-serif',
-    'georgia': 'Georgia, serif',
-    'roboto': '"Roboto", sans-serif'
-  }[font] || '"Roboto", sans-serif';
-
-  // Template styles
-  const templateStyles = {
-    classic: {
-      headerBg: accentColor,
-      headerColor: '#ffffff',
-      borderStyle: `3px solid ${accentColor}`,
-      sectionHeaderColor: accentColor
-    },
-    modern: {
-      headerBg: `linear-gradient(135deg, ${accentColor}, #667eea)`,
-      headerColor: '#ffffff',
-      borderStyle: `2px solid ${accentColor}`,
-      sectionHeaderColor: accentColor
-    },
-    minimal: {
-      headerBg: '#f8f9fa',
-      headerColor: accentColor,
-      borderStyle: `1px solid ${accentColor}`,
-      sectionHeaderColor: accentColor
-    }
-  }[template] || {
-    headerBg: accentColor,
-    headerColor: '#ffffff',
-    borderStyle: `3px solid ${accentColor}`,
-    sectionHeaderColor: accentColor
-  };
-
-  // Tone-based content
-  const toneContent = {
+  // Three distinct theme templates with fixed fonts and styling
+  const themeTemplates = {
     professional: {
+      name: 'Professional & Formal',
+      fontFamily: '"Times New Roman", serif',
+      headerBg: '#1e293b',
+      headerColor: '#ffffff',
+      borderStyle: '2px solid #1e293b',
+      sectionHeaderColor: '#1e293b',
+      accentColor: '#1e293b',
       greeting: 'Dear Client,',
-      closing: 'Thank you for your business.',
-      terms: 'Payment is due within 30 days of invoice date. Late fees may apply.'
+      intro: 'Please find attached the official contract for your upcoming event booking. Kindly review all details carefully and return a signed copy at your earliest convenience.',
+      closing: 'If you have any questions or require amendments, do not hesitate to get in touch.\n\nBest regards,',
+      terms: 'Payment is due within 30 days of invoice date. Late fees may apply for overdue accounts.',
+      subjectLine: 'Event Booking Confirmation & Contract'
     },
     friendly: {
-      greeting: 'Hi there!',
-      closing: 'Looking forward to working with you!',
-      terms: 'Payment due in 30 days - just drop me a line if you have any questions!'
+      name: 'Friendly & Informal',
+      fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+      headerBg: '#059669',
+      headerColor: '#ffffff',
+      borderStyle: '2px solid #059669',
+      sectionHeaderColor: '#059669',
+      accentColor: '#059669',
+      greeting: 'Hey there!',
+      intro: 'Really excited to be part of your event! I\'ve attached a quick contract just to lock things in and keep everything nice and clear.',
+      closing: 'Give it a quick read, and if all looks good, just sign and send it back when you can. Shout if you need anything changed!\n\nCheers,',
+      terms: 'Payment due in 30 days - just drop me a line if you have any questions!',
+      subjectLine: 'You\'re all booked in!'
     },
-    creative: {
-      greeting: 'Hey music lover!',
-      closing: 'Let\'s make some magic happen!',
-      terms: 'Payment due within 30 days. Can\'t wait to rock your event!'
+    musical: {
+      name: 'Musical & Creative',
+      fontFamily: '"Comic Sans MS", cursive, sans-serif',
+      headerBg: 'linear-gradient(135deg, #9333ea, #c084fc)',
+      headerColor: '#ffffff',
+      borderStyle: '3px solid #9333ea',
+      sectionHeaderColor: '#9333ea',
+      accentColor: '#9333ea',
+      greeting: 'Yo there! 🎶',
+      intro: 'You\'re officially on the MusoBuddy gig list 🎷🎤🎧 — it\'s gonna be a vibe. I\'ve popped a contract in here to keep things in tune (pun very much intended).',
+      closing: 'Have a skim, hit sign, and send it back. Any questions? Drop me a beat (or an email).\n\nLet\'s make your event unforgettable.\n\nRock on,',
+      terms: 'Payment due within 30 days. Can\'t wait to rock your event!',
+      subjectLine: 'Let\'s Make Music! 🎶'
     }
-  }[tone] || {
-    greeting: 'Dear Client,',
-    closing: 'Thank you for your business.',
-    terms: 'Payment is due within 30 days of invoice date.'
   };
+
+  const selectedTheme = themeTemplates[template] || themeTemplates.professional;
 
   return `
     <!DOCTYPE html>
@@ -92,7 +81,7 @@ function generateThemePreviewHTML(themeSettings: any): string {
       <title>Theme Preview - ${customTitle}</title>
       <style>
         body {
-          font-family: ${fontFamily};
+          font-family: ${selectedTheme.fontFamily};
           line-height: 1.6;
           color: #333;
           max-width: 800px;
@@ -101,8 +90,8 @@ function generateThemePreviewHTML(themeSettings: any): string {
           background: white;
         }
         .header {
-          background: ${templateStyles.headerBg};
-          color: ${templateStyles.headerColor};
+          background: ${selectedTheme.headerBg};
+          color: ${selectedTheme.headerColor};
           text-align: center;
           padding: 30px;
           border-radius: 8px;
@@ -128,11 +117,11 @@ function generateThemePreviewHTML(themeSettings: any): string {
         .section {
           margin-bottom: 30px;
           padding: 20px;
-          border: ${templateStyles.borderStyle};
+          border: ${selectedTheme.borderStyle};
           border-radius: 8px;
         }
         .section h3 {
-          color: ${templateStyles.sectionHeaderColor};
+          color: ${selectedTheme.sectionHeaderColor};
           margin-top: 0;
           font-size: 18px;
           border-bottom: 1px solid #ddd;
@@ -161,19 +150,19 @@ function generateThemePreviewHTML(themeSettings: any): string {
           border-radius: 8px;
           text-align: center;
           margin: 20px 0;
-          border: 2px solid ${accentColor};
+          border: 2px solid ${selectedTheme.accentColor};
         }
         .fee-amount {
           font-size: 24px;
           font-weight: bold;
-          color: ${accentColor};
+          color: ${selectedTheme.accentColor};
         }
         .optional-section {
           background: #f9f9f9;
           padding: 15px;
           border-radius: 6px;
           margin: 15px 0;
-          border-left: 4px solid ${accentColor};
+          border-left: 4px solid ${selectedTheme.accentColor};
         }
         .terms {
           background: #f9f9f9;
@@ -186,7 +175,7 @@ function generateThemePreviewHTML(themeSettings: any): string {
           position: fixed;
           top: 20px;
           right: 20px;
-          background: ${accentColor};
+          background: ${selectedTheme.accentColor};
           color: white;
           padding: 10px 15px;
           border-radius: 20px;
@@ -200,8 +189,8 @@ function generateThemePreviewHTML(themeSettings: any): string {
       <div class="preview-badge">THEME PREVIEW</div>
       
       <div class="header">
-        <h1>${customTitle.toUpperCase()}</h1>
-        <h2>Preview of ${template} template with ${tone} tone</h2>
+        <h1>${selectedTheme.subjectLine}</h1>
+        <h2>${selectedTheme.name} Theme Preview</h2>
       </div>
 
       <div class="business-info">
@@ -268,15 +257,16 @@ function generateThemePreviewHTML(themeSettings: any): string {
       ` : ''}
 
       <div class="section">
-        <p>${toneContent.greeting}</p>
-        <p>This preview shows how your ${customTitle.toLowerCase()} will look with the selected theme settings. Your actual documents will include real booking details and personalized content.</p>
-        <p>${toneContent.closing}</p>
+        <p>${selectedTheme.greeting}</p>
+        <p>${selectedTheme.intro}</p>
+        <p>This preview shows how your documents will look with the ${selectedTheme.name} theme. Your actual contracts and invoices will include real booking details and personalized content.</p>
+        <p>${selectedTheme.closing}<br><strong>${businessName}</strong></p>
       </div>
 
       ${showTerms ? `
       <div class="terms">
         <h4>Terms & Conditions</h4>
-        <p>${toneContent.terms}</p>
+        <p>${selectedTheme.terms}</p>
         <p>Cancellation policy: 48 hours notice required for full refund.</p>
       </div>
       ` : ''}
