@@ -1179,18 +1179,14 @@ html body [class*="theme-"] .sidebar .bg-primary span {
 }
 
 /* TARGETED FIX: Only buttons outside sidebar need white text on dark themes */
-.theme-midnight-blue button:not(.sidebar button),
-.theme-midnight-blue button:not(.sidebar *),
-.theme-purple button:not(.sidebar button),
-.theme-purple button:not(.sidebar *) {
+.theme-midnight-blue button:not(.sidebar button):not(.sidebar *),
+.theme-purple button:not(.sidebar button):not(.sidebar *) {
   color: white !important;
 }
 
 /* Force white text on button contents (but exclude sidebar) */
-.theme-midnight-blue button:not(.sidebar button) *,
-.theme-midnight-blue button:not(.sidebar *) *,
-.theme-purple button:not(.sidebar button) *,
-.theme-purple button:not(.sidebar *) * {
+.theme-midnight-blue button:not(.sidebar button):not(.sidebar *) *,
+.theme-purple button:not(.sidebar button):not(.sidebar *) * {
   color: white !important;
 }
 
@@ -1246,8 +1242,16 @@ html body [class*="theme-"] .sidebar .bg-primary span {
   color: white !important;
 }
 
-/* Mobile navigation specific fixes */
-.theme-midnight-blue [class*="bg-primary"] *,
-.theme-purple [class*="bg-primary"] * {
+/* Mobile navigation specific fixes - but exclude sidebar */
+.theme-midnight-blue [class*="bg-primary"]:not(.sidebar *) *,
+.theme-purple [class*="bg-primary"]:not(.sidebar *) * {
   color: white !important;
+}
+
+/* Ensure sidebar links remain visible for inactive states */
+.sidebar a:not(.bg-primary),
+.sidebar button:not(.bg-primary) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
 }
