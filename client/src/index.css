@@ -1233,13 +1233,13 @@ html body [class*="theme-"] .sidebar .bg-primary span {
 /* CRITICAL SIDEBAR NAVIGATION VISIBILITY FIX - MAXIMUM SPECIFICITY */
 /* Force all inactive sidebar navigation items to be visible with explicit colors */
 
-/* Override ALL navigation link colors with maximum specificity */
-html body nav a,
-html body .sidebar nav a,
-html body [class*="sidebar"] nav a,
-html body #root nav a,
-html body #root .sidebar nav a {
-  color: #64748b !important; /* Visible gray for all inactive items */
+/* Default inactive navigation - black text for light themes */
+html body nav a:not(.bg-primary),
+html body .sidebar nav a:not(.bg-primary),
+html body [class*="sidebar"] nav a:not(.bg-primary),
+html body #root nav a:not(.bg-primary),
+html body #root .sidebar nav a:not(.bg-primary) {
+  color: #1e293b !important; /* Dark text for light themes */
 }
 
 /* Force icons and text to inherit link colors */
@@ -1269,14 +1269,14 @@ html body #root .sidebar nav a.bg-primary * {
   color: white !important;
 }
 
-/* Theme-specific overrides with nuclear specificity */
+/* Purple and Midnight Blue themes - WHITE text for inactive items */
 html body.theme-purple nav a:not(.bg-primary),
 html body.theme-purple .sidebar nav a:not(.bg-primary),
 html body.theme-midnight-blue nav a:not(.bg-primary),
 html body.theme-midnight-blue .sidebar nav a:not(.bg-primary),
 html body [class*="theme-purple"] nav a:not(.bg-primary),
 html body [class*="theme-midnight"] nav a:not(.bg-primary) {
-  color: #64748b !important;
+  color: white !important;
 }
 
 html body.theme-purple nav a:not(.bg-primary) *,
@@ -1285,6 +1285,25 @@ html body.theme-midnight-blue nav a:not(.bg-primary) *,
 html body.theme-midnight-blue .sidebar nav a:not(.bg-primary) *,
 html body [class*="theme-purple"] nav a:not(.bg-primary) *,
 html body [class*="theme-midnight"] nav a:not(.bg-primary) * {
+  color: inherit !important;
+}
+
+/* Green, Ocean Blue, Clean Pro Audio themes - BLACK text for inactive items */
+html body.theme-forest-green nav a:not(.bg-primary),
+html body.theme-forest-green .sidebar nav a:not(.bg-primary),
+html body.theme-ocean-blue nav a:not(.bg-primary),
+html body.theme-ocean-blue .sidebar nav a:not(.bg-primary),
+html body.theme-clean-pro-audio nav a:not(.bg-primary),
+html body.theme-clean-pro-audio .sidebar nav a:not(.bg-primary) {
+  color: #1e293b !important;
+}
+
+html body.theme-forest-green nav a:not(.bg-primary) *,
+html body.theme-forest-green .sidebar nav a:not(.bg-primary) *,
+html body.theme-ocean-blue nav a:not(.bg-primary) *,
+html body.theme-ocean-blue .sidebar nav a:not(.bg-primary) *,
+html body.theme-clean-pro-audio nav a:not(.bg-primary) *,
+html body.theme-clean-pro-audio .sidebar nav a:not(.bg-primary) * {
   color: inherit !important;
 }
 
