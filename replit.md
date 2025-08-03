@@ -16,7 +16,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **State Management**: React Query
 - **Routing**: Wouter
 - **Forms**: React Hook Form with Zod validation
-- **UI/UX Decisions**: Clean white cards with left border status indicators, gradient-styled forms, professional action buttons, responsive layouts for all screen sizes (mobile-optimized), consistent sidebar navigation, clear visual cues for user interactions. Single professional theme with clean, business-appropriate styling for contracts and invoices.
+- **UI/UX Decisions**: Clean white cards with left border status indicators, gradient-styled forms, professional action buttons, responsive layouts for all screen sizes (mobile-optimized), consistent sidebar navigation, clear visual cues for user interactions. Multiple theme options (Purple, Ocean Blue, Forest Green, Clean Pro Audio, Midnight Blue) with theme-aware components and an animated metronome logo.
 
 ### Backend
 - **Runtime**: Node.js with Express.js
@@ -25,13 +25,13 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **Authentication**: Branded email/password authentication with PostgreSQL sessions, robust session management, and Replit Auth integration.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails and webhook processing.
-- **PDF Generation**: Puppeteer for contract and invoice PDFs with AI-powered page break optimization, print optimization, and professional layout.
-- **AI Integration**: Anthropic Claude Haiku for contract parsing, OpenAI for email parsing, AI response generation, and intelligent PDF page break optimization to prevent awkward sentence splits.
+- **PDF Generation**: Puppeteer for contract and invoice PDFs.
+- **AI Integration**: Anthropic Claude Haiku for contract parsing, OpenAI for email parsing and AI response generation, including price enquiry detection and message categorization.
 - **System Design Choices**:
     - **User Management**: Replit Auth integration, session-based authentication, user tiers (free, premium, enterprise), admin dashboard.
     - **Booking Management**: Unified system, conflict detection, calendar integration (.ics import), status tracking, and manual gig entry. Includes a standalone, token-based booking widget.
-    - **Contract Generation**: Dynamic PDF generation with professional styling, AI-optimized page breaks, digital signature capabilities, cloud storage, and automated reminders (Phase 2).
-    - **Invoice Management**: Professional invoice generation with clean styling, smart page breaks, sequential numbering (001, 002, 003), proper business address display, payment tracking, overdue monitoring, and integration with banking APIs (planned).
+    - **Contract Generation**: Dynamic PDF generation, digital signature capabilities, cloud storage, and automated reminders (Phase 2).
+    - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, and integration with banking APIs (planned).
     - **Compliance Tracking**: Document management for insurance, licenses, PAT testing; expiry date monitoring and alerts; automated compliance sharing.
     - **Data Flow**: Streamlined authentication, booking lifecycle management, and AI integration for automated data extraction and processing.
     - **Security**: Robust session validation, comprehensive rate limiting (login, SMS, signup, API), enhanced database connection pooling, and secure password hashing.

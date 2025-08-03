@@ -282,43 +282,7 @@ export class Storage {
 
   // Contracts
   async getContracts(userId: string) {
-    return await db.select({
-      id: contracts.id,
-      userId: contracts.userId,
-      contractNumber: contracts.contractNumber,
-      clientName: contracts.clientName,
-      clientEmail: contracts.clientEmail,
-      clientAddress: contracts.clientAddress,
-      clientPhone: contracts.clientPhone,
-      venue: contracts.venue,
-      venueAddress: contracts.venueAddress,
-      eventDate: contracts.eventDate,
-      eventTime: contracts.eventTime,
-      eventEndTime: contracts.eventEndTime,
-      fee: contracts.fee,
-      deposit: contracts.deposit,
-      paymentInstructions: contracts.paymentInstructions,
-      equipmentRequirements: contracts.equipmentRequirements,
-      specialRequirements: contracts.specialRequirements,
-      clientFillableFields: contracts.clientFillableFields,
-      status: contracts.status,
-      signedAt: contracts.signedAt,
-      sentAt: contracts.sentAt,
-      reminderEnabled: contracts.reminderEnabled,
-      reminderDays: contracts.reminderDays,
-      lastReminderSent: contracts.lastReminderSent,
-      reminderCount: contracts.reminderCount,
-      cloudStorageUrl: contracts.cloudStorageUrl,
-      cloudStorageKey: contracts.cloudStorageKey,
-      signingPageUrl: contracts.signingPageUrl,
-      signingPageKey: contracts.signingPageKey,
-      signingUrlCreatedAt: contracts.signingUrlCreatedAt,
-      clientSignature: contracts.clientSignature,
-      clientIpAddress: contracts.clientIpAddress,
-      enquiryId: contracts.enquiryId,
-      createdAt: contracts.createdAt,
-      updatedAt: contracts.updatedAt
-    }).from(contracts)
+    return await db.select().from(contracts)
       .where(eq(contracts.userId, userId))
       .orderBy(desc(contracts.createdAt));
   }
@@ -354,11 +318,6 @@ export class Storage {
             clientFillableFields: contractData.clientFillableFields || null,
             status: contractData.status || "draft",
             signedAt: contractData.signedAt ? new Date(contractData.signedAt) : null,
-            sentAt: contractData.sentAt ? new Date(contractData.sentAt) : null,
-            reminderEnabled: contractData.reminderEnabled || false,
-            reminderDays: contractData.reminderDays || 3,
-            lastReminderSent: contractData.lastReminderSent ? new Date(contractData.lastReminderSent) : null,
-            reminderCount: contractData.reminderCount || 0,
             cloudStorageUrl: contractData.cloudStorageUrl || null,
             cloudStorageKey: contractData.cloudStorageKey || null,
             signingPageUrl: contractData.signingPageUrl || null,
@@ -404,8 +363,6 @@ export class Storage {
       ...updates,
       eventDate: updates.eventDate ? new Date(updates.eventDate) : updates.eventDate,
       signedAt: updates.signedAt ? new Date(updates.signedAt) : updates.signedAt,
-      sentAt: updates.sentAt ? new Date(updates.sentAt) : updates.sentAt,
-      lastReminderSent: updates.lastReminderSent ? new Date(updates.lastReminderSent) : updates.lastReminderSent,
       signingUrlCreatedAt: updates.signingUrlCreatedAt ? new Date(updates.signingUrlCreatedAt) : updates.signingUrlCreatedAt,
       updatedAt: new Date()
     };
@@ -442,35 +399,6 @@ export class Storage {
   async getInvoice(id: number) {
     const result = await db.select().from(invoices).where(eq(invoices.id, id));
     return result[0] || null;
-  }
-
-  async getNextInvoiceNumber(userId: string): Promise<string> {
-    // Get the latest invoice for this user to determine the next number
-    const latestInvoices = await db.select({ invoiceNumber: invoices.invoiceNumber })
-      .from(invoices)
-      .where(eq(invoices.userId, userId))
-      .orderBy(desc(invoices.createdAt))
-      .limit(10); // Get last 10 to handle edge cases
-
-    let nextNumber = 1;
-    
-    if (latestInvoices.length > 0) {
-      // Extract numbers from existing invoice numbers and find the highest
-      const existingNumbers = latestInvoices
-        .map(inv => {
-          // Handle various formats: "001", "INV-001", "1", etc.
-          const match = inv.invoiceNumber.match(/(\d+)$/);
-          return match ? parseInt(match[1]) : 0;
-        })
-        .filter(num => num > 0);
-      
-      if (existingNumbers.length > 0) {
-        nextNumber = Math.max(...existingNumbers) + 1;
-      }
-    }
-    
-    // Return padded 3-digit number
-    return String(nextNumber).padStart(3, '0');
   }
 
   async createInvoice(invoiceData: any) {

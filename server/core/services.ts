@@ -41,7 +41,7 @@ export class MailgunService {
       const messageData: any = {
         from: `MusoBuddy <noreply@${domain}>`,
         to: contract.clientEmail,
-        subject: subject || this.getThemeEmailContent((contract as any).contractTheme || 'professional', contract.clientName).subject + ` - ${contract.contractNumber}`,
+        subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
         html: this.generateContractEmailHTML(contract, userSettings, signingUrl, customMessage),
         attachment: [{
           data: pdfBuffer,
@@ -95,7 +95,7 @@ export class MailgunService {
     const emailData = {
       from: `MusoBuddy <noreply@${domain}>`,
       to: invoice.clientEmail,
-      subject: subject || this.getThemeInvoiceEmailContent((invoice as any).invoiceTheme || 'professional', invoice.clientName).subject + ` - ${invoice.invoiceNumber}`,
+      subject: subject || `Invoice ${invoice.invoiceNumber}`,
       html: this.generateInvoiceEmailHTML(invoice, userSettings, pdfUrl),
       // Email deliverability improvements - additive only
       'h:Reply-To': userSettings?.businessEmail || `noreply@${domain}`,
@@ -202,22 +202,10 @@ export class MailgunService {
       console.log(`📧 Sending enhanced ${emailData.emailType || 'general'} email with DKIM signing and tracking`);
       
       const result = await this.mailgun.messages.create(domain, messageData);
-      
-      // Return standardized response format
-      return {
-        success: true,
-        messageId: result.id,
-        message: 'Email sent successfully'
-      };
+      return result;
     } catch (error: any) {
       console.error('❌ Failed to send enhanced email:', error);
-      
-      // Return standardized error format
-      return {
-        success: false,
-        error: error.message || 'Email sending failed',
-        details: error
-      };
+      throw error;
     }
   }
 
@@ -722,16 +710,12 @@ export class MailgunService {
     console.log('📧 Contract email signing URL:', finalSigningUrl);
     console.log('📧 Contract signing page URL from DB:', contract.signingPageUrl);
     
-    // Get theme-specific email content
-    const theme = (contract as any).contractTheme || 'professional';
-    const themeContent = this.getThemeEmailContent(theme, contract.clientName);
-    
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <h2 style="color: ${themeContent.accentColor};">${themeContent.subject}</h2>
+        <h2>Contract Ready for Signing</h2>
         <p>Dear ${contract.clientName},</p>
-        ${customMessage ? `<p>${customMessage}</p>` : themeContent.introduction}
-        <p>${themeContent.body}</p>
+        ${customMessage ? `<p>${customMessage}</p>` : ''}
+        <p>Your contract is ready for review and signing.</p>
         
         <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
           <h3>Event Details:</h3>
@@ -742,220 +726,25 @@ export class MailgunService {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${finalSigningUrl}" style="background: ${themeContent.accentColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            ${themeContent.buttonText}
+          <a href="${finalSigningUrl}" style="background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Review and Sign Contract
           </a>
         </div>
         
         <p><strong>Note:</strong> A PDF copy of the contract is attached to this email for your records.</p>
         
-        <p>${themeContent.signature}<br>
+        <p>Best regards,<br>
         ${userSettings?.businessName || 'MusoBuddy'}</p>
       </div>
     `;
   }
 
-  // Theme-specific email content generator
-  getThemeEmailContent(theme: string, clientName: string) {
-    switch (theme) {
-      case 'professional':
-        return {
-          subject: 'Performance Agreement - Ready for Review',
-          introduction: '<p>I trust this email finds you well.</p>',
-          body: 'Please find attached the formal performance agreement for your upcoming event. I have prepared this document in accordance with industry standards and best practices.',
-          buttonText: 'Review Agreement',
-          signature: 'Kind regards',
-          accentColor: '#1e40af'
-        };
-      case 'friendly':
-        return {
-          subject: 'Your Music Contract is Ready! 🎵',
-          introduction: '<p>Hope you\'re having a great day!</p>',
-          body: 'I\'m excited about your upcoming event and have prepared your music contract. Everything looks fantastic and I can\'t wait to perform for you and your guests!',
-          buttonText: 'Check Out Your Contract',
-          signature: 'Looking forward to working with you',
-          accentColor: '#059669'
-        };
-      case 'musical':
-        return {
-          subject: '🎵 Contract Time - Let\'s Make Music Together! 🎵',
-          introduction: '<p>Hey there, fellow music lover!</p>',
-          body: 'Your gig contract is ready to rock! I\'ve put together all the details for our musical collaboration. This is going to be an awesome performance!',
-          buttonText: '🎵 Sign & Let\'s Rock! 🎵',
-          signature: 'Keep on groovin\'',
-          accentColor: '#7c3aed'
-        };
-      default:
-        return {
-          subject: 'Contract Ready for Signing',
-          introduction: '',
-          body: 'Your contract is ready for review and signing.',
-          buttonText: 'Review and Sign Contract',
-          signature: 'Best regards',
-          accentColor: '#6366f1'
-        };
-    }
-  }
-
-  // Theme-specific email content generator for invoices
-  getThemeInvoiceEmailContent(theme: string, clientName: string) {
-    switch (theme) {
-      case 'professional':
-        return {
-          subject: 'Invoice - Payment Due',
-          introduction: '<p>I trust this email finds you well.</p>',
-          body: 'Please find your invoice attached for the recent musical performance. Payment is requested within the specified timeframe as outlined in our agreement.',
-          buttonText: 'Download Invoice',
-          signature: 'Kind regards',
-          accentColor: '#1e40af'
-        };
-      case 'friendly':
-        return {
-          subject: 'Your Invoice is Ready! 💰',
-          introduction: '<p>Hope you\'re having a wonderful day!</p>',
-          body: 'Thank you so much for choosing me for your event! It was an absolute pleasure performing for you and your guests. Here\'s your invoice for the performance.',
-          buttonText: 'Get Your Invoice',
-          signature: 'Thanks again for a great event',
-          accentColor: '#059669'
-        };
-      case 'musical':
-        return {
-          subject: '🎵 Invoice Time - Thanks for Rocking! 🎵',
-          introduction: '<p>Hey there, music lover!</p>',
-          body: 'What an amazing gig that was! Thanks for letting me share the music with your crowd. Here\'s the invoice for our awesome musical collaboration.',
-          buttonText: '🎵 Download Invoice 🎵',
-          signature: 'Keep the music alive',
-          accentColor: '#7c3aed'
-        };
-      default:
-        return {
-          subject: 'Invoice ${invoice.invoiceNumber}',
-          introduction: '',
-          body: 'Please find your invoice attached.',
-          buttonText: 'Download Invoice PDF',
-          signature: 'Best regards',
-          accentColor: '#059669'
-        };
-    }
-  }
-
-  // Theme-specific styling for invoice PDFs
-  getInvoiceThemeStyles(theme: string) {
-    switch (theme) {
-      case 'professional':
-        return {
-          fontFamily: "'Times New Roman', serif",
-          accentColor: '#1e40af',
-          textColor: '#1f2937',
-          backgroundColor: '#ffffff',
-          headerBackground: '#f8fafc',
-          tableHeaderBackground: '#f1f5f9',
-          totalBackground: '#dbeafe',
-          paymentSectionBackground: '#f8fafc',
-          borderColor: '#e2e8f0'
-        };
-      case 'friendly':
-        return {
-          fontFamily: "'Georgia', serif",
-          accentColor: '#059669',
-          textColor: '#374151',
-          backgroundColor: '#fefefe',
-          headerBackground: '#f0fdf4',
-          tableHeaderBackground: '#ecfdf5',
-          totalBackground: '#d1fae5',
-          paymentSectionBackground: '#f0fdf4',
-          borderColor: '#d1d5db'
-        };
-      case 'musical':
-        return {
-          fontFamily: "'Trebuchet MS', sans-serif",
-          accentColor: '#7c3aed',
-          textColor: '#6b7280',
-          backgroundColor: '#fafafa',
-          headerBackground: '#faf5ff',
-          tableHeaderBackground: '#f3e8ff',
-          totalBackground: '#e9d5ff',
-          paymentSectionBackground: '#faf5ff',
-          borderColor: '#d1d5db'
-        };
-      default:
-        return {
-          fontFamily: 'Arial, sans-serif',
-          accentColor: '#059669',
-          textColor: '#1f2937',
-          backgroundColor: '#ffffff',
-          headerBackground: '#f8f9fa',
-          tableHeaderBackground: '#f8f9fa',
-          totalBackground: '#f8f9fa',
-          paymentSectionBackground: '#f8f9fa',
-          borderColor: '#ddd'
-        };
-    }
-  }
-
-  getInvoiceThemeTitle(theme: string): string {
-    switch (theme) {
-      case 'professional':
-        return 'INVOICE';
-      case 'friendly':
-        return 'Invoice for Your Event';
-      case 'musical':
-        return '🎵 INVOICE 🎵';
-      default:
-        return 'INVOICE';
-    }
-  }
-
-  getInvoiceThemePaymentTitle(theme: string): string {
-    switch (theme) {
-      case 'professional':
-        return 'Payment Instructions';
-      case 'friendly':
-        return 'Payment Details';
-      case 'musical':
-        return 'Let\'s Talk Payment 🎵';
-      default:
-        return 'Payment Instructions';
-    }
-  }
-
-  getInvoiceThemePaymentText(theme: string): string {
-    switch (theme) {
-      case 'professional':
-        return 'Please remit payment by the due date specified above. Payment should be made in accordance with the terms outlined in our performance agreement.';
-      case 'friendly':
-        return 'Payment is due by the date shown above. Thank you for making this process easy and straightforward!';
-      case 'musical':
-        return 'Time to settle up! Payment is due by the date above. Thanks for keeping the business side smooth so we can focus on the music!';
-      default:
-        return 'Please remit payment by the due date above.';
-    }
-  }
-
-  getInvoiceThemeThankYou(theme: string): string {
-    switch (theme) {
-      case 'professional':
-        return 'Thank you for your business and the opportunity to provide musical services for your event.';
-      case 'friendly':
-        return 'Thank you so much for choosing me for your special event. It was wonderful performing for you!';
-      case 'musical':
-        return 'Thanks for letting me rock your event! Here\'s to many more musical collaborations! 🎵';
-      default:
-        return 'Thank you for your business!';
-    }
-  }
-
   generateInvoiceEmailHTML(invoice: any, userSettings: any, pdfUrl: string) {
-    // Get theme-specific email content for invoices
-    const theme = (invoice as any).invoiceTheme || 'professional';
-    const themeContent = this.getThemeInvoiceEmailContent(theme, invoice.clientName);
-    
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <h2 style="color: ${themeContent.accentColor};">${themeContent.subject}</h2>
+        <h2>Invoice ${invoice.invoiceNumber}</h2>
         <p>Dear ${invoice.clientName},</p>
-        ${themeContent.introduction}
-        <p>${themeContent.body}</p>
+        <p>Please find your invoice attached.</p>
         
         <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
           <h3>Invoice Details:</h3>
@@ -966,12 +755,12 @@ export class MailgunService {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${pdfUrl}" style="background: ${themeContent.accentColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            ${themeContent.buttonText}
+          <a href="${pdfUrl}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Download Invoice PDF
           </a>
         </div>
         
-        <p>${themeContent.signature}<br>
+        <p>Best regards,<br>
         ${userSettings?.businessName || 'MusoBuddy'}</p>
       </div>
     `;
@@ -1496,71 +1285,22 @@ export class CloudStorageService {
 
 
   private generateInvoiceHTML(invoice: any, userSettings: any): string {
-    // Get theme-specific styling for invoices
-    const theme = (invoice as any).invoiceTheme || 'professional';
-    const themeStyles = this.getInvoiceThemeStyles(theme);
-    
     return `
 <!DOCTYPE html>
 <html>
 <head>
     <style>
-        body { 
-          font-family: ${themeStyles.fontFamily}; 
-          color: ${themeStyles.textColor};
-          background-color: ${themeStyles.backgroundColor};
-          line-height: 1.6;
-        }
-        .header { 
-          text-align: center; 
-          margin-bottom: 40px; 
-          padding: 20px;
-          background-color: ${themeStyles.headerBackground};
-          border-radius: 8px;
-        }
-        .header h1 {
-          color: ${themeStyles.accentColor};
-          margin: 0 0 10px 0;
-          font-size: 2.5rem;
-        }
-        .header h2 {
-          color: ${themeStyles.textColor};
-          margin: 0;
-          font-size: 1.5rem;
-        }
+        body { font-family: Arial, sans-serif; }
+        .header { text-align: center; margin-bottom: 40px; }
         .invoice-details { margin: 30px 0; }
-        .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .table th, .table td { 
-          border: 1px solid ${themeStyles.borderColor}; 
-          padding: 12px; 
-          text-align: left; 
-        }
-        .table th {
-          background-color: ${themeStyles.tableHeaderBackground};
-          color: ${themeStyles.accentColor};
-          font-weight: bold;
-        }
-        .total { 
-          background: ${themeStyles.totalBackground}; 
-          font-weight: bold; 
-          color: ${themeStyles.accentColor};
-        }
-        .payment-section {
-          margin-top: 40px;
-          padding: 20px;
-          background-color: ${themeStyles.paymentSectionBackground};
-          border-radius: 8px;
-          border-left: 4px solid ${themeStyles.accentColor};
-        }
-        .payment-section h3 {
-          color: ${themeStyles.accentColor};
-          margin-top: 0;
-        }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        .total { background: #f8f9fa; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>${this.getInvoiceThemeTitle(theme)}</h1>
+        <h1>INVOICE</h1>
         <h2>${invoice.invoiceNumber}</h2>
     </div>
 
@@ -1594,10 +1334,10 @@ export class CloudStorageService {
         </tbody>
     </table>
 
-    <div class="payment-section">
-        <h3>${this.getInvoiceThemePaymentTitle(theme)}</h3>
-        <p>${this.getInvoiceThemePaymentText(theme)}</p>
-        <p>${this.getInvoiceThemeThankYou(theme)}</p>
+    <div style="margin-top: 40px;">
+        <h3>Payment Instructions</h3>
+        <p>Please remit payment by the due date above.</p>
+        <p>Thank you for your business!</p>
     </div>
 </body>
 </html>

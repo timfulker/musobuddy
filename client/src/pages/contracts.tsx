@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,14 +48,10 @@ const contractFormSchema = z.object({
   clientFillableFields: z.array(z.string()).optional(),
   enquiryId: z.number().optional(),
   status: z.string().default("draft"),
-  
-
   // PHASE 2: Automated reminders (removed for manual-only phase 1)
   // reminderEnabled: z.boolean().default(false),
   // reminderDays: z.number().min(1).max(30).default(3),
 });
-
-
 
 export default function Contracts() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -114,7 +110,6 @@ export default function Contracts() {
       equipmentRequirements: "",
       specialRequirements: "",
       status: "draft",
-
       // PHASE 2: Automated reminders (removed for manual-only phase 1)
       // reminderEnabled: false,
       // reminderDays: 3,
@@ -746,9 +741,6 @@ export default function Contracts() {
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader className="pb-4">
                     <DialogTitle>{editingContract ? 'Edit Contract' : 'Generate New Contract'}</DialogTitle>
-                    <DialogDescription>
-                      {editingContract ? 'Update the contract details below.' : 'Fill out the form below to create a new performance contract.'}
-                    </DialogDescription>
                   </DialogHeader>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit((data) => {
@@ -873,10 +865,6 @@ export default function Contracts() {
                               </FormItem>
                             )}
                           />
-
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
                             name="deposit"
@@ -1056,8 +1044,6 @@ export default function Contracts() {
                           </div>
                         </div>
                       </div>
-
-
 
 
 

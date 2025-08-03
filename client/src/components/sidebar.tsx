@@ -47,9 +47,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     return location === path;
   };
 
-  // Force colors via direct DOM manipulation
+  // NUCLEAR OPTION: Force colors via direct DOM manipulation
   useEffect(() => {
     const forceNavigationColors = () => {
+      console.log('🔧 Forcing navigation colors...', { currentTheme, location });
+      
       // Get all navigation links in sidebar
       const navLinks = document.querySelectorAll('.sidebar nav a');
       
@@ -63,6 +65,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           (currentTheme === 'purple' || currentTheme === 'midnight-blue');
         
         const textColor = shouldUseWhiteText ? 'white' : '#1e293b';
+        
+        console.log(`🔧 Link ${href}:`, {
+          isActive: isCurrentlyActive,
+          theme: currentTheme,
+          shouldUseWhite: shouldUseWhiteText,
+          textColor
+        });
         
         // Force color on the link itself with !important
         linkElement.style.setProperty('color', textColor, 'important');
@@ -120,9 +129,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     };
   };
 
-  // Correct theme comparison logic  
+  // FIXED: Correct theme comparison logic with debug logging
   const getActiveTextColor = () => {
+    console.log('🎨 Current theme:', currentTheme);
     const needsWhiteText = (currentTheme === 'purple' || currentTheme === 'midnight-blue');
+    console.log('🎨 Needs white text:', needsWhiteText);
     return needsWhiteText ? 'white' : '#1e293b';
   };
 

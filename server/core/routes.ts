@@ -7,325 +7,6 @@ import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 import { aiResponseGenerator } from './ai-response-generator.js';
 import QRCode from 'qrcode';
 
-// Background AI PDF generation function
-async function generateBackgroundAIPDF(contractId: string, pdfData: any, userId: number) {
-  try {
-    console.log(`🔄 Starting background AI PDF generation for contract ${contractId}...`);
-    const { generateAIPDF } = await import('./ai-pdf-builder');
-    
-    const startTime = Date.now();
-    const pdfBuffer = await generateAIPDF(pdfData);
-    const duration = Date.now() - startTime;
-    
-    console.log(`✅ Background AI PDF completed in ${duration}ms for contract ${contractId}`);
-    
-    // Upload AI PDF directly to cloud storage
-    const { uploadFileToCloudflare } = await import('./cloud-storage');
-    const contract = await storage.getContract(contractId);
-    
-    if (contract) {
-      // Create storage key for AI PDF
-      const timestamp = new Date().toISOString().split('T')[0];
-      const sanitizedContractNumber = contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-');
-      const key = `contracts/${timestamp}/${sanitizedContractNumber}-ai.pdf`;
-      
-      const cloudResult = await uploadFileToCloudflare(key, pdfBuffer, 'application/pdf');
-      
-      if (cloudResult.success) {
-        // Update contract with AI PDF URLs
-        await storage.updateContract(contractId, {
-          cloudStorageUrl: cloudResult.url,
-          cloudStorageKey: key,
-          pdfGenerationStatus: 'completed'
-        });
-        
-        console.log(`✅ Background AI PDF uploaded to cloud for contract ${contractId}`);
-      }
-    }
-    
-  } catch (error: any) {
-    console.error(`❌ Background AI PDF generation failed for contract ${contractId}:`, error.message);
-    
-    // Update contract status to show failure
-    try {
-      await storage.updateContract(contractId, {
-        pdfGenerationStatus: 'failed',
-        pdfError: error.message
-      });
-    } catch (updateError) {
-      console.error(`❌ Failed to update contract status:`, updateError);
-    }
-  }
-}
-
-// Theme preview HTML generator
-function generateThemePreviewHTML(themeSettings: any): string {
-  const {
-    template,
-    tone,
-    font,
-    accentColor,
-    customTitle,
-    showSetlist,
-    showRiderNotes,
-    showQrCode,
-    showTerms,
-    businessName,
-    businessAddress,
-    businessPhone,
-    businessEmail
-  } = themeSettings;
-
-  // Three distinct theme templates with fixed fonts and styling
-  const themeTemplates = {
-    professional: {
-      name: 'Professional & Formal',
-      fontFamily: '"Times New Roman", serif',
-      headerBg: '#1e293b',
-      headerColor: '#ffffff',
-      borderStyle: '2px solid #1e293b',
-      sectionHeaderColor: '#1e293b',
-      accentColor: '#1e293b',
-      greeting: 'Dear Client,',
-      intro: 'Please find attached the official contract for your upcoming event booking. Kindly review all details carefully and return a signed copy at your earliest convenience.',
-      closing: 'If you have any questions or require amendments, do not hesitate to get in touch.\n\nBest regards,',
-      terms: 'Payment is due within 30 days of invoice date. Late fees may apply for overdue accounts.',
-      subjectLine: 'Event Booking Confirmation & Contract'
-    },
-    friendly: {
-      name: 'Friendly & Informal',
-      fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
-      headerBg: '#059669',
-      headerColor: '#ffffff',
-      borderStyle: '2px solid #059669',
-      sectionHeaderColor: '#059669',
-      accentColor: '#059669',
-      greeting: 'Hey there!',
-      intro: 'Really excited to be part of your event! I\'ve attached a quick contract just to lock things in and keep everything nice and clear.',
-      closing: 'Give it a quick read, and if all looks good, just sign and send it back when you can. Shout if you need anything changed!\n\nCheers,',
-      terms: 'Payment due in 30 days - just drop me a line if you have any questions!',
-      subjectLine: 'You\'re all booked in!'
-    },
-    musical: {
-      name: 'Musical & Creative',
-      fontFamily: '"Comic Sans MS", cursive, sans-serif',
-      headerBg: 'linear-gradient(135deg, #9333ea, #c084fc)',
-      headerColor: '#ffffff',
-      borderStyle: '3px solid #9333ea',
-      sectionHeaderColor: '#9333ea',
-      accentColor: '#9333ea',
-      greeting: 'Yo there! 🎶',
-      intro: 'You\'re officially on the MusoBuddy gig list 🎷🎤🎧 — it\'s gonna be a vibe. I\'ve popped a contract in here to keep things in tune (pun very much intended).',
-      closing: 'Have a skim, hit sign, and send it back. Any questions? Drop me a beat (or an email).\n\nLet\'s make your event unforgettable.\n\nRock on,',
-      terms: 'Payment due within 30 days. Can\'t wait to rock your event!',
-      subjectLine: 'Let\'s Make Music! 🎶'
-    }
-  };
-
-  const selectedTheme = themeTemplates[template] || themeTemplates.professional;
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Theme Preview - ${customTitle}</title>
-      <style>
-        body {
-          font-family: ${selectedTheme.fontFamily};
-          line-height: 1.6;
-          color: #333;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 30px;
-          background: white;
-        }
-        .header {
-          background: ${selectedTheme.headerBg};
-          color: ${selectedTheme.headerColor};
-          text-align: center;
-          padding: 30px;
-          border-radius: 8px;
-          margin-bottom: 40px;
-        }
-        .header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: bold;
-        }
-        .header h2 {
-          margin: 10px 0 0 0;
-          font-size: 16px;
-          opacity: 0.9;
-        }
-        .business-info {
-          text-align: center;
-          margin-bottom: 30px;
-          padding: 20px;
-          background: #f8f9fa;
-          border-radius: 8px;
-        }
-        .section {
-          margin-bottom: 30px;
-          padding: 20px;
-          border: ${selectedTheme.borderStyle};
-          border-radius: 8px;
-        }
-        .section h3 {
-          color: ${selectedTheme.sectionHeaderColor};
-          margin-top: 0;
-          font-size: 18px;
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 10px;
-        }
-        .details-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-          margin: 20px 0;
-        }
-        .detail-item {
-          margin-bottom: 10px;
-        }
-        .label {
-          font-weight: bold;
-          color: #555;
-        }
-        .value {
-          color: #333;
-          margin-left: 10px;
-        }
-        .fee-highlight {
-          background: #f0f8ff;
-          padding: 20px;
-          border-radius: 8px;
-          text-align: center;
-          margin: 20px 0;
-          border: 2px solid ${selectedTheme.accentColor};
-        }
-        .fee-amount {
-          font-size: 24px;
-          font-weight: bold;
-          color: ${selectedTheme.accentColor};
-        }
-        .optional-section {
-          background: #f9f9f9;
-          padding: 15px;
-          border-radius: 6px;
-          margin: 15px 0;
-          border-left: 4px solid ${selectedTheme.accentColor};
-        }
-        .terms {
-          background: #f9f9f9;
-          padding: 20px;
-          border-radius: 8px;
-          font-size: 14px;
-          border: 1px solid #ddd;
-        }
-        .preview-badge {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: ${selectedTheme.accentColor};
-          color: white;
-          padding: 10px 15px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: bold;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-      </style>
-    </head>
-    <body>
-      <div class="preview-badge">THEME PREVIEW</div>
-      
-      <div class="header">
-        <h1>${selectedTheme.subjectLine}</h1>
-        <h2>${selectedTheme.name} Theme Preview</h2>
-      </div>
-
-      <div class="business-info">
-        <h3>${businessName}</h3>
-        <p>${businessAddress}</p>
-        <p>${businessPhone} • ${businessEmail}</p>
-      </div>
-
-      <div class="section">
-        <h3>Sample Event Details</h3>
-        <div class="details-grid">
-          <div class="detail-item">
-            <span class="label">Event:</span>
-            <span class="value">Wedding Reception</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Date:</span>
-            <span class="value">Saturday, June 15, 2024</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Time:</span>
-            <span class="value">6:00 PM - 11:00 PM</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Venue:</span>
-            <span class="value">Grand Ballroom Hotel</span>
-          </div>
-        </div>
-        
-        <div class="fee-highlight">
-          <div class="fee-amount">£650.00</div>
-          <p>Total Performance Fee</p>
-        </div>
-      </div>
-
-      ${showSetlist ? `
-      <div class="section optional-section">
-        <h3>Setlist</h3>
-        <p>• First Dance: "Perfect" - Ed Sheeran</p>
-        <p>• Reception Set: Mix of classic hits and modern favorites</p>
-        <p>• Last Dance: "Don't Stop Me Now" - Queen</p>
-      </div>
-      ` : ''}
-
-      ${showRiderNotes ? `
-      <div class="section optional-section">
-        <h3>Technical Requirements</h3>
-        <p>• Power supply: 2x 13A sockets required</p>
-        <p>• Space requirements: 3m x 2m minimum</p>
-        <p>• Load-in time: 1 hour before performance</p>
-      </div>
-      ` : ''}
-
-      ${showQrCode ? `
-      <div class="section optional-section">
-        <h3>Quick Links</h3>
-        <p>Scan QR code for playlist requests and social media</p>
-        <div style="text-align: center; padding: 20px;">
-          <div style="width: 100px; height: 100px; background: #f0f0f0; border: 2px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;">
-            QR CODE
-          </div>
-        </div>
-      </div>
-      ` : ''}
-
-      <div class="section">
-        <p>${selectedTheme.greeting}</p>
-        <p>${selectedTheme.intro}</p>
-        <p>This preview shows how your documents will look with the ${selectedTheme.name} theme. Your actual contracts and invoices will include real booking details and personalized content.</p>
-        <p>${selectedTheme.closing}<br><strong>${businessName}</strong></p>
-      </div>
-
-      ${showTerms ? `
-      <div class="terms">
-        <h4>Terms & Conditions</h4>
-        <p>${selectedTheme.terms}</p>
-        <p>Cancellation policy: 48 hours notice required for full refund.</p>
-      </div>
-      ` : ''}
-    </body>
-    </html>
-  `;
-}
-
 // Removed AI gig generation function - feature moved to documentation
 
 // ENHANCED AUTHENTICATION MIDDLEWARE - With debugging for development
@@ -1180,7 +861,7 @@ export async function registerRoutes(app: Express) {
       // Get recipient email (from booking or direct recipient)
       let recipientEmail = recipient;
       if (bookingId && !recipientEmail) {
-        const booking = await storage.getBooking(bookingId);
+        const booking = await storage.getBookingDetails(bookingId);
         if (!booking) {
           return res.status(404).json({ error: 'Booking not found' });
         }
@@ -2088,93 +1769,62 @@ export async function registerRoutes(app: Express) {
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
       
-      // Return contract immediately if PDF generation disabled for testing
-      if (req.body.skipPdfGeneration) {
-        console.log('⚠️ Skipping PDF generation as requested');
-        return res.json(newContract);
-      }
-      
-      // Generate PDF with AI page break optimization (no themes, just smart breaks)
-      console.log('📄 Contract created successfully, generating PDF with AI page break optimization...');
-      
+      // CRITICAL FIX: Generate and store PDF immediately after contract creation
       try {
+        console.log('🎨 Generating PDF for newly created contract...');
+        
+        // Get user settings for PDF generation
         const userSettings = await storage.getUserSettings(req.session.userId);
         
-        // Prepare contract sections for AI page break optimization
-        const contractSections = [
-          {
-            title: 'Event Details',
-            content: `Date: ${new Date(newContract.eventDate).toLocaleDateString('en-GB')}\nTime: ${newContract.eventTime || 'TBD'} - ${newContract.eventEndTime || 'TBD'}\nVenue: ${newContract.venue || 'TBD'}\nAddress: ${newContract.venueAddress || 'TBD'}`
-          },
-          {
-            title: 'Performance Fee',
-            content: `Performance Fee: £${newContract.fee}\nDeposit: £${newContract.deposit || '0.00'}\nBalance Due: £${(parseFloat(newContract.fee) - parseFloat(newContract.deposit || '0')).toFixed(2)}`
-          },
-          {
-            title: 'Payment Terms',
-            content: newContract.paymentInstructions || 'Payment due within 30 days of performance date. Payment methods: Bank transfer or cash on the day.'
-          },
-          {
-            title: 'Equipment & Requirements',
-            content: newContract.equipmentRequirements || 'Standard performance setup required. Power supply: 2x 13A sockets. Space required: 3m x 2m minimum.'
-          },
-          {
-            title: 'Special Requirements', 
-            content: newContract.specialRequirements || 'No special requirements specified.'
-          },
-          {
-            title: 'Terms & Conditions',
-            content: 'This contract constitutes the entire agreement between parties. Any modifications must be agreed in writing. Cancellation policy: Full fee due if cancelled within 48 hours of event.'
-          },
-          {
-            title: 'Signatures',
-            content: 'By signing below, both parties agree to the terms outlined in this contract.'
-          }
-        ];
-
-        let optimizedSections = contractSections; // Default fallback
+        // Generate PDF using our enhanced PDF generator
+        const { generateContractPDF } = await import('./pdf-generator');
+        const pdfBuffer = await generateContractPDF(newContract, userSettings);
         
-        try {
-          // Try AI page break optimization
-          const { optimizePageBreaks } = await import('./ai-page-breaks');
-          optimizedSections = await optimizePageBreaks(contractSections);
-          console.log('✅ AI page break optimization successful');
-        } catch (aiError: any) {
-          console.warn('❌ AI page break optimization failed, using standard sections:', aiError.message);
-        }
+        console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
         
-        // Generate PDF with optimized sections if available
-        const { generateContractPDFWithOptimizedBreaks, generateContractPDF } = await import('./pdf-generator');
-        
-        let pdfBuffer;
-        if (optimizedSections !== contractSections) {
-          // Use optimized sections
-          pdfBuffer = await generateContractPDFWithOptimizedBreaks(newContract, userSettings, optimizedSections);
-        } else {
-          // Fallback to standard generation
-          pdfBuffer = await generateContractPDF(newContract, userSettings);
-        }
-        
-        // Upload to cloud storage
-        const { uploadContractToCloud } = await import('./cloud-storage');
-        const cloudResult = await uploadContractToCloud(newContract, userSettings, pdfBuffer);
+        // Upload PDF to cloud storage
+        const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
+        const cloudResult = await uploadContractToCloud(newContract, userSettings);
         
         if (cloudResult.success) {
-          const updatedContract = await storage.updateContract(newContract.id, {
-            cloudStorageUrl: cloudResult.url,
-            cloudStorageKey: cloudResult.key
-          });
+          console.log('✅ Contract PDF uploaded to cloud storage:', cloudResult.url);
           
-          console.log('✅ PDF with AI page break optimization uploaded successfully');
-          return res.json(updatedContract);
+          // CRITICAL FIX: Also create and upload signing page to R2
+          console.log('📝 Creating contract signing page for R2 cloud storage...');
+          const signingPageResult = await uploadContractSigningPage(newContract, userSettings);
+          
+          if (signingPageResult.success) {
+            console.log('✅ Contract signing page uploaded to R2:', signingPageResult.url);
+            
+            // Update contract with both PDF and signing page URLs
+            const updatedContract = await storage.updateContract(newContract.id, {
+              cloudStorageUrl: cloudResult.url,
+              cloudStorageKey: cloudResult.key,
+              signingPageUrl: signingPageResult.url,
+              signingPageKey: signingPageResult.storageKey
+            });
+            
+            res.json(updatedContract);
+          } else {
+            console.log('⚠️ PDF uploaded but signing page upload failed');
+            
+            // Update contract with just PDF URL
+            const updatedContract = await storage.updateContract(newContract.id, {
+              cloudStorageUrl: cloudResult.url,
+              cloudStorageKey: cloudResult.key
+            });
+            
+            res.json(updatedContract);
+          }
         } else {
-          console.error('❌ Cloud upload failed:', cloudResult.error);
-          return res.json(newContract);
+          console.log('⚠️ PDF generated but cloud upload failed, returning contract without cloud URL');
+          res.json(newContract);
         }
+        
       } catch (pdfError: any) {
-        console.error('❌ PDF generation failed:', pdfError.message);
-        // Always return the contract even if PDF fails
-        return res.json(newContract);
+        console.error('⚠️ PDF generation failed, but contract was created:', pdfError.message);
+        // Still return the contract even if PDF generation fails
+        res.json(newContract);
       }
     } catch (error: any) {
       console.error('❌ Failed to create contract:', error);
@@ -2204,190 +1854,6 @@ export async function registerRoutes(app: Express) {
           details: error?.message || 'Unknown database error'
         });
       }
-    }
-  });
-
-  // DEBUG ENDPOINTS FOR AI PDF GENERATION TESTING
-  app.get('/debug/openai', async (req, res) => {
-    try {
-      const OpenAI = (await import('openai')).default;
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      
-      console.log('🧪 Testing OpenAI connection...');
-      const start = Date.now();
-      
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [{ role: "user", content: "Respond with 'OpenAI connection successful'" }],
-        max_tokens: 20
-      });
-      
-      const duration = Date.now() - start;
-      
-      res.json({
-        success: true,
-        response: completion.choices[0]?.message?.content,
-        duration: `${duration}ms`,
-        model: completion.model,
-        usage: completion.usage
-      });
-    } catch (error: any) {
-      console.error('❌ OpenAI test failed:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-        hasApiKey: !!process.env.OPENAI_API_KEY,
-        keyPreview: process.env.OPENAI_API_KEY?.substring(0, 7) + '...'
-      });
-    }
-  });
-
-  app.get('/debug/puppeteer', async (req, res) => {
-    try {
-      const puppeteer = (await import('puppeteer')).default;
-      console.log('🧪 Testing Puppeteer...');
-      
-      const browser = await puppeteer.launch({
-        headless: true,
-        executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
-      
-      const page = await browser.newPage();
-      await page.setContent('<h1>Test PDF</h1><p>Puppeteer working!</p>');
-      
-      const pdf = await page.pdf({ format: 'A4' });
-      await browser.close();
-      
-      res.setHeader('Content-Type', 'application/pdf');
-      res.send(pdf);
-    } catch (error: any) {
-      console.error('❌ Puppeteer test failed:', error);
-      res.status(500).json({
-        error: error.message,
-        chromiumPath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium'
-      });
-    }
-  });
-
-  app.get('/debug/ai-pdf-simple', async (req, res) => {
-    try {
-      const { generateAIPDF } = await import('./ai-pdf-builder');
-      
-      const testData = {
-        type: 'contract' as const,
-        client: 'Debug Test Client',
-        eventDate: '01/01/2024',
-        venue: 'Test Venue',
-        fee: '£100.00',
-        theme: 'professional' as const,
-        sections: [
-          {
-            title: 'Test Section',
-            content: 'This is a simple test to verify AI PDF generation works.'
-          }
-        ],
-        branding: {
-          businessName: 'Debug Test',
-          footerText: 'Debug Contract'
-        }
-      };
-      
-      console.log('🧪 Testing AI PDF with simple data...');
-      const startTime = Date.now();
-      
-      // Add timeout to prevent hanging
-      const pdfBuffer = await Promise.race([
-        generateAIPDF(testData),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Debug test timeout after 30 seconds')), 30000)
-        )
-      ]) as Buffer;
-      
-      const duration = Date.now() - startTime;
-      
-      console.log(`✅ AI PDF generated in ${duration}ms, size: ${pdfBuffer.length} bytes`);
-      
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline; filename="debug-test.pdf"');
-      res.send(pdfBuffer);
-      
-    } catch (error: any) {
-      console.error('❌ AI PDF simple test failed:', error);
-      res.status(500).json({
-        error: error.message,
-        stack: error.stack?.split('\n').slice(0, 5)
-      });
-    }
-  });
-
-  // PDF Status Checker for Background AI Generation
-  app.get('/api/contracts/:id/pdf-status', async (req, res) => {
-    try {
-      const contractId = req.params.id;
-      const contract = await storage.getContract(contractId);
-      
-      if (!contract) {
-        return res.status(404).json({ error: 'Contract not found' });
-      }
-      
-      res.json({
-        contractId,
-        pdfGenerationStatus: contract.pdfGenerationStatus || 'unknown',
-        cloudStorageUrl: contract.cloudStorageUrl || null,
-        pdfError: contract.pdfError || null,
-        lastUpdated: contract.updatedAt || contract.createdAt
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Error checking PDF status:', error);
-      res.status(500).json({ error: 'Failed to check PDF status' });
-    }
-  });
-
-  app.get('/debug/openai-only', async (req, res) => {
-    try {
-      const OpenAI = (await import('openai')).default;
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      
-      console.log('🧪 Testing OpenAI theme generation only...');
-      const start = Date.now();
-      
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          { 
-            role: "system", 
-            content: "Generate a simple HTML contract with professional theme. Include page breaks and clean styling." 
-          },
-          { 
-            role: "user", 
-            content: JSON.stringify({
-              type: "contract",
-              theme: "professional", 
-              client: "Test Client",
-              fee: "£100"
-            })
-          }
-        ],
-        max_tokens: 1000
-      });
-      
-      const duration = Date.now() - start;
-      const htmlContent = completion.choices[0]?.message?.content || '';
-      
-      res.json({
-        success: true,
-        duration: `${duration}ms`,
-        htmlLength: htmlContent.length,
-        htmlPreview: htmlContent.substring(0, 200) + '...'
-      });
-      
-    } catch (error: any) {
-      console.error('❌ OpenAI only test failed:', error);
-      res.status(500).json({
-        error: error.message
-      });
     }
   });
 
@@ -2994,15 +2460,15 @@ export async function registerRoutes(app: Express) {
       });
       
       // Validate required fields
-      if (!req.body.clientName || !req.body.dueDate) {
+      if (!req.body.clientName || !req.body.issueDate || !req.body.dueDate) {
         return res.status(400).json({ 
-          error: 'Missing required fields: clientName and dueDate are required' 
+          error: 'Missing required fields: clientName, issueDate, and dueDate are required' 
         });
       }
 
-      // Generate incremental invoice number if not provided
+      // Generate invoice number if not provided
       const invoiceNumber = req.body.invoiceNumber || 
-        await storage.getNextInvoiceNumber(userId);
+        `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
 
       const invoiceData = {
         userId: userId,
@@ -3011,18 +2477,15 @@ export async function registerRoutes(app: Express) {
         clientEmail: req.body.clientEmail || null,
         clientAddress: req.body.clientAddress || null,
         clientPhone: req.body.clientPhone || null,
-        ccEmail: req.body.ccEmail || null,
-        venueAddress: req.body.venueAddress || null,
-        amount: req.body.amount || "0.00",
-        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
-        performanceDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
-        performanceFee: req.body.performanceFee || null,
-        depositPaid: req.body.depositPaid || "0.00",
-        eventDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null, // Map performanceDate to eventDate
-        fee: req.body.performanceFee || req.body.amount || "0.00",
-        invoiceTheme: req.body.invoiceTheme || "professional",
-        contractId: req.body.contractId || null,
-        status: req.body.status || 'draft'
+        issueDate: req.body.issueDate,
+        dueDate: req.body.dueDate,
+        items: req.body.items || [],
+        subtotal: req.body.subtotal || "0.00",
+        tax: req.body.tax || "0.00",
+        total: req.body.total || "0.00",
+        notes: req.body.notes || null,
+        status: req.body.status || 'draft',
+        enquiryId: req.body.enquiryId || null
       };
       
       const newInvoice = await storage.createInvoice(invoiceData);
@@ -4550,96 +4013,6 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error('QR code generation error:', error);
       res.status(500).json({ error: 'Failed to generate QR code' });
-    }
-  });
-
-  // Static theme preview endpoints for pre-generated images
-  app.get("/api/theme-preview-static/:themeId", (req, res) => {
-    const { themeId } = req.params;
-    const validThemes = ['professional', 'friendly', 'musical'];
-    
-    if (!validThemes.includes(themeId)) {
-      return res.status(404).json({ error: 'Theme not found' });
-    }
-    
-    const imagePath = path.join(process.cwd(), 'attached_assets', 'theme_previews', `${themeId}-preview.png`);
-    
-    res.sendFile(imagePath, (err) => {
-      if (err) {
-        console.error(`❌ Error serving theme preview for ${themeId}:`, err);
-        res.status(404).json({ error: 'Preview image not found' });
-      }
-    });
-  });
-
-  // Theme preview endpoint
-  app.post('/api/theme-preview', isAuthenticated, async (req: any, res) => {
-    try {
-      const { 
-        template = 'classic',
-        tone = 'professional', 
-        font = 'roboto',
-        accentColor = '#673ab7',
-        customTitle = 'Invoice',
-        showSetlist = false,
-        showRiderNotes = false,
-        showQrCode = false,
-        showTerms = true,
-        businessName = 'Your Business',
-        businessAddress = 'Your Address',
-        businessPhone = 'Your Phone',
-        businessEmail = 'your@email.com'
-      } = req.body;
-
-      console.log('🎨 Generating theme preview with settings:', { template, tone, font, accentColor });
-
-      // Generate theme preview PDF using Puppeteer
-      const puppeteer = await import('puppeteer');
-      const browser = await puppeteer.default.launch({
-        headless: true,
-        executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
-
-      const page = await browser.newPage();
-      
-      // Generate theme-aware HTML
-      const html = generateThemePreviewHTML({
-        template,
-        tone,
-        font,
-        accentColor,
-        customTitle,
-        showSetlist,
-        showRiderNotes,
-        showQrCode,
-        showTerms,
-        businessName,
-        businessAddress,
-        businessPhone,
-        businessEmail
-      });
-
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
-      });
-
-      await browser.close();
-
-      console.log('✅ Theme preview PDF generated:', pdfBuffer.length, 'bytes');
-
-      // Return PDF as blob
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline; filename="theme-preview.pdf"');
-      res.send(pdfBuffer);
-
-    } catch (error: any) {
-      console.error('❌ Theme preview generation error:', error);
-      res.status(500).json({ error: 'Failed to generate theme preview' });
     }
   });
 

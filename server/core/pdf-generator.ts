@@ -10,8 +10,9 @@ export async function generateContractPDF(
     clientIpAddress?: string;
   }
 ): Promise<Buffer> {
-  console.log('Starting standard contract PDF generation for:', contract.contractNumber);
+  console.log('Starting contract PDF generation for:', contract.contractNumber);
   
+  // RESTORED: Working Puppeteer configuration from previous version
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -22,77 +23,10 @@ export async function generateContractPDF(
     const page = await browser.newPage();
     const html = generateContractHTML(contract, userSettings, signatureDetails);
     
-    // Enable print media emulation for better layout
-    await page.emulateMediaType('print');
-    
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
-    const pdf = await page.pdf({ 
-      format: 'A4', 
-      printBackground: true,
-      margin: {
-        top: '1cm',
-        bottom: '1.5cm',
-        left: '1.5cm',
-        right: '1.5cm'
-      },
-      displayHeaderFooter: true,
-      footerTemplate: `
-        <div style="font-size:10px; width:100%; text-align:center; color:#666;">
-          Page <span class="pageNumber"></span> of <span class="totalPages"></span>
-        </div>`
-    });
+    const pdf = await page.pdf({ format: 'A4', printBackground: true });
     
     console.log('Contract PDF generated successfully:', pdf.length, 'bytes');
-    return Buffer.from(pdf);
-  } finally {
-    await browser.close();
-  }
-}
-
-// NEW: Generate contract PDF with AI-optimized page breaks
-export async function generateContractPDFWithOptimizedBreaks(
-  contract: Contract,
-  userSettings: UserSettings | null,
-  optimizedSections: Array<{title: string; content: string}>,
-  signatureDetails?: {
-    signedAt: Date;
-    signatureName?: string;
-    clientIpAddress?: string;
-  }
-): Promise<Buffer> {
-  console.log('Starting AI-optimized contract PDF generation for:', contract.contractNumber);
-  
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-  });
-  
-  try {
-    const page = await browser.newPage();
-    const html = generateContractHTMLWithOptimizedSections(contract, userSettings, optimizedSections, signatureDetails);
-    
-    // Enable print media emulation for better layout
-    await page.emulateMediaType('print');
-    
-    await page.setContent(html, { waitUntil: 'domcontentloaded' });
-    const pdf = await page.pdf({ 
-      format: 'A4', 
-      printBackground: true,
-      margin: {
-        top: '1cm',
-        bottom: '1.5cm',
-        left: '1.5cm',
-        right: '1.5cm'
-      },
-      displayHeaderFooter: true,
-      footerTemplate: `
-        <div style="font-size:10px; width:100%; text-align:center; color:#666;">
-          Page <span class="pageNumber"></span> of <span class="totalPages"></span>
-        </div>`
-    });
-    
-    console.log('AI-optimized contract PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
   } finally {
     await browser.close();
@@ -116,200 +50,6 @@ function getLogoBase64(): string {
   }
 }
 
-
-
-// Generate HTML using AI-optimized sections
-function generateContractHTMLWithOptimizedSections(
-  contract: Contract,
-  userSettings: UserSettings | null,
-  optimizedSections: Array<{title: string; content: string}>,
-  signatureDetails?: {
-    signedAt: Date;
-    signatureName?: string;
-    clientIpAddress?: string;
-  }
-): string {
-  const businessName = userSettings?.businessName || 'MusoBuddy';
-  const addressParts = [];
-  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
-  if (userSettings?.city) addressParts.push(userSettings.city);
-  if (userSettings?.county) addressParts.push(userSettings.county);
-  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
-  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
-  const businessPhone = userSettings?.phone || '';
-  const businessEmail = userSettings?.businessEmail || '';
-  
-  const logoBase64 = getLogoBase64();
-  const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto; margin-bottom: 20px;" alt="MusoBuddy Logo" />` : '';
-  
-  const themeStyles = getThemeStyles();
-  
-  // Generate sections from optimized content
-  const sectionsHtml = optimizedSections.map(section => `
-    <div class="contract-section avoid-break">
-      <h3>${section.title}</h3>
-      <div class="section-content">
-        ${section.content.split('\n').map(line => `<p>${line}</p>`).join('')}
-      </div>
-    </div>
-  `).join('\n');
-  
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Performance Contract ${contract.contractNumber}</title>
-      <style>
-        body {
-          font-family: ${themeStyles.fontFamily};
-          line-height: 1.6;
-          color: ${themeStyles.textColor};
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 20px;
-          background-color: ${themeStyles.backgroundColor};
-        }
-        .header {
-          text-align: center;
-          border-bottom: 3px solid ${themeStyles.accentColor};
-          padding-bottom: 20px;
-          margin-bottom: 30px;
-        }
-        .contract-section {
-          margin-bottom: 30px;
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .section-content p {
-          margin: 8px 0;
-        }
-        .signature-section {
-          margin-top: 50px;
-          border-top: 1px solid #ccc;
-          padding-top: 30px;
-          page-break-before: auto;
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .signature-box {
-          border: 1px solid #333;
-          padding: 20px;
-          margin: 20px 0;
-          background-color: #f9f9f9;
-        }
-        .signed-box {
-          border: 2px solid #4CAF50;
-          background-color: #e8f5e8;
-        }
-        .avoid-break {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .amount {
-          font-weight: bold;
-          color: #2563eb;
-        }
-        .status-badge {
-          display: inline-block;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: bold;
-          text-transform: uppercase;
-        }
-        .status-signed {
-          background-color: #dcfce7;
-          color: #166534;
-        }
-        .status-sent {
-          background-color: #fef3c7;
-          color: #92400e;
-        }
-        h3 {
-          color: ${themeStyles.accentColor};
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 5px;
-          page-break-after: avoid;
-          break-after: avoid;
-        }
-        @media print {
-          .signature-section {
-            page-break-before: always;
-            break-before: page;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        ${logoHtml}
-        <h1 style="color: ${themeStyles.accentColor};">Performance Agreement</h1>
-        <h2 style="color: ${themeStyles.textColor};">${contract.contractNumber}</h2>
-        <div class="status-badge ${contract.status === 'signed' ? 'status-signed' : 'status-sent'}">
-          ${contract.status.toUpperCase()}
-        </div>
-      </div>
-
-      <div class="contract-section avoid-break">
-        <h3>Performer Details</h3>
-        <div class="section-content">
-          <p><strong>${businessName}</strong></p>
-          ${businessAddress ? `<p>${businessAddress}</p>` : ''}
-          ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
-          ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
-        </div>
-      </div>
-
-      <div class="contract-section avoid-break">
-        <h3>Client Details</h3>
-        <div class="section-content">
-          <p><strong>Name:</strong> ${contract.clientName}</p>
-          <p><strong>Email:</strong> ${contract.clientEmail}</p>
-          ${contract.clientPhone ? `<p><strong>Phone:</strong> ${contract.clientPhone}</p>` : ''}
-          ${contract.clientAddress ? `<p><strong>Address:</strong> ${contract.clientAddress}</p>` : ''}
-        </div>
-      </div>
-
-      ${sectionsHtml}
-
-      <div class="signature-section">
-        <h3>Signatures</h3>
-        ${signatureDetails ? `
-          <div class="signature-box signed-box">
-            <h4>✓ Digitally Signed by Client</h4>
-            <p><strong>Signed by:</strong> ${signatureDetails.signatureName || contract.clientName}</p>
-            <p><strong>Date:</strong> ${signatureDetails.signedAt.toLocaleDateString('en-GB')}</p>
-            <p><strong>Time:</strong> ${signatureDetails.signedAt.toLocaleTimeString('en-GB')}</p>
-            ${signatureDetails.clientIpAddress ? `<p><strong>IP Address:</strong> ${signatureDetails.clientIpAddress}</p>` : ''}
-          </div>
-        ` : `
-          <div class="signature-box">
-            <p><strong>Client Signature:</strong> _________________________________</p>
-            <p><strong>Date:</strong> _________________</p>
-          </div>
-        `}
-        
-        <div class="signature-box">
-          <p><strong>Performer Signature:</strong> ${businessName}</p>
-          <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB')}</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-// Simple professional styling only
-function getThemeStyles() {
-  return {
-    fontFamily: "'Times New Roman', serif",
-    accentColor: '#1e40af', // Professional blue
-    textColor: '#1f2937',    // Dark gray
-    backgroundColor: '#ffffff'
-  };
-}
-
 function generateContractHTML(
   contract: Contract,
   userSettings: UserSettings | null,
@@ -328,14 +68,11 @@ function generateContractHTML(
   if (userSettings?.postcode) addressParts.push(userSettings.postcode);
   const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
   const businessPhone = userSettings?.phone || '';
-  const businessEmail = userSettings?.businessEmail || '';
+  const businessEmail = userSettings?.email || '';
   
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto; margin-bottom: 20px;" alt="MusoBuddy Logo" />` : '';
-  
-  // Professional styling
-  const themeStyles = getThemeStyles();
   
   return `
     <!DOCTYPE html>
@@ -345,17 +82,16 @@ function generateContractHTML(
       <title>Performance Contract ${contract.contractNumber}</title>
       <style>
         body {
-          font-family: ${themeStyles.fontFamily};
+          font-family: Arial, sans-serif;
           line-height: 1.6;
-          color: ${themeStyles.textColor};
+          color: #333;
           max-width: 800px;
           margin: 0 auto;
           padding: 20px;
-          background-color: ${themeStyles.backgroundColor};
         }
         .header {
           text-align: center;
-          border-bottom: 3px solid ${themeStyles.accentColor};
+          border-bottom: 3px solid #9333ea;
           padding-bottom: 20px;
           margin-bottom: 30px;
         }
@@ -420,64 +156,13 @@ function generateContractHTML(
           background-color: #fef3c7;
           color: #92400e;
         }
-        
-        /* Advanced Page Break CSS */
-        .page-break {
-          page-break-before: always;
-          break-before: page;
-        }
-        .avoid-break {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .keep-together {
-          page-break-before: avoid;
-          page-break-after: avoid;
-          break-before: avoid;
-          break-after: avoid;
-        }
-        .policy-section {
-          page-break-inside: avoid;
-          break-inside: avoid;
-          margin-bottom: 20px;
-        }
-        .terms-group {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .signature-area {
-          page-break-before: auto;
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        @media print {
-          .business-details, .contract-details {
-            page-break-after: avoid;
-            break-after: avoid;
-          }
-          h2, h3, h4 {
-            page-break-after: avoid;
-            break-after: avoid;
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-          .payment-info {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-          /* Force signature section to new page */
-          .signature-section {
-            page-break-before: always;
-            break-before: page;
-          }
-        }
       </style>
     </head>
     <body>
       <div class="header">
         ${logoHtml}
-        <h1 style="color: ${themeStyles.accentColor};">Performance Agreement</h1>
-        <h2 style="color: ${themeStyles.textColor};">${contract.contractNumber}</h2>
+        <h1>Performance Contract</h1>
+        <h2>${contract.contractNumber}</h2>
         <div class="status-badge ${contract.status === 'signed' ? 'status-signed' : 'status-sent'}">
           ${contract.status.toUpperCase()}
         </div>
@@ -534,21 +219,17 @@ function generateContractHTML(
         </table>
       </div>
 
-      <div class="terms avoid-break">
-        <h3 style="color: ${themeStyles.accentColor};">Terms and Conditions</h3>
+      <div class="terms">
+        <h3>Terms and Conditions</h3>
         
-        <!-- Payment Terms Section -->
-        <div style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;" class="policy-section">
-          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Payment Terms</h4>
+        <div style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-radius: 5px; font-size: 14px;">
+          <h4 style="margin-top: 0; color: #2563eb;">Payment Terms & Conditions</h4>
           <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
           <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
           ${contract.deposit ? `<p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>` : ''}
           <p><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</p>
-        </div>
-        
-        <!-- Cancellation Policy Section -->
-        <div class="policy-section" style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;">
-          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Cancellation & Refund Policy</h4>
+          
+          <h4 style="color: #2563eb; margin-top: 20px;">Cancellation & Refund Policy</h4>
           <p><strong>Client Cancellation:</strong></p>
           <ul style="margin-left: 20px;">
             <li>More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee</li>
@@ -557,17 +238,14 @@ function generateContractHTML(
           </ul>
           <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</p>
           <p><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</p>
-        </div>
-        
-        <!-- Force Majeure Section -->
-        <div class="policy-section" style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;">
-          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Force Majeure</h4>
+          
+          <h4 style="color: #2563eb; margin-top: 20px;">Force Majeure</h4>
           <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
-        </div>
-        
-        <!-- Performance Standards Section -->
-        <div class="terms-group" style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;">
-          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Professional Performance Standards</h4>
+          
+          <h4 style="color: #2563eb; margin-top: 20px;">Performance Contingencies</h4>
+          <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
+          
+          <h4 style="color: #2563eb; margin-top: 20px;">Professional Performance Standards</h4>
           <p><strong>Payment Schedule:</strong> The agreed performance fee${contract.deposit ? ' (including applicable VAT)' : ''} becomes due and payable on the date of performance of the engagement.</p>
           <p><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</p>
           <p><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</p>
@@ -579,14 +257,14 @@ function generateContractHTML(
         </div>
       </div>
 
-      <div class="signature-section signature-area">
+      <div class="signature-section">
         <h3>Signatures</h3>
         
         <div class="party-section">
           <h4>Performer</h4>
           <div class="signature-box signed-box">
             <p><strong>Signed by:</strong> ${businessName}</p>
-            <p><strong>Date:</strong> ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</p>
+            <p><strong>Date:</strong> ${new Date(contract.createdAt).toLocaleDateString('en-GB')}</p>
             <p><strong>Status:</strong> Agreed by sending contract</p>
           </div>
         </div>
@@ -629,33 +307,11 @@ function generateContractHTML(
 export async function generateInvoicePDF(
   invoice: Invoice,
   userSettings: UserSettings | null,
-  contract?: any,
-  useAI: boolean = true
+  contract?: any
 ): Promise<Buffer> {
   console.log('Starting invoice PDF generation for:', invoice.invoiceNumber);
   
-  // Use AI-driven PDF generation if requested
-  if (useAI) {
-    try {
-      console.log('🤖 Starting AI PDF generation for invoice:', invoice.invoiceNumber);
-      const theme = (invoice as any).invoiceTheme || 'professional';
-      console.log('🎨 Using theme:', theme);
-      const aiData = invoiceToAIFormat(invoice, userSettings, contract, theme);
-      console.log('📊 AI data prepared:', { type: aiData.type, theme: aiData.theme, sectionsCount: aiData.sections.length });
-      const result = await generateAIPDF(aiData);
-      console.log('✅ AI PDF generation successful for invoice');
-      return result;
-    } catch (error) {
-      console.error('❌ AI PDF generation failed for invoice:', {
-        invoiceNumber: invoice.invoiceNumber,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      console.warn('🔄 Falling back to standard method for invoice');
-    }
-  }
-  
-  // Fallback to original method
+  // RESTORED: Working Puppeteer configuration from previous version
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -666,25 +322,8 @@ export async function generateInvoicePDF(
     const page = await browser.newPage();
     const html = generateInvoiceHTML(invoice, contract, userSettings);
     
-    // Enable print media emulation for better layout
-    await page.emulateMediaType('print');
-    
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
-    const pdf = await page.pdf({ 
-      format: 'A4', 
-      printBackground: true,
-      margin: {
-        top: '1cm',
-        bottom: '1.5cm',
-        left: '1.5cm',
-        right: '1.5cm'
-      },
-      displayHeaderFooter: true,
-      footerTemplate: `
-        <div style="font-size:10px; width:100%; text-align:center; color:#666;">
-          Page <span class="pageNumber"></span> of <span class="totalPages"></span>
-        </div>`
-    });
+    const pdf = await page.pdf({ format: 'A4', printBackground: true });
     
     console.log('Invoice PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
@@ -700,22 +339,9 @@ function generateInvoiceHTML(
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
-  // Build business address from individual fields (same as contract generation)
-  const addressParts = [];
-  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
-  if (userSettings?.city) addressParts.push(userSettings.city);
-  if (userSettings?.county) addressParts.push(userSettings.county);
-  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
-  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
-  const businessPhone = userSettings?.phone || '';
-  const businessEmail = userSettings?.businessEmail || '';
-  
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 40px; width: auto;" alt="MusoBuddy Logo" />` : '';
-  
-  // Simple professional styling only
-  const themeStyles = getThemeStyles();
   
   return `
     <!DOCTYPE html>
@@ -725,19 +351,18 @@ function generateInvoiceHTML(
       <title>Invoice ${invoice.invoiceNumber}</title>
       <style>
         body {
-          font-family: ${themeStyles.fontFamily};
+          font-family: 'Arial', sans-serif;
           margin: 0;
           padding: 20px;
-          color: ${themeStyles.textColor};
+          color: #333;
           line-height: 1.6;
-          background-color: ${themeStyles.backgroundColor};
         }
         .header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 40px;
-          border-bottom: 3px solid ${themeStyles.accentColor};
+          border-bottom: 3px solid #9333ea;
           padding-bottom: 20px;
         }
         .logo-section {
@@ -748,7 +373,7 @@ function generateInvoiceHTML(
         .logo {
           font-size: 32px;
           font-weight: bold;
-          color: ${themeStyles.accentColor};
+          color: #9333ea;
         }
         .invoice-details {
           text-align: right;
@@ -763,7 +388,6 @@ function generateInvoiceHTML(
           color: #666;
           font-size: 14px;
         }
-        
         .billing-section {
           display: flex;
           justify-content: space-between;
@@ -829,19 +453,19 @@ function generateInvoiceHTML(
         }
         .grand-total {
           font-size: 20px;
-          color: ${themeStyles.accentColor};
-          border-top: 2px solid ${themeStyles.accentColor};
+          color: #9333ea;
+          border-top: 2px solid #9333ea;
           padding-top: 15px;
           margin-top: 15px;
         }
         .payment-info {
           margin-top: 40px;
           padding: 20px;
-          background-color: #f8fafc;
+          background-color: #f8f9fa;
           border-radius: 8px;
         }
         .payment-info h3 {
-          color: ${themeStyles.accentColor};
+          color: #333;
           margin-bottom: 15px;
         }
         .payment-info p {
@@ -854,7 +478,7 @@ function generateInvoiceHTML(
           border-top: 1px solid #dee2e6;
         }
         .terms h3 {
-          color: ${themeStyles.accentColor};
+          color: #333;
           margin-bottom: 10px;
         }
         .terms p {
@@ -882,33 +506,6 @@ function generateInvoiceHTML(
           background-color: #d1fae5;
           color: #065f46;
         }
-        
-        /* Smart Page Break CSS */
-        .page-break {
-          page-break-before: always;
-        }
-        .avoid-break {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .keep-together {
-          page-break-before: avoid;
-          page-break-after: avoid;
-        }
-        @media print {
-          .billing-section, .items-table {
-            page-break-after: avoid;
-          }
-          h2, h3 {
-            page-break-after: avoid;
-          }
-          .payment-info, .terms {
-            page-break-inside: avoid;
-          }
-          .total-section {
-            page-break-before: avoid;
-          }
-        }
       </style>
     </head>
     <body>
@@ -926,14 +523,14 @@ function generateInvoiceHTML(
         </div>
       </div>
 
-      <div class="billing-section avoid-break">
+      <div class="billing-section">
         <div class="billing-info">
           <h3>From:</h3>
           <p><strong>${businessName}</strong></p>
           <p style="font-style: italic; color: #666;">Sole trader trading as ${businessName}</p>
-          ${businessAddress ? `<p>${businessAddress}</p>` : ''}
-          ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
-          ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
+          ${userSettings?.businessAddress ? `<p>${userSettings?.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
+          ${userSettings?.phone ? `<p>Phone: ${userSettings?.phone}</p>` : ''}
+          ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
           ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
         </div>
         <div class="billing-info">
@@ -958,18 +555,18 @@ function generateInvoiceHTML(
         <tbody>
           <tr>
             <td>Music Performance${invoice.venueAddress ? `<br><strong>Venue:</strong> ${invoice.venueAddress}` : ''}</td>
-            <td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
-            <td>£${parseFloat(invoice.amount).toFixed(2)}</td>
+            <td>${invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : 'TBD'}</td>
+            <td>£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</td>
             <td>£${parseFloat(invoice.depositPaid || '0').toFixed(2)}</td>
             <td class="amount">£${parseFloat(invoice.amount).toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
 
-      <div class="total-section avoid-break">
+      <div class="total-section">
         <div class="total-row">
           <div class="total-label">Performance Fee:</div>
-          <div class="total-amount">£${parseFloat(invoice.amount).toFixed(2)}</div>
+          <div class="total-amount">£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</div>
         </div>
         <div class="total-row">
           <div class="total-label">Deposit Paid:</div>
@@ -985,13 +582,13 @@ function generateInvoiceHTML(
         </div>
       </div>
 
-      <div class="payment-info avoid-break">
+      <div class="payment-info">
         <h3>Payment Information</h3>
         <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</p>
         ${userSettings?.bankDetails ? `<p><strong>Bank Details:</strong><br>${userSettings.bankDetails.replace(/\n/g, '<br>')}</p>` : ''}
       </div>
 
-      <div class="terms avoid-break">
+      <div class="terms">
         <h3>Terms & Conditions</h3>
         <p>${userSettings?.defaultTerms || 'Payment is due within 30 days of the invoice date. Thank you for your business!'}</p>
         <p style="margin-top: 15px; font-weight: bold; color: #333;">VAT Status: I am not VAT registered and therefore no VAT is charged.</p>
