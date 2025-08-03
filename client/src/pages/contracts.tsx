@@ -535,10 +535,10 @@ export default function Contracts() {
   };
 
   const handleSelectAll = () => {
-    if (selectedContracts.length === filteredContracts.length) {
+    if (selectedContracts.length === filteredContracts?.length) {
       setSelectedContracts([]);
     } else {
-      setSelectedContracts(filteredContracts.map(contract => contract.id));
+      setSelectedContracts(filteredContracts?.map(contract => contract.id) || []);
     }
   };
 
@@ -646,7 +646,7 @@ export default function Contracts() {
     return new Date(dateString).toLocaleDateString("en-GB");
   };
 
-  const filteredContracts = contracts.filter((contract: Contract) => {
+  const filteredContracts = contracts?.filter((contract: Contract) => {
     const matchesSearch = searchQuery === "" || 
       contract.contractNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contract.clientName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -654,7 +654,7 @@ export default function Contracts() {
     const matchesStatus = statusFilter === "all" || contract.status === statusFilter;
 
     return matchesSearch && matchesStatus;
-  });
+  }) || [];
 
   // Handle loading state
   if (isLoading) {
@@ -1051,10 +1051,7 @@ export default function Contracts() {
                         <Button 
                           type="button" 
                           variant="outline" 
-                          onClick={() => {
-                            setIsDialogOpen(false);
-                            handleDialogClose(false);
-                          }}
+                          onClick={() => handleDialogClose(false)}
                         >
                           Cancel
                         </Button>
