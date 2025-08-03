@@ -158,13 +158,17 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **SOLUTION SCOPE**: Fixes Import Calendar, Export, and all other primary buttons throughout application
 
 ### NEW BOOKING FORM THEME INTEGRATION (August 3, 2025)
-- **GRADIENT TEXT FIX**: Updated "New Booking" header to use standard primary gradient colors for consistent theme display
+- **GRADIENT TEXT FIX**: Updated "New Booking" header to use theme-aware CSS variables `from-[var(--theme-primary)] to-[var(--theme-secondary)]`
 - **BACK BUTTON FIX**: Changed "Back to Bookings" button to use bg-primary with white text for proper visibility in dark themes
 - **SUBMIT BUTTON FIX**: Updated submit button to use standard bg-primary for consistent theming
 - **TEXT VISIBILITY RESTORATION**: Fixed overly aggressive CSS that was making text invisible across application
 - **BUTTON-ONLY TARGETING**: Refined CSS selectors to target only buttons, preserving text visibility elsewhere
+- **DYNAMIC THEME SWITCHING**: "New Booking" gradient now changes colors based on selected theme
 - **THEME CONSISTENCY**: Form now fully adapts to selected theme with proper text contrast
 - **EXPECTED BEHAVIOR**: 
-  - Purple/Midnight Blue themes: All buttons show WHITE text on theme background
-  - All themes: "New Booking" gradient displays theme-appropriate colors
-  - All themes: Text remains visible throughout application
+  - Purple theme: "New Booking" gradient displays purple colors
+  - Midnight Blue theme: "New Booking" gradient displays midnight blue colors
+  - Ocean Blue theme: "New Booking" gradient displays blue colors
+  - Forest Green theme: "New Booking" gradient displays green colors
+  - Clean Pro Audio theme: "New Booking" gradient displays grey/red colors
+  - All themes: Buttons show appropriate text colors for maximum contrast

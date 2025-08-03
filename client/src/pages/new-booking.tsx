@@ -176,7 +176,7 @@ export default function NewBookingPage() {
                   </Button>
                 </Link>
                 <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] bg-clip-text text-transparent">
                     New Booking
                   </h1>
                   <p className="text-gray-600 mt-1">Create a new performance booking</p>
