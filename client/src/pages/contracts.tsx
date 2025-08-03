@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -731,7 +731,10 @@ export default function Contracts() {
                 <p className="text-gray-600 dark:text-gray-400">Manage your performance contracts and agreements</p>
               </div>
 
-              <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                console.log('🔄 Dialog onOpenChange called with:', open);
+                handleDialogClose(open);
+              }}>
                 <DialogTrigger asChild>
                   <Button className="bg-primary hover:bg-primary/90">
                     <FileText className="w-4 h-4 mr-2" />
@@ -741,6 +744,9 @@ export default function Contracts() {
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader className="pb-4">
                     <DialogTitle>{editingContract ? 'Edit Contract' : 'Generate New Contract'}</DialogTitle>
+                    <DialogDescription>
+                      {editingContract ? 'Update the contract details below.' : 'Fill in the contract details below to generate a new contract.'}
+                    </DialogDescription>
                   </DialogHeader>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit((data) => {
