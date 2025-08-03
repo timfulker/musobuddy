@@ -17,7 +17,8 @@ export async function generateContractPDF(
   // Use AI-driven PDF generation if requested
   if (useAI) {
     try {
-      const aiData = contractToAIFormat(contract, userSettings);
+      const theme = (contract as any).contractTheme || 'professional';
+      const aiData = contractToAIFormat(contract, userSettings, theme);
       return await generateAIPDF(aiData);
     } catch (error) {
       console.warn('AI PDF generation failed, falling back to standard method:', error);
@@ -418,7 +419,8 @@ export async function generateInvoicePDF(
   // Use AI-driven PDF generation if requested
   if (useAI) {
     try {
-      const aiData = invoiceToAIFormat(invoice, userSettings, contract);
+      const theme = (invoice as any).invoiceTheme || 'professional';
+      const aiData = invoiceToAIFormat(invoice, userSettings, contract, theme);
       return await generateAIPDF(aiData);
     } catch (error) {
       console.warn('AI PDF generation failed, falling back to standard method:', error);

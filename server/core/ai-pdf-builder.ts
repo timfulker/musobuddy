@@ -11,6 +11,7 @@ interface PDFData {
   eventDate?: string;
   venue?: string;
   fee: string;
+  theme: 'professional' | 'friendly' | 'musical';
   sections: Array<{
     title: string;
     content: string;
@@ -25,38 +26,73 @@ interface PDFData {
 export async function generateAIPDF(data: PDFData): Promise<Buffer> {
   console.log(`🤖 Generating AI-driven ${data.type} PDF for:`, data.client);
   
-  // Prepare the prompt for OpenAI
-  const systemPrompt = `You are an expert layout formatter specializing in professional business documents. Format this ${data.type} into clean, professional HTML suitable for printing to PDF with Puppeteer.
+  // Prepare the comprehensive theme-based prompt for OpenAI
+  const systemPrompt = `You are an expert document formatter and layout designer.
 
-CRITICAL REQUIREMENTS:
-1. Use CSS to ensure good page breaks - add class="page-break" before each major section
-2. Use class="avoid-break" for content that should stay together
-3. Keep signature sections and legal information grouped together
-4. Use professional styling with clean typography
-5. Include proper margins and spacing for print
-6. Return ONLY the complete HTML document (including <html>, <head>, <body> tags)
+You are building contracts or invoices for live performers (e.g. musicians, DJs, bands) and formatting them into HTML suitable for PDF output using Puppeteer.
 
-CSS CLASSES TO USE:
-- page-break: Forces a new page
-- avoid-break: Prevents breaking within this element
-- keep-together: Prevents breaking before or after
+The input is structured JSON containing:
+- Client and performer details
+- Performance details (e.g., date, time, venue, fee)
+- Terms and legal text
+- Optional brand settings (logo, footer, etc.)
+- A theme key with one of: "professional", "friendly", or "musical"
 
-The output should be print-ready and professional.`;
+### GENERAL INSTRUCTIONS
 
-  const userPrompt = `Generate a professional ${data.type} HTML document with this data:
+1. Output valid HTML with inline CSS for a clean, professional PDF appearance.
+2. Use these CSS classes:
+   - .page-break: apply page-break-before: always;
+   - .avoid-break: apply page-break-inside: avoid; break-inside: avoid;
+3. Ensure "Signature" and "Legal" sections are grouped together and not broken across pages.
+4. Include a visually distinct heading, optional branding logo, and footer if provided.
 
-Client: ${data.client}
-${data.eventDate ? `Event Date: ${data.eventDate}` : ''}
-${data.venue ? `Venue: ${data.venue}` : ''}
-Fee: ${data.fee}
-Business: ${data.branding?.businessName || 'MusoBuddy'}
+### THEMES
 
-Sections:
-${data.sections.map(section => `${section.title}: ${section.content}`).join('\n')}
+#### 1. PROFESSIONAL
+- Tone: Formal, concise, clear
+- Headings: Conventional (e.g., "Invoice Details" or "Terms and Conditions")
+- Fonts: Clean sans-serif (e.g., Helvetica, Arial)
+- Layout: Conservative, neutral
+- Style: Black and white or minimal grey highlights
 
-${data.branding?.footerText ? `Footer: ${data.branding.footerText}` : ''}
+#### 2. FRIENDLY
+- Tone: Conversational, warm, approachable
+- Headings: E.g., "Hey there 👋 – here's your invoice!" or "Let's get things squared away"
+- Fonts: Rounded or soft (e.g., Inter, Poppins)
+- Layout: Clean with soft pastel background areas or dividers
+- Optional: Friendly greeting and closing paragraph (e.g., "Thanks again – can't wait for the big day!")
 
-Format this as a complete, professional HTML document ready for PDF generation.`;
+#### 3. MUSICAL
+- Tone: Playful, rhythmic, fun
+- Headings: Use musical language or icons (e.g., "🎷 Booking Breakdown" or "Encore: The Fine Print")
+- Fonts: Slightly more expressive, but still readable
+- Style: May use background accents (e.g., music note icons, dashed lines)
+- Optional: Opening line like "🎶 Let's tune up your booking…"
+
+### FINAL OUTPUT
+
+Return a complete HTML document containing:
+- The layout styled according to the selected theme
+- Clearly structured sections with appropriate h1, h2, p, and table elements
+- No external stylesheet or font references (use inline or Google Fonts if needed)
+- Include page-breaks for major sections, but avoid splitting tables or legal blocks
+
+This HTML will be passed directly to Puppeteer for PDF generation.
+
+Do not include markdown or JSON. Output valid, print-ready HTML only.`;
+
+  const userPrompt = JSON.stringify({
+    type: data.type,
+    theme: data.theme,
+    client: data.client,
+    eventDate: data.eventDate,
+    venue: data.venue,
+    fee: data.fee,
+    business: data.branding?.businessName || 'MusoBuddy',
+    sections: data.sections,
+    branding: data.branding
+  }, null, 2);
 
   try {
     // Get AI-generated HTML
@@ -124,7 +160,7 @@ Format this as a complete, professional HTML document ready for PDF generation.`
 }
 
 // Helper function to convert contract data to AI format
-export function contractToAIFormat(contract: any, userSettings: any): PDFData {
+export function contractToAIFormat(contract: any, userSettings: any, theme: 'professional' | 'friendly' | 'musical' = 'professional'): PDFData {
   const sections = [
     {
       title: "Performer Details",
@@ -162,6 +198,7 @@ export function contractToAIFormat(contract: any, userSettings: any): PDFData {
     eventDate: new Date(contract.eventDate).toLocaleDateString('en-GB'),
     venue: contract.venue,
     fee: `£${contract.fee}`,
+    theme,
     sections,
     branding: {
       businessName: userSettings?.businessName || 'MusoBuddy',
@@ -171,7 +208,7 @@ export function contractToAIFormat(contract: any, userSettings: any): PDFData {
 }
 
 // Helper function to convert invoice data to AI format
-export function invoiceToAIFormat(invoice: any, userSettings: any, contract?: any): PDFData {
+export function invoiceToAIFormat(invoice: any, userSettings: any, contract?: any, theme: 'professional' | 'friendly' | 'musical' = 'professional'): PDFData {
   const sections = [
     {
       title: "Business Details",
@@ -205,6 +242,7 @@ export function invoiceToAIFormat(invoice: any, userSettings: any, contract?: an
     eventDate: invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : undefined,
     venue: invoice.venueAddress,
     fee: `£${invoice.amount}`,
+    theme,
     sections,
     branding: {
       businessName: userSettings?.businessName || 'MusoBuddy',

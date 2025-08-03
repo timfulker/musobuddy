@@ -36,6 +36,7 @@ const invoiceFormSchema = z.object({
   performanceDate: z.string().optional(),
   performanceFee: z.string().optional(),
   depositPaid: z.string().optional(),
+  invoiceTheme: z.enum(["professional", "friendly", "musical"]).default("professional"),
 
 });
 
@@ -427,6 +428,7 @@ export default function Invoices() {
       performanceDate: data.performanceDate || null,
       performanceFee: data.performanceFee?.trim() || null,
       depositPaid: data.depositPaid?.trim() || null,
+      invoiceTheme: data.invoiceTheme || 'professional',
 
     };
     
@@ -1080,7 +1082,31 @@ export default function Invoices() {
                       />
                     </div>
 
-
+                    <div className="grid grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="invoiceTheme"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Invoice Style</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select style" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="professional">Professional</SelectItem>
+                                <SelectItem value="friendly">Friendly</SelectItem>
+                                <SelectItem value="musical">Musical</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-sm text-gray-600">Choose the tone and style for your invoice</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                     <div className="flex justify-end gap-3">
                       <Button type="button" variant="outline" onClick={handleDialogClose}>
