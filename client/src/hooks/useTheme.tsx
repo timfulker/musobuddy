@@ -64,8 +64,8 @@ export const themes: Record<ThemeName, Theme> = {
     name: 'Forest Green',
     description: 'Natural green theme for outdoor musicians',
     colors: {
-      primary: '#6ee7b7',
-      secondary: '#34d399',
+      primary: '#34d399',
+      secondary: '#10b981',
       accent: '#22c55e',
       background: '#f0fdf4',
       surface: '#ffffff',

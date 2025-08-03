@@ -35,7 +35,7 @@ export function MusoBuddyLogo({
         };
       case 'forest-green':
         return {
-          primary: '#6ee7b7',
+          primary: '#10b981',
           secondary: '#34d399'
         };
       case 'clean-pro-audio':
