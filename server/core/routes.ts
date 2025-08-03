@@ -2023,7 +2023,8 @@ export async function registerRoutes(app: Express) {
         paymentInstructions: req.body.paymentInstructions || null,
         equipmentRequirements: req.body.equipmentRequirements || null,
         specialRequirements: req.body.specialRequirements || null,
-        enquiryId: req.body.enquiryId || null
+        enquiryId: req.body.enquiryId || null,
+        contractTheme: req.body.contractTheme || 'professional'
       };
       
       console.log('📝 Processed contract data:', {
