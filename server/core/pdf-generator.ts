@@ -190,9 +190,10 @@ function generateContractHTML(
           color: #92400e;
         }
         
-        /* Smart Page Break CSS */
+        /* Advanced Page Break CSS */
         .page-break {
           page-break-before: always;
+          break-before: page;
         }
         .avoid-break {
           page-break-inside: avoid;
@@ -201,23 +202,42 @@ function generateContractHTML(
         .keep-together {
           page-break-before: avoid;
           page-break-after: avoid;
+          break-before: avoid;
+          break-after: avoid;
         }
-        .terms-section {
+        .policy-section {
           page-break-inside: avoid;
+          break-inside: avoid;
+          margin-bottom: 20px;
+        }
+        .terms-group {
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
         .signature-area {
           page-break-before: auto;
           page-break-inside: avoid;
+          break-inside: avoid;
         }
         @media print {
           .business-details, .contract-details {
             page-break-after: avoid;
+            break-after: avoid;
           }
-          h2, h3 {
+          h2, h3, h4 {
             page-break-after: avoid;
+            break-after: avoid;
+            page-break-inside: avoid;
+            break-inside: avoid;
           }
           .payment-info {
             page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          /* Force signature section to new page */
+          .signature-section {
+            page-break-before: always;
+            break-before: page;
           }
         }
       </style>
@@ -286,14 +306,18 @@ function generateContractHTML(
       <div class="terms avoid-break">
         <h3 style="color: ${themeStyles.accentColor};">Terms and Conditions</h3>
         
-        <div style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;" class="avoid-break">
+        <!-- Payment Terms Section -->
+        <div style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;" class="policy-section">
           <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Payment Terms</h4>
           <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
           <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
           ${contract.deposit ? `<p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>` : ''}
           <p><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</p>
-          
-          <h4 style="color: #2563eb; margin-top: 20px;">Cancellation & Refund Policy</h4>
+        </div>
+        
+        <!-- Cancellation Policy Section -->
+        <div class="policy-section" style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;">
+          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Cancellation & Refund Policy</h4>
           <p><strong>Client Cancellation:</strong></p>
           <ul style="margin-left: 20px;">
             <li>More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee</li>
@@ -302,14 +326,17 @@ function generateContractHTML(
           </ul>
           <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</p>
           <p><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</p>
-          
-          <h4 style="color: #2563eb; margin-top: 20px;">Force Majeure</h4>
+        </div>
+        
+        <!-- Force Majeure Section -->
+        <div class="policy-section" style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;">
+          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Force Majeure</h4>
           <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
-          
-          <h4 style="color: #2563eb; margin-top: 20px;">Performance Contingencies</h4>
-          <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
-          
-          <h4 style="color: #2563eb; margin-top: 20px;">Professional Performance Standards</h4>
+        </div>
+        
+        <!-- Performance Standards Section -->
+        <div class="terms-group" style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;">
+          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Professional Performance Standards</h4>
           <p><strong>Payment Schedule:</strong> The agreed performance fee${contract.deposit ? ' (including applicable VAT)' : ''} becomes due and payable on the date of performance of the engagement.</p>
           <p><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</p>
           <p><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</p>
@@ -321,7 +348,7 @@ function generateContractHTML(
         </div>
       </div>
 
-      <div class="signature-section page-break signature-area">
+      <div class="signature-section signature-area">
         <h3>Signatures</h3>
         
         <div class="party-section">

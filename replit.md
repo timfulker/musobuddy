@@ -25,13 +25,13 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **Authentication**: Branded email/password authentication with PostgreSQL sessions, robust session management, and Replit Auth integration.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails and webhook processing.
-- **PDF Generation**: Puppeteer for contract and invoice PDFs.
+- **PDF Generation**: Puppeteer for contract and invoice PDFs with advanced page break control, print optimization, and professional layout.
 - **AI Integration**: Anthropic Claude Haiku for contract parsing, OpenAI for email parsing and AI response generation, including price enquiry detection and message categorization.
 - **System Design Choices**:
     - **User Management**: Replit Auth integration, session-based authentication, user tiers (free, premium, enterprise), admin dashboard.
     - **Booking Management**: Unified system, conflict detection, calendar integration (.ics import), status tracking, and manual gig entry. Includes a standalone, token-based booking widget.
-    - **Contract Generation**: Dynamic PDF generation with professional styling, digital signature capabilities, cloud storage, and automated reminders (Phase 2).
-    - **Invoice Management**: Professional invoice generation with clean styling, sequential numbering (001, 002, 003), proper business address display, payment tracking, overdue monitoring, and integration with banking APIs (planned).
+    - **Contract Generation**: Dynamic PDF generation with professional styling, smart page breaks, digital signature capabilities, cloud storage, and automated reminders (Phase 2).
+    - **Invoice Management**: Professional invoice generation with clean styling, smart page breaks, sequential numbering (001, 002, 003), proper business address display, payment tracking, overdue monitoring, and integration with banking APIs (planned).
     - **Compliance Tracking**: Document management for insurance, licenses, PAT testing; expiry date monitoring and alerts; automated compliance sharing.
     - **Data Flow**: Streamlined authentication, booking lifecycle management, and AI integration for automated data extraction and processing.
     - **Security**: Robust session validation, comprehensive rate limiting (login, SMS, signup, API), enhanced database connection pooling, and secure password hashing.
