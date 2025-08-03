@@ -212,6 +212,10 @@ function generateContractHTML(
             <th>Venue</th>
             <td>${contract.venue}</td>
           </tr>
+          ${contract.venueAddress ? `<tr>
+            <th>Venue Address</th>
+            <td>${contract.venueAddress}</td>
+          </tr>` : ''}
           <tr>
             <th>Performance Fee</th>
             <td class="amount">£${contract.fee}</td>
