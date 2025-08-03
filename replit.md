@@ -35,7 +35,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **AI Integration**: Anthropic Claude Haiku for contract parsing, OpenAI for email parsing and AI response generation, including price enquiry detection and message categorization.
 - **System Design Choices**:
     - **User Management**: Replit Auth integration, session-based authentication, user tiers (free, premium, enterprise), admin dashboard.
-    - **Booking Management**: Unified system, conflict detection, calendar integration (.ics import), status tracking, and manual gig entry. Includes a standalone, token-based booking widget.
+    - **Booking Management**: Unified system, conflict detection, calendar integration (.ics import), status tracking, and manual gig entry. Includes a standalone, token-based booking widget. Booking workflow: 1) New (auto-triggered by event creation), 2) In progress (auto-triggered by template sent), 3) Client confirms (manual user input), 4) Confirmed (auto-set when contract signed), 5) Completed (auto-set when date passed), 6) Rejected (user-set anytime).
     - **Contract Generation**: Dynamic PDF generation, digital signature capabilities, cloud storage, and automated reminders (Phase 2).
     - **Invoice Management**: Professional invoice generation, payment tracking, overdue monitoring, and integration with banking APIs (planned).
     - **Compliance Tracking**: Document management for insurance, licenses, PAT testing; expiry date monitoring and alerts; automated compliance sharing.
