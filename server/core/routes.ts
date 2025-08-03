@@ -2537,6 +2537,85 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Send invoice via email
+  app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const { invoiceId, customMessage } = req.body;
+      const parsedInvoiceId = parseInt(invoiceId);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(parsedInvoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      console.log(`📧 Sending invoice #${parsedInvoiceId} via email...`);
+      
+      // Get invoice and verify ownership
+      const invoice = await storage.getInvoice(parsedInvoiceId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      if (invoice.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      if (!invoice.clientEmail) {
+        return res.status(400).json({ error: 'No client email address on file' });
+      }
+      
+      // Get user settings
+      const userSettings = await storage.getUserSettings(userId);
+      if (!userSettings) {
+        return res.status(404).json({ error: 'User settings not found' });
+      }
+      
+      // Import services
+      const { MailgunService } = await import('./services');
+      const emailService = new MailgunService();
+      
+      // Generate and upload invoice PDF to cloud storage if not already done
+      let pdfUrl = invoice.cloudStorageUrl;
+      if (!pdfUrl) {
+        const { uploadInvoiceToCloud } = await import('./cloud-storage');
+        const { url: newPdfUrl, key } = await uploadInvoiceToCloud(invoice, userSettings);
+        
+        // Update invoice with cloud URL
+        await storage.updateInvoice(parsedInvoiceId, {
+          cloudStorageUrl: newPdfUrl,
+          cloudStorageKey: key,
+          updatedAt: new Date()
+        });
+        
+        pdfUrl = newPdfUrl;
+      }
+      
+      // Update invoice status to sent
+      await storage.updateInvoice(parsedInvoiceId, {
+        status: 'sent',
+        updatedAt: new Date()
+      });
+      
+      // Send email with invoice
+      const subject = `Invoice ${invoice.invoiceNumber} - Payment Due`;
+      await emailService.sendInvoiceEmail(invoice, userSettings, pdfUrl, subject);
+      
+      console.log(`✅ Invoice #${parsedInvoiceId} sent successfully via email`);
+      res.json({ success: true, message: 'Invoice sent successfully' });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to send invoice:', error);
+      res.status(500).json({ 
+        error: 'Failed to send invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // Get individual invoice for viewing
   app.get('/api/invoices/:id/view', isAuthenticated, async (req: any, res) => {
     try {
