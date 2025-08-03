@@ -50,6 +50,101 @@ function getLogoBase64(): string {
   }
 }
 
+// Theme-specific titles and language
+function getThemeTitle(theme: string): string {
+  switch (theme) {
+    case 'professional':
+      return 'Performance Agreement';
+    case 'friendly':
+      return 'Music Performance Contract';
+    case 'musical':
+      return '🎵 Performance Contract 🎵';
+    default:
+      return 'Performance Contract';
+  }
+}
+
+function getThemeTermsTitle(theme: string): string {
+  switch (theme) {
+    case 'professional':
+      return 'Terms and Conditions';
+    case 'friendly':
+      return 'Important Details';
+    case 'musical':
+      return 'The Small Print (But Important Stuff!)';
+    default:
+      return 'Terms and Conditions';
+  }
+}
+
+function getThemePaymentTitle(theme: string): string {
+  switch (theme) {
+    case 'professional':
+      return 'Payment Terms & Conditions';
+    case 'friendly':
+      return 'Payment & Money Matters';
+    case 'musical':
+      return 'Payment & The Business Side of Things';
+    default:
+      return 'Payment Terms & Conditions';
+  }
+}
+
+function getThemeBoxColor(theme: string): string {
+  switch (theme) {
+    case 'professional':
+      return '#f8fafc'; // Light blue-gray
+    case 'friendly':
+      return '#f0fdf4'; // Light green
+    case 'musical':
+      return '#faf5ff'; // Light purple
+    default:
+      return '#f0f8ff';
+  }
+}
+
+// Theme-based styling configuration
+function getThemeStyles(theme: string) {
+  switch (theme) {
+    case 'professional':
+      return {
+        fontFamily: "'Times New Roman', serif",
+        accentColor: '#1e40af', // Professional blue
+        textColor: '#1f2937',    // Dark gray
+        backgroundColor: '#ffffff',
+        headerStyle: 'formal',
+        tone: 'formal'
+      };
+    case 'friendly':
+      return {
+        fontFamily: "'Georgia', serif", 
+        accentColor: '#059669',  // Warm green
+        textColor: '#374151',    // Softer gray
+        backgroundColor: '#fefefe',
+        headerStyle: 'warm',
+        tone: 'casual'
+      };
+    case 'musical':
+      return {
+        fontFamily: "'Trebuchet MS', sans-serif",
+        accentColor: '#7c3aed',  // Creative purple
+        textColor: '#6b7280',    // Medium gray
+        backgroundColor: '#fafafa',
+        headerStyle: 'creative',
+        tone: 'expressive'
+      };
+    default:
+      return {
+        fontFamily: "'Times New Roman', serif",
+        accentColor: '#1e40af',
+        textColor: '#1f2937',
+        backgroundColor: '#ffffff',
+        headerStyle: 'formal',
+        tone: 'formal'
+      };
+  }
+}
+
 function generateContractHTML(
   contract: Contract,
   userSettings: UserSettings | null,
@@ -74,6 +169,10 @@ function generateContractHTML(
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto; margin-bottom: 20px;" alt="MusoBuddy Logo" />` : '';
   
+  // Theme-based styling
+  const theme = (contract as any).contractTheme || 'professional';
+  const themeStyles = getThemeStyles(theme);
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -82,16 +181,17 @@ function generateContractHTML(
       <title>Performance Contract ${contract.contractNumber}</title>
       <style>
         body {
-          font-family: Arial, sans-serif;
+          font-family: ${themeStyles.fontFamily};
           line-height: 1.6;
-          color: #333;
+          color: ${themeStyles.textColor};
           max-width: 800px;
           margin: 0 auto;
           padding: 20px;
+          background-color: ${themeStyles.backgroundColor};
         }
         .header {
           text-align: center;
-          border-bottom: 3px solid #9333ea;
+          border-bottom: 3px solid ${themeStyles.accentColor};
           padding-bottom: 20px;
           margin-bottom: 30px;
         }
@@ -161,8 +261,8 @@ function generateContractHTML(
     <body>
       <div class="header">
         ${logoHtml}
-        <h1>Performance Contract</h1>
-        <h2>${contract.contractNumber}</h2>
+        <h1 style="color: ${themeStyles.accentColor};">${getThemeTitle(theme)}</h1>
+        <h2 style="color: ${themeStyles.textColor};">${contract.contractNumber}</h2>
         <div class="status-badge ${contract.status === 'signed' ? 'status-signed' : 'status-sent'}">
           ${contract.status.toUpperCase()}
         </div>
@@ -220,10 +320,10 @@ function generateContractHTML(
       </div>
 
       <div class="terms">
-        <h3>Terms and Conditions</h3>
+        <h3 style="color: ${themeStyles.accentColor};">${getThemeTermsTitle(theme)}</h3>
         
-        <div style="margin-top: 20px; padding: 15px; background-color: #f0f8ff; border-radius: 5px; font-size: 14px;">
-          <h4 style="margin-top: 0; color: #2563eb;">Payment Terms & Conditions</h4>
+        <div style="margin-top: 20px; padding: 15px; background-color: ${getThemeBoxColor(theme)}; border-radius: 5px; font-size: 14px;">
+          <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">${getThemePaymentTitle(theme)}</h4>
           <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
           <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
           ${contract.deposit ? `<p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>` : ''}
