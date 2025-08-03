@@ -216,9 +216,9 @@ export default function Settings() {
     form.setValue('selectedInstruments', updatedInstruments);
     
     // Update available gig types based on selected instruments
-    const availableGigTypes = updatedInstruments.flatMap(inst => 
-      getGigTypeNamesForInstrument(inst)
-    );
+    const availableGigTypes = Array.isArray(updatedInstruments) 
+      ? updatedInstruments.flatMap(inst => getGigTypeNamesForInstrument(inst) || [])
+      : [];
     const currentGigTypes = selectedGigTypes || [];
     const filteredGigTypes = currentGigTypes.filter(gt => 
       availableGigTypes.includes(gt)
@@ -239,8 +239,11 @@ export default function Settings() {
 
   const getAvailableGigTypes = () => {
     const instruments = selectedInstruments || [];
+    if (!Array.isArray(instruments) || instruments.length === 0) {
+      return [];
+    }
     return instruments.flatMap(instrument => 
-      getGigTypeNamesForInstrument(instrument)
+      getGigTypeNamesForInstrument(instrument) || []
     );
   };
 
