@@ -143,3 +143,15 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
   - All other themes: Active items = BLACK text (forced via JavaScript)
   - All themes: Inactive items = BLACK text (forced via JavaScript)
 - **NUCLEAR SOLUTION**: Bypasses CSS specificity wars through direct DOM manipulation
+
+### BUTTON TEXT COLOR FIX COMPLETED (August 3, 2025)
+- **CRITICAL BUTTON FIX**: Added comprehensive CSS rules to ensure white text on primary buttons in purple and midnight blue themes
+- **BUTTON TARGETING**: Multiple selectors target `.bg-primary`, `button[class*="bg-primary"]`, and `.text-primary-foreground` elements
+- **MAXIMUM SPECIFICITY**: Uses `body.theme-purple` and `html.theme-purple` prefixes with `!important` flags
+- **CHILD ELEMENT FORCING**: All child elements within primary buttons inherit white text color
+- **SHADCN COMPATIBILITY**: Targets shadcn button variants including `data-variant="default"` buttons
+- **COMPREHENSIVE COVERAGE**: Handles inline styles, CSS classes, and data attributes
+- **EXPECTED BEHAVIOR**: 
+  - Purple/Midnight Blue themes: All primary buttons = WHITE text on theme background
+  - All other themes: Primary buttons maintain existing text colors
+- **SOLUTION SCOPE**: Fixes Import Calendar, Export, and all other primary buttons throughout application
