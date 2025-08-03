@@ -221,21 +221,33 @@ export default function Contracts() {
       }
       setDataLoaded(true); // Mark data as loaded even if no specific auto-fill occurs
     }
-  }, [enquiries, contracts, form, isLoading, isDialogOpen, dataLoaded, toast]);
+  }, [enquiries, contracts, form, isLoading, dataLoaded, toast]); // Removed isDialogOpen from dependencies to prevent circular reopening
 
-  // Clean up URL when dialog closes
+  // Improved dialog close handler with better state management
   const handleDialogClose = (open: boolean) => {
+    console.log('🔄 handleDialogClose called with:', open);
+    
     setIsDialogOpen(open);
+    
     if (!open) {
-      // Clean up URL when closing dialog
+      console.log('🚪 Closing dialog - cleaning up state');
+      
+      // Clean up URL when closing dialog - do this first
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('action') === 'new') {
+      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
+        console.log('🧹 Cleaning up URL params');
         window.history.replaceState({}, '', window.location.pathname);
       }
-      // Clear editing state and reset form
+      
+      // Clear all form and component state
       setEditingContract(null);
-      setDataLoaded(false); // Reset data loaded flag
-      form.reset();
+      setDataLoaded(false); // Reset data loaded flag to allow future URL-based opens
+      
+      // Reset form with a slight delay to ensure state updates are complete
+      setTimeout(() => {
+        form.reset();
+        console.log('✅ Dialog cleanup complete');
+      }, 50);
     }
   };
 
