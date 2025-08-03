@@ -843,6 +843,36 @@ html.theme-midnight-blue button[class*="bg-gradient"] * {
   color: white !important;
 }
 
+/* OUTLINE BUTTON FIX: Make outline buttons with text-primary behave like primary buttons */
+/* For purple and midnight blue themes, outline buttons should show white text on primary background */
+body.theme-purple button[class*="text-primary"],
+body.theme-midnight-blue button[class*="text-primary"],
+html.theme-purple button[class*="text-primary"],
+html.theme-midnight-blue button[class*="text-primary"] {
+  background-color: var(--theme-primary) !important;
+  color: white !important;
+  border-color: var(--theme-primary) !important;
+}
+
+/* Ensure proper hover states for outline buttons in dark themes */
+body.theme-purple button[class*="text-primary"]:hover,
+body.theme-midnight-blue button[class*="text-primary"]:hover,
+html.theme-purple button[class*="text-primary"]:hover,
+html.theme-midnight-blue button[class*="text-primary"]:hover {
+  background-color: var(--theme-primary) !important;
+  color: white !important;
+  border-color: var(--theme-primary) !important;
+  opacity: 0.9;
+}
+
+/* Force child elements in outline buttons to inherit white text in dark themes */
+body.theme-purple button[class*="text-primary"] *,
+body.theme-midnight-blue button[class*="text-primary"] *,
+html.theme-purple button[class*="text-primary"] *,
+html.theme-midnight-blue button[class*="text-primary"] * {
+  color: white !important;
+}
+
 /* Metronome animation for logo */
 @keyframes metronome-tick {
   0% { transform: rotate(-18deg); }
