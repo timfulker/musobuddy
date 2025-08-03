@@ -2038,6 +2038,12 @@ export async function registerRoutes(app: Express) {
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
       
+      // Return contract immediately if AI PDF generation disabled for testing
+      if (req.body.skipPdfGeneration) {
+        console.log('⚠️ Skipping PDF generation as requested');
+        return res.json(newContract);
+      }
+      
       // ENHANCED AI PDF GENERATION WITH COMPREHENSIVE ERROR HANDLING
       try {
         console.log('🤖 Starting AI PDF generation with diagnostics...');
@@ -2118,11 +2124,16 @@ export async function registerRoutes(app: Express) {
           sectionsCount: pdfData.sections.length
         });
         
-        // Generate PDF with timeout protection
+        // Generate PDF with timeout protection and detailed error logging
+        console.log('🤖 Calling generateAIPDF with timeout protection...');
         const pdfBuffer = await Promise.race([
-          generateAIPDF(pdfData),
+          generateAIPDF(pdfData).catch(aiErr => {
+            console.error('❌ AI PDF generation internal error:', aiErr.message);
+            console.error('❌ AI PDF stack trace:', aiErr.stack?.split('\n').slice(0, 3));
+            throw aiErr;
+          }),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('AI PDF generation timeout')), 60000)
+            setTimeout(() => reject(new Error('AI PDF generation timeout after 60 seconds')), 60000)
           )
         ]) as Buffer;
         
@@ -2174,37 +2185,22 @@ export async function registerRoutes(app: Express) {
         }
         
       } catch (aiError: any) {
-        console.error('❌ AI PDF generation failed:', aiError.message);
-        console.error('Stack:', aiError.stack);
+        console.error('❌ AI PDF generation failed:', {
+          message: aiError.message,
+          type: aiError.constructor.name,
+          code: aiError.code,
+          timestamp: new Date().toISOString()
+        });
+        console.error('❌ AI PDF Stack trace:', aiError.stack?.split('\n').slice(0, 5));
         
-        // FALLBACK: Try standard PDF generation
-        try {
-          console.log('🔄 Falling back to standard PDF generation...');
-          const { generateContractPDF } = await import('./pdf-generator');
-          const userSettings = await storage.getUserSettings(req.session.userId);
-          const fallbackPdfBuffer = await generateContractPDF(newContract, userSettings);
-          
-          // Upload fallback PDF
-          const { uploadContractToCloud } = await import('./cloud-storage');
-          const cloudResult = await uploadContractToCloud(newContract, userSettings);
-          
-          if (cloudResult.success) {
-            const updatedContract = await storage.updateContract(newContract.id, {
-              cloudStorageUrl: cloudResult.url,
-              cloudStorageKey: cloudResult.key
-            });
-            
-            console.log('✅ Fallback PDF generation successful');
-            return res.json(updatedContract);
-          }
-          
-        } catch (fallbackError: any) {
-          console.error('❌ Fallback PDF generation also failed:', fallbackError.message);
-        }
-        
-        // If everything fails, still return the contract (user can generate PDF later)
-        console.log('⚠️ Both AI and fallback PDF generation failed - returning contract without PDF');
-        return res.json(newContract);
+        // EMERGENCY: Skip PDF generation for now and return contract successfully
+        console.log('⚠️ AI PDF failed - returning contract without PDF to prevent 500 error');
+        console.log('⚠️ Contract created successfully, PDF can be generated manually later');
+        return res.json({
+          ...newContract,
+          pdfGenerationStatus: 'failed',
+          pdfError: aiError.message
+        });
       }
     } catch (error: any) {
       console.error('❌ Failed to create contract:', error);
