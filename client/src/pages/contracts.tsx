@@ -169,6 +169,9 @@ export default function Contracts() {
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
               form.setValue('specialRequirements', booking.specialRequirements || '');
               
+              // CRITICAL FIX: Set enquiryId to link contract back to booking
+              form.setValue('enquiryId', parseInt(bookingId));
+              
               // Auto-generate contract number with event date and client name
               if (booking.eventDate && booking.clientName) {
                 const eventDate = new Date(booking.eventDate);

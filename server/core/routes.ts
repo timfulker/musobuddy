@@ -1763,7 +1763,8 @@ export async function registerRoutes(app: Express) {
         clientName: contractData.clientName,
         eventDate: contractData.eventDate,
         eventTime: contractData.eventTime,
-        fee: contractData.fee
+        fee: contractData.fee,
+        enquiryId: contractData.enquiryId
       });
       
       const newContract = await storage.createContract(contractData);
