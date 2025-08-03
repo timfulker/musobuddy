@@ -107,18 +107,37 @@ export function MusoBuddyLogo({
             background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
           }}
         >
-          <div 
-            className={`${config.bodySize} bg-white relative`}
-            style={{ clipPath: 'polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%)' }}
-          >
+          <div className="relative flex flex-col items-center">
+            {/* Metronome body - triangular shape */}
             <div 
-              className={`absolute ${config.armTop} left-1/2 transform -translate-x-1/2 ${config.armSize} rounded-sm`}
+              className={`${config.bodySize} bg-white relative`}
               style={{ 
-                background: colors.primary,
-                transformOrigin: 'bottom',
-                animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+                clipPath: 'polygon(40% 0%, 60% 0%, 85% 100%, 15% 100%)',
+                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
               }}
-            />
+            >
+              {/* Metronome arm */}
+              <div 
+                className={`absolute ${config.armTop} left-1/2 transform -translate-x-1/2 ${config.armSize} rounded-sm`}
+                style={{ 
+                  background: colors.primary,
+                  transformOrigin: 'bottom center',
+                  animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+                }}
+              />
+              {/* Weight on the arm */}
+              <div 
+                className="absolute w-1 h-1 bg-current rounded-full"
+                style={{
+                  top: '25%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  color: colors.primary,
+                  animation: 'metronome-tick 1.2s ease-in-out infinite alternate',
+                  transformOrigin: 'bottom center'
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -133,18 +152,37 @@ export function MusoBuddyLogo({
           background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
         }}
       >
-        <div 
-          className={`${config.bodySize} bg-white relative`}
-          style={{ clipPath: 'polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%)' }}
-        >
+        <div className="relative flex flex-col items-center">
+          {/* Metronome body - triangular shape */}
           <div 
-            className={`absolute ${config.armTop} left-1/2 transform -translate-x-1/2 ${config.armSize} rounded-sm`}
+            className={`${config.bodySize} bg-white relative`}
             style={{ 
-              background: colors.primary,
-              transformOrigin: 'bottom',
-              animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+              clipPath: 'polygon(40% 0%, 60% 0%, 85% 100%, 15% 100%)',
+              filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
             }}
-          />
+          >
+            {/* Metronome arm */}
+            <div 
+              className={`absolute ${config.armTop} left-1/2 transform -translate-x-1/2 ${config.armSize} rounded-sm`}
+              style={{ 
+                background: colors.primary,
+                transformOrigin: 'bottom center',
+                animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+              }}
+            />
+            {/* Weight on the arm */}
+            <div 
+              className="absolute w-1.5 h-1.5 bg-current rounded-full"
+              style={{
+                top: '25%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                color: colors.primary,
+                animation: 'metronome-tick 1.2s ease-in-out infinite alternate',
+                transformOrigin: 'bottom center'
+              }}
+            />
+          </div>
         </div>
       </div>
       <div className="text-left">
