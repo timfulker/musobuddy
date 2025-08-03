@@ -151,7 +151,18 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **CHILD ELEMENT FORCING**: All child elements within primary buttons inherit white text color
 - **SHADCN COMPATIBILITY**: Targets shadcn button variants including `data-variant="default"` buttons
 - **COMPREHENSIVE COVERAGE**: Handles inline styles, CSS classes, and data attributes
+- **GRADIENT BUTTON FIX**: Added specific CSS targeting for buttons with gradient backgrounds and `bg-gradient` classes
 - **EXPECTED BEHAVIOR**: 
   - Purple/Midnight Blue themes: All primary buttons = WHITE text on theme background
   - All other themes: Primary buttons maintain existing text colors
 - **SOLUTION SCOPE**: Fixes Import Calendar, Export, and all other primary buttons throughout application
+
+### NEW BOOKING FORM THEME INTEGRATION (August 3, 2025)
+- **GRADIENT TEXT FIX**: Updated "New Booking" header to use theme-aware CSS variables `from-[var(--theme-primary)] to-[var(--theme-secondary)]`
+- **SUBMIT BUTTON FIX**: Updated submit button gradient to use theme variables instead of hardcoded primary colors
+- **THEME CONSISTENCY**: Form now fully adapts to selected theme including gradient elements
+- **CSS VARIABLE USAGE**: Leverages CSS custom properties for dynamic theme switching
+- **EXPECTED BEHAVIOR**: 
+  - Purple theme: "New Booking" gradient displays purple colors
+  - Midnight Blue theme: "New Booking" gradient displays midnight blue colors
+  - All themes: Submit button gradients match theme colors

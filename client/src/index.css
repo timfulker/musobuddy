@@ -835,3 +835,26 @@ html.theme-purple [style*="background"][style*="var(--primary)"],
 html.theme-midnight-blue [style*="background"][style*="var(--primary)"] {
   color: white !important;
 }
+
+/* Fix submit buttons and form buttons with gradient backgrounds */
+body.theme-purple button[class*="gradient"],
+body.theme-midnight-blue button[class*="gradient"],
+html.theme-purple button[class*="gradient"],
+html.theme-midnight-blue button[class*="gradient"],
+body.theme-purple [class*="bg-gradient"],
+body.theme-midnight-blue [class*="bg-gradient"],
+html.theme-purple [class*="bg-gradient"],
+html.theme-midnight-blue [class*="bg-gradient"] {
+  color: white !important;
+}
+
+body.theme-purple button[class*="gradient"] *,
+body.theme-midnight-blue button[class*="gradient"] *,
+html.theme-purple button[class*="gradient"] *,
+html.theme-midnight-blue button[class*="gradient"] *,
+body.theme-purple [class*="bg-gradient"] *,
+body.theme-midnight-blue [class*="bg-gradient"] *,
+html.theme-purple [class*="bg-gradient"] *,
+html.theme-midnight-blue [class*="bg-gradient"] * {
+  color: white !important;
+}
