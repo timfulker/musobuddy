@@ -40,8 +40,8 @@ export function MusoBuddyLogo({
         };
       case 'clean-pro-audio':
         return {
-          primary: '#9ca3af',
-          secondary: '#f87171'
+          primary: '#f87171',
+          secondary: '#9ca3af'
         };
       default:
         return {
@@ -99,13 +99,13 @@ export function MusoBuddyLogo({
       style={{
         width: config.icon,
         height: config.icon,
-        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+        background: colors.primary,
         borderRadius: config.iconRadius,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        boxShadow: `0 ${config.icon * 0.1}px ${config.icon * 0.3}px rgba(139, 92, 246, 0.3)`,
+        boxShadow: `0 ${config.icon * 0.1}px ${config.icon * 0.3}px ${colors.primary}40`,
         flexShrink: 0
       }}
     >
