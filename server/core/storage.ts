@@ -326,6 +326,7 @@ export class Storage {
             clientSignature: contractData.clientSignature || null,
             clientIpAddress: contractData.clientIpAddress || null,
             enquiryId: contractData.enquiryId || null,
+            contractTheme: contractData.contractTheme || 'professional',
             createdAt: new Date(),
             updatedAt: new Date()
           };
