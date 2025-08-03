@@ -54,7 +54,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       "rounded-lg",
       isActive(path) 
         ? "bg-primary text-white shadow-sm" // Active state: theme color background with white text
-        : "hover:bg-primary/10" // Inactive: hover effect, text color handled by CSS
+        : "text-slate-600 hover:bg-primary/10 hover:text-slate-700" // EXPLICIT: inactive text color with hover
     );
   };
 
