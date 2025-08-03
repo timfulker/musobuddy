@@ -48,31 +48,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const getNavLinkClass = (path: string) => {
     const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
-    const theme = getCurrentTheme();
     
     return cn(
       baseClass,
       "rounded-lg",
       isActive(path) 
-        ? theme === 'midnight-blue' || theme === 'purple' 
-          ? "bg-primary text-white shadow-sm" // Purple/Midnight Blue: white text on colored background
-          : "bg-primary text-black shadow-sm" // Other themes: black text on colored background
-        : "hover:bg-primary/10" // Inactive: just hover effect, text color handled by inline styles
+        ? "bg-primary text-white shadow-sm" // Active state: theme color background with white text
+        : "hover:bg-primary/10" // Inactive: hover effect, text color handled by CSS
     );
   };
 
-  // Get the current theme from document class
-  const getCurrentTheme = () => {
-    const bodyClasses = document.body.className;
-    if (bodyClasses.includes('theme-midnight-blue')) return 'midnight-blue';
-    if (bodyClasses.includes('theme-purple')) return 'purple';
-    return 'other';
-  };
 
-  const getInactiveStyle = () => {
-    // ALL inactive menu items should be black text (visible against white sidebar background)
-    return { color: 'rgb(51, 65, 85)' }; // slate-700 - dark text for visibility
-  };
 
   return (
     <>
@@ -122,21 +108,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
-          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/dashboard")} style={!isActive("/dashboard") ? getInactiveStyle() : {}}>
-            <Home className="w-5 h-5" style={!isActive("/dashboard") ? getInactiveStyle() : {}} />
-            <span style={!isActive("/dashboard") ? getInactiveStyle() : {}}>Dashboard</span>
+          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/dashboard")} data-active={isActive("/dashboard").toString()}>
+            <Home className="w-5 h-5" />
+            <span>Dashboard</span>
           </Link>
-          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/bookings")} style={!isActive("/bookings") ? getInactiveStyle() : {}}>
-            <Inbox className="w-5 h-5" style={!isActive("/bookings") ? getInactiveStyle() : {}} />
-            <span style={!isActive("/bookings") ? getInactiveStyle() : {}}>Bookings</span>
+          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/bookings")} data-active={isActive("/bookings").toString()}>
+            <Inbox className="w-5 h-5" />
+            <span>Bookings</span>
           </Link>
-          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/address-book")} style={!isActive("/address-book") ? getInactiveStyle() : {}}>
-            <Users className="w-5 h-5" style={!isActive("/address-book") ? getInactiveStyle() : {}} />
-            <span style={!isActive("/address-book") ? getInactiveStyle() : {}}>Address Book</span>
+          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/address-book")} data-active={isActive("/address-book").toString()}>
+            <Users className="w-5 h-5" />
+            <span>Address Book</span>
           </Link>
-          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/contracts")} style={!isActive("/contracts") ? getInactiveStyle() : {}}>
-            <FileText className="w-5 h-5" style={!isActive("/contracts") ? getInactiveStyle() : {}} />
-            <span style={!isActive("/contracts") ? getInactiveStyle() : {}}>Contracts</span>
+          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/contracts")} data-active={isActive("/contracts").toString()}>
+            <FileText className="w-5 h-5" />
+            <span>Contracts</span>
           </Link>
           <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/invoices")} style={!isActive("/invoices") ? getInactiveStyle() : {}}>
             <PoundSterling className="w-5 h-5" style={!isActive("/invoices") ? getInactiveStyle() : {}} />

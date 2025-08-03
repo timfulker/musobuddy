@@ -163,16 +163,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       (appContainer as HTMLElement).style.color = theme.colors.text;
     }
 
-    // Add theme class for conditional styling to both html and body
+    // IMPROVED: Clean theme class application
     // Remove existing theme classes first
     Object.keys(themes).forEach(themeKey => {
       root.classList.remove(`theme-${themeKey}`);
       document.body.classList.remove(`theme-${themeKey}`);
     });
     
-    // Add current theme class
+    // Add current theme class to both html and body for maximum coverage
     root.classList.add(`theme-${currentTheme}`);
     document.body.classList.add(`theme-${currentTheme}`);
+
+    // CRITICAL: Force refresh sidebar navigation colors after theme change
+    setTimeout(() => {
+      const sidebarItems = document.querySelectorAll('[data-sidebar="menu-button"], .sidebar nav a, .sidebar nav button');
+      sidebarItems.forEach((item) => {
+        const element = item as HTMLElement;
+        // Force recomputation of styles
+        element.style.display = 'none';
+        element.offsetHeight; // Trigger reflow
+        element.style.display = '';
+      });
+    }, 10);
 
     // Save to localStorage
     localStorage.setItem('musobuddy-theme', currentTheme);

@@ -1248,40 +1248,151 @@ html body [class*="theme-"] .sidebar .bg-primary span {
   color: white !important;
 }
 
-/* Ensure sidebar links remain visible for inactive states */
-.sidebar a:not(.bg-primary),
-.sidebar button:not(.bg-primary) {
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: flex !important;
+/* SIDEBAR NAVIGATION VISIBILITY FIX */
+/* Base sidebar styling - consistent across all themes */
+.sidebar {
+  --sidebar-text-inactive: #64748b;
+  --sidebar-text-inactive-hover: #334155;
+  --sidebar-background: #ffffff;
 }
 
-/* NUCLEAR OPTION: Fix sidebar inactive link visibility for dark themes */
-/* Target by theme class and sidebar with maximum specificity */
-html body .theme-midnight-blue .sidebar a:not(.bg-primary),
-html body .theme-midnight-blue .sidebar a:not(.bg-primary) span,
-html body .theme-midnight-blue .sidebar a:not(.bg-primary) svg,
-html body .theme-purple .sidebar a:not(.bg-primary),
-html body .theme-purple .sidebar a:not(.bg-primary) span,
-html body .theme-purple .sidebar a:not(.bg-primary) svg {
-  color: rgb(148 163 184) !important; /* slate-400 - visible gray */
+/* Dark mode base */
+.dark .sidebar {
+  --sidebar-text-inactive: #94a3b8;
+  --sidebar-text-inactive-hover: #cbd5e1;
+  --sidebar-background: #0f172a;
 }
 
-/* Hover states for sidebar links in dark themes */
-html body .theme-midnight-blue .sidebar a:not(.bg-primary):hover,
-html body .theme-midnight-blue .sidebar a:not(.bg-primary):hover span,
-html body .theme-midnight-blue .sidebar a:not(.bg-primary):hover svg,
-html body .theme-purple .sidebar a:not(.bg-primary):hover,
-html body .theme-purple .sidebar a:not(.bg-primary):hover span,
-html body .theme-purple .sidebar a:not(.bg-primary):hover svg {
-  color: rgb(203 213 225) !important; /* slate-300 - lighter on hover */
+/* CRITICAL: Force inactive navigation items to be visible in ALL themes */
+[data-sidebar="sidebar"] nav a:not([data-active="true"]),
+[data-sidebar="sidebar"] nav button:not([data-active="true"]),
+.sidebar nav a:not([data-active="true"]),
+.sidebar nav button:not([data-active="true"]) {
+  color: var(--sidebar-text-inactive) !important;
+  background-color: transparent !important;
 }
 
-/* Force visibility on all sidebar navigation elements */
-html body .theme-midnight-blue .sidebar nav a,
-html body .theme-midnight-blue .sidebar nav a *,
-html body .theme-purple .sidebar nav a,
-html body .theme-purple .sidebar nav a * {
-  opacity: 1 !important;
-  visibility: visible !important;
+/* Force all child elements of inactive items to inherit visibility */
+[data-sidebar="sidebar"] nav a:not([data-active="true"]) *,
+[data-sidebar="sidebar"] nav button:not([data-active="true"]) *,
+.sidebar nav a:not([data-active="true"]) *,
+.sidebar nav button:not([data-active="true"]) * {
+  color: inherit !important;
+}
+
+/* Hover states for inactive items */
+[data-sidebar="sidebar"] nav a:not([data-active="true"]):hover,
+[data-sidebar="sidebar"] nav button:not([data-active="true"]):hover,
+.sidebar nav a:not([data-active="true"]):hover,
+.sidebar nav button:not([data-active="true"]):hover {
+  color: var(--sidebar-text-inactive-hover) !important;
+  background-color: var(--theme-primary) !important;
+}
+
+[data-sidebar="sidebar"] nav a:not([data-active="true"]):hover *,
+[data-sidebar="sidebar"] nav button:not([data-active="true"]):hover *,
+.sidebar nav a:not([data-active="true"]):hover *,
+.sidebar nav button:not([data-active="true"]):hover * {
+  color: white !important;
+}
+
+/* ACTIVE navigation items - theme-specific colors */
+[data-sidebar="sidebar"] nav a[data-active="true"],
+[data-sidebar="sidebar"] nav button[data-active="true"],
+.sidebar nav a[data-active="true"],
+.sidebar nav button[data-active="true"],
+/* Also target by class-based active states */
+[data-sidebar="sidebar"] nav a.bg-primary,
+[data-sidebar="sidebar"] nav button.bg-primary,
+.sidebar nav a.bg-primary,
+.sidebar nav button.bg-primary {
+  background-color: var(--theme-primary) !important;
+  color: white !important;
+}
+
+/* Force all child elements of active items to be white */
+[data-sidebar="sidebar"] nav a[data-active="true"] *,
+[data-sidebar="sidebar"] nav button[data-active="true"] *,
+.sidebar nav a[data-active="true"] *,
+.sidebar nav button[data-active="true"] *,
+[data-sidebar="sidebar"] nav a.bg-primary *,
+[data-sidebar="sidebar"] nav button.bg-primary *,
+.sidebar nav a.bg-primary *,
+.sidebar nav button.bg-primary * {
+  color: white !important;
+}
+
+/* Theme-specific inactive text colors for better contrast */
+.theme-purple .sidebar {
+  --sidebar-text-inactive: #64748b;
+  --sidebar-text-inactive-hover: #334155;
+}
+
+.theme-midnight-blue .sidebar {
+  --sidebar-text-inactive: #64748b;
+  --sidebar-text-inactive-hover: #334155;
+}
+
+.theme-ocean-blue .sidebar {
+  --sidebar-text-inactive: #475569;
+  --sidebar-text-inactive-hover: #334155;
+}
+
+.theme-forest-green .sidebar {
+  --sidebar-text-inactive: #475569;
+  --sidebar-text-inactive-hover: #334155;
+}
+
+.theme-clean-pro-audio .sidebar {
+  --sidebar-text-inactive: #6b7280;
+  --sidebar-text-inactive-hover: #374151;
+}
+
+/* Dark mode overrides for each theme */
+.theme-purple.dark .sidebar,
+.theme-midnight-blue.dark .sidebar {
+  --sidebar-text-inactive: #94a3b8;
+  --sidebar-text-inactive-hover: #cbd5e1;
+}
+
+.theme-ocean-blue.dark .sidebar,
+.theme-forest-green.dark .sidebar,
+.theme-clean-pro-audio.dark .sidebar {
+  --sidebar-text-inactive: #94a3b8;
+  --sidebar-text-inactive-hover: #cbd5e1;
+}
+
+/* NUCLEAR OPTION: Force override any remaining invisible text */
+/* Target by component structure if data attributes fail */
+.sidebar [role="navigation"] a:not(.bg-primary),
+.sidebar [role="navigation"] button:not(.bg-primary),
+.sidebar nav [data-sidebar="menu-button"]:not([data-active="true"]) {
+  color: var(--sidebar-text-inactive) !important;
+}
+
+.sidebar [role="navigation"] a:not(.bg-primary) *,
+.sidebar [role="navigation"] button:not(.bg-primary) *,
+.sidebar nav [data-sidebar="menu-button"]:not([data-active="true"]) * {
+  color: inherit !important;
+}
+
+/* Ensure sidebar background is always visible */
+[data-sidebar="sidebar"] {
+  background-color: var(--sidebar-background) !important;
+}
+
+/* Override any conflicting Radix UI styles */
+.sidebar [data-sidebar="menu-button"] {
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Fix for mobile sidebar */
+.sidebar [data-mobile="true"] nav a:not([data-active="true"]),
+.sidebar [data-mobile="true"] nav button:not([data-active="true"]) {
+  color: var(--sidebar-text-inactive) !important;
+}
+
+.sidebar [data-mobile="true"] nav a:not([data-active="true"]) *,
+.sidebar [data-mobile="true"] nav button:not([data-active="true"]) * {
+  color: inherit !important;
 }
