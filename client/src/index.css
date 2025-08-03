@@ -202,49 +202,26 @@ body {
   background-color: var(--theme-primary) !important;
 }
 
-/* Theme-specific sidebar hover overrides */
-.theme-ocean-blue .sidebar a:hover,
-.theme-ocean-blue nav a:hover {
-  background-color: #0ea5e9 !important;
+/* Remove theme-specific overrides - now handled by universal rules above */
+
+/* Ensure inactive sidebar items are visible with proper contrast */
+[class*="theme-"] .sidebar a:not(.bg-primary) {
+  color: #334155 !important; /* slate-700 for good contrast */
 }
 
-.theme-forest-green .sidebar a:hover,
-.theme-forest-green nav a:hover {
-  background-color: #16a34a !important;
+[class*="theme-"] .dark .sidebar a:not(.bg-primary) {
+  color: #cbd5e1 !important; /* slate-300 for dark mode */
 }
 
-.theme-clean-pro-audio .sidebar a:hover,
-.theme-clean-pro-audio nav a:hover {
-  background-color: #e53935 !important;
+/* Hover states for inactive items - subtle theme color background */
+[class*="theme-"] .sidebar a:hover:not(.bg-primary) {
+  background-color: rgba(from var(--theme-primary) r g b / 0.1) !important;
+  color: var(--theme-primary) !important;
 }
 
-.theme-midnight-blue .bg-primary,
-.theme-midnight-blue button[class*="bg-primary"] {
-  background-color: #191970 !important;
-}
-
-.theme-midnight-blue .text-primary {
-  color: #191970 !important;
-}
-
-.theme-midnight-blue .sidebar a:hover,
-.theme-midnight-blue nav a:hover {
-  background-color: #191970 !important;
-}
-
-/* Force white text on active/selected navigation items for all themes */
-[class*="theme-"] .bg-primary,
-[class*="theme-"] .bg-primary *,
-[class*="theme-"] [class*="bg-primary"] {
-  color: white !important;
-}
-
-/* Specific override for midnight blue active states */
-.theme-midnight-blue .bg-primary,
-.theme-midnight-blue .bg-primary *,
-.theme-midnight-blue [class*="bg-primary"],
-.theme-midnight-blue [class*="bg-primary"] * {
-  background-color: #191970 !important;
+/* Active states - full theme color background */
+[class*="theme-"] .sidebar .bg-primary {
+  background-color: var(--theme-primary) !important;
   color: white !important;
 }
 

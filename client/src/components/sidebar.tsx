@@ -49,13 +49,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const getNavLinkClass = (path: string) => {
     const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
     
-    // Theme-aware styling that respects selected theme
+    // Fixed styling for better visibility across all themes
     return cn(
       baseClass,
       "rounded-lg", // 8px border radius as documented
       isActive(path) 
-        ? "bg-primary text-white shadow-sm" // Theme-aware background for active state
-        : "text-gray-700 dark:text-gray-300 hover:bg-primary hover:text-white" // Theme-aware hover
+        ? "bg-primary text-white shadow-sm" // Active state: theme color background with white text
+        : "text-slate-700 dark:text-slate-300 hover:bg-primary/10 hover:text-primary" // Inactive: dark text with subtle hover
     );
   };
 
