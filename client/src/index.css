@@ -1233,3 +1233,21 @@ html body [class*="theme-"] .sidebar .bg-primary span {
 .theme-purple [class*="page"] button span {
   color: white !important;
 }
+
+/* Fix mobile navigation breadcrumb for dark themes */
+.theme-midnight-blue .bg-primary .flex.items-center,
+.theme-midnight-blue .bg-primary .flex.items-center *,
+.theme-midnight-blue .bg-primary span,
+.theme-midnight-blue .bg-primary div,
+.theme-purple .bg-primary .flex.items-center,
+.theme-purple .bg-primary .flex.items-center *,
+.theme-purple .bg-primary span,
+.theme-purple .bg-primary div {
+  color: white !important;
+}
+
+/* Mobile navigation specific fixes */
+.theme-midnight-blue [class*="bg-primary"] *,
+.theme-purple [class*="bg-primary"] * {
+  color: white !important;
+}
