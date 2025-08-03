@@ -45,7 +45,7 @@ type SettingsFormData = z.infer<typeof settingsSchema>;
 // Widget URL generator
 const generateWidgetUrl = (token: string): string => {
   const baseUrl = window.location.origin;
-  return `${baseUrl}/booking-widget?token=${token}`;
+  return `${baseUrl}/widget/${token}`;
 };
 
 // QR Code generator
