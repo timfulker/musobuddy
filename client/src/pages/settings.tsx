@@ -75,6 +75,9 @@ const settingsFormSchema = z.object({
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
   
+  // Invoice Settings
+  defaultInvoiceDueDays: z.coerce.number().min(1, "Due days must be at least 1").max(365, "Due days cannot exceed 365").default(7),
+  
   // AI Pricing Guide fields
   aiPricingEnabled: z.boolean().default(true),
   baseHourlyRate: z.coerce.number().min(0, "Base hourly rate must be positive").default(130),
@@ -144,6 +147,7 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     emailFromName: data.emailFromName || "",
     nextInvoiceNumber: data.nextInvoiceNumber || 1,
     defaultTerms: data.defaultTerms || "",
+    defaultInvoiceDueDays: data.defaultInvoiceDueDays || 7,
     bankDetails: data.bankDetails || "",
     // Instrument settings
     primaryInstrument: data.primaryInstrument || "",
@@ -973,19 +977,44 @@ export default function Settings() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="p-6 space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="nextInvoiceNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="00001" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="nextInvoiceNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="00001" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="defaultInvoiceDueDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Default Due Days</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="number" 
+                              min="1" 
+                              max="365"
+                              placeholder="7" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-muted-foreground">
+                            Default number of days from invoice creation until payment is due
+                          </p>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   
                   <FormField
                     control={form.control}
