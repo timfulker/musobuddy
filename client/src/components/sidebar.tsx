@@ -24,7 +24,7 @@ import {
   Lock,
   AlertTriangle
 } from "lucide-react";
-import logoImage from "/musobuddy-logo-purple.png";
+import { MusoBuddyLogo } from "@/components/MusoBuddyLogo";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -176,17 +176,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Header */}
         <div className="p-6 border-b border-gray-300 dark:border-slate-700">
-          <div className="flex items-center space-x-3">
-            <img 
-              src={logoImage} 
-              alt="MusoBuddy Logo" 
-              className="w-10 h-10 object-contain rounded-lg"
-            />
-            <div>
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">MusoBuddy</h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Less admin, more music</p>
-            </div>
-          </div>
+          <MusoBuddyLogo size="small" showTagline={true} />
         </div>
 
         {/* Navigation */}

@@ -842,3 +842,9 @@ html.theme-purple button[class*="bg-gradient"] *,
 html.theme-midnight-blue button[class*="bg-gradient"] * {
   color: white !important;
 }
+
+/* Metronome animation for logo */
+@keyframes metronome-tick {
+  0% { transform: translateX(-50%) rotate(-18deg); }
+  100% { transform: translateX(-50%) rotate(18deg); }
+}
