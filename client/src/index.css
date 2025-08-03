@@ -693,93 +693,81 @@ body {
   }
 }
 
-/* CRITICAL SIDEBAR TEXT COLOR FIX - Add this to the end of index.css */
+/* NUCLEAR OPTION SIDEBAR TEXT FIX - Replace the existing fix in index.css */
 
-/* Maximum specificity override for sidebar navigation text colors */
-/* This rule has the highest possible specificity and will override everything */
-
-/* INACTIVE sidebar items - BLACK text in ALL themes */
-html body #root .sidebar nav a:not([data-active="true"]),
-html body #root .sidebar nav button:not([data-active="true"]),
-html body #root .sidebar nav a[data-active="false"],
-html body #root .sidebar nav button[data-active="false"],
-html body #root [class*="sidebar"] nav a:not([data-active="true"]),
-html body #root [class*="sidebar"] nav button:not([data-active="true"]) {
-  color: #1e293b !important;
-}
-
-/* Force all child elements of inactive items to inherit */
-html body #root .sidebar nav a:not([data-active="true"]) *,
-html body #root .sidebar nav button:not([data-active="true"]) *,
-html body #root .sidebar nav a[data-active="false"] *,
-html body #root .sidebar nav button[data-active="false"] * {
-  color: inherit !important;
-}
-
-/* ACTIVE sidebar items - Default: BLACK text for most themes */
-html body #root .sidebar nav a[data-active="true"],
-html body #root .sidebar nav button[data-active="true"],
-html body #root .sidebar nav a[style*="var(--theme-primary)"],
-html body #root .sidebar nav button[style*="var(--theme-primary)"] {
-  color: #1e293b !important; /* Default black for most themes */
-}
-
-html body #root .sidebar nav a[data-active="true"] *,
-html body #root .sidebar nav button[data-active="true"] *,
-html body #root .sidebar nav a[style*="var(--theme-primary)"] *,
-html body #root .sidebar nav button[style*="var(--theme-primary)"] * {
-  color: inherit !important;
-}
-
-/* OVERRIDE: WHITE text ONLY for purple and midnight blue themes */
-/* Target by data-theme attribute for maximum reliability */
-html body #root .sidebar nav a[data-active="true"][data-theme="purple"],
-html body #root .sidebar nav button[data-active="true"][data-theme="purple"],
-html body #root .sidebar nav a[data-active="true"][data-theme="midnight-blue"],
-html body #root .sidebar nav button[data-active="true"][data-theme="midnight-blue"],
-/* Also target by body classes */
-html body.theme-purple #root .sidebar nav a[data-active="true"],
-html body.theme-purple #root .sidebar nav button[data-active="true"],
-html body.theme-midnight-blue #root .sidebar nav a[data-active="true"],
-html body.theme-midnight-blue #root .sidebar nav button[data-active="true"],
-/* Also target by inline styles */
-html body.theme-purple #root .sidebar nav a[style*="var(--theme-primary)"],
-html body.theme-purple #root .sidebar nav button[style*="var(--theme-primary)"],
-html body.theme-midnight-blue #root .sidebar nav a[style*="var(--theme-primary)"],
-html body.theme-midnight-blue #root .sidebar nav button[style*="var(--theme-primary)"] {
+/* Target the new nav-link-forced class with maximum specificity */
+body.theme-midnight-blue .nav-link-forced[data-active="true"],
+html.theme-midnight-blue .nav-link-forced[data-active="true"],
+body.theme-purple .nav-link-forced[data-active="true"],
+html.theme-purple .nav-link-forced[data-active="true"],
+.theme-midnight-blue .nav-link-forced[data-active="true"],
+.theme-purple .nav-link-forced[data-active="true"] {
   color: white !important;
 }
 
-/* Force all child elements to inherit white text */
-html body #root .sidebar nav a[data-active="true"][data-theme="purple"] *,
-html body #root .sidebar nav button[data-active="true"][data-theme="purple"] *,
-html body #root .sidebar nav a[data-active="true"][data-theme="midnight-blue"] *,
-html body #root .sidebar nav button[data-active="true"][data-theme="midnight-blue"] *,
-html body.theme-purple #root .sidebar nav a[data-active="true"] *,
-html body.theme-purple #root .sidebar nav button[data-active="true"] *,
-html body.theme-midnight-blue #root .sidebar nav a[data-active="true"] *,
-html body.theme-midnight-blue #root .sidebar nav button[data-active="true"] * {
-  color: inherit !important;
-}
-
-/* NUCLEAR OPTION: Target specific href for Settings page */
-html body.theme-purple .sidebar a[href="/settings"],
-html body.theme-midnight-blue .sidebar a[href="/settings"] {
+/* Force all child elements */
+body.theme-midnight-blue .nav-link-forced[data-active="true"] *,
+html.theme-midnight-blue .nav-link-forced[data-active="true"] *,
+body.theme-purple .nav-link-forced[data-active="true"] *,
+html.theme-purple .nav-link-forced[data-active="true"] *,
+.theme-midnight-blue .nav-link-forced[data-active="true"] *,
+.theme-purple .nav-link-forced[data-active="true"] * {
   color: white !important;
 }
 
-html body.theme-purple .sidebar a[href="/settings"] *,
-html body.theme-midnight-blue .sidebar a[href="/settings"] * {
+/* Target by data-force-color attribute */
+[data-force-color="white"],
+[data-force-color="white"] * {
   color: white !important;
 }
 
-/* Force override any remaining text color issues */
-[class*="theme-purple"] .sidebar [data-active="true"],
-[class*="theme-midnight"] .sidebar [data-active="true"] {
+/* Target by specific theme combinations */
+[data-theme="midnight-blue"][data-active="true"],
+[data-theme="purple"][data-active="true"] {
   color: white !important;
 }
 
-[class*="theme-purple"] .sidebar [data-active="true"] *,
-[class*="theme-midnight"] .sidebar [data-active="true"] * {
+[data-theme="midnight-blue"][data-active="true"] *,
+[data-theme="purple"][data-active="true"] * {
+  color: white !important;
+}
+
+/* ABSOLUTE NUCLEAR OPTION - Override any existing color rules */
+/* Target all navigation links in sidebar */
+.sidebar .nav-link-forced[data-active="true"] {
+  color: white !important;
+}
+
+.sidebar .nav-link-forced[data-active="true"] * {
+  color: white !important;
+}
+
+/* Theme-specific overrides with maximum specificity */
+body[class*="theme-midnight-blue"] .sidebar a[data-active="true"],
+body[class*="theme-purple"] .sidebar a[data-active="true"],
+html[class*="theme-midnight-blue"] .sidebar a[data-active="true"],
+html[class*="theme-purple"] .sidebar a[data-active="true"] {
+  color: white !important;
+}
+
+body[class*="theme-midnight-blue"] .sidebar a[data-active="true"] *,
+body[class*="theme-purple"] .sidebar a[data-active="true"] *,
+html[class*="theme-midnight-blue"] .sidebar a[data-active="true"] *,
+html[class*="theme-purple"] .sidebar a[data-active="true"] * {
+  color: white !important;
+}
+
+/* Final fallback using style attribute detection */
+a[style*="background-color"][data-theme="midnight-blue"],
+a[style*="background-color"][data-theme="purple"],
+a[style*="var(--theme-primary)"][data-theme="midnight-blue"],
+a[style*="var(--theme-primary)"][data-theme="purple"] {
+  color: white !important;
+}
+
+a[style*="background-color"][data-theme="midnight-blue"] *,
+a[style*="background-color"][data-theme="purple"] *,
+a[style*="var(--theme-primary)"][data-theme="midnight-blue"] *,
+a[style*="var(--theme-primary)"][data-theme="purple"] * {
   color: white !important;
 }

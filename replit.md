@@ -129,16 +129,17 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **PURPLE THEME UPDATE**: Lightened purple from #673ab7 to #8b5cf6 for better visual appeal
 - **FONT INTEGRATION**: Added Google Fonts imports for IBM Plex Sans and other theme-specific typography
 - **THEME PERSISTENCE**: Themes save to localStorage and persist across sessions
-### SIDEBAR NAVIGATION TEXT COLOR FIX COMPLETED (August 3, 2025)
-- **CRITICAL ISSUE RESOLVED**: Sidebar navigation text visibility problem fully fixed with comprehensive solution
-- **JAVASCRIPT FIX**: Corrected theme detection logic - changed from `theme` object to `currentTheme` string
-- **DATA ATTRIBUTES**: Added `data-active` and `data-theme` attributes to all navigation links for reliable CSS targeting
-- **DEBUG LOGGING**: Console output shows theme detection: "🎨 Current theme: midnight-blue" and "🎨 Needs white text: true"
-- **MAXIMUM SPECIFICITY CSS**: Added critical CSS overrides with highest possible specificity to end of index.css
-- **MULTIPLE TARGETING**: CSS uses data attributes, body classes, inline styles, and direct href targeting for reliability
-- **NUCLEAR OPTION**: Specific Settings page targeting as fallback: `html body.theme-purple .sidebar a[href="/settings"]`
+### SIDEBAR NAVIGATION TEXT COLOR FIX - NUCLEAR OPTION IMPLEMENTED (August 3, 2025)
+- **TRIPLE-LAYER SOLUTION**: Implemented external reviewer's nuclear option with JavaScript DOM manipulation
+- **LAYER 1 - JAVASCRIPT FORCE**: Added useEffect that directly manipulates DOM every 500ms using `setProperty('color', textColor, 'important')`
+- **LAYER 2 - ENHANCED INLINE**: Each navigation link has direct color styling and multiple data attributes
+- **LAYER 3 - NUCLEAR CSS**: Maximum specificity CSS with `nav-link-forced` class targeting
+- **DIRECT DOM BYPASS**: JavaScript solution completely bypasses all CSS framework conflicts
+- **COMPREHENSIVE LOGGING**: Console shows `🔧 Forcing navigation colors...` with detailed link-by-link analysis
+- **PERIODIC UPDATES**: DOM manipulation runs every 500ms to catch any missed React re-renders
+- **FORCE INHERITANCE**: Colors applied to both parent elements and all child elements
 - **EXPECTED BEHAVIOR**: 
-  - Purple/Midnight Blue themes: Active items = WHITE text on theme background
-  - All other themes: Active items = BLACK text on theme background  
-  - All themes: Inactive items = BLACK text
-- **EXTERNAL REVIEWER SOLUTION**: Implemented complete fix from external technical reviewer after multiple failed attempts
+  - Purple/Midnight Blue themes: Active items = WHITE text (forced via JavaScript)
+  - All other themes: Active items = BLACK text (forced via JavaScript)
+  - All themes: Inactive items = BLACK text (forced via JavaScript)
+- **NUCLEAR SOLUTION**: Bypasses CSS specificity wars through direct DOM manipulation

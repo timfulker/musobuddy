@@ -47,16 +47,87 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     return location === path;
   };
 
-  // Helper function to get navigation link props
-  const getNavLinkProps = (path: string) => ({
-    className: getNavLinkClass(path),
-    'data-active': isActive(path),
-    'data-theme': currentTheme,
-    style: {
-      color: isActive(path) ? getActiveTextColor() : '#1e293b',
-      backgroundColor: isActive(path) ? 'var(--theme-primary)' : 'transparent'
-    }
-  });
+  // NUCLEAR OPTION: Force colors via direct DOM manipulation
+  useEffect(() => {
+    const forceNavigationColors = () => {
+      console.log('🔧 Forcing navigation colors...', { currentTheme, location });
+      
+      // Get all navigation links in sidebar
+      const navLinks = document.querySelectorAll('.sidebar nav a');
+      
+      navLinks.forEach((link) => {
+        const linkElement = link as HTMLElement;
+        const href = linkElement.getAttribute('href');
+        const isCurrentlyActive = href === location;
+        
+        // Determine text color based on theme and active state
+        const shouldUseWhiteText = isCurrentlyActive && 
+          (currentTheme === 'purple' || currentTheme === 'midnight-blue');
+        
+        const textColor = shouldUseWhiteText ? 'white' : '#1e293b';
+        
+        console.log(`🔧 Link ${href}:`, {
+          isActive: isCurrentlyActive,
+          theme: currentTheme,
+          shouldUseWhite: shouldUseWhiteText,
+          textColor
+        });
+        
+        // Force color on the link itself with !important
+        linkElement.style.setProperty('color', textColor, 'important');
+        
+        // Force color on all child elements
+        const children = linkElement.querySelectorAll('*');
+        children.forEach((child) => {
+          (child as HTMLElement).style.setProperty('color', textColor, 'important');
+        });
+        
+        // Set background color if active
+        if (isCurrentlyActive) {
+          linkElement.style.setProperty('background-color', 'var(--theme-primary)', 'important');
+        } else {
+          linkElement.style.setProperty('background-color', 'transparent', 'important');
+        }
+      });
+    };
+    
+    // Run immediately
+    forceNavigationColors();
+    
+    // Run after small delay to catch async rendering
+    const timeoutId = setTimeout(forceNavigationColors, 100);
+    
+    // Run periodically to catch any missed updates
+    const intervalId = setInterval(forceNavigationColors, 500);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [currentTheme, location]);
+
+  // Helper function to get navigation link props with forced styling
+  const getNavLinkProps = (path: string) => {
+    const isLinkActive = isActive(path);
+    const textColor = isLinkActive ? getActiveTextColor() : '#1e293b';
+    
+    // Create a style object that forces the color through multiple properties
+    const forcedStyle = {
+      color: textColor,
+      backgroundColor: isLinkActive ? 'var(--theme-primary)' : 'transparent',
+      // Additional properties to force color override
+      textDecoration: 'none',
+      transition: 'all 0.2s ease'
+    };
+    
+    return {
+      className: `${getNavLinkClass(path)} nav-link-forced`,
+      'data-active': isLinkActive,
+      'data-theme': currentTheme,
+      'data-force-color': textColor,
+      style: forcedStyle
+    };
+  };
 
   // FIXED: Correct theme comparison logic with debug logging
   const getActiveTextColor = () => {
@@ -85,7 +156,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div 
         className={cn(
-          "fixed left-0 top-0 h-full w-64 transition-transform duration-300 ease-in-out flex flex-col",
+          "fixed left-0 top-0 h-full w-64 transition-transform duration-300 ease-in-out flex flex-col sidebar",
           "shadow-sm font-sans",
           "bg-gray-50 dark:bg-slate-900 border-r border-gray-300 dark:border-slate-700",
           // Always show on desktop (768px+), slide on mobile
@@ -125,8 +196,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()} 
             {...getNavLinkProps("/dashboard")}
           >
-            <Home className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Dashboard</span>
+            <Home 
+              className="w-5 h-5" 
+              style={{ 
+                color: isActive("/dashboard") ? getActiveTextColor() : '#1e293b'
+              }} 
+            />
+            <span 
+              style={{ 
+                color: isActive("/dashboard") ? getActiveTextColor() : '#1e293b'
+              }}
+            >
+              Dashboard
+            </span>
           </Link>
           
           <Link 
@@ -134,8 +216,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()} 
             {...getNavLinkProps("/bookings")}
           >
-            <Inbox className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Bookings</span>
+            <Inbox 
+              className="w-5 h-5" 
+              style={{ 
+                color: isActive("/bookings") ? getActiveTextColor() : '#1e293b'
+              }} 
+            />
+            <span 
+              style={{ 
+                color: isActive("/bookings") ? getActiveTextColor() : '#1e293b'
+              }}
+            >
+              Bookings
+            </span>
           </Link>
           
           <Link 
@@ -208,8 +301,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={() => window.innerWidth < 768 && onClose()} 
             {...getNavLinkProps("/settings")}
           >
-            <Settings className="w-5 h-5" style={{ color: 'inherit' }} />
-            <span style={{ color: 'inherit' }}>Settings</span>
+            <Settings 
+              className="w-5 h-5" 
+              style={{ 
+                color: isActive("/settings") ? getActiveTextColor() : '#1e293b'
+              }} 
+            />
+            <span 
+              style={{ 
+                color: isActive("/settings") ? getActiveTextColor() : '#1e293b'
+              }}
+            >
+              Settings
+            </span>
           </Link>
           
           <Link 
