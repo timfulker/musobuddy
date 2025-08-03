@@ -155,7 +155,8 @@ Do not include markdown or JSON. Output valid, print-ready HTML only.`;
     
   } catch (error) {
     console.error('❌ AI PDF generation failed:', error);
-    throw new Error(`AI PDF generation failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`AI PDF generation failed: ${errorMessage}`);
   }
 }
 

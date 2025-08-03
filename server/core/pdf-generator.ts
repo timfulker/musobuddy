@@ -20,16 +20,37 @@ export async function generateContractPDF(
       console.log('🤖 Starting AI PDF generation for contract:', contract.contractNumber);
       const theme = (contract as any).contractTheme || 'professional';
       console.log('🎨 Using theme:', theme);
+      
+      console.log('📊 Contract data for AI:', {
+        clientName: contract.clientName,
+        eventDate: contract.eventDate,
+        eventTime: contract.eventTime,
+        eventEndTime: contract.eventEndTime,
+        venue: contract.venue,
+        fee: contract.fee
+      });
+      
       const aiData = contractToAIFormat(contract, userSettings, theme);
-      console.log('📊 AI data prepared:', { type: aiData.type, theme: aiData.theme, sectionsCount: aiData.sections.length });
+      console.log('📊 AI data prepared:', { 
+        type: aiData.type, 
+        theme: aiData.theme, 
+        sectionsCount: aiData.sections.length,
+        client: aiData.client,
+        eventDate: aiData.eventDate,
+        venue: aiData.venue,
+        fee: aiData.fee
+      });
+      
+      console.log('🤖 Calling generateAIPDF...');
       const result = await generateAIPDF(aiData);
-      console.log('✅ AI PDF generation successful for contract');
+      console.log('✅ AI PDF generation successful for contract, size:', result.length, 'bytes');
       return result;
     } catch (error) {
       console.error('❌ AI PDF generation failed for contract:', {
         contractNumber: contract.contractNumber,
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : 'Unknown'
       });
       console.warn('🔄 Falling back to standard method for contract');
     }
