@@ -2466,9 +2466,24 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      // Generate invoice number if not provided
-      const invoiceNumber = req.body.invoiceNumber || 
-        `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      // Generate sequential invoice number using user settings
+      let invoiceNumber = req.body.invoiceNumber;
+      
+      if (!invoiceNumber) {
+        // Get user settings to get the next invoice number
+        const userSettings = await storage.getUserSettings(userId);
+        const nextNumber = userSettings?.nextInvoiceNumber || 1;
+        
+        // Create sequential invoice number: INV-001, INV-002, etc.
+        invoiceNumber = `INV-${String(nextNumber).padStart(3, '0')}`;
+        
+        // Update the user settings with the next number
+        await storage.updateSettings(userId, {
+          nextInvoiceNumber: nextNumber + 1
+        });
+        
+        console.log(`📄 Generated sequential invoice number: ${invoiceNumber} (next will be ${nextNumber + 1})`);
+      }
 
       const invoiceData = {
         userId: userId,
