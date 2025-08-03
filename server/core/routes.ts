@@ -2734,9 +2734,9 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      // Generate invoice number if not provided
+      // Generate incremental invoice number if not provided
       const invoiceNumber = req.body.invoiceNumber || 
-        `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+        await storage.getNextInvoiceNumber(userId);
 
       const invoiceData = {
         userId: userId,

@@ -401,6 +401,35 @@ export class Storage {
     return result[0] || null;
   }
 
+  async getNextInvoiceNumber(userId: string): Promise<string> {
+    // Get the latest invoice for this user to determine the next number
+    const latestInvoices = await db.select({ invoiceNumber: invoices.invoiceNumber })
+      .from(invoices)
+      .where(eq(invoices.userId, userId))
+      .orderBy(desc(invoices.createdAt))
+      .limit(10); // Get last 10 to handle edge cases
+
+    let nextNumber = 1;
+    
+    if (latestInvoices.length > 0) {
+      // Extract numbers from existing invoice numbers and find the highest
+      const existingNumbers = latestInvoices
+        .map(inv => {
+          // Handle various formats: "001", "INV-001", "1", etc.
+          const match = inv.invoiceNumber.match(/(\d+)$/);
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter(num => num > 0);
+      
+      if (existingNumbers.length > 0) {
+        nextNumber = Math.max(...existingNumbers) + 1;
+      }
+    }
+    
+    // Return padded 3-digit number
+    return String(nextNumber).padStart(3, '0');
+  }
+
   async createInvoice(invoiceData: any) {
     const result = await db.insert(invoices).values(invoiceData).returning();
     return result[0];
