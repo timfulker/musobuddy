@@ -207,9 +207,10 @@ export default function Settings() {
   };
 
   const handleInstrumentChange = (instrument: string, checked: boolean) => {
+    const currentInstruments = selectedInstruments || [];
     const updatedInstruments = checked
-      ? [...selectedInstruments, instrument]
-      : selectedInstruments.filter(i => i !== instrument);
+      ? [...currentInstruments, instrument]
+      : currentInstruments.filter(i => i !== instrument);
     
     setSelectedInstruments(updatedInstruments);
     form.setValue('selectedInstruments', updatedInstruments);
@@ -218,7 +219,8 @@ export default function Settings() {
     const availableGigTypes = updatedInstruments.flatMap(inst => 
       getGigTypeNamesForInstrument(inst)
     );
-    const filteredGigTypes = selectedGigTypes.filter(gt => 
+    const currentGigTypes = selectedGigTypes || [];
+    const filteredGigTypes = currentGigTypes.filter(gt => 
       availableGigTypes.includes(gt)
     );
     setSelectedGigTypes(filteredGigTypes);
@@ -226,16 +228,18 @@ export default function Settings() {
   };
 
   const handleGigTypeChange = (gigType: string, checked: boolean) => {
+    const currentGigTypes = selectedGigTypes || [];
     const updatedGigTypes = checked
-      ? [...selectedGigTypes, gigType]
-      : selectedGigTypes.filter(gt => gt !== gigType);
+      ? [...currentGigTypes, gigType]
+      : currentGigTypes.filter(gt => gt !== gigType);
     
     setSelectedGigTypes(updatedGigTypes);
     form.setValue('defaultGigTypes', updatedGigTypes);
   };
 
   const getAvailableGigTypes = () => {
-    return selectedInstruments.flatMap(instrument => 
+    const instruments = selectedInstruments || [];
+    return instruments.flatMap(instrument => 
       getGigTypeNamesForInstrument(instrument)
     );
   };
