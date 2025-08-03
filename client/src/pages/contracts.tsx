@@ -1048,7 +1048,14 @@ export default function Contracts() {
 
 
                       <div className="flex justify-end space-x-3 pt-4 border-t">
-                        <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => {
+                            setIsDialogOpen(false);
+                            handleDialogClose(false);
+                          }}
+                        >
                           Cancel
                         </Button>
                         <Button type="submit" disabled={createContractMutation.isPending || updateContractMutation.isPending}>
