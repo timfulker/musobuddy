@@ -99,10 +99,9 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease, font-family 0.3s ease;
 }
 
-/* Force theme application for all layouts */
+/* Force theme application for specific layouts */
 .layout-consistent,
-.main-content,
-.min-h-screen {
+.main-content {
   background-color: var(--theme-background) !important;
   color: var(--theme-text) !important;
 }
@@ -112,7 +111,9 @@ body {
   background-color: var(--theme-background) !important;
 }
 
-.bg-white {
+/* Only override bg-white for main page backgrounds, not component backgrounds */
+body > div.min-h-screen .bg-white,
+.layout-consistent .bg-white {
   background-color: var(--theme-surface) !important;
 }
 
