@@ -23,8 +23,25 @@ export async function generateContractPDF(
     const page = await browser.newPage();
     const html = generateContractHTML(contract, userSettings, signatureDetails);
     
+    // Enable print media emulation for better layout
+    await page.emulateMediaType('print');
+    
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
-    const pdf = await page.pdf({ format: 'A4', printBackground: true });
+    const pdf = await page.pdf({ 
+      format: 'A4', 
+      printBackground: true,
+      margin: {
+        top: '1cm',
+        bottom: '1.5cm',
+        left: '1.5cm',
+        right: '1.5cm'
+      },
+      displayHeaderFooter: true,
+      footerTemplate: `
+        <div style="font-size:10px; width:100%; text-align:center; color:#666;">
+          Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+        </div>`
+    });
     
     console.log('Contract PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
@@ -172,6 +189,37 @@ function generateContractHTML(
           background-color: #fef3c7;
           color: #92400e;
         }
+        
+        /* Smart Page Break CSS */
+        .page-break {
+          page-break-before: always;
+        }
+        .avoid-break {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .keep-together {
+          page-break-before: avoid;
+          page-break-after: avoid;
+        }
+        .terms-section {
+          page-break-inside: avoid;
+        }
+        .signature-area {
+          page-break-before: auto;
+          page-break-inside: avoid;
+        }
+        @media print {
+          .business-details, .contract-details {
+            page-break-after: avoid;
+          }
+          h2, h3 {
+            page-break-after: avoid;
+          }
+          .payment-info {
+            page-break-inside: avoid;
+          }
+        }
       </style>
     </head>
     <body>
@@ -235,10 +283,10 @@ function generateContractHTML(
         </table>
       </div>
 
-      <div class="terms">
+      <div class="terms avoid-break">
         <h3 style="color: ${themeStyles.accentColor};">Terms and Conditions</h3>
         
-        <div style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;">
+        <div style="margin-top: 20px; padding: 15px; background-color: #f8fafc; border-radius: 5px; font-size: 14px;" class="avoid-break">
           <h4 style="margin-top: 0; color: ${themeStyles.accentColor};">Payment Terms</h4>
           <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
           <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
@@ -273,7 +321,7 @@ function generateContractHTML(
         </div>
       </div>
 
-      <div class="signature-section">
+      <div class="signature-section page-break signature-area">
         <h3>Signatures</h3>
         
         <div class="party-section">
@@ -338,8 +386,25 @@ export async function generateInvoicePDF(
     const page = await browser.newPage();
     const html = generateInvoiceHTML(invoice, contract, userSettings);
     
+    // Enable print media emulation for better layout
+    await page.emulateMediaType('print');
+    
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
-    const pdf = await page.pdf({ format: 'A4', printBackground: true });
+    const pdf = await page.pdf({ 
+      format: 'A4', 
+      printBackground: true,
+      margin: {
+        top: '1cm',
+        bottom: '1.5cm',
+        left: '1.5cm',
+        right: '1.5cm'
+      },
+      displayHeaderFooter: true,
+      footerTemplate: `
+        <div style="font-size:10px; width:100%; text-align:center; color:#666;">
+          Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+        </div>`
+    });
     
     console.log('Invoice PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
@@ -537,6 +602,33 @@ function generateInvoiceHTML(
           background-color: #d1fae5;
           color: #065f46;
         }
+        
+        /* Smart Page Break CSS */
+        .page-break {
+          page-break-before: always;
+        }
+        .avoid-break {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .keep-together {
+          page-break-before: avoid;
+          page-break-after: avoid;
+        }
+        @media print {
+          .billing-section, .items-table {
+            page-break-after: avoid;
+          }
+          h2, h3 {
+            page-break-after: avoid;
+          }
+          .payment-info, .terms {
+            page-break-inside: avoid;
+          }
+          .total-section {
+            page-break-before: avoid;
+          }
+        }
       </style>
     </head>
     <body>
@@ -554,7 +646,7 @@ function generateInvoiceHTML(
         </div>
       </div>
 
-      <div class="billing-section">
+      <div class="billing-section avoid-break">
         <div class="billing-info">
           <h3>From:</h3>
           <p><strong>${businessName}</strong></p>
@@ -594,7 +686,7 @@ function generateInvoiceHTML(
         </tbody>
       </table>
 
-      <div class="total-section">
+      <div class="total-section avoid-break">
         <div class="total-row">
           <div class="total-label">Performance Fee:</div>
           <div class="total-amount">£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</div>
@@ -613,13 +705,13 @@ function generateInvoiceHTML(
         </div>
       </div>
 
-      <div class="payment-info">
+      <div class="payment-info avoid-break">
         <h3>Payment Information</h3>
         <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</p>
         ${userSettings?.bankDetails ? `<p><strong>Bank Details:</strong><br>${userSettings.bankDetails.replace(/\n/g, '<br>')}</p>` : ''}
       </div>
 
-      <div class="terms">
+      <div class="terms avoid-break">
         <h3>Terms & Conditions</h3>
         <p>${userSettings?.defaultTerms || 'Payment is due within 30 days of the invoice date. Thank you for your business!'}</p>
         <p style="margin-top: 15px; font-weight: bold; color: #333;">VAT Status: I am not VAT registered and therefore no VAT is charged.</p>
