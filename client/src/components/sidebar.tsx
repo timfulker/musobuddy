@@ -37,8 +37,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
-  const { theme } = useTheme();
-  // Theme management now handled by ThemeProvider
+  const { currentTheme } = useTheme(); // FIXED: Use currentTheme instead of theme
 
   const handleLogout = () => {
     logout();
@@ -48,21 +47,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     return location === path;
   };
 
-  // Get theme-appropriate text color for active items
+  // FIXED: Correct theme comparison logic
   const getActiveTextColor = () => {
-    return (theme === 'purple' || theme === 'midnight-blue') ? 'white' : '#1e293b';
+    return (currentTheme === 'purple' || currentTheme === 'midnight-blue') ? 'white' : '#1e293b';
   };
 
+  // FIXED: Simplified navigation link styling without conflicting CSS classes
   const getNavLinkClass = (path: string) => {
-    const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
-    
-    return cn(
-      baseClass,
-      "rounded-lg",
-      isActive(path) 
-        ? "bg-primary text-white shadow-sm" // Active state: theme color background with white text
-        : "text-slate-600 hover:bg-primary/10 hover:text-slate-700" // EXPLICIT: inactive text color with hover
-    );
+    const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200 rounded-lg";
+    return baseClass; // Remove conditional classes to avoid CSS conflicts
   };
 
 

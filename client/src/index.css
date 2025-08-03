@@ -22,7 +22,6 @@
 }
 
 /* Theme-specific styles */
-
 .theme-purple {
   --theme-primary: #8b5cf6;
   --theme-secondary: #a855f7;
@@ -187,81 +186,12 @@ body {
   background-color: var(--theme-primary) !important;
 }
 
-/* Fix sidebar hover states */
-[class*="theme-"] .sidebar a:hover,
-[class*="theme-"] nav a:hover,
-[class*="theme-"] .nav-item:hover {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-}
-
 /* Force override specific purple hover classes */
 [class*="theme-"] .hover\:bg-purple-600:hover,
 [class*="theme-"] .hover\:bg-violet-600:hover,
 [class*="theme-"] .hover\:bg-primary:hover {
   background-color: var(--theme-primary) !important;
 }
-
-/* Remove theme-specific overrides - now handled by universal rules above */
-
-/* Ensure inactive sidebar items are visible with proper contrast */
-[class*="theme-"] .sidebar a:not(.bg-primary),
-[class*="theme-"] .sidebar a:not(.bg-primary) *,
-[class*="theme-"] .sidebar button:not(.bg-primary),
-[class*="theme-"] .sidebar button:not(.bg-primary) * {
-  color: #334155 !important; /* slate-700 for good contrast */
-}
-
-[class*="theme-"] .dark .sidebar a:not(.bg-primary),
-[class*="theme-"] .dark .sidebar a:not(.bg-primary) *,
-[class*="theme-"] .dark .sidebar button:not(.bg-primary),
-[class*="theme-"] .dark .sidebar button:not(.bg-primary) * {
-  color: #cbd5e1 !important; /* slate-300 for dark mode */
-}
-
-/* Hover states for inactive items - theme color background with white text */
-[class*="theme-"] .sidebar a:hover:not(.bg-primary),
-[class*="theme-"] .sidebar a:hover:not(.bg-primary) *,
-[class*="theme-"] .sidebar button:hover:not(.bg-primary),
-[class*="theme-"] .sidebar button:hover:not(.bg-primary) * {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-}
-
-/* CRITICAL: Active states with maximum specificity for selected items */
-html[class*="theme-"] .sidebar .bg-primary,
-html[class*="theme-"] .sidebar .bg-primary *,
-html[class*="theme-"] .sidebar .bg-primary span,
-html[class*="theme-"] .sidebar .bg-primary div,
-html[class*="theme-"] .sidebar a.bg-primary,
-html[class*="theme-"] .sidebar a.bg-primary *,
-html[class*="theme-"] .sidebar button.bg-primary,
-html[class*="theme-"] .sidebar button.bg-primary *,
-body[class*="theme-"] .sidebar .bg-primary,
-body[class*="theme-"] .sidebar .bg-primary *,
-.theme-midnight-blue .sidebar .bg-primary,
-.theme-midnight-blue .sidebar .bg-primary *,
-.theme-purple .sidebar .bg-primary,
-.theme-purple .sidebar .bg-primary * {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-}
-
-/* Additional specific overrides for navigation components */
-[class*="theme-"] .hover\:bg-muted:hover {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-}
-
-[class*="theme-"] .bg-primary {
-  background-color: var(--theme-primary) !important;
-}
-
-[class*="theme-"] .text-primary-foreground {
-  color: white !important;
-}
-
-
 
 /* Ocean blue theme overrides */
 html.theme-ocean-blue,
@@ -320,13 +250,6 @@ html.theme-clean-pro-audio body,
   font-family: var(--theme-font-body);
 }
 
-/* Theme-specific overrides for retro vinyl */
-.theme-retro-vinyl body {
-  background-color: var(--theme-background);
-}
-
-/* Updated purple color scheme - lighter shade */
-
 /* Balanced viewport scaling for consistent dev/production rendering */
 * {
   box-sizing: border-box;
@@ -345,7 +268,7 @@ html {
   -moz-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  font-size: 16px; /* Increased from 15px for better deployed version readability */
+  font-size: 16px;
   width: 100%;
   height: 100%;
   overflow-x: hidden;
@@ -369,35 +292,35 @@ body {
   position: relative;
 }
 
-/* Increased responsive scaling for better deployed version readability */
+/* Enhanced responsive scaling */
 @media screen and (max-width: 480px) {
   html {
-    font-size: 15px; /* Increased from 14px for better mobile readability */
+    font-size: 15px;
   }
 }
 
 @media screen and (min-width: 481px) and (max-width: 768px) {
   html {
-    font-size: 16px; /* Increased from 15px for better tablet readability */
+    font-size: 16px;
   }
 }
 
 @media screen and (min-width: 769px) and (max-width: 1199px) {
   html {
-    font-size: 16.5px; /* Increased from 15px for better desktop readability */
+    font-size: 16.5px;
   }
 }
 
 @media screen and (min-width: 1200px) {
   html {
-    font-size: 17px; /* Increased from 15.5px for better large screen readability */
+    font-size: 17px;
   }
 }
 
-/* Enhanced sizing utilities for better deployed version readability */
+/* Enhanced sizing utilities */
 .sidebar-consistent {
-  font-size: 0.95rem !important; /* Increased from 0.875rem for better sidebar readability */
-  line-height: 1.35rem !important; /* Increased line height for better spacing */
+  font-size: 0.95rem !important;
+  line-height: 1.35rem !important;
 }
 
 .layout-consistent {
@@ -405,56 +328,10 @@ body {
   position: relative;
 }
 
-/* Remove problematic scaling that causes overlapping text */
-.dashboard-card {
-  /* Removed transform scale to prevent overlapping text */
-}
-
-/* Remove button scaling to prevent overlapping text */
-button, input, select, textarea {
-  /* Removed transform scale to prevent overlapping text */
-}
-
-/* Ensure text remains readable with proper spacing */
-.text-balanced {
-  line-height: 1.5; /* Consistent line height for better readability */
-}
-
-/* Prevent layout shifts during window resize */
-.content-container {
-  transition: none !important;
-  will-change: auto !important;
-}
-
-/* Fix dashboard responsive spacing to prevent text overlap */
-.dashboard-spacing {
-  min-height: 0; /* Prevent flex items from overflowing */
-}
-
-/* Ensure cards have proper spacing */
-.dashboard-card-wrapper {
-  min-width: 0; /* Allow text to wrap within flex containers */
-}
-
-/* Responsive text sizing for better mobile display */
-@media (max-width: 640px) {
-  .text-responsive {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-}
-
-@media (min-width: 641px) {
-  .text-responsive {
-    font-size: 1rem;
-    line-height: 1.5rem;
-  }
-}
-
 /* Responsive layout utilities */
 @media (min-width: 768px) {
   .main-content {
-    margin-left: 16rem; /* 64 * 0.25rem = 16rem */
+    margin-left: 16rem;
   }
 }
 
@@ -466,26 +343,26 @@ button, input, select, textarea {
 
 :root {
   /* Primary Purple Colors from backup */
-  --background: hsl(0, 0%, 100%);  /* Pure white */
-  --foreground: hsl(224, 71.4%, 4.1%);  /* Primary text color */
-  --primary: hsl(262, 83%, 72%);  /* Main brand purple */
-  --primary-foreground: hsl(210, 20%, 98%);  /* Text on purple backgrounds */
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(224, 71.4%, 4.1%);
+  --primary: hsl(262, 83%, 72%);
+  --primary-foreground: hsl(210, 20%, 98%);
   
   /* Secondary Colors */
-  --secondary: hsl(220, 14.3%, 95.9%);  /* Light gray backgrounds */
-  --secondary-foreground: hsl(220.9, 39.3%, 11%);  /* Dark text */
-  --muted: hsl(220, 14.3%, 95.9%);  /* Subtle backgrounds */
-  --muted-foreground: hsl(220, 8.9%, 46.1%);  /* Subdued text */
-  --border: hsl(220, 13%, 91%);  /* Light borders */
-  --input: hsl(220, 13%, 91%);  /* Input field borders */
+  --secondary: hsl(220, 14.3%, 95.9%);
+  --secondary-foreground: hsl(220.9, 39.3%, 11%);
+  --muted: hsl(220, 14.3%, 95.9%);
+  --muted-foreground: hsl(220, 8.9%, 46.1%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
   
   /* Accent & Status Colors */
-  --accent: hsl(220, 14.3%, 95.9%);  /* Hover states */
+  --accent: hsl(220, 14.3%, 95.9%);
   --accent-foreground: hsl(220.9, 39.3%, 11%);
-  --destructive: hsl(0, 84.2%, 60.2%);  /* Error/delete actions */
+  --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(262, 83%, 72%);  /* Focus ring color */
-  --radius: 0.5rem;  /* Medium radius for classic look */
+  --ring: hsl(262, 83%, 72%);
+  --radius: 0.5rem;
   
   /* Popover and Card */
   --popover: hsl(0, 0%, 100%);
@@ -501,49 +378,47 @@ button, input, select, textarea {
   --chart-5: hsl(282, 83%, 62%);
   
   /* Sidebar-Specific Colors */
-  --sidebar-background: hsl(0, 0%, 98%);  /* Off-white */
+  --sidebar-background: hsl(0, 0%, 98%);
   --sidebar-foreground: hsl(224, 71.4%, 4.1%);
-  --sidebar-primary: hsl(262, 83%, 72%);  /* Purple for active items */
+  --sidebar-primary: hsl(262, 83%, 72%);
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
   --sidebar-accent: hsl(262, 83%, 72%);
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
-  --sidebar-border: hsl(220, 13%, 91%);  /* Light border */
+  --sidebar-border: hsl(220, 13%, 91%);
   --sidebar-ring: hsl(262, 83%, 72%);
   
-  /* Original font family - system fonts instead of Inter */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .dark {
-  /* Basecamp dark theme - green/yellow/white */
-  --background: #000000;  /* pure black background */
-  --foreground: #ffffff;  /* white text */
-  --muted: #1a1a1a;  /* very dark gray */
-  --muted-foreground: #a0a0a0;  /* light gray */
+  --background: #000000;
+  --foreground: #ffffff;
+  --muted: #1a1a1a;
+  --muted-foreground: #a0a0a0;
   --popover: #1a1a1a;
   --popover-foreground: #ffffff;
-  --card: #1a1a1a;  /* dark cards */
+  --card: #1a1a1a;
   --card-foreground: #ffffff;
-  --border: #333333;  /* dark gray borders */
+  --border: #333333;
   --input: #333333;
-  --primary: #ffd700;  /* yellow for dark mode */
+  --primary: #ffd700;
   --primary-foreground: #000000;
   --secondary: #1a1a1a;
   --secondary-foreground: #ffffff;
-  --accent: #ffd700;  /* keep the yellow */
+  --accent: #ffd700;
   --accent-foreground: #000000;
   --destructive: #dc3545;
   --destructive-foreground: #ffffff;
-  --ring: #ffd700;  /* yellow focus rings */
+  --ring: #ffd700;
   --radius: 0.375rem;
-  --chart-1: #ffd700;  /* yellow */
-  --chart-2: #ffd700;  /* yellow */
-  --chart-3: #ffffff;  /* white */
-  --chart-4: #a0a0a0;  /* light gray */
-  --chart-5: #333333;  /* dark gray */
+  --chart-1: #ffd700;
+  --chart-2: #ffd700;
+  --chart-3: #ffffff;
+  --chart-4: #a0a0a0;
+  --chart-5: #333333;
   --sidebar-background: #000000;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #ffd700;  /* yellow for active items */
+  --sidebar-primary: #ffd700;
   --sidebar-primary-foreground: #000000;
   --sidebar-accent: #ffd700;
   --sidebar-accent-foreground: #000000;
@@ -551,44 +426,33 @@ button, input, select, textarea {
   --sidebar-ring: #ffd700;
 }
 
-/* Purple Theme Dark Mode - from backup file */
+/* Purple Theme Dark Mode */
 .purple-theme.dark {
-  /* Dark theme colors from backup */
-  --background: hsl(224, 71.4%, 4.1%);  /* Very dark blue */
-  --foreground: hsl(210, 20%, 98%);  /* Light text */
-  --primary: hsl(263, 70%, 65%);  /* Slightly muted purple */
+  --background: hsl(224, 71.4%, 4.1%);
+  --foreground: hsl(210, 20%, 98%);
+  --primary: hsl(263, 70%, 65%);
   --primary-foreground: hsl(210, 20%, 98%);
-  
-  /* Secondary and muted dark colors */
-  --secondary: hsl(215, 27.9%, 16.9%);  /* Dark gray */
+  --secondary: hsl(215, 27.9%, 16.9%);
   --secondary-foreground: hsl(210, 20%, 98%);
-  --muted: hsl(215, 27.9%, 16.9%);  /* Dark gray */
+  --muted: hsl(215, 27.9%, 16.9%);
   --muted-foreground: hsl(215, 20.2%, 65.1%);
-  --border: hsl(215, 27.9%, 16.9%);  /* Dark borders */
+  --border: hsl(215, 27.9%, 16.9%);
   --input: hsl(215, 27.9%, 16.9%);
-  
-  /* Accent and status colors for dark mode */
   --accent: hsl(215, 27.9%, 16.9%);
   --accent-foreground: hsl(210, 20%, 98%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(263, 70%, 65%);  /* Purple focus ring */
+  --ring: hsl(263, 70%, 65%);
   --radius: 0.5rem;
-  
-  /* Popover and card for dark mode */
   --popover: hsl(224, 71.4%, 4.1%);
   --popover-foreground: hsl(210, 20%, 98%);
   --card: hsl(224, 71.4%, 4.1%);
   --card-foreground: hsl(210, 20%, 98%);
-  
-  /* Chart colors for dark mode */
   --chart-1: hsl(263, 70%, 65%);
   --chart-2: hsl(253, 70%, 75%);
   --chart-3: hsl(273, 70%, 55%);
   --chart-4: hsl(243, 70%, 75%);
   --chart-5: hsl(283, 70%, 55%);
-  
-  /* Sidebar dark mode colors */
   --sidebar-background: hsl(224, 71.4%, 4.1%);
   --sidebar-foreground: hsl(210, 20%, 98%);
   --sidebar-primary: hsl(263, 70%, 65%);
@@ -598,8 +462,6 @@ button, input, select, textarea {
   --sidebar-border: hsl(215, 27.9%, 16.9%);
   --sidebar-ring: hsl(263, 70%, 65%);
 }
-
-
 
 @layer base {
   * {
@@ -637,863 +499,196 @@ button, input, select, textarea {
     scrollbar-width: thin;
     scrollbar-color: hsl(262, 83%, 72%) hsl(220, 14.3%, 95.9%);
   }
-}
-
-/* Force React Day Picker to use full width */
-.rdp {
-  width: 100% !important;
-}
-
-.rdp-months {
-  width: 100% !important;
-}
-
-.rdp-month {
-  width: 100% !important;
-}
-
-.rdp-table {
-  width: 100% !important;
-  table-layout: fixed !important;
-}
-
-.rdp-head_cell, .rdp-cell {
-  width: 14.28% !important; /* 1/7 of the container */
-}
-
-/* Custom styles for MusoBuddy */
-.glass-effect {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.sidebar-transition {
-  transition: transform 0.3s ease-in-out;
-}
-
-/* Force sidebar visibility on desktop */
-@media (min-width: 768px) {
-  .sidebar-desktop-visible {
-    transform: translateX(0) !important;
-    display: block !important;
+  
+  /* Theme-aware scrollbars for all themes */
+  .theme-ocean-blue::-webkit-scrollbar-thumb {
+    background: #0ea5e9;
   }
   
-  /* Hide mobile navigation on desktop */
-  .mobile-nav-hidden {
-    display: none !important;
+  .theme-forest-green::-webkit-scrollbar-thumb {
+    background: #16a34a;
+  }
+  
+  .theme-clean-pro-audio::-webkit-scrollbar-thumb {
+    background: #e53935;
+  }
+  
+  .theme-midnight-blue::-webkit-scrollbar-thumb {
+    background: #191970;
+  }
+  
+  /* Firefox scrollbar for all themes */
+  .theme-ocean-blue {
+    scrollbar-color: #0ea5e9 hsl(220, 14.3%, 95.9%);
+  }
+  
+  .theme-forest-green {
+    scrollbar-color: #16a34a hsl(220, 14.3%, 95.9%);
+  }
+  
+  .theme-clean-pro-audio {
+    scrollbar-color: #e53935 #e5e5e5;
+  }
+  
+  .theme-midnight-blue {
+    scrollbar-color: #191970 hsl(220, 14.3%, 95.9%);
   }
 }
 
-@media (max-width: 768px) {
-  .sidebar-hidden {
-    transform: translateX(-100%);
+/* Enhanced Card Component Styling */
+.enhanced-card {
+  @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.enhanced-card.active {
+  @apply border-primary ring-2 ring-primary/20;
+}
+
+/* Card component variants */
+.card-gradient {
+  background: linear-gradient(135deg, var(--theme-surface) 0%, rgba(var(--theme-primary), 0.05) 100%);
+}
+
+.card-bordered {
+  border-left: 4px solid var(--theme-primary);
+}
+
+/* Enhanced button styling */
+.btn-primary-enhanced {
+  @apply bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-colors duration-200 font-medium;
+}
+
+.btn-secondary-enhanced {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors duration-200;
+}
+
+/* Enhanced form styling */
+.form-enhanced .form-group {
+  @apply space-y-2;
+}
+
+.form-enhanced .form-label {
+  @apply text-sm font-medium text-foreground;
+}
+
+.form-enhanced .form-control {
+  @apply w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+}
+
+/* Status indicator utilities */
+.status-success {
+  @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+}
+
+.status-warning {
+  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+}
+
+.status-error {
+  @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+}
+
+.status-info {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+}
+
+/* Layout utilities */
+.main-container {
+  @apply min-h-screen bg-background;
+}
+
+.content-wrapper {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section-spacing {
+  @apply py-8 lg:py-12;
+}
+
+/* Navigation active states */
+.nav-active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.nav-inactive {
+  @apply text-muted-foreground hover:text-foreground hover:bg-accent;
+}
+
+/* Data table styling */
+.data-table {
+  @apply w-full border-collapse border border-border rounded-lg overflow-hidden;
+}
+
+.data-table th {
+  @apply bg-muted text-muted-foreground font-medium text-left px-4 py-3 border-b border-border;
+}
+
+.data-table td {
+  @apply px-4 py-3 border-b border-border;
+}
+
+.data-table tr:hover {
+  @apply bg-muted/50;
+}
+
+/* Loading states */
+.loading-skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+.loading-spinner {
+  @apply animate-spin w-4 h-4 border-2 border-primary border-r-transparent rounded-full;
+}
+
+/* Toast notification styling */
+.toast-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.toast-error {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.toast-warning {
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.toast-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .mobile-hidden {
+    @apply hidden;
+  }
+  
+  .mobile-stack {
+    @apply flex-col space-y-2 space-x-0;
   }
 }
 
-/* Clean gradient backgrounds without artifacts */
-.superhuman-gradient {
-  background: linear-gradient(135deg, hsl(262, 83%, 72%) 0%, hsl(263, 70%, 65%) 100%);
-}
-
-.superhuman-gradient-dark {
-  background: linear-gradient(135deg, hsl(263, 70%, 65%) 0%, hsl(253, 70%, 75%) 100%);
-}
-
-.music-card-hover {
-  transition: all 0.3s ease;
-}
-
-.music-card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Custom scrollbar for webkit browsers - Theme aware */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(220, 14.3%, 95.9%);
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: hsl(215, 27.9%, 16.9%);
-}
-
-/* Purple theme scrollbars */
-.purple-theme ::-webkit-scrollbar-thumb {
-  background: hsl(262, 83%, 72%);
-  border-radius: 6px;
-}
-
-.purple-theme ::-webkit-scrollbar-thumb:hover {
-  background: hsl(263, 70%, 65%);
-}
-
-/* Basecamp theme scrollbars (default when no purple-theme class) */
-::-webkit-scrollbar-thumb {
-  background: #ffd700;
-  border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #ffcc02;
-}
-
-/* Clean filter container styling - remove purple lines */
-.filter-container {
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
-  position: relative !important;
-}
-
-.filter-container::before,
-.filter-container::after,
-.filter-container *::before,
-.filter-container *::after {
-  display: none !important;
-  content: none !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  background-image: none !important;
-  border-image: none !important;
-}
-
-.filter-container * {
-  background-image: none !important;
-  border-image: none !important;
-  border-image-source: none !important;
-}
-
-/* Clean card and filter styling */
-.card-clean {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.filter-section {
-  background: white;
-  border: none;
-  box-shadow: none;
-}
-
-/* Prevent any pseudo-element artifacts */
-.no-artifacts,
-.no-artifacts::before,
-.no-artifacts::after {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Remove purple lines and particles from filter container */
-.filter-container,
-.filter-container *,
-.filter-container div,
-.filter-container button,
-.filter-container input,
-.filter-container select {
-  background-image: none !important;
-  background-attachment: initial !important;
-  background-clip: initial !important;
-  background-origin: initial !important;
-  background-position: initial !important;
-  background-repeat: initial !important;
-  background-size: initial !important;
-  border-image: none !important;
-  border-image-source: none !important;
-}
-
-.filter-container::before,
-.filter-container::after,
-.filter-container *::before,
-.filter-container *::after,
-.filter-container div::before,
-.filter-container div::after,
-.filter-container button::before,
-.filter-container button::after {
-  content: none !important;
-  display: none !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-image: none !important;
-}
-
-/* Specifically target purple colors and remove them */
-.filter-container * {
-  border-color: #e5e7eb !important;
-}
-
-.filter-container *[style*="purple"],
-.filter-container *[style*="#673ab7"],
-.filter-container *[style*="rgb(103, 58, 183)"] {
-  border: 1px solid #e5e7eb !important;
-  background: white !important;
-}
-
-/* Remove all purple styling from filter container */
-.filter-container {
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-}
-
-/* Target specific elements that might have purple styling */
-.filter-container [data-radix-collection-item],
-.filter-container [data-radix-select-trigger],
-.filter-container [data-radix-select-content],
-.filter-container [data-radix-select-item],
-.filter-container [data-state],
-.filter-container [data-orientation] {
-  background: white !important;
-  border-color: #e5e7eb !important;
-  color: #374151 !important;
-}
-
-/* Remove any purple from Radix UI components */
-.filter-container [data-radix-collection-item]:hover,
-.filter-container [data-radix-select-trigger]:hover,
-.filter-container [data-radix-select-item]:hover {
-  background: #f9fafb !important;
-  border-color: #d1d5db !important;
-}
-
-/* Override any purple theming */
-.filter-container .text-purple-600,
-.filter-container .text-purple-700,
-.filter-container .text-purple-800,
-.filter-container .border-purple-200,
-.filter-container .border-purple-300,
-.filter-container .border-purple-400,
-.filter-container .bg-purple-50,
-.filter-container .bg-purple-100,
-.filter-container .bg-purple-200 {
-  color: #374151 !important;
-  border-color: #e5e7eb !important;
-  background: white !important;
-}
-
-/* More targeted approach - remove purple lines specifically */
-.filter-container {
-  position: relative;
-  overflow: hidden;
-}
-
-.filter-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: white;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.filter-container > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* Override any CSS variables that might be causing purple */
-.filter-container {
-  --primary: #374151 !important;
-  --primary-foreground: #ffffff !important;
-  --secondary: #f9fafb !important;
-  --secondary-foreground: #374151 !important;
-  --accent: #f3f4f6 !important;
-  --accent-foreground: #374151 !important;
-  --border: #e5e7eb !important;
-  --ring: #e5e7eb !important;
-}
-
-/* Remove purple from any buttons in the filter area */
-.filter-container button {
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  color: #374151 !important;
-}
-
-.filter-container button:hover {
-  background: #f9fafb !important;
-  border-color: #d1d5db !important;
-}
-
-.filter-container button[data-state="checked"],
-.filter-container button[data-state="selected"] {
-  background: #f3f4f6 !important;
-  border-color: #d1d5db !important;
-  color: #374151 !important;
-}
-
-/* Stronger global override for filter to remove all purple */
-.filter-container,
-.filter-container * {
-  --primary: #374151 !important; /* Gray instead of purple */
-  --ring: #e5e7eb !important;    /* Gray focus ring */
-  border-color: #e5e7eb !important;
-  background-color: white !important;
-  box-shadow: none !important;   /* Remove any purple shadows */
-}
-
-/* Target only thick purple lines - not form borders */
-.filter-container::before,
-.filter-container::after {
-  content: none !important;
-  display: none !important;
-}
-
-/* Remove any thick border artifacts from the container itself */
-.filter-container {
-  border-image: none !important;
-  background-image: none !important;
-}
-
-/* Override purple theming variables for filter container only */
-.filter-container {
-  --primary: #374151 !important;
-  --ring: #e5e7eb !important;
-  --chart-1: #374151 !important;
-  --chart-2: #6b7280 !important;
-  --chart-3: #9ca3af !important;
-  --chart-4: #d1d5db !important;
-  --chart-5: #e5e7eb !important;
-}
-
-/* Remove purple scrollbar inside filter */
-.filter-container ::-webkit-scrollbar-thumb {
-  background: #e5e7eb !important;
-}
-.filter-container ::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db !important;
-}
-
-/* Force override any purple styling on filter container children */
-.filter-container *[class*="purple"],
-.filter-container *[style*="purple"],
-.filter-container *[style*="hsl(262"],
-.filter-container *[style*="hsl(252"],
-.filter-container *[style*="hsl(272"] {
-  color: #374151 !important;
-  border-color: #e5e7eb !important;
-  background-color: white !important;
-}
-
-/* Global purple color overrides - force lighter purple everywhere */
-.bg-purple-600,
-.bg-purple-700,
-.bg-purple-800,
-.bg-purple-900 {
-  background-color: hsl(262, 83%, 72%) !important;
-}
-
-.text-purple-600,
-.text-purple-700,
-.text-purple-800,
-.text-purple-900 {
-  color: hsl(262, 83%, 72%) !important;
-}
-
-.border-purple-600,
-.border-purple-700,
-.border-purple-800,
-.border-purple-900 {
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-.hover\:bg-purple-600:hover,
-.hover\:bg-purple-700:hover,
-.hover\:bg-purple-800:hover,
-.hover\:bg-purple-900:hover {
-  background-color: hsl(262, 83%, 68%) !important;
-}
-
-/* Override specific purple color values */
-[style*="rgb(103, 58, 183)"] {
-  color: hsl(262, 83%, 72%) !important;
-  background-color: hsl(262, 83%, 72%) !important;
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-[style*="#673ab7"] {
-  color: hsl(262, 83%, 72%) !important;
-  background-color: hsl(262, 83%, 72%) !important;
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-[style*="hsl(262, 83%, 58%)"] {
-  color: hsl(262, 83%, 72%) !important;
-  background-color: hsl(262, 83%, 72%) !important;
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-[style*="hsl(263, 70%, 50%)"] {
-  color: hsl(263, 70%, 65%) !important;
-  background-color: hsl(263, 70%, 65%) !important;
-  border-color: hsl(263, 70%, 65%) !important;
-}
-
-/* Override button and link colors */
-button[class*="purple"],
-a[class*="purple"],
-.btn-purple,
-.link-purple {
-  background-color: hsl(262, 83%, 72%) !important;
-  color: white !important;
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-button[class*="purple"]:hover,
-a[class*="purple"]:hover,
-.btn-purple:hover,
-.link-purple:hover {
-  background-color: hsl(262, 83%, 68%) !important;
-}
-
-/* Override sidebar and navigation colors */
-.sidebar-primary,
-.nav-primary,
-[data-active="true"] {
-  background-color: hsl(262, 83%, 72%) !important;
-  color: white !important;
-}
-
-/* Override focus and active states */
-:focus-visible {
-  outline-color: hsl(262, 83%, 72%) !important;
-}
-
-.focus\:ring-purple-500:focus {
-  ring-color: hsl(262, 83%, 72%) !important;
-}
-
-/* Override any remaining hardcoded purple values */
-* {
-  --tw-ring-color: hsl(262, 83%, 72%) !important;
-}
-
-/* Extremely specific filter button overrides - higher specificity than existing rules */
-.filter-container button[data-filter="new"] {
-  background-color: #3b82f6 !important;
-  color: white !important;
-  border-color: #3b82f6 !important;
-  border-width: 2px !important;
-}
-
-.filter-container button[data-filter="awaiting_response"] {
-  background-color: #fbbf24 !important;
-  color: #92400e !important;
-  border-color: #fbbf24 !important;
-  border-width: 2px !important;
-}
-
-.filter-container button[data-filter="client_confirms"] {
-  background-color: #f97316 !important;
-  color: white !important;
-  border-color: #f97316 !important;
-  border-width: 2px !important;
-}
-
-.filter-container button[data-filter="contract_sent"] {
-  background-color: #8b5cf6 !important;
-  color: white !important;
-  border-color: #8b5cf6 !important;
-  border-width: 2px !important;
-}
-
-.filter-container button[data-filter="confirmed"] {
-  background-color: #10b981 !important;
-  color: white !important;
-  border-color: #10b981 !important;
-  border-width: 2px !important;
-}
-
-.filter-container button[data-filter="cancelled"] {
-  background-color: #ef4444 !important;
-  color: white !important;
-  border-color: #ef4444 !important;
-  border-width: 2px !important;
-}
-
-.filter-container button[data-filter="completed"] {
-  background-color: #6b7280 !important;
-  color: white !important;
-  border-color: #6b7280 !important;
-  border-width: 2px !important;
-}
-
-/* FINAL OVERRIDE: Force white text on ALL selected sidebar items */
-/* This rule has the highest specificity and should override everything */
-html body [class*="theme-"] .sidebar .bg-primary,
-html body [class*="theme-"] .sidebar .bg-primary *,
-html body .theme-midnight-blue .sidebar .bg-primary,
-html body .theme-midnight-blue .sidebar .bg-primary *,
-html body .theme-purple .sidebar .bg-primary,
-html body .theme-purple .sidebar .bg-primary *,
-html body .theme-ocean-blue .sidebar .bg-primary,
-html body .theme-ocean-blue .sidebar .bg-primary *,
-html body .theme-forest-green .sidebar .bg-primary,
-html body .theme-forest-green .sidebar .bg-primary *,
-html body .theme-clean-pro-audio .sidebar .bg-primary,
-html body .theme-clean-pro-audio .sidebar .bg-primary *,
-/* Extremely specific targeting for sidebar navigation */
-#root [class*="theme-"] .sidebar .bg-primary,
-#root [class*="theme-"] .sidebar .bg-primary *,
-[data-theme*="midnight"] .sidebar .bg-primary,
-[data-theme*="midnight"] .sidebar .bg-primary *,
-.sidebar a[class*="bg-primary"],
-.sidebar a[class*="bg-primary"] *,
-.sidebar button[class*="bg-primary"],
-.sidebar button[class*="bg-primary"] * {
-  color: white !important;
-  background-color: var(--theme-primary) !important;
-}
-
-/* Nuclear option: Force white text on midnight blue specifically */
-.theme-midnight-blue * {
-  --tw-text-opacity: 1 !important;
-}
-
-.theme-midnight-blue .bg-primary * {
-  color: rgb(255 255 255) !important;
-}
-
-/* Ultimate override for span elements in sidebar links */
-.sidebar .bg-primary span,
-.sidebar a.bg-primary span,
-.sidebar button.bg-primary span,
-[class*="theme-"] .sidebar .bg-primary span,
-[class*="theme-"] .sidebar a.bg-primary span,
-html [class*="theme-"] .sidebar .bg-primary span,
-html body [class*="theme-"] .sidebar .bg-primary span {
-  color: white !important;
-}
-
-/* TARGETED FIX: Only buttons outside sidebar need white text on dark themes */
-.theme-midnight-blue button:not(.sidebar button):not(.sidebar *),
-.theme-purple button:not(.sidebar button):not(.sidebar *) {
-  color: white !important;
-}
-
-/* Force white text on button contents (but exclude sidebar) */
-.theme-midnight-blue button:not(.sidebar button):not(.sidebar *) *,
-.theme-purple button:not(.sidebar button):not(.sidebar *) * {
-  color: white !important;
-}
-
-/* Specific targeting for primary buttons in main content areas */
-.theme-midnight-blue main button,
-.theme-midnight-blue .container button,
-.theme-midnight-blue .content button,
-.theme-midnight-blue [class*="page"] button,
-.theme-purple main button,
-.theme-purple .container button,
-.theme-purple .content button,
-.theme-purple [class*="page"] button {
-  color: white !important;
-}
-
-/* Purple theme gets its own color */
-.theme-purple main button,
-.theme-purple .container button,
-.theme-purple .content button,
-.theme-purple [class*="page"] button {
-  background-color: #8b5cf6 !important;
-}
-
-/* Midnight blue theme gets its color */
-.theme-midnight-blue main button,
-.theme-midnight-blue .container button,
-.theme-midnight-blue .content button,
-.theme-midnight-blue [class*="page"] button {
-  background-color: #191970 !important;
-}
-
-/* Target button text content specifically for both themes */
-.theme-midnight-blue main button span,
-.theme-midnight-blue .container button span,
-.theme-midnight-blue .content button span,
-.theme-midnight-blue [class*="page"] button span,
-.theme-purple main button span,
-.theme-purple .container button span,
-.theme-purple .content button span,
-.theme-purple [class*="page"] button span {
-  color: white !important;
-}
-
-/* CRITICAL SIDEBAR NAVIGATION VISIBILITY FIX - MAXIMUM SPECIFICITY */
-/* Force all inactive sidebar navigation items to be visible with explicit colors */
-
-/* INACTIVE items - BLACK text in ALL themes */
-html body nav a:not(.bg-primary),
-html body .sidebar nav a:not(.bg-primary),
-html body [class*="sidebar"] nav a:not(.bg-primary),
-html body #root nav a:not(.bg-primary),
-html body #root .sidebar nav a:not(.bg-primary) {
-  color: #1e293b !important; /* Black text for ALL inactive items */
-}
-
-/* Force icons and text to inherit link colors */
-html body nav a *,
-html body .sidebar nav a *,
-html body [class*="sidebar"] nav a *,
-html body #root nav a *,
-html body #root .sidebar nav a * {
-  color: inherit !important;
-}
-
-/* ACTIVE items - Default BLACK text for most themes */
-html body nav a.bg-primary,
-html body .sidebar nav a.bg-primary,
-html body [class*="sidebar"] nav a.bg-primary,
-html body #root nav a.bg-primary,
-html body #root .sidebar nav a.bg-primary {
-  color: #1e293b !important; /* Black text for active items in most themes */
-  background-color: var(--theme-primary, #8b5cf6) !important;
-}
-
-html body nav a.bg-primary *,
-html body .sidebar nav a.bg-primary *,
-html body [class*="sidebar"] nav a.bg-primary *,
-html body #root nav a.bg-primary *,
-html body #root .sidebar nav a.bg-primary * {
-  color: inherit !important;
-}
-
-/* ACTIVE items - WHITE text ONLY for purple and midnight blue themes - MAXIMUM SPECIFICITY */
-html body.theme-purple nav a.bg-primary,
-html body.theme-purple .sidebar nav a.bg-primary,
-html body.theme-midnight-blue nav a.bg-primary,
-html body.theme-midnight-blue .sidebar nav a.bg-primary,
-html body [class*="theme-purple"] nav a.bg-primary,
-html body [class*="theme-midnight"] nav a.bg-primary,
-html body.theme-purple nav a[style*="background-color"],
-html body.theme-purple .sidebar nav a[style*="background-color"],
-html body.theme-midnight-blue nav a[style*="background-color"],
-html body.theme-midnight-blue .sidebar nav a[style*="background-color"] {
-  color: white !important;
-}
-
-html body.theme-purple nav a.bg-primary *,
-html body.theme-purple .sidebar nav a.bg-primary *,
-html body.theme-midnight-blue nav a.bg-primary *,
-html body.theme-midnight-blue .sidebar nav a.bg-primary *,
-html body [class*="theme-purple"] nav a.bg-primary *,
-html body [class*="theme-midnight"] nav a.bg-primary *,
-html body.theme-purple nav a[style*="background-color"] *,
-html body.theme-purple .sidebar nav a[style*="background-color"] *,
-html body.theme-midnight-blue nav a[style*="background-color"] *,
-html body.theme-midnight-blue .sidebar nav a[style*="background-color"] * {
-  color: inherit !important;
-}
-
-/* Hover states */
-html body nav a:not(.bg-primary):hover,
-html body .sidebar nav a:not(.bg-primary):hover {
-  color: #334155 !important;
-}
-
-html body nav a:not(.bg-primary):hover *,
-html body .sidebar nav a:not(.bg-primary):hover * {
-  color: inherit !important;
-}
-
-/* NUCLEAR OPTION: Override inline styles for purple and midnight blue themes */
-/* Use attribute selectors to target elements with inline background styles */
-html[class*="theme-purple"] nav a[style*="var(--theme-primary)"],
-html[class*="theme-purple"] .sidebar nav a[style*="var(--theme-primary)"],
-html[class*="theme-midnight"] nav a[style*="var(--theme-primary)"],
-html[class*="theme-midnight"] .sidebar nav a[style*="var(--theme-primary)"],
-.theme-purple nav a[style*="var(--theme-primary)"],
-.theme-purple .sidebar nav a[style*="var(--theme-primary)"],
-.theme-midnight-blue nav a[style*="var(--theme-primary)"],
-.theme-midnight-blue .sidebar nav a[style*="var(--theme-primary)"] {
-  color: white !important;
-}
-
-html[class*="theme-purple"] nav a[style*="var(--theme-primary)"] *,
-html[class*="theme-purple"] .sidebar nav a[style*="var(--theme-primary)"] *,
-html[class*="theme-midnight"] nav a[style*="var(--theme-primary)"] *,
-html[class*="theme-midnight"] .sidebar nav a[style*="var(--theme-primary)"] *,
-.theme-purple nav a[style*="var(--theme-primary)"] *,
-.theme-purple .sidebar nav a[style*="var(--theme-primary)"] *,
-.theme-midnight-blue nav a[style*="var(--theme-primary)"] *,
-.theme-midnight-blue .sidebar nav a[style*="var(--theme-primary)"] * {
-  color: white !important;
-}
-
-/* Fix mobile navigation breadcrumb for dark themes */
-.theme-midnight-blue .bg-primary .flex.items-center,
-.theme-midnight-blue .bg-primary .flex.items-center *,
-.theme-midnight-blue .bg-primary span,
-.theme-midnight-blue .bg-primary div,
-.theme-purple .bg-primary .flex.items-center,
-.theme-purple .bg-primary .flex.items-center *,
-.theme-purple .bg-primary span,
-.theme-purple .bg-primary div {
-  color: white !important;
-}
-
-/* Mobile navigation specific fixes - but exclude sidebar */
-.theme-midnight-blue [class*="bg-primary"]:not(.sidebar *) *,
-.theme-purple [class*="bg-primary"]:not(.sidebar *) * {
-  color: white !important;
-}
-
-/* SIDEBAR NAVIGATION VISIBILITY FIX */
-/* Base sidebar styling - consistent across all themes */
-.sidebar {
-  --sidebar-text-inactive: #64748b;
-  --sidebar-text-inactive-hover: #334155;
-  --sidebar-background: #ffffff;
-}
-
-/* Dark mode base */
-.dark .sidebar {
-  --sidebar-text-inactive: #94a3b8;
-  --sidebar-text-inactive-hover: #cbd5e1;
-  --sidebar-background: #0f172a;
-}
-
-/* CRITICAL: Force inactive navigation items to be visible in ALL themes */
-[data-sidebar="sidebar"] nav a:not([data-active="true"]),
-[data-sidebar="sidebar"] nav button:not([data-active="true"]),
-.sidebar nav a:not([data-active="true"]),
-.sidebar nav button:not([data-active="true"]) {
-  color: var(--sidebar-text-inactive) !important;
-  background-color: transparent !important;
-}
-
-/* Force all child elements of inactive items to inherit visibility */
-[data-sidebar="sidebar"] nav a:not([data-active="true"]) *,
-[data-sidebar="sidebar"] nav button:not([data-active="true"]) *,
-.sidebar nav a:not([data-active="true"]) *,
-.sidebar nav button:not([data-active="true"]) * {
-  color: inherit !important;
-}
-
-/* Hover states for inactive items */
-[data-sidebar="sidebar"] nav a:not([data-active="true"]):hover,
-[data-sidebar="sidebar"] nav button:not([data-active="true"]):hover,
-.sidebar nav a:not([data-active="true"]):hover,
-.sidebar nav button:not([data-active="true"]):hover {
-  color: var(--sidebar-text-inactive-hover) !important;
-  background-color: var(--theme-primary) !important;
-}
-
-[data-sidebar="sidebar"] nav a:not([data-active="true"]):hover *,
-[data-sidebar="sidebar"] nav button:not([data-active="true"]):hover *,
-.sidebar nav a:not([data-active="true"]):hover *,
-.sidebar nav button:not([data-active="true"]):hover * {
-  color: white !important;
-}
-
-/* ACTIVE navigation items - theme-specific colors */
-[data-sidebar="sidebar"] nav a[data-active="true"],
-[data-sidebar="sidebar"] nav button[data-active="true"],
-.sidebar nav a[data-active="true"],
-.sidebar nav button[data-active="true"],
-/* Also target by class-based active states */
-[data-sidebar="sidebar"] nav a.bg-primary,
-[data-sidebar="sidebar"] nav button.bg-primary,
-.sidebar nav a.bg-primary,
-.sidebar nav button.bg-primary {
-  background-color: var(--theme-primary) !important;
-  color: white !important;
-}
-
-/* Force all child elements of active items to be white */
-[data-sidebar="sidebar"] nav a[data-active="true"] *,
-[data-sidebar="sidebar"] nav button[data-active="true"] *,
-.sidebar nav a[data-active="true"] *,
-.sidebar nav button[data-active="true"] *,
-[data-sidebar="sidebar"] nav a.bg-primary *,
-[data-sidebar="sidebar"] nav button.bg-primary *,
-.sidebar nav a.bg-primary *,
-.sidebar nav button.bg-primary * {
-  color: white !important;
-}
-
-/* Theme-specific inactive text colors for better contrast */
-.theme-purple .sidebar {
-  --sidebar-text-inactive: #64748b;
-  --sidebar-text-inactive-hover: #334155;
-}
-
-.theme-midnight-blue .sidebar {
-  --sidebar-text-inactive: #64748b;
-  --sidebar-text-inactive-hover: #334155;
-}
-
-.theme-ocean-blue .sidebar {
-  --sidebar-text-inactive: #475569;
-  --sidebar-text-inactive-hover: #334155;
-}
-
-.theme-forest-green .sidebar {
-  --sidebar-text-inactive: #475569;
-  --sidebar-text-inactive-hover: #334155;
-}
-
-.theme-clean-pro-audio .sidebar {
-  --sidebar-text-inactive: #6b7280;
-  --sidebar-text-inactive-hover: #374151;
-}
-
-/* Dark mode overrides for each theme */
-.theme-purple.dark .sidebar,
-.theme-midnight-blue.dark .sidebar {
-  --sidebar-text-inactive: #94a3b8;
-  --sidebar-text-inactive-hover: #cbd5e1;
-}
-
-.theme-ocean-blue.dark .sidebar,
-.theme-forest-green.dark .sidebar,
-.theme-clean-pro-audio.dark .sidebar {
-  --sidebar-text-inactive: #94a3b8;
-  --sidebar-text-inactive-hover: #cbd5e1;
-}
-
-/* NUCLEAR OPTION: Force override any remaining invisible text */
-/* Target by component structure if data attributes fail */
-.sidebar [role="navigation"] a:not(.bg-primary),
-.sidebar [role="navigation"] button:not(.bg-primary),
-.sidebar nav [data-sidebar="menu-button"]:not([data-active="true"]) {
-  color: var(--sidebar-text-inactive) !important;
-}
-
-.sidebar [role="navigation"] a:not(.bg-primary) *,
-.sidebar [role="navigation"] button:not(.bg-primary) *,
-.sidebar nav [data-sidebar="menu-button"]:not([data-active="true"]) * {
-  color: inherit !important;
-}
-
-/* Ensure sidebar background is always visible */
-[data-sidebar="sidebar"] {
-  background-color: var(--sidebar-background) !important;
-}
-
-/* Override any conflicting Radix UI styles */
-.sidebar [data-sidebar="menu-button"] {
-  transition: all 0.2s ease-in-out !important;
-}
-
-/* Fix for mobile sidebar */
-.sidebar [data-mobile="true"] nav a:not([data-active="true"]),
-.sidebar [data-mobile="true"] nav button:not([data-active="true"]) {
-  color: var(--sidebar-text-inactive) !important;
-}
-
-.sidebar [data-mobile="true"] nav a:not([data-active="true"]) *,
-.sidebar [data-mobile="true"] nav button:not([data-active="true"]) * {
-  color: inherit !important;
+@media (min-width: 641px) {
+  .desktop-hidden {
+    @apply hidden;
+  }
+  
+  .desktop-row {
+    @apply flex-row space-y-0 space-x-4;
+  }
+}
+
+/* Print styles */
+@media print {
+  .print-hidden {
+    @apply hidden;
+  }
+  
+  .print-break {
+    page-break-after: always;
+  }
+  
+  .print-no-break {
+    page-break-inside: avoid;
+  }
 }
