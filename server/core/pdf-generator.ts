@@ -339,49 +339,26 @@ async function optimizeInvoiceLayout(invoice: Invoice, userSettings: UserSetting
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 4000,
+      max_tokens: 2000, // Reduced to stay within rate limits
       messages: [{
         role: "user",
-        content: `You are a professional invoice designer. Create a clean, professional HTML invoice template that fixes these common formatting issues:
+        content: `Create professional HTML invoice with CSS. Fix: alignment, spacing, page breaks.
 
-1. Poor alignment and spacing
-2. Bad page breaks
-3. Inconsistent typography
-4. Unprofessional layout structure
-5. Poor visual hierarchy
+Data: ${invoiceData.invoiceNumber}, ${invoiceData.businessName}, ${invoiceData.clientName}, £${invoiceData.amount}, Due: ${invoiceData.dueDate}
 
-REQUIREMENTS:
-- Clean, professional business appearance
-- Proper spacing and alignment
-- Smart page break handling (avoid breaking in middle of content blocks)
-- Clear visual hierarchy
-- Modern but conservative styling
-- Ensure all content fits properly on A4 page
-- Use professional typography (Arial/Helvetica family)
-- Consistent margins and padding
-- Clear section separations
-
-Invoice Data:
-${JSON.stringify(invoiceData, null, 2)}
-
-Generate a complete HTML document with embedded CSS that creates a professional, well-formatted invoice. Include:
-- Professional header with business details and invoice number
-- Clear billing section (FROM/TO)
-- Clean table for performance details
-- Professional total calculation area
-- Payment information section
-- Terms and conditions
-- Professional footer
-
-Focus on visual balance, proper spacing, and ensuring content doesn't break poorly across pages.`
+Requirements: Professional header, clean billing section, proper table layout, payment info, terms. A4 format, Arial font, consistent spacing.`
       }]
     });
 
     const optimizedHtml = response.content[0].text;
     console.log('✅ AI-optimized invoice layout generated');
     return optimizedHtml;
-  } catch (error) {
-    console.error('❌ AI optimization failed, using fallback:', error);
+  } catch (error: any) {
+    if (error.status === 429) {
+      console.log('⏳ Rate limit hit, using standard template instead of AI optimization');
+    } else {
+      console.error('❌ AI optimization failed, using fallback:', error);
+    }
     // Fallback to original function if AI fails
     return generateInvoiceHTML(invoice, null, userSettings);
   }
