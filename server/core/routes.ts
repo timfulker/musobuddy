@@ -1895,6 +1895,19 @@ export async function registerRoutes(app: Express) {
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
       await emailService.sendContractEmail(contract, userSettings, subject, pdfUrl, customMessage);
       
+      // Update associated booking status to 'contract_sent' if contract is linked to a booking
+      if (contract.enquiryId) {
+        try {
+          await storage.updateBooking(contract.enquiryId, { 
+            status: 'contract_sent',
+            contract_sent: true
+          });
+          console.log(`✅ Updated booking #${contract.enquiryId} status to 'contract_sent'`);
+        } catch (bookingError) {
+          console.warn(`⚠️ Could not update booking status for enquiry #${contract.enquiryId}:`, bookingError);
+        }
+      }
+      
       console.log(`✅ Contract #${parsedContractId} sent successfully via send-email endpoint`);
       res.json({ success: true, message: 'Contract sent successfully' });
       
