@@ -1,6 +1,5 @@
 import puppeteer from 'puppeteer';
 import type { Contract, Invoice, UserSettings } from '@shared/schema';
-import { generateAIPDF, contractToAIFormat, invoiceToAIFormat } from './ai-pdf-builder.ts';
 
 export async function generateContractPDF(
   contract: Contract,
@@ -9,54 +8,10 @@ export async function generateContractPDF(
     signedAt: Date;
     signatureName?: string;
     clientIpAddress?: string;
-  },
-  useAI: boolean = true
-): Promise<Buffer> {
-  console.log('Starting contract PDF generation for:', contract.contractNumber);
-  
-  // Use AI-driven PDF generation if requested
-  if (useAI) {
-    try {
-      console.log('🤖 Starting AI PDF generation for contract:', contract.contractNumber);
-      const theme = (contract as any).contractTheme || 'professional';
-      console.log('🎨 Using theme:', theme);
-      
-      console.log('📊 Contract data for AI:', {
-        clientName: contract.clientName,
-        eventDate: contract.eventDate,
-        eventTime: contract.eventTime,
-        eventEndTime: contract.eventEndTime,
-        venue: contract.venue,
-        fee: contract.fee
-      });
-      
-      const aiData = contractToAIFormat(contract, userSettings, theme);
-      console.log('📊 AI data prepared:', { 
-        type: aiData.type, 
-        theme: aiData.theme, 
-        sectionsCount: aiData.sections.length,
-        client: aiData.client,
-        eventDate: aiData.eventDate,
-        venue: aiData.venue,
-        fee: aiData.fee
-      });
-      
-      console.log('🤖 Calling generateAIPDF...');
-      const result = await generateAIPDF(aiData);
-      console.log('✅ AI PDF generation successful for contract, size:', result.length, 'bytes');
-      return result;
-    } catch (error) {
-      console.error('❌ AI PDF generation failed for contract:', {
-        contractNumber: contract.contractNumber,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        name: error instanceof Error ? error.name : 'Unknown'
-      });
-      console.warn('🔄 Falling back to standard method for contract');
-    }
   }
+): Promise<Buffer> {
+  console.log('Starting standard contract PDF generation for:', contract.contractNumber);
   
-  // Fallback to original method
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -88,6 +43,56 @@ export async function generateContractPDF(
     });
     
     console.log('Contract PDF generated successfully:', pdf.length, 'bytes');
+    return Buffer.from(pdf);
+  } finally {
+    await browser.close();
+  }
+}
+
+// NEW: Generate contract PDF with AI-optimized page breaks
+export async function generateContractPDFWithOptimizedBreaks(
+  contract: Contract,
+  userSettings: UserSettings | null,
+  optimizedSections: Array<{title: string; content: string}>,
+  signatureDetails?: {
+    signedAt: Date;
+    signatureName?: string;
+    clientIpAddress?: string;
+  }
+): Promise<Buffer> {
+  console.log('Starting AI-optimized contract PDF generation for:', contract.contractNumber);
+  
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+  });
+  
+  try {
+    const page = await browser.newPage();
+    const html = generateContractHTMLWithOptimizedSections(contract, userSettings, optimizedSections, signatureDetails);
+    
+    // Enable print media emulation for better layout
+    await page.emulateMediaType('print');
+    
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    const pdf = await page.pdf({ 
+      format: 'A4', 
+      printBackground: true,
+      margin: {
+        top: '1cm',
+        bottom: '1.5cm',
+        left: '1.5cm',
+        right: '1.5cm'
+      },
+      displayHeaderFooter: true,
+      footerTemplate: `
+        <div style="font-size:10px; width:100%; text-align:center; color:#666;">
+          Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+        </div>`
+    });
+    
+    console.log('AI-optimized contract PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
   } finally {
     await browser.close();
