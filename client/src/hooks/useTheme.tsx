@@ -135,13 +135,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Force apply background color immediately to body
     document.body.style.backgroundColor = theme.colors.background;
     document.body.style.color = theme.colors.text;
+    document.body.style.fontFamily = theme.fonts.body;
+    
+    // Force apply to main app container
+    const appContainer = document.querySelector('.min-h-screen');
+    if (appContainer) {
+      (appContainer as HTMLElement).style.backgroundColor = theme.colors.background;
+      (appContainer as HTMLElement).style.color = theme.colors.text;
+    }
 
     // Add theme class for conditional styling to both html and body
-    root.className = root.className.replace(/theme-\w+/g, '');
-    root.classList.add(`theme-${currentTheme}`);
+    // Remove existing theme classes first
+    Object.keys(themes).forEach(themeKey => {
+      root.classList.remove(`theme-${themeKey}`);
+      document.body.classList.remove(`theme-${themeKey}`);
+    });
     
-    // Also apply to body for enhanced styling
-    document.body.className = document.body.className.replace(/theme-\w+/g, '');
+    // Add current theme class
+    root.classList.add(`theme-${currentTheme}`);
     document.body.classList.add(`theme-${currentTheme}`);
 
     // Save to localStorage

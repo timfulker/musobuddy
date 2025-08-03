@@ -2166,7 +2166,10 @@ export default function Settings() {
                           {Object.values(themes).map((theme) => (
                             <div
                               key={theme.id}
-                              onClick={() => setTheme(theme.id)}
+                              onClick={() => {
+                                console.log('🎨 User clicked theme:', theme.id);
+                                setTheme(theme.id);
+                              }}
                               className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                                 currentTheme === theme.id
                                   ? 'border-theme-primary bg-theme-primary/10'

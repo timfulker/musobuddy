@@ -23,15 +23,22 @@
 
 /* Theme-specific styles */
 .theme-retro-vinyl {
-  --theme-primary: #d17b0f;
-  --theme-secondary: #578d8c;
-  --theme-accent: #c9e3d4;
-  --theme-background: #f5e9dc;
-  --theme-surface: #ffffff;
-  --theme-text: #40342a;
-  --theme-text-secondary: #6b5b4e;
-  --theme-font-heading: "DM Serif Display", serif;
-  --theme-font-body: "Work Sans", sans-serif;
+  --theme-primary: #d17b0f !important;
+  --theme-secondary: #578d8c !important;
+  --theme-accent: #c9e3d4 !important;
+  --theme-background: #f5e9dc !important;
+  --theme-surface: #ffffff !important;
+  --theme-text: #40342a !important;
+  --theme-text-secondary: #6b5b4e !important;
+  --theme-font-heading: "DM Serif Display", serif !important;
+  --theme-font-body: "Work Sans", sans-serif !important;
+}
+
+/* Force retro vinyl theme application */
+.theme-retro-vinyl body {
+  background-color: #f5e9dc !important;
+  color: #40342a !important;
+  font-family: "Work Sans", sans-serif !important;
 }
 
 .theme-ocean-blue {
@@ -59,7 +66,71 @@ body {
   background-color: var(--theme-background) !important;
   color: var(--theme-text) !important;
   font-family: var(--theme-font-body) !important;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, font-family 0.3s ease;
+}
+
+/* Force theme application for all layouts */
+.layout-consistent,
+.main-content,
+.min-h-screen {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+}
+
+/* Override Tailwind background classes */
+.bg-background {
+  background-color: var(--theme-background) !important;
+}
+
+.bg-white {
+  background-color: var(--theme-surface) !important;
+}
+
+.text-foreground {
+  color: var(--theme-text) !important;
+}
+
+/* Specific retro vinyl overrides - Maximum specificity */
+html.theme-retro-vinyl,
+html.theme-retro-vinyl body,
+.theme-retro-vinyl,
+.theme-retro-vinyl *,
+.theme-retro-vinyl .bg-background,
+.theme-retro-vinyl .min-h-screen,
+.theme-retro-vinyl .layout-consistent,
+.theme-retro-vinyl .main-content,
+.theme-retro-vinyl div,
+.theme-retro-vinyl main,
+.theme-retro-vinyl section {
+  background-color: #f5e9dc !important;
+  color: #40342a !important;
+}
+
+/* Override any remaining white backgrounds */
+.theme-retro-vinyl .bg-white,
+.theme-retro-vinyl .bg-card,
+.theme-retro-vinyl .bg-popover {
+  background-color: #ffffff !important;
+}
+
+/* Ocean blue theme overrides */
+html.theme-ocean-blue,
+html.theme-ocean-blue body,
+.theme-ocean-blue,
+.theme-ocean-blue .bg-background,
+.theme-ocean-blue .min-h-screen {
+  background-color: #e0f2fe !important;
+  color: #0f172a !important;
+}
+
+/* Forest green theme overrides */
+html.theme-forest-green,
+html.theme-forest-green body,
+.theme-forest-green,
+.theme-forest-green .bg-background,
+.theme-forest-green .min-h-screen {
+  background-color: #f0fdf4 !important;
+  color: #14532d !important;
 }
 
 .theme-heading {
