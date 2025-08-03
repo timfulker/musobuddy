@@ -4284,6 +4284,25 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Static theme preview endpoints for pre-generated images
+  app.get("/api/theme-preview-static/:themeId", (req, res) => {
+    const { themeId } = req.params;
+    const validThemes = ['professional', 'friendly', 'musical'];
+    
+    if (!validThemes.includes(themeId)) {
+      return res.status(404).json({ error: 'Theme not found' });
+    }
+    
+    const imagePath = path.join(process.cwd(), 'attached_assets', 'theme_previews', `${themeId}-preview.png`);
+    
+    res.sendFile(imagePath, (err) => {
+      if (err) {
+        console.error(`❌ Error serving theme preview for ${themeId}:`, err);
+        res.status(404).json({ error: 'Preview image not found' });
+      }
+    });
+  });
+
   // Theme preview endpoint
   app.post('/api/theme-preview', isAuthenticated, async (req: any, res) => {
     try {
