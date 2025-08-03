@@ -23,40 +23,7 @@ import { useTheme, themes, type ThemeName } from "@/hooks/useTheme";
 // Import instrument presets
 import { INSTRUMENT_GIG_PRESETS, getGigTypeNamesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
 
-// Theme configuration constants
-const THEME_TEMPLATES = [
-  { id: "professional", label: "Professional & Formal", description: "Business-like, structured. Perfect for corporate events and high-end weddings" },
-  { id: "friendly", label: "Friendly & Informal", description: "Warm, personal. Great for smaller weddings and return clients" },
-  { id: "musical", label: "Musical & Creative", description: "Quirky, expressive. Ideal for fellow musicians and creative events" },
-];
 
-const THEME_TONES = [
-  { id: "professional", label: "Professional", description: "Formal business language" },
-  { id: "friendly", label: "Friendly", description: "Warm and approachable tone" },
-  { id: "creative", label: "Creative", description: "Musical and artistic language" },
-];
-
-const THEME_FONTS = [
-  { id: "times", label: "Times New Roman", description: "Classic and professional" },
-  { id: "arial", label: "Arial", description: "Clean and modern" },
-  { id: "helvetica", label: "Helvetica", description: "Swiss design classic" },
-  { id: "georgia", label: "Georgia", description: "Elegant serif font" },
-  { id: "roboto", label: "Roboto", description: "Contemporary sans-serif" },
-];
-
-const THEME_COLORS = [
-  "#673ab7", "#ff0066", "#00bcd4", "#4caf50", "#f44336", "#ff9800", "#9c27b0", "#3f51b5"
-];
-
-const CUSTOM_TITLES = [
-  { id: "invoice", label: "Invoice" },
-  { id: "performance-summary", label: "Performance Summary" },
-  { id: "booking-confirmation", label: "Booking Confirmation" },
-  { id: "gig-breakdown", label: "Gig Breakdown" },
-  { id: "set-list-costs", label: "Set List & Costs" },
-  { id: "showtime-receipt", label: "Showtime Receipt" },
-  { id: "custom", label: "Custom Title" },
-];
 
 // Schema for form validation - includes all fields we want to save
 const settingsFormSchema = z.object({

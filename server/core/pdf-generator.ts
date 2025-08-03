@@ -103,70 +103,14 @@ function getThemeBoxColor(theme: string): string {
   }
 }
 
-// Theme-based styling configuration with dramatic differences
-function getThemeStyles(theme: string) {
-  switch (theme) {
-    case 'professional':
-      return {
-        fontFamily: "'Times New Roman', serif",
-        accentColor: '#1e40af', // Professional blue
-        textColor: '#1f2937',    // Dark gray
-        backgroundColor: '#ffffff',
-        headerStyle: 'formal',
-        tone: 'formal',
-        headerLayout: 'traditional',
-        borderStyle: '3px solid #1e40af',
-        tableHeaderBg: '#f8fafc',
-        invoiceTitle: 'INVOICE',
-        formality: 'FORMAL',
-        layout: 'classic'
-      };
-    case 'friendly':
-      return {
-        fontFamily: "'Georgia', serif", 
-        accentColor: '#059669',  // Warm green
-        textColor: '#374151',    // Softer gray
-        backgroundColor: '#fefefe',
-        headerStyle: 'warm',
-        tone: 'casual',
-        headerLayout: 'modern',
-        borderStyle: '4px solid #059669',
-        tableHeaderBg: '#f0fdf4',
-        invoiceTitle: 'Invoice',
-        formality: 'FRIENDLY',
-        layout: 'modern'
-      };
-    case 'musical':
-      return {
-        fontFamily: "'Trebuchet MS', sans-serif",
-        accentColor: '#7c3aed',  // Creative purple
-        textColor: '#6b7280',    // Medium gray
-        backgroundColor: '#faf5ff',
-        headerStyle: 'creative',
-        tone: 'expressive',
-        headerLayout: 'artistic',
-        borderStyle: '5px double #7c3aed',
-        tableHeaderBg: '#faf5ff',
-        invoiceTitle: '🎵 Invoice 🎵',
-        formality: 'CREATIVE',
-        layout: 'artistic'
-      };
-    default:
-      return {
-        fontFamily: "'Times New Roman', serif",
-        accentColor: '#1e40af',
-        textColor: '#1f2937',
-        backgroundColor: '#ffffff',
-        headerStyle: 'formal',
-        tone: 'formal',
-        headerLayout: 'standard',
-        borderStyle: '2px solid #6b7280',
-        tableHeaderBg: '#f9fafb',
-        invoiceTitle: 'Invoice',
-        formality: 'STANDARD',
-        layout: 'classic'
-      };
-  }
+// Simple professional styling only
+function getThemeStyles() {
+  return {
+    fontFamily: "'Times New Roman', serif",
+    accentColor: '#1e40af', // Professional blue
+    textColor: '#1f2937',    // Dark gray
+    backgroundColor: '#ffffff'
+  };
 }
 
 function generateContractHTML(
@@ -477,49 +421,8 @@ function generateInvoiceHTML(
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 40px; width: auto;" alt="MusoBuddy Logo" />` : '';
   
-  // Theme-based styling for invoices with dramatic differences
-  const theme = (invoice as any).invoiceTheme || 'professional';
-  const themeStyles = getThemeStyles(theme);
-  
-  // Generate theme-specific content and layouts
-  function getThemeSpecificContent() {
-    switch (theme) {
-      case 'professional':
-        return {
-          headerClass: 'professional-header',
-          billingTitle: 'BILLING INFORMATION',
-          itemsTableClass: 'formal-table',
-          footerNote: 'This invoice is issued in accordance with professional standards.',
-          pageStyle: 'border-top: 8px solid #1e40af;'
-        };
-      case 'friendly':
-        return {
-          headerClass: 'friendly-header',
-          billingTitle: 'Who\'s Paying What',
-          itemsTableClass: 'friendly-table',
-          footerNote: 'Thanks for choosing us! We really appreciate your business.',
-          pageStyle: 'border-left: 8px solid #059669; border-radius: 8px;'
-        };
-      case 'musical':
-        return {
-          headerClass: 'musical-header',
-          billingTitle: '🎼 Show Me The Money 🎼',
-          itemsTableClass: 'musical-table',
-          footerNote: '🎵 Keep the music playing and the payments flowing! 🎵',
-          pageStyle: 'border: 6px double #7c3aed; border-radius: 15px; background: linear-gradient(45deg, #faf5ff, #ffffff);'
-        };
-      default:
-        return {
-          headerClass: 'standard-header',
-          billingTitle: 'Billing Information',
-          itemsTableClass: 'standard-table',
-          footerNote: 'Standard invoice terms apply.',
-          pageStyle: ''
-        };
-    }
-  }
-  
-  const themeContent = getThemeSpecificContent();
+  // Simple professional styling only
+  const themeStyles = getThemeStyles();
   
   return `
     <!DOCTYPE html>
@@ -535,94 +438,39 @@ function generateInvoiceHTML(
           color: ${themeStyles.textColor};
           line-height: 1.6;
           background-color: ${themeStyles.backgroundColor};
-          ${themeContent.pageStyle}
         }
-        
-        /* Professional Theme Styling */
-        .professional-header {
+        .header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 40px;
-          border-bottom: 4px solid #1e40af;
+          border-bottom: 3px solid ${themeStyles.accentColor};
           padding-bottom: 20px;
-          background: linear-gradient(135deg, #f8fafc, #ffffff);
-          padding: 20px;
-          margin: -20px -20px 40px -20px;
         }
-        
-        /* Friendly Theme Styling */
-        .friendly-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 40px;
-          border-bottom: 4px solid #059669;
-          border-radius: 12px;
-          padding: 25px;
-          background: linear-gradient(135deg, #f0fdf4, #ffffff);
-          box-shadow: 0 4px 6px rgba(5, 150, 105, 0.1);
-          margin: -20px -20px 40px -20px;
-        }
-        
-        /* Musical Theme Styling */
-        .musical-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 40px;
-          border: 4px double #7c3aed;
-          border-radius: 20px;
-          padding: 30px;
-          background: linear-gradient(135deg, #faf5ff, #f3e8ff, #ffffff);
-          box-shadow: 0 8px 16px rgba(124, 58, 237, 0.15);
-          margin: -20px -20px 40px -20px;
-          position: relative;
-        }
-        .musical-header::before {
-          content: "🎵";
-          position: absolute;
-          top: 10px;
-          left: 20px;
-          font-size: 20px;
-          opacity: 0.3;
-        }
-        .musical-header::after {
-          content: "🎵";
-          position: absolute;
-          bottom: 10px;
-          right: 20px;
-          font-size: 20px;
-          opacity: 0.3;
-        }
-        
         .logo-section {
           display: flex;
           align-items: center;
           gap: 12px;
         }
         .logo {
-          font-size: ${theme === 'musical' ? '36px' : theme === 'friendly' ? '30px' : '28px'};
+          font-size: 32px;
           font-weight: bold;
           color: ${themeStyles.accentColor};
-          ${theme === 'musical' ? 'text-shadow: 2px 2px 4px rgba(124, 58, 237, 0.3);' : ''}
         }
         .invoice-details {
           text-align: right;
         }
         .invoice-number {
-          font-size: ${theme === 'musical' ? '28px' : '24px'};
+          font-size: 24px;
           font-weight: bold;
-          color: ${themeStyles.accentColor};
+          color: #333;
           margin-bottom: 5px;
-          ${theme === 'musical' ? 'text-shadow: 1px 1px 2px rgba(124, 58, 237, 0.2);' : ''}
         }
         .invoice-date {
           color: #666;
           font-size: 14px;
         }
         
-        /* Theme-specific billing sections */
         .billing-section {
           display: flex;
           justify-content: space-between;
@@ -632,90 +480,39 @@ function generateInvoiceHTML(
           width: 45%;
         }
         .billing-info h3 {
-          color: ${themeStyles.accentColor};
+          color: #333;
           margin-bottom: 15px;
-          font-size: ${theme === 'musical' ? '18px' : '16px'};
-          ${theme === 'professional' ? 'text-transform: uppercase; letter-spacing: 1px;' : ''}
-          ${theme === 'musical' ? 'text-shadow: 1px 1px 2px rgba(124, 58, 237, 0.2);' : ''}
+          font-size: 16px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
         .billing-info p {
           margin: 5px 0;
-          color: ${themeStyles.textColor};
+          color: #666;
         }
         .billing-info strong {
-          color: ${themeStyles.accentColor};
+          color: #333;
         }
-        
-        /* Theme-specific table styling */
-        .formal-table {
+        .items-table {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 30px;
-          border: 2px solid #1e40af;
         }
-        .formal-table th {
-          background-color: #f8fafc;
+        .items-table th {
+          background-color: #f8f9fa;
           padding: 15px;
           text-align: left;
-          border-bottom: 2px solid #1e40af;
+          border-bottom: 2px solid #dee2e6;
           font-weight: bold;
-          color: #1e40af;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+          color: #333;
         }
-        .formal-table td {
+        .items-table td {
           padding: 15px;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #dee2e6;
         }
-        
-        .friendly-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 30px;
-          border-radius: 8px;
-          overflow: hidden;
-          box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);
-        }
-        .friendly-table th {
-          background-color: #f0fdf4;
-          padding: 18px;
-          text-align: left;
-          border-bottom: 3px solid #059669;
-          font-weight: bold;
-          color: #059669;
-        }
-        .friendly-table td {
-          padding: 18px;
-          border-bottom: 1px solid #d1fae5;
-        }
-        
-        .musical-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 30px;
-          border: 3px double #7c3aed;
-          border-radius: 12px;
-          overflow: hidden;
-          background: linear-gradient(135deg, #faf5ff, #ffffff);
-        }
-        .musical-table th {
-          background: linear-gradient(135deg, #faf5ff, #f3e8ff);
-          padding: 20px;
-          text-align: left;
-          border-bottom: 3px solid #7c3aed;
-          font-weight: bold;
-          color: #7c3aed;
-          text-shadow: 1px 1px 2px rgba(124, 58, 237, 0.1);
-        }
-        .musical-table td {
-          padding: 20px;
-          border-bottom: 1px solid #e9d5ff;
-        }
-        
         .items-table .amount {
           text-align: right;
           font-weight: bold;
-          color: ${themeStyles.accentColor};
         }
         .total-section {
           text-align: right;
@@ -795,13 +592,13 @@ function generateInvoiceHTML(
       </style>
     </head>
     <body>
-      <div class="${themeContent.headerClass}">
+      <div class="header">
         <div class="logo-section">
           ${logoHtml}
           <div class="logo">${businessName}</div>
         </div>
         <div class="invoice-details">
-          <div class="invoice-number">${themeStyles.invoiceTitle} ${invoice.invoiceNumber}</div>
+          <div class="invoice-number">Invoice ${invoice.invoiceNumber}</div>
           <div class="invoice-date">${new Date(invoice.createdAt || '').toLocaleDateString('en-GB')}</div>
           <div style="margin-top: 10px;">
             <span class="status-badge status-${invoice.status}">${invoice.status}</span>
@@ -811,36 +608,36 @@ function generateInvoiceHTML(
 
       <div class="billing-section">
         <div class="billing-info">
-          <h3>${theme === 'professional' ? 'FROM:' : theme === 'friendly' ? 'From:' : '🎤 From:'}</h3>
+          <h3>From:</h3>
           <p><strong>${businessName}</strong></p>
-          <p style="font-style: italic; color: #666;">${theme === 'professional' ? 'Sole trader trading as' : theme === 'friendly' ? 'Trading as' : '🎵 Performing as'} ${businessName}</p>
+          <p style="font-style: italic; color: #666;">Sole trader trading as ${businessName}</p>
           ${businessAddress ? `<p>${businessAddress}</p>` : ''}
-          ${businessPhone ? `<p>${theme === 'musical' ? '📞 ' : ''}Phone: ${businessPhone}</p>` : ''}
-          ${businessEmail ? `<p>${theme === 'musical' ? '📧 ' : ''}Email: ${businessEmail}</p>` : ''}
-          ${userSettings?.website ? `<p>${theme === 'musical' ? '🌐 ' : ''}Website: ${userSettings.website}</p>` : ''}
+          ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
+          ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
+          ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
         </div>
         <div class="billing-info">
-          <h3>${themeContent.billingTitle}</h3>
+          <h3>Bill To:</h3>
           <p><strong>${invoice.clientName}</strong></p>
           ${invoice.clientAddress ? `<p>${invoice.clientAddress.replace(/\n/g, '<br>')}</p>` : ''}
-          ${(invoice.clientEmail || contract?.clientEmail) ? `<p>${theme === 'musical' ? '📧 ' : ''}${invoice.clientEmail || contract?.clientEmail}</p>` : ''}
-          ${contract?.clientPhone ? `<p>${theme === 'musical' ? '📞 ' : ''}${contract.clientPhone}</p>` : ''}
+          ${(invoice.clientEmail || contract?.clientEmail) ? `<p>${invoice.clientEmail || contract?.clientEmail}</p>` : ''}
+          ${contract?.clientPhone ? `<p>${contract.clientPhone}</p>` : ''}
         </div>
       </div>
 
-      <table class="${themeContent.itemsTableClass}">
+      <table class="items-table">
         <thead>
           <tr>
-            <th>${theme === 'musical' ? '🎵 ' : ''}Description</th>
-            <th>${theme === 'musical' ? '📅 ' : ''}Event Date</th>
-            <th>${theme === 'musical' ? '💰 ' : ''}Performance Fee</th>
-            <th>${theme === 'musical' ? '💸 ' : ''}Deposit Paid</th>
-            <th class="amount">${theme === 'musical' ? '💳 ' : ''}Amount Due</th>
+            <th>Description</th>
+            <th>Event Date</th>
+            <th>Performance Fee</th>
+            <th>Deposit Paid</th>
+            <th class="amount">Amount Due</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>${theme === 'musical' ? '🎼 ' : ''}Music Performance${invoice.venueAddress ? `<br><strong>${theme === 'musical' ? '🏢 ' : ''}Venue:</strong> ${invoice.venueAddress}` : ''}</td>
+            <td>Music Performance${invoice.venueAddress ? `<br><strong>Venue:</strong> ${invoice.venueAddress}` : ''}</td>
             <td>${invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : 'TBD'}</td>
             <td>£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</td>
             <td>£${parseFloat(invoice.depositPaid || '0').toFixed(2)}</td>
@@ -875,24 +672,13 @@ function generateInvoiceHTML(
       </div>
 
       <div class="terms">
-        <h3>${getThemePaymentTitle(theme)}</h3>
-        <p>${theme === 'professional' ? 'All invoices are to be paid within seven days of receipt.' : 
-             theme === 'friendly' ? 'We\'d appreciate payment within a week - thanks!' : 
-             '🎵 Please pay within 7 days to keep the music flowing! 🎵'}</p>
-        <p>${theme === 'professional' ? 'VAT Status: I am not VAT registered and therefore no VAT is charged.' :
-             theme === 'friendly' ? 'VAT Status: We\'re not VAT registered, so no VAT included.' :
-             '💰 VAT Status: No VAT registration = no VAT charges! 💰'}</p>
+        <h3>Terms & Conditions</h3>
+        <p>${userSettings?.defaultTerms || 'Payment is due within 30 days of the invoice date. Thank you for your business!'}</p>
+        <p style="margin-top: 15px; font-weight: bold; color: #333;">VAT Status: I am not VAT registered and therefore no VAT is charged.</p>
       </div>
 
-      <div style="text-align: center; margin-top: 40px; padding: 20px; 
-                  ${theme === 'musical' ? 'background: linear-gradient(135deg, #faf5ff, #f3e8ff);' : ''}
-                  ${theme === 'friendly' ? 'background: linear-gradient(135deg, #f0fdf4, #ffffff);' : ''}
-                  ${theme === 'professional' ? 'background: linear-gradient(135deg, #f8fafc, #ffffff);' : ''}
-                  border-radius: 8px; color: ${themeStyles.accentColor}; font-size: 12px;">
-        <p>${themeContent.footerNote}</p>
-        <p style="margin-top: 10px; font-style: italic;">
-          ${theme === 'musical' ? '🎵 ' : ''}Powered by MusoBuddy${theme === 'musical' ? ' 🎵' : ''} – ${theme === 'professional' ? 'Professional music business management' : theme === 'friendly' ? 'less admin, more music' : 'keeping the beat in your business!'}
-        </p>
+      <div style="margin-top: 40px; padding: 15px; text-align: center; border-top: 1px solid #dee2e6; color: #999; font-size: 12px;">
+        <p style="margin: 0;">Powered by <strong style="color: #9333ea;">MusoBuddy</strong> – less admin, more music.</p>
       </div>
     </body>
     </html>

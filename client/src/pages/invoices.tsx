@@ -36,7 +36,7 @@ const invoiceFormSchema = z.object({
   performanceDate: z.string().optional(),
   performanceFee: z.string().optional(),
   depositPaid: z.string().optional(),
-  invoiceTheme: z.string().default("professional"), // Add theme selection
+
 });
 
 export default function Invoices() {
@@ -88,7 +88,6 @@ export default function Invoices() {
       performanceDate: "",
       performanceFee: "",
       depositPaid: "",
-      invoiceTheme: "professional",
     },
   });
 
@@ -139,7 +138,6 @@ export default function Invoices() {
                 performanceDate: performanceDate,
                 performanceFee: booking.fee || "",
                 depositPaid: "",
-                invoiceTheme: "professional",
               });
               
               toast({

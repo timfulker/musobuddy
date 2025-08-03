@@ -49,34 +49,13 @@ const contractFormSchema = z.object({
   enquiryId: z.number().optional(),
   status: z.string().default("draft"),
   
-  // Theme selection for contract styling
-  contractTheme: z.string().default("professional"),
+
   // PHASE 2: Automated reminders (removed for manual-only phase 1)
   // reminderEnabled: z.boolean().default(false),
   // reminderDays: z.number().min(1).max(30).default(3),
 });
 
-// Theme options for contract styling
-const CONTRACT_THEMES = [
-  { 
-    id: "professional", 
-    label: "Professional & Formal", 
-    description: "Business-like, respectful, structured. Perfect for corporate events, agencies, and high-end weddings.",
-    preview: "/api/theme-preview-static/professional"
-  },
-  { 
-    id: "friendly", 
-    label: "Friendly & Informal", 
-    description: "Warm, personal, chatty. Great for smaller weddings, birthday parties, and return clients.",
-    preview: "/api/theme-preview-static/friendly"
-  },
-  { 
-    id: "musical", 
-    label: "Musical & Creative", 
-    description: "Quirky, musician-branded, expressive. Ideal for fellow musicians, open mic nights, and festivals.",
-    preview: "/api/theme-preview-static/musical"
-  }
-];
+
 
 export default function Contracts() {
   const [searchQuery, setSearchQuery] = useState("");
