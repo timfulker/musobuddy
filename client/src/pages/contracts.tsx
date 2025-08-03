@@ -48,7 +48,6 @@ const contractFormSchema = z.object({
   clientFillableFields: z.array(z.string()).optional(),
   enquiryId: z.number().optional(),
   status: z.string().default("draft"),
-  contractTheme: z.enum(["professional", "friendly", "musical"]).default("professional"),
   
 
   // PHASE 2: Automated reminders (removed for manual-only phase 1)
@@ -871,29 +870,7 @@ export default function Contracts() {
                               </FormItem>
                             )}
                           />
-                          <FormField
-                            control={form.control}
-                            name="contractTheme"
-                            render={({ field }) => (
-                              <FormItem className="space-y-2">
-                                <FormLabel className="text-gray-700 font-medium">Contract Style</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select style" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="professional">Professional</SelectItem>
-                                    <SelectItem value="friendly">Friendly</SelectItem>
-                                    <SelectItem value="musical">Musical</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <p className="text-sm text-gray-600">Choose the tone and style for your contract</p>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
