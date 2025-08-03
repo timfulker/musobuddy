@@ -2459,10 +2459,10 @@ export async function registerRoutes(app: Express) {
         userId: userId
       });
       
-      // Validate required fields
-      if (!req.body.clientName || !req.body.issueDate || !req.body.dueDate) {
+      // Validate required fields based on actual schema
+      if (!req.body.clientName || !req.body.amount || !req.body.dueDate) {
         return res.status(400).json({ 
-          error: 'Missing required fields: clientName, issueDate, and dueDate are required' 
+          error: 'Missing required fields: clientName, amount, and dueDate are required' 
         });
       }
 
@@ -2473,19 +2473,18 @@ export async function registerRoutes(app: Express) {
       const invoiceData = {
         userId: userId,
         invoiceNumber,
+        contractId: req.body.contractId || null,
         clientName: req.body.clientName,
         clientEmail: req.body.clientEmail || null,
+        ccEmail: req.body.ccEmail || null,
         clientAddress: req.body.clientAddress || null,
-        clientPhone: req.body.clientPhone || null,
-        issueDate: req.body.issueDate,
-        dueDate: req.body.dueDate,
-        items: req.body.items || [],
-        subtotal: req.body.subtotal || "0.00",
-        tax: req.body.tax || "0.00",
-        total: req.body.total || "0.00",
-        notes: req.body.notes || null,
-        status: req.body.status || 'draft',
-        enquiryId: req.body.enquiryId || null
+        venueAddress: req.body.venueAddress || null,
+        eventDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
+        fee: req.body.performanceFee || req.body.fee || null,
+        depositPaid: req.body.depositPaid || "0",
+        amount: req.body.amount,
+        dueDate: new Date(req.body.dueDate),
+        status: req.body.status || 'draft'
       };
       
       const newInvoice = await storage.createInvoice(invoiceData);
