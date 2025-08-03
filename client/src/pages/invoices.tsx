@@ -1591,10 +1591,9 @@ export default function Invoices() {
                       </Button>
                       <Button 
                         size="sm" 
-                        variant="outline" 
-                        className="text-xs whitespace-nowrap min-w-[60px]" 
+                        className="text-xs whitespace-nowrap text-white min-w-[60px]" 
                         style={{ 
-                          color: colors.primary, 
+                          backgroundColor: colors.primary, 
                           borderColor: colors.primary 
                         }}
                         onClick={() => handleEditInvoice(invoice)}
