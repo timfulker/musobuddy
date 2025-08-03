@@ -55,7 +55,8 @@ export default function Invoices() {
   const [customMessage, setCustomMessage] = useState("");
   const { isDesktop } = useResponsive();
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { theme } = useTheme();
+  const colors = theme.colors;
   
 
 
