@@ -64,8 +64,8 @@ export const themes: Record<ThemeName, Theme> = {
     name: 'Forest Green',
     description: 'Natural green theme for outdoor musicians',
     colors: {
-      primary: '#16a34a',
-      secondary: '#15803d',
+      primary: '#34d399',
+      secondary: '#10b981',
       accent: '#22c55e',
       background: '#f0fdf4',
       surface: '#ffffff',
@@ -82,8 +82,8 @@ export const themes: Record<ThemeName, Theme> = {
     name: 'Clean Pro Audio',
     description: 'Clean industrial theme with professional audio aesthetics',
     colors: {
-      primary: '#e53935',
-      secondary: '#2c2c2c',
+      primary: '#f87171',
+      secondary: '#9ca3af',
       accent: '#ffeb3b',
       background: '#e5e5e5',
       surface: '#fdfdfd',

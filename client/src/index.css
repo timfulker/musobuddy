@@ -138,20 +138,20 @@ body {
 
 .theme-forest-green .bg-primary,
 .theme-forest-green button[class*="bg-primary"] {
-  background-color: #16a34a !important;
+  background-color: #34d399 !important;
 }
 
 .theme-forest-green .text-primary {
-  color: #16a34a !important;
+  color: #34d399 !important;
 }
 
 .theme-clean-pro-audio .bg-primary,
 .theme-clean-pro-audio button[class*="bg-primary"] {
-  background-color: #e53935 !important;
+  background-color: #f87171 !important;
 }
 
 .theme-clean-pro-audio .text-primary {
-  color: #e53935 !important;
+  color: #f87171 !important;
 }
 
 /* Comprehensive theme overrides for all UI elements */
@@ -214,8 +214,8 @@ html.theme-forest-green body,
 }
 
 .theme-clean-pro-audio {
-  --theme-primary: #e53935 !important;
-  --theme-secondary: #2c2c2c !important;
+  --theme-primary: #f87171 !important;
+  --theme-secondary: #9ca3af !important;
   --theme-accent: #ffeb3b !important;
   --theme-background: #e5e5e5 !important;
   --theme-surface: #fdfdfd !important;

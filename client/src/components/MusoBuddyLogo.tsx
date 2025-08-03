@@ -35,13 +35,13 @@ export function MusoBuddyLogo({
         };
       case 'forest-green':
         return {
-          primary: '#10b981',
-          secondary: '#059669'
+          primary: '#34d399',
+          secondary: '#10b981'
         };
       case 'clean-pro-audio':
         return {
-          primary: '#6b7280',
-          secondary: '#ef4444'
+          primary: '#9ca3af',
+          secondary: '#f87171'
         };
       default:
         return {
