@@ -2748,11 +2748,11 @@ export async function registerRoutes(app: Express) {
         ccEmail: req.body.ccEmail || null,
         venueAddress: req.body.venueAddress || null,
         amount: req.body.amount || "0.00",
-        dueDate: req.body.dueDate,
-        performanceDate: req.body.performanceDate || null,
+        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+        performanceDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
         performanceFee: req.body.performanceFee || null,
         depositPaid: req.body.depositPaid || "0.00",
-        eventDate: req.body.performanceDate || null, // Map performanceDate to eventDate
+        eventDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null, // Map performanceDate to eventDate
         fee: req.body.performanceFee || req.body.amount || "0.00",
         invoiceTheme: req.body.invoiceTheme || "professional",
         contractId: req.body.contractId || null,
