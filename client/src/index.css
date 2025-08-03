@@ -91,30 +91,21 @@
   --theme-gradient-end: #4169e1;
 }
 
-/* Apply theme to body and typography */
+/* Apply theme to body and typography - SAFE OVERRIDES ONLY */
 body {
-  background-color: var(--theme-background) !important;
-  color: var(--theme-text) !important;
-  font-family: var(--theme-font-body) !important;
+  font-family: var(--theme-font-body);
   transition: background-color 0.3s ease, color 0.3s ease, font-family 0.3s ease;
 }
 
-/* Force theme application for specific layouts */
-.layout-consistent,
-.main-content {
+/* Theme application for specific tagged elements only */
+.theme-background {
   background-color: var(--theme-background) !important;
   color: var(--theme-text) !important;
 }
 
-/* Override Tailwind background classes */
+/* Safe background overrides - only apply to main containers */
 .bg-background {
   background-color: var(--theme-background) !important;
-}
-
-/* Only override bg-white for main page backgrounds, not component backgrounds */
-body > div.min-h-screen .bg-white:not(.bg-white *),
-.layout-consistent .bg-white:not(.bg-white *) {
-  background-color: var(--theme-surface) !important;
 }
 
 .text-foreground {
