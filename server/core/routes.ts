@@ -2456,6 +2456,30 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // PDF Status Checker for Background AI Generation
+  app.get('/api/contracts/:id/pdf-status', async (req, res) => {
+    try {
+      const contractId = req.params.id;
+      const contract = await storage.getContract(contractId);
+      
+      if (!contract) {
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      res.json({
+        contractId,
+        pdfGenerationStatus: contract.pdfGenerationStatus || 'unknown',
+        cloudStorageUrl: contract.cloudStorageUrl || null,
+        pdfError: contract.pdfError || null,
+        lastUpdated: contract.updatedAt || contract.createdAt
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Error checking PDF status:', error);
+      res.status(500).json({ error: 'Failed to check PDF status' });
+    }
+  });
+
   app.get('/debug/openai-only', async (req, res) => {
     try {
       const OpenAI = (await import('openai')).default;
