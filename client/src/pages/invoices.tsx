@@ -1585,19 +1585,6 @@ export default function Invoices() {
                         <RefreshCw className="w-3 h-3 mr-1" />
                         Resend Copy
                       </Button>
-                      <Button 
-                        size="sm" 
-                        className="text-xs whitespace-nowrap min-w-[60px]" 
-                        style={{ 
-                          backgroundColor: colors.primary, 
-                          borderColor: colors.primary,
-                          color: 'white'
-                        }}
-                        onClick={() => handleEditInvoice(invoice)}
-                      >
-                        <Edit className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
                     </>
                   )}
 
