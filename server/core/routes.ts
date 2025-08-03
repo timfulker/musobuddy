@@ -19,19 +19,23 @@ async function generateBackgroundAIPDF(contractId: string, pdfData: any, userId:
     
     console.log(`✅ Background AI PDF completed in ${duration}ms for contract ${contractId}`);
     
-    // Upload to cloud storage
-    const { uploadContractToCloud } = await import('./cloud-storage');
+    // Upload AI PDF directly to cloud storage
+    const { uploadFileToCloudflare } = await import('./cloud-storage');
     const contract = await storage.getContract(contractId);
-    const userSettings = await storage.getUserSettings(userId);
     
     if (contract) {
-      const cloudResult = await uploadContractToCloud(contract, userSettings, pdfBuffer);
+      // Create storage key for AI PDF
+      const timestamp = new Date().toISOString().split('T')[0];
+      const sanitizedContractNumber = contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-');
+      const key = `contracts/${timestamp}/${sanitizedContractNumber}-ai.pdf`;
+      
+      const cloudResult = await uploadFileToCloudflare(key, pdfBuffer, 'application/pdf');
       
       if (cloudResult.success) {
         // Update contract with AI PDF URLs
         await storage.updateContract(contractId, {
           cloudStorageUrl: cloudResult.url,
-          cloudStorageKey: cloudResult.key,
+          cloudStorageKey: key,
           pdfGenerationStatus: 'completed'
         });
         
@@ -2090,6 +2094,57 @@ export async function registerRoutes(app: Express) {
         console.log('⚠️ Skipping PDF generation as requested');
         return res.json(newContract);
       }
+      
+      // TEMPORARY: Skip AI PDF during creation to prevent timeouts, generate in background
+      console.log('📄 Contract created successfully, starting background AI PDF generation...');
+      
+      // Start background AI PDF generation immediately (don't await)
+      const userSettings = await storage.getUserSettings(req.session.userId);
+      const pdfData = {
+        type: 'contract' as const,
+        client: newContract.clientName || 'Unknown Client',
+        eventDate: newContract.eventDate || new Date().toISOString(),
+        venue: newContract.venue || 'TBD',
+        fee: newContract.fee || '0.00',
+        theme: (newContract.contractTheme as 'professional' | 'friendly' | 'musical') || 'professional',
+        sections: [
+          {
+            title: 'Event Details',
+            content: `Date: ${new Date(newContract.eventDate).toLocaleDateString('en-GB')}\nTime: ${newContract.eventTime || 'TBD'} - ${newContract.eventEndTime || 'TBD'}\nVenue: ${newContract.venue || 'TBD'}\nAddress: ${newContract.venueAddress || 'TBD'}`
+          },
+          {
+            title: 'Performance Fee',
+            content: `Performance Fee: £${newContract.fee}\nDeposit: £${newContract.deposit || '0.00'}\nBalance Due: £${(parseFloat(newContract.fee) - parseFloat(newContract.deposit || '0')).toFixed(2)}`
+          },
+          {
+            title: 'Payment Terms',
+            content: newContract.paymentInstructions || 'Payment due within 30 days of performance date. Payment methods: Bank transfer or cash on the day.'
+          },
+          {
+            title: 'Equipment & Requirements',
+            content: newContract.equipmentRequirements || 'Standard performance setup required. Power supply: 2x 13A sockets. Space required: 3m x 2m minimum.'
+          },
+          {
+            title: 'Special Requirements', 
+            content: newContract.specialRequirements || 'No special requirements specified.'
+          }
+        ],
+        branding: {
+          businessName: userSettings?.businessName || 'MusoBuddy User',
+          footerText: `Contract ${newContract.contractNumber} | Generated ${new Date().toLocaleDateString('en-GB')}`
+        }
+      };
+      
+      generateBackgroundAIPDF(newContract.id, pdfData, req.session.userId)
+        .catch(bgError => {
+          console.error('❌ Background AI PDF generation failed:', bgError.message);
+        });
+      
+      return res.json({
+        ...newContract,
+        pdfGenerationStatus: 'processing',
+        pdfMessage: 'Contract created successfully. AI-themed PDF is being generated in the background.'
+      });
       
       // ENHANCED AI PDF GENERATION WITH COMPREHENSIVE ERROR HANDLING
       try {
