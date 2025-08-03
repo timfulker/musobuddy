@@ -238,6 +238,9 @@ export const contracts = pgTable("contracts", {
   clientSignature: text("client_signature"), // Client's actual signature data
   clientIpAddress: varchar("client_ip_address"), // IP address when client signed
   
+  // Theme selection for contract styling
+  contractTheme: varchar("contract_theme").default("professional"), // professional, friendly, musical
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

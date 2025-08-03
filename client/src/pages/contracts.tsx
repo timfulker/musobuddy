@@ -1094,9 +1094,10 @@ export default function Contracts() {
                                     }`}>
                                       <input
                                         type="radio"
-                                        {...field}
+                                        name="contractTheme"
                                         value={theme.id}
                                         checked={field.value === theme.id}
+                                        onChange={(e) => field.onChange(e.target.value)}
                                         className="sr-only"
                                       />
                                       
