@@ -41,7 +41,7 @@ export class MailgunService {
       const messageData: any = {
         from: `MusoBuddy <noreply@${domain}>`,
         to: contract.clientEmail,
-        subject: subject || `Contract ready for signing - ${contract.contractNumber}`,
+        subject: subject || this.getThemeEmailContent((contract as any).contractTheme || 'professional', contract.clientName).subject + ` - ${contract.contractNumber}`,
         html: this.generateContractEmailHTML(contract, userSettings, signingUrl, customMessage),
         attachment: [{
           data: pdfBuffer,
@@ -710,12 +710,16 @@ export class MailgunService {
     console.log('📧 Contract email signing URL:', finalSigningUrl);
     console.log('📧 Contract signing page URL from DB:', contract.signingPageUrl);
     
+    // Get theme-specific email content
+    const theme = (contract as any).contractTheme || 'professional';
+    const themeContent = this.getThemeEmailContent(theme, contract.clientName);
+    
     return `
       <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-        <h2>Contract Ready for Signing</h2>
+        <h2 style="color: ${themeContent.accentColor};">${themeContent.subject}</h2>
         <p>Dear ${contract.clientName},</p>
-        ${customMessage ? `<p>${customMessage}</p>` : ''}
-        <p>Your contract is ready for review and signing.</p>
+        ${customMessage ? `<p>${customMessage}</p>` : themeContent.introduction}
+        <p>${themeContent.body}</p>
         
         <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
           <h3>Event Details:</h3>
@@ -726,17 +730,59 @@ export class MailgunService {
         </div>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${finalSigningUrl}" style="background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            Review and Sign Contract
+          <a href="${finalSigningUrl}" style="background: ${themeContent.accentColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            ${themeContent.buttonText}
           </a>
         </div>
         
         <p><strong>Note:</strong> A PDF copy of the contract is attached to this email for your records.</p>
         
-        <p>Best regards,<br>
+        <p>${themeContent.signature}<br>
         ${userSettings?.businessName || 'MusoBuddy'}</p>
       </div>
     `;
+  }
+
+  // Theme-specific email content generator
+  getThemeEmailContent(theme: string, clientName: string) {
+    switch (theme) {
+      case 'professional':
+        return {
+          subject: 'Performance Agreement - Ready for Review',
+          introduction: '<p>I trust this email finds you well.</p>',
+          body: 'Please find attached the formal performance agreement for your upcoming event. I have prepared this document in accordance with industry standards and best practices.',
+          buttonText: 'Review Agreement',
+          signature: 'Kind regards',
+          accentColor: '#1e40af'
+        };
+      case 'friendly':
+        return {
+          subject: 'Your Music Contract is Ready! 🎵',
+          introduction: '<p>Hope you\'re having a great day!</p>',
+          body: 'I\'m excited about your upcoming event and have prepared your music contract. Everything looks fantastic and I can\'t wait to perform for you and your guests!',
+          buttonText: 'Check Out Your Contract',
+          signature: 'Looking forward to working with you',
+          accentColor: '#059669'
+        };
+      case 'musical':
+        return {
+          subject: '🎵 Contract Time - Let\'s Make Music Together! 🎵',
+          introduction: '<p>Hey there, fellow music lover!</p>',
+          body: 'Your gig contract is ready to rock! I\'ve put together all the details for our musical collaboration. This is going to be an awesome performance!',
+          buttonText: '🎵 Sign & Let\'s Rock! 🎵',
+          signature: 'Keep on groovin\'',
+          accentColor: '#7c3aed'
+        };
+      default:
+        return {
+          subject: 'Contract Ready for Signing',
+          introduction: '',
+          body: 'Your contract is ready for review and signing.',
+          buttonText: 'Review and Sign Contract',
+          signature: 'Best regards',
+          accentColor: '#6366f1'
+        };
+    }
   }
 
   generateInvoiceEmailHTML(invoice: any, userSettings: any, pdfUrl: string) {
