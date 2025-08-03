@@ -1269,13 +1269,17 @@ html body #root .sidebar nav a.bg-primary * {
   color: inherit !important;
 }
 
-/* ACTIVE items - WHITE text ONLY for purple and midnight blue themes */
+/* ACTIVE items - WHITE text ONLY for purple and midnight blue themes - MAXIMUM SPECIFICITY */
 html body.theme-purple nav a.bg-primary,
 html body.theme-purple .sidebar nav a.bg-primary,
 html body.theme-midnight-blue nav a.bg-primary,
 html body.theme-midnight-blue .sidebar nav a.bg-primary,
 html body [class*="theme-purple"] nav a.bg-primary,
-html body [class*="theme-midnight"] nav a.bg-primary {
+html body [class*="theme-midnight"] nav a.bg-primary,
+html body.theme-purple nav a[style*="background-color"],
+html body.theme-purple .sidebar nav a[style*="background-color"],
+html body.theme-midnight-blue nav a[style*="background-color"],
+html body.theme-midnight-blue .sidebar nav a[style*="background-color"] {
   color: white !important;
 }
 
@@ -1284,7 +1288,11 @@ html body.theme-purple .sidebar nav a.bg-primary *,
 html body.theme-midnight-blue nav a.bg-primary *,
 html body.theme-midnight-blue .sidebar nav a.bg-primary *,
 html body [class*="theme-purple"] nav a.bg-primary *,
-html body [class*="theme-midnight"] nav a.bg-primary * {
+html body [class*="theme-midnight"] nav a.bg-primary *,
+html body.theme-purple nav a[style*="background-color"] *,
+html body.theme-purple .sidebar nav a[style*="background-color"] *,
+html body.theme-midnight-blue nav a[style*="background-color"] *,
+html body.theme-midnight-blue .sidebar nav a[style*="background-color"] * {
   color: inherit !important;
 }
 
@@ -1297,6 +1305,30 @@ html body .sidebar nav a:not(.bg-primary):hover {
 html body nav a:not(.bg-primary):hover *,
 html body .sidebar nav a:not(.bg-primary):hover * {
   color: inherit !important;
+}
+
+/* NUCLEAR OPTION: Override inline styles for purple and midnight blue themes */
+/* Use attribute selectors to target elements with inline background styles */
+html[class*="theme-purple"] nav a[style*="var(--theme-primary)"],
+html[class*="theme-purple"] .sidebar nav a[style*="var(--theme-primary)"],
+html[class*="theme-midnight"] nav a[style*="var(--theme-primary)"],
+html[class*="theme-midnight"] .sidebar nav a[style*="var(--theme-primary)"],
+.theme-purple nav a[style*="var(--theme-primary)"],
+.theme-purple .sidebar nav a[style*="var(--theme-primary)"],
+.theme-midnight-blue nav a[style*="var(--theme-primary)"],
+.theme-midnight-blue .sidebar nav a[style*="var(--theme-primary)"] {
+  color: white !important;
+}
+
+html[class*="theme-purple"] nav a[style*="var(--theme-primary)"] *,
+html[class*="theme-purple"] .sidebar nav a[style*="var(--theme-primary)"] *,
+html[class*="theme-midnight"] nav a[style*="var(--theme-primary)"] *,
+html[class*="theme-midnight"] .sidebar nav a[style*="var(--theme-primary)"] *,
+.theme-purple nav a[style*="var(--theme-primary)"] *,
+.theme-purple .sidebar nav a[style*="var(--theme-primary)"] *,
+.theme-midnight-blue nav a[style*="var(--theme-primary)"] *,
+.theme-midnight-blue .sidebar nav a[style*="var(--theme-primary)"] * {
+  color: white !important;
 }
 
 /* Fix mobile navigation breadcrumb for dark themes */
