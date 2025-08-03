@@ -916,7 +916,7 @@ export default function Invoices() {
                   Create Invoice
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editAndResendMode ? "Edit Invoice & Resend" : editingInvoice ? "Edit Invoice" : "Create New Invoice"}
