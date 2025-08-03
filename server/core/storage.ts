@@ -282,7 +282,38 @@ export class Storage {
 
   // Contracts
   async getContracts(userId: string) {
-    return await db.select().from(contracts)
+    return await db.select({
+      id: contracts.id,
+      userId: contracts.userId,
+      contractNumber: contracts.contractNumber,
+      clientName: contracts.clientName,
+      clientEmail: contracts.clientEmail,
+      clientAddress: contracts.clientAddress,
+      clientPhone: contracts.clientPhone,
+      venue: contracts.venue,
+      venueAddress: contracts.venueAddress,
+      eventDate: contracts.eventDate,
+      eventTime: contracts.eventTime,
+      eventEndTime: contracts.eventEndTime,
+      fee: contracts.fee,
+      deposit: contracts.deposit,
+      paymentInstructions: contracts.paymentInstructions,
+      equipmentRequirements: contracts.equipmentRequirements,
+      specialRequirements: contracts.specialRequirements,
+      clientFillableFields: contracts.clientFillableFields,
+      status: contracts.status,
+      signedAt: contracts.signedAt,
+      cloudStorageUrl: contracts.cloudStorageUrl,
+      cloudStorageKey: contracts.cloudStorageKey,
+      signingPageUrl: contracts.signingPageUrl,
+      signingPageKey: contracts.signingPageKey,
+      signingUrlCreatedAt: contracts.signingUrlCreatedAt,
+      clientSignature: contracts.clientSignature,
+      clientIpAddress: contracts.clientIpAddress,
+      enquiryId: contracts.enquiryId,
+      createdAt: contracts.createdAt,
+      updatedAt: contracts.updatedAt
+    }).from(contracts)
       .where(eq(contracts.userId, userId))
       .orderBy(desc(contracts.createdAt));
   }
@@ -326,7 +357,6 @@ export class Storage {
             clientSignature: contractData.clientSignature || null,
             clientIpAddress: contractData.clientIpAddress || null,
             enquiryId: contractData.enquiryId || null,
-            contractTheme: contractData.contractTheme || 'professional',
             createdAt: new Date(),
             updatedAt: new Date()
           };
