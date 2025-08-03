@@ -2529,6 +2529,42 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Update invoice
+  app.patch('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const invoiceId = parseInt(req.params.id);
+      if (!invoiceId) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      // Check if invoice belongs to user
+      const existingInvoice = await storage.getInvoices(userId);
+      const invoiceToUpdate = existingInvoice.find(inv => inv.id === invoiceId);
+      
+      if (!invoiceToUpdate) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      console.log(`📝 Updating invoice #${invoiceId} for user ${userId}`, req.body);
+      
+      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body);
+      console.log(`✅ Updated invoice #${invoiceId}`);
+      
+      res.json(updatedInvoice);
+    } catch (error: any) {
+      console.error('❌ Update invoice error:', error);
+      res.status(500).json({ 
+        error: 'Failed to update invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // Delete invoice
   app.delete('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
     try {
