@@ -343,6 +343,14 @@ function generateInvoiceHTML(
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
+  // Format business address from user settings components (same as contract template)
+  const addressParts = [];
+  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
+  if (userSettings?.city) addressParts.push(userSettings.city);
+  if (userSettings?.county) addressParts.push(userSettings.county);
+  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
+  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
+  
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 40px; width: auto;" alt="MusoBuddy Logo" />` : '';
@@ -532,7 +540,7 @@ function generateInvoiceHTML(
           <h3>From:</h3>
           <p><strong>${businessName}</strong></p>
           <p style="font-style: italic; color: #666;">Sole trader trading as ${businessName}</p>
-          ${userSettings?.businessAddress ? `<p>${userSettings?.businessAddress.replace(/\n/g, '<br>')}</p>` : ''}
+          ${businessAddress ? `<p>${businessAddress}</p>` : ''}
           ${userSettings?.phone ? `<p>Phone: ${userSettings?.phone}</p>` : ''}
           ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
           ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
