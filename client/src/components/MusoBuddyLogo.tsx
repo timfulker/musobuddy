@@ -121,31 +121,29 @@ export function MusoBuddyLogo({
               stroke="#e5e7eb" 
               strokeWidth="0.5"
             />
-            {/* Metronome arm */}
-            <line 
-              x1="12" 
-              y1="6" 
-              x2="12" 
-              y2="18" 
-              stroke={colors.primary}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              style={{
-                transformOrigin: '12px 18px',
-                animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
-              }}
-            />
-            {/* Weight on arm */}
-            <circle 
-              cx="12" 
-              cy="10" 
-              r="2" 
-              fill={colors.primary}
-              style={{
-                transformOrigin: '12px 18px',
-                animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
-              }}
-            />
+            {/* Animated group for arm and weight */}
+            <g style={{
+              transformOrigin: '12px 18px',
+              animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+            }}>
+              {/* Metronome arm */}
+              <line 
+                x1="12" 
+                y1="6" 
+                x2="12" 
+                y2="18" 
+                stroke={colors.primary}
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              {/* Weight on arm */}
+              <circle 
+                cx="12" 
+                cy="10" 
+                r="2.5" 
+                fill={colors.primary}
+              />
+            </g>
           </svg>
         </div>
       </div>
@@ -174,31 +172,29 @@ export function MusoBuddyLogo({
             stroke="#e5e7eb" 
             strokeWidth="0.5"
           />
-          {/* Metronome arm */}
-          <line 
-            x1="12" 
-            y1="6" 
-            x2="12" 
-            y2="18" 
-            stroke={colors.primary}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            style={{
-              transformOrigin: '12px 18px',
-              animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
-            }}
-          />
-          {/* Weight on arm */}
-          <circle 
-            cx="12" 
-            cy="10" 
-            r="2" 
-            fill={colors.primary}
-            style={{
-              transformOrigin: '12px 18px',
-              animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
-            }}
-          />
+          {/* Animated group for arm and weight */}
+          <g style={{
+            transformOrigin: '12px 18px',
+            animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+          }}>
+            {/* Metronome arm */}
+            <line 
+              x1="12" 
+              y1="6" 
+              x2="12" 
+              y2="18" 
+              stroke={colors.primary}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            {/* Weight on arm */}
+            <circle 
+              cx="12" 
+              cy="10" 
+              r="2.5" 
+              fill={colors.primary}
+            />
+          </g>
         </svg>
       </div>
       <div className="text-left">
