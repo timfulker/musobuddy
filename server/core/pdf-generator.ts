@@ -10,7 +10,7 @@ export async function generateContractPDF(
     signatureName?: string;
     clientIpAddress?: string;
   },
-  useAI: boolean = true
+  useAI: boolean = false
 ): Promise<Buffer> {
   console.log('Starting contract PDF generation for:', contract.contractNumber);
   

@@ -168,7 +168,7 @@ export function contractToAIFormat(contract: any, userSettings: any, theme: 'pro
     },
     {
       title: "Event Details", 
-      content: `Client: ${contract.clientName}\nEmail: ${contract.clientEmail}\nAddress: ${contract.clientAddress || ''}\nPhone: ${contract.clientPhone || ''}\nDate: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}\nTime: ${contract.startTime} - ${contract.endTime}\nVenue: ${contract.venue}`
+      content: `Client: ${contract.clientName}\nEmail: ${contract.clientEmail}\nAddress: ${contract.clientAddress || ''}\nPhone: ${contract.clientPhone || ''}\nDate: ${new Date(contract.eventDate).toLocaleDateString('en-GB')}\nTime: ${contract.eventTime} - ${contract.eventEndTime}\nVenue: ${contract.venue}`
     },
     {
       title: "Performance Fee",
