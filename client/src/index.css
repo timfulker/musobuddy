@@ -1177,3 +1177,45 @@ html [class*="theme-"] .sidebar .bg-primary span,
 html body [class*="theme-"] .sidebar .bg-primary span {
   color: white !important;
 }
+
+/* COMPREHENSIVE FIX: All primary buttons need white text on midnight blue theme */
+.theme-midnight-blue button,
+.theme-midnight-blue .bg-primary,
+.theme-midnight-blue [class*="bg-primary"],
+.theme-midnight-blue button[class*="primary"],
+.theme-midnight-blue a[class*="primary"] {
+  color: white !important;
+}
+
+/* Force white text on ALL children of primary elements in midnight blue */
+.theme-midnight-blue button *,
+.theme-midnight-blue .bg-primary *,
+.theme-midnight-blue [class*="bg-primary"] *,
+.theme-midnight-blue button[class*="primary"] *,
+.theme-midnight-blue a[class*="primary"] * {
+  color: white !important;
+}
+
+/* Specific targeting for common UI patterns */
+.theme-midnight-blue .bg-primary span,
+.theme-midnight-blue .bg-primary div,
+.theme-midnight-blue .bg-primary p,
+.theme-midnight-blue button span,
+.theme-midnight-blue button div,
+.theme-midnight-blue button p {
+  color: white !important;
+}
+
+/* Force midnight blue theme buttons to have proper styling */
+.theme-midnight-blue button:not(.bg-secondary):not(.bg-gray-500):not(.bg-green-500):not(.bg-red-500):not(.bg-yellow-500) {
+  background-color: #191970 !important;
+  color: white !important;
+}
+
+/* Ensure all interactive elements work properly */
+.theme-midnight-blue .bg-primary,
+.theme-midnight-blue button[type="submit"],
+.theme-midnight-blue button[type="button"]:not(.bg-secondary) {
+  background-color: #191970 !important;
+  color: white !important;
+}
