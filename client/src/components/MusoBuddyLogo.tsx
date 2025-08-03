@@ -21,38 +21,32 @@ export function MusoBuddyLogo({
       case 'purple':
         return {
           primary: '#8b5cf6',
-          secondary: '#a855f7',
-          text: '#8b5cf6'
+          secondary: '#a855f7'
         };
       case 'midnight-blue':
         return {
           primary: '#191970',
-          secondary: '#1e3a8a',
-          text: '#191970'
+          secondary: '#1e3a8a'
         };
       case 'ocean-blue':
         return {
           primary: '#0ea5e9',
-          secondary: '#0284c7',
-          text: '#0ea5e9'
+          secondary: '#0284c7'
         };
       case 'forest-green':
         return {
           primary: '#10b981',
-          secondary: '#059669',
-          text: '#10b981'
+          secondary: '#059669'
         };
       case 'clean-pro-audio':
         return {
           primary: '#6b7280',
-          secondary: '#ef4444',
-          text: '#374151'
+          secondary: '#ef4444'
         };
       default:
         return {
           primary: '#8b5cf6',
-          secondary: '#a855f7',
-          text: '#8b5cf6'
+          secondary: '#a855f7'
         };
     }
   };
@@ -62,155 +56,135 @@ export function MusoBuddyLogo({
   // Size configurations
   const sizeConfig = {
     small: {
-      container: 'gap-2',
-      icon: 'w-12 h-12',
-      iconRadius: 'rounded-lg',
-      bodySize: 'w-6 h-8',
-      armSize: 'w-0.5 h-4',
-      armTop: 'top-1',
-      textSize: 'text-lg',
-      taglineSize: 'text-[10px]',
-      taglineMargin: 'mt-0.5'
+      icon: 40,
+      iconRadius: 8,
+      metronomeBody: { width: 14, height: 22 },
+      metronomeArm: { width: 1.5, height: 14, top: 4 },
+      text: 18,
+      tagline: 10,
+      gap: 10
     },
     medium: {
-      container: 'gap-3',
-      icon: 'w-16 h-16',
-      iconRadius: 'rounded-xl',
-      bodySize: 'w-5 h-8',
-      armSize: 'w-0.5 h-5',
-      armTop: 'top-1.5',
-      textSize: 'text-2xl',
-      taglineSize: 'text-xs',
-      taglineMargin: 'mt-1'
+      icon: 60,
+      iconRadius: 12,
+      metronomeBody: { width: 20, height: 32 },
+      metronomeArm: { width: 2, height: 20, top: 6 },
+      text: 24,
+      tagline: 12,
+      gap: 15
     },
     large: {
-      container: 'gap-5',
-      icon: 'w-20 h-20',
-      iconRadius: 'rounded-2xl',
-      bodySize: 'w-7 h-11',
-      armSize: 'w-1 h-7',
-      armTop: 'top-2',
-      textSize: 'text-4xl',
-      taglineSize: 'text-sm',
-      taglineMargin: 'mt-1'
+      icon: 80,
+      iconRadius: 20,
+      metronomeBody: { width: 28, height: 45 },
+      metronomeArm: { width: 3, height: 28, top: 8 },
+      text: 36,
+      tagline: 14,
+      gap: 20
     }
   };
 
   const config = sizeConfig[size];
 
+  // Animation keyframes
+  const tickAnimation = `
+    @keyframes tick {
+      0% { transform: translateX(-50%) rotate(-18deg); }
+      100% { transform: translateX(-50%) rotate(18deg); }
+    }
+  `;
+
+  const MetronomeIcon = () => (
+    <div
+      style={{
+        width: config.icon,
+        height: config.icon,
+        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+        borderRadius: config.iconRadius,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        boxShadow: `0 ${config.icon * 0.1}px ${config.icon * 0.3}px rgba(139, 92, 246, 0.3)`,
+        flexShrink: 0
+      }}
+    >
+      {/* Metronome Body */}
+      <div
+        style={{
+          width: config.metronomeBody.width,
+          height: config.metronomeBody.height,
+          background: 'white',
+          clipPath: 'polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%)',
+          position: 'relative'
+        }}
+      >
+        {/* Metronome Arm */}
+        <div
+          style={{
+            position: 'absolute',
+            top: config.metronomeArm.top,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: config.metronomeArm.width,
+            height: config.metronomeArm.height,
+            background: colors.primary,
+            transformOrigin: 'bottom',
+            animation: 'tick 1.2s ease-in-out infinite alternate',
+            borderRadius: 1
+          }}
+        />
+      </div>
+      <style dangerouslySetInnerHTML={{ __html: tickAnimation }} />
+    </div>
+  );
+
   if (iconOnly) {
     return (
       <div className={className}>
-        <div 
-          className={`${config.icon} ${config.iconRadius} flex items-center justify-center relative shadow-lg`}
-          style={{ 
-            background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
-          }}
-        >
-          {/* Simple metronome icon with SVG-like approach */}
-          <svg 
-            width="24" 
-            height="28" 
-            viewBox="0 0 24 28" 
-            className="fill-white drop-shadow-sm"
-          >
-            {/* Metronome body - pyramid shape */}
-            <polygon 
-              points="8,2 16,2 20,26 4,26" 
-              fill="white" 
-              stroke="#e5e7eb" 
-              strokeWidth="0.5"
-            />
-            {/* Animated group for arm and weight */}
-            <g style={{
-              transformOrigin: '12px 18px',
-              animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
-            }}>
-              {/* Metronome arm */}
-              <line 
-                x1="12" 
-                y1="6" 
-                x2="12" 
-                y2="18" 
-                stroke={colors.primary}
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              {/* Weight on arm */}
-              <circle 
-                cx="12" 
-                cy="10" 
-                r="2.5" 
-                fill={colors.primary}
-              />
-            </g>
-          </svg>
-        </div>
+        <MetronomeIcon />
       </div>
     );
   }
 
   return (
-    <div className={`inline-flex items-center ${config.container} ${className}`}>
-      <div 
-        className={`${config.icon} ${config.iconRadius} flex items-center justify-center relative shadow-lg`}
-        style={{ 
-          background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
-        }}
-      >
-        {/* Simple metronome icon with SVG-like approach */}
-        <svg 
-          width={size === 'small' ? '24' : size === 'medium' ? '32' : '40'} 
-          height={size === 'small' ? '28' : size === 'medium' ? '36' : '44'} 
-          viewBox="0 0 24 28" 
-          className="fill-white drop-shadow-sm"
-        >
-          {/* Metronome body - pyramid shape */}
-          <polygon 
-            points="8,2 16,2 20,26 4,26" 
-            fill="white" 
-            stroke="#e5e7eb" 
-            strokeWidth="0.5"
-          />
-          {/* Animated group for arm and weight */}
-          <g style={{
-            transformOrigin: '12px 18px',
-            animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
-          }}>
-            {/* Metronome arm */}
-            <line 
-              x1="12" 
-              y1="6" 
-              x2="12" 
-              y2="18" 
-              stroke={colors.primary}
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-            {/* Weight on arm */}
-            <circle 
-              cx="12" 
-              cy="10" 
-              r="2.5" 
-              fill={colors.primary}
-            />
-          </g>
-        </svg>
-      </div>
-      <div className="text-left">
-        <div 
-          className={`${config.textSize} font-bold leading-none`}
-          style={{ color: colors.text }}
+    <div 
+      className={className}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: config.gap
+      }}
+    >
+      <MetronomeIcon />
+      
+      <div style={{ textAlign: 'left' }}>
+        <div
+          style={{
+            fontSize: config.text,
+            fontWeight: 700,
+            color: colors.primary,
+            letterSpacing: -1,
+            lineHeight: 1,
+            marginBottom: showTagline ? 4 : 0
+          }}
         >
           MusoBuddy
         </div>
+        
         {showTagline && (
-          <div className={`${config.taglineSize} text-gray-500 font-medium italic ${config.taglineMargin}`}>
+          <div
+            style={{
+              fontSize: config.tagline,
+              color: '#64748b',
+              fontWeight: 500,
+              fontStyle: 'italic'
+            }}
+          >
             Less admin, more music
           </div>
         )}
       </div>
-
     </div>
   );
 }
