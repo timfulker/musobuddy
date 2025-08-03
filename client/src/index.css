@@ -112,8 +112,8 @@ body {
 }
 
 /* Only override bg-white for main page backgrounds, not component backgrounds */
-body > div.min-h-screen .bg-white,
-.layout-consistent .bg-white {
+body > div.min-h-screen .bg-white:not(.bg-white *),
+.layout-consistent .bg-white:not(.bg-white *) {
   background-color: var(--theme-surface) !important;
 }
 
