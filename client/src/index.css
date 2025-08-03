@@ -133,6 +133,35 @@ html.theme-forest-green body,
   color: #14532d !important;
 }
 
+.theme-clean-pro-audio {
+  --theme-primary: #e53935 !important;
+  --theme-secondary: #2c2c2c !important;
+  --theme-accent: #ffeb3b !important;
+  --theme-background: #e5e5e5 !important;
+  --theme-surface: #fdfdfd !important;
+  --theme-text: #2c2c2c !important;
+  --theme-text-secondary: #555555 !important;
+  --theme-font-heading: "IBM Plex Sans", sans-serif !important;
+  --theme-font-body: "IBM Plex Sans", sans-serif !important;
+}
+
+/* Clean Pro Audio theme overrides */
+html.theme-clean-pro-audio,
+html.theme-clean-pro-audio body,
+.theme-clean-pro-audio,
+.theme-clean-pro-audio .bg-background,
+.theme-clean-pro-audio .min-h-screen {
+  background-color: #e5e5e5 !important;
+  color: #2c2c2c !important;
+  font-family: "IBM Plex Sans", sans-serif !important;
+}
+
+.theme-clean-pro-audio .bg-white,
+.theme-clean-pro-audio .bg-card,
+.theme-clean-pro-audio .bg-popover {
+  background-color: #fdfdfd !important;
+}
+
 .theme-heading {
   font-family: var(--theme-font-heading);
 }

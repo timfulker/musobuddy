@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type ThemeName = 'purple' | 'retro-vinyl' | 'ocean-blue' | 'forest-green';
+export type ThemeName = 'purple' | 'retro-vinyl' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio';
 
 export interface Theme {
   id: ThemeName;
@@ -92,6 +92,24 @@ export const themes: Record<ThemeName, Theme> = {
     fonts: {
       heading: 'system-ui, sans-serif',
       body: 'system-ui, sans-serif'
+    }
+  },
+  'clean-pro-audio': {
+    id: 'clean-pro-audio',
+    name: 'Clean Pro Audio',
+    description: 'Clean industrial theme with professional audio aesthetics',
+    colors: {
+      primary: '#e53935',
+      secondary: '#2c2c2c',
+      accent: '#ffeb3b',
+      background: '#e5e5e5',
+      surface: '#fdfdfd',
+      text: '#2c2c2c',
+      textSecondary: '#555555'
+    },
+    fonts: {
+      heading: 'IBM Plex Sans, sans-serif',
+      body: 'IBM Plex Sans, sans-serif'
     }
   }
 };
