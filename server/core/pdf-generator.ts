@@ -10,18 +10,28 @@ export async function generateContractPDF(
     signatureName?: string;
     clientIpAddress?: string;
   },
-  useAI: boolean = false
+  useAI: boolean = true
 ): Promise<Buffer> {
   console.log('Starting contract PDF generation for:', contract.contractNumber);
   
   // Use AI-driven PDF generation if requested
   if (useAI) {
     try {
+      console.log('🤖 Starting AI PDF generation for contract:', contract.contractNumber);
       const theme = (contract as any).contractTheme || 'professional';
+      console.log('🎨 Using theme:', theme);
       const aiData = contractToAIFormat(contract, userSettings, theme);
-      return await generateAIPDF(aiData);
+      console.log('📊 AI data prepared:', { type: aiData.type, theme: aiData.theme, sectionsCount: aiData.sections.length });
+      const result = await generateAIPDF(aiData);
+      console.log('✅ AI PDF generation successful for contract');
+      return result;
     } catch (error) {
-      console.warn('AI PDF generation failed, falling back to standard method:', error);
+      console.error('❌ AI PDF generation failed for contract:', {
+        contractNumber: contract.contractNumber,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      console.warn('🔄 Falling back to standard method for contract');
     }
   }
   
@@ -110,7 +120,7 @@ function generateContractHTML(
   if (userSettings?.postcode) addressParts.push(userSettings.postcode);
   const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
   const businessPhone = userSettings?.phone || '';
-  const businessEmail = userSettings?.email || '';
+  const businessEmail = userSettings?.businessEmail || '';
   
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
@@ -368,7 +378,7 @@ function generateContractHTML(
           <h4>Performer</h4>
           <div class="signature-box signed-box">
             <p><strong>Signed by:</strong> ${businessName}</p>
-            <p><strong>Date:</strong> ${new Date(contract.createdAt).toLocaleDateString('en-GB')}</p>
+            <p><strong>Date:</strong> ${contract.createdAt ? new Date(contract.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')}</p>
             <p><strong>Status:</strong> Agreed by sending contract</p>
           </div>
         </div>
@@ -412,18 +422,28 @@ export async function generateInvoicePDF(
   invoice: Invoice,
   userSettings: UserSettings | null,
   contract?: any,
-  useAI: boolean = false
+  useAI: boolean = true
 ): Promise<Buffer> {
   console.log('Starting invoice PDF generation for:', invoice.invoiceNumber);
   
   // Use AI-driven PDF generation if requested
   if (useAI) {
     try {
+      console.log('🤖 Starting AI PDF generation for invoice:', invoice.invoiceNumber);
       const theme = (invoice as any).invoiceTheme || 'professional';
+      console.log('🎨 Using theme:', theme);
       const aiData = invoiceToAIFormat(invoice, userSettings, contract, theme);
-      return await generateAIPDF(aiData);
+      console.log('📊 AI data prepared:', { type: aiData.type, theme: aiData.theme, sectionsCount: aiData.sections.length });
+      const result = await generateAIPDF(aiData);
+      console.log('✅ AI PDF generation successful for invoice');
+      return result;
     } catch (error) {
-      console.warn('AI PDF generation failed, falling back to standard method:', error);
+      console.error('❌ AI PDF generation failed for invoice:', {
+        invoiceNumber: invoice.invoiceNumber,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      console.warn('🔄 Falling back to standard method for invoice');
     }
   }
   
@@ -480,7 +500,7 @@ function generateInvoiceHTML(
   if (userSettings?.postcode) addressParts.push(userSettings.postcode);
   const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
   const businessPhone = userSettings?.phone || '';
-  const businessEmail = userSettings?.email || '';
+  const businessEmail = userSettings?.businessEmail || '';
   
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
@@ -730,8 +750,8 @@ function generateInvoiceHTML(
         <tbody>
           <tr>
             <td>Music Performance${invoice.venueAddress ? `<br><strong>Venue:</strong> ${invoice.venueAddress}` : ''}</td>
-            <td>${invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : 'TBD'}</td>
-            <td>£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</td>
+            <td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
+            <td>£${parseFloat(invoice.amount).toFixed(2)}</td>
             <td>£${parseFloat(invoice.depositPaid || '0').toFixed(2)}</td>
             <td class="amount">£${parseFloat(invoice.amount).toFixed(2)}</td>
           </tr>
@@ -741,7 +761,7 @@ function generateInvoiceHTML(
       <div class="total-section avoid-break">
         <div class="total-row">
           <div class="total-label">Performance Fee:</div>
-          <div class="total-amount">£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</div>
+          <div class="total-amount">£${parseFloat(invoice.amount).toFixed(2)}</div>
         </div>
         <div class="total-row">
           <div class="total-label">Deposit Paid:</div>
