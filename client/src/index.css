@@ -1,8 +1,79 @@
-/* Use system fonts for purple theme consistency */
+/* Theme System CSS */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Work+Sans:wght@400;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Theme CSS Variables */
+:root {
+  --radius: 0.5rem;
+  
+  /* Default Purple Theme */
+  --theme-primary: #673ab7;
+  --theme-secondary: #9c27b0;
+  --theme-accent: #3f51b5;
+  --theme-background: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-text: #1e293b;
+  --theme-text-secondary: #64748b;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+}
+
+/* Theme-specific styles */
+.theme-retro-vinyl {
+  --theme-primary: #d17b0f;
+  --theme-secondary: #578d8c;
+  --theme-accent: #c9e3d4;
+  --theme-background: #f5e9dc;
+  --theme-surface: #ffffff;
+  --theme-text: #40342a;
+  --theme-text-secondary: #6b5b4e;
+  --theme-font-heading: "DM Serif Display", serif;
+  --theme-font-body: "Work Sans", sans-serif;
+}
+
+.theme-ocean-blue {
+  --theme-primary: #0ea5e9;
+  --theme-secondary: #0284c7;
+  --theme-accent: #38bdf8;
+  --theme-background: #f0f9ff;
+  --theme-surface: #ffffff;
+  --theme-text: #0c4a6e;
+  --theme-text-secondary: #075985;
+}
+
+.theme-forest-green {
+  --theme-primary: #16a34a;
+  --theme-secondary: #15803d;
+  --theme-accent: #22c55e;
+  --theme-background: #f0fdf4;
+  --theme-surface: #ffffff;
+  --theme-text: #14532d;
+  --theme-text-secondary: #166534;
+}
+
+/* Apply theme to body and typography */
+body {
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+  font-family: var(--theme-font-body);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.theme-heading {
+  font-family: var(--theme-font-heading);
+}
+
+.theme-body {
+  font-family: var(--theme-font-body);
+}
+
+/* Theme-specific overrides for retro vinyl */
+.theme-retro-vinyl body {
+  background-color: var(--theme-background);
+}
 
 /* Updated purple color scheme - lighter shade */
 

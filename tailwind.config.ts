@@ -20,6 +20,15 @@ export default {
         'soft-lg': '0 4px 20px rgba(0, 0, 0, 0.08)',
       },
       colors: {
+        // Theme system colors
+        'theme-primary': 'var(--theme-primary)',
+        'theme-secondary': 'var(--theme-secondary)',
+        'theme-accent': 'var(--theme-accent)',
+        'theme-background': 'var(--theme-background)',
+        'theme-surface': 'var(--theme-surface)',
+        'theme-text': 'var(--theme-text)',
+        'theme-text-secondary': 'var(--theme-text-secondary)',
+        
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {

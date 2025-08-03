@@ -14,10 +14,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useTheme, themes, type ThemeName } from "@/hooks/useTheme";
 
 // Import instrument presets
 import { INSTRUMENT_GIG_PRESETS, getGigTypeNamesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
@@ -206,6 +207,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const { isDesktop } = useResponsive();
   const isMobile = !isDesktop;
+  const { currentTheme, setTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Instrument and gig type state
@@ -243,6 +245,7 @@ export default function Settings() {
     performance: false,
     instruments: true, // Open by default for new instrument context feature
     themes: false,
+    appThemes: true, // App theme selector section
   });
 
   const toggleSection = (section: string) => {
@@ -1342,7 +1345,7 @@ export default function Settings() {
                                           // Update available gig types when secondary instruments change
                                           const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
                                           const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                            const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
+                                            const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
                                             return [...acc, ...instrumentGigTypes];
                                           }, [] as string[]);
                                           
@@ -1391,7 +1394,7 @@ export default function Settings() {
                                     // Update available gig types when secondary instruments change
                                     const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
                                     const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                      const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
+                                      const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
                                       return [...acc, ...instrumentGigTypes];
                                     }, [] as string[]);
                                     
@@ -2130,6 +2133,118 @@ export default function Settings() {
                       )}
                     </Button>
                   </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* App Theme Selector */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                <Collapsible open={expandedSections.appThemes} onOpenChange={() => toggleSection('appThemes')}>
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                      <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center space-x-2">
+                          <Palette className="w-5 h-5 text-primary" />
+                          <span>App Theme</span>
+                        </div>
+                        {expandedSections.appThemes ? 
+                          <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        }
+                      </CardTitle>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
+                        Choose your preferred visual theme for the MusoBuddy interface
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Available Themes</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {Object.values(themes).map((theme) => (
+                            <div
+                              key={theme.id}
+                              onClick={() => setTheme(theme.id)}
+                              className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                currentTheme === theme.id
+                                  ? 'border-theme-primary bg-theme-primary/10'
+                                  : 'border-gray-200 dark:border-gray-600 hover:border-theme-primary/50'
+                              }`}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div 
+                                  className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                                  style={{ backgroundColor: theme.colors.primary }}
+                                />
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-sm" style={{ 
+                                    fontFamily: theme.fonts.heading,
+                                    color: currentTheme === theme.id ? theme.colors.primary : 'inherit'
+                                  }}>
+                                    {theme.name}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {theme.description}
+                                  </p>
+                                </div>
+                                {currentTheme === theme.id && (
+                                  <div className="w-5 h-5 rounded-full bg-theme-primary flex items-center justify-center">
+                                    <div className="w-2 h-2 rounded-full bg-white" />
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Theme Preview */}
+                              <div className="mt-3 p-3 rounded border" style={{ 
+                                backgroundColor: theme.colors.background,
+                                borderColor: theme.colors.primary + '20'
+                              }}>
+                                <div className="flex items-center justify-between">
+                                  <div 
+                                    className="text-xs font-medium"
+                                    style={{ 
+                                      color: theme.colors.text,
+                                      fontFamily: theme.fonts.heading
+                                    }}
+                                  >
+                                    Sample Dashboard
+                                  </div>
+                                  <div 
+                                    className="w-3 h-3 rounded"
+                                    style={{ backgroundColor: theme.colors.accent }}
+                                  />
+                                </div>
+                                <div className="mt-2 space-y-1">
+                                  <div 
+                                    className="h-2 rounded"
+                                    style={{ backgroundColor: theme.colors.primary, width: '60%' }}
+                                  />
+                                  <div 
+                                    className="h-2 rounded"
+                                    style={{ backgroundColor: theme.colors.secondary, width: '40%' }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                            Current Theme: {themes[currentTheme].name}
+                          </h4>
+                          <p className="text-xs text-blue-700 dark:text-blue-300">
+                            {themes[currentTheme].description}
+                          </p>
+                          {currentTheme === 'retro-vinyl' && (
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                              ✨ This theme includes custom fonts and warm vintage colors for a unique musical aesthetic.
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
