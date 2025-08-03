@@ -114,7 +114,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/dashboard")} 
             data-active={isActive("/dashboard").toString()}
             style={{ 
-              color: isActive("/dashboard") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/dashboard") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -128,7 +128,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/bookings")} 
             data-active={isActive("/bookings").toString()}
             style={{ 
-              color: isActive("/bookings") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/bookings") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -142,7 +142,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/address-book")} 
             data-active={isActive("/address-book").toString()}
             style={{ 
-              color: isActive("/address-book") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/address-book") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -156,7 +156,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/contracts")} 
             data-active={isActive("/contracts").toString()}
             style={{ 
-              color: isActive("/contracts") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/contracts") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -170,7 +170,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/invoices")} 
             data-active={isActive("/invoices").toString()}
             style={{ 
-              color: isActive("/invoices") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/invoices") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -184,7 +184,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/compliance")} 
             data-active={isActive("/compliance").toString()}
             style={{ 
-              color: isActive("/compliance") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/compliance") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -198,7 +198,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/pricing")} 
             data-active={isActive("/pricing").toString()}
             style={{ 
-              color: isActive("/pricing") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/pricing") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -212,7 +212,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/settings")} 
             data-active={isActive("/settings").toString()}
             style={{ 
-              color: isActive("/settings") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/settings") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -226,7 +226,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/templates")} 
             data-active={isActive("/templates").toString()}
             style={{ 
-              color: isActive("/templates") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/templates") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -240,7 +240,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/unparseable-messages")} 
             data-active={isActive("/unparseable-messages").toString()}
             style={{ 
-              color: isActive("/unparseable-messages") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/unparseable-messages") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -254,7 +254,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={getNavLinkClass("/user-guide")} 
             data-active={isActive("/user-guide").toString()}
             style={{ 
-              color: isActive("/user-guide") ? 'white' : '#64748b',
+              color: '#1e293b', /* Always black text */
               backgroundColor: isActive("/user-guide") ? 'var(--theme-primary)' : 'transparent'
             }}
           >
@@ -270,7 +270,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               className={getNavLinkClass("/feedback")} 
               data-active={isActive("/feedback").toString()}
               style={{ 
-                color: isActive("/feedback") ? 'white' : '#64748b',
+                color: '#1e293b', /* Always black text */
                 backgroundColor: isActive("/feedback") ? 'var(--theme-primary)' : 'transparent'
               }}
             >
@@ -287,7 +287,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               className={getNavLinkClass("/admin")} 
               data-active={isActive("/admin").toString()}
               style={{ 
-                color: isActive("/admin") ? 'white' : '#64748b',
+                color: '#1e293b', /* Always black text */
                 backgroundColor: isActive("/admin") ? 'var(--theme-primary)' : 'transparent'
               }}
             >
