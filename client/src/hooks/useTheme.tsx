@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type ThemeName = 'purple' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio';
+export type ThemeName = 'purple' | 'ocean-blue' | 'forest-green' | 'clean-pro-audio' | 'midnight-blue';
 
 export interface Theme {
   id: ThemeName;
@@ -93,6 +93,24 @@ export const themes: Record<ThemeName, Theme> = {
     fonts: {
       heading: 'IBM Plex Sans, sans-serif',
       body: 'IBM Plex Sans, sans-serif'
+    }
+  },
+  'midnight-blue': {
+    id: 'midnight-blue',
+    name: 'Midnight Blue',
+    description: 'Deep midnight blue theme for sophisticated elegance',
+    colors: {
+      primary: '#191970',
+      secondary: '#1e1e3f',
+      accent: '#4169e1',
+      background: '#f8f9fa',
+      surface: '#ffffff',
+      text: '#1a1a1a',
+      textSecondary: '#4a5568'
+    },
+    fonts: {
+      heading: 'system-ui, sans-serif',
+      body: 'system-ui, sans-serif'
     }
   }
 };

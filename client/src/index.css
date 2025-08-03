@@ -53,6 +53,30 @@
   --theme-text-secondary: #166534;
 }
 
+.theme-clean-pro-audio {
+  --theme-primary: #e53935;
+  --theme-secondary: #2c2c2c;
+  --theme-accent: #ffeb3b;
+  --theme-background: #e5e5e5;
+  --theme-surface: #fdfdfd;
+  --theme-text: #2c2c2c;
+  --theme-text-secondary: #555555;
+  --theme-font-heading: "IBM Plex Sans", sans-serif;
+  --theme-font-body: "IBM Plex Sans", sans-serif;
+}
+
+.theme-midnight-blue {
+  --theme-primary: #191970;
+  --theme-secondary: #1e1e3f;
+  --theme-accent: #4169e1;
+  --theme-background: #f8f9fa;
+  --theme-surface: #ffffff;
+  --theme-text: #1a1a1a;
+  --theme-text-secondary: #4a5568;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+}
+
 /* Apply theme to body and typography */
 body {
   background-color: var(--theme-background) !important;
@@ -192,6 +216,20 @@ body {
 .theme-clean-pro-audio .sidebar a:hover,
 .theme-clean-pro-audio nav a:hover {
   background-color: #e53935 !important;
+}
+
+.theme-midnight-blue .bg-primary,
+.theme-midnight-blue button[class*="bg-primary"] {
+  background-color: #191970 !important;
+}
+
+.theme-midnight-blue .text-primary {
+  color: #191970 !important;
+}
+
+.theme-midnight-blue .sidebar a:hover,
+.theme-midnight-blue nav a:hover {
+  background-color: #191970 !important;
 }
 
 /* Additional specific overrides for navigation components */

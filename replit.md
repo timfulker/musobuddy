@@ -120,10 +120,12 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **CLIENT MANAGEMENT**: Basic API structure in place with populate-from-bookings functionality
 
 ### COMPREHENSIVE MULTI-THEME SYSTEM (August 3, 2025)
-- **THEME SELECTION**: Implemented 4 distinct themes: Purple (default), Ocean Blue, Forest Green, and Clean Pro Audio
+- **THEME SELECTION**: Implemented 5 distinct themes: Purple (default), Ocean Blue, Forest Green, Clean Pro Audio, and Midnight Blue
 - **RETRO VINYL REMOVAL**: Removed retro vinyl theme per user request to streamline options
 - **THEME SWITCHING FIX**: Enhanced CSS specificity to ensure all UI elements (buttons, menus, text) change with theme selection
 - **COMPREHENSIVE OVERRIDES**: Added extensive CSS rules to force theme colors on all primary/secondary elements
 - **CLEAN PRO AUDIO THEME**: Added industrial theme with light grey background, dark text, and red accents using IBM Plex Sans font
+- **MIDNIGHT BLUE THEME**: Added sophisticated deep blue theme (#191970) for elegant professional appearance
+- **PURPLE THEME UPDATE**: Lightened purple from #673ab7 to #8b5cf6 for better visual appeal
 - **FONT INTEGRATION**: Added Google Fonts imports for IBM Plex Sans and other theme-specific typography
 - **THEME PERSISTENCE**: Themes save to localStorage and persist across sessions
