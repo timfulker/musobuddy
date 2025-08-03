@@ -567,8 +567,8 @@ function generateInvoiceHTML(
         <tbody>
           <tr>
             <td>Music Performance${invoice.venueAddress ? `<br><strong>Venue:</strong> ${invoice.venueAddress}` : ''}</td>
-            <td>${invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : 'TBD'}</td>
-            <td>£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</td>
+            <td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
+            <td>£${parseFloat(invoice.fee || invoice.amount).toFixed(2)}</td>
             <td>£${parseFloat(invoice.depositPaid || '0').toFixed(2)}</td>
             <td class="amount">£${parseFloat(invoice.amount).toFixed(2)}</td>
           </tr>
@@ -578,7 +578,7 @@ function generateInvoiceHTML(
       <div class="total-section">
         <div class="total-row">
           <div class="total-label">Performance Fee:</div>
-          <div class="total-amount">£${parseFloat(invoice.performanceFee || invoice.amount).toFixed(2)}</div>
+          <div class="total-amount">£${parseFloat(invoice.fee || invoice.amount).toFixed(2)}</div>
         </div>
         <div class="total-row">
           <div class="total-label">Deposit Paid:</div>
