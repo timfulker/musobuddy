@@ -861,7 +861,7 @@ export async function registerRoutes(app: Express) {
       // Get recipient email (from booking or direct recipient)
       let recipientEmail = recipient;
       if (bookingId && !recipientEmail) {
-        const booking = await storage.getBookingDetails(bookingId);
+        const booking = await storage.getBooking(parseInt(bookingId));
         if (!booking) {
           return res.status(404).json({ error: 'Booking not found' });
         }
