@@ -213,15 +213,29 @@ body {
   color: #cbd5e1 !important; /* slate-300 for dark mode */
 }
 
-/* Hover states for inactive items - subtle theme color background */
+/* Hover states for inactive items - theme color background with white text */
 [class*="theme-"] .sidebar a:hover:not(.bg-primary) {
-  background-color: rgba(from var(--theme-primary) r g b / 0.1) !important;
-  color: var(--theme-primary) !important;
+  background-color: var(--theme-primary) !important;
+  color: white !important;
 }
 
 /* Active states - full theme color background */
 [class*="theme-"] .sidebar .bg-primary {
   background-color: var(--theme-primary) !important;
+  color: white !important;
+}
+
+/* Theme-specific text color overrides for selected items */
+/* Dark themes need white text for readability */
+.theme-purple .sidebar .bg-primary,
+.theme-midnight-blue .sidebar .bg-primary {
+  color: white !important;
+}
+
+/* Light themes can use white text too for consistency */
+.theme-ocean-blue .sidebar .bg-primary,
+.theme-forest-green .sidebar .bg-primary,
+.theme-clean-pro-audio .sidebar .bg-primary {
   color: white !important;
 }
 
