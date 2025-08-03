@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import type { Contract, Invoice, UserSettings } from '@shared/schema';
+import { generateAIPDF, contractToAIFormat, invoiceToAIFormat } from './ai-pdf-builder.ts';
 
 export async function generateContractPDF(
   contract: Contract,
@@ -8,11 +9,22 @@ export async function generateContractPDF(
     signedAt: Date;
     signatureName?: string;
     clientIpAddress?: string;
-  }
+  },
+  useAI: boolean = true
 ): Promise<Buffer> {
   console.log('Starting contract PDF generation for:', contract.contractNumber);
   
-  // RESTORED: Working Puppeteer configuration from previous version
+  // Use AI-driven PDF generation if requested
+  if (useAI) {
+    try {
+      const aiData = contractToAIFormat(contract, userSettings);
+      return await generateAIPDF(aiData);
+    } catch (error) {
+      console.warn('AI PDF generation failed, falling back to standard method:', error);
+    }
+  }
+  
+  // Fallback to original method
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -398,11 +410,22 @@ function generateContractHTML(
 export async function generateInvoicePDF(
   invoice: Invoice,
   userSettings: UserSettings | null,
-  contract?: any
+  contract?: any,
+  useAI: boolean = true
 ): Promise<Buffer> {
   console.log('Starting invoice PDF generation for:', invoice.invoiceNumber);
   
-  // RESTORED: Working Puppeteer configuration from previous version
+  // Use AI-driven PDF generation if requested
+  if (useAI) {
+    try {
+      const aiData = invoiceToAIFormat(invoice, userSettings, contract);
+      return await generateAIPDF(aiData);
+    } catch (error) {
+      console.warn('AI PDF generation failed, falling back to standard method:', error);
+    }
+  }
+  
+  // Fallback to original method
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
