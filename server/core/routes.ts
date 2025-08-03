@@ -2045,9 +2045,38 @@ export async function registerRoutes(app: Express) {
         // Get user settings for PDF generation
         const userSettings = await storage.getUserSettings(req.session.userId);
         
-        // Generate PDF using our enhanced PDF generator
-        const { generateContractPDF } = await import('./pdf-generator');
-        const pdfBuffer = await generateContractPDF(newContract, userSettings);
+        // Generate PDF using AI-powered PDF generator
+        console.log('🤖 Using AI-powered PDF generation for contract theme:', contractData.contractTheme);
+        
+        const { generateAIPDF } = await import('./ai-pdf-builder');
+        const pdfData = {
+          type: 'contract' as const,
+          client: newContract.clientName,
+          eventDate: newContract.eventDate,
+          venue: newContract.venue,
+          fee: newContract.fee,
+          theme: newContract.contractTheme as 'professional' | 'friendly' | 'musical',
+          sections: [
+            {
+              title: 'Performance Details',
+              content: `Date: ${newContract.eventDate}\nTime: ${newContract.eventTime} - ${newContract.eventEndTime}\nVenue: ${newContract.venue || 'TBD'}\nFee: £${newContract.fee}`
+            },
+            {
+              title: 'Payment Terms',
+              content: newContract.paymentInstructions || 'Payment due within 30 days of performance date.'
+            },
+            {
+              title: 'Equipment & Requirements',
+              content: newContract.equipmentRequirements || 'Standard performance setup required.'
+            }
+          ],
+          branding: {
+            businessName: userSettings?.businessName || 'MusoBuddy User',
+            footerText: `Contract ${newContract.contractNumber}`,
+          }
+        };
+        
+        const pdfBuffer = await generateAIPDF(pdfData);
         
         console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
         
