@@ -59,6 +59,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     );
   };
 
+  // Get the current theme from document class
+  const getCurrentTheme = () => {
+    const bodyClasses = document.body.className;
+    if (bodyClasses.includes('theme-midnight-blue')) return 'midnight-blue';
+    if (bodyClasses.includes('theme-purple')) return 'purple';
+    return 'other';
+  };
+
+  const getInactiveStyle = () => {
+    const theme = getCurrentTheme();
+    if (theme === 'midnight-blue' || theme === 'purple') {
+      return { color: 'rgb(148, 163, 184)' }; // Force slate-400 color
+    }
+    return {};
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -107,64 +123,64 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
-          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/dashboard")}>
-            <Home className="w-5 h-5" />
-            <span>Dashboard</span>
+          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/dashboard")} style={!isActive("/dashboard") ? getInactiveStyle() : {}}>
+            <Home className="w-5 h-5" style={!isActive("/dashboard") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/dashboard") ? getInactiveStyle() : {}}>Dashboard</span>
           </Link>
-          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/bookings")}>
-            <Inbox className="w-5 h-5" />
-            <span>Bookings</span>
+          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/bookings")} style={!isActive("/bookings") ? getInactiveStyle() : {}}>
+            <Inbox className="w-5 h-5" style={!isActive("/bookings") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/bookings") ? getInactiveStyle() : {}}>Bookings</span>
           </Link>
-          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/address-book")}>
-            <Users className="w-5 h-5" />
-            <span>Address Book</span>
+          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/address-book")} style={!isActive("/address-book") ? getInactiveStyle() : {}}>
+            <Users className="w-5 h-5" style={!isActive("/address-book") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/address-book") ? getInactiveStyle() : {}}>Address Book</span>
           </Link>
-          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/contracts")}>
-            <FileText className="w-5 h-5" />
-            <span>Contracts</span>
+          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/contracts")} style={!isActive("/contracts") ? getInactiveStyle() : {}}>
+            <FileText className="w-5 h-5" style={!isActive("/contracts") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/contracts") ? getInactiveStyle() : {}}>Contracts</span>
           </Link>
-          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/invoices")}>
-            <PoundSterling className="w-5 h-5" />
-            <span>Invoices</span>
+          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/invoices")} style={!isActive("/invoices") ? getInactiveStyle() : {}}>
+            <PoundSterling className="w-5 h-5" style={!isActive("/invoices") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/invoices") ? getInactiveStyle() : {}}>Invoices</span>
           </Link>
 
-          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/compliance")}>
-            <Shield className="w-5 h-5" />
-            <span>Compliance</span>
+          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/compliance")} style={!isActive("/compliance") ? getInactiveStyle() : {}}>
+            <Shield className="w-5 h-5" style={!isActive("/compliance") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/compliance") ? getInactiveStyle() : {}}>Compliance</span>
           </Link>
-          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/pricing")}>
-            <Crown className="w-5 h-5" />
-            <span>Upgrade ⭐</span>
+          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/pricing")} style={!isActive("/pricing") ? getInactiveStyle() : {}}>
+            <Crown className="w-5 h-5" style={!isActive("/pricing") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/pricing") ? getInactiveStyle() : {}}>Upgrade ⭐</span>
           </Link>
-          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/settings")}>
-            <Settings className="w-5 h-5" />
-            <span>Settings</span>
+          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/settings")} style={!isActive("/settings") ? getInactiveStyle() : {}}>
+            <Settings className="w-5 h-5" style={!isActive("/settings") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/settings") ? getInactiveStyle() : {}}>Settings</span>
           </Link>
-          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/templates")}>
-            <MessageSquare className="w-5 h-5" />
-            <span>Templates</span>
+          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/templates")} style={!isActive("/templates") ? getInactiveStyle() : {}}>
+            <MessageSquare className="w-5 h-5" style={!isActive("/templates") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/templates") ? getInactiveStyle() : {}}>Templates</span>
           </Link>
-          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/unparseable-messages")}>
-            <AlertTriangle className="w-5 h-5" />
-            <span>Review Messages</span>
+          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/unparseable-messages")} style={!isActive("/unparseable-messages") ? getInactiveStyle() : {}}>
+            <AlertTriangle className="w-5 h-5" style={!isActive("/unparseable-messages") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/unparseable-messages") ? getInactiveStyle() : {}}>Review Messages</span>
           </Link>
-          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/user-guide")}>
-            <BookOpen className="w-5 h-5" />
-            <span>User Guide</span>
+          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/user-guide")} style={!isActive("/user-guide") ? getInactiveStyle() : {}}>
+            <BookOpen className="w-5 h-5" style={!isActive("/user-guide") ? getInactiveStyle() : {}} />
+            <span style={!isActive("/user-guide") ? getInactiveStyle() : {}}>User Guide</span>
           </Link>
           {/* Beta Feedback section - only show for beta testers and admin */}
           {((user as any)?.isBetaTester || (user as any)?.isAdmin) && (
-            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/feedback")}>
-              <MessageSquare className="w-5 h-5" />
-              <span>Beta Feedback</span>
+            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/feedback")} style={!isActive("/feedback") ? getInactiveStyle() : {}}>
+              <MessageSquare className="w-5 h-5" style={!isActive("/feedback") ? getInactiveStyle() : {}} />
+              <span style={!isActive("/feedback") ? getInactiveStyle() : {}}>Beta Feedback</span>
             </Link>
           )}
           
           {/* Admin section - only show for admin users */}
           {(user as any)?.isAdmin && (
-            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/admin")}>
-              <Crown className="w-5 h-5" />
-              <span>Admin</span>
+            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/admin")} style={!isActive("/admin") ? getInactiveStyle() : {}}>
+              <Crown className="w-5 h-5" style={!isActive("/admin") ? getInactiveStyle() : {}} />
+              <span style={!isActive("/admin") ? getInactiveStyle() : {}}>Admin</span>
             </Link>
           )}
         </nav>
