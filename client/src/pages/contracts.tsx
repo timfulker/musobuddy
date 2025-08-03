@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -746,6 +746,9 @@ export default function Contracts() {
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader className="pb-4">
                     <DialogTitle>{editingContract ? 'Edit Contract' : 'Generate New Contract'}</DialogTitle>
+                    <DialogDescription>
+                      {editingContract ? 'Update the contract details below.' : 'Fill out the form below to create a new performance contract.'}
+                    </DialogDescription>
                   </DialogHeader>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit((data) => {
