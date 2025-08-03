@@ -1256,18 +1256,32 @@ html body [class*="theme-"] .sidebar .bg-primary span {
   display: flex !important;
 }
 
-/* Fix sidebar inactive link visibility for dark themes */
-.theme-midnight-blue .sidebar a:not(.bg-primary),
-.theme-midnight-blue .sidebar a:not(.bg-primary) *,
-.theme-purple .sidebar a:not(.bg-primary),
-.theme-purple .sidebar a:not(.bg-primary) * {
-  color: rgb(148 163 184) !important; /* slate-400 */
+/* NUCLEAR OPTION: Fix sidebar inactive link visibility for dark themes */
+/* Target by theme class and sidebar with maximum specificity */
+html body .theme-midnight-blue .sidebar a:not(.bg-primary),
+html body .theme-midnight-blue .sidebar a:not(.bg-primary) span,
+html body .theme-midnight-blue .sidebar a:not(.bg-primary) svg,
+html body .theme-purple .sidebar a:not(.bg-primary),
+html body .theme-purple .sidebar a:not(.bg-primary) span,
+html body .theme-purple .sidebar a:not(.bg-primary) svg {
+  color: rgb(148 163 184) !important; /* slate-400 - visible gray */
 }
 
 /* Hover states for sidebar links in dark themes */
-.theme-midnight-blue .sidebar a:not(.bg-primary):hover,
-.theme-midnight-blue .sidebar a:not(.bg-primary):hover *,
-.theme-purple .sidebar a:not(.bg-primary):hover,
-.theme-purple .sidebar a:not(.bg-primary):hover * {
-  color: rgb(203 213 225) !important; /* slate-300 */
+html body .theme-midnight-blue .sidebar a:not(.bg-primary):hover,
+html body .theme-midnight-blue .sidebar a:not(.bg-primary):hover span,
+html body .theme-midnight-blue .sidebar a:not(.bg-primary):hover svg,
+html body .theme-purple .sidebar a:not(.bg-primary):hover,
+html body .theme-purple .sidebar a:not(.bg-primary):hover span,
+html body .theme-purple .sidebar a:not(.bg-primary):hover svg {
+  color: rgb(203 213 225) !important; /* slate-300 - lighter on hover */
+}
+
+/* Force visibility on all sidebar navigation elements */
+html body .theme-midnight-blue .sidebar nav a,
+html body .theme-midnight-blue .sidebar nav a *,
+html body .theme-purple .sidebar nav a,
+html body .theme-purple .sidebar nav a * {
+  opacity: 1 !important;
+  visibility: visible !important;
 }

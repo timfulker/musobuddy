@@ -129,3 +129,4 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **PURPLE THEME UPDATE**: Lightened purple from #673ab7 to #8b5cf6 for better visual appeal
 - **FONT INTEGRATION**: Added Google Fonts imports for IBM Plex Sans and other theme-specific typography
 - **THEME PERSISTENCE**: Themes save to localStorage and persist across sessions
+- **CRITICAL ISSUE**: Sidebar navigation visibility problem in Purple and Midnight Blue themes where inactive menu items are invisible due to text color inheritance conflicts
