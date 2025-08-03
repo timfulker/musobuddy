@@ -1833,77 +1833,60 @@ export default function Settings() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="p-6 space-y-6">
-                  {/* Template Selection */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Template Style</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {THEME_TEMPLATES.map((template) => (
-                        <FormField
-                          key={template.id}
-                          control={form.control}
-                          name="themeTemplate"
-                          render={({ field }) => (
-                            <FormItem>
+                  {/* Template Selection - Simple Dropdowns */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <FormField
+                        control={form.control}
+                        name="themeTemplate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Contract Theme</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                  field.value === template.id
-                                    ? 'border-primary/50 bg-primary/5 dark:bg-primary-900/20'
-                                    : 'border-gray-200 dark:border-gray-600 hover:border-primary-300'
-                                }`}>
-                                  <input
-                                    type="radio"
-                                    {...field}
-                                    value={template.id}
-                                    checked={field.value === template.id}
-                                    className="sr-only"
-                                  />
-                                  <div className="font-medium text-sm">{template.label}</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {template.description}
-                                  </div>
-                                </label>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select contract theme" />
+                                </SelectTrigger>
                               </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      ))}
+                              <SelectContent>
+                                {THEME_TEMPLATES.map((template) => (
+                                  <SelectItem key={template.id} value={template.id}>
+                                    {template.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                  </div>
 
-                  {/* Tone Selection */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Tone & Language</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {THEME_TONES.map((tone) => (
-                        <FormField
-                          key={tone.id}
-                          control={form.control}
-                          name="themeTone"
-                          render={({ field }) => (
-                            <FormItem>
+                    <div className="space-y-3">
+                      <FormField
+                        control={form.control}
+                        name="themeTone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Invoice Theme</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                  field.value === tone.id
-                                    ? 'border-primary/50 bg-primary/5 dark:bg-primary-900/20'
-                                    : 'border-gray-200 dark:border-gray-600 hover:border-primary-300'
-                                }`}>
-                                  <input
-                                    type="radio"
-                                    {...field}
-                                    value={tone.id}
-                                    checked={field.value === tone.id}
-                                    className="sr-only"
-                                  />
-                                  <div className="font-medium text-sm">{tone.label}</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {tone.description}
-                                  </div>
-                                </label>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select invoice theme" />
+                                </SelectTrigger>
                               </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      ))}
+                              <SelectContent>
+                                {THEME_TONES.map((tone) => (
+                                  <SelectItem key={tone.id} value={tone.id}>
+                                    {tone.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   </div>
 
