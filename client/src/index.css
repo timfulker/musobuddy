@@ -772,32 +772,24 @@ a[style*="var(--theme-primary)"][data-theme="purple"] * {
   color: white !important;
 }
 
-/* CRITICAL FIX: Button text colors for purple and midnight blue themes */
-/* Target buttons with primary backgrounds to ensure white text */
+/* CRITICAL FIX: Button text colors for purple and midnight blue themes - ONLY TARGET BUTTONS */
+/* Target ONLY buttons with primary backgrounds to ensure white text */
 body.theme-purple button.bg-primary,
-body.theme-purple .bg-primary,
 body.theme-midnight-blue button.bg-primary,
-body.theme-midnight-blue .bg-primary,
 html.theme-purple button.bg-primary,
-html.theme-purple .bg-primary,
-html.theme-midnight-blue button.bg-primary,
-html.theme-midnight-blue .bg-primary {
+html.theme-midnight-blue button.bg-primary {
   color: white !important;
 }
 
-/* Force all child elements in primary buttons to have white text */
+/* Force all child elements in primary BUTTONS ONLY to have white text */
 body.theme-purple button.bg-primary *,
-body.theme-purple .bg-primary *,
 body.theme-midnight-blue button.bg-primary *,
-body.theme-midnight-blue .bg-primary *,
 html.theme-purple button.bg-primary *,
-html.theme-purple .bg-primary *,
-html.theme-midnight-blue button.bg-primary *,
-html.theme-midnight-blue .bg-primary * {
+html.theme-midnight-blue button.bg-primary * {
   color: white !important;
 }
 
-/* Target buttons with primary variant class */
+/* Target ONLY buttons with primary variant class */
 body.theme-purple button[class*="bg-primary"],
 body.theme-midnight-blue button[class*="bg-primary"],
 html.theme-purple button[class*="bg-primary"],
@@ -812,15 +804,15 @@ html.theme-midnight-blue button[class*="bg-primary"] * {
   color: white !important;
 }
 
-/* Target any element with text-primary-foreground in these themes */
-body.theme-purple .text-primary-foreground,
-body.theme-midnight-blue .text-primary-foreground,
-html.theme-purple .text-primary-foreground,
-html.theme-midnight-blue .text-primary-foreground {
+/* Target ONLY button elements with text-primary-foreground in these themes */
+body.theme-purple button.text-primary-foreground,
+body.theme-midnight-blue button.text-primary-foreground,
+html.theme-purple button.text-primary-foreground,
+html.theme-midnight-blue button.text-primary-foreground {
   color: white !important;
 }
 
-/* Additional button targeting by common shadcn button classes */
+/* Additional button targeting by common shadcn button classes - BUTTONS ONLY */
 body.theme-purple button[data-variant="default"],
 body.theme-midnight-blue button[data-variant="default"],
 html.theme-purple button[data-variant="default"],
@@ -828,23 +820,15 @@ html.theme-midnight-blue button[data-variant="default"] {
   color: white !important;
 }
 
-/* Force override any inline styles that might interfere */
-body.theme-purple [style*="background"][style*="var(--primary)"],
-body.theme-midnight-blue [style*="background"][style*="var(--primary)"],
-html.theme-purple [style*="background"][style*="var(--primary)"],
-html.theme-midnight-blue [style*="background"][style*="var(--primary)"] {
-  color: white !important;
-}
-
-/* Fix submit buttons and form buttons with gradient backgrounds */
+/* Fix submit buttons and form buttons with gradient backgrounds - BUTTONS ONLY */
 body.theme-purple button[class*="gradient"],
 body.theme-midnight-blue button[class*="gradient"],
 html.theme-purple button[class*="gradient"],
 html.theme-midnight-blue button[class*="gradient"],
-body.theme-purple [class*="bg-gradient"],
-body.theme-midnight-blue [class*="bg-gradient"],
-html.theme-purple [class*="bg-gradient"],
-html.theme-midnight-blue [class*="bg-gradient"] {
+body.theme-purple button[class*="bg-gradient"],
+body.theme-midnight-blue button[class*="bg-gradient"],
+html.theme-purple button[class*="bg-gradient"],
+html.theme-midnight-blue button[class*="bg-gradient"] {
   color: white !important;
 }
 
@@ -852,9 +836,9 @@ body.theme-purple button[class*="gradient"] *,
 body.theme-midnight-blue button[class*="gradient"] *,
 html.theme-purple button[class*="gradient"] *,
 html.theme-midnight-blue button[class*="gradient"] *,
-body.theme-purple [class*="bg-gradient"] *,
-body.theme-midnight-blue [class*="bg-gradient"] *,
-html.theme-purple [class*="bg-gradient"] *,
-html.theme-midnight-blue [class*="bg-gradient"] * {
+body.theme-purple button[class*="bg-gradient"] *,
+body.theme-midnight-blue button[class*="bg-gradient"] *,
+html.theme-purple button[class*="bg-gradient"] *,
+html.theme-midnight-blue button[class*="bg-gradient"] * {
   color: white !important;
 }
