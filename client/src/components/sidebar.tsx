@@ -36,11 +36,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const { isDesktop } = useResponsive();
-  // Remove Basecamp theme completely - always use purple theme
-  useEffect(() => {
-    document.documentElement.classList.add('purple-theme');
-    document.body.classList.remove('basecamp-scrollbar');
-  }, []);
+  // Theme management now handled by ThemeProvider
 
   const handleLogout = () => {
     logout();
@@ -53,13 +49,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const getNavLinkClass = (path: string) => {
     const baseClass = "flex items-center space-x-3 px-4 py-3 font-medium transition-all duration-200";
     
-    // Purple theme (original) - exact behavior from backup
+    // Theme-aware styling that respects selected theme
     return cn(
       baseClass,
       "rounded-lg", // 8px border radius as documented
       isActive(path) 
-        ? "bg-purple-600 text-white shadow-sm" // Purple background for active state
-        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" // Light gray on hover, no purple hover
+        ? "bg-primary text-white shadow-sm" // Theme-aware background for active state
+        : "text-gray-700 dark:text-gray-300 hover:bg-primary hover:text-white" // Theme-aware hover
     );
   };
 
