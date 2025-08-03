@@ -63,10 +63,10 @@ export function MusoBuddyLogo({
   const sizeConfig = {
     small: {
       container: 'gap-2',
-      icon: 'w-10 h-10',
+      icon: 'w-12 h-12',
       iconRadius: 'rounded-lg',
-      bodySize: 'w-3.5 h-5.5',
-      armSize: 'w-0.5 h-3.5',
+      bodySize: 'w-6 h-8',
+      armSize: 'w-0.5 h-4',
       armTop: 'top-1',
       textSize: 'text-lg',
       taglineSize: 'text-[10px]',
@@ -107,38 +107,46 @@ export function MusoBuddyLogo({
             background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
           }}
         >
-          <div className="relative flex flex-col items-center">
-            {/* Metronome body - triangular shape */}
-            <div 
-              className={`${config.bodySize} bg-white relative`}
-              style={{ 
-                clipPath: 'polygon(40% 0%, 60% 0%, 85% 100%, 15% 100%)',
-                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
+          {/* Simple metronome icon with SVG-like approach */}
+          <svg 
+            width="24" 
+            height="28" 
+            viewBox="0 0 24 28" 
+            className="fill-white drop-shadow-sm"
+          >
+            {/* Metronome body - pyramid shape */}
+            <polygon 
+              points="8,2 16,2 20,26 4,26" 
+              fill="white" 
+              stroke="#e5e7eb" 
+              strokeWidth="0.5"
+            />
+            {/* Metronome arm */}
+            <line 
+              x1="12" 
+              y1="6" 
+              x2="12" 
+              y2="18" 
+              stroke={colors.primary}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              style={{
+                transformOrigin: '12px 18px',
+                animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
               }}
-            >
-              {/* Metronome arm */}
-              <div 
-                className={`absolute ${config.armTop} left-1/2 transform -translate-x-1/2 ${config.armSize} rounded-sm`}
-                style={{ 
-                  background: colors.primary,
-                  transformOrigin: 'bottom center',
-                  animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
-                }}
-              />
-              {/* Weight on the arm */}
-              <div 
-                className="absolute w-1 h-1 bg-current rounded-full"
-                style={{
-                  top: '25%',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  color: colors.primary,
-                  animation: 'metronome-tick 1.2s ease-in-out infinite alternate',
-                  transformOrigin: 'bottom center'
-                }}
-              />
-            </div>
-          </div>
+            />
+            {/* Weight on arm */}
+            <circle 
+              cx="12" 
+              cy="10" 
+              r="2" 
+              fill={colors.primary}
+              style={{
+                transformOrigin: '12px 18px',
+                animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+              }}
+            />
+          </svg>
         </div>
       </div>
     );
@@ -152,38 +160,46 @@ export function MusoBuddyLogo({
           background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` 
         }}
       >
-        <div className="relative flex flex-col items-center">
-          {/* Metronome body - triangular shape */}
-          <div 
-            className={`${config.bodySize} bg-white relative`}
-            style={{ 
-              clipPath: 'polygon(40% 0%, 60% 0%, 85% 100%, 15% 100%)',
-              filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
+        {/* Simple metronome icon with SVG-like approach */}
+        <svg 
+          width={size === 'small' ? '24' : size === 'medium' ? '32' : '40'} 
+          height={size === 'small' ? '28' : size === 'medium' ? '36' : '44'} 
+          viewBox="0 0 24 28" 
+          className="fill-white drop-shadow-sm"
+        >
+          {/* Metronome body - pyramid shape */}
+          <polygon 
+            points="8,2 16,2 20,26 4,26" 
+            fill="white" 
+            stroke="#e5e7eb" 
+            strokeWidth="0.5"
+          />
+          {/* Metronome arm */}
+          <line 
+            x1="12" 
+            y1="6" 
+            x2="12" 
+            y2="18" 
+            stroke={colors.primary}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            style={{
+              transformOrigin: '12px 18px',
+              animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
             }}
-          >
-            {/* Metronome arm */}
-            <div 
-              className={`absolute ${config.armTop} left-1/2 transform -translate-x-1/2 ${config.armSize} rounded-sm`}
-              style={{ 
-                background: colors.primary,
-                transformOrigin: 'bottom center',
-                animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
-              }}
-            />
-            {/* Weight on the arm */}
-            <div 
-              className="absolute w-1.5 h-1.5 bg-current rounded-full"
-              style={{
-                top: '25%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                color: colors.primary,
-                animation: 'metronome-tick 1.2s ease-in-out infinite alternate',
-                transformOrigin: 'bottom center'
-              }}
-            />
-          </div>
-        </div>
+          />
+          {/* Weight on arm */}
+          <circle 
+            cx="12" 
+            cy="10" 
+            r="2" 
+            fill={colors.primary}
+            style={{
+              transformOrigin: '12px 18px',
+              animation: 'metronome-tick 1.2s ease-in-out infinite alternate'
+            }}
+          />
+        </svg>
       </div>
       <div className="text-left">
         <div 
