@@ -202,10 +202,22 @@ export class MailgunService {
       console.log(`📧 Sending enhanced ${emailData.emailType || 'general'} email with DKIM signing and tracking`);
       
       const result = await this.mailgun.messages.create(domain, messageData);
-      return result;
+      
+      // Return standardized response format
+      return {
+        success: true,
+        messageId: result.id,
+        message: 'Email sent successfully'
+      };
     } catch (error: any) {
       console.error('❌ Failed to send enhanced email:', error);
-      throw error;
+      
+      // Return standardized error format
+      return {
+        success: false,
+        error: error.message || 'Email sending failed',
+        details: error
+      };
     }
   }
 
