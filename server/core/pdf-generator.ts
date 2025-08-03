@@ -443,6 +443,10 @@ function generateInvoiceHTML(
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 40px; width: auto;" alt="MusoBuddy Logo" />` : '';
   
+  // Theme-based styling for invoices
+  const theme = (invoice as any).invoiceTheme || 'professional';
+  const themeStyles = getThemeStyles(theme);
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -451,18 +455,19 @@ function generateInvoiceHTML(
       <title>Invoice ${invoice.invoiceNumber}</title>
       <style>
         body {
-          font-family: 'Arial', sans-serif;
+          font-family: ${themeStyles.fontFamily};
           margin: 0;
           padding: 20px;
-          color: #333;
+          color: ${themeStyles.textColor};
           line-height: 1.6;
+          background-color: ${themeStyles.backgroundColor};
         }
         .header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 40px;
-          border-bottom: 3px solid #9333ea;
+          border-bottom: 3px solid ${themeStyles.accentColor};
           padding-bottom: 20px;
         }
         .logo-section {
@@ -473,7 +478,7 @@ function generateInvoiceHTML(
         .logo {
           font-size: 32px;
           font-weight: bold;
-          color: #9333ea;
+          color: ${themeStyles.accentColor};
         }
         .invoice-details {
           text-align: right;
@@ -553,19 +558,19 @@ function generateInvoiceHTML(
         }
         .grand-total {
           font-size: 20px;
-          color: #9333ea;
-          border-top: 2px solid #9333ea;
+          color: ${themeStyles.accentColor};
+          border-top: 2px solid ${themeStyles.accentColor};
           padding-top: 15px;
           margin-top: 15px;
         }
         .payment-info {
           margin-top: 40px;
           padding: 20px;
-          background-color: #f8f9fa;
+          background-color: ${getThemeBoxColor(theme)};
           border-radius: 8px;
         }
         .payment-info h3 {
-          color: #333;
+          color: ${themeStyles.accentColor};
           margin-bottom: 15px;
         }
         .payment-info p {
@@ -578,7 +583,7 @@ function generateInvoiceHTML(
           border-top: 1px solid #dee2e6;
         }
         .terms h3 {
-          color: #333;
+          color: ${themeStyles.accentColor};
           margin-bottom: 10px;
         }
         .terms p {

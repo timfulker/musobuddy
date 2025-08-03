@@ -429,6 +429,7 @@ export default function Invoices() {
       performanceDate: data.performanceDate || null,
       performanceFee: data.performanceFee?.trim() || null,
       depositPaid: data.depositPaid?.trim() || null,
+      invoiceTheme: data.invoiceTheme || "professional", // Include theme selection
     };
     
     
