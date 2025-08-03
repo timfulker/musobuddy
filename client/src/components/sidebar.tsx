@@ -108,64 +108,191 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 pb-20">
-          <Link href="/dashboard" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/dashboard")} data-active={isActive("/dashboard").toString()}>
-            <Home className="w-5 h-5" />
-            <span>Dashboard</span>
+          <Link 
+            href="/dashboard" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/dashboard")} 
+            data-active={isActive("/dashboard").toString()}
+            style={{ 
+              color: isActive("/dashboard") ? 'white' : '#64748b',
+              backgroundColor: isActive("/dashboard") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <Home className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Dashboard</span>
           </Link>
-          <Link href="/bookings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/bookings")} data-active={isActive("/bookings").toString()}>
-            <Inbox className="w-5 h-5" />
-            <span>Bookings</span>
+          
+          <Link 
+            href="/bookings" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/bookings")} 
+            data-active={isActive("/bookings").toString()}
+            style={{ 
+              color: isActive("/bookings") ? 'white' : '#64748b',
+              backgroundColor: isActive("/bookings") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <Inbox className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Bookings</span>
           </Link>
-          <Link href="/address-book" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/address-book")} data-active={isActive("/address-book").toString()}>
-            <Users className="w-5 h-5" />
-            <span>Address Book</span>
+          
+          <Link 
+            href="/address-book" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/address-book")} 
+            data-active={isActive("/address-book").toString()}
+            style={{ 
+              color: isActive("/address-book") ? 'white' : '#64748b',
+              backgroundColor: isActive("/address-book") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <Users className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Address Book</span>
           </Link>
-          <Link href="/contracts" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/contracts")} data-active={isActive("/contracts").toString()}>
-            <FileText className="w-5 h-5" />
-            <span>Contracts</span>
+          
+          <Link 
+            href="/contracts" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/contracts")} 
+            data-active={isActive("/contracts").toString()}
+            style={{ 
+              color: isActive("/contracts") ? 'white' : '#64748b',
+              backgroundColor: isActive("/contracts") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <FileText className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Contracts</span>
           </Link>
-          <Link href="/invoices" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/invoices")} data-active={isActive("/invoices").toString()}>
-            <PoundSterling className="w-5 h-5" />
-            <span>Invoices</span>
+          
+          <Link 
+            href="/invoices" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/invoices")} 
+            data-active={isActive("/invoices").toString()}
+            style={{ 
+              color: isActive("/invoices") ? 'white' : '#64748b',
+              backgroundColor: isActive("/invoices") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <PoundSterling className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Invoices</span>
           </Link>
 
-          <Link href="/compliance" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/compliance")} data-active={isActive("/compliance").toString()}>
-            <Shield className="w-5 h-5" />
-            <span>Compliance</span>
+          <Link 
+            href="/compliance" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/compliance")} 
+            data-active={isActive("/compliance").toString()}
+            style={{ 
+              color: isActive("/compliance") ? 'white' : '#64748b',
+              backgroundColor: isActive("/compliance") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <Shield className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Compliance</span>
           </Link>
-          <Link href="/pricing" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/pricing")} data-active={isActive("/pricing").toString()}>
-            <Crown className="w-5 h-5" />
-            <span>Upgrade ⭐</span>
+          
+          <Link 
+            href="/pricing" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/pricing")} 
+            data-active={isActive("/pricing").toString()}
+            style={{ 
+              color: isActive("/pricing") ? 'white' : '#64748b',
+              backgroundColor: isActive("/pricing") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <Crown className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Upgrade ⭐</span>
           </Link>
-          <Link href="/settings" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/settings")} data-active={isActive("/settings").toString()}>
-            <Settings className="w-5 h-5" />
-            <span>Settings</span>
+          
+          <Link 
+            href="/settings" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/settings")} 
+            data-active={isActive("/settings").toString()}
+            style={{ 
+              color: isActive("/settings") ? 'white' : '#64748b',
+              backgroundColor: isActive("/settings") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <Settings className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Settings</span>
           </Link>
-          <Link href="/templates" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/templates")} data-active={isActive("/templates").toString()}>
-            <MessageSquare className="w-5 h-5" />
-            <span>Templates</span>
+          
+          <Link 
+            href="/templates" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/templates")} 
+            data-active={isActive("/templates").toString()}
+            style={{ 
+              color: isActive("/templates") ? 'white' : '#64748b',
+              backgroundColor: isActive("/templates") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <MessageSquare className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Templates</span>
           </Link>
-          <Link href="/unparseable-messages" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/unparseable-messages")} data-active={isActive("/unparseable-messages").toString()}>
-            <AlertTriangle className="w-5 h-5" />
-            <span>Review Messages</span>
+          
+          <Link 
+            href="/unparseable-messages" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/unparseable-messages")} 
+            data-active={isActive("/unparseable-messages").toString()}
+            style={{ 
+              color: isActive("/unparseable-messages") ? 'white' : '#64748b',
+              backgroundColor: isActive("/unparseable-messages") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <AlertTriangle className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>Review Messages</span>
           </Link>
-          <Link href="/user-guide" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/user-guide")} data-active={isActive("/user-guide").toString()}>
-            <BookOpen className="w-5 h-5" />
-            <span>User Guide</span>
+          
+          <Link 
+            href="/user-guide" 
+            onClick={() => window.innerWidth < 768 && onClose()} 
+            className={getNavLinkClass("/user-guide")} 
+            data-active={isActive("/user-guide").toString()}
+            style={{ 
+              color: isActive("/user-guide") ? 'white' : '#64748b',
+              backgroundColor: isActive("/user-guide") ? 'var(--theme-primary)' : 'transparent'
+            }}
+          >
+            <BookOpen className="w-5 h-5" style={{ color: 'inherit' }} />
+            <span style={{ color: 'inherit' }}>User Guide</span>
           </Link>
+          
           {/* Beta Feedback section - only show for beta testers and admin */}
           {((user as any)?.isBetaTester || (user as any)?.isAdmin) && (
-            <Link href="/feedback" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/feedback")} data-active={isActive("/feedback").toString()}>
-              <MessageSquare className="w-5 h-5" />
-              <span>Beta Feedback</span>
+            <Link 
+              href="/feedback" 
+              onClick={() => window.innerWidth < 768 && onClose()} 
+              className={getNavLinkClass("/feedback")} 
+              data-active={isActive("/feedback").toString()}
+              style={{ 
+                color: isActive("/feedback") ? 'white' : '#64748b',
+                backgroundColor: isActive("/feedback") ? 'var(--theme-primary)' : 'transparent'
+              }}
+            >
+              <MessageSquare className="w-5 h-5" style={{ color: 'inherit' }} />
+              <span style={{ color: 'inherit' }}>Beta Feedback</span>
             </Link>
           )}
           
           {/* Admin section - only show for admin users */}
           {(user as any)?.isAdmin && (
-            <Link href="/admin" onClick={() => window.innerWidth < 768 && onClose()} className={getNavLinkClass("/admin")} data-active={isActive("/admin").toString()}>
-              <Crown className="w-5 h-5" />
-              <span>Admin</span>
+            <Link 
+              href="/admin" 
+              onClick={() => window.innerWidth < 768 && onClose()} 
+              className={getNavLinkClass("/admin")} 
+              data-active={isActive("/admin").toString()}
+              style={{ 
+                color: isActive("/admin") ? 'white' : '#64748b',
+                backgroundColor: isActive("/admin") ? 'var(--theme-primary)' : 'transparent'
+              }}
+            >
+              <Crown className="w-5 h-5" style={{ color: 'inherit' }} />
+              <span style={{ color: 'inherit' }}>Admin</span>
             </Link>
           )}
         </nav>
