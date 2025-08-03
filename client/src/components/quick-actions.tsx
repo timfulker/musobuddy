@@ -12,7 +12,7 @@ export default function QuickActions() {
       <CardContent className="space-y-3">
         <Link href="/bookings?action=new">
           <Button 
-            className="w-full justify-start bg-yellow-400 hover:bg-yellow-500 theme-button-text font-semibold py-4 rounded-xl shadow-soft transition-all border-0"
+            className="w-full justify-start bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-4 rounded-xl shadow-soft transition-all border-0"
           >
             <Plus className="w-5 h-5 mr-3" />
             New Enquiry
@@ -21,7 +21,7 @@ export default function QuickActions() {
         <Link href="/quick-add">
           <Button 
             variant="outline" 
-            className="w-full justify-start bg-white hover:bg-slate-50 theme-button-text border-slate-200 py-4 rounded-xl font-medium transition-all"
+            className="w-full justify-start bg-white hover:bg-slate-50 text-slate-800 border-slate-200 py-4 rounded-xl font-medium transition-all"
           >
             <Zap className="w-5 h-5 mr-3" />
             Quick Add
@@ -30,7 +30,7 @@ export default function QuickActions() {
         <Link href="/contracts?action=new">
           <Button 
             variant="outline" 
-            className="w-full justify-start bg-white hover:bg-slate-50 theme-button-text border-slate-200 py-4 rounded-xl font-medium transition-all"
+            className="w-full justify-start bg-white hover:bg-slate-50 text-slate-800 border-slate-200 py-4 rounded-xl font-medium transition-all"
           >
             <FileText className="w-5 h-5 mr-3" />
             Generate Contract
@@ -39,7 +39,7 @@ export default function QuickActions() {
         <Link href="/invoices?action=new">
           <Button 
             variant="outline" 
-            className="w-full justify-start bg-white hover:bg-slate-50 theme-button-text border-slate-200 py-4 rounded-xl font-medium transition-all"
+            className="w-full justify-start bg-white hover:bg-slate-50 text-slate-800 border-slate-200 py-4 rounded-xl font-medium transition-all"
           >
             <DollarSign className="w-5 h-5 mr-3" />
             Create Invoice
@@ -48,7 +48,7 @@ export default function QuickActions() {
         <Link href="/calendar?action=block">
           <Button 
             variant="outline" 
-            className="w-full justify-start bg-white hover:bg-slate-50 theme-button-text border-slate-200 py-4 rounded-xl font-medium transition-all"
+            className="w-full justify-start bg-white hover:bg-slate-50 text-slate-800 border-slate-200 py-4 rounded-xl font-medium transition-all"
           >
             <CalendarPlus className="w-5 h-5 mr-3" />
             Mark Unavailable

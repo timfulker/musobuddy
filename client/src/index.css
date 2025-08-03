@@ -30,9 +30,6 @@
   --theme-surface: #ffffff;
   --theme-text: #1e293b;
   --theme-text-secondary: #64748b;
-  --theme-gradient-start: #8b5cf6;
-  --theme-gradient-mid: #a855f7;
-  --theme-gradient-end: #6366f1;
 }
 
 .theme-ocean-blue {
@@ -43,9 +40,6 @@
   --theme-surface: #ffffff;
   --theme-text: #0c4a6e;
   --theme-text-secondary: #075985;
-  --theme-gradient-start: #0ea5e9;
-  --theme-gradient-mid: #0284c7;
-  --theme-gradient-end: #38bdf8;
 }
 
 .theme-forest-green {
@@ -56,9 +50,6 @@
   --theme-surface: #ffffff;
   --theme-text: #14532d;
   --theme-text-secondary: #166534;
-  --theme-gradient-start: #16a34a;
-  --theme-gradient-mid: #15803d;
-  --theme-gradient-end: #22c55e;
 }
 
 .theme-clean-pro-audio {
@@ -71,9 +62,6 @@
   --theme-text-secondary: #555555;
   --theme-font-heading: "IBM Plex Sans", sans-serif;
   --theme-font-body: "IBM Plex Sans", sans-serif;
-  --theme-gradient-start: #e53935;
-  --theme-gradient-mid: #2c2c2c;
-  --theme-gradient-end: #ffeb3b;
 }
 
 .theme-midnight-blue {
@@ -86,26 +74,31 @@
   --theme-text-secondary: #4a5568;
   --theme-font-heading: system-ui, sans-serif;
   --theme-font-body: system-ui, sans-serif;
-  --theme-gradient-start: #191970;
-  --theme-gradient-mid: #1e1e3f;
-  --theme-gradient-end: #4169e1;
 }
 
-/* Apply theme to body and typography - SAFE OVERRIDES ONLY */
+/* Apply theme to body and typography */
 body {
-  font-family: var(--theme-font-body);
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+  font-family: var(--theme-font-body) !important;
   transition: background-color 0.3s ease, color 0.3s ease, font-family 0.3s ease;
 }
 
-/* Theme application for specific tagged elements only */
-.theme-background {
+/* Force theme application for all layouts */
+.layout-consistent,
+.main-content,
+.min-h-screen {
   background-color: var(--theme-background) !important;
   color: var(--theme-text) !important;
 }
 
-/* Safe background overrides - only apply to main containers */
+/* Override Tailwind background classes */
 .bg-background {
   background-color: var(--theme-background) !important;
+}
+
+.bg-white {
+  background-color: var(--theme-surface) !important;
 }
 
 .text-foreground {
@@ -777,186 +770,4 @@ a[style*="background-color"][data-theme="purple"] *,
 a[style*="var(--theme-primary)"][data-theme="midnight-blue"] *,
 a[style*="var(--theme-primary)"][data-theme="purple"] * {
   color: white !important;
-}
-
-/* BUTTON TEXT COLOR FIX FOR DARK THEMES */
-/* Fix all primary buttons to have white text in dark themes */
-
-/* Target primary buttons in dark themes */
-body.theme-purple .bg-primary,
-body.theme-midnight-blue .bg-primary,
-html.theme-purple .bg-primary,
-html.theme-midnight-blue .bg-primary,
-.theme-purple .bg-primary,
-.theme-midnight-blue .bg-primary {
-  color: white !important;
-}
-
-/* Force all child elements in primary buttons to inherit white text */
-body.theme-purple .bg-primary *,
-body.theme-midnight-blue .bg-primary *,
-html.theme-purple .bg-primary *,
-html.theme-midnight-blue .bg-primary *,
-.theme-purple .bg-primary *,
-.theme-midnight-blue .bg-primary * {
-  color: inherit !important;
-}
-
-/* Target buttons with primary variant class specifically */
-body.theme-purple button[class*="bg-primary"],
-body.theme-midnight-blue button[class*="bg-primary"],
-html.theme-purple button[class*="bg-primary"],
-html.theme-midnight-blue button[class*="bg-primary"],
-.theme-purple button[class*="bg-primary"],
-.theme-midnight-blue button[class*="bg-primary"] {
-  color: white !important;
-}
-
-body.theme-purple button[class*="bg-primary"] *,
-body.theme-midnight-blue button[class*="bg-primary"] *,
-html.theme-purple button[class*="bg-primary"] *,
-html.theme-midnight-blue button[class*="bg-primary"] *,
-.theme-purple button[class*="bg-primary"] *,
-.theme-midnight-blue button[class*="bg-primary"] * {
-  color: inherit !important;
-}
-
-/* Target all Button components with default variant */
-body.theme-purple .inline-flex[class*="bg-primary"],
-body.theme-midnight-blue .inline-flex[class*="bg-primary"],
-html.theme-purple .inline-flex[class*="bg-primary"],
-html.theme-midnight-blue .inline-flex[class*="bg-primary"],
-.theme-purple .inline-flex[class*="bg-primary"],
-.theme-midnight-blue .inline-flex[class*="bg-primary"] {
-  color: white !important;
-}
-
-body.theme-purple .inline-flex[class*="bg-primary"] *,
-body.theme-midnight-blue .inline-flex[class*="bg-primary"] *,
-html.theme-purple .inline-flex[class*="bg-primary"] *,
-html.theme-midnight-blue .inline-flex[class*="bg-primary"] *,
-.theme-purple .inline-flex[class*="bg-primary"] *,
-.theme-midnight-blue .inline-flex[class*="bg-primary"] * {
-  color: inherit !important;
-}
-
-/* Additional targeting for button components with primary background */
-[class*="theme-purple"] button:not([class*="outline"]):not([class*="ghost"]):not([class*="secondary"]),
-[class*="theme-midnight-blue"] button:not([class*="outline"]):not([class*="ghost"]):not([class*="secondary"]) {
-  color: white !important;
-}
-
-[class*="theme-purple"] button:not([class*="outline"]):not([class*="ghost"]):not([class*="secondary"]) *,
-[class*="theme-midnight-blue"] button:not([class*="outline"]):not([class*="ghost"]):not([class*="secondary"]) * {
-  color: inherit !important;
-}
-
-/* Target specific button text elements */
-body.theme-purple [role="button"][class*="bg-primary"] span,
-body.theme-midnight-blue [role="button"][class*="bg-primary"] span,
-html.theme-purple [role="button"][class*="bg-primary"] span,
-html.theme-midnight-blue [role="button"][class*="bg-primary"] span,
-.theme-purple [role="button"][class*="bg-primary"] span,
-.theme-midnight-blue [role="button"][class*="bg-primary"] span {
-  color: white !important;
-}
-
-/* Override any remaining button text color issues in dark themes */
-[data-theme="purple"] button,
-[data-theme="midnight-blue"] button,
-body[class*="theme-purple"] button,
-body[class*="theme-midnight-blue"] button,
-html[class*="theme-purple"] button,
-html[class*="theme-midnight-blue"] button {
-  color: white !important;
-}
-
-[data-theme="purple"] button *,
-[data-theme="midnight-blue"] button *,
-body[class*="theme-purple"] button *,
-body[class*="theme-midnight-blue"] button *,
-html[class*="theme-purple"] button *,
-html[class*="theme-midnight-blue"] button * {
-  color: inherit !important;
-}
-
-/* THEME BUTTON TEXT UTILITY CLASS */
-/* Ensures proper text color for theme-specific buttons */
-.theme-button-text {
-  color: #1e293b !important; /* Default dark text */
-}
-
-/* Dark themes override for theme-button-text class */
-body.theme-purple .theme-button-text,
-body.theme-midnight-blue .theme-button-text,
-html.theme-purple .theme-button-text,
-html.theme-midnight-blue .theme-button-text,
-.theme-purple .theme-button-text,
-.theme-midnight-blue .theme-button-text {
-  color: white !important;
-}
-
-/* Force specific hard-coded text colors to be theme-aware */
-body.theme-purple [class*="text-slate-800"],
-body.theme-midnight-blue [class*="text-slate-800"],
-body.theme-purple [class*="text-slate-900"],
-body.theme-midnight-blue [class*="text-slate-900"],
-html.theme-purple [class*="text-slate-800"],
-html.theme-midnight-blue [class*="text-slate-800"],
-html.theme-purple [class*="text-slate-900"],
-html.theme-midnight-blue [class*="text-slate-900"],
-.theme-purple [class*="text-slate-800"],
-.theme-midnight-blue [class*="text-slate-800"],
-.theme-purple [class*="text-slate-900"],
-.theme-midnight-blue [class*="text-slate-900"] {
-  color: white !important;
-}
-
-/* Force quick action buttons to have proper contrast */
-body.theme-purple .bg-yellow-400,
-body.theme-midnight-blue .bg-yellow-400,
-html.theme-purple .bg-yellow-400,
-html.theme-midnight-blue .bg-yellow-400,
-.theme-purple .bg-yellow-400,
-.theme-midnight-blue .bg-yellow-400 {
-  color: #1e293b !important; /* Keep dark text on yellow background for contrast */
-}
-
-/* Ensure all button variants have proper text contrast in dark themes */
-body.theme-purple button:not(.theme-button-text),
-body.theme-midnight-blue button:not(.theme-button-text),
-html.theme-purple button:not(.theme-button-text),
-html.theme-midnight-blue button:not(.theme-button-text),
-.theme-purple button:not(.theme-button-text),
-.theme-midnight-blue button:not(.theme-button-text) {
-  color: white !important;
-}
-
-body.theme-purple button:not(.theme-button-text) *,
-body.theme-midnight-blue button:not(.theme-button-text) *,
-html.theme-purple button:not(.theme-button-text) *,
-html.theme-midnight-blue button:not(.theme-button-text) *,
-.theme-purple button:not(.theme-button-text) *,
-.theme-midnight-blue button:not(.theme-button-text) * {
-  color: inherit !important;
-}
-
-/* THEME-AWARE GRADIENT UTILITIES */
-/* Background gradients that adapt to current theme */
-.bg-theme-gradient {
-  background: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-mid), var(--theme-gradient-end)) !important;
-}
-
-.bg-theme-gradient-subtle {
-  background: linear-gradient(to right, var(--theme-primary), var(--theme-gradient-mid)) !important;
-  opacity: 0.1;
-}
-
-/* Text gradients that adapt to current theme */
-.text-theme-gradient {
-  background: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-end)) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
 }
