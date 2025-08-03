@@ -48,6 +48,22 @@ const generateWidgetUrl = (token: string): string => {
   return `${baseUrl}/booking-widget?token=${token}`;
 };
 
+// QR Code generator
+const generateQRCode = (url: string): string => {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+};
+
+// Copy to clipboard helper
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    console.error('Failed to copy to clipboard:', err);
+    return false;
+  }
+};
+
 export default function Settings() {
   const { isMobile } = useResponsive();
   const { toast } = useToast();
@@ -71,6 +87,7 @@ export default function Settings() {
   const [selectedGigTypes, setSelectedGigTypes] = useState<string[]>([]);
   const [widgetToken, setWidgetToken] = useState<string>('');
   const [widgetUrl, setWidgetUrl] = useState<string>('');
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
   // Initialize form
   const form = useForm<SettingsFormData>({
@@ -135,7 +152,9 @@ export default function Settings() {
           const data = await response.json();
           if (data.token) {
             setWidgetToken(data.token);
-            setWidgetUrl(generateWidgetUrl(data.token));
+            const url = generateWidgetUrl(data.token);
+            setWidgetUrl(url);
+            setQrCodeUrl(generateQRCode(url));
           }
         }
       } catch (error) {
@@ -184,7 +203,9 @@ export default function Settings() {
     },
     onSuccess: (data) => {
       setWidgetToken(data.token);
-      setWidgetUrl(generateWidgetUrl(data.token));
+      const url = generateWidgetUrl(data.token);
+      setWidgetUrl(url);
+      setQrCodeUrl(generateQRCode(url));
       toast({
         title: "Widget token generated",
         description: "New booking widget token created successfully.",
@@ -676,7 +697,7 @@ export default function Settings() {
                           </div>
 
                           {widgetUrl && (
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                               <div className="flex items-center space-x-2">
                                 <Input
                                   value={widgetUrl}
@@ -700,8 +721,22 @@ export default function Settings() {
                                   <ExternalLink className="w-4 h-4" />
                                 </Button>
                               </div>
+                              
+                              {qrCodeUrl && (
+                                <div className="flex flex-col items-center space-y-2 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                                  <img 
+                                    src={qrCodeUrl} 
+                                    alt="Booking Widget QR Code" 
+                                    className="w-48 h-48 border border-gray-200 dark:border-gray-600 rounded"
+                                  />
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                                    QR Code for your booking widget
+                                  </p>
+                                </div>
+                              )}
+                              
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Share this URL to allow clients to book directly with you
+                                Share this URL or QR code to allow clients to book directly with you
                               </p>
                             </div>
                           )}
