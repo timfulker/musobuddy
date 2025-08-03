@@ -7,6 +7,53 @@ import { generalApiRateLimit, slowDownMiddleware } from './rate-limiting.js';
 import { aiResponseGenerator } from './ai-response-generator.js';
 import QRCode from 'qrcode';
 
+// Background AI PDF generation function
+async function generateBackgroundAIPDF(contractId: string, pdfData: any, userId: number) {
+  try {
+    console.log(`🔄 Starting background AI PDF generation for contract ${contractId}...`);
+    const { generateAIPDF } = await import('./ai-pdf-builder');
+    
+    const startTime = Date.now();
+    const pdfBuffer = await generateAIPDF(pdfData);
+    const duration = Date.now() - startTime;
+    
+    console.log(`✅ Background AI PDF completed in ${duration}ms for contract ${contractId}`);
+    
+    // Upload to cloud storage
+    const { uploadContractToCloud } = await import('./cloud-storage');
+    const contract = await storage.getContract(contractId);
+    const userSettings = await storage.getUserSettings(userId);
+    
+    if (contract) {
+      const cloudResult = await uploadContractToCloud(contract, userSettings, pdfBuffer);
+      
+      if (cloudResult.success) {
+        // Update contract with AI PDF URLs
+        await storage.updateContract(contractId, {
+          cloudStorageUrl: cloudResult.url,
+          cloudStorageKey: cloudResult.key,
+          pdfGenerationStatus: 'completed'
+        });
+        
+        console.log(`✅ Background AI PDF uploaded to cloud for contract ${contractId}`);
+      }
+    }
+    
+  } catch (error: any) {
+    console.error(`❌ Background AI PDF generation failed for contract ${contractId}:`, error.message);
+    
+    // Update contract status to show failure
+    try {
+      await storage.updateContract(contractId, {
+        pdfGenerationStatus: 'failed',
+        pdfError: error.message
+      });
+    } catch (updateError) {
+      console.error(`❌ Failed to update contract status:`, updateError);
+    }
+  }
+}
+
 // Theme preview HTML generator
 function generateThemePreviewHTML(themeSettings: any): string {
   const {
@@ -2193,13 +2240,20 @@ export async function registerRoutes(app: Express) {
         });
         console.error('❌ AI PDF Stack trace:', aiError.stack?.split('\n').slice(0, 5));
         
-        // EMERGENCY: Skip PDF generation for now and return contract successfully
-        console.log('⚠️ AI PDF failed - returning contract without PDF to prevent 500 error');
-        console.log('⚠️ Contract created successfully, PDF can be generated manually later');
+        // GRACEFUL HANDLING: Return contract immediately, generate AI PDF in background
+        console.log('⚠️ AI PDF generation slow/failed - returning contract immediately');
+        console.log('📄 AI PDF will be generated in background and attached to contract');
+        
+        // Start background AI PDF generation (don't await)
+        generateBackgroundAIPDF(newContract.id, pdfData, req.session.userId)
+          .catch(bgError => {
+            console.error('❌ Background AI PDF generation failed:', bgError.message);
+          });
+        
         return res.json({
           ...newContract,
-          pdfGenerationStatus: 'failed',
-          pdfError: aiError.message
+          pdfGenerationStatus: 'processing',
+          pdfMessage: 'Contract created successfully. AI-themed PDF is being generated in the background.'
         });
       }
     } catch (error: any) {
@@ -2322,7 +2376,14 @@ export async function registerRoutes(app: Express) {
       console.log('🧪 Testing AI PDF with simple data...');
       const startTime = Date.now();
       
-      const pdfBuffer = await generateAIPDF(testData);
+      // Add timeout to prevent hanging
+      const pdfBuffer = await Promise.race([
+        generateAIPDF(testData),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Debug test timeout after 30 seconds')), 30000)
+        )
+      ]) as Buffer;
+      
       const duration = Date.now() - startTime;
       
       console.log(`✅ AI PDF generated in ${duration}ms, size: ${pdfBuffer.length} bytes`);
@@ -2336,6 +2397,52 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({
         error: error.message,
         stack: error.stack?.split('\n').slice(0, 5)
+      });
+    }
+  });
+
+  app.get('/debug/openai-only', async (req, res) => {
+    try {
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      console.log('🧪 Testing OpenAI theme generation only...');
+      const start = Date.now();
+      
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { 
+            role: "system", 
+            content: "Generate a simple HTML contract with professional theme. Include page breaks and clean styling." 
+          },
+          { 
+            role: "user", 
+            content: JSON.stringify({
+              type: "contract",
+              theme: "professional", 
+              client: "Test Client",
+              fee: "£100"
+            })
+          }
+        ],
+        max_tokens: 1000
+      });
+      
+      const duration = Date.now() - start;
+      const htmlContent = completion.choices[0]?.message?.content || '';
+      
+      res.json({
+        success: true,
+        duration: `${duration}ms`,
+        htmlLength: htmlContent.length,
+        htmlPreview: htmlContent.substring(0, 200) + '...'
+      });
+      
+    } catch (error: any) {
+      console.error('❌ OpenAI only test failed:', error);
+      res.status(500).json({
+        error: error.message
       });
     }
   });
