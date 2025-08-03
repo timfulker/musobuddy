@@ -1144,7 +1144,36 @@ html body .theme-ocean-blue .sidebar .bg-primary *,
 html body .theme-forest-green .sidebar .bg-primary,
 html body .theme-forest-green .sidebar .bg-primary *,
 html body .theme-clean-pro-audio .sidebar .bg-primary,
-html body .theme-clean-pro-audio .sidebar .bg-primary * {
+html body .theme-clean-pro-audio .sidebar .bg-primary *,
+/* Extremely specific targeting for sidebar navigation */
+#root [class*="theme-"] .sidebar .bg-primary,
+#root [class*="theme-"] .sidebar .bg-primary *,
+[data-theme*="midnight"] .sidebar .bg-primary,
+[data-theme*="midnight"] .sidebar .bg-primary *,
+.sidebar a[class*="bg-primary"],
+.sidebar a[class*="bg-primary"] *,
+.sidebar button[class*="bg-primary"],
+.sidebar button[class*="bg-primary"] * {
   color: white !important;
   background-color: var(--theme-primary) !important;
+}
+
+/* Nuclear option: Force white text on midnight blue specifically */
+.theme-midnight-blue * {
+  --tw-text-opacity: 1 !important;
+}
+
+.theme-midnight-blue .bg-primary * {
+  color: rgb(255 255 255) !important;
+}
+
+/* Ultimate override for span elements in sidebar links */
+.sidebar .bg-primary span,
+.sidebar a.bg-primary span,
+.sidebar button.bg-primary span,
+[class*="theme-"] .sidebar .bg-primary span,
+[class*="theme-"] .sidebar a.bg-primary span,
+html [class*="theme-"] .sidebar .bg-primary span,
+html body [class*="theme-"] .sidebar .bg-primary span {
+  color: white !important;
 }
