@@ -469,28 +469,28 @@ export function generateProfessionalContractHTML(contract: any, userSettings: an
       ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<div style="font-size:12px; color:#334155; margin-top:4px;">Deposit Required: £${contract.deposit}</div>` : ''}
     </div>
 
-    \${(contract.equipmentRequirements || contract.specialRequirements) ? \`
+    ${(contract.equipmentRequirements || contract.specialRequirements) ? `
       <div class="section-header">Requirements & Specifications</div>
       <div class="terms-section">
-        \${contract.equipmentRequirements ? \`
+        ${contract.equipmentRequirements ? `
           <h4>Equipment Requirements</h4>
-          <p>\${contract.equipmentRequirements}</p>
-        \` : ''}
-        \${contract.specialRequirements ? \`
+          <p>${contract.equipmentRequirements}</p>
+        ` : ''}
+        ${contract.specialRequirements ? `
           <h4>Special Requirements</h4>
-          <p>\${contract.specialRequirements}</p>
-        \` : ''}
+          <p>${contract.specialRequirements}</p>
+        ` : ''}
       </div>
-    \` : ''}
+    ` : ''}
 
     <div class="section-header terms">Terms & Conditions</div>
 
     <div class="terms-section">
       <h4>Payment Terms & Conditions</h4>
       <ul>
-        <li><strong>Payment Due Date:</strong> Full payment of £\${contract.fee || '0.00'} becomes due and payable no later than the day of performance.</li>
+        <li><strong>Payment Due Date:</strong> Full payment of £${fee} becomes due and payable no later than the day of performance.</li>
         <li><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account.</li>
-        <li><strong>Deposit:</strong> £\${contract.deposit || '0.00'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy.</li>
+        <li><strong>Deposit:</strong> £${depositAmount} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy.</li>
         <li><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</li>
       </ul>
     </div>
@@ -528,13 +528,13 @@ export function generateProfessionalContractHTML(contract: any, userSettings: an
       <div class="signature-box">
         <h4>Client Signature</h4>
         <div class="signature-line"></div>
-        <p><strong>\${contract.clientName}</strong></p>
+        <p><strong>${clientName}</strong></p>
         <div class="date-line">Date: ________________</div>
       </div>
       <div class="signature-box">
         <h4>Performer Signature</h4>
         <div class="signature-line"></div>
-        <p><strong>\${userSettings?.businessName || 'Performer'}</strong></p>
+        <p><strong>${businessName}</strong></p>
         <div class="date-line">Date: ________________</div>
       </div>
     </div>
@@ -542,9 +542,9 @@ export function generateProfessionalContractHTML(contract: any, userSettings: an
     <div class="footer">
       <div class="brand">MusoBuddy</div>
       <div class="contract-ref">
-        Contract Reference: \${contract.contractNumber || 'DRAFT'} • 
-        Generated: \${new Date().toLocaleDateString('en-GB')} \${new Date().toLocaleTimeString('en-GB')}
-        \${contract.id ? \` • ID: \${contract.id}\` : ''}
+        Contract Reference: ${contractNumber} • 
+        Generated: ${currentDate} ${new Date().toLocaleTimeString('en-GB')}
+        ${contract.id ? ` • ID: ${contract.id}` : ''}
       </div>
     </div>
   </div>
