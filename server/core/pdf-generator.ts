@@ -115,141 +115,203 @@ function generateContractHTML(
       color: #333;
       background-color: white;
       font-size: 12px;
-      padding: 30px;
+      padding: 20px;
     }
+
+    /* CRITICAL FIX: Remove all page break forcing properties */
     .contract-header {
       text-align: center;
-      margin-bottom: 40px;
-      page-break-inside: avoid;
-      padding-bottom: 20px;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
       border-bottom: 3px solid #9333ea;
+      /* REMOVED: page-break-inside: avoid; */
+      /* REMOVED: page-break-after: avoid; */
     }
+
     .contract-title {
-      font-size: 28px;
+      font-size: 24px; /* Reduced from 28px to save space */
       font-weight: bold;
       color: #9333ea;
-      margin: 15px 0;
+      margin: 10px 0; /* Reduced margin */
     }
+
     .contract-number {
-      font-size: 16px;
+      font-size: 14px; /* Reduced from 16px */
       color: #666;
       font-weight: 500;
     }
+
     .draft-label {
-      font-size: 18px;
+      font-size: 16px; /* Reduced from 18px */
       font-weight: bold;
       color: #9333ea;
       background: linear-gradient(135deg, #f3e8ff, #e879f9);
-      padding: 8px 20px;
+      padding: 6px 16px; /* Reduced padding */
       border-radius: 20px;
       display: inline-block;
-      margin: 15px 0;
+      margin: 10px 0; /* Reduced margin */
     }
+
     .section {
-      margin-bottom: 30px;
-      /* page-break-inside: avoid; */
+      margin-bottom: 20px; /* Reduced from 30px */
+      /* CRITICAL: Allow sections to break across pages */
+      page-break-inside: auto;
     }
+
     .section-title {
-      font-size: 18px;
+      font-size: 16px; /* Reduced from 18px */
       font-weight: bold;
       color: #9333ea;
-      margin-bottom: 15px;
-      padding-bottom: 5px;
+      margin-bottom: 12px; /* Reduced from 15px */
+      padding-bottom: 4px; /* Reduced from 5px */
       border-bottom: 2px solid #9333ea;
     }
+
     .performer-details {
       text-align: left;
-      margin-bottom: 30px;
+      margin-bottom: 20px; /* Reduced from 30px */
     }
+
     .event-details-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      margin-bottom: 15px; /* Reduced from 20px */
     }
+
     .event-details-table td {
-      padding: 8px;
+      padding: 6px; /* Reduced from 8px */
       border: 1px solid #ccc;
       vertical-align: top;
+      font-size: 11px; /* Slightly smaller text */
     }
+
     .event-details-table .label {
       font-weight: bold;
       background: linear-gradient(135deg, #9333ea, #7c3aed);
       color: white;
       width: 30%;
     }
+
+    /* CRITICAL FIX: Make terms section breakable */
     .terms-section {
-      margin-top: 30px;
-      font-size: 11px;
-      line-height: 1.6;
-      /* page-break-inside: avoid; */
+      margin-top: 20px; /* Reduced from 30px */
+      font-size: 10px; /* Reduced from 11px */
+      line-height: 1.4; /* Reduced from 1.6 */
+      /* CRITICAL: Allow terms to break across pages */
+      page-break-inside: auto;
     }
+
     .terms-section h3 {
-      font-size: 14px;
+      font-size: 13px; /* Reduced from 14px */
       font-weight: bold;
-      margin: 20px 0 10px 0;
+      margin: 15px 0 8px 0; /* Reduced margins */
       text-decoration: underline;
+      /* Allow headings to break if needed */
+      page-break-after: auto;
     }
+
     .terms-section h4 {
-      font-size: 12px;
+      font-size: 11px; /* Reduced from 12px */
       font-weight: bold;
-      margin: 15px 0 8px 0;
+      margin: 12px 0 6px 0; /* Reduced margins */
+      page-break-after: auto;
     }
+
     .terms-section ul {
-      margin-left: 30px;
-      margin-bottom: 15px;
+      margin-left: 25px; /* Reduced from 30px */
+      margin-bottom: 12px; /* Reduced from 15px */
     }
+
     .terms-section li {
-      margin-bottom: 8px;
+      margin-bottom: 6px; /* Reduced from 8px */
     }
+
+    .terms-section p {
+      margin-bottom: 8px; /* Reduced from default */
+    }
+
+    /* CRITICAL FIX: Only prevent signature section from breaking */
     .signature-section {
-      margin-top: 40px;
-      page-break-inside: avoid;
+      margin-top: 30px; /* Reduced from 40px */
+      page-break-inside: avoid; /* Keep signatures together */
+      page-break-before: auto; /* But allow natural page breaks before */
     }
+
     .signature-block {
-      margin: 30px 0;
+      margin: 20px 0; /* Reduced from 30px */
       border: 2px solid #9333ea;
       background: linear-gradient(135deg, #faf5ff, #f3e8ff);
-      padding: 20px;
+      padding: 15px; /* Reduced from 20px */
       border-radius: 8px;
-      min-height: 80px;
+      min-height: 60px; /* Reduced from 80px */
+      page-break-inside: avoid; /* Keep individual signature blocks together */
     }
+
     .signature-block h4 {
-      font-size: 16px;
+      font-size: 14px; /* Reduced from 16px */
       font-weight: bold;
       color: #9333ea;
-      margin-bottom: 15px;
+      margin-bottom: 10px; /* Reduced from 15px */
       border-bottom: 1px solid #9333ea;
-      padding-bottom: 5px;
+      padding-bottom: 4px; /* Reduced from 5px */
     }
+
     .signature-info {
-      margin: 10px 0;
+      margin: 8px 0; /* Reduced from 10px */
     }
+
     .legal-footer {
-      margin-top: 40px;
-      font-size: 10px;
+      margin-top: 30px; /* Reduced from 40px */
+      font-size: 9px; /* Reduced from 10px */
       border-top: 1px solid #ccc;
-      padding-top: 20px;
+      padding-top: 15px; /* Reduced from 20px */
+      page-break-inside: auto; /* Allow footer to break if needed */
     }
+
     .legal-footer h4 {
-      font-size: 12px;
+      font-size: 11px; /* Reduced from 12px */
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 8px; /* Reduced from 10px */
     }
+
     .powered-by {
       text-align: center;
-      margin-top: 30px;
+      margin-top: 20px; /* Reduced from 30px */
       font-style: italic;
-      font-size: 11px;
+      font-size: 10px; /* Reduced from 11px */
     }
+
     .fee-highlight {
       background: linear-gradient(135deg, #9333ea, #7c3aed);
       color: white;
-      padding: 15px;
+      padding: 12px; /* Reduced from 15px */
       border-radius: 8px;
       text-align: center;
-      font-size: 18px;
+      font-size: 16px; /* Reduced from 18px */
       font-weight: bold;
-      margin: 20px 0;
+      margin: 15px 0; /* Reduced from 20px */
+    }
+
+    /* CRITICAL FIX: Override any forced page breaks */
+    * {
+      page-break-after: auto !important;
+      page-break-before: auto !important;
+    }
+
+    /* Only allow these specific elements to avoid page breaks */
+    .signature-section,
+    .signature-block {
+      page-break-inside: avoid !important;
+    }
+
+    /* Ensure content flows naturally */
+    .contract-header,
+    .section,
+    .terms-section,
+    .legal-footer {
+      page-break-inside: auto !important;
+      page-break-after: auto !important;
+      page-break-before: auto !important;
     }
   </style>
 </head>
@@ -412,7 +474,7 @@ function generateContractHTML(
     <p><strong>Contract Validity:</strong> This contract remains valid and enforceable regardless of changes in circumstances, location, or contact information of either party.</p>
   </div>
 
-  <div class="powered-by" style="text-align: center; margin-top: 30px; color: #9333ea; font-weight: bold; font-size: 12px;">
+  <div class="powered-by" style="text-align: center; margin-top: 20px; color: #9333ea; font-weight: bold; font-size: 11px;">
     Powered by <span style="color: #9333ea; font-weight: bold;">MusoBuddy</span> – less admin, more music.
   </div>
 </body>
