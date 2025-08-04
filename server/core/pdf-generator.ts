@@ -101,12 +101,12 @@ function generateContractHTML(
   <title>MusoBuddy Performance Contract</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
     html, body {
       background: #f4f6fa;
       color: #222;
       font-family: 'Inter', Arial, sans-serif;
-      font-size: 13px;
+      font-size: 11px;
+      line-height: 1.3;
       margin: 0;
       padding: 0;
     }
@@ -114,83 +114,72 @@ function generateContractHTML(
       max-width: 800px;
       margin: 0 auto;
       background: #fff;
-      padding: 32px 28px 24px 28px;
-      box-shadow: 0 2px 16px #e0e7ef;
-      min-height: 1120px;
+      padding: 18px 10px 10px 10px;
+      box-shadow: 0 2px 8px #e0e7ef;
     }
     .header {
       background: #3b82f6;
       color: #fff;
-      padding: 28px 0 18px 0;
+      padding: 16px 0 10px 0;
+      margin-bottom: 18px;
+      border-radius: 0 0 6px 6px;
       text-align: center;
-      border-radius: 0 0 8px 8px;
-      margin-bottom: 32px;
     }
     .header h1 {
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      letter-spacing: 1px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
     }
     .header .subtitle {
-      font-size: 14px;
+      font-size: 11px;
       opacity: 0.92;
-    }
-    .section-header {
-      color: #334155;
-      background: #e0e7ef;
-      font-size: 15px;
-      font-weight: 600;
-      padding: 10px 18px;
-      border-radius: 6px;
-      margin: 32px 0 14px 0;
-      letter-spacing: 0.5px;
     }
     .two-column {
       display: flex;
-      gap: 32px;
-      margin-bottom: 24px;
+      gap: 12px;
+      margin-bottom: 10px;
     }
     .column {
       flex: 1;
       background: #f4f6fa;
-      padding: 18px 18px 12px 18px;
-      border-radius: 8px;
-      border-left: 4px solid #3b82f6;
+      padding: 10px 10px 6px 10px;
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
     }
     .column h3 {
       color: #3b82f6;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .column p {
-      margin-bottom: 6px;
-      font-size: 13px;
+      margin-bottom: 4px;
+      font-size: 11px;
     }
     .event-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 18px 0 0 0;
+      margin: 10px 0 0 0;
       background: #fff;
-      border-radius: 8px;
+      border-radius: 6px;
       overflow: hidden;
       box-shadow: 0 1px 4px #e0e7ef;
     }
     .event-table th {
       background: #3b82f6;
       color: #fff;
-      padding: 12px;
+      padding: 6px;
       text-align: left;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 11px;
     }
     .event-table td {
-      padding: 12px;
+      padding: 6px;
       border-bottom: 1px solid #e0e7ef;
-      font-size: 13px;
+      font-size: 11px;
     }
     .event-table tr:last-child td {
       border-bottom: none;
@@ -203,127 +192,131 @@ function generateContractHTML(
     .fee-highlight {
       background: #e0e7ef;
       color: #3b82f6;
-      font-size: 22px;
+      font-size: 14px;
       text-align: center;
-      padding: 18px;
+      padding: 8px;
       border-radius: 6px;
-      margin: 28px 0 0 0;
+      margin: 12px 0 0 0;
       font-weight: 600;
       box-shadow: 0 2px 8px #e0e7ef;
     }
     .fee-highlight .label {
-      font-size: 13px;
+      font-size: 10px;
       color: #334155;
       font-weight: 400;
-      margin-top: 6px;
+      margin-top: 2px;
+    }
+    .section-header {
+      color: #334155;
+      background: #e0e7ef;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin: 18px 0 8px 0;
+      letter-spacing: 0.5px;
+    }
+    .section-header.terms {
+      page-break-before: always;
+      break-before: page;
     }
     .terms-section {
       background: #f4f6fa;
-      padding: 20px 18px;
-      border-radius: 8px;
-      margin: 18px 0;
-      border-left: 4px solid #3b82f6;
+      padding: 10px 8px;
+      border-radius: 6px;
+      margin: 8px 0;
+      border-left: 3px solid #3b82f6;
     }
     .terms-section h4 {
       color: #3b82f6;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       text-transform: uppercase;
     }
     .terms-section p, .terms-section ul {
-      font-size: 12px;
-      line-height: 1.5;
-      margin-bottom: 8px;
+      font-size: 10px;
+      line-height: 1.4;
+      margin-bottom: 4px;
       color: #475569;
     }
     .terms-section ul {
-      padding-left: 20px;
+      padding-left: 16px;
     }
     .terms-section li {
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .signature-section {
-      margin-top: 36px;
+      margin-top: 12px;
       display: flex;
-      gap: 32px;
+      gap: 12px;
     }
     .signature-box {
       flex: 1;
       border: 2px solid #3b82f6;
-      border-radius: 8px;
-      padding: 22px 12px 18px 12px;
+      border-radius: 6px;
+      padding: 10px 6px 8px 6px;
       text-align: center;
       background: #fff;
-      min-height: 100px;
+      min-height: 60px;
       position: relative;
     }
     .signature-box h4 {
       color: #3b82f6;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     .signature-line {
       border-bottom: 2px solid #3b82f6;
-      margin: 18px 0 8px 0;
-      height: 36px;
+      margin: 10px 0 4px 0;
+      height: 18px;
     }
     .signature-box .date-line {
-      font-size: 11px;
+      font-size: 10px;
       color: #64748b;
-      margin-top: 8px;
+      margin-top: 4px;
     }
     .signed-indicator {
       background: #059669;
       color: white;
-      padding: 7px 14px;
+      padding: 4px 8px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 9px;
       font-weight: 600;
       display: inline-block;
-      margin-top: 8px;
+      margin-top: 4px;
     }
     .footer {
       background: #3b82f6;
       color: white;
-      padding: 18px 0 12px 0;
+      padding: 6px 0 4px 0;
       text-align: center;
-      font-size: 11px;
-      border-radius: 8px 8px 0 0;
-      margin-top: 40px;
+      font-size: 10px;
+      border-radius: 6px 6px 0 0;
+      margin-top: 10px;
     }
     .footer .brand {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 700;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
     .footer .contract-ref {
-      font-size: 10px;
+      font-size: 9px;
       opacity: 0.7;
     }
     @media print {
-      body { margin: 0; -webkit-print-color-adjust: exact; color-adjust: exact; }
-      .container { box-shadow: none; }
       .header, .footer { background: #3b82f6 !important; }
       .section-header, .event-table th { background: #e0e7ef !important; color: #334155 !important; }
       .fee-highlight { background: #e0e7ef !important; color: #3b82f6 !important; }
-      .event-table, .fee-highlight, .section-header, .terms-section { page-break-inside: avoid; break-inside: avoid; }
+      .section-header.terms { page-break-before: always; break-before: page; }
+      .event-table, .fee-highlight, .section-header, .terms-section, .signature-section { page-break-inside: avoid; break-inside: avoid; }
       .section-header { page-break-after: avoid; break-after: avoid; }
-      /* Footer improvements: Allow it to flow naturally without forcing page breaks */
-      .footer {
-        background: #3b82f6 !important;
-        color: white !important;
-        border-radius: 0;
-        box-shadow: none;
-        margin-top: 24px;
-        padding: 12px 0 8px 0;
-        /* Remove any page-break restrictions on footer */
-      }
+      .footer { border-radius: 0; box-shadow: none; }
     }
     @media (max-width: 700px) {
-      .container { padding: 10px; }
-      .two-column, .signature-section { flex-direction: column; gap: 16px; }
+      .container { padding: 6px; }
+      .two-column, .signature-section { flex-direction: column; gap: 8px; }
     }
   </style>
 </head>
@@ -342,7 +335,7 @@ function generateContractHTML(
         <p><strong>${businessName}</strong></p>
         ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
         ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
-        ${businessAddress ? `<p>Address: ${formatAddress(businessAddress)}</p>` : ''}
+        ${businessAddress ? `<p style="font-size:10px; color:#64748b;">Address: ${formatAddress(businessAddress)}</p>` : ''}
       </div>
       <div class="column">
         <h3>Client Details</h3>
@@ -382,7 +375,7 @@ function generateContractHTML(
     <div class="fee-highlight">
       £${contract.fee || '0.00'}
       <div class="label">Total Performance Fee</div>
-      ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<div style="font-size:12px; color:#334155; margin-top:4px;">Deposit Required: £${contract.deposit}</div>` : ''}
+      ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<div style="font-size:10px; color:#334155; margin-top:2px;">Deposit Required: £${contract.deposit}</div>` : ''}
     </div>
 
     <!-- Equipment & Special Requirements -->
@@ -400,7 +393,7 @@ function generateContractHTML(
       </div>
     ` : ''}
 
-    <!-- Terms & Conditions -->
+    <!-- Terms & Conditions (start on page 2) -->
     <div class="section-header terms">Terms & Conditions</div>
     <div class="terms-section">
       <h4>Payment Terms & Conditions</h4>
@@ -449,7 +442,7 @@ function generateContractHTML(
       </ul>
     </div>
 
-    <!-- Signature Section -->
+    <!-- Signature Section (page 3) -->
     <div class="signature-section">
       <div class="signature-box">
         <h4>Client Signature</h4>
@@ -474,7 +467,7 @@ function generateContractHTML(
     <div class="footer">
       <div class="brand">MusoBuddy</div>
       <div class="contract-ref">
-        Contract Reference: ${contract.contractNumber || 'DRAFT'} • 
+        Contract Reference: (${contract.contractNumber || 'DRAFT'} - ${contract.clientName || ''}) • 
         Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}
         ${contract.id ? ` • ID: ${contract.id}` : ''}
       </div>
