@@ -2070,19 +2070,39 @@ export async function registerRoutes(app: Express) {
       const emailService = new MailgunService();
       
       // Generate and upload contract PDF to cloud storage
-      const { uploadContractToCloud } = await import('./cloud-storage');
+      const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
       const { url: pdfUrl } = await uploadContractToCloud(contract, userSettings);
       
-      // Update contract with cloud URLs and status
-      await storage.updateContract(parsedContractId, {
-        status: 'sent',
-        cloudStorageUrl: pdfUrl,
-        sentAt: new Date()
-      });
+      // Generate and upload contract signing page
+      console.log('📝 Creating contract signing page for email sending...');
+      const signingPageResult = await uploadContractSigningPage(contract, userSettings);
       
-      // Send email with contract
+      let signingPageUrl = pdfUrl; // fallback to PDF if signing page fails
+      if (signingPageResult.success) {
+        signingPageUrl = signingPageResult.url;
+        console.log('✅ Contract signing page created:', signingPageUrl);
+        
+        // Update contract with both PDF and signing page URLs
+        await storage.updateContract(parsedContractId, {
+          status: 'sent',
+          cloudStorageUrl: pdfUrl,
+          signingPageUrl: signingPageResult.url,
+          signingPageKey: signingPageResult.key,
+          sentAt: new Date()
+        });
+      } else {
+        console.log('⚠️ Signing page creation failed, using PDF URL as fallback');
+        // Update contract with just PDF URL
+        await storage.updateContract(parsedContractId, {
+          status: 'sent',
+          cloudStorageUrl: pdfUrl,
+          sentAt: new Date()
+        });
+      }
+      
+      // Send email with contract - use signing page URL so client can sign
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject, pdfUrl, customMessage);
+      await emailService.sendContractEmail(contract, userSettings, subject, signingPageUrl, customMessage);
       
       // Update associated booking status to 'contract_sent' if contract is linked to a booking
       if (contract.enquiryId) {
