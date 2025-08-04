@@ -56,23 +56,23 @@ export async function generateInvoicePDF(
 
 function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettings | null): string {
   const logoBase64 = getLogoBase64();
-  // CSS-based animated metronome logo (from your HTML file)
+  // CSS-based animated metronome logo (from your HTML file) - LARGE VERSION
   const cssMetronomeLogo = `
-    <div class="logo-invoice" style="display: inline-flex; align-items: center; gap: 15px;">
-      <div class="metronome-icon" style="width: 80px; height: 80px; background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 8px 25px rgba(25, 25, 112, 0.3);">
-        <div class="metronome-body" style="width: 28px; height: 45px; background: white; clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%); position: relative;">
-          <div class="metronome-arm" style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 3px; height: 28px; background: #191970; border-radius: 1px;"></div>
+    <div class="logo-invoice" style="display: inline-flex; align-items: center; gap: 20px;">
+      <div class="metronome-icon" style="width: 120px; height: 120px; background: linear-gradient(135deg, #191970 0%, #1e3a8a 100%); border-radius: 25px; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 10px 30px rgba(25, 25, 112, 0.3);">
+        <div class="metronome-body" style="width: 42px; height: 68px; background: white; clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%); position: relative;">
+          <div class="metronome-arm" style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 4px; height: 42px; background: #191970; border-radius: 2px;"></div>
         </div>
       </div>
       <div class="logo-text" style="text-align: left;">
-        <div class="metronome-text" style="font-size: 36px; font-weight: 700; color: #191970; letter-spacing: -1px; line-height: 1; margin-bottom: 8px; font-family: 'Arial', sans-serif;">MusoBuddy</div>
-        <div class="tagline" style="font-size: 14px; color: #64748b; font-weight: 500; font-style: italic; font-family: 'Arial', sans-serif;">Less admin, more music</div>
+        <div class="metronome-text" style="font-size: 48px; font-weight: 700; color: #191970; letter-spacing: -1px; line-height: 1; margin-bottom: 10px; font-family: 'Arial', sans-serif;">MusoBuddy</div>
+        <div class="tagline" style="font-size: 18px; color: #64748b; font-weight: 500; font-style: italic; font-family: 'Arial', sans-serif;">Less admin, more music</div>
       </div>
     </div>
   `;
 
   const logoHtml = logoBase64 ? 
-    `<img src="data:image/png;base64,${logoBase64}" alt="MusoBuddy Logo" style="height: 80px; vertical-align: middle;">` : 
+    `<img src="data:image/png;base64,${logoBase64}" alt="MusoBuddy Logo" style="height: 120px; vertical-align: middle;">` : 
     cssMetronomeLogo;
 
   // Extract business details from user settings
