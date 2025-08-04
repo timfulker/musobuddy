@@ -3,7 +3,6 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { nanoid } from 'nanoid';
 import type { Invoice, Contract, UserSettings } from '@shared/schema';
-import { generateContractContent, DEFAULT_CONTRACT_TEMPLATE } from './contract-templates.js';
 
 // Initialize R2 client
 const r2Client = new S3Client({
@@ -23,7 +22,7 @@ export async function uploadInvoiceToCloud(
     console.log(`☁️ Uploading invoice #${invoice.id} to cloud storage...`);
     
     // Generate PDF using the dedicated invoice PDF generator
-    const { generateInvoicePDF } = await import('./invoice-pdf-generator');
+    const { generateInvoicePDF } = await import('./invoice-pdf-generator.js');
     const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
     
     console.log(`📄 PDF generated, size: ${pdfBuffer.length} bytes`);

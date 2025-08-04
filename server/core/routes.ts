@@ -3055,7 +3055,7 @@ export async function registerRoutes(app: Express) {
       
       // Generate PDF using the dedicated invoice PDF generator
       const userSettings = await storage.getUserSettings(userId);
-      const { generateInvoicePDF } = await import('./invoice-pdf-generator');
+      const { generateInvoicePDF } = await import('./invoice-pdf-generator.js');
       const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
       
       res.setHeader('Content-Type', 'application/pdf');
@@ -3086,7 +3086,7 @@ export async function registerRoutes(app: Express) {
       
       // Generate PDF using the dedicated invoice PDF generator
       const userSettings = await storage.getUserSettings(userId);
-      const { generateInvoicePDF } = await import('./invoice-pdf-generator');
+      const { generateInvoicePDF } = await import('./invoice-pdf-generator.js');
       const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
       
       res.setHeader('Content-Type', 'application/pdf');

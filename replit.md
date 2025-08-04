@@ -17,7 +17,8 @@ MusoBuddy is a comprehensive music business management platform designed to help
 - **Codebase Cleanup**: Removed legacy `pdf-generator.ts` file and updated all references to use dedicated generators, ensuring complete system isolation (August 4, 2025)
 - **Data Compliance**: Added comprehensive Terms & Conditions page addressing GDPR compliance, data processing, and cloud storage transparency. Accessible via footer link on login page (August 4, 2025)
 - **Invoice System Protection**: Locked `invoice-pdf-generator.ts` with read-only permissions and backup copy to prevent accidental modifications. System now stable with 120px logo and professional design (August 4, 2025)
-- **Professional Contract Template**: Integrated advanced "Professional" template with blue theme (#3b82f6), Inter font, comprehensive styling, and enhanced terms & conditions. Shared template system ensures PDF and signing page synchronization (August 4, 2025)
+- **Professional Contract Template**: Integrated advanced "Professional" template with blue theme (#3b82f6), Inter font, comprehensive styling, and enhanced terms & conditions. Template system kept completely separate from invoice system due to reliability concerns (August 4, 2025)
+- **System Isolation Fixed**: Resolved import path corruption in cloud-storage.ts and routes.ts that was breaking invoice system when contract templates were modified. Systems now completely isolated (August 4, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
