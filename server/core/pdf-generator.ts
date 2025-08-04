@@ -315,7 +315,7 @@ function generateContractHTML(
   </div>
 
   <!-- TERMS AND CONDITIONS -->
-  <div class="terms-section">
+  <div class="terms-section" style="page-break-before: always;">
     <div class="section-title">Terms and Conditions</div>
     
     <h3>Payment Terms & Conditions</h3>
