@@ -166,6 +166,17 @@ export const PROFESSIONAL_TEMPLATE: ContractTemplate = {
 
 // Generate full professional contract HTML with styling
 export function generateProfessionalContractHTML(contract: any, userSettings: any): string {
+  // Process contract data properly
+  const clientName = contract.clientName || 'Client Name TBC';
+  const businessName = userSettings?.businessName || 'Professional Musician';
+  const eventDate = contract.eventDate ? new Date(contract.eventDate).toLocaleDateString('en-GB') : 'TBD';
+  const eventTime = contract.eventTime || 'TBC';
+  const eventEndTime = contract.eventEndTime || 'TBC';
+  const venue = contract.venue || 'To be confirmed';
+  const fee = contract.fee || '0.00';
+  const depositAmount = contract.depositAmount || '0.00';
+  const contractNumber = contract.contractNumber || 'DRAFT';
+  const currentDate = new Date().toLocaleDateString('en-GB');
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -395,16 +406,16 @@ export function generateProfessionalContractHTML(contract: any, userSettings: an
   <div class="container">
     <div class="header">
       <h1>Performance Contract</h1>
-      <div class="subtitle">Contract #\${contract.contractNumber || 'DRAFT'} • Generated \${new Date().toLocaleDateString('en-GB')}</div>
+      <div class="subtitle">Contract #${contractNumber} • Generated ${currentDate}</div>
     </div>
 
     <div class="two-column">
       <div class="column">
         <h3>Performer Details</h3>
-        <p><strong>\${userSettings?.businessName || 'Professional Musician'}</strong></p>
-        \${userSettings?.businessEmail ? \`<p>Email: \${userSettings.businessEmail}</p>\` : ''}
-        \${userSettings?.phone ? \`<p>Phone: \${userSettings.phone}</p>\` : ''}
-        \${(() => {
+        <p><strong>${businessName}</strong></p>
+        ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
+        ${userSettings?.phone ? `<p>Phone: ${userSettings.phone}</p>` : ''}
+        ${(() => {
           const addressParts = [
             userSettings?.addressLine1,
             userSettings?.addressLine2,
@@ -412,17 +423,17 @@ export function generateProfessionalContractHTML(contract: any, userSettings: an
             userSettings?.county,
             userSettings?.postcode
           ].filter(Boolean);
-          return addressParts.length > 0 ? \`<p>Address: \${addressParts.join(', ')}</p>\` : '';
+          return addressParts.length > 0 ? `<p>Address: ${addressParts.join(', ')}</p>` : '';
         })()}
-        \${userSettings?.website ? \`<p>Website: \${userSettings.website}</p>\` : ''}
-        \${userSettings?.taxNumber ? \`<p>VAT/Tax No: \${userSettings.taxNumber}</p>\` : ''}
+        ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
+        ${userSettings?.taxNumber ? `<p>VAT/Tax No: ${userSettings.taxNumber}</p>` : ''}
       </div>
       <div class="column">
         <h3>Client Details</h3>
-        <p><strong>\${contract.clientName}</strong></p>
-        \${contract.clientEmail ? \`<p>Email: \${contract.clientEmail}</p>\` : ''}
-        \${contract.clientPhone ? \`<p>Phone: \${contract.clientPhone}</p>\` : ''}
-        \${contract.clientAddress ? \`<p>Address: \${contract.clientAddress}</p>\` : ''}
+        <p><strong>${clientName}</strong></p>
+        ${contract.clientEmail ? `<p>Email: ${contract.clientEmail}</p>` : ''}
+        ${contract.clientPhone ? `<p>Phone: ${contract.clientPhone}</p>` : ''}
+        ${contract.clientAddress ? `<p>Address: ${contract.clientAddress}</p>` : ''}
       </div>
     </div>
 
@@ -430,32 +441,32 @@ export function generateProfessionalContractHTML(contract: any, userSettings: an
     <table class="event-table">
       <tr>
         <td class="label">Event Date:</td>
-        <td><strong>\${contract.eventDate ? new Date(contract.eventDate).toLocaleDateString('en-GB', {
+        <td><strong>${contract.eventDate ? new Date(contract.eventDate).toLocaleDateString('en-GB', {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         }) : 'To be confirmed'}</strong></td>
       </tr>
       <tr>
         <td class="label">Event Time:</td>
-        <td>\${contract.eventTime || 'TBC'} - \${contract.eventEndTime || 'TBC'}</td>
+        <td>${eventTime} - ${eventEndTime}</td>
       </tr>
       <tr>
         <td class="label">Venue:</td>
-        <td><strong>\${contract.venue || 'To be confirmed'}</strong></td>
+        <td><strong>${venue}</strong></td>
       </tr>
       <tr>
         <td class="label">Venue Address:</td>
-        <td>\${contract.venueAddress || 'To be confirmed'}</td>
+        <td>${contract.venueAddress || 'To be confirmed'}</td>
       </tr>
       <tr>
         <td class="label">Performance Type:</td>
-        <td>\${userSettings?.primaryInstrument ? \`\${userSettings.primaryInstrument} Performance\` : 'Live Music Performance'}</td>
+        <td>${userSettings?.primaryInstrument ? `${userSettings.primaryInstrument} Performance` : 'Live Music Performance'}</td>
       </tr>
     </table>
 
     <div class="fee-highlight">
-      £\${contract.fee || '0.00'}
+      £${fee}
       <div class="label">Total Performance Fee</div>
-      \${contract.deposit && parseFloat(contract.deposit) > 0 ? \`<div style="font-size:12px; color:#334155; margin-top:4px;">Deposit Required: £\${contract.deposit}</div>\` : ''}
+      ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<div style="font-size:12px; color:#334155; margin-top:4px;">Deposit Required: £${contract.deposit}</div>` : ''}
     </div>
 
     \${(contract.equipmentRequirements || contract.specialRequirements) ? \`

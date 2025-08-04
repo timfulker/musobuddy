@@ -1,1 +1,16 @@
-400 Bad Request
+This is a placeholder for the Basic Template PDF Example.
+
+The actual PDF will be generated through the application.
+
+To see working examples:
+1. Basic Template (Purple theme): Contract #536 - Music A&A LTD
+   Cloud URL: https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/contracts/2025-08-04/_02_08_2025_-_Music_A_A_LTD__-_3-hSdy4halYy0J79kf.pdf
+
+2. Professional Template (Blue theme): Now fixed with proper variable processing
+   Create a new contract with "template": "professional" parameter
+
+Template Switching:
+- Basic (Default): Purple theme (#9333ea) with simple design
+- Professional: Blue theme (#3b82f6) with advanced styling and enhanced layout
+
+The Professional template has been fixed to properly process variables instead of showing raw template code.
