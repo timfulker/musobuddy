@@ -845,8 +845,13 @@ export default function Invoices() {
   };
 
   const handleViewInvoice = (invoice: Invoice) => {
-    // Open invoice in new tab using the public view route that redirects to cloud storage
-    window.open(`/view/invoices/${invoice.id}`, '_blank');
+    // Determine the base URL - use production domain if in production
+    const baseUrl = window.location.hostname.includes('replit.app') 
+      ? `https://${window.location.hostname}` 
+      : window.location.origin;
+    
+    // Open invoice in new tab using the public view route
+    window.open(`${baseUrl}/view/invoices/${invoice.id}`, '_blank');
   };
 
   const filteredInvoices = (invoices || []).filter((invoice: Invoice) => {
