@@ -10,12 +10,14 @@ export class IsolatedContractEmailService {
 
   async init() {
     if (!this.mailgun) {
-      const { default: mailgun } = await import('mailgun.js');
-      const mg = new mailgun(FormData);
+      // Use EXACT same configuration as working invoice system
+      const { default: Mailgun } = await import('mailgun.js');
+      const formData = (await import('form-data')).default;
+      const mg = new Mailgun(formData);
       
       this.mailgun = mg.client({
         username: 'api',
-        key: process.env.MAILGUN_API_KEY || '',
+        key: process.env.MAILGUN_API_KEY,
         url: 'https://api.eu.mailgun.net'
       });
     }

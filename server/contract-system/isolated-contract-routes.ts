@@ -4,7 +4,7 @@
 
 import type { Express } from 'express';
 import { isolatedContractStorage } from './isolated-contract-storage';
-import { isolatedContractEmailService } from './isolated-contract-email';
+import { sendIsolatedContractEmail } from './isolated-contract-email-fixed';
 import type { IsolatedContractData, IsolatedUserSettings } from './isolated-contract-types';
 
 export function registerIsolatedContractRoutes(app: Express, storage: any, isAuthenticated: any) {
@@ -106,11 +106,11 @@ export function registerIsolatedContractRoutes(app: Express, storage: any, isAut
       }
       
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
-      const result = await isolatedContractEmailService.sendContractEmail(
+      const result = await sendIsolatedContractEmail(
         contract, 
         userSettings, 
-        subject, 
         contract.cloudStorageUrl,
+        subject,
         customMessage
       );
       
