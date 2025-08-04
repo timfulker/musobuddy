@@ -3,6 +3,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { nanoid } from 'nanoid';
 import type { Invoice, Contract, UserSettings } from '@shared/schema';
+import { generateContractContent, DEFAULT_CONTRACT_TEMPLATE } from './contract-templates.js';
 
 // Initialize R2 client
 const r2Client = new S3Client({
@@ -227,6 +228,48 @@ export async function uploadContractSigningPage(
 function generateContractSigningPage(contract: Contract, userSettings: UserSettings | null): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
+  // Generate contract sections using shared template
+  function generateContractSections(contract: any, userSettings: any) {
+    const { sections } = generateContractContent(contract, userSettings);
+    
+    let html = '';
+    let infoSections = [];
+    
+    for (const section of sections) {
+      if (!section.renderedContent.trim()) continue;
+      
+      if (section.type === 'info' && (section.id === 'client-info' || section.id === 'event-info')) {
+        infoSections.push(`
+          <div class="info-section">
+            <h4>${section.title}</h4>
+            ${section.renderedContent}
+          </div>
+        `);
+      } else {
+        const sectionClass = section.type === 'terms' ? 'terms-section' : 'info-section';
+        const extraStyle = section.type === 'terms' ? '' : section.type === 'payment' ? '' : 'margin-top: 20px;';
+        
+        html += `
+          <div class="${sectionClass}" ${extraStyle ? `style="${extraStyle}"` : ''}>
+            <h4>${section.title}</h4>
+            ${section.renderedContent}
+          </div>
+        `;
+      }
+    }
+    
+    // Add info grid if we have info sections
+    if (infoSections.length > 0) {
+      html = `
+        <div class="info-grid">
+          ${infoSections.join('')}
+        </div>
+      ` + html;
+    }
+    
+    return html;
+  }
+  
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -266,49 +309,7 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
     <div class="main-container">
         <div class="contract-section">
             <h3>Contract Details</h3>
-            
-            <div class="info-grid">
-                <div class="info-section">
-                    <h4>Client Information</h4>
-                    <p><strong>Name:</strong> ${contract.clientName}</p>
-                    ${contract.clientEmail ? `<p><strong>Email:</strong> ${contract.clientEmail}</p>` : ''}
-                    ${contract.clientPhone ? `<p><strong>Phone:</strong> ${contract.clientPhone}</p>` : ''}
-                    ${contract.clientAddress ? `<p><strong>Address:</strong> ${contract.clientAddress}</p>` : ''}
-                </div>
-                <div class="info-section">
-                    <h4>Event Information</h4>
-                    <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString()}</p>
-                    ${contract.eventTime ? `<p><strong>Time:</strong> ${contract.eventTime}</p>` : ''}
-                    ${contract.eventEndTime ? `<p><strong>End Time:</strong> ${contract.eventEndTime}</p>` : ''}
-                    <p><strong>Venue:</strong> ${contract.venue || 'TBD'}</p>
-                    ${contract.venueAddress ? `<p><strong>Venue Address:</strong> ${contract.venueAddress}</p>` : ''}
-                </div>
-            </div>
-            
-            <div class="info-section">
-                <h4>Financial Terms</h4>
-                <p><strong>Total Fee:</strong> £${contract.fee}</p>
-                ${contract.deposit ? `<p><strong>Deposit Required:</strong> £${contract.deposit}</p>` : ''}
-                ${contract.paymentInstructions ? `<p><strong>Payment Instructions:</strong> ${contract.paymentInstructions}</p>` : ''}
-            </div>
-            
-            ${contract.equipmentRequirements || contract.specialRequirements ? `
-            <div class="info-section" style="margin-top: 20px;">
-                <h4>Requirements & Notes</h4>
-                ${contract.equipmentRequirements ? `<p><strong>Equipment:</strong> ${contract.equipmentRequirements}</p>` : ''}
-                ${contract.specialRequirements ? `<p><strong>Special Requirements:</strong> ${contract.specialRequirements}</p>` : ''}
-            </div>
-            ` : ''}
-            
-            <div class="terms-section">
-                <h4>Terms & Conditions</h4>
-                <p><strong>Performer:</strong> ${businessName}</p>
-                <p>By signing this contract, both parties agree to the terms outlined. This contract is legally binding once signed by both parties.</p>
-                <p><strong>Cancellation Policy:</strong> Any cancellations must be made in writing with reasonable notice.</p>
-                <p><strong>Force Majeure:</strong> Neither party shall be liable for failure to perform due to circumstances beyond their control.</p>
-                <p><strong>Payment Terms:</strong> Payment as specified above. Late payments may incur additional charges.</p>
-                <p><strong>Liability:</strong> The performer's liability is limited to the contract value. Client is responsible for venue safety and compliance.</p>
-            </div>
+            ${generateContractSections(contract, userSettings)}
         </div>
         
         <div class="signing-section">
