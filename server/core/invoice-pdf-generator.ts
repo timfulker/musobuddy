@@ -112,6 +112,20 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         .keep-together {
           page-break-inside: avoid;
           break-inside: avoid;
+          page-break-before: avoid;
+          break-before: avoid;
+        }
+        
+        /* FORCE TOTALS SECTION TO STAY WITH TABLE */
+        .items-table {
+          margin-bottom: 10px !important;
+        }
+        
+        .total-section {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-before: avoid !important;
+          break-before: avoid !important;
         }
         
         /* HEADER SECTION */
@@ -181,8 +195,10 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         .items-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 30px;
+          margin-bottom: 10px;
           border: 1px solid #ddd;
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
         
         .items-table th {
@@ -207,7 +223,11 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         .total-section {
           margin-left: auto;
           width: 300px;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-before: avoid !important;
+          break-before: avoid !important;
         }
         
         .total-row {
