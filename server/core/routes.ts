@@ -338,6 +338,8 @@ export async function registerRoutes(app: Express) {
 
       console.log(`💾 Saving settings for user: ${userId}`);
       console.log(`🎵 Instrument in request:`, req.body.primaryInstrument);
+      console.log(`📄 DefaultInvoiceDueDays in request:`, req.body.defaultInvoiceDueDays);
+      console.log(`📋 Full request body:`, req.body);
       
       const result = await storage.updateSettings(userId, req.body);
       
