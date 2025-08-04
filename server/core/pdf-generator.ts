@@ -177,11 +177,18 @@ function generateContractHTML(
       color: white;
       width: 30%;
     }
+    .page-break {
+      page-break-before: always !important;
+      break-before: page !important;
+      height: 0;
+      margin: 0;
+      padding: 0;
+    }
     .terms-section {
-      page-break-before: always;
-      margin-top: 0;
+      margin-top: 30px;
       font-size: 11px;
       line-height: 1.6;
+      page-break-inside: avoid;
     }
     .terms-section h3 {
       font-size: 14px;
@@ -314,8 +321,11 @@ function generateContractHTML(
     </table>
   </div>
 
+  <!-- PAGE BREAK -->
+  <div class="page-break"></div>
+  
   <!-- TERMS AND CONDITIONS -->
-  <div class="terms-section" style="page-break-before: always;">
+  <div class="terms-section">
     <div class="section-title">Terms and Conditions</div>
     
     <h3>Payment Terms & Conditions</h3>
