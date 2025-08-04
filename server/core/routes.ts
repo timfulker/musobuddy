@@ -2103,7 +2103,29 @@ export async function registerRoutes(app: Express) {
       
       // Send email with direct R2 URL - clients can view/sign directly
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage);
+      
+      // CRITICAL FIX: Check if client email exists before sending
+      if (!contract.clientEmail) {
+        console.warn('⚠️ No client email provided - contract uploaded but email not sent');
+        console.log(`✅ Contract #${parsedContractId} uploaded to R2 but email skipped (no client email)`);
+        return res.json({ 
+          success: true, 
+          message: 'Contract uploaded successfully (email skipped - no client email provided)',
+          contractUrl: uploadResult.url 
+        });
+      }
+      
+      console.log(`📧 Sending contract email to: ${contract.clientEmail}`);
+      const emailResult = await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage);
+      
+      if (!emailResult.success) {
+        console.error('❌ Email sending failed:', emailResult.error);
+        return res.json({ 
+          success: true, 
+          message: `Contract uploaded successfully but email failed: ${emailResult.error}`,
+          contractUrl: uploadResult.url 
+        });
+      }
       
       // Update associated booking status to 'contract_sent' if contract is linked to a booking
       if (contract.enquiryId) {
@@ -3036,6 +3058,33 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('❌ Failed to fetch invoice:', error);
       res.status(500).json({ error: 'Failed to fetch invoice' });
+    }
+  });
+
+  // Test Mailgun configuration
+  app.get('/api/test-mailgun', isAuthenticated, async (req: any, res) => {
+    try {
+      const { EmailService } = await import('./services');
+      const emailService = new EmailService();
+      
+      // Test email data
+      const testEmailData = {
+        to: 'timfulker@gmail.com',
+        subject: 'MusoBuddy Email Test',
+        html: '<h2>Email Test Successful!</h2><p>Your Mailgun configuration is working correctly.</p>'
+      };
+      
+      console.log('📧 Testing Mailgun configuration...');
+      const result = await emailService.sendEmail(testEmailData);
+      
+      res.json({
+        success: result.success,
+        message: result.success ? 'Email sent successfully!' : `Email failed: ${result.error}`,
+        result: result
+      });
+    } catch (error: any) {
+      console.error('❌ Mailgun test failed:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 
