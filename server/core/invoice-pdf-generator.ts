@@ -63,18 +63,6 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
   // Extract business details from user settings
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
-  // Build business address with proper line breaks for each field
-  const addressLines = [];
-  if (userSettings?.addressLine1) addressLines.push(userSettings.addressLine1);
-  if (userSettings?.addressLine2) addressLines.push(userSettings.addressLine2);
-  if (userSettings?.city) addressLines.push(userSettings.city);
-  if (userSettings?.county) addressLines.push(userSettings.county);
-  if (userSettings?.postcode) addressLines.push(userSettings.postcode);
-  
-  // Create formatted address with line breaks
-  const businessAddress = addressLines.length > 0 ? 
-    addressLines.map(line => `<p>${line}</p>`).join('') : '';
-  
   const businessPhone = userSettings?.phone || '';
   const businessEmail = userSettings?.email || '';
 
@@ -300,7 +288,11 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           <h3>FROM:</h3>
           <p><strong>${businessName}</strong></p>
           <p>Sole trader trading as ${businessName}</p>
-          ${businessAddress ? `<p>${businessAddress}</p>` : ''}
+          ${userSettings?.addressLine1 ? `<p>${userSettings.addressLine1}</p>` : ''}
+          ${userSettings?.addressLine2 ? `<p>${userSettings.addressLine2}</p>` : ''}
+          ${userSettings?.city ? `<p>${userSettings.city}</p>` : ''}
+          ${userSettings?.county ? `<p>${userSettings.county}</p>` : ''}
+          ${userSettings?.postcode ? `<p>${userSettings.postcode}</p>` : ''}
           ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
           ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
           <p>Website: www.saxdj.co.uk</p>
