@@ -16,17 +16,22 @@ const isAuthenticated = async (req: any, res: any, next: any) => {
   console.log(`🔐 Session userId: ${req.session?.userId}`);
   console.log(`🔐 Session email: ${req.session?.email}`);
   
-  if (!req.session?.userId) {
+  // FIXED: Handle both null and undefined cases, plus convert string to number
+  const sessionUserId = req.session?.userId;
+  if (!sessionUserId || (typeof sessionUserId === 'string' && sessionUserId.trim() === '')) {
     console.log('❌ Authentication failed - no userId in session');
     return res.status(401).json({ error: 'Authentication required' });
   }
 
   try {
+    // Convert userId to number if it's a string (for compatibility)
+    const userId = typeof sessionUserId === 'string' ? parseInt(sessionUserId) : sessionUserId;
+    
     // CRITICAL SECURITY FIX: Validate user still exists in database
-    const user = await storage.getUserById(req.session.userId);
+    const user = await storage.getUserById(userId);
     
     if (!user) {
-      console.log(`❌ Authentication failed - user ${req.session.userId} no longer exists in database`);
+      console.log(`❌ Authentication failed - user ${userId} no longer exists in database`);
       // Clear the invalid session
       req.session.destroy((err: any) => {
         if (err) console.error('Session destroy error:', err);
@@ -37,7 +42,7 @@ const isAuthenticated = async (req: any, res: any, next: any) => {
     // Store user object in request for other routes to use
     req.user = user;
     
-    console.log(`✅ Authentication successful for user ${req.session.userId} (${user.email})`);
+    console.log(`✅ Authentication successful for user ${userId} (${user.email})`);
     next();
     
   } catch (error: any) {
@@ -1104,7 +1109,71 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ===== CONTRACT DOWNLOAD ROUTE =====
+  // ===== CONTRACT DIRECT R2 ACCESS ROUTE =====
+  app.get('/api/contracts/:id/r2-url', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`🔗 R2 URL request for contract #${contractId} by user ${userId}`);
+      
+      // Get contract and verify ownership
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        console.log(`❌ Contract #${contractId} not found`);
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      if (contract.userId !== userId) {
+        console.log(`❌ User ${userId} denied access to contract #${contractId} (owned by ${contract.userId})`);
+        return res.status(403).json({ error: 'Access denied - you do not own this contract' });
+      }
+      
+      // Check if contract already has R2 URL
+      if (contract.cloudStorageUrl) {
+        console.log(`✅ Returning existing R2 URL for contract #${contractId}`);
+        return res.json({ url: contract.cloudStorageUrl });
+      }
+      
+      // Generate and upload to R2 immediately
+      console.log(`🔄 Generating and uploading contract #${contractId} to R2...`);
+      const userSettings = await storage.getUserSettings(userId);
+      const { uploadContractToCloud } = await import('./contract-cloud-storage');
+      
+      const uploadResult = await uploadContractToCloud(contract, userSettings);
+      
+      if (uploadResult.success && uploadResult.url) {
+        // Update contract with R2 URL
+        await storage.updateContract(contractId, {
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key
+        });
+        
+        console.log(`✅ Contract #${contractId} uploaded to R2: ${uploadResult.url}`);
+        return res.json({ url: uploadResult.url });
+      } else {
+        console.error(`❌ Failed to upload contract #${contractId} to R2:`, uploadResult.error);
+        return res.status(500).json({ error: 'Failed to upload contract to cloud storage' });
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Contract R2 URL error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get contract R2 URL',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // ===== CONTRACT DOWNLOAD ROUTE (Fallback) =====
   app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
@@ -1132,46 +1201,18 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ error: 'Access denied - you do not own this contract' });
       }
       
-      console.log(`✅ Contract #${contractId} access authorized for user ${userId}`);
-      
-      // FIXED: Generate PDF locally instead of redirecting to avoid CORS issues
+      // If contract has R2 URL, redirect to it
       if (contract.cloudStorageUrl) {
-        console.log('🌐 Cloud URL available, but generating PDF locally to avoid CORS issues');
-        
-        try {
-          const userSettings = await storage.getUserSettings(userId);
-          const services = new (await import('./services')).EmailService();
-          
-          // Include signature details if contract is signed
-          const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
-            signedAt: new Date(contract.signedAt),
-            signatureName: contract.clientSignature || undefined,
-            clientIpAddress: contract.clientIpAddress || undefined
-          } : undefined;
-          
-          const pdfBuffer = await services.generateContractPDF(contract, userSettings);
-          
-          // Set headers for direct PDF download
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
-          res.setHeader('Content-Length', pdfBuffer.length.toString());
-          
-          console.log(`✅ Professional PDF generated and served: ${pdfBuffer.length} bytes`);
-          return res.send(pdfBuffer);
-          
-        } catch (pdfError: any) {
-          console.error('❌ Local PDF generation failed, trying cloud redirect:', pdfError);
-          // Fallback to cloud redirect if local generation fails
-          return res.redirect(contract.cloudStorageUrl);
-        }
+        console.log(`🔗 Redirecting to R2 URL: ${contract.cloudStorageUrl}`);
+        return res.redirect(contract.cloudStorageUrl);
       }
       
-      // Fallback: Generate PDF on-demand with professional template
+      // Generate PDF on-demand with professional template
       console.log('🔄 Generating professional PDF on-demand...');
       
       try {
         const userSettings = await storage.getUserSettings(userId);
-        const services = new (await import('./services')).EmailService();
+        const { generateContractPDF } = await import('./contract-pdf-generator');
         
         // Include signature details if contract is signed
         const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
@@ -1180,7 +1221,7 @@ export async function registerRoutes(app: Express) {
           clientIpAddress: contract.clientIpAddress || undefined
         } : undefined;
         
-        const pdfBuffer = await services.generateContractPDF(contract, userSettings);
+        const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
         
         // Set appropriate headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
@@ -2042,40 +2083,28 @@ export async function registerRoutes(app: Express) {
       const { MailgunService } = await import('./services');
       const emailService = new MailgunService();
       
-      // Generate and upload contract PDF to cloud storage
-      const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
-      const { url: pdfUrl } = await uploadContractToCloud(contract, userSettings);
+      // NEW: Use dedicated contract cloud storage for R2 upload
+      const { uploadContractToCloud } = await import('./contract-cloud-storage');
+      const uploadResult = await uploadContractToCloud(contract, userSettings);
       
-      // Generate and upload contract signing page
-      console.log('📝 Creating contract signing page for email sending...');
-      const signingPageResult = await uploadContractSigningPage(contract, userSettings);
-      
-      let signingPageUrl = pdfUrl; // fallback to PDF if signing page fails
-      if (signingPageResult.success) {
-        signingPageUrl = signingPageResult.url;
-        console.log('✅ Contract signing page created:', signingPageUrl);
-        
-        // Update contract with both PDF and signing page URLs
-        await storage.updateContract(parsedContractId, {
-          status: 'sent',
-          cloudStorageUrl: pdfUrl,
-          signingPageUrl: signingPageResult.url,
-          signingPageKey: signingPageResult.key,
-          sentAt: new Date()
-        });
-      } else {
-        console.log('⚠️ Signing page creation failed, using PDF URL as fallback');
-        // Update contract with just PDF URL
-        await storage.updateContract(parsedContractId, {
-          status: 'sent',
-          cloudStorageUrl: pdfUrl,
-          sentAt: new Date()
-        });
+      if (!uploadResult.success) {
+        console.error('❌ Failed to upload contract to R2:', uploadResult.error);
+        return res.status(500).json({ error: 'Failed to upload contract to cloud storage' });
       }
       
-      // Send email with contract - use signing page URL so client can sign
+      console.log('✅ Contract uploaded to R2:', uploadResult.url);
+      
+      // Update contract with R2 URL and mark as sent
+      await storage.updateContract(parsedContractId, {
+        status: 'sent',
+        cloudStorageUrl: uploadResult.url,
+        cloudStorageKey: uploadResult.key,
+        sentAt: new Date()
+      });
+      
+      // Send email with direct R2 URL - clients can view/sign directly
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
-      await emailService.sendContractEmail(contract, userSettings, subject, signingPageUrl, customMessage);
+      await emailService.sendContractEmail(contract, userSettings, subject, uploadResult.url, customMessage);
       
       // Update associated booking status to 'contract_sent' if contract is linked to a booking
       if (contract.enquiryId) {

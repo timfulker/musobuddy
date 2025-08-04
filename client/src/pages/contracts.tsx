@@ -264,12 +264,34 @@ export default function Contracts() {
         // Fields now aligned - no mapping needed
       };
 
-      return apiRequest("/api/contracts", {
+      // Step 1: Create contract in database
+      const contract = await apiRequest("/api/contracts", {
         method: "POST",
         body: JSON.stringify(contractData),
       });
+
+      // Step 2: Immediately upload to R2 cloud storage
+      console.log('☁️ Uploading new contract to R2 storage...');
+      const r2Response = await fetch(`/api/contracts/${contract.id}/r2-url`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (r2Response.ok) {
+        const r2Data = await r2Response.json();
+        console.log('✅ Contract created and uploaded to R2:', r2Data.url);
+        contract.cloudStorageUrl = r2Data.url;
+      } else {
+        console.warn('⚠️ Contract created but R2 upload failed - will upload on first view');
+      }
+
+      return contract;
     },
-    onSuccess: () => {
+    onSuccess: (contract) => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       // Force dialog to close immediately
       setIsDialogOpen(false);
@@ -283,7 +305,9 @@ export default function Contracts() {
       }
       toast({
         title: "Success",
-        description: "Contract generated successfully!",
+        description: contract.cloudStorageUrl 
+          ? "Contract created and stored in cloud!" 
+          : "Contract created successfully!",
       });
     },
     onError: (error) => {
@@ -298,12 +322,34 @@ export default function Contracts() {
 
   const updateContractMutation = useMutation({
     mutationFn: async ({ id, contractData }: { id: number, contractData: any }) => {
-      return apiRequest(`/api/contracts/${id}`, {
+      // Step 1: Update contract in database
+      const updatedContract = await apiRequest(`/api/contracts/${id}`, {
         method: "PATCH",
         body: JSON.stringify(contractData),
       });
+
+      // Step 2: Update in R2 cloud storage (overwrite existing)
+      console.log('☁️ Updating contract in R2 storage...');
+      const r2Response = await fetch(`/api/contracts/${id}/r2-url`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (r2Response.ok) {
+        const r2Data = await r2Response.json();
+        console.log('✅ Contract updated in R2:', r2Data.url);
+        updatedContract.cloudStorageUrl = r2Data.url;
+      } else {
+        console.warn('⚠️ Contract updated but R2 update failed');
+      }
+
+      return updatedContract;
     },
-    onSuccess: () => {
+    onSuccess: (contract) => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
       // Force dialog to close immediately for updates too
       setIsDialogOpen(false);
@@ -317,7 +363,9 @@ export default function Contracts() {
       }
       toast({
         title: "Success",
-        description: "Contract updated successfully!",
+        description: contract.cloudStorageUrl 
+          ? "Contract updated and stored in cloud!" 
+          : "Contract updated successfully!",
       });
     },
     onError: (error) => {
@@ -446,7 +494,7 @@ export default function Contracts() {
     sendEmailMutation.mutate({ contractId: contract.id });
   };
 
-  const handleViewSignedContract = (contract: Contract) => {
+  const handleViewSignedContract = async (contract: Contract) => {
     console.log('👁️ View contract clicked:', {
       id: contract.id,
       status: contract.status,
@@ -454,26 +502,49 @@ export default function Contracts() {
       contractNumber: contract.contractNumber
     });
     
-    // ENHANCED LOGIC: Better handling of different contract statuses and URLs
-    
-    // 1. For signed contracts with cloud storage URL - open in new tab
-    if (contract.status === 'signed' && contract.cloudStorageUrl) {
-      console.log('🌐 Opening signed contract from cloud storage:', contract.cloudStorageUrl);
-      window.open(contract.cloudStorageUrl, '_blank');
-      return;
-    }
-    
-    // 2. For signed contracts without cloud URL - try download endpoint
-    if (contract.status === 'signed') {
-      console.log('📄 Opening signed contract via download endpoint');
+    try {
+      // NEW: Always get R2 URL - create if doesn't exist, return if exists
+      console.log('🔗 Getting R2 URL for contract...');
+      const response = await fetch(`/api/contracts/${contract.id}/r2-url`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Got R2 URL:', data.url);
+        
+        // Open R2 URL directly in new tab - no intermediate pages
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: "Contract Opened",
+          description: "Opening contract directly from cloud storage",
+        });
+        
+      } else {
+        console.error('❌ Failed to get R2 URL:', response.status);
+        // Fallback to download endpoint
+        const downloadUrl = `/api/contracts/${contract.id}/download`;
+        window.open(downloadUrl, '_blank');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error getting R2 URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to open contract. Using fallback method.",
+        variant: "destructive",
+      });
+      
+      // Fallback to download endpoint
       const downloadUrl = `/api/contracts/${contract.id}/download`;
       window.open(downloadUrl, '_blank');
-      return;
     }
-    
-    // 3. For all other contracts (draft, sent) - use internal viewer
-    console.log('📋 Opening contract in internal viewer');
-    setLocation(`/view-contract/${contract.id}`);
   };
 
   // DEBUGGING: Add this temporary function to test API connectivity
