@@ -62,9 +62,9 @@ export async function uploadInvoiceToCloud(
       Key: storageKey,
     });
     
-    // Generate signed URL that lasts 30 days
+    // Generate signed URL that lasts 7 days (maximum allowed)
     const signedUrl = await getSignedUrl(r2Client, getCommand, { 
-      expiresIn: 2592000 // 30 days
+      expiresIn: 604800 // 7 days (maximum)
     });
     
     console.log(`🔗 Generated signed R2 URL (30-day expiry): ${signedUrl.split('?')[0]}...`);
