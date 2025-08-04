@@ -308,10 +308,18 @@ function generateContractHTML(
       .header, .footer { background: #3b82f6 !important; }
       .section-header, .event-table th { background: #e0e7ef !important; color: #334155 !important; }
       .fee-highlight { background: #e0e7ef !important; color: #3b82f6 !important; }
-      .event-table, .fee-highlight, .section-header, .terms-section, .signature-section { page-break-inside: avoid; break-inside: avoid; }
-      .section-header.terms { page-break-before: always; break-before: page; }
-      .signature-section { page-break-before: always; break-before: page; }
+      .event-table, .fee-highlight, .section-header, .terms-section { page-break-inside: avoid; break-inside: avoid; }
       .section-header { page-break-after: avoid; break-after: avoid; }
+      /* Footer improvements: Allow it to flow naturally without forcing page breaks */
+      .footer {
+        background: #3b82f6 !important;
+        color: white !important;
+        border-radius: 0;
+        box-shadow: none;
+        margin-top: 24px;
+        padding: 12px 0 8px 0;
+        /* Remove any page-break restrictions on footer */
+      }
     }
     @media (max-width: 700px) {
       .container { padding: 10px; }
