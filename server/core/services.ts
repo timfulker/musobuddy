@@ -269,10 +269,10 @@ export class MailgunService {
   // RESTORED: Original working PDF generation method
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
     try {
-      console.log('🚀 CALLING ORIGINAL working generateContractPDF from pdf-generator...');
+      console.log('🚀 CALLING dedicated contract PDF generator...');
       
-      // Use the corrected PDF generator we just restored
-      const { generateContractPDF: originalGenerateContractPDF } = await import('./pdf-generator');
+      // Use the dedicated contract PDF generator
+      const { generateContractPDF: originalGenerateContractPDF } = await import('./contract-pdf-generator');
       console.log('✅ PDF generator imported successfully');
       
       console.log('🎯 Calling original working generateContractPDF...');
@@ -293,9 +293,9 @@ export class MailgunService {
   // Invoice PDF generation method
   async generateInvoicePDF(invoice: any, userSettings: any): Promise<Buffer> {
     try {
-      console.log('🚀 Calling generateInvoicePDF from pdf-generator...');
+      console.log('🚀 Calling dedicated invoice PDF generator...');
       
-      const { generateInvoicePDF: originalGenerateInvoicePDF } = await import('./pdf-generator');
+      const { generateInvoicePDF: originalGenerateInvoicePDF } = await import('./invoice-pdf-generator');
       console.log('✅ Invoice PDF generator imported successfully');
       
       console.log('🎯 Calling generateInvoicePDF...');

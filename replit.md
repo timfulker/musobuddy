@@ -12,6 +12,7 @@ MusoBuddy is a comprehensive music business management platform designed to help
 - **Null Safety Enhanced**: Added comprehensive null checking across contracts filtering and notification components
 - **Comprehensive Invoice Template**: Enhanced PDF generator to include complete business details, custom user terms, VAT status, bank details, and professional multi-page layout (August 2025)
 - **PDF System Isolation**: Created separate PDF generators (`invoice-pdf-generator.ts` and `contract-pdf-generator.ts`) to prevent cross-system contamination - invoice system can no longer be broken by contract system fixes (August 4, 2025)
+- **Codebase Cleanup**: Removed legacy `pdf-generator.ts` file and updated all references to use dedicated generators, ensuring complete system isolation (August 4, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

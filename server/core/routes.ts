@@ -1140,7 +1140,7 @@ export async function registerRoutes(app: Express) {
         
         try {
           const userSettings = await storage.getUserSettings(userId);
-          const { generateContractPDF } = await import('./pdf-generator');
+          const { generateContractPDF } = await import('./contract-pdf-generator');
           
           // Include signature details if contract is signed
           const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
@@ -1171,7 +1171,7 @@ export async function registerRoutes(app: Express) {
       
       try {
         const userSettings = await storage.getUserSettings(userId);
-        const { generateContractPDF } = await import('./pdf-generator');
+        const { generateContractPDF } = await import('./contract-pdf-generator');
         
         // Include signature details if contract is signed
         const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
@@ -1966,7 +1966,7 @@ export async function registerRoutes(app: Express) {
         const userSettings = await storage.getUserSettings(req.session.userId);
         
         // Generate PDF using our enhanced PDF generator
-        const { generateContractPDF } = await import('./pdf-generator');
+        const { generateContractPDF } = await import('./contract-pdf-generator');
         const pdfBuffer = await generateContractPDF(newContract, userSettings);
         
         console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
@@ -2402,7 +2402,7 @@ export async function registerRoutes(app: Express) {
       // Fallback: Generate and serve PDF directly if no cloud URL
       console.log('⚠️ No cloud storage URL, generating PDF on-demand...');
       const userSettings = await storage.getUserSettings(contract.userId);
-      const { generateContractPDF } = await import('./pdf-generator');
+      const { generateContractPDF } = await import('./contract-pdf-generator');
       const pdfBuffer = await generateContractPDF(contract, userSettings);
       
       res.setHeader('Content-Type', 'application/pdf');
@@ -3033,9 +3033,9 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
       
-      // Generate PDF using the existing PDF generator
+      // Generate PDF using the dedicated invoice PDF generator
       const userSettings = await storage.getUserSettings(userId);
-      const { generateInvoicePDF } = await import('./pdf-generator');
+      const { generateInvoicePDF } = await import('./invoice-pdf-generator');
       const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
       
       res.setHeader('Content-Type', 'application/pdf');
@@ -3064,9 +3064,9 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
       
-      // Generate PDF using the existing PDF generator
+      // Generate PDF using the dedicated invoice PDF generator
       const userSettings = await storage.getUserSettings(userId);
-      const { generateInvoicePDF } = await import('./pdf-generator');
+      const { generateInvoicePDF } = await import('./invoice-pdf-generator');
       const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
       
       res.setHeader('Content-Type', 'application/pdf');
