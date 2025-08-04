@@ -2573,8 +2573,41 @@ export async function registerRoutes(app: Express) {
         return res.redirect(invoice.cloudStorageUrl);
       }
       
+      // If invoice has cloud storage key but no URL, generate signed URL 
+      if (invoice.cloudStorageKey) {
+        console.log(`📥 Generating signed URL for invoice #${invoiceId} using cloud storage key: ${invoice.cloudStorageKey}`);
+        try {
+          const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+          const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3');
+          
+          const r2Client = new S3Client({
+            region: 'auto',
+            endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+            credentials: {
+              accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+              secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+            },
+          });
+          
+          const getCommand = new GetObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME || 'musobuddy-storage',
+            Key: invoice.cloudStorageKey,
+          });
+          
+          const signedUrl = await getSignedUrl(r2Client, getCommand, { 
+            expiresIn: 604800 // 7 days
+          });
+          
+          console.log(`✅ Generated signed URL for invoice #${invoiceId}`);
+          return res.redirect(signedUrl);
+        } catch (error: any) {
+          console.error(`❌ Failed to generate signed URL for invoice #${invoiceId}:`, error);
+          // Fall back to loading page
+        }
+      }
+      
       // If no cloud URL yet, show a loading page that refreshes
-      if (!invoice.cloudStorageUrl) {
+      if (!invoice.cloudStorageUrl && !invoice.cloudStorageKey) {
         console.log(`⏳ No cloud URL yet for invoice #${invoiceId}, showing loading page`);
         return res.send(`
           <!DOCTYPE html>

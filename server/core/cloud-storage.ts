@@ -56,20 +56,14 @@ export async function uploadFileToCloudflare(
 
     await r2Client.send(command);
 
-    // Generate a signed URL for secure public access (valid for 1 year)
-    const getCommand = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-    });
-    
-    const signedUrl = await getSignedUrl(r2Client, getCommand, { 
-      expiresIn: 604800 // 7 days (maximum allowed)
-    });
+    // R2 bucket requires custom domain for public access
+    // For now, store the R2 key and use app redirect for client access
+    const storageKey = key;
     
     console.log(`✅ File uploaded to cloud storage: ${key}`);
-    console.log(`🔗 Signed Access URL generated (1 year expiry)`);
+    console.log(`🔗 Access via app redirect system`);
     
-    return { success: true, url: signedUrl };
+    return { success: true, url: null, key: storageKey };
   } catch (error) {
     console.error('❌ Cloud storage upload failed:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -103,7 +97,7 @@ export async function uploadContractToCloud(
 
     if (result.success) {
       console.log('✅ Contract PDF uploaded successfully to cloud storage');
-      return { success: true, url: result.url, key };
+      return { success: true, url: result.url, key: result.key || key };
     } else {
       return { success: false, error: result.error };
     }
@@ -137,7 +131,7 @@ export async function uploadInvoiceToCloud(
 
     if (result.success) {
       console.log('✅ Invoice PDF uploaded successfully to cloud storage');
-      return { success: true, url: result.url, key };
+      return { success: true, url: result.url, key: result.key || key };
     } else {
       return { success: false, error: result.error };
     }
