@@ -20,6 +20,14 @@ export async function generateInvoicePDF(
   userSettings: UserSettings | null
 ): Promise<Buffer> {
   console.log('🚀 Starting FAST invoice PDF generation for:', invoice.invoiceNumber);
+  console.log('📍 Address debug - userSettings:', {
+    addressLine1: userSettings?.addressLine1,
+    addressLine2: userSettings?.addressLine2,
+    city: userSettings?.city,
+    county: userSettings?.county,
+    postcode: userSettings?.postcode,
+    businessAddress: userSettings?.businessAddress
+  });
   
   // Simple, reliable Puppeteer configuration - NO AI CALLS
   const browser = await puppeteer.launch({
@@ -293,6 +301,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           ${userSettings?.city ? `<p>${userSettings.city}</p>` : ''}
           ${userSettings?.county ? `<p>${userSettings.county}</p>` : ''}
           ${userSettings?.postcode ? `<p>${userSettings.postcode}</p>` : ''}
+          ${(!userSettings?.addressLine1 && userSettings?.businessAddress) ? `<p>${userSettings.businessAddress.replace(/,\s*/g, '</p><p>')}</p>` : ''}
           ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
           ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
           <p>Website: www.saxdj.co.uk</p>
