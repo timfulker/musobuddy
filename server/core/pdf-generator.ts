@@ -25,11 +25,11 @@ export async function generateContractPDF(
   }
 ): Promise<Buffer> {
   console.log('🔄 Generating professional contract PDF...');
-  
+
   try {
     // STEP 1: Generate styled HTML template
     const htmlContent = generateContractHTML(contract, userSettings, signatureDetails);
-    
+
     // STEP 2: Launch Puppeteer with correct configuration
     const browser = await puppeteer.launch({
       headless: true,
@@ -46,15 +46,15 @@ export async function generateContractPDF(
         '--disable-renderer-backgrounding'
       ]
     });
-    
+
     const page = await browser.newPage();
-    
+
     // STEP 3: Set HTML content with proper wait conditions
     await page.setContent(htmlContent, { 
       waitUntil: 'networkidle0',
       timeout: 30000 
     });
-    
+
     // STEP 4: Generate PDF with styling preservation
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -68,18 +68,18 @@ export async function generateContractPDF(
       preferCSSPageSize: true,
       displayHeaderFooter: false
     });
-    
+
     await browser.close();
-    
+
     console.log(`✅ Professional contract PDF generated: ${pdfBuffer.length} bytes`);
-    
+
     // Verify PDF size (should be > 15KB for styled content)
     if (pdfBuffer.length < 15000) {
       console.warn('⚠️ PDF suspiciously small - styling may have failed');
     }
-    
+
     return pdfBuffer;
-    
+
   } catch (error: any) {
     console.error('❌ PDF generation failed:', error);
     throw new Error(`PDF generation failed: ${error.message}`);
@@ -91,21 +91,21 @@ export async function generateInvoicePDF(
   userSettings: UserSettings | null
 ): Promise<Buffer> {
   console.log('🚀 Starting FAST invoice PDF generation for:', invoice.invoiceNumber);
-  
+
   // Simple, reliable Puppeteer configuration - NO AI CALLS
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   });
-  
+
   try {
     const page = await browser.newPage();
-    
+
     // CSS-OPTIMIZED: Generate HTML with built-in page break controls (NO AI)
     console.log('📄 Using CSS-optimized invoice template (under 5 seconds)...');
     const html = generateOptimizedInvoiceHTML(invoice, userSettings);
-    
+
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 
       format: 'A4', 
@@ -117,7 +117,7 @@ export async function generateInvoicePDF(
         left: '15mm'
       }
     });
-    
+
     console.log('✅ FAST invoice PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
   } finally {
@@ -131,7 +131,7 @@ function generateOptimizedInvoiceHTML(
   userSettings: UserSettings | null
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-  
+
   // Format business address from user settings components
   const addressParts = [];
   if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
@@ -141,11 +141,11 @@ function generateOptimizedInvoiceHTML(
   const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
   const businessPhone = userSettings?.phone || '';
   const businessEmail = userSettings?.email || '';
-  
+
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 40px; width: auto;" alt="MusoBuddy Logo" />` : '';
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -160,7 +160,7 @@ function generateOptimizedInvoiceHTML(
           .no-page-break { page-break-inside: avoid !important; }
           .keep-together { page-break-inside: avoid !important; }
         }
-        
+
         body {
           font-family: 'Arial', sans-serif;
           margin: 0;
@@ -168,7 +168,7 @@ function generateOptimizedInvoiceHTML(
           color: #333;
           line-height: 1.6;
         }
-        
+
         .header {
           display: flex;
           justify-content: space-between;
@@ -177,46 +177,46 @@ function generateOptimizedInvoiceHTML(
           border-bottom: 3px solid #9333ea;
           padding-bottom: 20px;
         }
-        
+
         .logo-section {
           display: flex;
           align-items: center;
           gap: 12px;
         }
-        
+
         .logo {
           font-size: 32px;
           font-weight: bold;
           color: #9333ea;
         }
-        
+
         .invoice-details {
           text-align: right;
         }
-        
+
         .invoice-number {
           font-size: 24px;
           font-weight: bold;
           color: #333;
           margin-bottom: 5px;
         }
-        
+
         .invoice-date {
           color: #666;
           font-size: 14px;
         }
-        
+
         /* BILLING SECTION - Keep together */
         .billing-section {
           display: flex;
           justify-content: space-between;
           margin-bottom: 40px;
         }
-        
+
         .billing-info {
           width: 45%;
         }
-        
+
         .billing-info h3 {
           color: #333;
           margin-bottom: 15px;
@@ -224,26 +224,26 @@ function generateOptimizedInvoiceHTML(
           text-transform: uppercase;
           letter-spacing: 1px;
         }
-        
+
         .billing-info p {
           margin: 5px 0;
           color: #666;
         }
-        
+
         .billing-info strong {
           color: #333;
         }
-        
+
         /* ITEMS TABLE - Optimized for page breaks */
         .items-section {
           margin-bottom: 30px;
         }
-        
+
         .items-table {
           width: 100%;
           border-collapse: collapse;
         }
-        
+
         .items-table th {
           background-color: #f8f9fa;
           padding: 15px;
@@ -252,49 +252,49 @@ function generateOptimizedInvoiceHTML(
           font-weight: bold;
           color: #333;
         }
-        
+
         .items-table td {
           padding: 15px;
           border-bottom: 1px solid #dee2e6;
         }
-        
+
         .items-table .amount {
           text-align: right;
           font-weight: bold;
         }
-        
+
         /* TOTALS SECTION - Keep together */
         .total-section {
           text-align: right;
           margin-top: 30px;
         }
-        
+
         .total-row {
           display: flex;
           justify-content: flex-end;
           margin-bottom: 8px;
         }
-        
+
         .total-label {
           width: 150px;
           text-align: right;
           padding-right: 20px;
           font-weight: bold;
         }
-        
+
         .total-amount {
           width: 100px;
           text-align: right;
           font-weight: bold;
         }
-        
+
         .grand-total {
           border-top: 2px solid #333;
           padding-top: 8px;
           font-size: 18px;
           color: #9333ea;
         }
-        
+
         /* PAYMENT INFO - Keep together */
         .payment-info {
           margin-top: 40px;
@@ -302,21 +302,21 @@ function generateOptimizedInvoiceHTML(
           background-color: #f8f9fa;
           border-left: 4px solid #9333ea;
         }
-        
+
         .payment-info h3 {
           color: #333;
           margin-bottom: 15px;
         }
-        
+
         .payment-info p {
           margin: 8px 0;
           color: #666;
         }
-        
+
         .payment-info strong {
           color: #333;
         }
-        
+
         /* TERMS & CONDITIONS */
         .terms-section {
           margin-top: 30px;
@@ -324,21 +324,21 @@ function generateOptimizedInvoiceHTML(
           background-color: #f8f9fa;
           border-left: 4px solid #9333ea;
         }
-        
+
         .terms-section h3 {
           color: #333;
           margin-bottom: 15px;
         }
-        
+
         .terms-section p {
           margin: 8px 0;
           color: #666;
         }
-        
+
         .terms-section strong {
           color: #333;
         }
-        
+
         /* FOOTER */
         .footer {
           margin-top: 30px;
@@ -362,7 +362,7 @@ function generateOptimizedInvoiceHTML(
           <div class="invoice-date">Date: ${new Date(invoice.createdAt).toLocaleDateString('en-GB')}</div>
         </div>
       </div>
-      
+
       <!-- BILLING SECTION -->
       <div class="billing-section keep-together">
         <div class="billing-info">
@@ -381,7 +381,7 @@ function generateOptimizedInvoiceHTML(
           ${invoice.clientAddress ? `<p>${invoice.clientAddress}</p>` : ''}
         </div>
       </div>
-      
+
       <!-- ITEMS SECTION -->
       <div class="items-section">
         <table class="items-table">
@@ -408,7 +408,7 @@ function generateOptimizedInvoiceHTML(
           </tbody>
         </table>
       </div>
-      
+
       <!-- TOTALS SECTION -->
       <div class="total-section keep-together">
         <div class="total-row">
@@ -428,7 +428,7 @@ function generateOptimizedInvoiceHTML(
           <div class="total-amount">£${invoice.amount}</div>
         </div>
       </div>
-      
+
       <!-- PAYMENT INFO -->
       <div class="payment-info keep-together">
         <h3>Payment Information</h3>
@@ -439,14 +439,14 @@ function generateOptimizedInvoiceHTML(
            Sort - 54 21 30<br>
            Ref - Please use Name/Date</p>
       </div>
-      
+
       <!-- TERMS & CONDITIONS -->
       <div class="terms-section keep-together">
         <h3>Terms & Conditions</h3>
         <p>${userSettings?.defaultTerms || 'All invoices to be paid within seven days of receipt'}</p>
         <p><strong>VAT Status:</strong> I am not VAT registered and therefore no VAT is charged.</p>
       </div>
-      
+
       <!-- FOOTER -->
       <div class="footer">
         <p>Powered by <strong style="color: #9333ea;">MusoBuddy</strong> – less admin, more music.</p>
@@ -466,8 +466,8 @@ function generateContractHTML(
   }
 ): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
-  
-  // Format business address from user settings components (same as contract template)
+
+  // Format business address from user settings components
   const addressParts = [];
   if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
   if (userSettings?.city) addressParts.push(userSettings.city);
@@ -476,11 +476,11 @@ function generateContractHTML(
   const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
   const businessPhone = userSettings?.phone || '';
   const businessEmail = userSettings?.email || '';
-  
+
   // Use the custom MusoBuddy logo
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 50px; width: auto; margin-bottom: 20px;" alt="MusoBuddy Logo" />` : '';
-  
+
   // Signature section
   const hasSignature = signatureDetails && signatureDetails.signedAt;
   const signatureSection = hasSignature ? `
@@ -509,7 +509,7 @@ function generateContractHTML(
   <title>Performance Contract</title>
   <style>
     * { box-sizing: border-box; }
-    
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       line-height: 1.6;
@@ -519,7 +519,15 @@ function generateContractHTML(
       background: white;
       font-size: 14px;
     }
-    
+
+    /* PAGE BREAK OPTIMIZATION */
+    @media print {
+      .page-break-before { page-break-before: always !important; }
+      .page-break-after { page-break-after: always !important; }
+      .no-page-break { page-break-inside: avoid !important; }
+      .keep-together { page-break-inside: avoid !important; }
+    }
+
     /* PURPLE GRADIENT HEADER */
     .header {
       background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
@@ -530,7 +538,7 @@ function generateContractHTML(
       border-radius: 0;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    
+
     .header h1 {
       margin: 0;
       font-size: 32px;
@@ -538,7 +546,7 @@ function generateContractHTML(
       text-shadow: 0 2px 4px rgba(0,0,0,0.3);
       letter-spacing: -0.5px;
     }
-    
+
     .contract-number {
       background: rgba(255,255,255,0.2);
       padding: 8px 16px;
@@ -548,7 +556,7 @@ function generateContractHTML(
       font-weight: 600;
       font-size: 16px;
     }
-    
+
     /* BLUE SECTIONS */
     .section {
       margin: 25px 0;
@@ -558,7 +566,7 @@ function generateContractHTML(
       border-radius: 0 8px 8px 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    
+
     .section h2 {
       color: #2563eb;
       margin: 0 0 15px 0;
@@ -567,7 +575,7 @@ function generateContractHTML(
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    
+
     /* DETAIL GRID LAYOUT */
     .detail-grid {
       display: grid;
@@ -575,7 +583,7 @@ function generateContractHTML(
       gap: 20px;
       margin: 15px 0;
     }
-    
+
     .detail-item {
       background: white;
       padding: 15px;
@@ -583,7 +591,7 @@ function generateContractHTML(
       border: 1px solid #e2e8f0;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    
+
     .detail-label {
       font-weight: 600;
       color: #475569;
@@ -592,13 +600,13 @@ function generateContractHTML(
       letter-spacing: 0.5px;
       margin-bottom: 5px;
     }
-    
+
     .detail-value {
       color: #1e293b;
       font-size: 16px;
       font-weight: 500;
     }
-    
+
     /* GREEN FEE HIGHLIGHT */
     .fee-highlight {
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
@@ -612,7 +620,7 @@ function generateContractHTML(
       box-shadow: 0 4px 6px rgba(0,0,0,0.15);
       text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-    
+
     /* SIGNATURE SECTION */
     .signature-section {
       margin-top: 40px;
@@ -621,7 +629,7 @@ function generateContractHTML(
       border-radius: 8px;
       border: 2px solid #e2e8f0;
     }
-    
+
     .signature-box {
       background: white;
       border: 2px solid #9333ea;
@@ -631,14 +639,14 @@ function generateContractHTML(
       min-height: 80px;
       position: relative;
     }
-    
+
     .signature-label {
       color: #9333ea;
       font-weight: 600;
       margin-bottom: 10px;
       font-size: 16px;
     }
-    
+
     .signed-indicator {
       background: #10b981;
       color: white;
@@ -649,14 +657,14 @@ function generateContractHTML(
       margin-top: 10px;
       font-size: 14px;
     }
-    
+
     .signature-name {
       font-size: 20px;
       color: #1e293b;
       margin: 10px 0;
       font-weight: 600;
     }
-    
+
     /* TERMS SECTION */
     .terms {
       font-size: 13px;
@@ -668,12 +676,12 @@ function generateContractHTML(
       border-radius: 8px;
       border-left: 4px solid #94a3b8;
     }
-    
+
     .terms strong {
       color: #334155;
       font-size: 14px;
     }
-    
+
     /* FOOTER */
     .footer {
       margin-top: 40px;
@@ -683,12 +691,12 @@ function generateContractHTML(
       border-top: 1px solid #e2e8f0;
       padding-top: 20px;
     }
-    
+
     /* SINGLE COLUMN FOR LONG CONTENT */
     .full-width {
       grid-column: 1 / -1;
     }
-    
+
     /* RESPONSIVE GRID */
     @media (max-width: 600px) {
       .detail-grid {
@@ -699,13 +707,59 @@ function generateContractHTML(
 </head>
 <body>
   <!-- PURPLE HEADER -->
-  <div class="header">
+  <div class="header no-page-break">
     <h1>Performance Contract</h1>
     <div class="contract-number">Contract #${contract.contractNumber || contract.id}</div>
   </div>
 
+  <!-- PERFORMER DETAILS SECTION -->
+  <div class="section keep-together">
+    <h2>Performer Details</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">Business Name</div>
+        <div class="detail-value">${businessName}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Contact Email</div>
+        <div class="detail-value">${businessEmail || 'Not provided'}</div>
+      </div>
+      <div class="detail-item full-width">
+        <div class="detail-label">Business Address</div>
+        <div class="detail-value">${businessAddress || 'Address not provided'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Phone</div>
+        <div class="detail-value">${businessPhone || 'Not provided'}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENT INFORMATION SECTION -->
+  <div class="section keep-together">
+    <h2>Client Information</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">Client Name</div>
+        <div class="detail-value">${contract.clientName}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Contact Email</div>
+        <div class="detail-value">${contract.clientEmail || 'Not provided'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Contact Phone</div>
+        <div class="detail-value">${contract.clientPhone || 'Not provided'}</div>
+      </div>
+      <div class="detail-item full-width">
+        <div class="detail-label">Client Address</div>
+        <div class="detail-value">${contract.clientAddress || 'Not provided'}</div>
+      </div>
+    </div>
+  </div>
+
   <!-- EVENT DETAILS SECTION -->
-  <div class="section">
+  <div class="section keep-together">
     <h2>Event Details</h2>
     <div class="detail-grid">
       <div class="detail-item">
@@ -722,41 +776,53 @@ function generateContractHTML(
         <div class="detail-label">Venue</div>
         <div class="detail-value">${contract.venue || 'TBC'}</div>
       </div>
-      <div class="detail-item">
-        <div class="detail-label">Performance Duration</div>
-        <div class="detail-value">${contract.performanceDuration || 'TBC'}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CLIENT INFORMATION SECTION -->
-  <div class="section">
-    <h2>Client Information</h2>
-    <div class="detail-grid">
-      <div class="detail-item">
-        <div class="detail-label">Client Name</div>
-        <div class="detail-value">${contract.clientName}</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">Contact Email</div>
-        <div class="detail-value">${contract.clientEmail || 'Not provided'}</div>
-      </div>
-      <div class="detail-item">
-        <div class="detail-label">Contact Phone</div>
-        <div class="detail-value">${contract.clientPhone || 'Not provided'}</div>
+      <div class="detail-item full-width">
+        <div class="detail-label">Venue Address</div>
+        <div class="detail-value">${contract.venueAddress || 'TBC'}</div>
       </div>
     </div>
   </div>
 
   <!-- FEE HIGHLIGHT -->
-  <div class="fee-highlight">
+  <div class="fee-highlight keep-together">
     Performance Fee: £${contract.fee || 'TBC'}
+    ${contract.deposit && parseFloat(contract.deposit.toString()) > 0 ? 
+      `<div style="font-size: 18px; margin-top: 10px;">Deposit Required: £${contract.deposit}</div>` : ''}
   </div>
 
+  <!-- TECHNICAL REQUIREMENTS -->
+  ${contract.equipmentRequirements || contract.specialRequirements ? `
+  <div class="section keep-together">
+    <h2>Technical Requirements</h2>
+    ${contract.equipmentRequirements ? `
+    <div class="detail-item" style="margin-bottom: 15px;">
+      <div class="detail-label">Equipment Requirements</div>
+      <div class="detail-value">${contract.equipmentRequirements}</div>
+    </div>
+    ` : ''}
+    ${contract.specialRequirements ? `
+    <div class="detail-item">
+      <div class="detail-label">Special Requirements</div>
+      <div class="detail-value">${contract.specialRequirements}</div>
+    </div>
+    ` : ''}
+  </div>
+  ` : ''}
+
+  <!-- PAYMENT TERMS -->
+  ${contract.paymentInstructions ? `
+  <div class="section keep-together">
+    <h2>Payment Instructions</h2>
+    <div class="detail-item">
+      <div class="detail-value">${contract.paymentInstructions}</div>
+    </div>
+  </div>
+  ` : ''}
+
   <!-- SIGNATURE SECTION -->
-  <div class="signature-section">
+  <div class="signature-section keep-together">
     <h2 style="color: #475569; margin-bottom: 20px; font-size: 18px;">Contract Agreement</h2>
-    
+
     <div class="signature-box">
       <div class="signature-label">Client Signature</div>
       ${signatureDetails ? `
@@ -770,20 +836,27 @@ function generateContractHTML(
         </div>
       `}
     </div>
+
+    <div class="signature-box">
+      <div class="signature-label">Performer Signature</div>
+      <div style="color: #64748b; font-style: italic; margin-top: 20px;">
+        ${businessName}
+      </div>
+    </div>
   </div>
 
   <!-- TERMS AND CONDITIONS -->
-  <div class="terms">
+  <div class="terms keep-together">
     <strong>Terms and Conditions:</strong><br><br>
-    
+
     <strong>Payment:</strong> Payment is due within 7 days of performance completion unless otherwise agreed in writing.<br><br>
-    
+
     <strong>Cancellation:</strong> Cancellation within 48 hours of the event may result in a 50% cancellation fee. The performer reserves the right to cancel due to circumstances beyond their control (illness, weather, etc.).<br><br>
-    
+
     <strong>Equipment:</strong> The performer will provide their own professional equipment unless specifically noted above. Adequate power supply and safe performance area must be provided by the client.<br><br>
-    
+
     <strong>Liability:</strong> The performer carries public liability insurance. The client is responsible for the safety and security of guests and venue.<br><br>
-    
+
     <strong>Agreement:</strong> This contract constitutes the entire agreement between the parties and supersedes all prior negotiations, representations, or agreements relating to the subject matter herein.
   </div>
 
@@ -793,41 +866,4 @@ function generateContractHTML(
   </div>
 </body>
 </html>`;
-}
-
-      <div class="section">
-        <div class="section-title">Performance Details</div>
-        <div class="detail-item">
-          <span class="detail-label">Event Date:</span> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Performance Time:</span> ${contract.eventTime || 'TBD'} - ${contract.eventEndTime || 'TBD'}
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Venue:</span> ${contract.venue || 'TBD'}
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Performance Fee:</span> £${contract.fee || '0.00'}
-        </div>
-        ${contract.deposit && parseFloat(contract.deposit.toString()) > 0 ? `
-        <div class="detail-item">
-          <span class="detail-label">Deposit Required:</span> £${contract.deposit}
-        </div>
-        ` : ''}
-      </div>
-
-      <div class="terms">
-        <div class="section-title">Terms and Conditions</div>
-        ${contract.paymentInstructions || contract.specialRequirements || 'Standard performance terms apply.'}
-      </div>
-
-      ${signatureSection}
-
-      <div class="footer">
-        <p>Generated by <strong style="color: #9333ea;">MusoBuddy</strong> – Professional Music Business Management</p>
-        <p>Contract generated on ${new Date().toLocaleDateString('en-GB')}</p>
-      </div>
-    </body>
-    </html>
-  `;
 }
