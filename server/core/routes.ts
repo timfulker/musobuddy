@@ -47,10 +47,54 @@ const isAuthenticated = async (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express) {
+  console.log('🚀 Registering all application routes...');
+
+  // IMMEDIATE TEST ROUTES - Add these FIRST
+  // 1. SIMPLE TEST ROUTE - Add this FIRST to test if routing works at all
+  app.get('/test-route', (req, res) => {
+    res.json({ 
+      message: 'Routes are working!', 
+      timestamp: new Date().toISOString() 
+    });
+  });
+
+  // 2. SIMPLE DEBUG ROUTE
+  app.get('/debug-invoice/:id', async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      console.log(`🔍 Debug request for invoice: ${invoiceId}`);
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      
+      if (!invoice) {
+        return res.json({ error: 'Invoice not found', invoiceId });
+      }
+      
+      res.json({
+        success: true,
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        cloudStorageUrl: invoice.cloudStorageUrl,
+        cloudStorageKey: invoice.cloudStorageKey,
+        rawCloudUrl: JSON.stringify(invoice.cloudStorageUrl),
+        urlLength: invoice.cloudStorageUrl?.length || 0,
+        analysis: {
+          hasCloudUrl: !!invoice.cloudStorageUrl,
+          startsWithSlash: invoice.cloudStorageUrl?.startsWith('/'),
+          containsInvoices: invoice.cloudStorageUrl?.includes('invoices/'),
+          containsView: invoice.cloudStorageUrl?.includes('view/'),
+          expectedFormat: `invoices/${new Date(invoice.createdAt || new Date()).toISOString().split('T')[0]}/${invoice.invoiceNumber}.pdf`
+        }
+      });
+    } catch (error: any) {
+      console.error('Debug error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ===== FIXED INVOICE PDF SERVING ROUTES =====
 
-  // 1. PDF SERVING ROUTE - Must be FIRST, before rate limiting
-  // This serves PDFs directly from cloud storage
+  // 3. REAL PDF SERVING ROUTE - Serves PDFs from R2 cloud storage
   app.get('/invoices/:dateFolder/:filename', async (req, res) => {
     try {
       const { dateFolder, filename } = req.params;
@@ -79,18 +123,51 @@ export async function registerRoutes(app: Express) {
       if (response.Body) {
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
         
-        // Stream the PDF
+        // Convert the stream to buffer and send
+        const chunks: Buffer[] = [];
         const stream = response.Body as any;
-        stream.pipe(res);
-        console.log(`✅ PDF served successfully: ${filename}`);
+        
+        stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+        stream.on('end', () => {
+          const buffer = Buffer.concat(chunks);
+          console.log(`✅ PDF served successfully: ${filename} (${buffer.length} bytes)`);
+          res.send(buffer);
+        });
+        stream.on('error', (error: any) => {
+          console.error(`❌ Stream error serving ${filename}:`, error);
+          res.status(500).send('Error streaming PDF');
+        });
+        
       } else {
-        res.status(404).send('PDF not found');
+        console.log(`❌ PDF not found in cloud storage: ${key}`);
+        res.status(404).send(`
+          <!DOCTYPE html>
+          <html>
+            <head><title>PDF Not Found</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h1>PDF Not Found</h1>
+              <p>The requested PDF could not be found in cloud storage.</p>
+              <p><small>Key: ${key}</small></p>
+            </body>
+          </html>
+        `);
       }
       
-    } catch (error) {
-      console.error('❌ Error serving PDF:', error);
-      res.status(500).send('Error loading PDF');
+    } catch (error: any) {
+      console.error(`❌ Error serving PDF ${req.params.dateFolder}/${req.params.filename}:`, error);
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>PDF Error</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>PDF Service Error</h1>
+            <p>There was an error loading the PDF. Please try again later.</p>
+            <p><small>Error: ${error.message}</small></p>
+          </body>
+        </html>
+      `);
     }
   });
 
