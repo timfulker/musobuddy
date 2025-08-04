@@ -2644,41 +2644,41 @@ export async function registerRoutes(app: Express) {
         `);
       }
       
-      // Generate PDF on demand as fallback
+      // Generate PDF on demand and upload with signed URL
       try {
         const userSettings = await storage.getUserSettings(invoice.userId);
-        const { generateInvoicePDF } = await import('./pdf-generator');
-        const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+        const { uploadInvoiceToCloud } = await import('./cloud-storage');
+        const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
         
-        // Try to upload to R2 storage for future use
-        try {
-          const { uploadInvoiceToCloud } = await import('./cloud-storage');
-          const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
+        if (uploadResult.success && uploadResult.url) {
+          console.log(`✅ Generated new signed URL for invoice ${invoice.invoiceNumber}`);
           
-          if (uploadResult.success && uploadResult.url) {
-            // Update invoice with cloud storage info - store just the path
-            let cloudUrl = uploadResult.url;
-            if (cloudUrl.startsWith('http')) {
-              const url = new URL(cloudUrl);
-              cloudUrl = url.pathname.substring(1); // Remove leading /
-            }
-            
-            await storage.updateInvoice(invoiceId, { 
-              cloudStorageUrl: cloudUrl, // Store as: invoices/2025-08-04/INV-263.pdf
-              cloudStorageKey: uploadResult.key 
-            });
-            
-            console.log(`✅ Invoice PDF uploaded and saved. Redirecting to: /${cloudUrl}`);
-            return res.redirect(`/${cloudUrl}`);
-          }
-        } catch (uploadError: any) {
-          console.error('❌ Failed to upload invoice PDF:', uploadError);
+          // Update invoice with new signed URL
+          await storage.updateInvoice(invoiceId, { 
+            cloudStorageUrl: uploadResult.url, // Store signed URL
+            cloudStorageKey: uploadResult.key 
+          });
+          
+          console.log(`✅ Updated invoice with signed URL, redirecting...`);
+          return res.redirect(uploadResult.url);
+        } else {
+          console.error('❌ Failed to generate signed URL:', uploadResult.error);
+          // Fallback to loading page
+          return res.send(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Invoice ${invoice.invoiceNumber} - Error</title>
+                <meta http-equiv="refresh" content="5">
+              </head>
+              <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1>Invoice ${invoice.invoiceNumber}</h1>
+                <p>There was an issue accessing your invoice. Retrying...</p>
+                <p>This page will refresh automatically.</p>
+              </body>
+            </html>
+          `);
         }
-        
-        // Serve PDF directly as final fallback
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
-        res.send(pdfBuffer);
         
       } catch (pdfError) {
         console.error('❌ PDF generation failed:', pdfError);

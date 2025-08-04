@@ -53,14 +53,25 @@ export async function uploadInvoiceToCloud(
     
     console.log(`✅ Invoice PDF uploaded successfully to R2: ${storageKey}`);
     
-    // FIXED: Return the direct Cloudflare R2 public URL
-    const publicUrl = `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${storageKey}`;
+    // Generate signed URL for public access (works with private buckets)
+    const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+    const { GetObjectCommand } = await import('@aws-sdk/client-s3');
     
-    console.log(`🔗 Direct R2 public URL: ${publicUrl}`);
+    const getCommand = new GetObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME || 'musobuddy-documents',
+      Key: storageKey,
+    });
+    
+    // Generate signed URL that lasts 30 days
+    const signedUrl = await getSignedUrl(r2Client, getCommand, { 
+      expiresIn: 2592000 // 30 days
+    });
+    
+    console.log(`🔗 Generated signed R2 URL (30-day expiry): ${signedUrl.split('?')[0]}...`);
     
     return {
       success: true,
-      url: publicUrl, // Returns: https://pub-a730a594e40d8b46295554074c8e4413.r2.dev/invoices/2025-08-04/INV-264.pdf
+      url: signedUrl, // Returns signed URL that works with private buckets
       key: storageKey
     };
     
