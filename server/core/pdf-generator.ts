@@ -101,6 +101,7 @@ function generateContractHTML(
             padding: 20mm 15mm;
             background: white;
             min-height: 297mm;
+            line-height: 1.4;
         }
 
         /* Header Section */
@@ -232,9 +233,9 @@ function generateContractHTML(
         /* Terms Section */
         .terms-section {
             background: #f1f5f9;
-            padding: 25px;
+            padding: 20px;
             border-radius: 8px;
-            margin: 25px 0;
+            margin: 20px 0;
             border-left: 4px solid #2563eb;
         }
 
@@ -248,8 +249,8 @@ function generateContractHTML(
 
         .terms-section p, .terms-section ul {
             font-size: 11px;
-            line-height: 1.5;
-            margin-bottom: 10px;
+            line-height: 1.4;
+            margin-bottom: 8px;
             color: #475569;
         }
 
@@ -335,7 +336,7 @@ function generateContractHTML(
             opacity: 0.7;
         }
 
-        /* Print Styles */
+        /* Print Styles - Enhanced for proper page breaks */
         @media print {
             body {
                 margin: 0;
@@ -359,12 +360,21 @@ function generateContractHTML(
                 background: #2563eb !important;
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
+                page-break-after: avoid;
+                page-break-inside: avoid;
             }
 
             .fee-highlight {
                 background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
+                page-break-inside: avoid;
+                page-break-after: avoid;
+            }
+
+            .event-table {
+                page-break-inside: avoid;
+                page-break-after: avoid;
             }
 
             .event-table th {
@@ -373,12 +383,45 @@ function generateContractHTML(
                 color-adjust: exact;
             }
 
-            .signature-section {
+            .two-column {
                 page-break-inside: avoid;
+                page-break-after: avoid;
             }
 
             .terms-section {
                 page-break-inside: avoid;
+                margin-bottom: 15px;
+            }
+
+            .terms-section:last-of-type {
+                page-break-after: avoid;
+            }
+
+            .signature-section {
+                page-break-inside: avoid;
+                page-break-before: auto;
+                margin-top: 20px;
+            }
+
+            .footer {
+                page-break-inside: avoid;
+            }
+
+            /* Ensure sections don't split awkwardly */
+            .section-header + .terms-section {
+                page-break-before: avoid;
+            }
+
+            .section-header + .event-table {
+                page-break-before: avoid;
+            }
+
+            .section-header + .two-column {
+                page-break-before: avoid;
+            }
+
+            .section-header + .fee-highlight {
+                page-break-before: avoid;
             }
         }
 
