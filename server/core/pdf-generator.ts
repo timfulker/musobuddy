@@ -404,7 +404,7 @@ function generateOptimizedInvoiceHTML(
       <!-- TERMS & CONDITIONS -->
       <div class="terms-section keep-together">
         <h3>Terms & Conditions</h3>
-        <p>All invoices to be paid within seven days of receipt</p>
+        <p>${userSettings?.defaultTerms || 'All invoices to be paid within seven days of receipt'}</p>
         <p><strong>VAT Status:</strong> I am not VAT registered and therefore no VAT is charged.</p>
       </div>
       

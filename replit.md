@@ -10,6 +10,7 @@ MusoBuddy is a comprehensive music business management platform designed to help
 - **Contract Modal Fixed**: Resolved critical contract creation dialog close issue by removing circular dependency in useEffect
 - **Settings Page Restored**: Fixed corrupted JSX structure (300+ broken lines) that was causing application-wide runtime errors
 - **Null Safety Enhanced**: Added comprehensive null checking across contracts filtering and notification components
+- **Comprehensive Invoice Template**: Enhanced PDF generator to include complete business details, custom user terms, VAT status, bank details, and professional multi-page layout (August 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
