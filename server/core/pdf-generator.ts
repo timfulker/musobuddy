@@ -371,6 +371,13 @@ function generateContractHTML(
                 color-adjust: exact;
                 page-break-after: avoid;
                 page-break-inside: avoid;
+                break-after: avoid;
+                margin-top: 40px;
+            }
+
+            .section-header.terms {
+                page-break-before: always;
+                break-before: page;
             }
 
             .fee-highlight {
@@ -378,15 +385,16 @@ function generateContractHTML(
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
                 page-break-inside: avoid !important;
-                page-break-before: auto;
                 page-break-after: avoid;
                 break-inside: avoid;
+                break-after: avoid;
             }
 
             .event-table {
                 page-break-inside: avoid !important;
                 page-break-after: avoid;
                 break-inside: avoid;
+                break-after: avoid;
             }
 
             .event-table th {
@@ -561,7 +569,7 @@ function generateContractHTML(
         ` : ''}
 
         <!-- Terms & Conditions -->
-        <div class="section-header">Terms & Conditions</div>
+        <div class="section-header terms">Terms & Conditions</div>
 
         <div class="terms-section">
             <h4>Payment Terms</h4>
