@@ -320,7 +320,7 @@ function generateOptimizedInvoiceHTML(
         </div>
         <div class="invoice-details">
           <div class="invoice-number">Invoice ${invoice.invoiceNumber}</div>
-          <div class="invoice-date">Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')}</div>
+          <div class="invoice-date">Date: ${new Date(invoice.createdAt).toLocaleDateString('en-GB')}</div>
         </div>
       </div>
       
