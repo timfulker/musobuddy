@@ -29,7 +29,8 @@ export function createSessionMiddleware() {
       secure: ENV.sessionSecure,
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax', // FIXED: Use 'lax' for same-origin requests
+      sameSite: ENV.isProduction ? 'none' : 'lax', // Allow cross-site in production, lax in dev
+      domain: ENV.isProduction ? '.replit.dev' : undefined, // Share across subdomains in production
     },
   });
 }
