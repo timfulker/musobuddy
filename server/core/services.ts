@@ -225,8 +225,8 @@ export class EmailService {
       const emailData = {
         to: contract.clientEmail,
         subject: subject,
-        html: emailHtml,
-        from: `${userSettings?.businessName || 'MusoBuddy'} <noreply@${process.env.MAILGUN_DOMAIN}>`
+        html: emailHtml
+        // Remove custom 'from' field - use same working logic as invoices
       };
 
       return await this.sendEmail(emailData);
