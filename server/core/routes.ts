@@ -1106,8 +1106,8 @@ export async function registerRoutes(app: Express) {
 
   // ===== CONTRACT PDF ROUTES =====
   
-  // EMERGENCY CONTRACT PDF ROUTE - Direct database lookup
-  app.get('/api/contracts/:id/pdf', async (req: any, res) => {
+  // FIXED: Contract PDF route with proper authentication
+  app.get('/api/contracts/:id/pdf', isAuthenticated, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
       
@@ -1115,20 +1115,32 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: 'Invalid contract ID' });
       }
       
-      console.log(`🚨 EMERGENCY PDF: Contract #${contractId} - bypassing flaky session auth`);
+      const userId = req.session?.userId;
       
-      // Get contract first to check if it exists
+      if (!userId) {
+        console.log('❌ Contract PDF: Authentication required');
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`📄 Generating PDF for contract #${contractId} by user ${userId}`);
+      
+      // Get contract and verify ownership
       const contract = await storage.getContract(contractId);
       if (!contract) {
         console.log(`❌ Contract #${contractId} not found`);
         return res.status(404).json({ error: 'Contract not found' });
       }
       
-      // EMERGENCY: For now, just generate the PDF (will add proper auth later)
-      console.log(`📄 Generating PDF for contract #${contractId} - Owner: ${contract.userId}`);
+      // CRITICAL: Verify user owns this contract
+      if (contract.userId !== userId) {
+        console.log(`❌ User ${userId} denied access to contract #${contractId} (owned by ${contract.userId})`);
+        return res.status(403).json({ error: 'Access denied - you do not own this contract' });
+      }
       
-      // Get user settings for the contract owner
-      const userSettings = await storage.getUserSettings(contract.userId);
+      console.log(`✅ Contract #${contractId} access authorized for user ${userId}`);
+      
+      // Get user settings for PDF generation
+      const userSettings = await storage.getUserSettings(userId);
       const { generateContractPDF } = await import('./pdf-generator');
       
       // Include signature details if contract is signed
@@ -1149,7 +1161,7 @@ export async function registerRoutes(app: Express) {
       res.setHeader('Content-Length', pdfBuffer.length.toString());
       
       // Send the PDF buffer
-      console.log(`✅ PDF generated for viewing: ${pdfBuffer.length} bytes`);
+      console.log(`✅ PDF served for viewing: ${pdfBuffer.length} bytes`);
       return res.send(pdfBuffer);
       
     } catch (error: any) {
