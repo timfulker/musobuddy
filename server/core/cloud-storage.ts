@@ -1,6 +1,7 @@
 // cloud-storage.ts - Fixed uploadInvoiceToCloud function
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { nanoid } from 'nanoid';
 import type { Invoice, UserSettings } from '@shared/schema';
 
 // Initialize R2 client
@@ -26,10 +27,13 @@ export async function uploadInvoiceToCloud(
     
     console.log(`📄 PDF generated, size: ${pdfBuffer.length} bytes`);
     
-    // Create storage key with date folder structure
+    // Create storage key with date folder structure and random token for security
     const invoiceDate = new Date(invoice.createdAt || new Date());
     const dateFolder = invoiceDate.toISOString().split('T')[0]; // 2025-08-04
-    const filename = `${invoice.invoiceNumber}.pdf`;
+    
+    // Generate cryptographically secure random token to prevent URL guessing
+    const securityToken = nanoid(16); // 16-character URL-safe random string
+    const filename = `${invoice.invoiceNumber}-${securityToken}.pdf`;
     const storageKey = `invoices/${dateFolder}/${filename}`;
     
     console.log(`🔑 Storage key: ${storageKey}`);
