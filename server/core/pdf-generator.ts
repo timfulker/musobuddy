@@ -82,6 +82,11 @@ function generateContractHTML(
   const businessAddress = userSettings?.businessAddress || '';
   const businessPhone = userSettings?.phone || '';
 
+  const logoBase64 = getLogoBase64();
+  const logoHtml = logoBase64 ? 
+    `<img src="data:image/png;base64,${logoBase64}" alt="MusoBuddy Logo" style="height: 40px; margin-bottom: 15px;">` : 
+    '<div style="color: #9333ea; font-weight: bold; font-size: 24px; margin-bottom: 15px; font-family: \'Segoe UI\', sans-serif;">MusoBuddy</div>';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,9 +100,9 @@ function generateContractHTML(
       box-sizing: border-box;
     }
     body {
-      font-family: 'Times New Roman', Times, serif;
-      line-height: 1.5;
-      color: #000;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
       background-color: white;
       font-size: 12px;
       padding: 30px;
@@ -106,34 +111,41 @@ function generateContractHTML(
       text-align: center;
       margin-bottom: 40px;
       page-break-inside: avoid;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #9333ea;
     }
     .contract-title {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: bold;
-      margin-bottom: 15px;
-      text-decoration: underline;
+      color: #9333ea;
+      margin: 15px 0;
     }
     .contract-number {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 15px;
+      font-size: 16px;
+      color: #666;
+      font-weight: 500;
     }
     .draft-label {
-      font-size: 24px;
+      font-size: 18px;
       font-weight: bold;
-      color: #666;
-      margin-bottom: 30px;
-      letter-spacing: 3px;
+      color: #9333ea;
+      background: linear-gradient(135deg, #f3e8ff, #e879f9);
+      padding: 8px 20px;
+      border-radius: 20px;
+      display: inline-block;
+      margin: 15px 0;
     }
     .section {
       margin-bottom: 30px;
       page-break-inside: avoid;
     }
     .section-title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
+      color: #9333ea;
       margin-bottom: 15px;
-      text-decoration: underline;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #9333ea;
     }
     .performer-details {
       text-align: left;
@@ -151,7 +163,8 @@ function generateContractHTML(
     }
     .event-details-table .label {
       font-weight: bold;
-      background-color: #f5f5f5;
+      background: linear-gradient(135deg, #9333ea, #7c3aed);
+      color: white;
       width: 30%;
     }
     .terms-section {
@@ -183,15 +196,19 @@ function generateContractHTML(
     }
     .signature-block {
       margin: 30px 0;
-      border: 1px solid #ccc;
+      border: 2px solid #9333ea;
+      background: linear-gradient(135deg, #faf5ff, #f3e8ff);
       padding: 20px;
+      border-radius: 8px;
       min-height: 80px;
     }
     .signature-block h4 {
-      font-size: 14px;
+      font-size: 16px;
       font-weight: bold;
+      color: #9333ea;
       margin-bottom: 15px;
-      text-decoration: underline;
+      border-bottom: 1px solid #9333ea;
+      padding-bottom: 5px;
     }
     .signature-info {
       margin: 10px 0;
@@ -214,15 +231,21 @@ function generateContractHTML(
       font-size: 11px;
     }
     .fee-highlight {
-      font-size: 14px;
+      background: linear-gradient(135deg, #9333ea, #7c3aed);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 18px;
       font-weight: bold;
-      margin: 15px 0;
+      margin: 20px 0;
     }
   </style>
 </head>
 <body>
   <!-- CONTRACT HEADER -->
   <div class="contract-header">
+    ${logoHtml}
     <div class="contract-title">Performance Contract</div>
     <div class="contract-number">${contract.contractNumber}</div>
     <div class="draft-label">DRAFT</div>
@@ -274,7 +297,7 @@ function generateContractHTML(
       </tr>
       <tr>
         <td class="label">Performance Fee</td>
-        <td class="fee-highlight">£${contract.fee || '0.00'}</td>
+        <td><div class="fee-highlight">£${contract.fee || '0.00'}</div></td>
       </tr>
     </table>
   </div>
@@ -377,8 +400,8 @@ function generateContractHTML(
     <p><strong>Contract Validity:</strong> This contract remains valid and enforceable regardless of changes in circumstances, location, or contact information of either party.</p>
   </div>
 
-  <div class="powered-by">
-    Powered by MusoBuddy – less admin, more music.
+  <div class="powered-by" style="text-align: center; margin-top: 30px; color: #9333ea; font-weight: bold; font-size: 12px;">
+    Powered by <span style="color: #9333ea; font-weight: bold;">MusoBuddy</span> – less admin, more music.
   </div>
 </body>
 </html>`;
