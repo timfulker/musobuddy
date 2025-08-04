@@ -82,11 +82,6 @@ function generateContractHTML(
   const businessAddress = userSettings?.businessAddress || '';
   const businessPhone = userSettings?.phone || '';
 
-  const logoBase64 = getLogoBase64();
-  const logoHtml = logoBase64 ? 
-    `<img src="data:image/png;base64,${logoBase64}" alt="MusoBuddy Logo" style="height: 40px; margin-bottom: 10px;">` : 
-    '<div style="color: #9333ea; font-weight: bold; font-size: 24px; margin-bottom: 10px;">MusoBuddy</div>';
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,242 +95,290 @@ function generateContractHTML(
       box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
+      font-family: 'Times New Roman', Times, serif;
+      line-height: 1.5;
+      color: #000;
       background-color: white;
+      font-size: 12px;
+      padding: 30px;
     }
-    .header {
+    .contract-header {
       text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 3px solid #9333ea;
+      margin-bottom: 40px;
+      page-break-inside: avoid;
     }
     .contract-title {
-      font-size: 28px;
-      font-weight: bold;
-      color: #9333ea;
-      margin: 15px 0;
-    }
-    .contract-number {
-      font-size: 16px;
-      color: #666;
-      font-weight: 500;
-    }
-    .section {
-      margin-bottom: 25px;
-    }
-    .section-title {
-      font-size: 18px;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 15px;
-      padding-bottom: 5px;
-      border-bottom: 1px solid #ddd;
-    }
-    .details-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-    .detail-item {
-      margin-bottom: 12px;
-    }
-    .detail-label {
-      font-weight: bold;
-      color: #555;
-      display: block;
-      margin-bottom: 5px;
-    }
-    .detail-value {
-      color: #333;
-    }
-    .fee-highlight {
-      background: linear-gradient(135deg, #9333ea, #7c3aed);
-      color: white;
-      padding: 20px;
-      border-radius: 8px;
-      text-align: center;
       font-size: 24px;
       font-weight: bold;
-      margin: 20px 0;
+      margin-bottom: 15px;
+      text-decoration: underline;
     }
-    .terms {
-      background-color: #f8fafc;
-      padding: 20px;
-      border-left: 4px solid #9333ea;
-      margin: 20px 0;
-      border-radius: 4px;
+    .contract-number {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .draft-label {
+      font-size: 24px;
+      font-weight: bold;
+      color: #666;
+      margin-bottom: 30px;
+      letter-spacing: 3px;
+    }
+    .section {
+      margin-bottom: 30px;
+      page-break-inside: avoid;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-decoration: underline;
+    }
+    .performer-details {
+      text-align: left;
+      margin-bottom: 30px;
+    }
+    .event-details-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .event-details-table td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      vertical-align: top;
+    }
+    .event-details-table .label {
+      font-weight: bold;
+      background-color: #f5f5f5;
+      width: 30%;
+    }
+    .terms-section {
+      margin-top: 30px;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .terms-section h3 {
+      font-size: 14px;
+      font-weight: bold;
+      margin: 20px 0 10px 0;
+      text-decoration: underline;
+    }
+    .terms-section h4 {
+      font-size: 12px;
+      font-weight: bold;
+      margin: 15px 0 8px 0;
+    }
+    .terms-section ul {
+      margin-left: 30px;
+      margin-bottom: 15px;
+    }
+    .terms-section li {
+      margin-bottom: 8px;
     }
     .signature-section {
       margin-top: 40px;
+      page-break-inside: avoid;
+    }
+    .signature-block {
+      margin: 30px 0;
+      border: 1px solid #ccc;
       padding: 20px;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
+      min-height: 80px;
     }
-    .signature-box {
-      margin: 20px 0;
-      padding: 15px;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-    }
-    .signature-label {
+    .signature-block h4 {
+      font-size: 14px;
       font-weight: bold;
-      color: #475569;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
+      text-decoration: underline;
     }
-    .signature-name {
-      font-size: 18px;
-      font-weight: bold;
-      color: #1e293b;
+    .signature-info {
       margin: 10px 0;
     }
-    .signed-indicator {
-      color: #059669;
-      font-weight: bold;
-      font-size: 14px;
-    }
-    .footer {
+    .legal-footer {
       margin-top: 40px;
-      text-align: center;
-      font-size: 12px;
-      color: #64748b;
-      border-top: 1px solid #e2e8f0;
+      font-size: 10px;
+      border-top: 1px solid #ccc;
       padding-top: 20px;
+    }
+    .legal-footer h4 {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .powered-by {
+      text-align: center;
+      margin-top: 30px;
+      font-style: italic;
+      font-size: 11px;
+    }
+    .fee-highlight {
+      font-size: 14px;
+      font-weight: bold;
+      margin: 15px 0;
     }
   </style>
 </head>
 <body>
-  <!-- HEADER -->
-  <div class="header">
-    ${logoHtml}
-    <div class="contract-title">PERFORMANCE CONTRACT</div>
-    <div class="contract-number">Contract Number: ${contract.contractNumber}</div>
+  <!-- CONTRACT HEADER -->
+  <div class="contract-header">
+    <div class="contract-title">Performance Contract</div>
+    <div class="contract-number">${contract.contractNumber}</div>
+    <div class="draft-label">DRAFT</div>
   </div>
 
-  <!-- PARTIES SECTION -->
+  <!-- PERFORMER DETAILS -->
   <div class="section">
-    <div class="section-title">Contracting Parties</div>
-    <div class="details-grid">
-      <div>
-        <div class="detail-item">
-          <span class="detail-label">Performer:</span>
-          <div class="detail-value">
-            ${businessName}<br>
-            ${businessAddress ? `${businessAddress}<br>` : ''}
-            ${businessPhone ? `Phone: ${businessPhone}<br>` : ''}
-            ${businessEmail ? `Email: ${businessEmail}` : ''}
-          </div>
-        </div>
-      </div>
-      <div>
-        <div class="detail-item">
-          <span class="detail-label">Client:</span>
-          <div class="detail-value">
-            ${contract.clientName}<br>
-            ${contract.clientEmail ? `Email: ${contract.clientEmail}<br>` : ''}
-            ${contract.clientPhone ? `Phone: ${contract.clientPhone}<br>` : ''}
-            ${contract.clientAddress || 'Address not provided'}
-          </div>
-        </div>
-      </div>
+    <div class="section-title">Performer Details</div>
+    <div class="performer-details">
+      ${businessName}<br>
+      ${businessPhone ? `Phone: ${businessPhone}<br>` : ''}
+      ${businessEmail ? `Email: ${businessEmail}<br>` : ''}
     </div>
   </div>
 
-  <!-- PERFORMANCE DETAILS -->
+  <!-- EVENT DETAILS -->
   <div class="section">
-    <div class="section-title">Performance Details</div>
-    <div class="detail-item">
-      <span class="detail-label">Event Date:</span>
-      <div class="detail-value">${new Date(contract.eventDate).toLocaleDateString('en-GB', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-      })}</div>
-    </div>
-    <div class="detail-item">
-      <span class="detail-label">Performance Time:</span>
-      <div class="detail-value">${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}</div>
-    </div>
-    <div class="detail-item">
-      <span class="detail-label">Venue:</span>
-      <div class="detail-value">${contract.venue || 'TBC'}</div>
-    </div>
-    ${contract.venueAddress ? `
-    <div class="detail-item">
-      <span class="detail-label">Venue Address:</span>
-      <div class="detail-value">${contract.venueAddress}</div>
-    </div>
-    ` : ''}
-  </div>
-
-  <!-- FEE HIGHLIGHT -->
-  <div class="fee-highlight">
-    Performance Fee: £${contract.fee || 'TBC'}
-    ${contract.deposit && parseFloat(contract.deposit.toString()) > 0 ? 
-      `<div style="font-size: 18px; margin-top: 10px;">Deposit Required: £${contract.deposit}</div>` : ''}
-  </div>
-
-  <!-- TECHNICAL REQUIREMENTS -->
-  ${contract.equipmentRequirements || contract.specialRequirements ? `
-  <div class="section">
-    <div class="section-title">Technical Requirements</div>
-    ${contract.equipmentRequirements ? `
-    <div class="detail-item">
-      <span class="detail-label">Equipment Requirements:</span>
-      <div class="detail-value">${contract.equipmentRequirements}</div>
-    </div>
-    ` : ''}
-    ${contract.specialRequirements ? `
-    <div class="detail-item">
-      <span class="detail-label">Special Requirements:</span>
-      <div class="detail-value">${contract.specialRequirements}</div>
-    </div>
-    ` : ''}
-  </div>
-  ` : ''}
-
-  <!-- PAYMENT INSTRUCTIONS -->
-  ${contract.paymentInstructions ? `
-  <div class="section">
-    <div class="section-title">Payment Instructions</div>
-    <div class="detail-item">
-      <div class="detail-value">${contract.paymentInstructions}</div>
-    </div>
-  </div>
-  ` : ''}
-
-  <!-- SIGNATURE SECTION -->
-  <div class="signature-section">
-    <div class="section-title">Contract Agreement</div>
-    <div class="signature-box">
-      <div class="signature-label">Client Signature</div>
-      ${signatureDetails ? `
-        <div class="signature-name">${signatureDetails.signatureName || 'Signed'}</div>
-        <div class="signed-indicator">
-          ✓ Signed on ${signatureDetails.signedAt ? new Date(signatureDetails.signedAt).toLocaleDateString('en-GB') : 'N/A'}
-        </div>
-      ` : `
-        <div style="color: #64748b; font-style: italic; margin-top: 20px;">
-          Awaiting client signature
-        </div>
-      `}
-    </div>
+    <div class="section-title">Event Details</div>
+    <table class="event-details-table">
+      <tr>
+        <td class="label">Client Name</td>
+        <td>${contract.clientName}</td>
+      </tr>
+      <tr>
+        <td class="label">Client Email</td>
+        <td>${contract.clientEmail || 'Not provided'}</td>
+      </tr>
+      <tr>
+        <td class="label">Client Address</td>
+        <td>${contract.clientAddress || 'Not provided'}</td>
+      </tr>
+      <tr>
+        <td class="label">Client Phone</td>
+        <td>${contract.clientPhone || 'Not provided'}</td>
+      </tr>
+      <tr>
+        <td class="label">Event Date</td>
+        <td>${new Date(contract.eventDate).toLocaleDateString('en-GB', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        })}</td>
+      </tr>
+      <tr>
+        <td class="label">Event Time</td>
+        <td>${contract.eventTime || 'TBC'}</td>
+      </tr>
+      <tr>
+        <td class="label">Venue</td>
+        <td>${contract.venue || 'TBC'}</td>
+      </tr>
+      <tr>
+        <td class="label">Performance Fee</td>
+        <td class="fee-highlight">£${contract.fee || '0.00'}</td>
+      </tr>
+    </table>
   </div>
 
   <!-- TERMS AND CONDITIONS -->
-  <div class="terms">
+  <div class="terms-section">
     <div class="section-title">Terms and Conditions</div>
-    <p><strong>Payment:</strong> Payment is due within 7 days of performance completion unless otherwise agreed in writing.</p>
-    <p><strong>Cancellation:</strong> Cancellation within 48 hours of the event may result in a 50% cancellation fee.</p>
-    <p><strong>Equipment:</strong> The performer will provide their own professional equipment unless specifically noted above.</p>
-    <p><strong>Liability:</strong> The performer carries public liability insurance. The client is responsible for the safety and security of guests and venue.</p>
-    <p><strong>Agreement:</strong> This contract constitutes the entire agreement between the parties and supersedes all prior negotiations, representations, or agreements relating to the subject matter herein.</p>
+    
+    <h3>Payment Terms & Conditions</h3>
+    <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee || '0.00'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
+    
+    <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
+    
+    ${contract.deposit && parseFloat(contract.deposit.toString()) > 0 ? `
+    <p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>
+    ` : ''}
+    
+    <p><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</p>
+
+    <h3>Cancellation & Refund Policy</h3>
+    <h4>Client Cancellation:</h4>
+    <ul>
+      <li><strong>More than 30 days before event:</strong> Any deposit paid will be refunded minus a £50 administration fee</li>
+      <li><strong>30 days or less before event:</strong> Full performance fee becomes due regardless of cancellation</li>
+      <li><strong>Same day cancellation:</strong> Full fee due plus any additional costs incurred</li>
+    </ul>
+    
+    <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</p>
+    
+    <p><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</p>
+
+    <h3>Force Majeure</h3>
+    <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
+
+    <h3>Performance Contingencies</h3>
+    <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
+
+    <h3>Professional Performance Standards</h3>
+    <p><strong>Payment Schedule:</strong> The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.</p>
+    
+    <p><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</p>
+    
+    <p><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</p>
+    
+    <p><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</p>
+    
+    <p><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</p>
+    
+    <p><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</p>
+    
+    <p><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</p>
+    
+    <p><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</p>
   </div>
 
-  <!-- FOOTER -->
-  <div class="footer">
-    <p>Generated by <strong style="color: #9333ea;">MusoBuddy</strong> – Professional Music Business Management</p>
-    <p>Contract generated on ${new Date().toLocaleDateString('en-GB')}</p>
+  <!-- SIGNATURES -->
+  <div class="signature-section">
+    <div class="section-title">Signatures</div>
+    
+    <div class="signature-block">
+      <h4>Performer</h4>
+      <div class="signature-info">
+        <p><strong>Signed by:</strong> ${businessName}</p>
+        <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-GB')}</p>
+        <p><strong>Status:</strong> Agreed by sending contract</p>
+      </div>
+    </div>
+    
+    <div class="signature-block">
+      <h4>Client</h4>
+      <div class="signature-info">
+        ${signatureDetails ? `
+          <p><strong>Signed by:</strong> ${signatureDetails.signatureName || contract.clientName}</p>
+          <p><strong>Date:</strong> ${new Date(signatureDetails.signedAt).toLocaleDateString('en-GB')}</p>
+          <p><strong>Status:</strong> Contract Signed</p>
+        ` : `
+          <p><strong>Status:</strong> Awaiting Signature</p>
+          <p>This contract has been sent to ${contract.clientEmail} for digital signature.</p>
+        `}
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGAL INFORMATION -->
+  <div class="legal-footer">
+    <h4>Legal Information & Governing Terms:</h4>
+    <p><strong>Contract Number:</strong> ${contract.contractNumber}</p>
+    <p><strong>Generated:</strong> ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
+    
+    <p><strong>Binding Agreement:</strong> This is a legally binding agreement between the parties named above. Both parties acknowledge they have read, understood, and agree to be bound by all terms and conditions set forth herein.</p>
+    
+    <p><strong>Governing Law & Jurisdiction:</strong> This contract shall be governed by and construed in accordance with the laws of England and Wales. Any disputes, claims, or legal proceedings arising from or relating to this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+    
+    <p><strong>Digital Signatures:</strong> Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation. Electronic acceptance constitutes agreement to all terms.</p>
+    
+    <p><strong>Entire Agreement:</strong> This contract represents the entire agreement between the parties and supersedes all prior negotiations, representations, or agreements. No modification shall be valid unless in writing and signed by both parties.</p>
+    
+    <p><strong>Severability:</strong> If any provision of this contract is found to be unenforceable, the remaining provisions shall continue in full force and effect.</p>
+    
+    <p><strong>Contract Validity:</strong> This contract remains valid and enforceable regardless of changes in circumstances, location, or contact information of either party.</p>
+  </div>
+
+  <div class="powered-by">
+    Powered by MusoBuddy – less admin, more music.
   </div>
 </body>
 </html>`;
