@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -91,7 +92,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 relative">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-900">
@@ -136,6 +137,13 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
+      
+      {/* Footer with Terms & Conditions link */}
+      <div className="absolute bottom-4 text-center text-sm text-gray-500">
+        <Link href="/terms-and-conditions" className="hover:text-gray-700 hover:underline">
+          Terms & Conditions
+        </Link>
+      </div>
     </div>
   );
 }

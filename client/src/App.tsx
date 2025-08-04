@@ -33,6 +33,7 @@ import UnparseableMessages from "@/pages/unparseable-messages";
 import LandingPage from "@/pages/landing";
 import SignupPage from "@/pages/signup";
 import TrialSuccessPage from "@/pages/trial-success";
+import TermsAndConditions from "@/pages/terms-and-conditions";
 import SupportChat from "@/components/support-chat";
 import { useEffect } from "react";
 
@@ -67,6 +68,7 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/terms-and-conditions" component={TermsAndConditions} />
       {/* Admin login removed per user request */}
       <Route path="/verify-phone" component={VerifyPhonePage} />
       <Route path="/trial-success" component={TrialSuccessPage} />
