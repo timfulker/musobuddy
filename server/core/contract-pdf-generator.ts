@@ -36,7 +36,7 @@ export async function generateContractPDF(
   
   try {
     const page = await browser.newPage();
-    const html = generateProfessionalContractHTML(contract, userSettings);
+    const html = generateContractHTML(contract, userSettings);
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ format: 'A4', printBackground: true });

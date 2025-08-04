@@ -20,6 +20,7 @@ MusoBuddy is a comprehensive music business management platform designed to help
 - **Professional Contract Template**: Integrated advanced "Professional" template with blue theme (#3b82f6), Inter font, comprehensive styling, and enhanced terms & conditions. Template system kept completely separate from invoice system due to reliability concerns (August 4, 2025)
 - **System Isolation Fixed**: Resolved import path corruption in cloud-storage.ts and routes.ts that was breaking invoice system when contract templates were modified. Systems now completely isolated (August 4, 2025)
 - **Complete Invoice System Isolation**: Created entirely separate invoice system in `server/invoice-system/` with isolated types, PDF generation, cloud storage, and API endpoints. Zero dependencies on main system to prevent future contamination. Uses `/api/isolated/invoices/` endpoints with enhanced page break controls (August 4, 2025)
+- **Contract Field Mapping Fixed**: Resolved critical PDF generation issue where template variables were showing as raw code instead of actual data. Fixed function name mismatch in contract-pdf-generator.ts and corrected database field mapping (eventTime vs startTime). Contract PDFs now display actual booking data correctly (August 4, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
