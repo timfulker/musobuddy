@@ -401,11 +401,75 @@ app.post('/api/stripe-webhook',
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// REBUILT: Session middleware
-console.log('🔧 Setting up REBUILT session middleware...');
+// CRITICAL FIX: Session middleware setup with proper order
+console.log('🔧 Setting up FIXED session middleware...');
 const sessionMiddleware = createSessionMiddleware();
 app.use(sessionMiddleware);
-console.log('✅ REBUILT session middleware configured');
+console.log('✅ FIXED session middleware configured');
+
+// CRITICAL FIX: Setup authentication routes IMMEDIATELY after session middleware
+console.log('🔐 Setting up FIXED authentication routes...');
+await setupAuthRoutes(app);
+console.log('✅ FIXED authentication routes configured');
+
+// Session debug endpoint for troubleshooting
+app.get('/api/debug/session', (req: any, res) => {
+  const debugInfo = {
+    timestamp: new Date().toISOString(),
+    sessionId: req.sessionID,
+    sessionExists: !!req.session,
+    userId: req.session?.userId,
+    email: req.session?.email,
+    isAdmin: req.session?.isAdmin,
+    cookies: req.headers.cookie ? 'present' : 'missing',
+    userAgent: req.headers['user-agent']?.substring(0, 50),
+    secure: req.secure,
+    protocol: req.protocol,
+    hostname: req.hostname
+  };
+
+  console.log('🔍 Session debug:', debugInfo);
+  res.json(debugInfo);
+});
+
+// Test authentication endpoint
+app.get('/api/test-auth', (req: any, res) => {
+  console.log('🧪 Test auth endpoint called');
+  console.log('🧪 Session state:', {
+    sessionId: req.sessionID,
+    userId: req.session?.userId,
+    email: req.session?.email
+  });
+  
+  if (req.session?.userId) {
+    res.json({ 
+      authenticated: true,
+      userId: req.session.userId,
+      email: req.session.email,
+      message: 'Authentication working correctly'
+    });
+  } else {
+    res.status(401).json({ 
+      authenticated: false,
+      message: 'Not authenticated - use /api/auth/admin-login first'
+    });
+  }
+});
+
+// Serve the session authentication test page
+app.get('/session-test', (req: any, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  try {
+    const testPagePath = path.join(process.cwd(), 'session-auth-test.html');
+    const testPageContent = fs.readFileSync(testPagePath, 'utf8');
+    res.setHeader('Content-Type', 'text/html');
+    res.send(testPageContent);
+  } catch (error) {
+    res.status(404).send('Session test page not found');
+  }
+});
 
 // SMS Service test endpoint  
 app.get('/api/test-sms', async (req, res) => {
@@ -951,13 +1015,8 @@ async function startServer() {
       }
     });
 
-    // Setup rebuilt authentication first
-    console.log('🔐 Setting up REBUILT authentication...');
-    setupAuthRoutes(app);
-    console.log('✅ REBUILT authentication configured');
-    
-    // Register all other routes AFTER authentication
-    console.log('🔄 Registering API routes...');
+    // Register all routes with proper authentication setup
+    console.log('🔄 Registering all API routes with authentication...');
     await registerRoutes(app);
     console.log('✅ API routes registered successfully');
     
