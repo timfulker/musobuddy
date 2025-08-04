@@ -41,7 +41,7 @@ export async function generateContractPDF(
     console.log('🎨 Generating HTML with template:', templateType);
     const html = templateType === 'professional' 
       ? generateProfessionalContractHTML(contract, userSettings)
-      : generateContractHTML(contract, userSettings, signatureDetails);
+      : await generateContractHTML(contract, userSettings, signatureDetails);
     console.log('📄 HTML generated, first 200 chars:', html.substring(0, 200));
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
@@ -54,7 +54,7 @@ export async function generateContractPDF(
   }
 }
 
-function generateContractHTML(
+async function generateContractHTML(
   contract: Contract,
   userSettings: UserSettings | null,
   signatureDetails?: {
@@ -62,8 +62,8 @@ function generateContractHTML(
     signatureName?: string;
     clientIpAddress?: string;
   }
-): string {
+): Promise<string> {
   // Use basic template from contract-templates.ts instead of hardcoded HTML
-  const { generateBasicContractHTML } = require('./contract-templates.js');
+  const { generateBasicContractHTML } = await import('./contract-templates.js');
   return generateBasicContractHTML(contract, userSettings);
 }
