@@ -117,7 +117,7 @@ export function setupAuthRoutes(app: Express) {
       console.log('🔐 Admin login attempt for:', email);
       
       // Hardcoded admin credentials for testing
-      if (email === 'timfulker@gmail.com' && password === 'MusoBuddy2025!') {
+      if (email === 'timfulker@gmail.com' && password === 'admin123') {
         // Set session data
         req.session.userId = '43963086';
         req.session.email = 'timfulker@gmail.com';

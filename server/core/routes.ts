@@ -110,9 +110,9 @@ export async function registerRoutes(app: Express) {
   // CRITICAL: Set up session middleware AFTER rate limiting
   console.log('📦 Session middleware already configured in main server');
   
-  // CRITICAL FIX: Setup authentication routes IMMEDIATELY after session middleware
+  // CRITICAL FIX: Setup authentication routes with correct credentials
   console.log('🔐 Setting up authentication routes...');
-  const { setupAuthRoutes } = await import('./auth-rebuilt.js');
+  const { setupAuthRoutes } = await import('./auth-rebuilt');
   setupAuthRoutes(app);
   console.log('✅ Authentication routes configured');
 

@@ -212,7 +212,7 @@ app.get('/auth-test', (req, res) => {
                         credentials: 'include',
                         body: JSON.stringify({
                             email: 'timfulker@gmail.com',
-                            password: 'MusoBuddy2025!'
+                            password: 'admin123'
                         })
                     });
                     
@@ -407,10 +407,8 @@ const sessionMiddleware = createSessionMiddleware();
 app.use(sessionMiddleware);
 console.log('✅ FIXED session middleware configured');
 
-// CRITICAL FIX: Setup authentication routes IMMEDIATELY after session middleware
-console.log('🔐 Setting up FIXED authentication routes...');
-await setupAuthRoutes(app);
-console.log('✅ FIXED authentication routes configured');
+// Authentication routes will be configured by registerRoutes() to avoid duplicates
+console.log('🔐 Authentication routes will be configured by registerRoutes()');
 
 // Session debug endpoint for troubleshooting
 app.get('/api/debug/session', (req: any, res) => {
