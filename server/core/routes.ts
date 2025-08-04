@@ -2551,57 +2551,88 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'Invoice not found' });
       }
       
+      console.log(`📋 Invoice found: ${invoice.invoiceNumber}, cloudStorageUrl: ${invoice.cloudStorageUrl ? 'exists' : 'missing'}`);
+      
       // If invoice has cloud storage URL, redirect to it directly
       if (invoice.cloudStorageUrl) {
         console.log(`✅ Redirecting to cloud storage for invoice #${invoiceId}: ${invoice.cloudStorageUrl}`);
         return res.redirect(invoice.cloudStorageUrl);
       }
       
-      // Generate PDF and store in R2 if not already stored
+      // If no cloud URL, check if PDF already exists in database
+      if (invoice.pdfPath) {
+        try {
+          const fs = await import('fs');
+          const path = await import('path');
+          const pdfPath = path.join(process.cwd(), invoice.pdfPath);
+          
+          if (fs.existsSync(pdfPath)) {
+            const pdfBuffer = fs.readFileSync(pdfPath);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
+            return res.send(pdfBuffer);
+          }
+        } catch (fileError) {
+          // Continue to PDF generation if file doesn't exist
+        }
+      }
+      
+      // Generate PDF on demand
       try {
         const userSettings = await storage.getUserSettings(invoice.userId);
         const { generateInvoicePDF } = await import('./pdf-generator');
         const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
         
-        // Upload to R2 storage for future use
+        // Try to upload to R2 storage
         try {
-          const { uploadFileToCloudflare } = await import('./cloud-storage');
-          const cloudStorageResult = await uploadFileToCloudflare(
-            `invoices/invoice-${invoice.invoiceNumber}.pdf`,
-            pdfBuffer,
-            'application/pdf'
-          );
+          const { uploadFileToCloudflare, isCloudStorageConfigured } = await import('./cloud-storage');
           
-          if (cloudStorageResult.success && cloudStorageResult.url) {
-            const cloudStorageUrl = cloudStorageResult.url;
+          if (isCloudStorageConfigured()) {
+            const cloudStorageResult = await uploadFileToCloudflare(
+              `invoices/invoice-${invoice.invoiceNumber}.pdf`,
+              pdfBuffer,
+              'application/pdf'
+            );
             
-            // Update invoice with cloud storage URL
-            await storage.updateInvoice(invoiceId, { cloudStorageUrl });
-            console.log(`✅ Uploaded invoice #${invoiceId} to R2: ${cloudStorageUrl}`);
-            
-            // Redirect to R2 URL
-            return res.redirect(cloudStorageUrl);
-          } else {
-            console.error(`❌ R2 upload failed:`, cloudStorageResult.error);
+            if (cloudStorageResult.success && cloudStorageResult.url) {
+              await storage.updateInvoice(invoiceId, { cloudStorageUrl: cloudStorageResult.url });
+              return res.redirect(cloudStorageResult.url);
+            }
           }
         } catch (uploadError) {
-          console.error(`❌ Failed to upload to R2, serving directly:`, uploadError);
-          // Fallback to direct serving if R2 fails
+          // Fallback to direct serving
         }
         
+        // Serve PDF directly
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
         res.send(pdfBuffer);
         
-        console.log(`✅ Generated PDF on-demand for public invoice #${invoiceId}`);
       } catch (pdfError) {
-        console.error(`❌ Failed to generate PDF for invoice #${invoiceId}:`, pdfError);
-        res.status(500).json({ error: 'Failed to generate invoice PDF' });
+        // Final fallback - serve a simple error page
+        res.status(500).send(`
+          <!DOCTYPE html>
+          <html>
+            <head><title>Invoice Error</title></head>
+            <body>
+              <h1>Invoice Temporarily Unavailable</h1>
+              <p>We're working to resolve this issue. Please try again later.</p>
+            </body>
+          </html>
+        `);
       }
       
     } catch (error) {
-      console.error('❌ Public invoice view error:', error);
-      res.status(500).json({ error: 'Failed to display invoice' });
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Invoice Error</title></head>
+          <body>
+            <h1>Invoice Temporarily Unavailable</h1>
+            <p>We're working to resolve this issue. Please try again later.</p>
+          </body>
+        </html>
+      `);
     }
   });
 
