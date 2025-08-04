@@ -1,4 +1,5 @@
 // Shared contract template system - keeps PDF and signing page in sync
+import type { Contract, UserSettings } from '@shared/schema';
 export interface ContractTemplate {
   name: string;
   sections: ContractSection[];
@@ -550,6 +551,264 @@ export function generateProfessionalContractHTML(contract: any, userSettings: an
   </div>
 </body>
 </html>
+  `;
+}
+
+// Basic template with purple theme
+export function generateBasicContractHTML(contract: Contract, userSettings: UserSettings | null): string {
+  const currentDate = new Date().toLocaleDateString('en-GB');
+  const businessName = userSettings?.businessName || 'Professional Musician';
+  const clientName = contract.clientName;
+  const contractNumber = contract.contractNumber || 'DRAFT';
+  const venue = contract.venue || 'To be confirmed';
+  const fee = contract.fee;
+  const depositAmount = contract.deposit || '0.00';
+  
+  const eventTime = contract.eventTime || '19:00';
+  const eventEndTime = contract.eventEndTime || '22:00';
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Performance Contract - ${contractNumber}</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: 'Arial', sans-serif;
+          font-size: 11px;
+          line-height: 1.4;
+          color: #333;
+          background: white;
+          padding: 20px;
+        }
+
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 30px;
+          border-bottom: 3px solid #9333ea;
+          padding-bottom: 15px;
+        }
+
+        .logo-section {
+          display: flex;
+          align-items: center;
+        }
+
+        .logo {
+          font-size: 20px;
+          font-weight: bold;
+          color: #9333ea;
+        }
+
+        .contract-details {
+          text-align: right;
+        }
+
+        .contract-number {
+          font-size: 18px;
+          font-weight: bold;
+          color: #333;
+        }
+
+        .section-header {
+          background: #9333ea;
+          color: white;
+          padding: 8px 12px;
+          font-weight: bold;
+          font-size: 12px;
+          margin: 20px 0 10px 0;
+        }
+
+        .event-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 15px 0;
+        }
+
+        .event-table td {
+          padding: 6px 8px;
+          border-bottom: 1px solid #e5e5e5;
+        }
+
+        .event-table .label {
+          font-weight: bold;
+          width: 120px;
+          color: #555;
+        }
+
+        .fee-highlight {
+          background: #f8f4ff;
+          border: 2px solid #9333ea;
+          padding: 15px;
+          text-align: center;
+          font-size: 24px;
+          font-weight: bold;
+          color: #9333ea;
+          margin: 20px 0;
+        }
+
+        .terms-section {
+          margin: 15px 0;
+        }
+
+        .terms-section h4 {
+          color: #9333ea;
+          margin: 10px 0 5px 0;
+        }
+
+        .terms-section ul {
+          padding-left: 20px;
+        }
+
+        .terms-section li {
+          margin: 3px 0;
+        }
+
+        .signature-section {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 40px;
+          gap: 40px;
+        }
+
+        .signature-box {
+          flex: 1;
+          text-align: center;
+        }
+
+        .signature-line {
+          border-bottom: 2px solid #333;
+          margin: 20px 0 10px 0;
+          height: 30px;
+        }
+
+        .footer {
+          margin-top: 30px;
+          text-align: center;
+          color: #666;
+          font-size: 10px;
+          border-top: 1px solid #ddd;
+          padding-top: 10px;
+        }
+
+        .brand {
+          font-weight: bold;
+          color: #9333ea;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo-section">
+          <div class="logo">MusoBuddy</div>
+        </div>
+        <div class="contract-details">
+          <div class="contract-number">${contractNumber}</div>
+          <div style="color: #666; font-size: 12px;">Performance Contract</div>
+        </div>
+      </div>
+
+      <div class="section-header">Event Information</div>
+      <table class="event-table">
+        <tr>
+          <td class="label">Client:</td>
+          <td><strong>${clientName}</strong></td>
+        </tr>
+        <tr>
+          <td class="label">Event Date:</td>
+          <td><strong>${contract.eventDate ? new Date(contract.eventDate).toLocaleDateString('en-GB', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+          }) : 'To be confirmed'}</strong></td>
+        </tr>
+        <tr>
+          <td class="label">Event Time:</td>
+          <td>${eventTime} - ${eventEndTime}</td>
+        </tr>
+        <tr>
+          <td class="label">Venue:</td>
+          <td><strong>${venue}</strong></td>
+        </tr>
+        <tr>
+          <td class="label">Venue Address:</td>
+          <td>${contract.venueAddress || 'To be confirmed'}</td>
+        </tr>
+        <tr>
+          <td class="label">Performance Type:</td>
+          <td>${userSettings?.primaryInstrument ? `${userSettings.primaryInstrument} Performance` : 'Live Music Performance'}</td>
+        </tr>
+      </table>
+
+      <div class="fee-highlight">
+        £${fee}
+        <div style="font-size:12px; color:#666; margin-top:4px;">Total Performance Fee</div>
+        ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<div style="font-size:10px; color:#666; margin-top:2px;">Deposit Required: £${contract.deposit}</div>` : ''}
+      </div>
+
+      ${(contract.equipmentRequirements || contract.specialRequirements) ? `
+        <div class="section-header">Requirements & Specifications</div>
+        <div class="terms-section">
+          ${contract.equipmentRequirements ? `
+            <h4>Equipment Requirements</h4>
+            <p>${contract.equipmentRequirements}</p>
+          ` : ''}
+          ${contract.specialRequirements ? `
+            <h4>Special Requirements</h4>
+            <p>${contract.specialRequirements}</p>
+          ` : ''}
+        </div>
+      ` : ''}
+
+      <div class="section-header">Terms & Conditions</div>
+
+      <div class="terms-section">
+        <h4>Payment Terms</h4>
+        <ul>
+          <li><strong>Performance Fee:</strong> £${fee} payable on completion of performance</li>
+          <li><strong>Deposit:</strong> £${depositAmount} required to secure booking</li>
+          <li><strong>Payment Method:</strong> Cash or bank transfer</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h4>Cancellation Policy</h4>
+        <ul>
+          <li>More than 30 days: Deposit refunded minus £25 admin fee</li>
+          <li>Less than 30 days: Full fee becomes due</li>
+          <li>Same day cancellation: Full fee plus additional costs</li>
+        </ul>
+      </div>
+
+      <div class="signature-section">
+        <div class="signature-box">
+          <h4>Client Signature</h4>
+          <div class="signature-line"></div>
+          <p><strong>${clientName}</strong></p>
+          <div>Date: ________________</div>
+        </div>
+        <div class="signature-box">
+          <h4>Performer Signature</h4>
+          <div class="signature-line"></div>
+          <p><strong>${businessName}</strong></p>
+          <div>Date: ________________</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="brand">MusoBuddy</div>
+        <div>Contract Reference: ${contractNumber} • Generated: ${currentDate}</div>
+      </div>
+    </body>
+    </html>
   `;
 }
 
