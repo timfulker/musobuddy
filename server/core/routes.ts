@@ -1968,6 +1968,8 @@ export async function registerRoutes(app: Express) {
         // Generate PDF using our enhanced PDF generator with template support
         const { generateContractPDF } = await import('./contract-pdf-generator');
         const templateType = req.body.template || 'basic'; // Default to basic template
+        console.log('🎨 ROUTES: Template requested:', req.body.template);
+        console.log('🎨 ROUTES: Template type set to:', templateType);
         const pdfBuffer = await generateContractPDF(newContract, userSettings, undefined, templateType);
         
         console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');

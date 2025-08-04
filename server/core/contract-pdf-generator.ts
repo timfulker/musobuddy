@@ -27,6 +27,7 @@ export async function generateContractPDF(
   templateType: 'basic' | 'professional' = 'basic'
 ): Promise<Buffer> {
   console.log('Starting contract PDF generation for:', contract.contractNumber);
+  console.log('🎨 Template selected:', templateType);
   
   // Simple, reliable Puppeteer configuration
   const browser = await puppeteer.launch({
@@ -37,9 +38,11 @@ export async function generateContractPDF(
   
   try {
     const page = await browser.newPage();
+    console.log('🎨 Generating HTML with template:', templateType);
     const html = templateType === 'professional' 
       ? generateProfessionalContractHTML(contract, userSettings)
       : generateContractHTML(contract, userSettings, signatureDetails);
+    console.log('📄 HTML generated, first 200 chars:', html.substring(0, 200));
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ format: 'A4', printBackground: true });
