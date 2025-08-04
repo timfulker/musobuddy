@@ -1,1 +1,1 @@
-{"error":"Authentication required"}
+{"error":"Failed to generate contract PDF","details":"Transform failed with 1 error:\n/home/runner/workspace/server/core/pdf-generator.ts:796:21: ERROR: Expected \";\" but found \":\""}
