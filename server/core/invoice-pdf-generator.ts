@@ -63,13 +63,13 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
   // Extract business details from user settings
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
-  // Build business address from components
+  // Build business address with proper line breaks
   const addressParts = [];
   if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
   if (userSettings?.city) addressParts.push(userSettings.city);
   if (userSettings?.county) addressParts.push(userSettings.county);
   if (userSettings?.postcode) addressParts.push(userSettings.postcode);
-  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
+  const businessAddress = addressParts.length > 0 ? addressParts.join('<br>') : '';
   
   const businessPhone = userSettings?.phone || '';
   const businessEmail = userSettings?.email || '';
