@@ -129,12 +129,11 @@ function generateContractHTML(
       page-break-inside: avoid;
     }
     .section-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
-      color: #9333ea;
+      color: #000;
       margin-bottom: 15px;
-      padding-bottom: 5px;
-      border-bottom: 2px solid #9333ea;
+      text-decoration: underline;
     }
     .performer-details {
       text-align: left;
@@ -152,9 +151,9 @@ function generateContractHTML(
     }
     .event-details-table .label {
       font-weight: bold;
-      background: linear-gradient(135deg, #9333ea, #7c3aed);
-      color: white;
-      width: 30%;
+      background-color: #e6f3ff;
+      color: #000;
+      width: 25%;
     }
     .terms-section {
       margin-top: 30px;
@@ -184,20 +183,16 @@ function generateContractHTML(
       page-break-inside: avoid;
     }
     .signature-block {
-      margin: 30px 0;
-      border: 2px solid #9333ea;
-      background: linear-gradient(135deg, #faf5ff, #f3e8ff);
-      padding: 20px;
-      border-radius: 8px;
-      min-height: 80px;
+      margin: 25px 0;
+      padding: 15px;
+      min-height: 60px;
     }
     .signature-block h4 {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: bold;
-      color: #9333ea;
-      margin-bottom: 15px;
-      border-bottom: 1px solid #9333ea;
-      padding-bottom: 5px;
+      color: #000;
+      margin-bottom: 10px;
+      text-decoration: underline;
     }
     .signature-info {
       margin: 10px 0;
@@ -220,21 +215,14 @@ function generateContractHTML(
       font-size: 11px;
     }
     .fee-highlight {
-      background: linear-gradient(135deg, #9333ea, #7c3aed);
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 18px;
       font-weight: bold;
-      margin: 20px 0;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
   <!-- CONTRACT HEADER -->
   <div class="contract-header">
-    ${logoHtml}
     <div class="contract-title">Performance Contract</div>
     <div class="contract-number">${contract.contractNumber}</div>
     <div class="draft-label">DRAFT</div>
@@ -286,7 +274,7 @@ function generateContractHTML(
       </tr>
       <tr>
         <td class="label">Performance Fee</td>
-        <td><div class="fee-highlight">£${contract.fee || '0.00'}</div></td>
+        <td class="fee-highlight">£${contract.fee || '0.00'}</td>
       </tr>
     </table>
   </div>
