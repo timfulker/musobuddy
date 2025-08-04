@@ -92,84 +92,10 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // ===== FIXED INVOICE PDF SERVING ROUTES =====
+  // ===== INVOICE SYSTEM NOW USES DIRECT CLOUDFLARE R2 URLS =====
 
-  // 3. REAL PDF SERVING ROUTE - Serves PDFs from R2 cloud storage
-  app.get('/invoices/:dateFolder/:filename', async (req, res) => {
-    try {
-      const { dateFolder, filename } = req.params;
-      const key = `invoices/${dateFolder}/${filename}`;
-      
-      console.log(`📄 Serving PDF from cloud storage: ${key}`);
-      
-      // Get file from R2
-      const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3');
-      const r2Client = new S3Client({
-        region: 'auto',
-        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        credentials: {
-          accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
-        },
-      });
-      
-      const command = new GetObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME || 'musobuddy-storage',
-        Key: key,
-      });
-      
-      const response = await r2Client.send(command);
-      
-      if (response.Body) {
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-        
-        // Convert the stream to buffer and send
-        const chunks: Buffer[] = [];
-        const stream = response.Body as any;
-        
-        stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-        stream.on('end', () => {
-          const buffer = Buffer.concat(chunks);
-          console.log(`✅ PDF served successfully: ${filename} (${buffer.length} bytes)`);
-          res.send(buffer);
-        });
-        stream.on('error', (error: any) => {
-          console.error(`❌ Stream error serving ${filename}:`, error);
-          res.status(500).send('Error streaming PDF');
-        });
-        
-      } else {
-        console.log(`❌ PDF not found in cloud storage: ${key}`);
-        res.status(404).send(`
-          <!DOCTYPE html>
-          <html>
-            <head><title>PDF Not Found</title></head>
-            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-              <h1>PDF Not Found</h1>
-              <p>The requested PDF could not be found in cloud storage.</p>
-              <p><small>Key: ${key}</small></p>
-            </body>
-          </html>
-        `);
-      }
-      
-    } catch (error: any) {
-      console.error(`❌ Error serving PDF ${req.params.dateFolder}/${req.params.filename}:`, error);
-      res.status(500).send(`
-        <!DOCTYPE html>
-        <html>
-          <head><title>PDF Error</title></head>
-          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h1>PDF Service Error</h1>
-            <p>There was an error loading the PDF. Please try again later.</p>
-            <p><small>Error: ${error.message}</small></p>
-          </body>
-        </html>
-      `);
-    }
-  });
+  // PDF serving routes removed - invoices now served directly from Cloudflare R2
+  // URLs: https://pub-a730a594e40d8b46295554074c8e4413.r2.dev/invoices/2025-08-04/INV-264.pdf
 
   // HARDENING: Apply general rate limiting and slow down protection
   console.log('🛡️ Setting up rate limiting protection...');
@@ -2691,24 +2617,10 @@ export async function registerRoutes(app: Express) {
       
       console.log(`📋 Invoice found: ${invoice.invoiceNumber}, cloudStorageUrl: ${invoice.cloudStorageUrl ? 'exists' : 'missing'}`);
       
-      // FIXED: Check if invoice has cloud storage URL and redirect correctly
+      // FIXED: Redirect directly to Cloudflare R2 public URL
       if (invoice.cloudStorageUrl) {
-        // Ensure the URL starts with just the path, not a full URL
-        let redirectUrl = invoice.cloudStorageUrl;
-        
-        // Remove any leading protocol/domain if present
-        if (redirectUrl.startsWith('http')) {
-          const url = new URL(redirectUrl);
-          redirectUrl = url.pathname;
-        }
-        
-        // Ensure it starts with /
-        if (!redirectUrl.startsWith('/')) {
-          redirectUrl = '/' + redirectUrl;
-        }
-        
-        console.log(`✅ Redirecting to PDF serving route: ${redirectUrl}`);
-        return res.redirect(redirectUrl);
+        console.log(`✅ Redirecting to Cloudflare R2 URL: ${invoice.cloudStorageUrl}`);
+        return res.redirect(invoice.cloudStorageUrl);
       }
       
       // If no cloud URL yet, show a loading page that refreshes
@@ -2891,13 +2803,13 @@ export async function registerRoutes(app: Express) {
         if (uploadResult.success && uploadResult.url) {
           console.log('✅ FAST: Invoice PDF uploaded to cloud storage in under 5 seconds:', uploadResult.url);
           
-          // Update invoice with cloud storage info
+          // Update invoice with cloud storage info - now storing full R2 URL
           await storage.updateInvoice(newInvoice.id, { 
-            cloudStorageUrl: uploadResult.url,
+            cloudStorageUrl: uploadResult.url, // Full R2 URL: https://pub-xxx.r2.dev/invoices/2025-08-04/INV-264.pdf
             cloudStorageKey: uploadResult.key 
           });
           
-          console.log(`✅ FAST: Invoice #${newInvoice.id} updated with R2 URL`);
+          console.log(`✅ FAST: Invoice #${newInvoice.id} updated with direct R2 URL: ${uploadResult.url}`);
           
           // Return invoice with cloud storage URL included
           res.json({ ...newInvoice, cloudStorageUrl: uploadResult.url });

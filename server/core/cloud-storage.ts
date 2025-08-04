@@ -53,14 +53,15 @@ export async function uploadInvoiceToCloud(
     
     console.log(`✅ Invoice PDF uploaded successfully to R2: ${storageKey}`);
     
-    // CRITICAL FIX: Return the correct URL format
-    // This should match the PDF serving route: /invoices/:dateFolder/:filename
-    const publicUrl = `invoices/${dateFolder}/${filename}`;
+    // FIXED: Return the direct Cloudflare R2 public URL
+    const publicUrl = `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${storageKey}`;
+    
+    console.log(`🔗 Direct R2 public URL: ${publicUrl}`);
     
     return {
       success: true,
-      url: publicUrl, // Returns: invoices/2025-08-04/INV-263.pdf
-      key: storageKey  // Same as url in this case
+      url: publicUrl, // Returns: https://pub-a730a594e40d8b46295554074c8e4413.r2.dev/invoices/2025-08-04/INV-264.pdf
+      key: storageKey
     };
     
   } catch (error: any) {
