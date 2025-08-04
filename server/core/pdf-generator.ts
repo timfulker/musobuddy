@@ -381,9 +381,9 @@ export async function generateInvoicePDF(
   try {
     const page = await browser.newPage();
     
-    // Use AI-optimized layout if available (TEMPORARILY DISABLED to avoid rate limits)
+    // Use AI-optimized layout if available
     let html: string;
-    if (false && process.env.ANTHROPIC_API_KEY) {
+    if (process.env.ANTHROPIC_API_KEY) {
       console.log('🤖 Generating AI-optimized invoice layout...');
       html = await optimizeInvoiceLayout(invoice, userSettings);
     } else {
