@@ -48,6 +48,7 @@ const contractFormSchema = z.object({
   clientFillableFields: z.array(z.string()).optional(),
   enquiryId: z.number().optional(),
   status: z.string().default("draft"),
+  template: z.string().optional().default("basic"),
   // PHASE 2: Automated reminders (removed for manual-only phase 1)
   // reminderEnabled: z.boolean().default(false),
   // reminderDays: z.number().min(1).max(30).default(3),
@@ -426,6 +427,7 @@ export default function Contracts() {
     form.setValue('paymentInstructions', contract.paymentInstructions || '');
     form.setValue('equipmentRequirements', contract.equipmentRequirements || '');
     form.setValue('specialRequirements', contract.specialRequirements || '');
+    form.setValue('template', (contract as any).template || 'basic');
     // PHASE 2: Reminder system fields (commented out for manual-only phase 1)
     // form.setValue('reminderEnabled', contract.reminderEnabled || false);
     // form.setValue('reminderDays', contract.reminderDays || 3);
@@ -784,6 +786,44 @@ export default function Contracts() {
                           Required Fields (Must be completed by musician)
                         </h3>
                         
+                        {/* Template Selector */}
+                        <div className="mb-6">
+                          <FormField
+                            control={form.control}
+                            name="template"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-gray-700 font-medium">Contract Template</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value || "basic"}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Choose template style" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="basic">
+                                      <div className="flex items-center gap-2">
+                                        <span className="w-3 h-3 rounded bg-purple-500"></span>
+                                        Basic Template (Purple)
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="professional">
+                                      <div className="flex items-center gap-2">
+                                        <span className="w-3 h-3 rounded bg-blue-500"></span>
+                                        Professional Template (Blue)
+                                      </div>
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <p className="text-sm text-gray-600">
+                                  Choose between simple purple design (Basic) or advanced blue styling (Professional)
+                                </p>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
