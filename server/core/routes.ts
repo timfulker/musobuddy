@@ -1965,9 +1965,10 @@ export async function registerRoutes(app: Express) {
         // Get user settings for PDF generation
         const userSettings = await storage.getUserSettings(req.session.userId);
         
-        // Generate PDF using our enhanced PDF generator
+        // Generate PDF using our enhanced PDF generator with template support
         const { generateContractPDF } = await import('./contract-pdf-generator');
-        const pdfBuffer = await generateContractPDF(newContract, userSettings);
+        const templateType = req.body.template || 'basic'; // Default to basic template
+        const pdfBuffer = await generateContractPDF(newContract, userSettings, undefined, templateType);
         
         console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
         

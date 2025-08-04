@@ -1,8 +1,8 @@
 import puppeteer from 'puppeteer';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import type { Contract, UserSettings } from '@shared/schema';
 import { generateProfessionalContractHTML } from './contract-templates.js';
+import type { Contract, UserSettings } from '@shared/schema';
 
 function getLogoBase64(): string {
   try {
@@ -23,7 +23,8 @@ export async function generateContractPDF(
     signedAt: Date;
     signatureName?: string;
     clientIpAddress?: string;
-  }
+  },
+  templateType: 'basic' | 'professional' = 'basic'
 ): Promise<Buffer> {
   console.log('Starting contract PDF generation for:', contract.contractNumber);
   
@@ -36,7 +37,9 @@ export async function generateContractPDF(
   
   try {
     const page = await browser.newPage();
-    const html = generateContractHTML(contract, userSettings);
+    const html = templateType === 'professional' 
+      ? generateProfessionalContractHTML(contract, userSettings)
+      : generateContractHTML(contract, userSettings, signatureDetails);
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ format: 'A4', printBackground: true });
