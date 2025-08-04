@@ -34,8 +34,10 @@ export async function generateContractPDF(contract: any, userSettings: any, sign
     // Set page size and scaling for professional PDF output
     await page.setViewport({ width: 800, height: 1200, deviceScaleFactor: 2 });
 
-    // Generate the professional contract HTML
-    const contractHTML = generateProfessionalContractHTML(contract, userSettings, signatureDetails);
+    // BULLETPROOF: Use template system instead of hardcoded HTML
+    const { renderContractTemplate } = await import('./contract-templates');
+    const templateId = contract.templateId || 'professional'; // Default to professional
+    const contractHTML = renderContractTemplate(templateId, contract);
     
     console.log('📝 Setting HTML content...');
     await page.setContent(contractHTML, { 
