@@ -217,6 +217,9 @@ function generateContractHTML(
             text-align: center;
             margin: 25px 0;
             box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+            page-break-inside: avoid;
+            page-break-before: auto;
+            page-break-after: avoid;
         }
 
         .fee-highlight .amount {
@@ -227,6 +230,12 @@ function generateContractHTML(
 
         .fee-highlight .label {
             font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .fee-highlight .deposit-info {
+            margin-top: 10px;
+            font-size: 12px;
             opacity: 0.9;
         }
 
@@ -368,13 +377,16 @@ function generateContractHTML(
                 background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
+                page-break-before: auto;
                 page-break-after: avoid;
+                break-inside: avoid;
             }
 
             .event-table {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
                 page-break-after: avoid;
+                break-inside: avoid;
             }
 
             .event-table th {
@@ -384,8 +396,9 @@ function generateContractHTML(
             }
 
             .two-column {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
                 page-break-after: avoid;
+                break-inside: avoid;
             }
 
             .terms-section {
@@ -422,6 +435,14 @@ function generateContractHTML(
 
             .section-header + .fee-highlight {
                 page-break-before: avoid;
+            }
+
+            /* Aggressive anti-break rules for critical sections */
+            div[style*="page-break-inside: avoid"] {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                orphans: 4;
+                widows: 4;
             }
         }
 
@@ -515,11 +536,13 @@ function generateContractHTML(
             </tr>
         </table>
 
-        <!-- Fee Highlight -->
-        <div class="fee-highlight">
-            <div class="amount">£${contract.fee || '0.00'}</div>
-            <div class="label">Total Performance Fee</div>
-            ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<div style="margin-top: 10px; font-size: 12px;">Deposit Required: £${contract.deposit}</div>` : ''}
+        <!-- Fee Highlight - Protected from page breaks -->
+        <div style="page-break-inside: avoid !important; break-inside: avoid;">
+            <div class="fee-highlight">
+                <div class="amount">£${contract.fee || '0.00'}</div>
+                <div class="label">Total Performance Fee</div>
+                ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<div class="deposit-info">Deposit Required: £${contract.deposit}</div>` : ''}
+            </div>
         </div>
 
         <!-- Equipment & Special Requirements -->
