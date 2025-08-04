@@ -568,24 +568,24 @@ function generateContractHTML(
           <span class="detail-label">Event Date:</span> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}
         </div>
         <div class="detail-item">
-          <span class="detail-label">Performance Time:</span> ${contract.startTime} - ${contract.endTime}
+          <span class="detail-label">Performance Time:</span> ${contract.eventTime || 'TBD'} - ${contract.eventEndTime || 'TBD'}
         </div>
         <div class="detail-item">
-          <span class="detail-label">Venue:</span> ${contract.venue}
+          <span class="detail-label">Venue:</span> ${contract.venue || 'TBD'}
         </div>
         <div class="detail-item">
-          <span class="detail-label">Performance Fee:</span> £${contract.performanceFee}
+          <span class="detail-label">Performance Fee:</span> £${contract.fee || '0.00'}
         </div>
-        ${contract.depositRequired ? `
+        ${contract.deposit && parseFloat(contract.deposit.toString()) > 0 ? `
         <div class="detail-item">
-          <span class="detail-label">Deposit Required:</span> £${contract.depositAmount} (due by ${new Date(contract.depositDueDate!).toLocaleDateString('en-GB')})
+          <span class="detail-label">Deposit Required:</span> £${contract.deposit}
         </div>
         ` : ''}
       </div>
 
       <div class="terms">
         <div class="section-title">Terms and Conditions</div>
-        ${contract.terms || 'Standard performance terms apply.'}
+        ${contract.paymentInstructions || contract.specialRequirements || 'Standard performance terms apply.'}
       </div>
 
       ${signatureSection}
