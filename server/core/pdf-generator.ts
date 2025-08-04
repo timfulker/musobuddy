@@ -69,7 +69,7 @@ function generateContractHTML(
     clientIpAddress?: string;
   }
 ): string {
-  // Complete professional contract template with comprehensive terms and MusoBuddy branding
+  // Original working professional template with proper variable interpolation
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
