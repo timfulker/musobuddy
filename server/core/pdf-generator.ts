@@ -381,15 +381,9 @@ export async function generateInvoicePDF(
   try {
     const page = await browser.newPage();
     
-    // Use AI-optimized layout if available
-    let html: string;
-    if (process.env.ANTHROPIC_API_KEY) {
-      console.log('🤖 Generating AI-optimized invoice layout...');
-      html = await optimizeInvoiceLayout(invoice, userSettings);
-    } else {
-      console.log('📄 Using standard invoice template...');
-      html = generateInvoiceHTML(invoice, contract, userSettings);
-    }
+    // Temporarily disable AI optimization to fix empty PDF issue
+    console.log('📄 Using standard invoice template...');
+    const html = generateInvoiceHTML(invoice, contract, userSettings);
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 
