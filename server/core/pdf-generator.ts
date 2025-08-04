@@ -168,7 +168,8 @@ function generateContractHTML(
       width: 30%;
     }
     .terms-section {
-      margin-top: 30px;
+      page-break-before: always;
+      margin-top: 0;
       font-size: 11px;
       line-height: 1.6;
     }
@@ -256,6 +257,7 @@ function generateContractHTML(
     <div class="section-title">Performer Details</div>
     <div class="performer-details">
       ${businessName}<br>
+      ${businessAddress ? `${businessAddress}<br>` : ''}
       ${businessPhone ? `Phone: ${businessPhone}<br>` : ''}
       ${businessEmail ? `Email: ${businessEmail}<br>` : ''}
     </div>
