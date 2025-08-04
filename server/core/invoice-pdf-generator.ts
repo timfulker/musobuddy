@@ -5,7 +5,7 @@ import type { Invoice, UserSettings } from '@shared/schema';
 
 function getLogoBase64(): string {
   try {
-    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-purple.png');
+    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-midnight-blue.png');
     const logoBuffer = readFileSync(logoPath);
     return logoBuffer.toString('base64');
   } catch (error) {
@@ -20,14 +20,6 @@ export async function generateInvoicePDF(
   userSettings: UserSettings | null
 ): Promise<Buffer> {
   console.log('🚀 Starting FAST invoice PDF generation for:', invoice.invoiceNumber);
-  console.log('📍 Address debug - userSettings:', {
-    addressLine1: userSettings?.addressLine1,
-    addressLine2: userSettings?.addressLine2,
-    city: userSettings?.city,
-    county: userSettings?.county,
-    postcode: userSettings?.postcode,
-    businessAddress: userSettings?.businessAddress
-  });
   
   // Simple, reliable Puppeteer configuration - NO AI CALLS
   const browser = await puppeteer.launch({
@@ -66,7 +58,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? 
     `<img src="data:image/png;base64,${logoBase64}" alt="MusoBuddy Logo" style="height: 40px; margin-right: 10px; vertical-align: middle;">` : 
-    `<div style="width: 40px; height: 40px; background: #9333ea; border-radius: 8px; display: inline-block; margin-right: 10px; vertical-align: middle;"></div>`;
+    `<div style="width: 40px; height: 40px; background: #1e3a8a; border-radius: 8px; display: inline-block; margin-right: 10px; vertical-align: middle;"></div>`;
 
   // Extract business details from user settings
   const businessName = userSettings?.businessName || 'MusoBuddy';
@@ -107,7 +99,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           justify-content: space-between;
           align-items: center;
           margin-bottom: 40px;
-          border-bottom: 3px solid #9333ea;
+          border-bottom: 3px solid #1e3a8a;
           padding-bottom: 20px;
         }
         
@@ -119,7 +111,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         .logo {
           font-size: 24px;
           font-weight: bold;
-          color: #9333ea;
+          color: #1e3a8a;
         }
         
         .invoice-details {
@@ -150,7 +142,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         }
         
         .billing-info h3 {
-          color: #9333ea;
+          color: #1e3a8a;
           margin-bottom: 10px;
           font-size: 16px;
         }
@@ -173,7 +165,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         }
         
         .items-table th {
-          background-color: #9333ea;
+          background-color: #1e3a8a;
           color: white;
           padding: 12px;
           text-align: left;
@@ -205,8 +197,8 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
         }
         
         .total-row.grand-total {
-          border-top: 2px solid #9333ea;
-          border-bottom: 2px solid #9333ea;
+          border-top: 2px solid #1e3a8a;
+          border-bottom: 2px solid #1e3a8a;
           font-weight: bold;
           font-size: 18px;
           margin-top: 10px;
@@ -227,7 +219,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           padding: 20px;
           border-radius: 8px;
           margin-bottom: 30px;
-          border-left: 4px solid #9333ea;
+          border-left: 4px solid #1e3a8a;
         }
         
         .payment-info h3 {
@@ -249,7 +241,7 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
           margin-top: 30px;
           padding: 20px;
           background-color: #f8f9fa;
-          border-left: 4px solid #9333ea;
+          border-left: 4px solid #1e3a8a;
         }
         
         .terms-section h3 {
