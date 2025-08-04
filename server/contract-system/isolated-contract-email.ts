@@ -8,25 +8,26 @@ import type { IsolatedContractData, IsolatedUserSettings, IsolatedEmailData, Iso
 export class IsolatedContractEmailService {
   private mailgun: any;
 
-  constructor() {
-    // Import mailgun dynamically to avoid ES module issues
-    import('mailgun.js').then(({ default: mailgun }) => {
+  async init() {
+    if (!this.mailgun) {
+      const { default: mailgun } = await import('mailgun.js');
       const mg = new mailgun(FormData);
       
       this.mailgun = mg.client({
         username: 'api',
         key: process.env.MAILGUN_API_KEY || '',
-        url: 'https://api.mailgun.net'
+        url: 'https://api.eu.mailgun.net'
       });
-    });
+    }
   }
 
   private async sendEmail(emailData: IsolatedEmailData): Promise<IsolatedEmailResult> {
     try {
+      await this.init();
       const domain = process.env.MAILGUN_DOMAIN;
       
       const messageData: any = {
-        from: emailData.from || `MusoBuddy <noreply@${domain}>`,
+        from: emailData.from || `MusoBuddy <noreply@mg.musobuddy.com>`,
         to: emailData.to,
         subject: emailData.subject,
         html: emailData.html
@@ -40,7 +41,7 @@ export class IsolatedContractEmailService {
       console.log(`📧 From: ${messageData.from}`);  
       console.log(`📧 To: ${messageData.to}`);
       
-      const result = await this.mailgun.messages.create(domain, messageData);
+      const result = await this.mailgun.messages.create('mg.musobuddy.com', messageData);
 
       if (result?.id || result?.message) {
         console.log(`✅ Email sent successfully: ${result.id || result.message}`);

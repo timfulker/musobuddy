@@ -2987,24 +2987,25 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: 'User settings not found' });
       }
       
-      // Import services
-      const { EmailService } = await import('./services');
-      const emailService = new EmailService();
+      // Use isolated invoice email service
+      const { sendIsolatedInvoiceEmail } = await import('../invoice-system/invoice-email-service.js');
       
-      // Generate and upload invoice PDF to cloud storage if not already done
+      // Generate R2 URL if not already done
       let pdfUrl = invoice.cloudStorageUrl;
       if (!pdfUrl) {
-        const { uploadInvoiceToCloud } = await import('./cloud-storage');
-        const { url: newPdfUrl, key } = await uploadInvoiceToCloud(invoice, userSettings);
-        
-        // Update invoice with cloud URL
-        await storage.updateInvoice(parsedInvoiceId, {
-          cloudStorageUrl: newPdfUrl,
-          cloudStorageKey: key,
-          updatedAt: new Date()
+        // Get R2 URL using isolated system
+        const response = await fetch(`http://localhost:5000/api/isolated/invoices/${parsedInvoiceId}/r2-url`, {
+          headers: {
+            'Cookie': req.headers.cookie || ''
+          }
         });
         
-        pdfUrl = newPdfUrl;
+        if (response.ok) {
+          const data = await response.json();
+          pdfUrl = data.url;
+        } else {
+          throw new Error('Failed to generate invoice PDF URL');
+        }
       }
       
       // Update invoice status to sent
@@ -3013,9 +3014,13 @@ export async function registerRoutes(app: Express) {
         updatedAt: new Date()
       });
       
-      // Send email with invoice
+      // Send email with invoice using isolated service
       const subject = `Invoice ${invoice.invoiceNumber} - Payment Due`;
-      await emailService.sendInvoiceEmail(invoice, userSettings, pdfUrl, subject);
+      const emailResult = await sendIsolatedInvoiceEmail(invoice, userSettings, pdfUrl, subject, req.body.customMessage);
+      
+      if (!emailResult.success) {
+        throw new Error(emailResult.error || 'Failed to send email');
+      }
       
       console.log(`✅ Invoice #${parsedInvoiceId} sent successfully via email`);
       res.json({ success: true, message: 'Invoice sent successfully' });

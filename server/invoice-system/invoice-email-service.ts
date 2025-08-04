@@ -44,9 +44,9 @@ export async function sendIsolatedInvoiceEmail(
         invoice_id: invoice.id,
         user_id: invoice.userId
       }),
-      'o:tracking': 'yes',
-      'o:tracking-clicks': 'yes',
-      'o:tracking-opens': 'yes'
+      'o:tracking': true,
+      'o:tracking-clicks': true,
+      'o:tracking-opens': true
     };
 
     console.log('🔒 ISOLATED INVOICE EMAIL: Sending via Mailgun EU...', {
@@ -61,9 +61,9 @@ export async function sendIsolatedInvoiceEmail(
     console.log('✅ ISOLATED INVOICE EMAIL: Email sent successfully:', result.id);
     return { success: true, messageId: result.id };
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ ISOLATED INVOICE EMAIL: Failed to send email:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error?.message || 'Unknown error' };
   }
 }
 
@@ -110,7 +110,7 @@ function generateInvoiceEmailHTML(
       <div class="invoice-details">
         <h3 style="margin-top: 0; color: #1e3a8a;">Invoice Details</h3>
         <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
-        <p><strong>Amount:</strong> £${invoice.amount?.toFixed(2) || '0.00'}</p>
+        <p><strong>Amount:</strong> £${parseFloat(invoice.total || invoice.amount || '0').toFixed(2)}</p>
         <p><strong>Performance Date:</strong> ${new Date(invoice.performanceDate).toLocaleDateString()}</p>
         <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
       </div>
