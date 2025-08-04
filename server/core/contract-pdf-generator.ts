@@ -313,11 +313,19 @@ function generateContractHTML(
         </div>
         <div class="detail-row">
           <div class="detail-label">Start Time:</div>
-          <div class="detail-value">${contract.startTime || 'TBD'}</div>
+          <div class="detail-value">${contract.eventTime || 'TBC'}</div>
         </div>
         <div class="detail-row">
           <div class="detail-label">End Time:</div>
-          <div class="detail-value">${contract.endTime || 'TBD'}</div>
+          <div class="detail-value">${contract.eventEndTime || 'TBC'}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Venue:</div>
+          <div class="detail-value">${contract.venue || 'To be confirmed'}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Venue Address:</div>
+          <div class="detail-value">${contract.venueAddress || 'To be confirmed'}</div>
         </div>
         <div class="detail-row">
           <div class="detail-label">Performance Fee:</div>
