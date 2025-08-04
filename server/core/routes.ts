@@ -2795,6 +2795,8 @@ export async function registerRoutes(app: Express) {
         const { uploadInvoiceToCloud } = await import('./cloud-storage');
         const uploadResult = await uploadInvoiceToCloud(newInvoice, userSettings);
         
+        console.log('🔍 Upload result debug:', { success: uploadResult.success, url: uploadResult.url, key: uploadResult.key, error: uploadResult.error });
+        
         if (uploadResult.success && uploadResult.url) {
           console.log('✅ FAST: Invoice PDF uploaded to cloud storage in under 5 seconds:', uploadResult.url);
           

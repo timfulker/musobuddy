@@ -63,7 +63,7 @@ export async function uploadFileToCloudflare(
     console.log(`✅ File uploaded to cloud storage: ${key}`);
     console.log(`🔗 Access via app redirect system`);
     
-    return { success: true, url: null, key: storageKey };
+    return { success: true, url: storageKey, key: storageKey };
   } catch (error) {
     console.error('❌ Cloud storage upload failed:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
