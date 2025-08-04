@@ -122,6 +122,8 @@ export function setupAuthRoutes(app: Express) {
         req.session.userId = '43963086';
         req.session.email = 'timfulker@gmail.com';
         req.session.isAuthenticated = true;
+        req.session.isAdmin = true;
+        req.session.phoneVerified = true;
         
         // Save session
         req.session.save((err: any) => {
@@ -145,6 +147,28 @@ export function setupAuthRoutes(app: Express) {
     } catch (error: any) {
       console.error('❌ Admin login error:', error);
       res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  // USER INFO ENDPOINT - Required by frontend useAuth hook
+  app.get('/api/auth/user', (req: any, res) => {
+    console.log('🔍 Frontend auth check:', {
+      hasSession: !!req.session,
+      userId: req.session?.userId,
+      email: req.session?.email
+    });
+    
+    if (req.session?.userId) {
+      // Return user data for frontend
+      res.json({
+        id: req.session.userId,
+        email: req.session.email,
+        isAdmin: req.session.isAdmin || false,
+        phoneVerified: req.session.phoneVerified || false,
+        isAuthenticated: true
+      });
+    } else {
+      res.status(401).json({ error: 'Not authenticated' });
     }
   });
 
