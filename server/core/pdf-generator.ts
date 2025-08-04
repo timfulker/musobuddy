@@ -82,11 +82,6 @@ function generateContractHTML(
   const businessAddress = userSettings?.businessAddress || '';
   const businessPhone = userSettings?.phone || '';
 
-  const logoBase64 = getLogoBase64();
-  const logoHtml = logoBase64 ? 
-    `<img src="data:image/png;base64,${logoBase64}" alt="MusoBuddy Logo" style="height: 40px; margin-bottom: 15px;">` : 
-    '<div style="color: #9333ea; font-weight: bold; font-size: 24px; margin-bottom: 15px; font-family: \'Segoe UI\', sans-serif;">MusoBuddy</div>';
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,40 +95,34 @@ function generateContractHTML(
       box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+      color: #000;
       background-color: white;
-      font-size: 12px;
-      padding: 30px;
+      font-size: 11px;
+      padding: 40px;
+      max-width: 8.5in;
+      margin: 0 auto;
     }
     .contract-header {
       text-align: center;
       margin-bottom: 40px;
-      page-break-inside: avoid;
-      padding-bottom: 20px;
-      border-bottom: 3px solid #9333ea;
     }
     .contract-title {
-      font-size: 28px;
+      font-size: 18px;
       font-weight: bold;
-      color: #9333ea;
-      margin: 15px 0;
+      margin-bottom: 10px;
     }
     .contract-number {
       font-size: 16px;
-      color: #666;
-      font-weight: 500;
+      font-weight: bold;
+      margin-bottom: 15px;
     }
     .draft-label {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: bold;
-      color: #9333ea;
-      background: linear-gradient(135deg, #f3e8ff, #e879f9);
-      padding: 8px 20px;
-      border-radius: 20px;
-      display: inline-block;
-      margin: 15px 0;
+      margin-bottom: 40px;
+      letter-spacing: 8px;
     }
     .section {
       margin-bottom: 30px;
