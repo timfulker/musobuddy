@@ -793,14 +793,6 @@ function generateContractHTML(
   </div>
 </body>
 </html>`;
-          font-weight: bold;
-          color: #9333ea;
-          margin-bottom: 10px;
-        }
-        .contract-number {
-          font-size: 16px;
-          color: #666;
-        }
         .section {
           margin-bottom: 25px;
         }
