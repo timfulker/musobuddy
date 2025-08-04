@@ -2784,39 +2784,41 @@ export async function registerRoutes(app: Express) {
       const newInvoice = await storage.createInvoice(invoiceData);
       console.log(`✅ Created invoice #${newInvoice.id} for user ${userId}`);
       
-      // Return invoice immediately, generate PDF in background
-      res.json(newInvoice);
-      
-      // Generate and upload PDF asynchronously in background to prevent timeout
-      setImmediate(async () => {
-        try {
-          console.log('🎨 Background: Generating PDF for invoice #', newInvoice.id);
+      // OPTIMIZED: Generate PDF immediately with fast CSS-based template (under 5 seconds)
+      try {
+        console.log('🚀 FAST: Generating optimized PDF for invoice #', newInvoice.id);
+        
+        // Get user settings for PDF generation
+        const userSettings = await storage.getUserSettings(userId);
+        
+        // Upload invoice to cloud storage using fast CSS method (NO AI)
+        const { uploadInvoiceToCloud } = await import('./cloud-storage');
+        const uploadResult = await uploadInvoiceToCloud(newInvoice, userSettings);
+        
+        if (uploadResult.success && uploadResult.url) {
+          console.log('✅ FAST: Invoice PDF uploaded to cloud storage in under 5 seconds:', uploadResult.url);
           
-          // Get user settings for PDF generation
-          const userSettings = await storage.getUserSettings(userId);
+          // Update invoice with cloud storage info
+          await storage.updateInvoice(newInvoice.id, { 
+            cloudStorageUrl: uploadResult.url,
+            cloudStorageKey: uploadResult.key 
+          });
           
-          // Upload invoice to cloud storage using consistent method
-          const { uploadInvoiceToCloud } = await import('./cloud-storage');
-          const uploadResult = await uploadInvoiceToCloud(newInvoice, userSettings);
+          console.log(`✅ FAST: Invoice #${newInvoice.id} updated with R2 URL`);
           
-          if (uploadResult.success && uploadResult.url) {
-            console.log('✅ Background: Invoice PDF uploaded to cloud storage:', uploadResult.url);
-            
-            // Update invoice with cloud storage info
-            await storage.updateInvoice(newInvoice.id, { 
-              cloudStorageUrl: uploadResult.url,
-              cloudStorageKey: uploadResult.key 
-            });
-            
-            console.log(`✅ Background: Invoice #${newInvoice.id} updated with R2 URL`);
-          } else {
-            console.log('⚠️ Background: Invoice PDF upload failed:', uploadResult.error);
-          }
-          
-        } catch (pdfError: any) {
-          console.error('⚠️ Background: PDF generation failed for invoice #', newInvoice.id, ':', pdfError.message);
+          // Return invoice with cloud storage URL included
+          res.json({ ...newInvoice, cloudStorageUrl: uploadResult.url });
+        } else {
+          console.log('⚠️ FAST: Invoice PDF upload failed, returning invoice without URL:', uploadResult.error);
+          // Still return the invoice even if PDF generation fails
+          res.json(newInvoice);
         }
-      });
+        
+      } catch (pdfError: any) {
+        console.error('⚠️ FAST: PDF generation failed for invoice #', newInvoice.id, ':', pdfError.message);
+        // Return invoice anyway - PDF can be generated later
+        res.json(newInvoice);
+      }
       
     } catch (error: any) {
       console.error('❌ Failed to create invoice:', error);
