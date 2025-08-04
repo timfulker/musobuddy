@@ -149,7 +149,7 @@ export default function SupportChat() {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-6 h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-2xl hover:shadow-primary/25 z-50 transition-all duration-300 hover:scale-105"
+        className="fixed bottom-20 right-6 h-14 w-14 rounded-full bg-purple-600 hover:bg-purple-700 shadow-2xl hover:shadow-purple-500/25 z-50 transition-all duration-300 hover:scale-105"
         size="icon"
       >
         <MessageCircle className="h-6 w-6 text-white" />
@@ -206,7 +206,7 @@ export default function SupportChat() {
                 <div
                   className={`max-w-[75%] px-3 py-2 rounded-lg text-sm ${
                     message.sender === 'user'
-                      ? 'bg-primary text-white'
+                      ? 'bg-purple-600 text-white'
                       : 'bg-gray-100 text-gray-900'
                   }`}
                 >
@@ -240,7 +240,7 @@ export default function SupportChat() {
               onClick={sendMessage}
               disabled={isLoading || !inputMessage.trim()}
               size="icon"
-              className="bg-primary hover:bg-primary/90"
+              className="bg-purple-600 hover:bg-purple-700"
             >
               <Send className="h-4 w-4" />
             </Button>

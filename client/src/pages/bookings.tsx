@@ -418,7 +418,7 @@ export default function UnifiedBookings() {
       let bValue = b[sortField];
       
       // Handle different data types
-      if (sortField === 'eventDate' || sortField === 'createdAt') {
+      if (sortField === 'eventDate') {
         aValue = aValue ? new Date(aValue) : new Date(0);
         bValue = bValue ? new Date(bValue) : new Date(0);
       } else if (sortField === 'fee') {
@@ -613,7 +613,7 @@ export default function UnifiedBookings() {
       case 'new': return 'bg-blue-100 text-blue-800';
       case 'awaiting_response': return 'bg-yellow-100 text-yellow-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'contract_sent': return 'bg-primary/10 text-primary';
+      case 'contract_sent': return 'bg-purple-100 text-purple-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-blue-100 text-blue-800';
@@ -838,7 +838,7 @@ export default function UnifiedBookings() {
                   </div>
                   
                   <Link href="/new-booking">
-                    <Button className="bg-primary hover:bg-primary/90">
+                    <Button className="bg-purple-600 hover:bg-purple-700">
                       <Plus className="w-4 h-4 mr-2" />
                       New Booking
                     </Button>
@@ -974,14 +974,6 @@ export default function UnifiedBookings() {
                         className="h-8"
                       >
                         Venue {sortField === 'venue' && (sortDirection === 'asc' ? '↑' : '↓')}
-                      </Button>
-                      <Button
-                        variant={sortField === 'createdAt' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handleSort('createdAt')}
-                        className="h-8"
-                      >
-                        Date Added {sortField === 'createdAt' && (sortDirection === 'asc' ? '↑' : '↓')}
                       </Button>
                     </div>
                   </div>

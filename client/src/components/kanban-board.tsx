@@ -173,13 +173,13 @@ export default function ActionableEnquiries() {
       <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-primary" />
+            <Clock className="w-5 h-5 text-purple-600" />
             <span>Action Required</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+            <div className="animate-spin w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-2"></div>
             <p className="text-gray-600">Loading enquiries...</p>
           </div>
         </CardContent>
@@ -211,7 +211,7 @@ export default function ActionableEnquiries() {
     <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <Clock className="w-5 h-5 text-primary" />
+          <Clock className="w-5 h-5 text-purple-600" />
           <span>Action Required</span>
           <Badge variant="secondary" className="ml-auto">
             {actionableEnquiries.length} items

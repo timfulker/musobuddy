@@ -14,11 +14,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import { useResponsive } from "@/hooks/useResponsive";
-import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link, Palette } from "lucide-react";
+import { Building, Save, MapPin, Globe, Hash, CreditCard, Loader2, Menu, Eye, ChevronDown, ChevronRight, Mail, Settings as SettingsIcon, Music, ExternalLink, Copy, Link } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useTheme, themes, type ThemeName } from "@/hooks/useTheme";
 
 // Import instrument presets
 import { INSTRUMENT_GIG_PRESETS, getGigTypeNamesForInstrument, getAvailableInstruments, getInstrumentDisplayName } from "../../../shared/instrument-gig-presets";
@@ -74,9 +73,6 @@ const settingsFormSchema = z.object({
   emailFromName: z.string().min(1, "Email from name is required"),
   nextInvoiceNumber: z.coerce.number().min(1, "Next invoice number is required"),
   defaultTerms: z.string().optional().or(z.literal("")),
-  
-  // Invoice Settings
-  defaultInvoiceDueDays: z.coerce.number().min(1, "Due days must be at least 1").max(365, "Due days cannot exceed 365").default(7),
   
   // AI Pricing Guide fields
   aiPricingEnabled: z.boolean().default(true),
@@ -147,7 +143,6 @@ const fetchSettings = async (): Promise<SettingsFormData> => {
     emailFromName: data.emailFromName || "",
     nextInvoiceNumber: data.nextInvoiceNumber || 1,
     defaultTerms: data.defaultTerms || "",
-    defaultInvoiceDueDays: data.defaultInvoiceDueDays || 7,
     bankDetails: data.bankDetails || "",
     // Instrument settings
     primaryInstrument: data.primaryInstrument || "",
@@ -211,7 +206,6 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const { isDesktop } = useResponsive();
   const isMobile = !isDesktop;
-  const { currentTheme, setTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Instrument and gig type state
@@ -249,7 +243,6 @@ export default function Settings() {
     performance: false,
     instruments: true, // Open by default for new instrument context feature
     themes: false,
-    appThemes: true, // App theme selector section
   });
 
   const toggleSection = (section: string) => {
@@ -378,9 +371,6 @@ export default function Settings() {
   // Save settings function - simplified version
   const saveSettings = useMutation({
     mutationFn: async (data: SettingsFormData) => {
-      console.log('🔧 Saving settings with data:', data);
-      console.log('📄 DefaultInvoiceDueDays being sent:', data.defaultInvoiceDueDays);
-      
       // Ensure arrays are properly formatted for JSON transmission
       const processedData = {
         ...data,
@@ -389,8 +379,6 @@ export default function Settings() {
         customGigTypes: Array.isArray(data.customGigTypes) ? 
           data.customGigTypes : []
       };
-      
-      console.log('📋 Final processed data to send:', processedData);
       
       const response = await fetch('/api/settings', {
         method: 'POST',
@@ -401,17 +389,12 @@ export default function Settings() {
         credentials: 'include', // This is crucial for session cookies
       });
       
-      console.log('🌐 Response status:', response.status);
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Settings save failed:', response.status, errorText);
         throw new Error(`Failed to save settings: ${response.status} ${errorText}`);
       }
       
-      const result = await response.json();
-      console.log('✅ Settings save response:', result);
-      return result;
+      return await response.json();
     },
     onSuccess: (data) => {
       
@@ -554,7 +537,6 @@ export default function Settings() {
         emailFromName: settings.emailFromName || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
-        defaultInvoiceDueDays: settings.defaultInvoiceDueDays || 7,
         bankDetails: settings.bankDetails || "",
         // AI Pricing Guide settings
         aiPricingEnabled: settings.aiPricingEnabled !== false,
@@ -673,7 +655,7 @@ export default function Settings() {
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent ml-12 md:ml-0">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent ml-12 md:ml-0">
                 Settings
               </h1>
             </div>
@@ -696,7 +678,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Building className="w-5 h-5 text-primary" />
+                          <Building className="w-5 h-5 text-purple-600" />
                           <span>Business Information</span>
                         </div>
                         {expandedSections.business ? 
@@ -886,7 +868,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Mail className="w-5 h-5 text-primary" />
+                          <Mail className="w-5 h-5 text-purple-600" />
                           <span>Lead Email Management</span>
                         </div>
                         {expandedSections.email ? 
@@ -939,7 +921,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Globe className="w-5 h-5 text-primary" />
+                          <Globe className="w-5 h-5 text-purple-600" />
                           <span>Email Settings</span>
                         </div>
                         {expandedSections.contact ? 
@@ -976,7 +958,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Hash className="w-5 h-5 text-primary" />
+                          <Hash className="w-5 h-5 text-purple-600" />
                           <span>Invoice Settings</span>
                         </div>
                         {expandedSections.financial ? 
@@ -988,44 +970,19 @@ export default function Settings() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="p-6 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="nextInvoiceNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="00001" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="defaultInvoiceDueDays"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Default Due Days</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              min="1" 
-                              max="365"
-                              placeholder="7" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          <p className="text-xs text-muted-foreground">
-                            Default number of days from invoice creation until payment is due
-                          </p>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="nextInvoiceNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Next Invoice Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="00001" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <FormField
                     control={form.control}
@@ -1052,7 +1009,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <CreditCard className="w-5 h-5 text-primary" />
+                          <CreditCard className="w-5 h-5 text-purple-600" />
                           <span>Bank Details</span>
                         </div>
                         {expandedSections.bank ? 
@@ -1089,7 +1046,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-primary" />
+                          <Music className="w-5 h-5 text-purple-600" />
                           <span>AI Pricing Guide</span>
                         </div>
                         {expandedSections.pricing ? 
@@ -1101,12 +1058,12 @@ export default function Settings() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="p-6 space-y-6">
-                      <div className="bg-primary/5 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+                      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
                         <div className="flex items-start space-x-3">
-                          <Music className="w-5 h-5 text-primary mt-0.5" />
+                          <Music className="w-5 h-5 text-purple-600 mt-0.5" />
                           <div>
-                            <h4 className="font-medium text-primary-900 dark:text-primary/10">Smart Quote Generation</h4>
-                            <p className="text-sm text-primary/90 dark:text-primary-300 mt-1">
+                            <h4 className="font-medium text-purple-900 dark:text-purple-100">Smart Quote Generation</h4>
+                            <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
                               Configure your pricing structure for AI-powered quote generation. These settings help the AI create accurate, professional quotes automatically.
                             </p>
                           </div>
@@ -1312,7 +1269,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-primary" />
+                          <Music className="w-5 h-5 text-purple-600" />
                           <span>Instrument & AI Context</span>
                         </div>
                         {expandedSections.instruments ? 
@@ -1385,7 +1342,7 @@ export default function Settings() {
                                           // Update available gig types when secondary instruments change
                                           const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
                                           const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                            const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
+                                            const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
                                             return [...acc, ...instrumentGigTypes];
                                           }, [] as string[]);
                                           
@@ -1411,7 +1368,7 @@ export default function Settings() {
                                       // Update available gig types when all secondary instruments are removed
                                       const allInstruments = [form.watch('primaryInstrument')].filter(Boolean);
                                       const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                        const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
+                                        const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
                                         return [...acc, ...instrumentGigTypes];
                                       }, [] as string[]);
                                       
@@ -1434,7 +1391,7 @@ export default function Settings() {
                                     // Update available gig types when secondary instruments change
                                     const allInstruments = [form.watch('primaryInstrument'), ...updated].filter(Boolean);
                                     const combinedGigTypes = allInstruments.reduce((acc, instrument) => {
-                                      const instrumentGigTypes = getGigTypeNamesForInstrument(instrument || '');
+                                      const instrumentGigTypes = getGigTypeNamesForInstrument(instrument);
                                       return [...acc, ...instrumentGigTypes];
                                     }, [] as string[]);
                                     
@@ -1497,7 +1454,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Music className="w-5 h-5 text-primary" />
+                          <Music className="w-5 h-5 text-purple-600" />
                           <span>Gig Types Management</span>
                         </div>
                         {expandedSections.gigTypes ? 
@@ -1605,7 +1562,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <SettingsIcon className="w-5 h-5 text-primary" />
+                          <SettingsIcon className="w-5 h-5 text-purple-600" />
                           <span>Performance Settings</span>
                         </div>
                         {expandedSections.performance ? 
@@ -1636,7 +1593,7 @@ export default function Settings() {
                                     value="50"
                                     checked={field.value === "50"}
                                     onChange={() => field.onChange("50")}
-                                    className="text-primary"
+                                    className="text-purple-600"
                                   />
                                   <label htmlFor="limit-50" className="text-sm font-medium cursor-pointer">
                                     All future bookings + 50 past bookings (Recommended)
@@ -1650,7 +1607,7 @@ export default function Settings() {
                                     value="all"
                                     checked={field.value === "all"}
                                     onChange={() => field.onChange("all")}
-                                    className="text-primary"
+                                    className="text-purple-600"
                                   />
                                   <label htmlFor="limit-all" className="text-sm font-medium cursor-pointer">
                                     Show all bookings
@@ -1677,7 +1634,7 @@ export default function Settings() {
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Link className="w-5 h-5 text-primary" />
+                          <Link className="w-5 h-5 text-purple-600" />
                           <span>Booking Widget</span>
                         </div>
                         {expandedSections.widget ? 
@@ -1715,7 +1672,7 @@ export default function Settings() {
                               type="button"
                               onClick={generateWidgetUrl}
                               disabled={isGeneratingToken}
-                              className="bg-primary hover:bg-primary/90"
+                              className="bg-purple-600 hover:bg-purple-700"
                             >
                               {isGeneratingToken ? (
                                 <>
@@ -1804,115 +1761,375 @@ export default function Settings() {
                 </Collapsible>
               </Card>
 
+              {/* Theme Customization */}
               <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
-                <Collapsible open={expandedSections.appThemes} onOpenChange={() => toggleSection('appThemes')}>
+                <Collapsible open={expandedSections.themes} onOpenChange={() => toggleSection('themes')}>
                   <CollapsibleTrigger className="w-full">
                     <CardHeader className="border-b border-gray-100 dark:border-slate-700 pb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <CardTitle className="flex items-center justify-between text-lg">
                         <div className="flex items-center space-x-2">
-                          <Palette className="w-5 h-5 text-primary" />
-                          <span>App Theme</span>
+                          <SettingsIcon className="w-5 h-5 text-purple-600" />
+                          <span>Invoice & Contract Themes</span>
                         </div>
-                        {expandedSections.appThemes ? 
+                        {expandedSections.themes ? 
                           <ChevronDown className="w-5 h-5 text-gray-400" /> : 
                           <ChevronRight className="w-5 h-5 text-gray-400" />
                         }
                       </CardTitle>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-left">
-                        Choose your preferred visual theme for the MusoBuddy interface
+                        Customize your invoices and contracts with professional themes, fonts, and branding
                       </div>
                     </CardHeader>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Available Themes</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {Object.values(themes).map((theme) => (
-                            <div
-                              key={theme.id}
-                              onClick={() => {
-                                console.log('🎨 User clicked theme:', theme.id);
-                                setTheme(theme.id);
-                              }}
-                              className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                currentTheme === theme.id
-                                  ? 'border-theme-primary bg-theme-primary/10'
-                                  : 'border-gray-200 dark:border-gray-600 hover:border-theme-primary/50'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div 
-                                  className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                                  style={{ backgroundColor: theme.colors.primary }}
-                                />
-                                <div className="flex-1">
-                                  <h4 className="font-medium text-sm" style={{ 
-                                    fontFamily: theme.fonts.heading,
-                                    color: currentTheme === theme.id ? theme.colors.primary : 'inherit'
-                                  }}>
-                                    {theme.name}
-                                  </h4>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {theme.description}
-                                  </p>
-                                </div>
-                                {currentTheme === theme.id && (
-                                  <div className="w-5 h-5 rounded-full bg-theme-primary flex items-center justify-center">
-                                    <div className="w-2 h-2 rounded-full bg-white" />
+                    <CardContent className="p-6 space-y-6">
+                  {/* Template Selection */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Template Style</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {THEME_TEMPLATES.map((template) => (
+                        <FormField
+                          key={template.id}
+                          control={form.control}
+                          name="themeTemplate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  field.value === template.id
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                }`}>
+                                  <input
+                                    type="radio"
+                                    {...field}
+                                    value={template.id}
+                                    checked={field.value === template.id}
+                                    className="sr-only"
+                                  />
+                                  <div className="font-medium text-sm">{template.label}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {template.description}
                                   </div>
-                                )}
-                              </div>
-                              
-                              {/* Theme Preview */}
-                              <div className="mt-3 p-3 rounded border" style={{ 
-                                backgroundColor: theme.colors.background,
-                                borderColor: theme.colors.primary + '20'
-                              }}>
-                                <div className="flex items-center justify-between">
-                                  <div 
-                                    className="text-xs font-medium"
-                                    style={{ 
-                                      color: theme.colors.text,
-                                      fontFamily: theme.fonts.heading
-                                    }}
-                                  >
-                                    Sample Dashboard
-                                  </div>
-                                  <div 
-                                    className="w-3 h-3 rounded"
-                                    style={{ backgroundColor: theme.colors.accent }}
-                                  />
-                                </div>
-                                <div className="mt-2 space-y-1">
-                                  <div 
-                                    className="h-2 rounded"
-                                    style={{ backgroundColor: theme.colors.primary, width: '60%' }}
-                                  />
-                                  <div 
-                                    className="h-2 rounded"
-                                    style={{ backgroundColor: theme.colors.secondary, width: '40%' }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                            Current Theme: {themes[currentTheme].name}
-                          </h4>
-                          <p className="text-xs text-blue-700 dark:text-blue-300">
-                            {themes[currentTheme].description}
-                          </p>
-                          {currentTheme === 'retro-vinyl' && (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                              ✨ This theme includes custom fonts and warm vintage colors for a unique musical aesthetic.
-                            </p>
+                                </label>
+                              </FormControl>
+                            </FormItem>
                           )}
-                        </div>
-                      </div>
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tone Selection */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Tone & Language</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {THEME_TONES.map((tone) => (
+                        <FormField
+                          key={tone.id}
+                          control={form.control}
+                          name="themeTone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  field.value === tone.id
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                }`}>
+                                  <input
+                                    type="radio"
+                                    {...field}
+                                    value={tone.id}
+                                    checked={field.value === tone.id}
+                                    className="sr-only"
+                                  />
+                                  <div className="font-medium text-sm">{tone.label}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {tone.description}
+                                  </div>
+                                </label>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Font Selection */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Font Style</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {THEME_FONTS.map((font) => (
+                        <FormField
+                          key={font.id}
+                          control={form.control}
+                          name="themeFont"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                  field.value === font.id
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                }`}>
+                                  <input
+                                    type="radio"
+                                    {...field}
+                                    value={font.id}
+                                    checked={field.value === font.id}
+                                    className="sr-only"
+                                  />
+                                  <div className="font-medium text-sm">{font.label}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {font.description}
+                                  </div>
+                                </label>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Accent Color */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Accent Color</h3>
+                    <FormField
+                      control={form.control}
+                      name="themeAccentColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex space-x-2">
+                                {THEME_COLORS.map((color) => (
+                                  <button
+                                    key={color}
+                                    type="button"
+                                    onClick={() => field.onChange(color)}
+                                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                      field.value === color
+                                        ? 'border-white shadow-lg scale-110'
+                                        : 'border-gray-300 hover:scale-105'
+                                    }`}
+                                    style={{ backgroundColor: color }}
+                                  />
+                                ))}
+                              </div>
+                              <Input
+                                type="color"
+                                value={field.value || "#8B5CF6"}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                className="w-16 h-8 border-0 rounded cursor-pointer"
+                              />
+                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {field.value}
+                              </span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Custom Title */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Document Title</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {CUSTOM_TITLES.map((title) => (
+                        <button
+                          key={title.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCustomTitle(title.id);
+                            if (title.id === 'custom') {
+                              form.setValue('themeCustomTitle', '');
+                            } else {
+                              form.setValue('themeCustomTitle', title.label);
+                            }
+                          }}
+                          className={`p-2 text-sm rounded-lg border transition-all ${
+                            selectedCustomTitle === title.id
+                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                          }`}
+                        >
+                          {title.label}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedCustomTitle === 'custom' && (
+                      <FormField
+                        control={form.control}
+                        name="themeCustomTitle"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="Enter custom title"
+                                className="mt-2"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+
+                  {/* Feature Toggles */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Optional Features</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="themeShowSetlist"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium cursor-pointer">
+                                Show Setlist Section
+                              </FormLabel>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Add a section for song lists and performance details
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="themeShowRiderNotes"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium cursor-pointer">
+                                Show Rider Notes
+                              </FormLabel>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Include technical requirements and setup notes
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="themeShowQrCode"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium cursor-pointer">
+                                Show QR Code
+                              </FormLabel>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Add QR code for social media or playlist links
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="themeShowTerms"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-medium cursor-pointer">
+                                Show Terms & Conditions
+                              </FormLabel>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Include legal terms and payment conditions
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preview Button */}
+                  <div className="flex justify-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Button
+                      type="button"
+                      onClick={async () => {
+                        setIsGeneratingPreview(true);
+                        const currentValues = form.getValues();
+                        const themeSettings = {
+                          template: currentValues.themeTemplate,
+                          tone: currentValues.themeTone,
+                          font: currentValues.themeFont,
+                          accentColor: currentValues.themeAccentColor,
+                          customTitle: currentValues.themeCustomTitle,
+                          showSetlist: currentValues.themeShowSetlist,
+                          showRiderNotes: currentValues.themeShowRiderNotes,
+                          showQrCode: currentValues.themeShowQrCode,
+                          showTerms: currentValues.themeShowTerms,
+                          businessName: currentValues.businessName,
+                          businessAddress: `${currentValues.addressLine1}, ${currentValues.city}, ${currentValues.postcode}`,
+                          businessPhone: currentValues.phone,
+                          businessEmail: currentValues.businessEmail,
+                        };
+                        
+                        const url = await generateThemePreview(themeSettings);
+                        if (url) {
+                          setPreviewUrl(url);
+                          setShowThemePreview(true);
+                        } else {
+                          toast({
+                            title: "Preview Error",
+                            description: "Could not generate theme preview. Please try again.",
+                            variant: "destructive",
+                          });
+                        }
+                        setIsGeneratingPreview(false);
+                      }}
+                      disabled={isGeneratingPreview}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg transition-all"
+                    >
+                      {isGeneratingPreview ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating Preview...
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Preview Theme
+                        </>
+                      )}
+                    </Button>
+                  </div>
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
@@ -1932,7 +2149,7 @@ export default function Settings() {
                   }}
                   className={`px-8 py-2 border-0 transition-all duration-300 ${
                     hasChanges && !saveSettings.isPending
-                      ? 'bg-gradient-to-r from-primary to-blue-600 text-white hover:shadow-lg hover:scale-105'
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:scale-105'
                       : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                   }`}
                 >

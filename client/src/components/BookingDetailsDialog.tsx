@@ -718,8 +718,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
           <Form {...form}>
             <form className="space-y-6">
               {/* Section 1: Basic Information - Purple Theme */}
-              <Card className="border-green-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+              <Card className="border-purple-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-3">
                     <div className="bg-white/20 p-2 rounded-full">
                       <span className="text-white font-bold text-lg">1</span>
@@ -728,7 +728,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                     <span className="text-xl font-semibold">Basic Information</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 bg-green-50 rounded-b-lg border-t-0">
+                <CardContent className="p-6 bg-purple-50 rounded-b-lg border-t-0">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -1077,8 +1077,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
               </Card>
 
               {/* Section 5: Timing & Setup - Indigo Theme */}
-              <Card className="border-yellow-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-t-lg">
+              <Card className="border-indigo-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-3">
                     <div className="bg-white/20 p-2 rounded-full">
                       <span className="text-white font-bold text-lg">5</span>
@@ -1087,7 +1087,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                     <span className="text-xl font-semibold">Timing & Setup</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 bg-yellow-50 rounded-b-lg border-t-0 grid gap-4">
+                <CardContent className="p-6 bg-indigo-50 rounded-b-lg border-t-0 grid gap-4">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -1301,8 +1301,8 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
               </Card>
 
               {/* Section 9: Comprehensive Document Management - Violet Theme */}
-              <Card className="border-black shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-slate-700 to-slate-900 text-white rounded-t-lg">
+              <Card className="border-violet-200 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-3">
                     <div className="bg-white/20 p-2 rounded-full">
                       <span className="text-white font-bold text-lg">9</span>
@@ -1314,7 +1314,7 @@ export function BookingDetailsDialog({ open, onOpenChange, booking, onBookingUpd
                     Upload contracts, invoices, and other booking-related documents. Use AI parsing to extract and populate booking details.
                   </p>
                 </CardHeader>
-                <CardContent className="p-6 bg-slate-50 rounded-b-lg border-t-0 space-y-4">
+                <CardContent className="p-6 bg-violet-50 rounded-b-lg border-t-0 space-y-4">
                   {/* Document Type Selection */}
                   <div className="space-y-2">
                     <Label>Document Type</Label>

@@ -92,69 +92,25 @@ export class MailgunService {
   async sendInvoiceEmail(invoice: any, userSettings: any, pdfUrl: string, subject: string) {
     const domain = 'mg.musobuddy.com';
     
-    console.log('📧 Sending invoice email with PDF attachment');
-    console.log('📧 Config check:', {
-      domain,
+    const emailData = {
+      from: `MusoBuddy <noreply@${domain}>`,
       to: invoice.clientEmail,
-      apiKeyExists: !!process.env.MAILGUN_API_KEY,
-      invoiceId: invoice.id
-    });
-    
-    try {
-      // Generate PDF attachment using PDFKit
-      console.log('📄 Generating invoice PDF...');
-      const pdfBuffer = await this.generateInvoicePDF(invoice, userSettings);
-      console.log('✅ Invoice PDF generated successfully, size:', pdfBuffer.length);
-      
-      const messageData = {
-        from: `MusoBuddy <noreply@${domain}>`,
-        to: invoice.clientEmail,
-        subject: subject || `Invoice ${invoice.invoiceNumber}`,
-        html: this.generateInvoiceEmailHTML(invoice, userSettings, pdfUrl),
-        attachment: [{
-          data: pdfBuffer,
-          filename: `Invoice-${invoice.invoiceNumber}.pdf`,
-          contentType: 'application/pdf'
-        }],
-        // Email deliverability improvements
-        'h:Reply-To': userSettings?.businessEmail || `noreply@${domain}`,
-        'h:X-Mailgun-Variables': JSON.stringify({
-          email_type: 'invoice',
-          invoice_id: invoice.id,
-          user_id: invoice.userId
-        }),
-        'o:tracking': 'yes',
-        'o:tracking-clicks': 'yes',
-        'o:tracking-opens': 'yes',
-        'o:dkim': 'yes'
-      };
+      subject: subject || `Invoice ${invoice.invoiceNumber}`,
+      html: this.generateInvoiceEmailHTML(invoice, userSettings, pdfUrl),
+      // Email deliverability improvements - additive only
+      'h:Reply-To': userSettings?.businessEmail || `noreply@${domain}`,
+      'h:X-Mailgun-Variables': JSON.stringify({
+        email_type: 'invoice',
+        invoice_id: invoice.id,
+        user_id: invoice.userId
+      }),
+      'o:tracking': 'yes',
+      'o:tracking-clicks': 'yes',
+      'o:tracking-opens': 'yes',
+      'o:dkim': 'yes'
+    };
 
-      console.log('📧 Sending invoice email via Mailgun...');
-      console.log('📧 Message data:', {
-        from: messageData.from,
-        to: messageData.to,
-        subject: messageData.subject,
-        hasAttachment: !!messageData.attachment,
-        attachmentCount: messageData.attachment?.length || 0
-      });
-      
-      const result = await this.mailgun.messages.create(domain, messageData);
-      console.log('✅ Invoice email with PDF sent successfully:', result.id);
-      console.log('📧 Mailgun response:', result);
-      return result;
-      
-    } catch (error: any) {
-      console.error('❌ Invoice email error:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        status: error.status,
-        details: error.details,
-        type: error.type,
-        stack: error.stack
-      });
-      console.error('❌ Full error object:', JSON.stringify(error, null, 2));
-      throw error;
-    }
+    return await this.mailgun.messages.create(domain, emailData);
   }
 
   // Generate professional email signature
@@ -246,23 +202,10 @@ export class MailgunService {
       console.log(`📧 Sending enhanced ${emailData.emailType || 'general'} email with DKIM signing and tracking`);
       
       const result = await this.mailgun.messages.create(domain, messageData);
-      
-      // Return structured response that matches expected format
-      return {
-        success: true,
-        messageId: result.id,
-        status: result.status || 'sent',
-        message: result.message || 'Email sent successfully'
-      };
+      return result;
     } catch (error: any) {
       console.error('❌ Failed to send enhanced email:', error);
-      
-      // Return structured error response instead of throwing
-      return {
-        success: false,
-        error: error.message || 'Failed to send email',
-        details: error.details || null
-      };
+      throw error;
     }
   }
 
@@ -287,28 +230,6 @@ export class MailgunService {
       
       // Don't let it fall back silently - throw the error
       throw new Error(`PDF generation failed: ${error.message}`);
-    }
-  }
-
-  // Invoice PDF generation method
-  async generateInvoicePDF(invoice: any, userSettings: any): Promise<Buffer> {
-    try {
-      console.log('🚀 Calling generateInvoicePDF from pdf-generator...');
-      
-      const { generateInvoicePDF: originalGenerateInvoicePDF } = await import('./pdf-generator');
-      console.log('✅ Invoice PDF generator imported successfully');
-      
-      console.log('🎯 Calling generateInvoicePDF...');
-      const result = await originalGenerateInvoicePDF(invoice, userSettings);
-      console.log('✅ Invoice PDF generation completed, buffer size:', result.length);
-      
-      return result;
-    } catch (error: any) {
-      console.error('💥 CRITICAL ERROR in generateInvoicePDF:', error);
-      console.error('💥 Error message:', error.message);
-      console.error('💥 Error stack:', error.stack);
-      
-      throw new Error(`Invoice PDF generation failed: ${error.message}`);
     }
   }
 
@@ -901,7 +822,7 @@ export class CloudStorageService {
     }));
 
     // Use the R2 public development URL
-    const url = `https://pub-a730a594e40d8b46295554074c8e4413.r2.dev/${key}`;
+    const url = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${key}`;
     return { url, key };
   }
 

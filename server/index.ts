@@ -143,123 +143,24 @@ app.get('/api/webhook-monitor', (req, res) => {
   });
 });
 
-// Authentication test page - moved here to avoid static file conflicts
+// Authentication test page
 app.get('/auth-test', (req, res) => {
   res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>MusoBuddy Quick Auth Test</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-            .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            button { padding: 12px 24px; margin: 10px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 14px; }
-            button:hover { background: #0056b3; }
-            .result { margin: 20px 0; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; white-space: pre-wrap; border-radius: 4px; font-family: monospace; }
-            .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-            .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
-            h1 { color: #333; }
-            h2 { color: #666; margin-top: 30px; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🔐 MusoBuddy Authentication Test</h1>
-            <p>This tool helps diagnose session authentication issues between Replit preview and web browser.</p>
-            
-            <h2>1. Check Authentication Status</h2>
-            <button onclick="checkAuthStatus()">Check Auth Status</button>
-            
-            <h2>2. Admin Login (if needed)</h2>
-            <button onclick="adminLogin()">Admin Login</button>
-            
-            <h2>3. Test Settings Access</h2>
-            <button onclick="testSettings()">Test Settings API</button>
-            
-            <h2>4. Go to Main App</h2>
-            <button onclick="window.location.href='/dashboard'">Go to Dashboard</button>
-            
-            <div id="result" class="result">Ready to test...</div>
-        </div>
-
-        <script>
-            async function checkAuthStatus() {
-                showResult('Checking authentication status...', '');
-                try {
-                    const response = await fetch('/api/auth/status', {
-                        credentials: 'include'
-                    });
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        showResult('✅ Authentication Status: LOGGED IN\\nUser ID: ' + data.userId + '\\nEmail: ' + data.email, 'success');
-                    } else {
-                        showResult('❌ Authentication Status: NOT LOGGED IN\\n' + JSON.stringify(data, null, 2), 'error');
-                    }
-                } catch (error) {
-                    showResult('❌ Error checking auth status: ' + error.message, 'error');
-                }
-            }
-
-            async function adminLogin() {
-                showResult('Attempting admin login...', '');
-                try {
-                    const response = await fetch('/api/auth/admin-login', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            email: 'timfulker@gmail.com',
-                            password: 'MusoBuddy2025!'
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        showResult('✅ Admin Login: SUCCESS\\nUser authenticated successfully!\\n' + JSON.stringify(data, null, 2), 'success');
-                    } else {
-                        showResult('❌ Admin Login: FAILED\\n' + JSON.stringify(data, null, 2), 'error');
-                    }
-                } catch (error) {
-                    showResult('❌ Error during admin login: ' + error.message, 'error');
-                }
-            }
-
-            async function testSettings() {
-                showResult('Testing settings access...', '');
-                try {
-                    const response = await fetch('/api/settings', {
-                        credentials: 'include'
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        showResult('✅ Settings Access: SUCCESS\\nSettings data retrieved:\\n' + JSON.stringify(data, null, 2), 'success');
-                    } else {
-                        showResult('❌ Settings Access: FAILED\\n' + JSON.stringify(data, null, 2), 'error');
-                    }
-                } catch (error) {
-                    showResult('❌ Error accessing settings: ' + error.message, 'error');
-                }
-            }
-
-            function showResult(message, type = '') {
-                const resultDiv = document.getElementById('result');
-                resultDiv.textContent = message;
-                resultDiv.className = 'result ' + type;
-            }
-
-            // Auto-check auth status on page load
-            window.onload = function() {
-                checkAuthStatus();
-            };
-        </script>
-    </body>
-    </html>
+    <h1>Quick Auth Test</h1>
+    <button onclick="testLogin()">Test Admin Login</button>
+    <div id="result"></div>
+    <script>
+    async function testLogin() {
+      const response = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({email: 'timfulker@gmail.com', password: 'MusoBuddy2025!'})
+      });
+      const data = await response.json();
+      document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+    }
+    </script>
   `);
 });
 

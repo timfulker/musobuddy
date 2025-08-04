@@ -342,7 +342,7 @@ export default function AdminPanel() {
     const colors = {
       free: "bg-gray-100 text-gray-800",
       core: "bg-blue-100 text-blue-800", 
-      premium: "bg-primary/10 text-yellow-800",
+      premium: "bg-purple-100 text-purple-800",
       enterprise: "bg-yellow-100 text-yellow-800"
     };
     return colors[tier as keyof typeof colors] || colors.free;
@@ -472,7 +472,7 @@ export default function AdminPanel() {
                         <span>Review system security</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Database className="h-4 w-4 text-primary/50" />
+                        <Database className="h-4 w-4 text-purple-500" />
                         <span>Database maintenance</span>
                       </div>
                     </div>
@@ -965,9 +965,9 @@ export default function AdminPanel() {
                             {users?.filter(u => u.isBetaTester).reduce((sum, u) => sum + (u.betaFeedbackCount || 0), 0) || 0}
                           </div>
                         </div>
-                        <div className="bg-primary/5 p-4 rounded-lg border border-yellow-200">
-                          <div className="text-primary/90 font-medium">1-Year Free Subscriptions</div>
-                          <div className="text-2xl font-bold text-yellow-900">
+                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                          <div className="text-purple-700 font-medium">1-Year Free Subscriptions</div>
+                          <div className="text-2xl font-bold text-purple-900">
                             {users?.filter(u => u.isBetaTester).length || 0}
                           </div>
                         </div>

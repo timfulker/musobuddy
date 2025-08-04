@@ -305,7 +305,7 @@ export default function AddressBook() {
               }
             }}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90" onClick={() => setIsCreateOpen(true)}>
+                <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => setIsCreateOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Client
                 </Button>
@@ -403,7 +403,7 @@ export default function AddressBook() {
                       <Button
                         type="submit"
                         disabled={createClientMutation.isPending || updateClientMutation.isPending}
-                        className="bg-primary hover:bg-primary/90"
+                        className="bg-purple-600 hover:bg-purple-700"
                       >
                         {editingClient ? "Update Client" : "Add Client"}
                       </Button>
@@ -521,7 +521,7 @@ export default function AddressBook() {
                     <p className="text-sm text-gray-600">Total Clients</p>
                     <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
                   </div>
-                  <Users className="w-8 h-8 text-primary" />
+                  <Users className="w-8 h-8 text-purple-600" />
                 </div>
               </CardContent>
             </Card>
@@ -602,7 +602,7 @@ export default function AddressBook() {
                   }
                 </p>
                 {!searchQuery && (
-                  <Button onClick={() => setIsCreateOpen(true)} className="bg-primary hover:bg-primary/90">
+                  <Button onClick={() => setIsCreateOpen(true)} className="bg-purple-600 hover:bg-purple-700">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Your First Client
                   </Button>

@@ -11,13 +11,13 @@ export default function CalendarWidget() {
     queryKey: ["/api/bookings"],
   });
 
-  // Filter for upcoming bookings within the next two weeks including today (no limit for dynamic sizing)
+  // Filter for upcoming bookings within the next two weeks (no limit for dynamic sizing)
   const bookings = (allBookings as any[]).filter((booking: Booking) => {
     if (!booking.eventDate) return false;
     const eventDate = new Date(booking.eventDate);
     const today = new Date();
     const twoWeeksFromNow = new Date();
-    today.setHours(0, 0, 0, 0); // Start of today to include today's gigs
+    today.setHours(0, 0, 0, 0);
     twoWeeksFromNow.setHours(0, 0, 0, 0);
     twoWeeksFromNow.setDate(today.getDate() + 14);
     return eventDate >= today && eventDate <= twoWeeksFromNow;
@@ -55,7 +55,7 @@ export default function CalendarWidget() {
       case 'client_confirms': return "bg-blue-50 text-blue-900 border-blue-200";
       case 'confirmed': return "bg-green-50 text-green-900 border-green-200";
       case 'rejected': return "bg-red-50 text-red-900 border-red-200";
-      case 'completed': return "bg-green-50 text-green-900 border-green-200";
+      case 'completed': return "bg-purple-50 text-purple-900 border-purple-200";
       default: return "bg-gray-50 text-gray-900 border-gray-200";
     }
   };
@@ -68,19 +68,18 @@ export default function CalendarWidget() {
       case 'client_confirms': return "text-blue-600";
       case 'confirmed': return "text-green-600";
       case 'rejected': return "text-red-600";
-      case 'completed': return "text-green-600";
+      case 'completed': return "text-purple-600";
       default: return "text-gray-600";
     }
   };
 
   // Get upcoming bookings (no need to combine with enquiries as they're now in the same table)
   const getUpcomingGigs = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Start of today
+    const now = new Date();
     
-    // Filter and sort upcoming bookings including today's gigs (no limit for dynamic sizing)
+    // Filter and sort upcoming bookings (no limit for dynamic sizing)
     return bookings
-      .filter((booking: Booking) => booking.eventDate && new Date(booking.eventDate) >= today)
+      .filter((booking: Booking) => booking.eventDate && new Date(booking.eventDate) >= now)
       .sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
       .map((booking: Booking) => ({
         id: booking.id,

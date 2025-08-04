@@ -407,19 +407,8 @@ export class Storage {
   }
 
   async updateInvoice(id: number, updates: any) {
-    // Convert string dates to Date objects for database compatibility
-    const processedUpdates = { ...updates };
-    
-    if (processedUpdates.dueDate && typeof processedUpdates.dueDate === 'string') {
-      processedUpdates.dueDate = new Date(processedUpdates.dueDate);
-    }
-    
-    if (processedUpdates.performanceDate && typeof processedUpdates.performanceDate === 'string') {
-      processedUpdates.performanceDate = new Date(processedUpdates.performanceDate);
-    }
-    
     const result = await db.update(invoices)
-      .set({ ...processedUpdates, updatedAt: new Date() })
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(invoices.id, id))
       .returning();
     return result[0];

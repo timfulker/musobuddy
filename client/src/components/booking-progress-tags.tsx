@@ -41,7 +41,7 @@ export default function BookingProgressTags({ booking, size = "sm" }: BookingPro
     tags.push({
       label: "Invoice Sent",
       icon: FileText,
-      color: "bg-green-100 text-green-800 border-green-200",
+      color: "bg-purple-100 text-purple-800 border-purple-200",
       emoji: "💸"
     });
   }

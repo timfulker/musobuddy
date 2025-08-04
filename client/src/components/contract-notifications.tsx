@@ -30,15 +30,15 @@ export function ContractNotifications() {
 
   // Check for newly signed contracts
   useEffect(() => {
-    if (!contracts?.length) return;
+    if (!contracts.length) return;
 
-    const newlySignedContracts = contracts?.filter(contract => 
+    const newlySignedContracts = contracts.filter(contract => 
       contract.status === 'signed' && 
       contract.signedAt && 
       new Date(contract.signedAt) > lastCheck
     );
 
-    newlySignedContracts?.forEach(contract => {
+    newlySignedContracts.forEach(contract => {
       // Add notification
       const notification: ContractNotification = {
         id: Date.now() + contract.id,
@@ -61,7 +61,7 @@ export function ContractNotifications() {
     });
 
     setLastCheck(new Date());
-  }, [contracts?.length, toast]); // Fixed: Remove lastCheck dependency to prevent infinite loop
+  }, [contracts.length, toast]); // Fixed: Remove lastCheck dependency to prevent infinite loop
 
   // Mark notification as read
   const markAsRead = (notificationId: number) => {
@@ -189,7 +189,7 @@ export function useContractStatusMonitor() {
   });
 
   useEffect(() => {
-    contracts?.forEach(contract => {
+    contracts.forEach(contract => {
       // Check if this contract was just signed (not seen before)
       if (contract.status === 'signed' && 
           contract.signedAt && 

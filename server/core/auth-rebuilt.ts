@@ -109,69 +109,6 @@ async function sendVerificationSMS(phoneNumber: string, verificationCode: string
 export function setupAuthRoutes(app: Express) {
   console.log('🔐 Setting up authentication routes...');
 
-  // ADMIN LOGIN ENDPOINT - Direct authentication for testing
-  app.post('/api/auth/admin-login', async (req: any, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      console.log('🔐 Admin login attempt for:', email);
-      
-      // Hardcoded admin credentials for testing
-      if (email === 'timfulker@gmail.com' && password === 'MusoBuddy2025!') {
-        // Set session data
-        req.session.userId = '43963086';
-        req.session.email = 'timfulker@gmail.com';
-        req.session.isAuthenticated = true;
-        req.session.isAdmin = true;
-        req.session.phoneVerified = true;
-        
-        // Save session
-        req.session.save((err: any) => {
-          if (err) {
-            console.error('❌ Session save error:', err);
-            return res.status(500).json({ error: 'Session save failed' });
-          }
-          
-          console.log('✅ Admin login successful, session saved');
-          res.json({ 
-            success: true, 
-            message: 'Admin login successful',
-            userId: '43963086',
-            email: 'timfulker@gmail.com'
-          });
-        });
-      } else {
-        console.log('❌ Invalid admin credentials');
-        res.status(401).json({ error: 'Invalid credentials' });
-      }
-    } catch (error: any) {
-      console.error('❌ Admin login error:', error);
-      res.status(500).json({ error: 'Login failed' });
-    }
-  });
-
-  // USER INFO ENDPOINT - Required by frontend useAuth hook
-  app.get('/api/auth/user', (req: any, res) => {
-    console.log('🔍 Frontend auth check:', {
-      hasSession: !!req.session,
-      userId: req.session?.userId,
-      email: req.session?.email
-    });
-    
-    if (req.session?.userId) {
-      // Return user data for frontend
-      res.json({
-        id: req.session.userId,
-        email: req.session.email,
-        isAdmin: req.session.isAdmin || false,
-        phoneVerified: req.session.phoneVerified || false,
-        isAuthenticated: true
-      });
-    } else {
-      res.status(401).json({ error: 'Not authenticated' });
-    }
-  });
-
   // DEBUG ENDPOINTS
   app.get('/api/debug/sms-config', (req: any, res) => {
     res.json({

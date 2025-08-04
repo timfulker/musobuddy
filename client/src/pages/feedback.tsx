@@ -210,7 +210,7 @@ export default function FeedbackPage() {
           
           <Dialog open={newFeedbackOpen} onOpenChange={setNewFeedbackOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button className="bg-purple-600 hover:bg-purple-700">
                 <Plus className="h-4 w-4 mr-2" />
                 New Feedback
               </Button>
@@ -286,7 +286,7 @@ export default function FeedbackPage() {
                 <Button 
                   onClick={handleSubmitFeedback}
                   disabled={createFeedbackMutation.isPending}
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-purple-600 hover:bg-purple-700"
                 >
                   {createFeedbackMutation.isPending ? "Submitting..." : "Submit Feedback"}
                 </Button>

@@ -60,8 +60,11 @@ export default function BookingActionMenu({ booking, onEditBooking, onSendCompli
         navigate(`/templates?bookingId=${booking.id}&action=respond`);
         break;
       case 'issue_contract':
+        // Auto-update status to 'contract_sent' when issuing contract
+        if (['awaiting_response', 'client_confirms'].includes(booking.status)) {
+          newStatus = 'contract_sent';
+        }
         // Navigate to contracts page with booking data pre-filled
-        // NOTE: Status will only change to 'contract_sent' when contract is actually sent via email
         navigate(`/contracts?bookingId=${booking.id}&action=create`);
         break;
       case 'issue_invoice':
