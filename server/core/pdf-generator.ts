@@ -793,41 +793,6 @@ function generateContractHTML(
   </div>
 </body>
 </html>`;
-        .section {
-          margin-bottom: 25px;
-        }
-        .section-title {
-          font-size: 18px;
-          font-weight: bold;
-          color: #333;
-          margin-bottom: 10px;
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 5px;
-        }
-        .details-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-          margin-bottom: 20px;
-        }
-        .detail-item {
-          margin-bottom: 8px;
-        }
-        .detail-label {
-          font-weight: bold;
-          color: #555;
-        }
-        .terms {
-          background-color: #f9f9f9;
-          padding: 15px;
-          border-left: 4px solid #9333ea;
-          margin: 20px 0;
-        }
-        .footer {
-          margin-top: 40px;
-          text-align: center;
-          font-size: 12px;
-          color: #666;
           border-top: 1px solid #ddd;
           padding-top: 20px;
         }
