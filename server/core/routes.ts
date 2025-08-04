@@ -4534,7 +4534,64 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Catch-all middleware to ensure API routes always return JSON
+  // Register completely isolated invoice system BEFORE catch-all
+  const { registerIsolatedInvoiceRoutes } = await import('../invoice-system/index.js');
+  registerIsolatedInvoiceRoutes(app);
+
+  // Add main invoice R2 URL endpoint for compatibility
+  app.get('/api/invoices/:id/r2-url', isAuthenticated, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice || invoice.userId !== userId) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      // Check if invoice already has R2 URL
+      if (invoice.cloudStorageUrl) {
+        return res.json({ url: invoice.cloudStorageUrl });
+      }
+      
+      // Generate and upload to R2 using main system
+      const userSettings = await storage.getUserSettings(userId);
+      const { generateInvoicePDF } = await import('./invoice-pdf-generator');
+      const { uploadToCloudflareR2 } = await import('./cloud-storage');
+      
+      const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+      const date = new Date();
+      const dateFolder = date.toISOString().split('T')[0];
+      const cloudStorageKey = `invoices/${dateFolder}/${invoice.invoiceNumber}.pdf`;
+      
+      const uploadResult = await uploadToCloudflareR2(pdfBuffer, cloudStorageKey, 'application/pdf');
+      
+      if (uploadResult.success && uploadResult.url) {
+        await storage.updateInvoice(invoiceId, {
+          cloudStorageUrl: uploadResult.url,
+          cloudStorageKey: uploadResult.key || cloudStorageKey
+        });
+        
+        return res.json({ url: uploadResult.url });
+      } else {
+        return res.status(500).json({ error: 'Failed to upload invoice to cloud storage' });
+      }
+      
+    } catch (error: any) {
+      console.error('Invoice R2 URL error:', error);
+      return res.status(500).json({ error: 'Failed to generate invoice URL' });
+    }
+  });
+
+  // ===== ISOLATED CONTRACT SYSTEM =====
+  const { registerIsolatedContractRoutes } = await import('../contract-system/isolated-contract-routes');
+  registerIsolatedContractRoutes(app, storage, isAuthenticated);
+
+  // Catch-all middleware to ensure API routes always return JSON (AFTER all routes)
   app.use('/api/*', (req: any, res: any) => {
     res.setHeader('Content-Type', 'application/json');
     res.status(404).json({
@@ -4544,14 +4601,6 @@ export async function registerRoutes(app: Express) {
       timestamp: new Date().toISOString()
     });
   });
-
-  // Register completely isolated invoice system
-  const { registerIsolatedInvoiceRoutes } = await import('../invoice-system/index.js');
-  registerIsolatedInvoiceRoutes(app);
-
-  // ===== ISOLATED CONTRACT SYSTEM =====
-  const { registerIsolatedContractRoutes } = await import('../contract-system/isolated-contract-routes');
-  registerIsolatedContractRoutes(app, storage, isAuthenticated);
 
   console.log('✅ Clean routes registered successfully');
   console.log('🔧 Widget token endpoints registered: /api/generate-widget-token, /api/get-widget-token');

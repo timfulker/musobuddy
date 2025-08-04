@@ -22,11 +22,21 @@ async function getAuthMiddleware() {
 export function registerIsolatedInvoiceRoutes(app: Express) {
   console.log('🔒 ISOLATED INVOICE: Setting up completely isolated invoice routes...');
 
-  // Generate invoice PDF (isolated)
-  app.get('/api/isolated/invoices/:id/pdf', async (req: any, res) => {
+  // Isolated R2 URL endpoint for invoices
+  app.get('/api/isolated/invoices/:id/r2-url', async (req: any, res) => {
     try {
       const isAuthenticated = await getAuthMiddleware();
-      if (!isAuthenticated(req, res, () => {})) return;
+      
+      // Use proper middleware pattern
+      let authPassed = false;
+      await new Promise<void>((resolve) => {
+        isAuthenticated(req, res, () => {
+          authPassed = true;
+          resolve();
+        });
+      });
+      
+      if (!authPassed) return;
       
       const invoiceId = parseInt(req.params.id);
       const userId = req.session?.userId;
