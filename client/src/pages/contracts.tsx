@@ -452,19 +452,26 @@ export default function Contracts() {
       contractNumber: contract.contractNumber
     });
     
-    // SIMPLIFIED LOGIC: Always go directly to the PDF
+    // ENHANCED LOGIC: Better handling of different contract statuses and URLs
     
-    // 1. If contract has cloud storage URL - open directly from R2
-    if (contract.cloudStorageUrl) {
-      console.log('🌐 Opening contract directly from cloud storage:', contract.cloudStorageUrl);
+    // 1. For signed contracts with cloud storage URL - open in new tab
+    if (contract.status === 'signed' && contract.cloudStorageUrl) {
+      console.log('🌐 Opening signed contract from cloud storage:', contract.cloudStorageUrl);
       window.open(contract.cloudStorageUrl, '_blank');
       return;
     }
     
-    // 2. Fallback: Generate PDF on-demand via API
-    console.log('📄 Opening contract via PDF endpoint');
-    const pdfUrl = `/api/contracts/${contract.id}/pdf`;
-    window.open(pdfUrl, '_blank');
+    // 2. For signed contracts without cloud URL - try download endpoint
+    if (contract.status === 'signed') {
+      console.log('📄 Opening signed contract via download endpoint');
+      const downloadUrl = `/api/contracts/${contract.id}/download`;
+      window.open(downloadUrl, '_blank');
+      return;
+    }
+    
+    // 3. For all other contracts (draft, sent) - use internal viewer
+    console.log('📋 Opening contract in internal viewer');
+    setLocation(`/view-contract/${contract.id}`);
   };
 
   // DEBUGGING: Add this temporary function to test API connectivity
