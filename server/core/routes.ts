@@ -1139,25 +1139,10 @@ export async function registerRoutes(app: Express) {
         console.log('🌐 Cloud URL available, but generating PDF locally to avoid CORS issues');
         
         try {
-          const userSettings = await storage.getUserSettings(userId);
-          const { generateContractPDF } = await import('./contract-pdf-generator');
-          
-          // Include signature details if contract is signed
-          const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
-            signedAt: new Date(contract.signedAt),
-            signatureName: contract.clientSignature || undefined,
-            clientIpAddress: contract.clientIpAddress || undefined
-          } : undefined;
-          
-          const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
-          
-          // Set headers for direct PDF download
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
-          res.setHeader('Content-Length', pdfBuffer.length.toString());
-          
-          console.log(`✅ PDF generated locally and served: ${pdfBuffer.length} bytes`);
-          return res.send(pdfBuffer);
+          console.log('❌ Contract PDF generation not available - system being rebuilt');
+          return res.status(503).json({ 
+            error: 'Contract PDF generation temporarily unavailable - system being rebuilt' 
+          });
           
         } catch (pdfError: any) {
           console.error('❌ Local PDF generation failed, trying cloud redirect:', pdfError);
@@ -1166,37 +1151,11 @@ export async function registerRoutes(app: Express) {
         }
       }
       
-      // Fallback: Generate PDF on-demand
-      console.log('🔄 Generating PDF on-demand (no cloud URL available)...');
-      
-      try {
-        const userSettings = await storage.getUserSettings(userId);
-        const { generateContractPDF } = await import('./contract-pdf-generator');
-        
-        // Include signature details if contract is signed
-        const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
-          signedAt: new Date(contract.signedAt),
-          signatureName: contract.clientSignature || undefined,
-          clientIpAddress: contract.clientIpAddress || undefined
-        } : undefined;
-        
-        const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
-        
-        // Set appropriate headers for PDF download
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
-        res.setHeader('Content-Length', pdfBuffer.length.toString());
-        
-        console.log(`✅ PDF generated and served: ${pdfBuffer.length} bytes`);
-        res.send(pdfBuffer);
-        
-      } catch (pdfError: any) {
-        console.error('❌ PDF generation failed:', pdfError);
-        return res.status(500).json({ 
-          error: 'Failed to generate contract PDF',
-          details: process.env.NODE_ENV === 'development' ? pdfError.message : undefined
-        });
-      }
+      // Contract PDF generation temporarily unavailable
+      console.log('❌ Contract PDF generation not available - system being rebuilt');
+      return res.status(503).json({ 
+        error: 'Contract PDF generation temporarily unavailable - system being rebuilt' 
+      });
       
     } catch (error: any) {
       console.error('❌ Contract download error:', error);
@@ -1958,64 +1917,34 @@ export async function registerRoutes(app: Express) {
       const newContract = await storage.createContract(contractData);
       console.log(`✅ Created contract #${newContract.id} for user ${req.session.userId}`);
       
-      // CRITICAL FIX: Generate and store PDF immediately after contract creation
+      // Generate signing page only (keep the working send/sign mechanism)
       try {
-        console.log('🎨 Generating PDF for newly created contract...');
+        console.log('📝 Creating contract signing page...');
         
-        // Get user settings for PDF generation
+        // Get user settings for signing page
         const userSettings = await storage.getUserSettings(req.session.userId);
         
-        // Generate PDF using our enhanced PDF generator with template support
-        const { generateContractPDF } = await import('./contract-pdf-generator');
-        const templateType = req.body.template || 'basic'; // Default to basic template
-        console.log('🎨 ROUTES: Template requested:', req.body.template);
-        console.log('🎨 ROUTES: Template type set to:', templateType);
-        const pdfBuffer = await generateContractPDF(newContract, userSettings, undefined, templateType);
+        // Upload signing page to cloud storage
+        const { uploadContractSigningPage } = await import('./cloud-storage');
+        const signingPageResult = await uploadContractSigningPage(newContract, userSettings);
         
-        console.log('✅ PDF generated successfully, size:', pdfBuffer.length, 'bytes');
-        
-        // Upload PDF to cloud storage
-        const { uploadContractToCloud, uploadContractSigningPage } = await import('./cloud-storage');
-        const cloudResult = await uploadContractToCloud(newContract, userSettings);
-        
-        if (cloudResult.success) {
-          console.log('✅ Contract PDF uploaded to cloud storage:', cloudResult.url);
+        if (signingPageResult.success) {
+          console.log('✅ Contract signing page uploaded to R2:', signingPageResult.url);
           
-          // CRITICAL FIX: Also create and upload signing page to R2
-          console.log('📝 Creating contract signing page for R2 cloud storage...');
-          const signingPageResult = await uploadContractSigningPage(newContract, userSettings);
+          // Update contract with signing page URL
+          const updatedContract = await storage.updateContract(newContract.id, {
+            signingPageUrl: signingPageResult.url,
+            signingPageKey: signingPageResult.storageKey
+          });
           
-          if (signingPageResult.success) {
-            console.log('✅ Contract signing page uploaded to R2:', signingPageResult.url);
-            
-            // Update contract with both PDF and signing page URLs
-            const updatedContract = await storage.updateContract(newContract.id, {
-              cloudStorageUrl: cloudResult.url,
-              cloudStorageKey: cloudResult.key,
-              signingPageUrl: signingPageResult.url,
-              signingPageKey: signingPageResult.storageKey
-            });
-            
-            res.json(updatedContract);
-          } else {
-            console.log('⚠️ PDF uploaded but signing page upload failed');
-            
-            // Update contract with just PDF URL
-            const updatedContract = await storage.updateContract(newContract.id, {
-              cloudStorageUrl: cloudResult.url,
-              cloudStorageKey: cloudResult.key
-            });
-            
-            res.json(updatedContract);
-          }
+          res.json(updatedContract);
         } else {
-          console.log('⚠️ PDF generated but cloud upload failed, returning contract without cloud URL');
+          console.log('⚠️ Signing page upload failed');
           res.json(newContract);
         }
         
-      } catch (pdfError: any) {
-        console.error('⚠️ PDF generation failed, but contract was created:', pdfError.message);
-        // Still return the contract even if PDF generation fails
+      } catch (error: any) {
+        console.error('⚠️ Signing page creation failed:', error.message);
         res.json(newContract);
       }
     } catch (error: any) {

@@ -227,46 +227,30 @@ export async function uploadContractSigningPage(
 function generateContractSigningPage(contract: Contract, userSettings: UserSettings | null): string {
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
-  // Generate contract sections using shared template
+  // Simple contract sections for signing page
   function generateContractSections(contract: any, userSettings: any) {
-    const { sections } = generateContractContent(contract, userSettings);
+    const businessName = userSettings?.businessName || 'MusoBuddy';
     
-    let html = '';
-    let infoSections = [];
-    
-    for (const section of sections) {
-      if (!section.renderedContent.trim()) continue;
-      
-      if (section.type === 'info' && (section.id === 'client-info' || section.id === 'event-info')) {
-        infoSections.push(`
-          <div class="info-section">
-            <h4>${section.title}</h4>
-            ${section.renderedContent}
-          </div>
-        `);
-      } else {
-        const sectionClass = section.type === 'terms' ? 'terms-section' : 'info-section';
-        const extraStyle = section.type === 'terms' ? '' : section.type === 'payment' ? '' : 'margin-top: 20px;';
-        
-        html += `
-          <div class="${sectionClass}" ${extraStyle ? `style="${extraStyle}"` : ''}>
-            <h4>${section.title}</h4>
-            ${section.renderedContent}
-          </div>
-        `;
-      }
-    }
-    
-    // Add info grid if we have info sections
-    if (infoSections.length > 0) {
-      html = `
-        <div class="info-grid">
-          ${infoSections.join('')}
+    return `
+      <div class="info-grid">
+        <div class="info-section">
+          <h4>Event Details</h4>
+          <p><strong>Client:</strong> ${contract.clientName}</p>
+          <p><strong>Date:</strong> ${contract.eventDate}</p>
+          <p><strong>Time:</strong> ${contract.eventTime}</p>
+          <p><strong>Venue:</strong> ${contract.venue}</p>
         </div>
-      ` + html;
-    }
-    
-    return html;
+        <div class="info-section">
+          <h4>Performer</h4>
+          <p><strong>Name:</strong> ${businessName}</p>
+          <p><strong>Fee:</strong> £${contract.fee}</p>
+        </div>
+      </div>
+      <div class="terms-section">
+        <h4>Terms & Conditions</h4>
+        <p>This is a legally binding performance contract. By signing, you agree to the performance date, time, venue, and fee as specified above.</p>
+      </div>
+    `;
   }
   
   return `
