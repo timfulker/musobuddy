@@ -378,6 +378,9 @@ export default function Settings() {
   // Save settings function - simplified version
   const saveSettings = useMutation({
     mutationFn: async (data: SettingsFormData) => {
+      console.log('🔧 Saving settings with data:', data);
+      console.log('📄 DefaultInvoiceDueDays being sent:', data.defaultInvoiceDueDays);
+      
       // Ensure arrays are properly formatted for JSON transmission
       const processedData = {
         ...data,
@@ -386,6 +389,8 @@ export default function Settings() {
         customGigTypes: Array.isArray(data.customGigTypes) ? 
           data.customGigTypes : []
       };
+      
+      console.log('📋 Final processed data to send:', processedData);
       
       const response = await fetch('/api/settings', {
         method: 'POST',
@@ -396,12 +401,17 @@ export default function Settings() {
         credentials: 'include', // This is crucial for session cookies
       });
       
+      console.log('🌐 Response status:', response.status);
+      
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ Settings save failed:', response.status, errorText);
         throw new Error(`Failed to save settings: ${response.status} ${errorText}`);
       }
       
-      return await response.json();
+      const result = await response.json();
+      console.log('✅ Settings save response:', result);
+      return result;
     },
     onSuccess: (data) => {
       
