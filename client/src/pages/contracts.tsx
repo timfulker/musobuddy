@@ -786,43 +786,7 @@ export default function Contracts() {
                           Required Fields (Must be completed by musician)
                         </h3>
                         
-                        {/* Template Selector */}
-                        <div className="mb-6">
-                          <FormField
-                            control={form.control}
-                            name="template"
-                            render={({ field }) => (
-                              <FormItem className="space-y-2">
-                                <FormLabel className="text-gray-700 font-medium">Contract Template</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value || "basic"}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Choose template style" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="basic">
-                                      <div className="flex items-center gap-2">
-                                        <span className="w-3 h-3 rounded bg-purple-500"></span>
-                                        Basic Template (Purple)
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="professional">
-                                      <div className="flex items-center gap-2">
-                                        <span className="w-3 h-3 rounded bg-blue-500"></span>
-                                        Professional Template (Blue)
-                                      </div>
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <p className="text-sm text-gray-600">
-                                  Choose between simple purple design (Basic) or advanced blue styling (Professional)
-                                </p>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <FormField
