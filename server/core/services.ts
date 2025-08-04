@@ -57,9 +57,23 @@ export class EmailService {
     }
   }
 
-  // Contract PDF generation - will be rebuilt from scratch
+  // Contract PDF generation using professional template
   async generateContractPDF(contract: any, userSettings: any): Promise<Buffer> {
-    throw new Error('Contract PDF generation system needs to be rebuilt');
+    try {
+      console.log('🚀 Calling professional contract PDF generator...');
+      
+      const { generateContractPDF: professionalGenerateContractPDF } = await import('./contract-pdf-generator');
+      console.log('✅ Professional contract PDF generator imported successfully');
+      
+      console.log('🎯 Generating professional contract PDF...');
+      const result = await professionalGenerateContractPDF(contract, userSettings);
+      console.log('✅ Professional contract PDF generation completed, buffer size:', result.length);
+      
+      return result;
+    } catch (error: any) {
+      console.error('💥 CRITICAL ERROR in generateContractPDF:', error);
+      throw new Error(`Contract PDF generation failed: ${error.message}`);
+    }
   }
 
   // Invoice PDF generation method (working and isolated)

@@ -1139,10 +1139,25 @@ export async function registerRoutes(app: Express) {
         console.log('🌐 Cloud URL available, but generating PDF locally to avoid CORS issues');
         
         try {
-          console.log('❌ Contract PDF generation not available - system being rebuilt');
-          return res.status(503).json({ 
-            error: 'Contract PDF generation temporarily unavailable - system being rebuilt' 
-          });
+          const userSettings = await storage.getUserSettings(userId);
+          const services = new (await import('./services')).EmailService();
+          
+          // Include signature details if contract is signed
+          const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+            signedAt: new Date(contract.signedAt),
+            signatureName: contract.clientSignature || undefined,
+            clientIpAddress: contract.clientIpAddress || undefined
+          } : undefined;
+          
+          const pdfBuffer = await services.generateContractPDF(contract, userSettings);
+          
+          // Set headers for direct PDF download
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
+          res.setHeader('Content-Length', pdfBuffer.length.toString());
+          
+          console.log(`✅ Professional PDF generated and served: ${pdfBuffer.length} bytes`);
+          return res.send(pdfBuffer);
           
         } catch (pdfError: any) {
           console.error('❌ Local PDF generation failed, trying cloud redirect:', pdfError);
@@ -1151,11 +1166,37 @@ export async function registerRoutes(app: Express) {
         }
       }
       
-      // Contract PDF generation temporarily unavailable
-      console.log('❌ Contract PDF generation not available - system being rebuilt');
-      return res.status(503).json({ 
-        error: 'Contract PDF generation temporarily unavailable - system being rebuilt' 
-      });
+      // Fallback: Generate PDF on-demand with professional template
+      console.log('🔄 Generating professional PDF on-demand...');
+      
+      try {
+        const userSettings = await storage.getUserSettings(userId);
+        const services = new (await import('./services')).EmailService();
+        
+        // Include signature details if contract is signed
+        const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+          signedAt: new Date(contract.signedAt),
+          signatureName: contract.clientSignature || undefined,
+          clientIpAddress: contract.clientIpAddress || undefined
+        } : undefined;
+        
+        const pdfBuffer = await services.generateContractPDF(contract, userSettings);
+        
+        // Set appropriate headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length.toString());
+        
+        console.log(`✅ Professional PDF generated and served: ${pdfBuffer.length} bytes`);
+        res.send(pdfBuffer);
+        
+      } catch (pdfError: any) {
+        console.error('❌ Professional PDF generation failed:', pdfError);
+        return res.status(500).json({ 
+          error: 'Failed to generate contract PDF',
+          details: process.env.NODE_ENV === 'development' ? pdfError.message : undefined
+        });
+      }
       
     } catch (error: any) {
       console.error('❌ Contract download error:', error);
