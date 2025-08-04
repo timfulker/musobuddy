@@ -80,7 +80,7 @@ function generateContractHTML(
   const businessName = userSettings?.businessName || 'Professional Musician';
   const businessEmail = userSettings?.businessEmail || '';
   const businessPhone = userSettings?.phone || '';
-  
+
   // Build complete business address from detailed fields
   const addressParts = [];
   if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
@@ -88,7 +88,7 @@ function generateContractHTML(
   if (userSettings?.city) addressParts.push(userSettings.city);
   if (userSettings?.county) addressParts.push(userSettings.county);
   if (userSettings?.postcode) addressParts.push(userSettings.postcode);
-  
+
   const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : 
                          (userSettings?.businessAddress || '');
 
@@ -178,7 +178,6 @@ function generateContractHTML(
       width: 30%;
     }
     .terms-section {
-      page-break-before: always !important;
       margin-top: 30px;
       font-size: 11px;
       line-height: 1.6;
@@ -318,16 +317,16 @@ function generateContractHTML(
   <!-- TERMS AND CONDITIONS -->
   <div class="terms-section">
     <div class="section-title">Terms and Conditions</div>
-    
+
     <h3>Payment Terms & Conditions</h3>
     <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee || '0.00'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
-    
+
     <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
-    
+
     ${contract.deposit && parseFloat(contract.deposit.toString()) > 0 ? `
     <p><strong>Deposit:</strong> £${contract.deposit} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>
     ` : ''}
-    
+
     <p><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</p>
 
     <h3>Cancellation & Refund Policy</h3>
@@ -337,9 +336,9 @@ function generateContractHTML(
       <li><strong>30 days or less before event:</strong> Full performance fee becomes due regardless of cancellation</li>
       <li><strong>Same day cancellation:</strong> Full fee due plus any additional costs incurred</li>
     </ul>
-    
+
     <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</p>
-    
+
     <p><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</p>
 
     <h3>Force Majeure</h3>
@@ -350,26 +349,26 @@ function generateContractHTML(
 
     <h3>Professional Performance Standards</h3>
     <p><strong>Payment Schedule:</strong> The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.</p>
-    
+
     <p><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</p>
-    
+
     <p><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</p>
-    
+
     <p><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</p>
-    
+
     <p><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</p>
-    
+
     <p><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</p>
-    
+
     <p><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</p>
-    
+
     <p><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</p>
   </div>
 
   <!-- SIGNATURES -->
   <div class="signature-section">
     <div class="section-title">Signatures</div>
-    
+
     <div class="signature-block">
       <h4>Performer</h4>
       <div class="signature-info">
@@ -378,7 +377,7 @@ function generateContractHTML(
         <p><strong>Status:</strong> Agreed by sending contract</p>
       </div>
     </div>
-    
+
     <div class="signature-block">
       <h4>Client</h4>
       <div class="signature-info">
@@ -399,17 +398,17 @@ function generateContractHTML(
     <h4>Legal Information & Governing Terms:</h4>
     <p><strong>Contract Number:</strong> ${contract.contractNumber}</p>
     <p><strong>Generated:</strong> ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
-    
+
     <p><strong>Binding Agreement:</strong> This is a legally binding agreement between the parties named above. Both parties acknowledge they have read, understood, and agree to be bound by all terms and conditions set forth herein.</p>
-    
+
     <p><strong>Governing Law & Jurisdiction:</strong> This contract shall be governed by and construed in accordance with the laws of England and Wales. Any disputes, claims, or legal proceedings arising from or relating to this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
-    
+
     <p><strong>Digital Signatures:</strong> Digital signatures are legally binding under the Electronic Communications Act 2000 and eIDAS Regulation. Electronic acceptance constitutes agreement to all terms.</p>
-    
+
     <p><strong>Entire Agreement:</strong> This contract represents the entire agreement between the parties and supersedes all prior negotiations, representations, or agreements. No modification shall be valid unless in writing and signed by both parties.</p>
-    
+
     <p><strong>Severability:</strong> If any provision of this contract is found to be unenforceable, the remaining provisions shall continue in full force and effect.</p>
-    
+
     <p><strong>Contract Validity:</strong> This contract remains valid and enforceable regardless of changes in circumstances, location, or contact information of either party.</p>
   </div>
 
