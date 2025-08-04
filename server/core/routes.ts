@@ -2583,24 +2583,26 @@ export async function registerRoutes(app: Express) {
         const { generateInvoicePDF } = await import('./pdf-generator');
         const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
         
-        // Try to upload to R2 storage
+        // Try to upload to R2 storage using consistent method
         try {
-          const { uploadFileToCloudflare, isCloudStorageConfigured } = await import('./cloud-storage');
+          const { uploadInvoiceToCloud } = await import('./cloud-storage');
+          const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
           
-          if (isCloudStorageConfigured()) {
-            const cloudStorageResult = await uploadFileToCloudflare(
-              `invoices/invoice-${invoice.invoiceNumber}.pdf`,
-              pdfBuffer,
-              'application/pdf'
-            );
+          if (uploadResult.success && uploadResult.url) {
+            // Update invoice with cloud storage info
+            await storage.updateInvoice(invoiceId, { 
+              cloudStorageUrl: uploadResult.url,
+              cloudStorageKey: uploadResult.key 
+            });
             
-            if (cloudStorageResult.success && cloudStorageResult.url) {
-              await storage.updateInvoice(invoiceId, { cloudStorageUrl: cloudStorageResult.url });
-              return res.redirect(cloudStorageResult.url);
-            }
+            console.log(`✅ Invoice PDF uploaded and saved. Redirecting to: ${uploadResult.url}`);
+            return res.redirect(uploadResult.url);
+          } else {
+            throw new Error(uploadResult.error || 'Failed to upload invoice to cloud storage');
           }
-        } catch (uploadError) {
-          // Fallback to direct serving
+        } catch (uploadError: any) {
+          console.error('❌ Failed to generate/upload invoice PDF:', uploadError);
+          // Continue to fallback serving
         }
         
         // Serve PDF directly

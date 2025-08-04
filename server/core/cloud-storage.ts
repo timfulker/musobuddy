@@ -51,19 +51,12 @@ export async function uploadFileToCloudflare(
 
     await r2Client.send(command);
 
-    // Now that public access is enabled, use direct public URLs for all files
-    let publicUrl;
-    if (contentType === 'text/html') {
-      // Use direct public URL for HTML signing pages since public access is enabled
-      publicUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${key}`;
-      console.log(`✅ Public URL generated for signing page: ${key}`);
-    } else {
-      // For PDFs, use the correct public URL format
-      publicUrl = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${key}`;
-      console.log(`✅ File uploaded to cloud storage: ${key}`);
-    }
-
+    // Use the correct R2 public URL format with actual account ID
+    const publicUrl = `https://pub-a730a594e40d8b46295554074c8e4413.r2.dev/${key}`;
+    
+    console.log(`✅ File uploaded to cloud storage: ${key}`);
     console.log(`🔗 Access URL: ${publicUrl}`);
+    
     return { success: true, url: publicUrl };
   } catch (error) {
     console.error('❌ Cloud storage upload failed:', error);
