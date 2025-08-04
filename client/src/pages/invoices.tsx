@@ -845,13 +845,9 @@ export default function Invoices() {
   };
 
   const handleViewInvoice = (invoice: Invoice) => {
-    // Determine the base URL - use production domain if in production
-    const baseUrl = window.location.hostname.includes('replit.app') 
-      ? `https://${window.location.hostname}` 
-      : window.location.origin;
-    
-    // Open invoice in new tab using the public view route
-    window.open(`${baseUrl}/view/invoices/${invoice.id}`, '_blank');
+    // Always use the production URL directly to avoid development gateway issues
+    const productionUrl = `https://musobuddy.replit.app/view/invoices/${invoice.id}`;
+    window.open(productionUrl, '_blank');
   };
 
   const filteredInvoices = (invoices || []).filter((invoice: Invoice) => {
