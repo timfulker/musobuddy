@@ -235,75 +235,87 @@ function generateContractSigningPage(contract: Contract, userSettings: UserSetti
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Contract - ${contract.contractNumber}</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; background: #f5f5f5; }
-        .header { text-align: center; margin-bottom: 30px; padding: 20px; background: #1e3a8a; color: white; border-radius: 8px; }
-        .contract-details { background: white; padding: 25px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .contract-details h4 { color: #1e3a8a; margin-top: 0; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
-        .signing-section { background: #e8f4fd; padding: 25px; border-radius: 8px; border: 2px solid #1e3a8a; }
-        .btn { background: #1e3a8a; color: white; padding: 15px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: bold; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; line-height: 1.6; background: #f5f5f5; height: 100vh; display: flex; flex-direction: column; }
+        .header { text-align: center; padding: 15px; background: #1e3a8a; color: white; flex-shrink: 0; }
+        .main-container { display: flex; flex: 1; gap: 20px; padding: 20px; max-height: calc(100vh - 120px); }
+        .contract-section { flex: 2; background: white; border-radius: 8px; padding: 20px; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .signing-section { flex: 1; background: #e8f4fd; padding: 25px; border-radius: 8px; border: 2px solid #1e3a8a; height: fit-content; min-width: 350px; }
+        .contract-section h4 { color: #1e3a8a; margin-top: 0; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
+        .btn { background: #1e3a8a; color: white; padding: 15px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 18px; font-weight: bold; width: 100%; }
         .btn:hover { background: #1e40af; transform: translateY(-1px); }
-        .signature-pad { border: 2px dashed #1e3a8a; height: 150px; margin: 10px 0; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-        input[type="text"] { padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .signature-pad { border: 2px dashed #1e3a8a; height: 120px; margin: 10px 0; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        input[type="text"] { padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; width: 100%; box-sizing: border-box; }
         input[type="text"]:focus { border-color: #1e3a8a; outline: none; }
-        .pdf-link { display: inline-block; margin: 10px 0; padding: 10px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px; }
+        .pdf-link { display: inline-block; margin: 10px 0; padding: 10px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px; width: 100%; text-align: center; box-sizing: border-box; }
         .pdf-link:hover { background: #5a6268; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .info-section { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        .terms-section { background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin-top: 20px; }
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Contract Signing</h1>
-        <h2>${contract.contractNumber}</h2>
+        <h1>Contract Signing - ${contract.contractNumber}</h1>
         <p>From: ${businessName}</p>
     </div>
     
-    <div class="contract-details">
-        <h3>Contract Details</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <div>
-                <h4>Client Information</h4>
-                <p><strong>Name:</strong> ${contract.clientName}</p>
-                ${contract.clientEmail ? `<p><strong>Email:</strong> ${contract.clientEmail}</p>` : ''}
-                ${contract.clientPhone ? `<p><strong>Phone:</strong> ${contract.clientPhone}</p>` : ''}
-                ${contract.clientAddress ? `<p><strong>Address:</strong> ${contract.clientAddress}</p>` : ''}
+    <div class="main-container">
+        <div class="contract-section">
+            <h3>Contract Details</h3>
+            
+            <div class="info-grid">
+                <div class="info-section">
+                    <h4>Client Information</h4>
+                    <p><strong>Name:</strong> ${contract.clientName}</p>
+                    ${contract.clientEmail ? `<p><strong>Email:</strong> ${contract.clientEmail}</p>` : ''}
+                    ${contract.clientPhone ? `<p><strong>Phone:</strong> ${contract.clientPhone}</p>` : ''}
+                    ${contract.clientAddress ? `<p><strong>Address:</strong> ${contract.clientAddress}</p>` : ''}
+                </div>
+                <div class="info-section">
+                    <h4>Event Information</h4>
+                    <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString()}</p>
+                    ${contract.eventTime ? `<p><strong>Time:</strong> ${contract.eventTime}</p>` : ''}
+                    ${contract.eventEndTime ? `<p><strong>End Time:</strong> ${contract.eventEndTime}</p>` : ''}
+                    <p><strong>Venue:</strong> ${contract.venue || 'TBD'}</p>
+                    ${contract.venueAddress ? `<p><strong>Venue Address:</strong> ${contract.venueAddress}</p>` : ''}
+                </div>
             </div>
-            <div>
-                <h4>Event Information</h4>
-                <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString()}</p>
-                ${contract.eventTime ? `<p><strong>Time:</strong> ${contract.eventTime}</p>` : ''}
-                ${contract.eventEndTime ? `<p><strong>End Time:</strong> ${contract.eventEndTime}</p>` : ''}
-                <p><strong>Venue:</strong> ${contract.venue || 'TBD'}</p>
-                ${contract.venueAddress ? `<p><strong>Venue Address:</strong> ${contract.venueAddress}</p>` : ''}
+            
+            <div class="info-section">
+                <h4>Financial Terms</h4>
+                <p><strong>Total Fee:</strong> £${contract.fee}</p>
+                ${contract.deposit ? `<p><strong>Deposit Required:</strong> £${contract.deposit}</p>` : ''}
+                ${contract.paymentInstructions ? `<p><strong>Payment Instructions:</strong> ${contract.paymentInstructions}</p>` : ''}
+            </div>
+            
+            ${contract.equipmentRequirements || contract.specialRequirements ? `
+            <div class="info-section" style="margin-top: 20px;">
+                <h4>Requirements & Notes</h4>
+                ${contract.equipmentRequirements ? `<p><strong>Equipment:</strong> ${contract.equipmentRequirements}</p>` : ''}
+                ${contract.specialRequirements ? `<p><strong>Special Requirements:</strong> ${contract.specialRequirements}</p>` : ''}
+            </div>
+            ` : ''}
+            
+            <div class="terms-section">
+                <h4>Terms & Conditions</h4>
+                <p><strong>Performer:</strong> ${businessName}</p>
+                <p>By signing this contract, both parties agree to the terms outlined. This contract is legally binding once signed by both parties.</p>
+                <p><strong>Cancellation Policy:</strong> Any cancellations must be made in writing with reasonable notice.</p>
+                <p><strong>Force Majeure:</strong> Neither party shall be liable for failure to perform due to circumstances beyond their control.</p>
+                <p><strong>Payment Terms:</strong> Payment as specified above. Late payments may incur additional charges.</p>
+                <p><strong>Liability:</strong> The performer's liability is limited to the contract value. Client is responsible for venue safety and compliance.</p>
             </div>
         </div>
         
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <h4>Financial Terms</h4>
-            <p><strong>Total Fee:</strong> £${contract.fee}</p>
-            ${contract.deposit ? `<p><strong>Deposit Required:</strong> £${contract.deposit}</p>` : ''}
-            ${contract.paymentInstructions ? `<p><strong>Payment Instructions:</strong> ${contract.paymentInstructions}</p>` : ''}
-        </div>
-        
-        ${contract.equipmentRequirements || contract.specialRequirements ? `
-        <div style="background: #e8f4fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <h4>Requirements & Notes</h4>
-            ${contract.equipmentRequirements ? `<p><strong>Equipment:</strong> ${contract.equipmentRequirements}</p>` : ''}
-            ${contract.specialRequirements ? `<p><strong>Special Requirements:</strong> ${contract.specialRequirements}</p>` : ''}
-        </div>
-        ` : ''}
-        
-        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
-            <h4>Terms & Conditions</h4>
-            <p><strong>Performer:</strong> ${businessName}</p>
-            <p>By signing this contract, both parties agree to the terms outlined above. This contract is legally binding once signed by both parties.</p>
-            <p><strong>Cancellation Policy:</strong> Any cancellations must be made in writing with reasonable notice.</p>
-            <p><strong>Force Majeure:</strong> Neither party shall be liable for failure to perform due to circumstances beyond their control.</p>
-        </div>
-    </div>
-    
-    <div class="signing-section">
-        <h3>Electronic Signature</h3>
-        <p>Please review all contract details above carefully. By signing below, you agree to the terms and conditions of this contract.</p>
-        <a href="/api/contracts/${contract.id}/pdf" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
+        <div class="signing-section">
+            <h3>Electronic Signature</h3>
+            <p>Please review the contract details and agree to the terms by signing below.</p>
+            
+            <a href="/api/contracts/${contract.id}/pdf" target="_blank" class="pdf-link">📄 View Full Contract PDF</a>
         
         <form id="signingForm" action="/api/contracts/sign/${contract.id}" method="POST">
             <label for="clientName">Full Name:</label>
