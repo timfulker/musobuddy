@@ -299,17 +299,17 @@ function generateContractHTML(
     <!-- Header -->
     <div class="header">
       <h1>Performance Contract</h1>
-      <div class="subtitle">Contract #\${contract.contractNumber || 'DRAFT'} • Generated \${new Date().toLocaleDateString('en-GB')}</div>
+      <div class="subtitle">Contract #${contract.contractNumber || 'DRAFT'} • Generated ${new Date().toLocaleDateString('en-GB')}</div>
     </div>
 
     <!-- Parties Section -->
     <div class="two-column">
       <div class="column">
         <h3>Performer Details</h3>
-        <p><strong>\${userSettings?.businessName || 'Professional Musician'}</strong></p>
-        \${userSettings?.businessEmail ? \`<p>Email: \${userSettings.businessEmail}</p>\` : ''}
-        \${userSettings?.phone ? \`<p>Phone: \${userSettings.phone}</p>\` : ''}
-        \${(() => {
+        <p><strong>${userSettings?.businessName || 'Professional Musician'}</strong></p>
+        ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
+        ${userSettings?.phone ? `<p>Phone: ${userSettings.phone}</p>` : ''}
+        ${(() => {
           const addressParts = [
             userSettings?.addressLine1,
             userSettings?.addressLine2,
@@ -317,10 +317,10 @@ function generateContractHTML(
             userSettings?.county,
             userSettings?.postcode
           ].filter(Boolean);
-          return addressParts.length > 0 ? \`<p>Address: \${addressParts.join(', ')}</p>\` : '';
+          return addressParts.length > 0 ? `<p>Address: ${addressParts.join(', ')}</p>` : '';
         })()}
-        \${userSettings?.website ? \`<p>Website: \${userSettings.website}</p>\` : ''}
-        \${userSettings?.taxNumber ? \`<p>VAT/Tax No: \${userSettings.taxNumber}</p>\` : ''}
+        ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
+        ${userSettings?.taxNumber ? `<p>VAT/Tax No: ${userSettings.taxNumber}</p>` : ''}
       </div>
       <div class="column">
         <h3>Client Details</h3>
