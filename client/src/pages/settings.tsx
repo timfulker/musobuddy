@@ -554,6 +554,7 @@ export default function Settings() {
         emailFromName: settings.emailFromName || "",
         nextInvoiceNumber: settings.nextInvoiceNumber || 1,
         defaultTerms: settings.defaultTerms || "",
+        defaultInvoiceDueDays: settings.defaultInvoiceDueDays || 7,
         bankDetails: settings.bankDetails || "",
         // AI Pricing Guide settings
         aiPricingEnabled: settings.aiPricingEnabled !== false,
