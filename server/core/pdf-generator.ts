@@ -1,9 +1,17 @@
 import puppeteer from 'puppeteer';
-import type { Contract, UserSettings, Invoice } from '../../shared/schema';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import type { Contract, UserSettings, Invoice } from '@shared/schema';
 
-function getLogoBase64(): string | null {
-  // Return base64 encoded logo if available
-  return null;
+function getLogoBase64(): string {
+  try {
+    const logoPath = join(process.cwd(), 'client/public/musobuddy-logo-purple.png');
+    const logoBuffer = readFileSync(logoPath);
+    return logoBuffer.toString('base64');
+  } catch (error) {
+    console.error('Error loading logo:', error);
+    return '';
+  }
 }
 
 export async function generateContractPDF(
@@ -69,922 +77,376 @@ function generateContractHTML(
     clientIpAddress?: string;
   }
 ): string {
-  // Original working professional template with proper variable interpolation
+  const businessName = userSettings?.businessName || 'Professional Musician';
+  const businessEmail = userSettings?.businessEmail || '';
+  const businessAddress = userSettings?.businessAddress || '';
+  const businessPhone = userSettings?.phone || '';
+
+  // Helper functions
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-GB', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+  };
+
+  const formatAddress = (addressStr: string) => {
+    if (!addressStr) return '';
+    return addressStr.split(',').map((part: string) => part.trim()).join('<br>');
+  };
+
   return `<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>MusoBuddy Performance Contract</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <title>Performance Contract</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-    html, body {
-      background: #f4f6fa;
-      color: #222;
-      font-family: 'Inter', Arial, sans-serif;
-      font-size: 13px;
+    * { box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
       margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 32px 28px 24px 28px;
-      box-shadow: 0 2px 16px #e0e7ef;
-      min-height: 1120px;
-    }
-    .header {
-      background: #3b82f6;
-      color: #fff;
-      padding: 28px 0 18px 0;
-      text-align: center;
-      border-radius: 0 0 8px 8px;
-      margin-bottom: 32px;
-    }
-    .header h1 {
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      letter-spacing: 1px;
-    }
-    .header .subtitle {
+      padding: 20px;
+      color: #333;
+      background: white;
       font-size: 14px;
-      opacity: 0.92;
     }
-    .section-header {
-      color: #334155;
-      background: #e0e7ef;
-      font-size: 15px;
-      font-weight: 600;
-      padding: 10px 18px;
-      border-radius: 6px;
-      margin: 32px 0 14px 0;
-      letter-spacing: 0.5px;
-    }
-    .two-column {
-      display: flex;
-      gap: 32px;
-      margin-bottom: 24px;
-    }
-    .column {
-      flex: 1;
-      background: #f4f6fa;
-      padding: 18px 18px 12px 18px;
-      border-radius: 8px;
-      border-left: 4px solid #3b82f6;
-    }
-    .column h3 {
-      color: #3b82f6;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .column p {
-      margin-bottom: 6px;
-      font-size: 13px;
-    }
-    .event-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 18px 0 0 0;
-      background: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 1px 4px #e0e7ef;
-    }
-    .event-table th {
-      background: #3b82f6;
-      color: #fff;
-      padding: 12px;
-      text-align: left;
-      font-weight: 600;
-      font-size: 13px;
-    }
-    .event-table td {
-      padding: 12px;
-      border-bottom: 1px solid #e0e7ef;
-      font-size: 13px;
-    }
-    .event-table tr:last-child td {
-      border-bottom: none;
-    }
-    .event-table .label {
-      font-weight: 600;
-      color: #334155;
-      width: 32%;
-    }
-    .fee-highlight {
-      background: #e0e7ef;
-      color: #3b82f6;
-      font-size: 22px;
+    
+    /* PURPLE GRADIENT HEADER */
+    .header {
+      background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+      color: white;
+      padding: 30px;
       text-align: center;
-      padding: 18px;
-      border-radius: 6px;
-      margin: 28px 0 0 0;
+      margin: -20px -20px 30px -20px;
+      border-radius: 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: bold;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      letter-spacing: -0.5px;
+    }
+    
+    .contract-number {
+      background: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-top: 10px;
       font-weight: 600;
-      box-shadow: 0 2px 8px #e0e7ef;
+      font-size: 16px;
     }
-    .fee-highlight .label {
-      font-size: 13px;
-      color: #334155;
-      font-weight: 400;
-      margin-top: 6px;
+    
+    /* BLUE SECTIONS */
+    .section {
+      margin: 25px 0;
+      padding: 20px;
+      border-left: 4px solid #2563eb;
+      background: #f8fafc;
+      border-radius: 0 8px 8px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
     }
-    .terms-section {
-      background: #f4f6fa;
-      padding: 20px 18px;
-      border-radius: 8px;
-      margin: 18px 0;
-      border-left: 4px solid #3b82f6;
-    }
-    .terms-section h4 {
-      color: #3b82f6;
-      font-size: 13px;
+    
+    .section h2 {
+      color: #2563eb;
+      margin: 0 0 15px 0;
+      font-size: 20px;
       font-weight: 600;
-      margin-bottom: 10px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .terms-section p, .terms-section ul {
-      font-size: 12px;
-      line-height: 1.5;
-      margin-bottom: 8px;
+    
+    /* DETAIL GRID LAYOUT */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 15px 0;
+    }
+    
+    .detail-item {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .detail-label {
+      font-weight: 600;
       color: #475569;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
     }
-    .terms-section ul {
-      padding-left: 20px;
+    
+    .detail-value {
+      color: #1e293b;
+      font-size: 16px;
+      font-weight: 500;
     }
-    .terms-section li {
-      margin-bottom: 4px;
-    }
-    .signature-section {
-      margin-top: 36px;
-      display: flex;
-      gap: 32px;
-    }
-    .signature-box {
-      flex: 1;
-      border: 2px solid #3b82f6;
-      border-radius: 8px;
-      padding: 22px 12px 18px 12px;
+    
+    /* GREEN FEE HIGHLIGHT */
+    .fee-highlight {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
       text-align: center;
-      background: #fff;
-      min-height: 100px;
+      padding: 25px;
+      border-radius: 8px;
+      margin: 25px 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    
+    /* SIGNATURE SECTION */
+    .signature-section {
+      margin-top: 40px;
+      padding: 25px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      border: 2px solid #e2e8f0;
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    
+    .signature-box {
+      background: white;
+      border: 2px solid #9333ea;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      min-height: 80px;
       position: relative;
     }
-    .signature-box h4 {
-      color: #3b82f6;
-      font-size: 13px;
+    
+    .signature-label {
+      color: #9333ea;
       font-weight: 600;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      font-size: 16px;
     }
-    .signature-line {
-      border-bottom: 2px solid #3b82f6;
-      margin: 18px 0 8px 0;
-      height: 36px;
-    }
-    .signature-box .date-line {
-      font-size: 11px;
-      color: #64748b;
-      margin-top: 8px;
-    }
+    
     .signed-indicator {
-      background: #059669;
+      background: #10b981;
       color: white;
-      padding: 7px 14px;
+      padding: 8px 16px;
       border-radius: 20px;
-      font-size: 11px;
       font-weight: 600;
       display: inline-block;
-      margin-top: 8px;
+      margin-top: 10px;
+      font-size: 14px;
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
     }
+    
+    .signature-name {
+      font-size: 20px;
+      color: #1e293b;
+      margin: 10px 0;
+      font-weight: 600;
+    }
+    
+    /* TERMS SECTION */
+    .terms {
+      font-size: 13px;
+      line-height: 1.8;
+      color: #475569;
+      margin-top: 30px;
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 8px;
+      border-left: 4px solid #94a3b8;
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    
+    .terms strong {
+      color: #334155;
+      font-size: 14px;
+    }
+    
+    /* FOOTER */
     .footer {
-      background: #3b82f6;
-      color: white;
-      padding: 18px 0 12px 0;
-      text-align: center;
-      font-size: 11px;
-      border-radius: 8px 8px 0 0;
       margin-top: 40px;
+      text-align: center;
+      color: #64748b;
+      font-size: 11px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 20px;
     }
-    .footer .brand {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 3px;
+    
+    /* SINGLE COLUMN FOR LONG CONTENT */
+    .full-width {
+      grid-column: 1 / -1;
     }
-    .footer .contract-ref {
-      font-size: 10px;
-      opacity: 0.7;
+    
+    /* RESPONSIVE GRID */
+    @media (max-width: 600px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
     }
+    
     @media print {
-      body { margin: 0; -webkit-print-color-adjust: exact; color-adjust: exact; }
-      .container { box-shadow: none; }
-      .header, .footer { background: #3b82f6 !important; }
-      .section-header, .event-table th { background: #e0e7ef !important; color: #334155 !important; }
-      .fee-highlight { background: #e0e7ef !important; color: #3b82f6 !important; }
-      .event-table, .fee-highlight, .section-header, .terms-section, .signature-section { page-break-inside: avoid; break-inside: avoid; }
-      .section-header.terms { page-break-before: always; break-before: page; }
-      .section-header { page-break-after: avoid; break-after: avoid; }
-    }
-    @media (max-width: 700px) {
-      .container { padding: 10px; }
-      .two-column, .signature-section { flex-direction: column; gap: 16px; }
+      .header, .section, .fee-highlight, .signature-section, .terms {
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <h1>Performance Contract</h1>
-      <div class="subtitle">Contract #${contract.contractNumber || 'DRAFT'} • Generated ${new Date().toLocaleDateString('en-GB')}</div>
-    </div>
+  <!-- PURPLE HEADER -->
+  <div class="header">
+    <h1>Performance Contract</h1>
+    <div class="contract-number">Contract #${contract.contractNumber || contract.id}</div>
+  </div>
 
-    <!-- Parties Section -->
-    <div class="two-column">
-      <div class="column">
-        <h3>Performer Details</h3>
-        <p><strong>${userSettings?.businessName || 'Professional Musician'}</strong></p>
-        ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
-        ${userSettings?.phone ? `<p>Phone: ${userSettings.phone}</p>` : ''}
-        ${(() => {
-          const addressParts = [
-            userSettings?.addressLine1,
-            userSettings?.addressLine2,
-            userSettings?.city,
-            userSettings?.county,
-            userSettings?.postcode
-          ].filter(Boolean);
-          return addressParts.length > 0 ? `<p>Address: ${addressParts.join(', ')}</p>` : '';
-        })()}
-        ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
-        ${userSettings?.taxNumber ? `<p>VAT/Tax No: ${userSettings.taxNumber}</p>` : ''}
+  <!-- EVENT DETAILS SECTION -->
+  <div class="section">
+    <h2>Event Details</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">Event Date</div>
+        <div class="detail-value">${formatDate(contract.eventDate)}</div>
       </div>
-      <div class="column">
-        <h3>Client Details</h3>
-        <p><strong>\${contract.clientName}</strong></p>
-        \${contract.clientEmail ? \`<p>Email: \${contract.clientEmail}</p>\` : ''}
-        \${contract.clientPhone ? \`<p>Phone: \${contract.clientPhone}</p>\` : ''}
-        \${contract.clientAddress ? \`<p>Address: \${contract.clientAddress}</p>\` : ''}
+      <div class="detail-item">
+        <div class="detail-label">Event Time</div>
+        <div class="detail-value">${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}</div>
       </div>
-    </div>
-
-    <!-- Event Details Section -->
-    <div class="section-header">Event Details</div>
-    <table class="event-table">
-      <tr>
-        <td class="label">Event Date:</td>
-        <td><strong>\${contract.eventDate ? new Date(contract.eventDate).toLocaleDateString('en-GB', {
-          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-        }) : 'To be confirmed'}</strong></td>
-      </tr>
-      <tr>
-        <td class="label">Event Time:</td>
-        <td>\${contract.eventTime || 'TBC'} - \${contract.eventEndTime || 'TBC'}</td>
-      </tr>
-      <tr>
-        <td class="label">Venue:</td>
-        <td><strong>\${contract.venue || 'To be confirmed'}</strong></td>
-      </tr>
-      <tr>
-        <td class="label">Venue Address:</td>
-        <td>\${contract.venueAddress || 'To be confirmed'}</td>
-      </tr>
-      <tr>
-        <td class="label">Performance Type:</td>
-        <td>\${userSettings?.primaryInstrument ? \`\${userSettings.primaryInstrument} Performance\` : 'Live Music Performance'}</td>
-      </tr>
-    </table>
-
-    <!-- Fee Highlight -->
-    <div class="fee-highlight">
-      £\${contract.fee || '0.00'}
-      <div class="label">Total Performance Fee</div>
-      \${contract.deposit && parseFloat(contract.deposit) > 0 ? \`<div style="font-size:12px; color:#334155; margin-top:4px;">Deposit Required: £\${contract.deposit}</div>\` : ''}
-    </div>
-
-    <!-- Equipment & Special Requirements -->
-    \${(contract.equipmentRequirements || contract.specialRequirements) ? \`
-      <div class="section-header">Requirements & Specifications</div>
-      <div class="terms-section">
-        \${contract.equipmentRequirements ? \`
-          <h4>Equipment Requirements</h4>
-          <p>\${contract.equipmentRequirements}</p>
-        \` : ''}
-        \${contract.specialRequirements ? \`
-          <h4>Special Requirements</h4>
-          <p>\${contract.specialRequirements}</p>
-        \` : ''}
+      <div class="detail-item">
+        <div class="detail-label">Venue</div>
+        <div class="detail-value">${contract.venue || 'TBC'}</div>
       </div>
-    \` : ''}
+      <div class="detail-item">
+        <div class="detail-label">Client Name</div>
+        <div class="detail-value">${contract.clientName}</div>
+      </div>
+      ${contract.equipmentRequirements ? `
+      <div class="detail-item">
+        <div class="detail-label">Equipment Requirements</div>
+        <div class="detail-value">${contract.equipmentRequirements}</div>
+      </div>
+      ` : ''}
+      ${contract.specialRequirements ? `
+      <div class="detail-item full-width">
+        <div class="detail-label">Special Requirements</div>
+        <div class="detail-value">${contract.specialRequirements}</div>
+      </div>
+      ` : ''}
+    </div>
+  </div>
 
-    <!-- Terms & Conditions -->
-    <div class="section-header terms">Terms & Conditions</div>
+  <!-- CLIENT INFORMATION SECTION -->
+  <div class="section">
+    <h2>Client Information</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">Contact Email</div>
+        <div class="detail-value">${contract.clientEmail || 'Not provided'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Contact Phone</div>
+        <div class="detail-value">${contract.clientPhone || 'Not provided'}</div>
+      </div>
+      ${contract.clientAddress ? `
+      <div class="detail-item full-width">
+        <div class="detail-label">Client Address</div>
+        <div class="detail-value">${formatAddress(contract.clientAddress)}</div>
+      </div>
+      ` : ''}
+    </div>
+  </div>
+
+  <!-- PERFORMER DETAILS SECTION -->
+  <div class="section">
+    <h2>Performer Details</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">Performer Name</div>
+        <div class="detail-value">${businessName}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Contact Phone</div>
+        <div class="detail-value">${businessPhone || 'Not provided'}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Contact Email</div>
+        <div class="detail-value">${businessEmail || 'Not provided'}</div>
+      </div>
+      ${businessAddress ? `
+      <div class="detail-item">
+        <div class="detail-label">Business Address</div>
+        <div class="detail-value">${formatAddress(businessAddress)}</div>
+      </div>
+      ` : ''}
+    </div>
+  </div>
+
+  <!-- FEE HIGHLIGHT -->
+  <div class="fee-highlight">
+    Performance Fee: £${contract.fee || 'TBC'}
+  </div>
+
+  <!-- SIGNATURE SECTION -->
+  <div class="signature-section">
+    <h2 style="color: #475569; margin-bottom: 20px; font-size: 18px;">Contract Agreement</h2>
     
-    <div class="terms-section">
-      <h4>Payment Terms & Conditions</h4>
-      <ul>
-        <li><strong>Payment Due Date:</strong> Full payment of £\${contract.fee || '0.00'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</li>
-        <li><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</li>
-        <li><strong>Deposit:</strong> £\${contract.deposit || '0.00'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</li>
-        <li><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</li>
-      </ul>
+    <div class="signature-box">
+      <div class="signature-label">Client Signature</div>
+      ${signatureDetails ? `
+        <div class="signature-name">${signatureDetails.signatureName}</div>
+        <div class="signed-indicator">
+          ✓ Signed on ${signatureDetails.signedAt ? new Date(signatureDetails.signedAt).toLocaleDateString('en-GB') : 'N/A'}
+        </div>
+      ` : `
+        <div style="color: #64748b; font-style: italic; margin-top: 20px;">
+          Awaiting client signature
+        </div>
+      `}
     </div>
-
-    <div class="terms-section">
-      <h4>Cancellation & Refund Policy</h4>
-      <ul>
-        <li><strong>Client Cancellation:</strong>
-          <ul>
-            <li>More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee.</li>
-            <li>30 days or less before event: Full performance fee becomes due regardless of cancellation.</li>
-            <li>Same day cancellation: Full fee due plus any additional costs incurred.</li>
-          </ul>
-        </li>
-        <li><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</li>
-        <li><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</li>
-      </ul>
-    </div>
-
-    <div class="terms-section">
-      <h4>Force Majeure</h4>
-      <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
-    </div>
-
-    <div class="terms-section">
-      <h4>Performance Contingencies</h4>
-      <ul>
-        <li>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</li>
-      </ul>
-    </div>
-
-    <div class="terms-section">
-      <h4>Professional Performance Standards</h4>
-      <ul>
-        <li><strong>Payment Schedule:</strong> The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.</li>
-        <li><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</li>
-        <li><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</li>
-        <li><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</li>
-        <li><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</li>
-        <li><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</li>
-        <li><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</li>
-        <li><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</li>
-      </ul>
-    </div>
-
-    <!-- Signature Section -->
-    <div class="signature-section">
-      <div class="signature-box">
-        <h4>Client Signature</h4>
-        <div class="signature-line"></div>
-        <p><strong>\${contract.clientName}</strong></p>
-        <div class="date-line">Date: ________________</div>
-        \${signatureDetails?.signedAt && signatureDetails?.signatureName ? \`
-          <div class="signed-indicator">
-            ✓ Signed on \${new Date(signatureDetails.signedAt).toLocaleDateString('en-GB')}
-          </div>
-        \` : ''}
-      </div>
-      <div class="signature-box">
-        <h4>Performer Signature</h4>
-        <div class="signature-line"></div>
-        <p><strong>\${userSettings?.businessName || 'Performer'}</strong></p>
-        <div class="date-line">Date: ________________</div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <div class="brand">MusoBuddy</div>
-      <div class="contract-ref">
-        Contract Reference: \${contract.contractNumber || 'DRAFT'} • 
-        Generated: \${new Date().toLocaleDateString('en-GB')} \${new Date().toLocaleTimeString('en-GB')}
-        \${contract.id ? \` • ID: \${contract.id}\` : ''}
+    
+    <div class="signature-box">
+      <div class="signature-label">Performer Signature</div>
+      <div class="signature-name">${businessName}</div>
+      <div class="signed-indicator">
+        ✓ Agreed by sending contract
       </div>
     </div>
   </div>
-</body>
-</html>\`;
 
-        /* Two Column Layout */
-        .two-column {
-            display: flex;
-            gap: 30px;
-            margin-bottom: 25px;
-        }
-
-        .column {
-            flex: 1;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #9333ea;
-        }
-
-        .column h3 {
-            color: #9333ea;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .column p {
-            margin-bottom: 6px;
-            font-size: 13px;
-        }
-
-        .column strong {
-            color: #1e293b;
-            font-weight: 600;
-        }
-
-        /* Event Details Table */
-        .event-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .event-table th {
-            background: #2563eb;
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        .event-table td {
-            padding: 15px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 13px;
-        }
-
-        .event-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .event-table .label {
-            font-weight: 600;
-            color: #475569;
-            width: 30%;
-        }
-
-        /* Fee Highlight */
-        .fee-highlight {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 25px 0;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-            page-break-inside: avoid;
-            page-break-before: auto;
-            page-break-after: avoid;
-        }
-
-        .fee-highlight .amount {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .fee-highlight .label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .fee-highlight .deposit-info {
-            margin-top: 10px;
-            font-size: 12px;
-            opacity: 0.9;
-        }
-
-        /* Terms Section */
-        .terms-section {
-            background: #f1f5f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #2563eb;
-        }
-
-        .terms-section h4 {
-            color: #2563eb;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-        }
-
-        .terms-section p, .terms-section ul {
-            font-size: 11px;
-            line-height: 1.4;
-            margin-bottom: 8px;
-            color: #475569;
-        }
-
-        .terms-section ul {
-            padding-left: 20px;
-        }
-
-        .terms-section li {
-            margin-bottom: 5px;
-        }
-
-        /* Signature Section */
-        .signature-section {
-            margin-top: 40px;
-            display: flex;
-            gap: 40px;
-        }
-
-        .signature-box {
-            flex: 1;
-            border: 2px solid #9333ea;
-            border-radius: 8px;
-            padding: 25px;
-            text-align: center;
-            background: #fefefe;
-            min-height: 120px;
-            position: relative;
-        }
-
-        .signature-box h4 {
-            color: #9333ea;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .signature-line {
-            border-bottom: 2px solid #9333ea;
-            margin: 20px 0 10px 0;
-            height: 40px;
-        }
-
-        .signature-box .date-line {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 10px;
-        }
-
-        .signed-indicator {
-            background: #059669;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            display: inline-block;
-            margin-top: 10px;
-        }
-
-        /* Footer */
-        .footer {
-            background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
-            color: white;
-            padding: 20px 30px;
-            margin: 40px -15mm -20mm -15mm;
-            text-align: center;
-            font-size: 11px;
-        }
-
-        .footer .brand {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .footer .tagline {
-            opacity: 0.8;
-            margin-bottom: 10px;
-        }
-
-        .footer .contract-ref {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        /* Print Styles - Enhanced for proper page breaks */
-        @media print {
-            body {
-                margin: 0;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-            }
-
-            .container {
-                margin: 0;
-                padding: 20mm 15mm;
-                max-width: none;
-            }
-
-            .header, .footer {
-                background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%) !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-            }
-
-            .section-header {
-                background: #2563eb !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-                page-break-after: avoid;
-                page-break-inside: avoid;
-                break-after: avoid;
-                margin-top: 40px;
-            }
-
-            .section-header.terms {
-                page-break-before: always;
-                break-before: page;
-            }
-
-            .fee-highlight {
-                background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-                page-break-inside: avoid !important;
-                page-break-after: avoid;
-                break-inside: avoid;
-                break-after: avoid;
-            }
-
-            .event-table {
-                page-break-inside: avoid !important;
-                page-break-after: avoid;
-                break-inside: avoid;
-                break-after: avoid;
-            }
-
-            .event-table th {
-                background: #2563eb !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-            }
-
-            .two-column {
-                page-break-inside: avoid !important;
-                page-break-after: avoid;
-                break-inside: avoid;
-            }
-
-            .terms-section {
-                page-break-inside: avoid;
-                margin-bottom: 15px;
-            }
-
-            .terms-section:last-of-type {
-                page-break-after: avoid;
-            }
-
-            .signature-section {
-                page-break-inside: avoid;
-                page-break-before: auto;
-                margin-top: 20px;
-            }
-
-            .footer {
-                page-break-inside: avoid;
-            }
-
-            /* Ensure sections don't split awkwardly */
-            .section-header + .terms-section {
-                page-break-before: avoid;
-            }
-
-            .section-header + .event-table {
-                page-break-before: avoid;
-            }
-
-            .section-header + .two-column {
-                page-break-before: avoid;
-            }
-
-            .section-header + .fee-highlight {
-                page-break-before: avoid;
-            }
-
-            /* Aggressive anti-break rules for critical sections */
-            div[style*="page-break-inside: avoid"] {
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-                orphans: 4;
-                widows: 4;
-            }
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .two-column {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .signature-section {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .container {
-                padding: 15px;
-            }
-
-            .header, .footer {
-                margin-left: -15px;
-                margin-right: -15px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Header Section -->
-        <div class="header">
-            <h1>PERFORMANCE CONTRACT</h1>
-            <div class="subtitle">Contract #${contract.contractNumber || 'DRAFT'} • Generated ${new Date().toLocaleDateString('en-GB')}</div>
-        </div>
-
-        <!-- Parties Section -->
-        <div class="two-column">
-            <div class="column">
-                <h3>Performer Details</h3>
-                <p><strong>${userSettings?.businessName || 'Professional Musician'}</strong></p>
-                ${userSettings?.businessEmail ? `<p>Email: ${userSettings.businessEmail}</p>` : ''}
-                ${userSettings?.phone ? `<p>Phone: ${userSettings.phone}</p>` : ''}
-                ${(() => {
-                    if (!userSettings) return '';
-                    const addressParts = [
-                        userSettings.addressLine1,
-                        userSettings.addressLine2,
-                        userSettings.city,
-                        userSettings.county,
-                        userSettings.postcode
-                    ].filter(Boolean);
-                    return addressParts.length > 0 ? `<p>Address: ${addressParts.join(', ')}</p>` : '';
-                })()}
-                ${userSettings?.website ? `<p>Website: ${userSettings.website}</p>` : ''}
-                ${userSettings?.taxNumber ? `<p>VAT/Tax No: ${userSettings.taxNumber}</p>` : ''}
-            </div>
-
-            <div class="column">
-                <h3>Client Details</h3>
-                <p><strong>${contract.clientName}</strong></p>
-                ${contract.clientEmail ? `<p>Email: ${contract.clientEmail}</p>` : ''}
-                ${contract.clientPhone ? `<p>Phone: ${contract.clientPhone}</p>` : ''}
-                ${contract.clientAddress ? `<p>Address: ${contract.clientAddress}</p>` : ''}
-            </div>
-        </div>
-
-        <!-- Event Details Section -->
-        <div class="section-header">Event Details</div>
-
-        <table class="event-table">
-            <tr>
-                <td class="label">Event Date:</td>
-                <td><strong>${contract.eventDate ? new Date(contract.eventDate).toLocaleDateString('en-GB', {
-                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-                }) : 'To be confirmed'}</strong></td>
-            </tr>
-            <tr>
-                <td class="label">Event Time:</td>
-                <td>${contract.eventTime || 'TBC'} - ${contract.eventEndTime || 'TBC'}</td>
-            </tr>
-            <tr>
-                <td class="label">Venue:</td>
-                <td><strong>${contract.venue || 'To be confirmed'}</strong></td>
-            </tr>
-            <tr>
-                <td class="label">Venue Address:</td>
-                <td>${contract.venueAddress || 'To be confirmed'}</td>
-            </tr>
-            <tr>
-                <td class="label">Performance Type:</td>
-                <td>${userSettings?.primaryInstrument ? `${userSettings.primaryInstrument} Performance` : 'Live Music Performance'}</td>
-            </tr>
-        </table>
-
-        <!-- Fee Highlight - Protected from page breaks -->
-        <div style="page-break-inside: avoid !important; break-inside: avoid;">
-            <div class="fee-highlight">
-                <div class="amount">£${contract.fee || '0.00'}</div>
-                <div class="label">Total Performance Fee</div>
-                ${contract.deposit && parseFloat(contract.deposit) > 0 ? `<div class="deposit-info">Deposit Required: £${contract.deposit}</div>` : ''}
-            </div>
-        </div>
-
-        <!-- Equipment & Special Requirements -->
-        ${(contract.equipmentRequirements || contract.specialRequirements) ? `
-        <div class="section-header">Requirements & Specifications</div>
-        <div class="terms-section">
-            ${contract.equipmentRequirements ? `
-            <h4>Equipment Requirements</h4>
-            <p>${contract.equipmentRequirements}</p>
-            ` : ''}
-            ${contract.specialRequirements ? `
-            <h4>Special Requirements</h4>
-            <p>${contract.specialRequirements}</p>
-            ` : ''}
-        </div>
-        ` : ''}
-
-        <!-- Terms & Conditions -->
-        <div class="section-header terms">Terms & Conditions</div>
-
-        <div class="terms-section">
-            <h4>Payment Terms & Conditions</h4>
-            <ul>
-                <li><strong>Payment Due Date:</strong> Full payment of £${contract.fee || '0.00'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</li>
-                <li><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</li>
-                <li><strong>Deposit:</strong> £${contract.deposit || '0.00'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</li>
-                <li><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</li>
-            </ul>
-        </div>
-
-        <div class="terms-section">
-            <h4>Cancellation & Refund Policy</h4>
-            <ul>
-                <li><strong>Client Cancellation:</strong>
-                    <ul>
-                        <li>More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee.</li>
-                        <li>30 days or less before event: Full performance fee becomes due regardless of cancellation.</li>
-                        <li>Same day cancellation: Full fee due plus any additional costs incurred.</li>
-                    </ul>
-                </li>
-                <li><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</li>
-                <li><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</li>
-            </ul>
-        </div>
-
-        <div class="terms-section">
-            <h4>Force Majeure</h4>
-            <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
-        </div>
-
-        <div class="terms-section">
-            <h4>Performance Contingencies</h4>
-            <ul>
-                <li>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</li>
-            </ul>
-        </div>
-
-        <div class="terms-section">
-            <h4>Professional Performance Standards</h4>
-            <ul>
-                <li><strong>Payment Schedule:</strong> The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.</li>
-                <li><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</li>
-                <li><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</li>
-                <li><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</li>
-                <li><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</li>
-                <li><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</li>
-                <li><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</li>
-                <li><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</li>
-            </ul>
-        </div>
-
-        <!-- Signature Section -->
-        <div class="signature-section">
-            <div class="signature-box">
-                <h4>Client Signature</h4>
-                <div class="signature-line"></div>
-                <p><strong>${contract.clientName}</strong></p>
-                <div class="date-line">Date: ________________</div>
-                ${signatureDetails?.signedAt && signatureDetails?.signatureName ? `
-                <div class="signed-indicator">
-                    ✓ Signed on ${new Date(signatureDetails.signedAt).toLocaleDateString('en-GB')}
-                </div>
-                ` : ''}
-            </div>
-
-            <div class="signature-box">
-                <h4>Performer Signature</h4>
-                <div class="signature-line"></div>
-                <p><strong>${userSettings?.businessName || 'Performer'}</strong></p>
-                <div class="date-line">Date: ________________</div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <div class="brand">MusoBuddy</div>
-            <div class="tagline">Professional Music Business Management</div>
-            <div class="contract-ref">
-                Contract Reference: ${contract.contractNumber || 'DRAFT'} • 
-                Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}
-                ${contract.id ? ` • ID: ${contract.id}` : ''}
-            </div>
-        </div>
-    </div>
+  <!-- TERMS AND CONDITIONS -->
+  <div class="terms">
+    <strong>Terms and Conditions:</strong><br><br>
+    
+    <strong>Payment:</strong> Payment is due within 7 days of performance completion unless otherwise agreed in writing.<br><br>
+    
+    <strong>Cancellation:</strong> Cancellation within 48 hours of the event may result in a 50% cancellation fee. The performer reserves the right to cancel due to circumstances beyond their control (illness, weather, etc.).<br><br>
+    
+    <strong>Equipment:</strong> The performer will provide their own professional equipment unless specifically noted above. Adequate power supply and safe performance area must be provided by the client.<br><br>
+    
+    <strong>Liability:</strong> The performer carries public liability insurance. The client is responsible for the safety and security of guests and venue.<br><br>
+    
+    <strong>Agreement:</strong> This contract constitutes the entire agreement between the parties and supersedes all prior negotiations, representations, or agreements relating to the subject matter herein.
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Contract generated on ${new Date().toLocaleDateString('en-GB')} via MusoBuddy Professional Services
+  </div>
 </body>
 </html>`;
 }
@@ -1061,11 +523,62 @@ function generateInvoiceHTML(
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-    /* ... continue with existing invoice styles ... */
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #9333ea; }
+    .invoice-title { font-size: 28px; font-weight: bold; color: #9333ea; margin: 15px 0; }
+    .invoice-number { font-size: 16px; color: #666; }
+    .section { margin-bottom: 25px; }
+    .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .detail-item { margin-bottom: 12px; }
+    .detail-label { font-weight: bold; color: #555; }
+    .total-highlight { background: #9333ea; color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; }
+    .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 20px; }
   </style>
 </head>
 <body>
-  <!-- Invoice content continues with existing template -->
+  <div class="header">
+    ${logoHtml}
+    <div class="invoice-title">INVOICE</div>
+    <div class="invoice-number">Invoice Number: ${invoice.invoiceNumber}</div>
+  </div>
+
+  <div class="section">
+    <div class="details-grid">
+      <div>
+        <h3>From:</h3>
+        <div>${businessName}</div>
+        ${businessAddress ? `<div>${businessAddress}</div>` : ''}
+        ${businessPhone ? `<div>Phone: ${businessPhone}</div>` : ''}
+        ${businessEmail ? `<div>Email: ${businessEmail}</div>` : ''}
+      </div>
+      <div>
+        <h3>To:</h3>
+        <div>${invoice.clientName}</div>
+        ${invoice.clientEmail ? `<div>Email: ${invoice.clientEmail}</div>` : ''}
+        ${invoice.clientAddress ? `<div>${invoice.clientAddress}</div>` : ''}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="detail-item">
+      <span class="detail-label">Invoice Date:</span> ${new Date(invoice.issueDate).toLocaleDateString('en-GB')}
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Due Date:</span> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Performance Date:</span> ${new Date(invoice.performanceDate).toLocaleDateString('en-GB')}
+    </div>
+  </div>
+
+  <div class="total-highlight">
+    Total Amount: £${invoice.amount}
+  </div>
+
+  <div class="footer">
+    <p>Generated by <strong style="color: #9333ea;">MusoBuddy</strong> – Professional Music Business Management</p>
+    <p>Invoice generated on ${new Date().toLocaleDateString('en-GB')}</p>
+  </div>
 </body>
 </html>`;
 }
