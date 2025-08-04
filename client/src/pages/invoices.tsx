@@ -845,9 +845,8 @@ export default function Invoices() {
   };
 
   const handleViewInvoice = (invoice: Invoice) => {
-    // Always use the production URL directly to avoid development gateway issues
-    const productionUrl = `https://musobuddy.replit.app/view/invoices/${invoice.id}`;
-    window.open(productionUrl, '_blank');
+    // Open invoice in new tab using the public view route that redirects to cloud storage
+    window.open(`/view/invoices/${invoice.id}`, '_blank');
   };
 
   const filteredInvoices = (invoices || []).filter((invoice: Invoice) => {
