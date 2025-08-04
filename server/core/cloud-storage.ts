@@ -46,18 +46,30 @@ export async function uploadFileToCloudflare(
       ContentType: contentType,
       Metadata: {
         'public-access': 'true'
-      }
+      },
+
+      // Cache for 1 year since PDFs don't change
+      CacheControl: 'public, max-age=31536000',
+      // Add content disposition for proper PDF viewing
+      ContentDisposition: contentType === 'application/pdf' ? 'inline' : 'attachment'
     });
 
     await r2Client.send(command);
 
-    // Use the correct R2 public URL format with actual account ID
-    const publicUrl = `https://pub-a730a594e40d8b46295554074c8e4413.r2.dev/${key}`;
+    // Generate a signed URL for secure public access (valid for 1 year)
+    const getCommand = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+    });
+    
+    const signedUrl = await getSignedUrl(r2Client, getCommand, { 
+      expiresIn: 604800 // 7 days (maximum allowed)
+    });
     
     console.log(`✅ File uploaded to cloud storage: ${key}`);
-    console.log(`🔗 Access URL: ${publicUrl}`);
+    console.log(`🔗 Signed Access URL generated (1 year expiry)`);
     
-    return { success: true, url: publicUrl };
+    return { success: true, url: signedUrl };
   } catch (error) {
     console.error('❌ Cloud storage upload failed:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
