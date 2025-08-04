@@ -150,4 +150,72 @@ export class EmailService {
       </div>
     `;
   }
+
+  // Send contract email with R2 URL
+  async sendContractEmail(contract: any, userSettings: any, subject: string, contractUrl: string, customMessage?: string) {
+    if (!this.mailgun) {
+      console.log('📧 Mailgun not configured, skipping contract email');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    try {
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Contract Ready for Signing</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #1e3a8a;">Contract Ready for Your Signature</h2>
+            
+            <p>Dear ${contract.clientName},</p>
+            
+            ${customMessage ? `<p>${customMessage}</p>` : ''}
+            
+            <p>Your contract for the event on ${new Date(contract.eventDate).toLocaleDateString('en-GB')} is ready for signing.</p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">Event Details:</h3>
+              <p><strong>Date:</strong> ${new Date(contract.eventDate).toLocaleDateString('en-GB')}</p>
+              <p><strong>Time:</strong> ${contract.eventTime} - ${contract.eventEndTime}</p>
+              <p><strong>Venue:</strong> ${contract.venue}</p>
+              <p><strong>Fee:</strong> £${contract.fee}</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${contractUrl}" 
+                 style="background: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                View & Sign Contract
+              </a>
+            </div>
+            
+            <p>Please review and sign the contract at your earliest convenience.</p>
+            
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            
+            <p style="font-size: 14px; color: #666;">
+              Best regards,<br>
+              ${userSettings?.businessName || 'MusoBuddy Team'}<br>
+              ${userSettings?.businessEmail || ''}
+            </p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const emailData = {
+        to: contract.clientEmail,
+        subject: subject,
+        html: emailHtml,
+        from: `${userSettings?.businessName || 'MusoBuddy'} <noreply@${process.env.MAILGUN_DOMAIN}>`
+      };
+
+      return await this.sendEmail(emailData);
+    } catch (error: any) {
+      console.error('❌ Failed to send contract email:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }

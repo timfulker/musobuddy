@@ -799,8 +799,8 @@ export async function registerRoutes(app: Express) {
 
       // Import email service
       console.log('🔍 Importing email service...');
-      const { MailgunService } = await import('./services');
-      const emailService = new MailgunService();
+      const { EmailService } = await import('./services');
+      const emailService = new EmailService();
       console.log('✅ Email service imported');
       
       // Generate professional email signature
@@ -919,8 +919,8 @@ export async function registerRoutes(app: Express) {
       }
 
       // Import email service
-      const { MailgunService } = await import('./services');
-      const emailService = new MailgunService();
+      const { EmailService } = await import('./services');
+      const emailService = new EmailService();
       
       // Generate email signature
       const signature = emailService.generateEmailSignature(userSettings);
@@ -1069,8 +1069,8 @@ export async function registerRoutes(app: Express) {
       }
       
       // Import email service
-      const { MailgunService } = await import('./services');
-      const emailService = new MailgunService();
+      const { EmailService } = await import('./services');
+      const emailService = new EmailService();
       
       // Generate professional email signature
       const signature = emailService.generateEmailSignature(userSettings);
@@ -2079,8 +2079,8 @@ export async function registerRoutes(app: Express) {
       }
       
       // Import services
-      const { MailgunService } = await import('./services');
-      const emailService = new MailgunService();
+      const { EmailService } = await import('./services');
+      const emailService = new EmailService();
       
       // NEW: Use dedicated contract cloud storage for R2 upload
       const { uploadContractToCloud } = await import('./contract-cloud-storage');
@@ -2142,8 +2142,8 @@ export async function registerRoutes(app: Express) {
       
       const userSettings = await storage.getUserSettings(req.session.userId);
       
-      const { MailgunService } = await import('./services');
-      const emailService = new MailgunService();
+      const { EmailService } = await import('./services');
+      const emailService = new EmailService();
       
       const subject = `Contract reminder - ${contract.contractNumber}`;
       await emailService.sendContractEmail(contract, userSettings, subject, undefined, customMessage);
@@ -2360,8 +2360,8 @@ export async function registerRoutes(app: Express) {
       // Send confirmation emails
       try {
         const userSettings = await storage.getUserSettings(contract.userId);
-        const { MailgunService } = await import('./services');
-        const emailService = new MailgunService();
+        const { EmailService } = await import('./services');
+        const emailService = new EmailService();
         
         // Upload signed contract to cloud storage with signature details
         const { uploadContractToCloud } = await import('./cloud-storage');
@@ -2966,8 +2966,8 @@ export async function registerRoutes(app: Express) {
       }
       
       // Import services
-      const { MailgunService } = await import('./services');
-      const emailService = new MailgunService();
+      const { EmailService } = await import('./services');
+      const emailService = new EmailService();
       
       // Generate and upload invoice PDF to cloud storage if not already done
       let pdfUrl = invoice.cloudStorageUrl;
@@ -3747,8 +3747,8 @@ export async function registerRoutes(app: Express) {
       
       // Send invitation email
       try {
-        const { MailgunService } = await import('./services');
-        const emailService = new MailgunService();
+        const { EmailService } = await import('./services');
+        const emailService = new EmailService();
         
         await emailService.sendEmail({
           to: email,
