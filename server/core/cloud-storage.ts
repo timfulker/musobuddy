@@ -20,8 +20,8 @@ export async function uploadInvoiceToCloud(
   try {
     console.log(`☁️ Uploading invoice #${invoice.id} to cloud storage...`);
     
-    // Generate PDF using the existing PDF generator
-    const { generateInvoicePDF } = await import('./pdf-generator');
+    // Generate PDF using the dedicated invoice PDF generator
+    const { generateInvoicePDF } = await import('./invoice-pdf-generator');
     const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
     
     console.log(`📄 PDF generated, size: ${pdfBuffer.length} bytes`);
