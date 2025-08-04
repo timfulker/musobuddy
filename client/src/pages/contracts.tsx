@@ -265,14 +265,14 @@ export default function Contracts() {
       };
 
       // Step 1: Create contract in database
-      const contract = await apiRequest("/api/contracts", {
+      const createdContract = await apiRequest("/api/contracts", {
         method: "POST",
         body: JSON.stringify(contractData),
       });
 
       // Step 2: Immediately upload to R2 cloud storage
       console.log('☁️ Uploading new contract to R2 storage...');
-      const r2Response = await fetch(`/api/contracts/${contract.id}/r2-url`, {
+      const r2Response = await fetch(`/api/contracts/${createdContract.id}/r2-url`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -284,12 +284,12 @@ export default function Contracts() {
       if (r2Response.ok) {
         const r2Data = await r2Response.json();
         console.log('✅ Contract created and uploaded to R2:', r2Data.url);
-        contract.cloudStorageUrl = r2Data.url;
+        createdContract.cloudStorageUrl = r2Data.url;
       } else {
         console.warn('⚠️ Contract created but R2 upload failed - will upload on first view');
       }
 
-      return contract;
+      return createdContract;
     },
     onSuccess: (contract) => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
