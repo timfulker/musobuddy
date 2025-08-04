@@ -79,8 +79,18 @@ function generateContractHTML(
 ): string {
   const businessName = userSettings?.businessName || 'Professional Musician';
   const businessEmail = userSettings?.businessEmail || '';
-  const businessAddress = userSettings?.businessAddress || '';
   const businessPhone = userSettings?.phone || '';
+  
+  // Build complete business address from detailed fields
+  const addressParts = [];
+  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
+  if (userSettings?.addressLine2) addressParts.push(userSettings.addressLine2);
+  if (userSettings?.city) addressParts.push(userSettings.city);
+  if (userSettings?.county) addressParts.push(userSettings.county);
+  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
+  
+  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : 
+                         (userSettings?.businessAddress || '');
 
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? 
