@@ -4536,7 +4536,7 @@ export async function registerRoutes(app: Express) {
 
   // Register completely isolated invoice system BEFORE catch-all
   const { registerIsolatedInvoiceRoutes } = await import('../invoice-system/index.js');
-  registerIsolatedInvoiceRoutes(app);
+  registerIsolatedInvoiceRoutes(app, storage, isAuthenticated);
 
   // Add main invoice R2 URL endpoint for compatibility
   app.get('/api/invoices/:id/r2-url', isAuthenticated, async (req: any, res) => {
