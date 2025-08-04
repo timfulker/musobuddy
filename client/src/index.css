@@ -1,10 +1,254 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Theme System CSS */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Work+Sans:wght@400;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Updated purple color scheme - lighter shade */
+/* Theme CSS Variables */
+:root {
+  --radius: 0.5rem;
+  
+  /* Default Purple Theme */
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-text: #1e293b;
+  --theme-text-secondary: #64748b;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+}
+
+/* Theme-specific styles */
+.theme-purple {
+  --theme-primary: #8b5cf6;
+  --theme-secondary: #a855f7;
+  --theme-accent: #6366f1;
+  --theme-background: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-text: #1e293b;
+  --theme-text-secondary: #64748b;
+}
+
+.theme-ocean-blue {
+  --theme-primary: #0ea5e9;
+  --theme-secondary: #0284c7;
+  --theme-accent: #38bdf8;
+  --theme-background: #f0f9ff;
+  --theme-surface: #ffffff;
+  --theme-text: #0c4a6e;
+  --theme-text-secondary: #075985;
+}
+
+.theme-forest-green {
+  --theme-primary: #16a34a;
+  --theme-secondary: #15803d;
+  --theme-accent: #22c55e;
+  --theme-background: #f0fdf4;
+  --theme-surface: #ffffff;
+  --theme-text: #14532d;
+  --theme-text-secondary: #166534;
+}
+
+.theme-clean-pro-audio {
+  --theme-primary: #e53935;
+  --theme-secondary: #2c2c2c;
+  --theme-accent: #ffeb3b;
+  --theme-background: #e5e5e5;
+  --theme-surface: #fdfdfd;
+  --theme-text: #2c2c2c;
+  --theme-text-secondary: #555555;
+  --theme-font-heading: "IBM Plex Sans", sans-serif;
+  --theme-font-body: "IBM Plex Sans", sans-serif;
+}
+
+.theme-midnight-blue {
+  --theme-primary: #191970;
+  --theme-secondary: #1e1e3f;
+  --theme-accent: #4169e1;
+  --theme-background: #f8f9fa;
+  --theme-surface: #ffffff;
+  --theme-text: #1a1a1a;
+  --theme-text-secondary: #4a5568;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+}
+
+/* Apply theme to body and typography */
+body {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+  font-family: var(--theme-font-body) !important;
+  transition: background-color 0.3s ease, color 0.3s ease, font-family 0.3s ease;
+}
+
+/* Force theme application for all layouts */
+.layout-consistent,
+.main-content,
+.min-h-screen {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+}
+
+/* Override Tailwind background classes */
+.bg-background {
+  background-color: var(--theme-background) !important;
+}
+
+.bg-white {
+  background-color: var(--theme-surface) !important;
+}
+
+.text-foreground {
+  color: var(--theme-text) !important;
+}
+
+/* Force theme colors on buttons and UI elements */
+.bg-primary {
+  background-color: var(--theme-primary) !important;
+}
+
+.text-primary {
+  color: var(--theme-primary) !important;
+}
+
+.border-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--theme-secondary) !important;
+}
+
+.text-secondary {
+  color: var(--theme-secondary) !important;
+}
+
+/* Theme-specific button and menu overrides */
+.theme-ocean-blue .bg-primary,
+.theme-ocean-blue button[class*="bg-primary"] {
+  background-color: #0ea5e9 !important;
+}
+
+.theme-ocean-blue .text-primary {
+  color: #0ea5e9 !important;
+}
+
+.theme-forest-green .bg-primary,
+.theme-forest-green button[class*="bg-primary"] {
+  background-color: #34d399 !important;
+}
+
+.theme-forest-green .text-primary {
+  color: #34d399 !important;
+}
+
+.theme-clean-pro-audio .bg-primary,
+.theme-clean-pro-audio button[class*="bg-primary"] {
+  background-color: #f87171 !important;
+}
+
+.theme-clean-pro-audio .text-primary {
+  color: #f87171 !important;
+}
+
+/* Comprehensive theme overrides for all UI elements */
+[class*="theme-"] .bg-violet-600,
+[class*="theme-"] .bg-purple-600,
+[class*="theme-"] .bg-primary {
+  background-color: var(--theme-primary) !important;
+}
+
+[class*="theme-"] .text-violet-600,
+[class*="theme-"] .text-purple-600,
+[class*="theme-"] .text-primary {
+  color: var(--theme-primary) !important;
+}
+
+[class*="theme-"] .border-violet-600,
+[class*="theme-"] .border-purple-600,
+[class*="theme-"] .border-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+/* Force override any hardcoded purple colors */
+[class*="theme-"] button,
+[class*="theme-"] .sidebar,
+[class*="theme-"] nav a,
+[class*="theme-"] .menu-item {
+  color: inherit !important;
+}
+
+[class*="theme-"] button[class*="primary"],
+[class*="theme-"] .primary-button {
+  background-color: var(--theme-primary) !important;
+}
+
+/* Force override specific purple hover classes */
+[class*="theme-"] .hover\:bg-purple-600:hover,
+[class*="theme-"] .hover\:bg-violet-600:hover,
+[class*="theme-"] .hover\:bg-primary:hover {
+  background-color: var(--theme-primary) !important;
+}
+
+/* Ocean blue theme overrides */
+html.theme-ocean-blue,
+html.theme-ocean-blue body,
+.theme-ocean-blue,
+.theme-ocean-blue .bg-background,
+.theme-ocean-blue .min-h-screen {
+  background-color: #e0f2fe !important;
+  color: #0f172a !important;
+}
+
+/* Forest green theme overrides */
+html.theme-forest-green,
+html.theme-forest-green body,
+.theme-forest-green,
+.theme-forest-green .bg-background,
+.theme-forest-green .min-h-screen {
+  background-color: #f0fdf4 !important;
+  color: #14532d !important;
+}
+
+.theme-clean-pro-audio {
+  --theme-primary: #f87171 !important;
+  --theme-secondary: #9ca3af !important;
+  --theme-accent: #ffeb3b !important;
+  --theme-background: #e5e5e5 !important;
+  --theme-surface: #fdfdfd !important;
+  --theme-text: #2c2c2c !important;
+  --theme-text-secondary: #555555 !important;
+  --theme-font-heading: "IBM Plex Sans", sans-serif !important;
+  --theme-font-body: "IBM Plex Sans", sans-serif !important;
+}
+
+/* Clean Pro Audio theme overrides */
+html.theme-clean-pro-audio,
+html.theme-clean-pro-audio body,
+.theme-clean-pro-audio,
+.theme-clean-pro-audio .bg-background,
+.theme-clean-pro-audio .min-h-screen {
+  background-color: #e5e5e5 !important;
+  color: #2c2c2c !important;
+  font-family: "IBM Plex Sans", sans-serif !important;
+}
+
+.theme-clean-pro-audio .bg-white,
+.theme-clean-pro-audio .bg-card,
+.theme-clean-pro-audio .bg-popover {
+  background-color: #fdfdfd !important;
+}
+
+.theme-heading {
+  font-family: var(--theme-font-heading);
+}
+
+.theme-body {
+  font-family: var(--theme-font-body);
+}
 
 /* Balanced viewport scaling for consistent dev/production rendering */
 * {
@@ -24,7 +268,7 @@ html {
   -moz-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  font-size: 16px; /* Increased from 15px for better deployed version readability */
+  font-size: 16px;
   width: 100%;
   height: 100%;
   overflow-x: hidden;
@@ -48,35 +292,35 @@ body {
   position: relative;
 }
 
-/* Increased responsive scaling for better deployed version readability */
+/* Enhanced responsive scaling */
 @media screen and (max-width: 480px) {
   html {
-    font-size: 15px; /* Increased from 14px for better mobile readability */
+    font-size: 15px;
   }
 }
 
 @media screen and (min-width: 481px) and (max-width: 768px) {
   html {
-    font-size: 16px; /* Increased from 15px for better tablet readability */
+    font-size: 16px;
   }
 }
 
 @media screen and (min-width: 769px) and (max-width: 1199px) {
   html {
-    font-size: 16.5px; /* Increased from 15px for better desktop readability */
+    font-size: 16.5px;
   }
 }
 
 @media screen and (min-width: 1200px) {
   html {
-    font-size: 17px; /* Increased from 15.5px for better large screen readability */
+    font-size: 17px;
   }
 }
 
-/* Enhanced sizing utilities for better deployed version readability */
+/* Enhanced sizing utilities */
 .sidebar-consistent {
-  font-size: 0.95rem !important; /* Increased from 0.875rem for better sidebar readability */
-  line-height: 1.35rem !important; /* Increased line height for better spacing */
+  font-size: 0.95rem !important;
+  line-height: 1.35rem !important;
 }
 
 .layout-consistent {
@@ -84,56 +328,10 @@ body {
   position: relative;
 }
 
-/* Remove problematic scaling that causes overlapping text */
-.dashboard-card {
-  /* Removed transform scale to prevent overlapping text */
-}
-
-/* Remove button scaling to prevent overlapping text */
-button, input, select, textarea {
-  /* Removed transform scale to prevent overlapping text */
-}
-
-/* Ensure text remains readable with proper spacing */
-.text-balanced {
-  line-height: 1.5; /* Consistent line height for better readability */
-}
-
-/* Prevent layout shifts during window resize */
-.content-container {
-  transition: none !important;
-  will-change: auto !important;
-}
-
-/* Fix dashboard responsive spacing to prevent text overlap */
-.dashboard-spacing {
-  min-height: 0; /* Prevent flex items from overflowing */
-}
-
-/* Ensure cards have proper spacing */
-.dashboard-card-wrapper {
-  min-width: 0; /* Allow text to wrap within flex containers */
-}
-
-/* Responsive text sizing for better mobile display */
-@media (max-width: 640px) {
-  .text-responsive {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-}
-
-@media (min-width: 641px) {
-  .text-responsive {
-    font-size: 1rem;
-    line-height: 1.5rem;
-  }
-}
-
 /* Responsive layout utilities */
 @media (min-width: 768px) {
   .main-content {
-    margin-left: 16rem; /* 64 * 0.25rem = 16rem */
+    margin-left: 16rem;
   }
 }
 
@@ -144,156 +342,126 @@ button, input, select, textarea {
 }
 
 :root {
-  /* Basecamp-inspired clean design theme */
-  --background: #f5f5f5;  /* neutral light background */
-  --foreground: #2d2d2d;  /* primary dark text */
-  --muted: hsl(220, 14.3%, 95.9%);
-  --muted-foreground: #666666;  /* softer gray */
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: #2d2d2d;
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: #2d2d2d;
-  --border: hsl(220, 13%, 91%);
-  --input: hsl(220, 13%, 91%);
-  --primary: #2d2d2d;  /* basecamp dark */
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(220, 14.3%, 95.9%);
-  --secondary-foreground: #2d2d2d;
-  --accent: #ffd500;  /* basecamp yellow */
-  --accent-foreground: #2d2d2d;
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: #ffd500;  /* basecamp yellow for focus rings */
-  --radius: 1rem;
-  --chart-1: #ffd500;
-  --chart-2: #ffdb33;
-  --chart-3: #e6c200;
-  --chart-4: #ccaa00;
-  --chart-5: #b39900;
-  --sidebar-background: hsl(0, 0%, 98%);
-  --sidebar-foreground: #2d2d2d;
-  --sidebar-primary: #2d2d2d;
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: #ffd500;
-  --sidebar-accent-foreground: #2d2d2d;
-  --sidebar-border: hsl(220, 13%, 91%);
-  --sidebar-ring: #ffd500;
-}
-
-/* Original Purple Theme - Classic MusoBuddy Colors */
-.purple-theme {
-  /* Original purple color scheme */
+  /* Primary Purple Colors from backup */
   --background: hsl(0, 0%, 100%);
-  --foreground: hsl(222.2, 84%, 4.9%);
-  --muted: hsl(210, 40%, 96%);
-  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(222.2, 84%, 4.9%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(222.2, 84%, 4.9%);
-  --border: hsl(214.3, 31.8%, 91.4%);
-  --input: hsl(214.3, 31.8%, 91.4%);
-  --primary: hsl(262.1, 83.3%, 57.8%);  /* classic purple */
+  --foreground: hsl(224, 71.4%, 4.1%);
+  --primary: hsl(262, 83%, 72%);
   --primary-foreground: hsl(210, 20%, 98%);
+  
+  /* Secondary Colors */
   --secondary: hsl(220, 14.3%, 95.9%);
   --secondary-foreground: hsl(220.9, 39.3%, 11%);
-  --accent: hsl(262.1, 83.3%, 57.8%);  /* purple accent */
-  --accent-foreground: hsl(210, 20%, 98%);
+  --muted: hsl(220, 14.3%, 95.9%);
+  --muted-foreground: hsl(220, 8.9%, 46.1%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  
+  /* Accent & Status Colors */
+  --accent: hsl(220, 14.3%, 95.9%);
+  --accent-foreground: hsl(220.9, 39.3%, 11%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(262.1, 83.3%, 57.8%);  /* purple for focus rings */
-  --radius: 0.5rem;  /* smaller radius for classic look */
-  --chart-1: hsl(262.1, 83.3%, 57.8%);
-  --chart-2: hsl(262.1, 70%, 65%);
-  --chart-3: hsl(262.1, 60%, 70%);
-  --chart-4: hsl(262.1, 50%, 75%);
-  --chart-5: hsl(262.1, 40%, 80%);
-  --sidebar-background: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(222.2, 84%, 4.9%);
-  --sidebar-primary: hsl(262.1, 83.3%, 57.8%);
+  --ring: hsl(262, 83%, 72%);
+  --radius: 0.5rem;
+  
+  /* Popover and Card */
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(224, 71.4%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(224, 71.4%, 4.1%);
+  
+  /* Chart Colors */
+  --chart-1: hsl(262, 83%, 72%);
+  --chart-2: hsl(252, 83%, 82%);
+  --chart-3: hsl(272, 83%, 62%);
+  --chart-4: hsl(242, 83%, 82%);
+  --chart-5: hsl(282, 83%, 62%);
+  
+  /* Sidebar-Specific Colors */
+  --sidebar-background: hsl(0, 0%, 98%);
+  --sidebar-foreground: hsl(224, 71.4%, 4.1%);
+  --sidebar-primary: hsl(262, 83%, 72%);
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
-  --sidebar-accent: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-accent: hsl(262, 83%, 72%);
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
-  --sidebar-border: hsl(214.3, 31.8%, 91.4%);
-  --sidebar-ring: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-border: hsl(220, 13%, 91%);
+  --sidebar-ring: hsl(262, 83%, 72%);
+  
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .dark {
-  /* Basecamp-inspired dark theme */
-  --background: #1e1e1e;  /* dark background */
-  --foreground: #ffffff;  /* white text for dark mode */
-  --muted: hsl(217, 10%, 25%);
-  --muted-foreground: #cccccc;  /* lighter gray for dark mode */
-  --popover: #2d2d2d;
+  --background: #000000;
+  --foreground: #ffffff;
+  --muted: #1a1a1a;
+  --muted-foreground: #a0a0a0;
+  --popover: #1a1a1a;
   --popover-foreground: #ffffff;
-  --card: #2d2d2d;  /* dark cards */
+  --card: #1a1a1a;
   --card-foreground: #ffffff;
-  --border: hsl(217, 10%, 40%);
-  --input: hsl(217, 10%, 40%);
-  --primary: #ffffff;  /* white for primary in dark mode */
-  --primary-foreground: #2d2d2d;  /* dark text on white buttons */
-  --secondary: hsl(217, 10%, 25%);
+  --border: #333333;
+  --input: #333333;
+  --primary: #ffd700;
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
   --secondary-foreground: #ffffff;
-  --accent: #ffd500;  /* keep the basecamp yellow */
-  --accent-foreground: #2d2d2d;  /* dark text on yellow */
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: #ffd500;  /* basecamp yellow for focus rings */
-  --radius: 1rem;
-  --chart-1: #ffd500;
-  --chart-2: #ffdb33;
-  --chart-3: #e6c200;
-  --chart-4: #ccaa00;
-  --chart-5: #b39900;
-  --sidebar-background: #1a1a1a;
+  --accent: #ffd700;
+  --accent-foreground: #000000;
+  --destructive: #dc3545;
+  --destructive-foreground: #ffffff;
+  --ring: #ffd700;
+  --radius: 0.375rem;
+  --chart-1: #ffd700;
+  --chart-2: #ffd700;
+  --chart-3: #ffffff;
+  --chart-4: #a0a0a0;
+  --chart-5: #333333;
+  --sidebar-background: #000000;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #ffffff;
-  --sidebar-primary-foreground: #2d2d2d;
-  --sidebar-accent: #ffd500;
-  --sidebar-accent-foreground: #2d2d2d;
-  --sidebar-border: hsl(217, 10%, 40%);
-  --sidebar-ring: #ffd500;
+  --sidebar-primary: #ffd700;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #ffd700;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #333333;
+  --sidebar-ring: #ffd700;
 }
 
 /* Purple Theme Dark Mode */
 .purple-theme.dark {
-  /* Original purple color scheme dark mode */
-  --background: hsl(222.2, 84%, 4.9%);
+  --background: hsl(224, 71.4%, 4.1%);
   --foreground: hsl(210, 20%, 98%);
-  --muted: hsl(217.2, 32.6%, 17.5%);
-  --muted-foreground: hsl(215, 20.2%, 65.1%);
-  --popover: hsl(222.2, 84%, 4.9%);
-  --popover-foreground: hsl(210, 20%, 98%);
-  --card: hsl(222.2, 84%, 4.9%);
-  --card-foreground: hsl(210, 20%, 98%);
-  --border: hsl(217.2, 32.6%, 17.5%);
-  --input: hsl(217.2, 32.6%, 17.5%);
-  --primary: hsl(262.1, 83.3%, 57.8%);  /* classic purple */
+  --primary: hsl(263, 70%, 65%);
   --primary-foreground: hsl(210, 20%, 98%);
-  --secondary: hsl(217.2, 32.6%, 17.5%);
+  --secondary: hsl(215, 27.9%, 16.9%);
   --secondary-foreground: hsl(210, 20%, 98%);
-  --accent: hsl(262.1, 83.3%, 57.8%);  /* purple accent */
+  --muted: hsl(215, 27.9%, 16.9%);
+  --muted-foreground: hsl(215, 20.2%, 65.1%);
+  --border: hsl(215, 27.9%, 16.9%);
+  --input: hsl(215, 27.9%, 16.9%);
+  --accent: hsl(215, 27.9%, 16.9%);
   --accent-foreground: hsl(210, 20%, 98%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(210, 20%, 98%);
-  --ring: hsl(262.1, 83.3%, 57.8%);  /* purple for focus rings */
-  --radius: 0.5rem;  /* smaller radius for classic look */
-  --chart-1: hsl(262.1, 83.3%, 57.8%);
-  --chart-2: hsl(262.1, 70%, 65%);
-  --chart-3: hsl(262.1, 60%, 70%);
-  --chart-4: hsl(262.1, 50%, 75%);
-  --chart-5: hsl(262.1, 40%, 80%);
-  --sidebar-background: hsl(222.2, 84%, 4.9%);
+  --ring: hsl(263, 70%, 65%);
+  --radius: 0.5rem;
+  --popover: hsl(224, 71.4%, 4.1%);
+  --popover-foreground: hsl(210, 20%, 98%);
+  --card: hsl(224, 71.4%, 4.1%);
+  --card-foreground: hsl(210, 20%, 98%);
+  --chart-1: hsl(263, 70%, 65%);
+  --chart-2: hsl(253, 70%, 75%);
+  --chart-3: hsl(273, 70%, 55%);
+  --chart-4: hsl(243, 70%, 75%);
+  --chart-5: hsl(283, 70%, 55%);
+  --sidebar-background: hsl(224, 71.4%, 4.1%);
   --sidebar-foreground: hsl(210, 20%, 98%);
-  --sidebar-primary: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-primary: hsl(263, 70%, 65%);
   --sidebar-primary-foreground: hsl(210, 20%, 98%);
-  --sidebar-accent: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-accent: hsl(263, 70%, 65%);
   --sidebar-accent-foreground: hsl(210, 20%, 98%);
-  --sidebar-border: hsl(217.2, 32.6%, 17.5%);
-  --sidebar-ring: hsl(262.1, 83.3%, 57.8%);
+  --sidebar-border: hsl(215, 27.9%, 16.9%);
+  --sidebar-ring: hsl(263, 70%, 65%);
 }
-
-
 
 @layer base {
   * {
@@ -305,483 +473,408 @@ button, input, select, textarea {
   }
 }
 
-/* Force React Day Picker to use full width */
-.rdp {
-  width: 100% !important;
-}
-
-.rdp-months {
-  width: 100% !important;
-}
-
-.rdp-month {
-  width: 100% !important;
-}
-
-.rdp-table {
-  width: 100% !important;
-  table-layout: fixed !important;
-}
-
-.rdp-head_cell, .rdp-cell {
-  width: 14.28% !important; /* 1/7 of the container */
-}
-
-/* Custom styles for MusoBuddy */
-.glass-effect {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.sidebar-transition {
-  transition: transform 0.3s ease-in-out;
-}
-
-/* Force sidebar visibility on desktop */
-@media (min-width: 768px) {
-  .sidebar-desktop-visible {
-    transform: translateX(0) !important;
-    display: block !important;
+@layer utilities {
+  /* Purple theme scrollbars */
+  .purple-theme::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
   
-  /* Hide mobile navigation on desktop */
-  .mobile-nav-hidden {
-    display: none !important;
+  .purple-theme::-webkit-scrollbar-track {
+    background: hsl(220, 14.3%, 95.9%);
+    border-radius: 4px;
+  }
+  
+  .purple-theme::-webkit-scrollbar-thumb {
+    background: hsl(262, 83%, 72%);
+    border-radius: 4px;
+  }
+  
+  .purple-theme::-webkit-scrollbar-thumb:hover {
+    background: hsl(262, 83%, 65%);
+  }
+  
+  /* Firefox scrollbar styling for purple theme */
+  .purple-theme {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(262, 83%, 72%) hsl(220, 14.3%, 95.9%);
+  }
+  
+  /* Theme-aware scrollbars for all themes */
+  .theme-ocean-blue::-webkit-scrollbar-thumb {
+    background: #0ea5e9;
+  }
+  
+  .theme-forest-green::-webkit-scrollbar-thumb {
+    background: #16a34a;
+  }
+  
+  .theme-clean-pro-audio::-webkit-scrollbar-thumb {
+    background: #e53935;
+  }
+  
+  .theme-midnight-blue::-webkit-scrollbar-thumb {
+    background: #191970;
+  }
+  
+  /* Firefox scrollbar for all themes */
+  .theme-ocean-blue {
+    scrollbar-color: #0ea5e9 hsl(220, 14.3%, 95.9%);
+  }
+  
+  .theme-forest-green {
+    scrollbar-color: #16a34a hsl(220, 14.3%, 95.9%);
+  }
+  
+  .theme-clean-pro-audio {
+    scrollbar-color: #e53935 #e5e5e5;
+  }
+  
+  .theme-midnight-blue {
+    scrollbar-color: #191970 hsl(220, 14.3%, 95.9%);
   }
 }
 
-@media (max-width: 768px) {
-  .sidebar-hidden {
-    transform: translateX(-100%);
+/* Enhanced Card Component Styling */
+.enhanced-card {
+  @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.enhanced-card.active {
+  @apply border-primary ring-2 ring-primary ring-opacity-20;
+}
+
+/* Card component variants */
+.card-gradient {
+  background: linear-gradient(135deg, var(--theme-surface) 0%, rgba(var(--theme-primary), 0.05) 100%);
+}
+
+.card-bordered {
+  border-left: 4px solid var(--theme-primary);
+}
+
+/* Enhanced button styling */
+.btn-primary-enhanced {
+  @apply bg-primary text-white hover:bg-primary hover:bg-opacity-90 active:bg-primary active:bg-opacity-80 transition-colors duration-200 font-medium;
+}
+
+.btn-secondary-enhanced {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary hover:bg-opacity-80 transition-colors duration-200;
+}
+
+/* Enhanced form styling */
+.form-enhanced .form-group {
+  @apply space-y-2;
+}
+
+.form-enhanced .form-label {
+  @apply text-sm font-medium text-foreground;
+}
+
+.form-enhanced .form-control {
+  @apply w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+}
+
+/* Status indicator utilities */
+.status-success {
+  @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+}
+
+.status-warning {
+  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+}
+
+.status-error {
+  @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+}
+
+.status-info {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200;
+}
+
+/* Layout utilities */
+.main-container {
+  @apply min-h-screen bg-background;
+}
+
+.content-wrapper {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section-spacing {
+  @apply py-8 lg:py-12;
+}
+
+/* Navigation active states */
+.nav-active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.nav-inactive {
+  @apply text-muted-foreground hover:text-foreground hover:bg-accent;
+}
+
+/* Data table styling */
+.data-table {
+  @apply w-full border-collapse border border-border rounded-lg overflow-hidden;
+}
+
+.data-table th {
+  @apply bg-muted text-muted-foreground font-medium text-left px-4 py-3 border-b border-border;
+}
+
+.data-table td {
+  @apply px-4 py-3 border-b border-border;
+}
+
+.data-table tr:hover {
+  @apply bg-muted bg-opacity-50;
+}
+
+/* Loading states */
+.loading-skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+.loading-spinner {
+  @apply animate-spin w-4 h-4 border-2 border-primary border-r-transparent rounded-full;
+}
+
+/* Toast notification styling */
+.toast-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.toast-error {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.toast-warning {
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.toast-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .mobile-hidden {
+    @apply hidden;
+  }
+  
+  .mobile-stack {
+    @apply flex-col space-y-2 space-x-0;
   }
 }
 
-/* Clean gradient backgrounds without artifacts */
-.superhuman-gradient {
-  background: linear-gradient(135deg, hsl(262, 83%, 72%) 0%, hsl(263, 70%, 65%) 100%);
+@media (min-width: 641px) {
+  .desktop-hidden {
+    @apply hidden;
+  }
+  
+  .desktop-row {
+    @apply flex-row space-y-0 space-x-4;
+  }
 }
 
-.superhuman-gradient-dark {
-  background: linear-gradient(135deg, hsl(263, 70%, 65%) 0%, hsl(253, 70%, 75%) 100%);
+/* Print styles */
+@media print {
+  .print-hidden {
+    @apply hidden;
+  }
+  
+  .print-break {
+    page-break-after: always;
+  }
+  
+  .print-no-break {
+    page-break-inside: avoid;
+  }
 }
 
-.music-card-hover {
-  transition: all 0.3s ease;
-}
+/* NUCLEAR OPTION SIDEBAR TEXT FIX - Replace the existing fix in index.css */
 
-.music-card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Custom scrollbar for webkit browsers - Superhuman style */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(220, 14.3%, 95.9%);
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: hsl(215, 27.9%, 16.9%);
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(262, 83%, 72%);
-  border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(263, 70%, 65%);
-}
-
-/* Clean filter container styling - remove purple lines */
-.filter-container {
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
-  position: relative !important;
-}
-
-.filter-container::before,
-.filter-container::after,
-.filter-container *::before,
-.filter-container *::after {
-  display: none !important;
-  content: none !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  background-image: none !important;
-  border-image: none !important;
-}
-
-.filter-container * {
-  background-image: none !important;
-  border-image: none !important;
-  border-image-source: none !important;
-}
-
-/* Clean card and filter styling */
-.card-clean {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.filter-section {
-  background: white;
-  border: none;
-  box-shadow: none;
-}
-
-/* Prevent any pseudo-element artifacts */
-.no-artifacts,
-.no-artifacts::before,
-.no-artifacts::after {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Remove purple lines and particles from filter container */
-.filter-container,
-.filter-container *,
-.filter-container div,
-.filter-container button,
-.filter-container input,
-.filter-container select {
-  background-image: none !important;
-  background-attachment: initial !important;
-  background-clip: initial !important;
-  background-origin: initial !important;
-  background-position: initial !important;
-  background-repeat: initial !important;
-  background-size: initial !important;
-  border-image: none !important;
-  border-image-source: none !important;
-}
-
-.filter-container::before,
-.filter-container::after,
-.filter-container *::before,
-.filter-container *::after,
-.filter-container div::before,
-.filter-container div::after,
-.filter-container button::before,
-.filter-container button::after {
-  content: none !important;
-  display: none !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-image: none !important;
-}
-
-/* Specifically target purple colors and remove them */
-.filter-container * {
-  border-color: #e5e7eb !important;
-}
-
-.filter-container *[style*="purple"],
-.filter-container *[style*="#673ab7"],
-.filter-container *[style*="rgb(103, 58, 183)"] {
-  border: 1px solid #e5e7eb !important;
-  background: white !important;
-}
-
-/* Remove all purple styling from filter container */
-.filter-container {
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-}
-
-/* Target specific elements that might have purple styling */
-.filter-container [data-radix-collection-item],
-.filter-container [data-radix-select-trigger],
-.filter-container [data-radix-select-content],
-.filter-container [data-radix-select-item],
-.filter-container [data-state],
-.filter-container [data-orientation] {
-  background: white !important;
-  border-color: #e5e7eb !important;
-  color: #374151 !important;
-}
-
-/* Remove any purple from Radix UI components */
-.filter-container [data-radix-collection-item]:hover,
-.filter-container [data-radix-select-trigger]:hover,
-.filter-container [data-radix-select-item]:hover {
-  background: #f9fafb !important;
-  border-color: #d1d5db !important;
-}
-
-/* Override any purple theming */
-.filter-container .text-purple-600,
-.filter-container .text-purple-700,
-.filter-container .text-purple-800,
-.filter-container .border-purple-200,
-.filter-container .border-purple-300,
-.filter-container .border-purple-400,
-.filter-container .bg-purple-50,
-.filter-container .bg-purple-100,
-.filter-container .bg-purple-200 {
-  color: #374151 !important;
-  border-color: #e5e7eb !important;
-  background: white !important;
-}
-
-/* More targeted approach - remove purple lines specifically */
-.filter-container {
-  position: relative;
-  overflow: hidden;
-}
-
-.filter-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: white;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.filter-container > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* Override any CSS variables that might be causing purple */
-.filter-container {
-  --primary: #374151 !important;
-  --primary-foreground: #ffffff !important;
-  --secondary: #f9fafb !important;
-  --secondary-foreground: #374151 !important;
-  --accent: #f3f4f6 !important;
-  --accent-foreground: #374151 !important;
-  --border: #e5e7eb !important;
-  --ring: #e5e7eb !important;
-}
-
-/* Remove purple from any buttons in the filter area */
-.filter-container button {
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  color: #374151 !important;
-}
-
-.filter-container button:hover {
-  background: #f9fafb !important;
-  border-color: #d1d5db !important;
-}
-
-.filter-container button[data-state="checked"],
-.filter-container button[data-state="selected"] {
-  background: #f3f4f6 !important;
-  border-color: #d1d5db !important;
-  color: #374151 !important;
-}
-
-/* Stronger global override for filter to remove all purple */
-.filter-container,
-.filter-container * {
-  --primary: #374151 !important; /* Gray instead of purple */
-  --ring: #e5e7eb !important;    /* Gray focus ring */
-  border-color: #e5e7eb !important;
-  background-color: white !important;
-  box-shadow: none !important;   /* Remove any purple shadows */
-}
-
-/* Target only thick purple lines - not form borders */
-.filter-container::before,
-.filter-container::after {
-  content: none !important;
-  display: none !important;
-}
-
-/* Remove any thick border artifacts from the container itself */
-.filter-container {
-  border-image: none !important;
-  background-image: none !important;
-}
-
-/* Override purple theming variables for filter container only */
-.filter-container {
-  --primary: #374151 !important;
-  --ring: #e5e7eb !important;
-  --chart-1: #374151 !important;
-  --chart-2: #6b7280 !important;
-  --chart-3: #9ca3af !important;
-  --chart-4: #d1d5db !important;
-  --chart-5: #e5e7eb !important;
-}
-
-/* Remove purple scrollbar inside filter */
-.filter-container ::-webkit-scrollbar-thumb {
-  background: #e5e7eb !important;
-}
-.filter-container ::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db !important;
-}
-
-/* Force override any purple styling on filter container children */
-.filter-container *[class*="purple"],
-.filter-container *[style*="purple"],
-.filter-container *[style*="hsl(262"],
-.filter-container *[style*="hsl(252"],
-.filter-container *[style*="hsl(272"] {
-  color: #374151 !important;
-  border-color: #e5e7eb !important;
-  background-color: white !important;
-}
-
-/* Global purple color overrides - force lighter purple everywhere */
-.bg-purple-600,
-.bg-purple-700,
-.bg-purple-800,
-.bg-purple-900 {
-  background-color: hsl(262, 83%, 72%) !important;
-}
-
-.text-purple-600,
-.text-purple-700,
-.text-purple-800,
-.text-purple-900 {
-  color: hsl(262, 83%, 72%) !important;
-}
-
-.border-purple-600,
-.border-purple-700,
-.border-purple-800,
-.border-purple-900 {
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-.hover\:bg-purple-600:hover,
-.hover\:bg-purple-700:hover,
-.hover\:bg-purple-800:hover,
-.hover\:bg-purple-900:hover {
-  background-color: hsl(262, 83%, 68%) !important;
-}
-
-/* Override specific purple color values */
-[style*="rgb(103, 58, 183)"] {
-  color: hsl(262, 83%, 72%) !important;
-  background-color: hsl(262, 83%, 72%) !important;
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-[style*="#673ab7"] {
-  color: hsl(262, 83%, 72%) !important;
-  background-color: hsl(262, 83%, 72%) !important;
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-[style*="hsl(262, 83%, 58%)"] {
-  color: hsl(262, 83%, 72%) !important;
-  background-color: hsl(262, 83%, 72%) !important;
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-[style*="hsl(263, 70%, 50%)"] {
-  color: hsl(263, 70%, 65%) !important;
-  background-color: hsl(263, 70%, 65%) !important;
-  border-color: hsl(263, 70%, 65%) !important;
-}
-
-/* Override button and link colors */
-button[class*="purple"],
-a[class*="purple"],
-.btn-purple,
-.link-purple {
-  background-color: hsl(262, 83%, 72%) !important;
-  color: white !important;
-  border-color: hsl(262, 83%, 72%) !important;
-}
-
-button[class*="purple"]:hover,
-a[class*="purple"]:hover,
-.btn-purple:hover,
-.link-purple:hover {
-  background-color: hsl(262, 83%, 68%) !important;
-}
-
-/* Override sidebar and navigation colors */
-.sidebar-primary,
-.nav-primary,
-[data-active="true"] {
-  background-color: hsl(262, 83%, 72%) !important;
+/* Target the new nav-link-forced class with maximum specificity */
+body.theme-midnight-blue .nav-link-forced[data-active="true"],
+html.theme-midnight-blue .nav-link-forced[data-active="true"],
+body.theme-purple .nav-link-forced[data-active="true"],
+html.theme-purple .nav-link-forced[data-active="true"],
+.theme-midnight-blue .nav-link-forced[data-active="true"],
+.theme-purple .nav-link-forced[data-active="true"] {
   color: white !important;
 }
 
-/* Override focus and active states */
-:focus-visible {
-  outline-color: hsl(262, 83%, 72%) !important;
-}
-
-.focus\:ring-purple-500:focus {
-  ring-color: hsl(262, 83%, 72%) !important;
-}
-
-/* Override any remaining hardcoded purple values */
-* {
-  --tw-ring-color: hsl(262, 83%, 72%) !important;
-}
-
-/* Extremely specific filter button overrides - higher specificity than existing rules */
-.filter-container button[data-filter="new"] {
-  background-color: #3b82f6 !important;
+/* Force all child elements */
+body.theme-midnight-blue .nav-link-forced[data-active="true"] *,
+html.theme-midnight-blue .nav-link-forced[data-active="true"] *,
+body.theme-purple .nav-link-forced[data-active="true"] *,
+html.theme-purple .nav-link-forced[data-active="true"] *,
+.theme-midnight-blue .nav-link-forced[data-active="true"] *,
+.theme-purple .nav-link-forced[data-active="true"] * {
   color: white !important;
-  border-color: #3b82f6 !important;
-  border-width: 2px !important;
 }
 
-.filter-container button[data-filter="awaiting_response"] {
-  background-color: #fbbf24 !important;
-  color: #92400e !important;
-  border-color: #fbbf24 !important;
-  border-width: 2px !important;
-}
-
-.filter-container button[data-filter="client_confirms"] {
-  background-color: #f97316 !important;
+/* Target by data-force-color attribute */
+[data-force-color="white"],
+[data-force-color="white"] * {
   color: white !important;
-  border-color: #f97316 !important;
-  border-width: 2px !important;
 }
 
-.filter-container button[data-filter="contract_sent"] {
-  background-color: #8b5cf6 !important;
+/* Target by specific theme combinations */
+[data-theme="midnight-blue"][data-active="true"],
+[data-theme="purple"][data-active="true"] {
   color: white !important;
-  border-color: #8b5cf6 !important;
-  border-width: 2px !important;
 }
 
-.filter-container button[data-filter="confirmed"] {
-  background-color: #10b981 !important;
+[data-theme="midnight-blue"][data-active="true"] *,
+[data-theme="purple"][data-active="true"] * {
   color: white !important;
-  border-color: #10b981 !important;
-  border-width: 2px !important;
 }
 
-.filter-container button[data-filter="cancelled"] {
-  background-color: #ef4444 !important;
+/* ABSOLUTE NUCLEAR OPTION - Override any existing color rules */
+/* Target all navigation links in sidebar */
+.sidebar .nav-link-forced[data-active="true"] {
   color: white !important;
-  border-color: #ef4444 !important;
-  border-width: 2px !important;
 }
 
-.filter-container button[data-filter="completed"] {
-  background-color: #6b7280 !important;
+.sidebar .nav-link-forced[data-active="true"] * {
   color: white !important;
-  border-color: #6b7280 !important;
-  border-width: 2px !important;
+}
+
+/* Theme-specific overrides with maximum specificity */
+body[class*="theme-midnight-blue"] .sidebar a[data-active="true"],
+body[class*="theme-purple"] .sidebar a[data-active="true"],
+html[class*="theme-midnight-blue"] .sidebar a[data-active="true"],
+html[class*="theme-purple"] .sidebar a[data-active="true"] {
+  color: white !important;
+}
+
+body[class*="theme-midnight-blue"] .sidebar a[data-active="true"] *,
+body[class*="theme-purple"] .sidebar a[data-active="true"] *,
+html[class*="theme-midnight-blue"] .sidebar a[data-active="true"] *,
+html[class*="theme-purple"] .sidebar a[data-active="true"] * {
+  color: white !important;
+}
+
+/* Final fallback using style attribute detection */
+a[style*="background-color"][data-theme="midnight-blue"],
+a[style*="background-color"][data-theme="purple"],
+a[style*="var(--theme-primary)"][data-theme="midnight-blue"],
+a[style*="var(--theme-primary)"][data-theme="purple"] {
+  color: white !important;
+}
+
+a[style*="background-color"][data-theme="midnight-blue"] *,
+a[style*="background-color"][data-theme="purple"] *,
+a[style*="var(--theme-primary)"][data-theme="midnight-blue"] *,
+a[style*="var(--theme-primary)"][data-theme="purple"] * {
+  color: white !important;
+}
+
+/* CRITICAL FIX: Button text colors for purple and midnight blue themes - ONLY TARGET BUTTONS */
+/* Target ONLY buttons with primary backgrounds to ensure white text */
+body.theme-purple button.bg-primary,
+body.theme-midnight-blue button.bg-primary,
+html.theme-purple button.bg-primary,
+html.theme-midnight-blue button.bg-primary {
+  color: white !important;
+}
+
+/* Force all child elements in primary BUTTONS ONLY to have white text */
+body.theme-purple button.bg-primary *,
+body.theme-midnight-blue button.bg-primary *,
+html.theme-purple button.bg-primary *,
+html.theme-midnight-blue button.bg-primary * {
+  color: white !important;
+}
+
+/* Target ONLY buttons with primary variant class */
+body.theme-purple button[class*="bg-primary"],
+body.theme-midnight-blue button[class*="bg-primary"],
+html.theme-purple button[class*="bg-primary"],
+html.theme-midnight-blue button[class*="bg-primary"] {
+  color: white !important;
+}
+
+body.theme-purple button[class*="bg-primary"] *,
+body.theme-midnight-blue button[class*="bg-primary"] *,
+html.theme-purple button[class*="bg-primary"] *,
+html.theme-midnight-blue button[class*="bg-primary"] * {
+  color: white !important;
+}
+
+/* Target ONLY button elements with text-primary-foreground in these themes */
+body.theme-purple button.text-primary-foreground,
+body.theme-midnight-blue button.text-primary-foreground,
+html.theme-purple button.text-primary-foreground,
+html.theme-midnight-blue button.text-primary-foreground {
+  color: white !important;
+}
+
+/* Additional button targeting by common shadcn button classes - BUTTONS ONLY */
+body.theme-purple button[data-variant="default"],
+body.theme-midnight-blue button[data-variant="default"],
+html.theme-purple button[data-variant="default"],
+html.theme-midnight-blue button[data-variant="default"] {
+  color: white !important;
+}
+
+/* Fix submit buttons and form buttons with gradient backgrounds - BUTTONS ONLY */
+body.theme-purple button[class*="gradient"],
+body.theme-midnight-blue button[class*="gradient"],
+html.theme-purple button[class*="gradient"],
+html.theme-midnight-blue button[class*="gradient"],
+body.theme-purple button[class*="bg-gradient"],
+body.theme-midnight-blue button[class*="bg-gradient"],
+html.theme-purple button[class*="bg-gradient"],
+html.theme-midnight-blue button[class*="bg-gradient"] {
+  color: white !important;
+}
+
+body.theme-purple button[class*="gradient"] *,
+body.theme-midnight-blue button[class*="gradient"] *,
+html.theme-purple button[class*="gradient"] *,
+html.theme-midnight-blue button[class*="gradient"] *,
+body.theme-purple button[class*="bg-gradient"] *,
+body.theme-midnight-blue button[class*="bg-gradient"] *,
+html.theme-purple button[class*="bg-gradient"] *,
+html.theme-midnight-blue button[class*="bg-gradient"] * {
+  color: white !important;
+}
+
+/* OUTLINE BUTTON FIX: Make outline buttons with text-primary behave like primary buttons */
+/* For purple and midnight blue themes, outline buttons should show white text on primary background */
+body.theme-purple button[class*="text-primary"],
+body.theme-midnight-blue button[class*="text-primary"],
+html.theme-purple button[class*="text-primary"],
+html.theme-midnight-blue button[class*="text-primary"] {
+  background-color: var(--theme-primary) !important;
+  color: white !important;
+  border-color: var(--theme-primary) !important;
+}
+
+/* Ensure proper hover states for outline buttons in dark themes */
+body.theme-purple button[class*="text-primary"]:hover,
+body.theme-midnight-blue button[class*="text-primary"]:hover,
+html.theme-purple button[class*="text-primary"]:hover,
+html.theme-midnight-blue button[class*="text-primary"]:hover {
+  background-color: var(--theme-primary) !important;
+  color: white !important;
+  border-color: var(--theme-primary) !important;
+  opacity: 0.9;
+}
+
+/* Force child elements in outline buttons to inherit white text in dark themes */
+body.theme-purple button[class*="text-primary"] *,
+body.theme-midnight-blue button[class*="text-primary"] *,
+html.theme-purple button[class*="text-primary"] *,
+html.theme-midnight-blue button[class*="text-primary"] * {
+  color: white !important;
+}
+
+/* Metronome animation for logo */
+@keyframes metronome-tick {
+  0% { transform: rotate(-18deg); }
+  100% { transform: rotate(18deg); }
 }

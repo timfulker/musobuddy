@@ -21,14 +21,14 @@ export default function MobileNav() {
       <div className="flex justify-around">
         <Link href="/" className={cn(
           "flex flex-col items-center space-y-1 py-2 px-1",
-          isActive("/") ? "text-purple-600" : "text-gray-500 dark:text-gray-400"
+          isActive("/") ? "text-primary" : "text-gray-500 dark:text-gray-400"
         )}>
           <Home className="w-5 h-5" />
           <span className={cn("text-xs", isActive("/") && "font-medium")}>Home</span>
         </Link>
         <Link href="/bookings" className={cn(
           "flex flex-col items-center space-y-1 py-2 px-1",
-          isActive("/bookings") ? "text-purple-600" : "text-gray-500 dark:text-gray-400"
+          isActive("/bookings") ? "text-primary" : "text-gray-500 dark:text-gray-400"
         )}>
           <Inbox className="w-5 h-5" />
           <span className={cn("text-xs", isActive("/bookings") && "font-medium")}>Bookings</span>
@@ -36,21 +36,21 @@ export default function MobileNav() {
 
         <Link href="/calendar" className={cn(
           "flex flex-col items-center space-y-1 py-2 px-1",
-          isActive("/calendar") ? "text-purple-600" : "text-gray-500 dark:text-gray-400"
+          isActive("/calendar") ? "text-primary" : "text-gray-500 dark:text-gray-400"
         )}>
           <Calendar className="w-5 h-5" />
           <span className={cn("text-xs", isActive("/calendar") && "font-medium")}>Calendar</span>
         </Link>
         <Link href="/invoices" className={cn(
           "flex flex-col items-center space-y-1 py-2 px-1",
-          isActive("/invoices") ? "text-purple-600" : "text-gray-500 dark:text-gray-400"
+          isActive("/invoices") ? "text-primary" : "text-gray-500 dark:text-gray-400"
         )}>
           <PoundSterling className="w-5 h-5" />
           <span className={cn("text-xs", isActive("/invoices") && "font-medium")}>Invoices</span>
         </Link>
         <Link href="/user-guide" className={cn(
           "flex flex-col items-center space-y-1 py-2 px-1",
-          isActive("/user-guide") ? "text-purple-600" : "text-gray-500 dark:text-gray-400"
+          isActive("/user-guide") ? "text-primary" : "text-gray-500 dark:text-gray-400"
         )}>
           <BookOpen className="w-5 h-5" />
           <span className={cn("text-xs", isActive("/user-guide") && "font-medium")}>Guide</span>

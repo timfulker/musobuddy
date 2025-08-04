@@ -161,28 +161,28 @@ export default function NewBookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-primary/5">
       <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8">
         {/* Enhanced Header */}
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl opacity-5"></div>
-          <div className="relative bg-white/80 backdrop-blur-sm border border-purple-100 rounded-2xl p-6 shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary via-yellow-500 to-blue-600 rounded-2xl opacity-5"></div>
+          <div className="relative bg-white/80 backdrop-blur-sm border border-primary/10 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <Link href="/bookings">
-                  <Button variant="outline" size="sm" className="bg-white/50 hover:bg-white/80 border-purple-200 text-purple-700 hover:text-purple-800">
+                  <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 border-primary text-white hover:text-white">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Bookings
                   </Button>
                 </Link>
                 <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] bg-clip-text text-transparent">
                     New Booking
                   </h1>
                   <p className="text-gray-600 mt-1">Create a new performance booking</p>
                 </div>
               </div>
-              <div className="hidden md:flex items-center space-x-2 text-purple-600">
+              <div className="hidden md:flex items-center space-x-2 text-primary">
                 <Calendar className="w-8 h-8" />
               </div>
             </div>
@@ -192,10 +192,10 @@ export default function NewBookingPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Client Information */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-purple-100">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-lg border-b border-purple-100">
-                <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl ring-1 ring-primary/10">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary-50 rounded-t-lg border-b border-primary/10">
+                <CardTitle className="text-xl font-semibold text-primary-800 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-primary/50 to-primary-500 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-sm">1</span>
                   </div>
                   Client Information
@@ -210,7 +210,7 @@ export default function NewBookingPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">Client Name *</FormLabel>
                         <FormControl>
-                          <Input {...field} className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20" />
+                          <Input {...field} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -224,7 +224,7 @@ export default function NewBookingPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">Email</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20" />
+                          <Input {...field} type="email" className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -238,7 +238,7 @@ export default function NewBookingPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">Phone</FormLabel>
                         <FormControl>
-                          <Input {...field} className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20" />
+                          <Input {...field} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -252,7 +252,7 @@ export default function NewBookingPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-gray-700">Contact Person</FormLabel>
                         <FormControl>
-                          <Input {...field} className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20" />
+                          <Input {...field} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -267,7 +267,7 @@ export default function NewBookingPage() {
                     <FormItem>
                       <FormLabel className="text-sm font-medium text-gray-700">Client Address</FormLabel>
                       <FormControl>
-                        <Textarea {...field} rows={2} className="bg-white/70 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20 resize-none" />
+                        <Textarea {...field} rows={2} className="bg-white/70 border-primary-200 focus:border-primary-400 focus:ring-purple-400/20 resize-none" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -601,8 +601,8 @@ export default function NewBookingPage() {
 
             {/* Enhanced Action Buttons */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-2xl opacity-5"></div>
-              <div className="relative bg-white/80 backdrop-blur-sm border border-purple-100 rounded-2xl p-6 shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary via-yellow-500 to-blue-600 rounded-2xl opacity-5"></div>
+              <div className="relative bg-white/80 backdrop-blur-sm border border-primary/10 rounded-2xl p-6 shadow-lg">
                 <div className="flex justify-between items-center">
                   <div className="text-sm text-gray-600">
                     Ready to create your booking?
@@ -615,7 +615,7 @@ export default function NewBookingPage() {
                     </Link>
                     <Button 
                       type="submit" 
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                      className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                       disabled={createBookingMutation.isPending}
                     >
                       <Save className="w-4 h-4 mr-2" />

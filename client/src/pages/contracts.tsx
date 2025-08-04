@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -169,6 +169,9 @@ export default function Contracts() {
               form.setValue('equipmentRequirements', booking.equipmentRequirements || '');
               form.setValue('specialRequirements', booking.specialRequirements || '');
               
+              // CRITICAL FIX: Set enquiryId to link contract back to booking
+              form.setValue('enquiryId', parseInt(bookingId));
+              
               // Auto-generate contract number with event date and client name
               if (booking.eventDate && booking.clientName) {
                 const eventDate = new Date(booking.eventDate);
@@ -221,21 +224,33 @@ export default function Contracts() {
       }
       setDataLoaded(true); // Mark data as loaded even if no specific auto-fill occurs
     }
-  }, [enquiries, contracts, form, isLoading, isDialogOpen, dataLoaded, toast]);
+  }, [enquiries, contracts, form, isLoading, dataLoaded, toast]); // Removed isDialogOpen from dependencies to prevent circular reopening
 
-  // Clean up URL when dialog closes
+  // Improved dialog close handler with better state management
   const handleDialogClose = (open: boolean) => {
+    console.log('🔄 handleDialogClose called with:', open);
+    
     setIsDialogOpen(open);
+    
     if (!open) {
-      // Clean up URL when closing dialog
+      console.log('🚪 Closing dialog - cleaning up state');
+      
+      // Clean up URL when closing dialog - do this first
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('action') === 'new') {
+      if (urlParams.get('action') === 'new' || urlParams.get('action') === 'create') {
+        console.log('🧹 Cleaning up URL params');
         window.history.replaceState({}, '', window.location.pathname);
       }
-      // Clear editing state and reset form
+      
+      // Clear all form and component state
       setEditingContract(null);
-      setDataLoaded(false); // Reset data loaded flag
-      form.reset();
+      setDataLoaded(false); // Reset data loaded flag to allow future URL-based opens
+      
+      // Reset form with a slight delay to ensure state updates are complete
+      setTimeout(() => {
+        form.reset();
+        console.log('✅ Dialog cleanup complete');
+      }, 50);
     }
   };
 
@@ -437,26 +452,19 @@ export default function Contracts() {
       contractNumber: contract.contractNumber
     });
     
-    // ENHANCED LOGIC: Better handling of different contract statuses and URLs
+    // SIMPLIFIED LOGIC: Always go directly to the PDF
     
-    // 1. For signed contracts with cloud storage URL - open in new tab
-    if (contract.status === 'signed' && contract.cloudStorageUrl) {
-      console.log('🌐 Opening signed contract from cloud storage:', contract.cloudStorageUrl);
+    // 1. If contract has cloud storage URL - open directly from R2
+    if (contract.cloudStorageUrl) {
+      console.log('🌐 Opening contract directly from cloud storage:', contract.cloudStorageUrl);
       window.open(contract.cloudStorageUrl, '_blank');
       return;
     }
     
-    // 2. For signed contracts without cloud URL - try download endpoint
-    if (contract.status === 'signed') {
-      console.log('📄 Opening signed contract via download endpoint');
-      const downloadUrl = `/api/contracts/${contract.id}/download`;
-      window.open(downloadUrl, '_blank');
-      return;
-    }
-    
-    // 3. For all other contracts (draft, sent) - use internal viewer
-    console.log('📋 Opening contract in internal viewer');
-    setLocation(`/view-contract/${contract.id}`);
+    // 2. Fallback: Generate PDF on-demand via API
+    console.log('📄 Opening contract via PDF endpoint');
+    const pdfUrl = `/api/contracts/${contract.id}/pdf`;
+    window.open(pdfUrl, '_blank');
   };
 
   // DEBUGGING: Add this temporary function to test API connectivity
@@ -535,10 +543,10 @@ export default function Contracts() {
   };
 
   const handleSelectAll = () => {
-    if (selectedContracts.length === filteredContracts.length) {
+    if (selectedContracts.length === filteredContracts?.length) {
       setSelectedContracts([]);
     } else {
-      setSelectedContracts(filteredContracts.map(contract => contract.id));
+      setSelectedContracts(filteredContracts?.map(contract => contract.id) || []);
     }
   };
 
@@ -623,7 +631,7 @@ export default function Contracts() {
       case "draft": return "bg-gray-100 text-gray-800";
       case "sent": return "bg-blue-100 text-blue-800";
       case "signed": return "bg-green-100 text-green-800";
-      case "completed": return "bg-purple-100 text-purple-800";
+      case "completed": return "bg-primary/10 text-primary";
       case "unsigned": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
@@ -646,7 +654,7 @@ export default function Contracts() {
     return new Date(dateString).toLocaleDateString("en-GB");
   };
 
-  const filteredContracts = contracts.filter((contract: Contract) => {
+  const filteredContracts = contracts?.filter((contract: Contract) => {
     const matchesSearch = searchQuery === "" || 
       contract.contractNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contract.clientName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -654,7 +662,7 @@ export default function Contracts() {
     const matchesStatus = statusFilter === "all" || contract.status === statusFilter;
 
     return matchesSearch && matchesStatus;
-  });
+  }) || [];
 
   // Handle loading state
   if (isLoading) {
@@ -731,9 +739,12 @@ export default function Contracts() {
                 <p className="text-gray-600 dark:text-gray-400">Manage your performance contracts and agreements</p>
               </div>
 
-              <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                console.log('🔄 Dialog onOpenChange called with:', open);
+                handleDialogClose(open);
+              }}>
                 <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700">
+                  <Button className="bg-primary hover:bg-primary/90">
                     <FileText className="w-4 h-4 mr-2" />
                     Generate Contract
                   </Button>
@@ -741,6 +752,9 @@ export default function Contracts() {
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader className="pb-4">
                     <DialogTitle>{editingContract ? 'Edit Contract' : 'Generate New Contract'}</DialogTitle>
+                    <DialogDescription>
+                      {editingContract ? 'Update the contract details below.' : 'Fill in the contract details below to generate a new contract.'}
+                    </DialogDescription>
                   </DialogHeader>
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit((data) => {
@@ -1048,7 +1062,11 @@ export default function Contracts() {
 
 
                       <div className="flex justify-end space-x-3 pt-4 border-t">
-                        <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => handleDialogClose(false)}
+                        >
                           Cancel
                         </Button>
                         <Button type="submit" disabled={createContractMutation.isPending || updateContractMutation.isPending}>
@@ -1138,7 +1156,7 @@ export default function Contracts() {
                     <p className="text-gray-500 text-lg">No contracts found</p>
                     <p className="text-gray-400">Generate your first contract from a qualified enquiry</p>
                     <Button 
-                      className="mt-4 bg-purple-600 hover:bg-purple-700"
+                      className="mt-4 bg-primary hover:bg-primary/90"
                       onClick={() => setIsDialogOpen(true)}
                     >
                       <FileText className="w-4 h-4 mr-2" />
@@ -1232,7 +1250,7 @@ export default function Contracts() {
                               <Button 
                                 size="sm" 
                                 variant="outline"
-                                className="text-xs whitespace-nowrap text-purple-600 hover:text-purple-700 border-purple-300"
+                                className="text-xs whitespace-nowrap text-primary hover:text-primary/80 border-primary/30"
                                 onClick={() => handleTestContractAPI(contract)}
                               >
                                 🧪 Test API

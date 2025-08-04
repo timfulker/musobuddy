@@ -20,6 +20,15 @@ export default {
         'soft-lg': '0 4px 20px rgba(0, 0, 0, 0.08)',
       },
       colors: {
+        // Theme system colors
+        'theme-primary': 'var(--theme-primary)',
+        'theme-secondary': 'var(--theme-secondary)',
+        'theme-accent': 'var(--theme-accent)',
+        'theme-background': 'var(--theme-background)',
+        'theme-surface': 'var(--theme-surface)',
+        'theme-text': 'var(--theme-text)',
+        'theme-text-secondary': 'var(--theme-text-secondary)',
+        
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {
@@ -46,9 +55,7 @@ export default {
         accent: {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-foreground)",
-          yellow: "#ffd500",  // basecamp yellow
         },
-        "basecamp-yellow": "#ffd500",  // basecamp yellow as direct color
         neutral: {
           light: "#f5f5f5",  // light backgrounds
         },

@@ -179,7 +179,7 @@ export default function TrialSuccessPage() {
             {/* Single Action: Set up Email */}
             <Button
               onClick={handleSetupEmail}
-              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-white"
               size="lg"
             >
               <Mail className="h-5 w-5 mr-2" />
@@ -200,7 +200,7 @@ export default function TrialSuccessPage() {
         <div className="text-center mt-6">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Questions? Check our{" "}
-            <Link href="/help" className="text-purple-600 hover:text-purple-700 dark:text-purple-400">
+            <Link href="/help" className="text-primary hover:text-primary/90 dark:text-yellow-400">
               help center
             </Link>
           </p>

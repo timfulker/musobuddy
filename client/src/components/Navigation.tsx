@@ -45,8 +45,8 @@ const Navigation = () => {
                   href={item.path}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      ? 'bg-primary text-white'
+                      : 'text-muted-foreground hover:text-white hover:bg-primary'
                   }`}
                 >
                   <Icon className="h-4 w-4" />

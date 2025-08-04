@@ -44,7 +44,7 @@ export default function BookingCTAButtons() {
       <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-purple-600" />
+            <Clock className="w-5 h-5 text-primary" />
             <span>Action Required</span>
           </CardTitle>
         </CardHeader>

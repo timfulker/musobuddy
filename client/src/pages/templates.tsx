@@ -743,7 +743,7 @@ export default function Templates() {
               <Button 
                 onClick={() => setShowAIDialog(true)}
                 variant="outline"
-                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none hover:from-purple-600 hover:to-blue-600"
+                className="bg-gradient-to-r from-primary/50 to-blue-500 text-white border-none hover:from-primary hover:to-blue-600"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 AI Generate
@@ -1074,7 +1074,7 @@ export default function Templates() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center">
-              <Bot className="w-5 h-5 mr-2 text-purple-600" />
+              <Bot className="w-5 h-5 mr-2 text-primary" />
               AI Response Generator
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
@@ -1202,7 +1202,7 @@ export default function Templates() {
               <Button 
                 onClick={handleGenerateAIResponse}
                 disabled={aiLoading}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                className="bg-gradient-to-r from-primary/50 to-blue-500 hover:from-primary hover:to-blue-600"
               >
                 {aiLoading ? (
                   <>
@@ -1226,11 +1226,11 @@ export default function Templates() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="pb-6 border-b border-gray-100">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <div className="p-3 bg-gradient-to-br from-primary/50 via-blue-500 to-primary-600 rounded-xl shadow-lg">
                 <Edit3 className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
-                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary via-blue-600 to-primary-600 bg-clip-text text-transparent">
                   Edit AI Response
                 </DialogTitle>
                 <p className="text-sm text-gray-600 mt-1 flex items-center">
@@ -1240,7 +1240,7 @@ export default function Templates() {
               </div>
               <div className="text-right">
                 <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">AI Powered</div>
-                <div className="text-xs text-purple-600 font-semibold">Ready to Edit</div>
+                <div className="text-xs text-primary font-semibold">Ready to Edit</div>
               </div>
             </div>
           </DialogHeader>
@@ -1249,7 +1249,7 @@ export default function Templates() {
             <div className="space-y-6 pt-6">
               <div className="space-y-2">
                 <Label htmlFor="edit-subject" className="text-sm font-semibold text-gray-700 flex items-center">
-                  <span className="inline-block w-1 h-4 bg-purple-500 rounded-full mr-2"></span>
+                  <span className="inline-block w-1 h-4 bg-primary/50 rounded-full mr-2"></span>
                   Email Subject
                 </Label>
                 <Input
@@ -1260,7 +1260,7 @@ export default function Templates() {
                     subject: e.target.value
                   })}
                   placeholder="Email subject line"
-                  className="border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200"
+                  className="border-gray-200 focus:border-primary/50 focus:ring-primary/50/20 transition-all duration-200"
                 />
               </div>
               
@@ -1314,7 +1314,7 @@ export default function Templates() {
               
               <div className="flex justify-between items-center pt-6 border-t border-gray-100">
                 <div className="text-xs text-gray-500 flex items-center">
-                  <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse"></span>
+                  <span className="inline-block w-2 h-2 bg-primary/50 rounded-full mr-2 animate-pulse"></span>
                   Changes will be applied to your response preview
                 </div>
                 <div className="flex space-x-3">
@@ -1326,7 +1326,7 @@ export default function Templates() {
                   </Button>
                   <Button 
                     onClick={handleSaveEditedResponse} 
-                    className="bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 hover:from-purple-600 hover:via-blue-600 hover:to-indigo-700 px-6 shadow-lg transition-all duration-200"
+                    className="bg-gradient-to-r from-primary/50 via-blue-500 to-primary-600 hover:from-primary hover:via-blue-600 hover:to-primary-700 px-6 shadow-lg transition-all duration-200"
                   >
                     <Wand2 className="w-4 h-4 mr-2" />
                     Use Edited Response

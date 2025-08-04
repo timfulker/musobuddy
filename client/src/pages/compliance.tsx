@@ -409,7 +409,7 @@ export default function Compliance() {
             </div>
             <div className="flex space-x-3">
               <Button 
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-primary hover:bg-primary/90"
                 onClick={() => {
                   
                   setIsDialogOpen(true);
@@ -526,7 +526,7 @@ export default function Compliance() {
                         <div
                           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                             isDragging
-                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10'
+                              ? 'border-primary/50 bg-primary/5 dark:bg-yellow-900/10'
                               : 'border-gray-300 hover:border-gray-400'
                           }`}
                           onDragOver={handleDragOver}
@@ -559,7 +559,7 @@ export default function Compliance() {
                               <div>
                                 <p className="text-sm text-gray-600">
                                   Drag and drop your document here, or{' '}
-                                  <label className="text-purple-600 hover:text-purple-700 underline cursor-pointer">
+                                  <label className="text-primary hover:text-primary/90 underline cursor-pointer">
                                     browse files
                                     <input
                                       type="file"
@@ -644,7 +644,7 @@ export default function Compliance() {
               </Dialog>
               
               {documents.length > 0 && (
-                <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50" onClick={() => setIsSendDialogOpen(true)}>
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary/5" onClick={() => setIsSendDialogOpen(true)}>
                   <Send className="w-4 h-4 mr-2" />
                   Send to Client
                 </Button>
@@ -709,12 +709,12 @@ export default function Compliance() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Total Documents</p>
-                    <p className="text-xl font-bold text-purple-600">{status.total}</p>
+                    <p className="text-xl font-bold text-primary">{status.total}</p>
                   </div>
                 </div>
               </CardContent>
@@ -729,7 +729,7 @@ export default function Compliance() {
                   <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 text-lg">No compliance documents</p>
                   <p className="text-gray-400">Add your insurance certificates and licenses to stay compliant</p>
-                  <Button className="mt-4 bg-purple-600 hover:bg-purple-700" onClick={() => setIsDialogOpen(true)}>
+                  <Button className="mt-4 bg-primary hover:bg-primary/90" onClick={() => setIsDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add First Document
                   </Button>
@@ -833,7 +833,7 @@ export default function Compliance() {
                 
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
-                    <Music className="w-5 h-5 text-purple-600" />
+                    <Music className="w-5 h-5 text-primary" />
                     <h4 className="font-semibold">Music Performance License</h4>
                   </div>
                   <p className="text-sm text-gray-600">

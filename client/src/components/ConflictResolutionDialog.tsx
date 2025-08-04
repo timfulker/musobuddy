@@ -40,7 +40,7 @@ export default function ConflictResolutionDialog({
   });
 
   // Check if the current conflict group is already resolved
-  const isResolved = resolutions.some((resolution: any) => {
+  const isResolved = resolutions?.some((resolution: any) => {
     if (!resolution?.bookingIds) return false;
     
     try {

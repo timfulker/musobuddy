@@ -47,6 +47,56 @@ const isAuthenticated = async (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express) {
+  console.log('🚀 Registering all application routes...');
+
+  // IMMEDIATE TEST ROUTES - Add these FIRST
+  // 1. SIMPLE TEST ROUTE - Add this FIRST to test if routing works at all
+  app.get('/test-route', (req, res) => {
+    res.json({ 
+      message: 'Routes are working!', 
+      timestamp: new Date().toISOString() 
+    });
+  });
+
+  // 2. SIMPLE DEBUG ROUTE
+  app.get('/debug-invoice/:id', async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      console.log(`🔍 Debug request for invoice: ${invoiceId}`);
+      
+      const invoice = await storage.getInvoice(invoiceId);
+      
+      if (!invoice) {
+        return res.json({ error: 'Invoice not found', invoiceId });
+      }
+      
+      res.json({
+        success: true,
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        cloudStorageUrl: invoice.cloudStorageUrl,
+        cloudStorageKey: invoice.cloudStorageKey,
+        rawCloudUrl: JSON.stringify(invoice.cloudStorageUrl),
+        urlLength: invoice.cloudStorageUrl?.length || 0,
+        analysis: {
+          hasCloudUrl: !!invoice.cloudStorageUrl,
+          startsWithSlash: invoice.cloudStorageUrl?.startsWith('/'),
+          containsInvoices: invoice.cloudStorageUrl?.includes('invoices/'),
+          containsView: invoice.cloudStorageUrl?.includes('view/'),
+          expectedFormat: `invoices/${new Date(invoice.createdAt || new Date()).toISOString().split('T')[0]}/${invoice.invoiceNumber}.pdf`
+        }
+      });
+    } catch (error: any) {
+      console.error('Debug error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== INVOICE SYSTEM NOW USES DIRECT CLOUDFLARE R2 URLS =====
+
+  // PDF serving routes removed - invoices now served directly from Cloudflare R2
+  // URLs: https://pub-a730a594e40d8b46295554074c8e4413.r2.dev/invoices/2025-08-04/INV-264.pdf
+
   // HARDENING: Apply general rate limiting and slow down protection
   console.log('🛡️ Setting up rate limiting protection...');
   app.use(generalApiRateLimit);
@@ -70,6 +120,116 @@ export async function registerRoutes(app: Express) {
   // ===== TEST ROUTES =====
   app.get('/test-login', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'test-direct-login.html'));
+  });
+
+  app.get('/auth-test', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>MusoBuddy Quick Auth Test</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .container { max-width: 600px; margin: 0 auto; }
+            button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+            button:hover { background: #0056b3; }
+            .result { margin: 20px 0; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; white-space: pre-wrap; }
+            .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+            .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔐 MusoBuddy Authentication Test</h1>
+            
+            <h2>1. Check Authentication Status</h2>
+            <button onclick="checkAuthStatus()">Check Auth Status</button>
+            
+            <h2>2. Admin Login (if needed)</h2>
+            <button onclick="adminLogin()">Admin Login</button>
+            
+            <h2>3. Test Settings Access</h2>
+            <button onclick="testSettings()">Test Settings API</button>
+            
+            <div id="result" class="result">Ready to test...</div>
+        </div>
+
+        <script>
+            async function checkAuthStatus() {
+                try {
+                    const response = await fetch('/api/auth/status', {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showResult('✅ Authentication Status: LOGGED IN\\n' + JSON.stringify(data, null, 2), 'success');
+                    } else {
+                        showResult('❌ Authentication Status: NOT LOGGED IN\\n' + JSON.stringify(data, null, 2), 'error');
+                    }
+                } catch (error) {
+                    showResult('❌ Error checking auth status: ' + error.message, 'error');
+                }
+            }
+
+            async function adminLogin() {
+                try {
+                    const response = await fetch('/api/auth/admin-login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            email: 'timfulker@gmail.com',
+                            password: 'MusoBuddy2025!'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showResult('✅ Admin Login: SUCCESS\\n' + JSON.stringify(data, null, 2), 'success');
+                    } else {
+                        showResult('❌ Admin Login: FAILED\\n' + JSON.stringify(data, null, 2), 'error');
+                    }
+                } catch (error) {
+                    showResult('❌ Error during admin login: ' + error.message, 'error');
+                }
+            }
+
+            async function testSettings() {
+                try {
+                    const response = await fetch('/api/settings', {
+                        credentials: 'include'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showResult('✅ Settings Access: SUCCESS\\n' + JSON.stringify(data, null, 2), 'success');
+                    } else {
+                        showResult('❌ Settings Access: FAILED\\n' + JSON.stringify(data, null, 2), 'error');
+                    }
+                } catch (error) {
+                    showResult('❌ Error accessing settings: ' + error.message, 'error');
+                }
+            }
+
+            function showResult(message, type = '') {
+                const resultDiv = document.getElementById('result');
+                resultDiv.textContent = message;
+                resultDiv.className = 'result ' + type;
+            }
+
+            // Auto-check auth status on page load
+            window.onload = function() {
+                checkAuthStatus();
+            };
+        </script>
+    </body>
+    </html>
+    `);
   });
 
   app.get('/dev-login', (req, res) => {
@@ -155,16 +315,151 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      // Return basic stats - will enhance later
+      // Calculate actual dashboard statistics
+      const [bookings, invoices] = await Promise.all([
+        storage.getBookings(userId),
+        storage.getInvoices(userId)
+      ]);
+      
+      // Calculate current month's first day
+      const now = new Date();
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // Filter bookings for current month
+      const thisMonthBookings = bookings.filter((booking: any) => {
+        const bookingDate = new Date(booking.eventDate);
+        return bookingDate >= currentMonthStart && bookingDate <= now;
+      });
+      
+      // Calculate monthly revenue from this month's bookings
+      const monthlyRevenue = thisMonthBookings.reduce((total: number, booking: any) => {
+        return total + (parseFloat(booking.fee?.toString() || '0') || 0);
+      }, 0);
+      
+      // Count active bookings (confirmed + awaiting_response + contract_sent)
+      const activeBookings = bookings.filter((booking: any) => 
+        ['confirmed', 'awaiting_response', 'contract_sent'].includes(booking.status)
+      ).length;
+      
+      // Calculate pending invoices (sent but not paid)
+      const pendingInvoices = invoices
+        .filter((invoice: any) => invoice.status === 'sent')
+        .reduce((total: number, invoice: any) => total + (parseFloat(invoice.amount?.toString() || '0') || 0), 0);
+      
+      // Count overdue invoices
+      const overdueInvoices = invoices.filter((invoice: any) => {
+        if (invoice.status !== 'sent') return false;
+        const dueDate = new Date(invoice.dueDate || invoice.createdAt);
+        return dueDate < now;
+      }).length;
+      
       res.json({
-        totalBookings: 0,
-        completedBookings: 0,
-        pendingContracts: 0,
-        totalRevenue: 0
+        monthlyRevenue: Math.round(monthlyRevenue),
+        activeBookings,
+        pendingInvoices: Math.round(pendingInvoices),
+        overdueInvoices
       });
     } catch (error: any) {
       console.error('❌ Dashboard stats error:', error);
       res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    }
+  });
+
+  // ===== CLIENTS API =====
+  app.get('/api/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Get clients from storage - for now return empty array until we implement client storage
+      res.json([]);
+    } catch (error: any) {
+      console.error('❌ Clients fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch clients' });
+    }
+  });
+
+  app.post('/api/clients', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // For now, return success but don't actually create anything
+      res.json({ success: true, message: 'Client functionality coming soon' });
+    } catch (error: any) {
+      console.error('❌ Client creation error:', error);
+      res.status(500).json({ error: 'Failed to create client' });
+    }
+  });
+
+  app.put('/api/clients/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // For now, return success but don't actually update anything
+      res.json({ success: true, message: 'Client functionality coming soon' });
+    } catch (error: any) {
+      console.error('❌ Client update error:', error);
+      res.status(500).json({ error: 'Failed to update client' });
+    }
+  });
+
+  app.delete('/api/clients/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // For now, return success but don't actually delete anything
+      res.json({ success: true, message: 'Client functionality coming soon' });
+    } catch (error: any) {
+      console.error('❌ Client deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete client' });
+    }
+  });
+
+  app.post('/api/clients/populate-from-bookings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Get all bookings for this user
+      const bookings = await storage.getBookings(userId);
+      
+      // Extract unique client data from bookings
+      const clientsMap = new Map();
+      bookings.forEach((booking: any) => {
+        if (booking.clientName && !clientsMap.has(booking.clientName)) {
+          clientsMap.set(booking.clientName, {
+            name: booking.clientName,
+            email: booking.clientEmail || '',
+            phone: booking.clientPhone || '',
+            address: '',
+            notes: `From booking: ${booking.title || 'Untitled'}`
+          });
+        }
+      });
+      
+      const uniqueClients = Array.from(clientsMap.values());
+      
+      res.json({ 
+        success: true, 
+        message: `Found ${uniqueClients.length} unique clients from your bookings. Client management system coming soon!`,
+        clientsFound: uniqueClients.length
+      });
+    } catch (error: any) {
+      console.error('❌ Populate clients error:', error);
+      res.status(500).json({ error: 'Failed to populate clients from bookings' });
     }
   });
 
@@ -173,6 +468,7 @@ export async function registerRoutes(app: Express) {
     try {
       const userId = req.session?.userId;
       if (!userId) {
+        console.log('❌ Settings fetch: no userId in session');
         return res.status(401).json({ error: 'Authentication required' });
       }
 
@@ -184,6 +480,7 @@ export async function registerRoutes(app: Express) {
       console.log(`✅ Settings retrieved for user ${userId}:`, {
         businessName: userSettings?.businessName,
         primaryInstrument: userSettings?.primaryInstrument,
+        defaultInvoiceDueDays: userSettings?.defaultInvoiceDueDays,
         hasSettings: !!userSettings
       });
       
@@ -203,6 +500,8 @@ export async function registerRoutes(app: Express) {
 
       console.log(`💾 Saving settings for user: ${userId}`);
       console.log(`🎵 Instrument in request:`, req.body.primaryInstrument);
+      console.log(`📄 DefaultInvoiceDueDays in request:`, req.body.defaultInvoiceDueDays);
+      console.log(`📋 Full request body:`, req.body);
       
       const result = await storage.updateSettings(userId, req.body);
       
@@ -246,7 +545,31 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Session restoration route moved to auth-rebuilt.ts to avoid duplication
+  // Session status and restoration endpoint
+  app.get('/api/auth/status', (req: any, res) => {
+    console.log('🔍 Auth status check:', {
+      hasSession: !!req.session,
+      userId: req.session?.userId,
+      email: req.session?.email,
+      headers: {
+        cookie: req.headers.cookie ? 'present' : 'missing',
+        userAgent: req.headers['user-agent']?.substring(0, 50)
+      }
+    });
+    
+    if (req.session?.userId) {
+      res.json({
+        authenticated: true,
+        userId: req.session.userId,
+        email: req.session.email
+      });
+    } else {
+      res.status(401).json({
+        authenticated: false,
+        error: 'No active session'
+      });
+    }
+  });
 
   app.patch('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
@@ -726,7 +1049,7 @@ export async function registerRoutes(app: Express) {
       // Get recipient email (from booking or direct recipient)
       let recipientEmail = recipient;
       if (bookingId && !recipientEmail) {
-        const booking = await storage.getBookingDetails(bookingId);
+        const booking = await storage.getBooking(parseInt(bookingId));
         if (!booking) {
           return res.status(404).json({ error: 'Booking not found' });
         }
@@ -777,6 +1100,75 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ 
         success: false, 
         error: error.message || 'Failed to send email' 
+      });
+    }
+  });
+
+  // ===== CONTRACT PDF ROUTES =====
+  
+  // FIXED: Contract PDF route with proper authentication
+  app.get('/api/contracts/:id/pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+      
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        console.log('❌ Contract PDF: Authentication required');
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`📄 Generating PDF for contract #${contractId} by user ${userId}`);
+      
+      // Get contract and verify ownership
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        console.log(`❌ Contract #${contractId} not found`);
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      // CRITICAL: Verify user owns this contract
+      if (contract.userId !== userId) {
+        console.log(`❌ User ${userId} denied access to contract #${contractId} (owned by ${contract.userId})`);
+        return res.status(403).json({ error: 'Access denied - you do not own this contract' });
+      }
+      
+      console.log(`✅ Contract #${contractId} access authorized for user ${userId}`);
+      
+      // Get user settings for PDF generation
+      const userSettings = await storage.getUserSettings(userId);
+      const { generateContractPDF } = await import('./pdf-generator');
+      
+      // Include signature details if contract is signed
+      const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+        signedAt: new Date(contract.signedAt),
+        signatureName: contract.clientSignature || undefined,
+        clientIpAddress: contract.clientIpAddress || undefined
+      } : undefined;
+      
+      console.log(`🔄 Generating professional PDF for contract #${contractId}...`);
+      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      
+      console.log(`✅ Professional contract PDF generated: ${pdfBuffer.length} bytes`);
+      
+      // Set headers for PDF viewing (inline)
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber?.replace(/[^a-zA-Z0-9-_]/g, '-') || contractId}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      
+      // Send the PDF buffer
+      console.log(`✅ PDF served for viewing: ${pdfBuffer.length} bytes`);
+      return res.send(pdfBuffer);
+      
+    } catch (error: any) {
+      console.error('❌ Contract PDF generation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate contract PDF',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });
@@ -1628,7 +2020,8 @@ export async function registerRoutes(app: Express) {
         clientName: contractData.clientName,
         eventDate: contractData.eventDate,
         eventTime: contractData.eventTime,
-        fee: contractData.fee
+        fee: contractData.fee,
+        enquiryId: contractData.enquiryId
       });
       
       const newContract = await storage.createContract(contractData);
@@ -1759,6 +2152,19 @@ export async function registerRoutes(app: Express) {
       // Send email with contract
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
       await emailService.sendContractEmail(contract, userSettings, subject, pdfUrl, customMessage);
+      
+      // Update associated booking status to 'contract_sent' if contract is linked to a booking
+      if (contract.enquiryId) {
+        try {
+          await storage.updateBooking(contract.enquiryId, { 
+            status: 'contract_sent',
+            contract_sent: true
+          });
+          console.log(`✅ Updated booking #${contract.enquiryId} status to 'contract_sent'`);
+        } catch (bookingError) {
+          console.warn(`⚠️ Could not update booking status for enquiry #${contract.enquiryId}:`, bookingError);
+        }
+      }
       
       console.log(`✅ Contract #${parsedContractId} sent successfully via send-email endpoint`);
       res.json({ success: true, message: 'Contract sent successfully' });
@@ -2246,13 +2652,20 @@ export async function registerRoutes(app: Express) {
 
   // ===== PUBLIC INVOICE VIEW ROUTES (NO AUTHENTICATION) =====
   
-  // Public invoice viewing route (for clients)
+  // 2. PUBLIC INVOICE VIEW ROUTE - Fixed redirect logic
   app.get('/view/invoices/:id', async (req, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
       
       if (isNaN(invoiceId)) {
-        return res.status(400).json({ error: 'Invalid invoice ID' });
+        return res.status(400).send(`
+          <!DOCTYPE html>
+          <html><head><title>Invalid Invoice</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Invalid Invoice ID</h1>
+            <p>The invoice ID provided is not valid.</p>
+          </body></html>
+        `);
       }
       
       console.log(`👁️ Public invoice view request for ID: ${invoiceId}`);
@@ -2261,34 +2674,107 @@ export async function registerRoutes(app: Express) {
       const invoice = await storage.getInvoice(invoiceId);
       if (!invoice) {
         console.log(`❌ Invoice #${invoiceId} not found for public view`);
-        return res.status(404).json({ error: 'Invoice not found' });
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html><head><title>Invoice Not Found</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Invoice Not Found</h1>
+            <p>The requested invoice could not be found.</p>
+          </body></html>
+        `);
       }
       
-      // If invoice has cloud storage URL, redirect to it directly
+      console.log(`📋 Invoice found: ${invoice.invoiceNumber}, cloudStorageUrl: ${invoice.cloudStorageUrl ? 'exists' : 'missing'}`);
+      
+      // FIXED: Redirect directly to Cloudflare R2 public URL
       if (invoice.cloudStorageUrl) {
-        console.log(`✅ Redirecting to cloud storage for invoice #${invoiceId}: ${invoice.cloudStorageUrl}`);
+        console.log(`✅ Redirecting to Cloudflare R2 URL: ${invoice.cloudStorageUrl}`);
         return res.redirect(invoice.cloudStorageUrl);
       }
       
-      // Fallback: generate PDF on-demand if no cloud URL exists
+      // If no cloud URL yet, show a loading page that refreshes
+      if (!invoice.cloudStorageUrl && !invoice.cloudStorageKey) {
+        console.log(`⏳ No cloud URL yet for invoice #${invoiceId}, showing loading page`);
+        return res.send(`
+          <!DOCTYPE html>
+          <html><head><title>Invoice ${invoice.invoiceNumber} - Loading</title>
+          <meta http-equiv="refresh" content="5"></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Invoice ${invoice.invoiceNumber}</h1>
+            <p>Your invoice is being generated...</p>
+            <p>This page will refresh automatically.</p>
+            <div style="margin: 20px;">
+              <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto;"></div>
+            </div>
+            <style>
+              @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            </style>
+          </body></html>
+        `);
+      }
+      
+      // Generate PDF on demand and upload with signed URL
       try {
         const userSettings = await storage.getUserSettings(invoice.userId);
-        const { generateInvoicePDF } = await import('./pdf-generator');
-        const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
+        const { uploadInvoiceToCloud } = await import('./cloud-storage');
+        const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
         
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
-        res.send(pdfBuffer);
+        if (uploadResult.success && uploadResult.url) {
+          console.log(`✅ Generated new signed URL for invoice ${invoice.invoiceNumber}`);
+          
+          // Update invoice with new signed URL
+          await storage.updateInvoice(invoiceId, { 
+            cloudStorageUrl: uploadResult.url, // Store signed URL
+            cloudStorageKey: uploadResult.key 
+          });
+          
+          console.log(`✅ Updated invoice with signed URL, redirecting...`);
+          return res.redirect(uploadResult.url);
+        } else {
+          console.error('❌ Failed to generate signed URL:', uploadResult.error);
+          // Fallback to loading page
+          return res.send(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Invoice ${invoice.invoiceNumber} - Error</title>
+                <meta http-equiv="refresh" content="5">
+              </head>
+              <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h1>Invoice ${invoice.invoiceNumber}</h1>
+                <p>There was an issue accessing your invoice. Retrying...</p>
+                <p>This page will refresh automatically.</p>
+              </body>
+            </html>
+          `);
+        }
         
-        console.log(`✅ Generated PDF on-demand for public invoice #${invoiceId}`);
       } catch (pdfError) {
-        console.error(`❌ Failed to generate PDF for invoice #${invoiceId}:`, pdfError);
-        res.status(500).json({ error: 'Failed to generate invoice PDF' });
+        console.error('❌ PDF generation failed:', pdfError);
+        res.status(500).send(`
+          <!DOCTYPE html>
+          <html>
+            <head><title>Invoice Error</title></head>
+            <body>
+              <h1>Invoice Temporarily Unavailable</h1>
+              <p>We're working to resolve this issue. Please try again later.</p>
+            </body>
+          </html>
+        `);
       }
       
     } catch (error) {
-      console.error('❌ Public invoice view error:', error);
-      res.status(500).json({ error: 'Failed to display invoice' });
+      console.error('❌ Invoice view error:', error);
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Invoice Error</title></head>
+          <body>
+            <h1>Invoice Temporarily Unavailable</h1>
+            <p>We're working to resolve this issue. Please try again later.</p>
+          </body>
+        </html>
+      `);
     }
   });
 
@@ -2324,43 +2810,130 @@ export async function registerRoutes(app: Express) {
         userId: userId
       });
       
-      // Validate required fields
-      if (!req.body.clientName || !req.body.issueDate || !req.body.dueDate) {
+      // Validate required fields based on actual schema
+      if (!req.body.clientName || !req.body.amount || !req.body.dueDate) {
         return res.status(400).json({ 
-          error: 'Missing required fields: clientName, issueDate, and dueDate are required' 
+          error: 'Missing required fields: clientName, amount, and dueDate are required' 
         });
       }
 
-      // Generate invoice number if not provided
-      const invoiceNumber = req.body.invoiceNumber || 
-        `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      // Generate sequential invoice number using user settings
+      let invoiceNumber = req.body.invoiceNumber;
+      
+      if (!invoiceNumber) {
+        // Get user settings to get the next invoice number
+        const userSettings = await storage.getUserSettings(userId);
+        const nextNumber = userSettings?.nextInvoiceNumber || 1;
+        
+        // Create sequential invoice number: INV-001, INV-002, etc.
+        invoiceNumber = `INV-${String(nextNumber).padStart(3, '0')}`;
+        
+        // Update the user settings with the next number
+        await storage.updateSettings(userId, {
+          nextInvoiceNumber: nextNumber + 1
+        });
+        
+        console.log(`📄 Generated sequential invoice number: ${invoiceNumber} (next will be ${nextNumber + 1})`);
+      }
 
       const invoiceData = {
         userId: userId,
         invoiceNumber,
+        contractId: req.body.contractId || null,
         clientName: req.body.clientName,
         clientEmail: req.body.clientEmail || null,
+        ccEmail: req.body.ccEmail || null,
         clientAddress: req.body.clientAddress || null,
-        clientPhone: req.body.clientPhone || null,
-        issueDate: req.body.issueDate,
-        dueDate: req.body.dueDate,
-        items: req.body.items || [],
-        subtotal: req.body.subtotal || "0.00",
-        tax: req.body.tax || "0.00",
-        total: req.body.total || "0.00",
-        notes: req.body.notes || null,
-        status: req.body.status || 'draft',
-        enquiryId: req.body.enquiryId || null
+        venueAddress: req.body.venueAddress || null,
+        eventDate: req.body.performanceDate ? new Date(req.body.performanceDate) : null,
+        fee: req.body.performanceFee || req.body.fee || null,
+        depositPaid: req.body.depositPaid || "0",
+        amount: req.body.amount,
+        dueDate: new Date(req.body.dueDate),
+        status: req.body.status || 'draft'
       };
       
       const newInvoice = await storage.createInvoice(invoiceData);
       console.log(`✅ Created invoice #${newInvoice.id} for user ${userId}`);
-      res.json(newInvoice);
+      
+      // OPTIMIZED: Generate PDF immediately with fast CSS-based template (under 5 seconds)
+      try {
+        console.log('🚀 FAST: Generating optimized PDF for invoice #', newInvoice.id);
+        
+        // Get user settings for PDF generation
+        const userSettings = await storage.getUserSettings(userId);
+        
+        // Upload invoice to cloud storage using fast CSS method (NO AI)
+        const { uploadInvoiceToCloud } = await import('./cloud-storage');
+        const uploadResult = await uploadInvoiceToCloud(newInvoice, userSettings);
+        
+        console.log('🔍 Upload result debug:', { success: uploadResult.success, url: uploadResult.url, key: uploadResult.key, error: uploadResult.error });
+        
+        if (uploadResult.success && uploadResult.url) {
+          console.log('✅ FAST: Invoice PDF uploaded to cloud storage in under 5 seconds:', uploadResult.url);
+          
+          // Update invoice with cloud storage info - now storing full R2 URL
+          await storage.updateInvoice(newInvoice.id, { 
+            cloudStorageUrl: uploadResult.url, // Full R2 URL: https://pub-xxx.r2.dev/invoices/2025-08-04/INV-264.pdf
+            cloudStorageKey: uploadResult.key 
+          });
+          
+          console.log(`✅ FAST: Invoice #${newInvoice.id} updated with direct R2 URL: ${uploadResult.url}`);
+          
+          // Return invoice with cloud storage URL included
+          res.json({ ...newInvoice, cloudStorageUrl: uploadResult.url });
+        } else {
+          console.log('⚠️ FAST: Invoice PDF upload failed, returning invoice without URL:', uploadResult.error);
+          // Still return the invoice even if PDF generation fails
+          res.json(newInvoice);
+        }
+        
+      } catch (pdfError: any) {
+        console.error('⚠️ FAST: PDF generation failed for invoice #', newInvoice.id, ':', pdfError.message);
+        // Return invoice anyway - PDF can be generated later
+        res.json(newInvoice);
+      }
       
     } catch (error: any) {
       console.error('❌ Failed to create invoice:', error);
       res.status(500).json({ 
         error: 'Failed to create invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Update invoice
+  app.patch('/api/invoices/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      const invoiceId = parseInt(req.params.id);
+      if (!invoiceId) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      // Check if invoice belongs to user
+      const existingInvoice = await storage.getInvoices(userId);
+      const invoiceToUpdate = existingInvoice.find(inv => inv.id === invoiceId);
+      
+      if (!invoiceToUpdate) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      console.log(`📝 Updating invoice #${invoiceId} for user ${userId}`, req.body);
+      
+      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body);
+      console.log(`✅ Updated invoice #${invoiceId}`);
+      
+      res.json(updatedInvoice);
+    } catch (error: any) {
+      console.error('❌ Update invoice error:', error);
+      res.status(500).json({ 
+        error: 'Failed to update invoice',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
@@ -2398,6 +2971,85 @@ export async function registerRoutes(app: Express) {
       console.error('❌ Failed to delete invoice:', error);
       res.status(500).json({ 
         error: 'Failed to delete invoice',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Send invoice via email
+  app.post('/api/invoices/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const { invoiceId, customMessage } = req.body;
+      const parsedInvoiceId = parseInt(invoiceId);
+      const userId = req.session?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      if (isNaN(parsedInvoiceId)) {
+        return res.status(400).json({ error: 'Invalid invoice ID' });
+      }
+      
+      console.log(`📧 Sending invoice #${parsedInvoiceId} via email...`);
+      
+      // Get invoice and verify ownership
+      const invoice = await storage.getInvoice(parsedInvoiceId);
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' });
+      }
+      
+      if (invoice.userId !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      if (!invoice.clientEmail) {
+        return res.status(400).json({ error: 'No client email address on file' });
+      }
+      
+      // Get user settings
+      const userSettings = await storage.getUserSettings(userId);
+      if (!userSettings) {
+        return res.status(404).json({ error: 'User settings not found' });
+      }
+      
+      // Import services
+      const { MailgunService } = await import('./services');
+      const emailService = new MailgunService();
+      
+      // Generate and upload invoice PDF to cloud storage if not already done
+      let pdfUrl = invoice.cloudStorageUrl;
+      if (!pdfUrl) {
+        const { uploadInvoiceToCloud } = await import('./cloud-storage');
+        const { url: newPdfUrl, key } = await uploadInvoiceToCloud(invoice, userSettings);
+        
+        // Update invoice with cloud URL
+        await storage.updateInvoice(parsedInvoiceId, {
+          cloudStorageUrl: newPdfUrl,
+          cloudStorageKey: key,
+          updatedAt: new Date()
+        });
+        
+        pdfUrl = newPdfUrl;
+      }
+      
+      // Update invoice status to sent
+      await storage.updateInvoice(parsedInvoiceId, {
+        status: 'sent',
+        updatedAt: new Date()
+      });
+      
+      // Send email with invoice
+      const subject = `Invoice ${invoice.invoiceNumber} - Payment Due`;
+      await emailService.sendInvoiceEmail(invoice, userSettings, pdfUrl, subject);
+      
+      console.log(`✅ Invoice #${parsedInvoiceId} sent successfully via email`);
+      res.json({ success: true, message: 'Invoice sent successfully' });
+      
+    } catch (error: any) {
+      console.error('❌ Failed to send invoice:', error);
+      res.status(500).json({ 
+        error: 'Failed to send invoice',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }

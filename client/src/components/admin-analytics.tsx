@@ -231,7 +231,7 @@ export default function AdminAnalytics() {
                     <div className="flex items-center space-x-2">
                       <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div 
-                          className="bg-purple-600 h-2 rounded-full" 
+                          className="bg-primary h-2 rounded-full" 
                           style={{ 
                             width: `${(location.count / (geoData[0]?.count || 1)) * 100}%` 
                           }}
@@ -272,7 +272,7 @@ export default function AdminAnalytics() {
               <p className="text-sm text-muted-foreground">Total Bookings</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-primary">
                 {biLoading ? "..." : businessData?.totalContracts || 0}
               </div>
               <p className="text-sm text-muted-foreground">Total Contracts</p>
