@@ -1,6 +1,5 @@
 import puppeteer from 'puppeteer';
 import type { Contract, Invoice, UserSettings } from '@shared/schema';
-import Anthropic from '@anthropic-ai/sdk';
 
 export async function generateContractPDF(
   contract: Contract,
@@ -309,86 +308,124 @@ function generateContractHTML(
   `;
 }
 
-// AI-powered invoice layout optimization using Anthropic
-async function optimizeInvoiceLayout(invoice: Invoice, userSettings: UserSettings | null): Promise<string> {
-  try {
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-
-    const invoiceData = {
-      invoiceNumber: invoice.invoiceNumber,
-      businessName: userSettings?.businessName || 'Tim Fulker',
-      businessAddress: `${userSettings?.addressLine1 || ''}, ${userSettings?.city || ''}, ${userSettings?.county || ''}, ${userSettings?.postcode || ''}`.replace(/^,\s*|,\s*$/g, ''),
-      businessPhone: userSettings?.phone || '',
-      businessEmail: userSettings?.businessEmail || '',
-      businessWebsite: userSettings?.website || '',
-      clientName: invoice.clientName,
-      clientEmail: invoice.clientEmail,
-      clientAddress: invoice.clientAddress,
-      venueAddress: invoice.venueAddress,
-      invoiceDate: new Date(invoice.createdAt).toLocaleDateString('en-GB'),
-      dueDate: new Date(invoice.dueDate).toLocaleDateString('en-GB'),
-      performanceDate: invoice.performanceDate ? new Date(invoice.performanceDate).toLocaleDateString('en-GB') : 'TBD',
-      amount: invoice.amount,
-      depositPaid: invoice.depositPaid || '0.00',
-      bankDetails: userSettings?.bankDetails || '',
-      defaultTerms: userSettings?.defaultTerms || '',
-      status: invoice.status || 'draft'
-    };
-
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2000, // Reduced to stay within rate limits
-      messages: [{
-        role: "user",
-        content: `Create professional HTML invoice using ONLY the data provided. DO NOT use placeholder text.
-
-BUSINESS DETAILS (use exactly as provided):
-- Business Name: ${invoiceData.businessName}
-- Address: ${invoiceData.businessAddress}
-- Phone: ${invoiceData.businessPhone}
-- Email: ${invoiceData.businessEmail}
-
-CLIENT DETAILS:
-- Client: ${invoiceData.clientName}
-- Address: ${invoiceData.clientAddress || 'Not provided'}
-- Venue: ${invoiceData.venueAddress}
-
-INVOICE DETAILS:
-- Invoice Number: ${invoiceData.invoiceNumber}
-- Date: ${invoiceData.invoiceDate}
-- Due Date: ${invoiceData.dueDate}
-- Performance Date: ${invoiceData.performanceDate}
-- Amount: £${invoiceData.amount}
-- Status: ${invoiceData.status}
-
-CRITICAL: Use these EXACT values in the HTML. Do not create placeholder text like "Your Company Ltd" or "123 Business Street". Create complete HTML with proper CSS for A4 printing with good page breaks.`
-      }]
-    });
-
-    const optimizedHtml = response.content[0].text;
-    console.log('✅ AI-optimized invoice layout generated');
-    return optimizedHtml;
-  } catch (error: any) {
-    if (error.status === 429) {
-      console.log('⏳ Rate limit hit, using standard template instead of AI optimization');
-    } else {
-      console.error('❌ AI optimization failed, using fallback:', error);
-    }
-    // Fallback to original function if AI fails
-    return generateInvoiceHTML(invoice, null, userSettings);
-  }
+// Generate complete professional invoice HTML (replaced AI version)
+function generateFastInvoiceHTML(invoice: Invoice, userSettings: UserSettings | null): string {
+  const businessName = userSettings?.businessName || 'Tim Fulker';
+  
+  // Format business address from user settings components
+  const addressParts = [];
+  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
+  if (userSettings?.city) addressParts.push(userSettings.city);
+  if (userSettings?.county) addressParts.push(userSettings.county);
+  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
+  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
+  
+  const businessPhone = userSettings?.phone || '';
+  const businessEmail = userSettings?.businessEmail || userSettings?.email || '';
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Invoice ${invoice.invoiceNumber}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; line-height: 1.6; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 3px solid #9333ea; padding-bottom: 20px; }
+        .logo { font-size: 32px; font-weight: bold; color: #9333ea; }
+        .invoice-details { text-align: right; }
+        .invoice-number { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .billing-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+        .billing-info { width: 45%; }
+        .billing-info h3 { color: #333; margin-bottom: 15px; font-size: 16px; text-transform: uppercase; }
+        .billing-info p { margin: 5px 0; color: #666; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .items-table th { background-color: #f8f9fa; padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold; }
+        .items-table td { padding: 15px; border-bottom: 1px solid #dee2e6; }
+        .items-table .amount { text-align: right; font-weight: bold; }
+        .total-section { text-align: right; margin-top: 30px; }
+        .total-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+        .total-label { width: 150px; text-align: right; padding-right: 20px; color: #666; }
+        .total-amount { width: 100px; text-align: right; font-weight: bold; }
+        .grand-total { font-size: 20px; color: #9333ea; border-top: 2px solid #9333ea; padding-top: 15px; margin-top: 15px; }
+        .payment-info { margin-top: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">${businessName}</div>
+        <div class="invoice-details">
+          <div class="invoice-number">Invoice ${invoice.invoiceNumber}</div>
+          <div>${new Date(invoice.createdAt || '').toLocaleDateString('en-GB')}</div>
+        </div>
+      </div>
+      
+      <div class="billing-section">
+        <div class="billing-info">
+          <h3>From</h3>
+          <p><strong>${businessName}</strong></p>
+          ${businessAddress ? `<p>${businessAddress}</p>` : ''}
+          ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ''}
+          ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ''}
+        </div>
+        <div class="billing-info">
+          <h3>To</h3>
+          <p><strong>${invoice.clientName}</strong></p>
+          ${invoice.clientEmail ? `<p>Email: ${invoice.clientEmail}</p>` : ''}
+          ${invoice.clientAddress ? `<p>${invoice.clientAddress}</p>` : ''}
+          ${invoice.venueAddress ? `<p>Venue: ${invoice.venueAddress}</p>` : ''}
+        </div>
+      </div>
+      
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Date</th>
+            <th class="amount">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Musical Performance Services</td>
+            <td>${invoice.eventDate ? new Date(invoice.eventDate).toLocaleDateString('en-GB') : 'TBD'}</td>
+            <td class="amount">£${invoice.amount}</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div class="total-section">
+        <div class="total-row">
+          <div class="total-label">Subtotal:</div>
+          <div class="total-amount">£${invoice.amount}</div>
+        </div>
+        <div class="total-row grand-total">
+          <div class="total-label">Total Due:</div>
+          <div class="total-amount">£${invoice.amount}</div>
+        </div>
+      </div>
+      
+      <div class="payment-info">
+        <h3>Payment Information</h3>
+        <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString('en-GB')}</p>
+        <p><strong>Payment Terms:</strong> Payment due on or before the due date above.</p>
+        <p><strong>Status:</strong> ${invoice.status?.toUpperCase() || 'DRAFT'}</p>
+      </div>
+      
+      <div style="margin-top: 30px; padding: 15px; text-align: center; border-top: 1px solid #ccc; color: #999; font-size: 12px;">
+        <p>Generated by <strong style="color: #9333ea;">MusoBuddy</strong> – Professional Music Business Management</p>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
 export async function generateInvoicePDF(
   invoice: Invoice,
-  userSettings: UserSettings | null,
-  contract?: any
+  userSettings: UserSettings | null
 ): Promise<Buffer> {
-  console.log('Starting AI-enhanced invoice PDF generation for:', invoice.invoiceNumber);
+  console.log('Starting fast invoice PDF generation for:', invoice.invoiceNumber);
   
-  // RESTORED: Working Puppeteer configuration from previous version
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -398,15 +435,9 @@ export async function generateInvoicePDF(
   try {
     const page = await browser.newPage();
     
-    // Use AI-optimized layout with fixed data handling
-    let html: string;
-    if (process.env.ANTHROPIC_API_KEY) {
-      console.log('🤖 Generating AI-optimized invoice layout with real business data...');
-      html = await optimizeInvoiceLayout(invoice, userSettings);
-    } else {
-      console.log('📄 Using standard invoice template...');
-      html = generateInvoiceHTML(invoice, contract, userSettings);
-    }
+    // Use fast template without AI (under 5 seconds)
+    console.log('📄 Using fast invoice template...');
+    const html = generateFastInvoiceHTML(invoice, userSettings);
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 
@@ -420,31 +451,12 @@ export async function generateInvoicePDF(
       }
     });
     
-    console.log('Invoice PDF generated successfully:', pdf.length, 'bytes');
+    console.log('Fast invoice PDF generated successfully:', pdf.length, 'bytes');
     return Buffer.from(pdf);
   } finally {
     await browser.close();
   }
 }
-
-function generateInvoiceHTML(
-  invoice: Invoice,
-  contract: Contract | null,
-  userSettings: UserSettings | null
-): string {
-  const businessName = userSettings?.businessName || 'MusoBuddy';
-  
-  // Format business address from user settings components (same as contract template)
-  const addressParts = [];
-  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
-  if (userSettings?.city) addressParts.push(userSettings.city);
-  if (userSettings?.county) addressParts.push(userSettings.county);
-  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
-  const businessAddress = addressParts.length > 0 ? addressParts.join(', ') : '';
-  
-  // Use the custom MusoBuddy logo
-  const logoBase64 = getLogoBase64();
-  const logoHtml = logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" style="height: 40px; width: auto;" alt="MusoBuddy Logo" />` : '';
   
   return `
     <!DOCTYPE html>
