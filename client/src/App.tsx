@@ -20,6 +20,7 @@ import Settings from "@/pages/settings";
 import Templates from "@/pages/templates";
 import SignContract from "@/pages/sign-contract";
 import ViewContract from "@/pages/view-contract";
+
 import ViewInvoice from "@/pages/view-invoice";
 import QuickAddWidget from "@/pages/quick-add-widget";
 import NewBooking from "@/pages/new-booking";
