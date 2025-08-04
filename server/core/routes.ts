@@ -4549,6 +4549,10 @@ export async function registerRoutes(app: Express) {
   const { registerIsolatedInvoiceRoutes } = await import('../invoice-system/index.js');
   registerIsolatedInvoiceRoutes(app);
 
+  // ===== ISOLATED CONTRACT SYSTEM =====
+  const { registerIsolatedContractRoutes } = await import('../contract-system/isolated-contract-routes');
+  registerIsolatedContractRoutes(app, storage, isAuthenticated);
+
   console.log('✅ Clean routes registered successfully');
   console.log('🔧 Widget token endpoints registered: /api/generate-widget-token, /api/get-widget-token');
 }
