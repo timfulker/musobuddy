@@ -901,7 +901,7 @@ export class CloudStorageService {
     }));
 
     // Use the R2 public development URL
-    const url = `https://pub-446248abf8164fb99bee2fc3dc3c513c.r2.dev/${key}`;
+    const url = `https://pub-a730a594e40d8b46295554074c8e4413.r2.dev/${key}`;
     return { url, key };
   }
 
