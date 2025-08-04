@@ -63,13 +63,17 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
   // Extract business details from user settings
   const businessName = userSettings?.businessName || 'MusoBuddy';
   
-  // Build business address with proper line breaks
-  const addressParts = [];
-  if (userSettings?.addressLine1) addressParts.push(userSettings.addressLine1);
-  if (userSettings?.city) addressParts.push(userSettings.city);
-  if (userSettings?.county) addressParts.push(userSettings.county);
-  if (userSettings?.postcode) addressParts.push(userSettings.postcode);
-  const businessAddress = addressParts.length > 0 ? addressParts.join('<br>') : '';
+  // Build business address with proper line breaks for each field
+  const addressLines = [];
+  if (userSettings?.addressLine1) addressLines.push(userSettings.addressLine1);
+  if (userSettings?.addressLine2) addressLines.push(userSettings.addressLine2);
+  if (userSettings?.city) addressLines.push(userSettings.city);
+  if (userSettings?.county) addressLines.push(userSettings.county);
+  if (userSettings?.postcode) addressLines.push(userSettings.postcode);
+  
+  // Create formatted address with line breaks
+  const businessAddress = addressLines.length > 0 ? 
+    addressLines.map(line => `<p>${line}</p>`).join('') : '';
   
   const businessPhone = userSettings?.phone || '';
   const businessEmail = userSettings?.email || '';
