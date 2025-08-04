@@ -2539,7 +2539,14 @@ export async function registerRoutes(app: Express) {
       const invoiceId = parseInt(req.params.id);
       
       if (isNaN(invoiceId)) {
-        return res.status(400).json({ error: 'Invalid invoice ID' });
+        return res.status(400).send(`
+          <!DOCTYPE html>
+          <html><head><title>Invalid Invoice</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Invalid Invoice ID</h1>
+            <p>The invoice ID provided is not valid.</p>
+          </body></html>
+        `);
       }
       
       console.log(`👁️ Public invoice view request for ID: ${invoiceId}`);
@@ -2548,7 +2555,14 @@ export async function registerRoutes(app: Express) {
       const invoice = await storage.getInvoice(invoiceId);
       if (!invoice) {
         console.log(`❌ Invoice #${invoiceId} not found for public view`);
-        return res.status(404).json({ error: 'Invoice not found' });
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html><head><title>Invoice Not Found</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Invoice Not Found</h1>
+            <p>The requested invoice could not be found.</p>
+          </body></html>
+        `);
       }
       
       console.log(`📋 Invoice found: ${invoice.invoiceNumber}, cloudStorageUrl: ${invoice.cloudStorageUrl ? 'exists' : 'missing'}`);
@@ -2557,6 +2571,27 @@ export async function registerRoutes(app: Express) {
       if (invoice.cloudStorageUrl) {
         console.log(`✅ Redirecting to cloud storage for invoice #${invoiceId}: ${invoice.cloudStorageUrl}`);
         return res.redirect(invoice.cloudStorageUrl);
+      }
+      
+      // If no cloud URL yet, show a loading page that refreshes
+      if (!invoice.cloudStorageUrl) {
+        console.log(`⏳ No cloud URL yet for invoice #${invoiceId}, showing loading page`);
+        return res.send(`
+          <!DOCTYPE html>
+          <html><head><title>Invoice ${invoice.invoiceNumber} - Loading</title>
+          <meta http-equiv="refresh" content="5"></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Invoice ${invoice.invoiceNumber}</h1>
+            <p>Your invoice is being generated...</p>
+            <p>This page will refresh automatically.</p>
+            <div style="margin: 20px;">
+              <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto;"></div>
+            </div>
+            <style>
+              @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            </style>
+          </body></html>
+        `);
       }
       
       // If no cloud URL, check if PDF already exists in database
