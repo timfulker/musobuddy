@@ -1104,6 +1104,68 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // ===== CONTRACT PDF ROUTES =====
+  
+  // Get contract PDF for viewing (inline)
+  app.get('/api/contracts/:id/pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const userId = req.session?.userId;
+      
+      if (isNaN(contractId)) {
+        return res.status(400).json({ error: 'Invalid contract ID' });
+      }
+      
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      console.log(`📄 PDF request for contract #${contractId} by user ${userId}`);
+      
+      // Get contract and verify ownership
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        console.log(`❌ Contract #${contractId} not found`);
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+      
+      if (contract.userId !== userId) {
+        console.log(`❌ User ${userId} denied access to contract #${contractId} (owned by ${contract.userId})`);
+        return res.status(403).json({ error: 'Access denied - you do not own this contract' });
+      }
+      
+      console.log(`✅ Contract #${contractId} access authorized for user ${userId}`);
+      
+      // Generate PDF locally for viewing
+      const userSettings = await storage.getUserSettings(userId);
+      const { generateContractPDF } = await import('./pdf-generator');
+      
+      // Include signature details if contract is signed
+      const signatureDetails = contract.status === 'signed' && contract.signedAt ? {
+        signedAt: new Date(contract.signedAt),
+        signatureName: contract.clientSignature || undefined,
+        clientIpAddress: contract.clientIpAddress || undefined
+      } : undefined;
+      
+      const pdfBuffer = await generateContractPDF(contract, userSettings, signatureDetails);
+      
+      // Set headers for PDF viewing (inline)
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Contract-${contract.contractNumber.replace(/[^a-zA-Z0-9-_]/g, '-')}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      
+      console.log(`✅ PDF generated for viewing: ${pdfBuffer.length} bytes`);
+      return res.send(pdfBuffer);
+      
+    } catch (error: any) {
+      console.error('❌ Contract PDF generation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate contract PDF',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
   // ===== CONTRACT DOWNLOAD ROUTE =====
   app.get('/api/contracts/:id/download', isAuthenticated, async (req: any, res) => {
     try {
