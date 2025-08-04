@@ -47,9 +47,10 @@ const isAuthenticated = async (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express) {
-  // ===== PDF SERVING ROUTE (MUST BE FIRST - BEFORE RATE LIMITING) =====
-  
-  // Serve PDFs from cloud storage - match exact path format
+  // ===== FIXED INVOICE PDF SERVING ROUTES =====
+
+  // 1. PDF SERVING ROUTE - Must be FIRST, before rate limiting
+  // This serves PDFs directly from cloud storage
   app.get('/invoices/:dateFolder/:filename', async (req, res) => {
     try {
       const { dateFolder, filename } = req.params;
@@ -2579,7 +2580,7 @@ export async function registerRoutes(app: Express) {
 
   // ===== PUBLIC INVOICE VIEW ROUTES (NO AUTHENTICATION) =====
   
-  // Public invoice viewing route (for clients)
+  // 2. PUBLIC INVOICE VIEW ROUTE - Fixed redirect logic
   app.get('/view/invoices/:id', async (req, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
@@ -2613,43 +2614,24 @@ export async function registerRoutes(app: Express) {
       
       console.log(`📋 Invoice found: ${invoice.invoiceNumber}, cloudStorageUrl: ${invoice.cloudStorageUrl ? 'exists' : 'missing'}`);
       
-      // If invoice has cloud storage URL, redirect to it directly
+      // FIXED: Check if invoice has cloud storage URL and redirect correctly
       if (invoice.cloudStorageUrl) {
-        console.log(`✅ Redirecting to cloud storage for invoice #${invoiceId}: ${invoice.cloudStorageUrl}`);
-        return res.redirect(`/${invoice.cloudStorageUrl}`);
-      }
-      
-      // If invoice has cloud storage key but no URL, generate signed URL 
-      if (invoice.cloudStorageKey) {
-        console.log(`📥 Generating signed URL for invoice #${invoiceId} using cloud storage key: ${invoice.cloudStorageKey}`);
-        try {
-          const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
-          const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3');
-          
-          const r2Client = new S3Client({
-            region: 'auto',
-            endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-            credentials: {
-              accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-              secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
-            },
-          });
-          
-          const getCommand = new GetObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME || 'musobuddy-storage',
-            Key: invoice.cloudStorageKey,
-          });
-          
-          const signedUrl = await getSignedUrl(r2Client, getCommand, { 
-            expiresIn: 604800 // 7 days
-          });
-          
-          console.log(`✅ Generated signed URL for invoice #${invoiceId}`);
-          return res.redirect(signedUrl);
-        } catch (error: any) {
-          console.error(`❌ Failed to generate signed URL for invoice #${invoiceId}:`, error);
-          // Fall back to loading page
+        // Ensure the URL starts with just the path, not a full URL
+        let redirectUrl = invoice.cloudStorageUrl;
+        
+        // Remove any leading protocol/domain if present
+        if (redirectUrl.startsWith('http')) {
+          const url = new URL(redirectUrl);
+          redirectUrl = url.pathname;
         }
+        
+        // Ensure it starts with /
+        if (!redirectUrl.startsWith('/')) {
+          redirectUrl = '/' + redirectUrl;
+        }
+        
+        console.log(`✅ Redirecting to PDF serving route: ${redirectUrl}`);
+        return res.redirect(redirectUrl);
       }
       
       // If no cloud URL yet, show a loading page that refreshes
@@ -2673,59 +2655,44 @@ export async function registerRoutes(app: Express) {
         `);
       }
       
-      // If no cloud URL, check if PDF already exists in database
-      if (invoice.pdfPath) {
-        try {
-          const fs = await import('fs');
-          const path = await import('path');
-          const pdfPath = path.join(process.cwd(), invoice.pdfPath);
-          
-          if (fs.existsSync(pdfPath)) {
-            const pdfBuffer = fs.readFileSync(pdfPath);
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
-            return res.send(pdfBuffer);
-          }
-        } catch (fileError) {
-          // Continue to PDF generation if file doesn't exist
-        }
-      }
-      
-      // Generate PDF on demand
+      // Generate PDF on demand as fallback
       try {
         const userSettings = await storage.getUserSettings(invoice.userId);
         const { generateInvoicePDF } = await import('./pdf-generator');
         const pdfBuffer = await generateInvoicePDF(invoice, userSettings);
         
-        // Try to upload to R2 storage using consistent method
+        // Try to upload to R2 storage for future use
         try {
           const { uploadInvoiceToCloud } = await import('./cloud-storage');
           const uploadResult = await uploadInvoiceToCloud(invoice, userSettings);
           
           if (uploadResult.success && uploadResult.url) {
-            // Update invoice with cloud storage info
+            // Update invoice with cloud storage info - store just the path
+            let cloudUrl = uploadResult.url;
+            if (cloudUrl.startsWith('http')) {
+              const url = new URL(cloudUrl);
+              cloudUrl = url.pathname.substring(1); // Remove leading /
+            }
+            
             await storage.updateInvoice(invoiceId, { 
-              cloudStorageUrl: uploadResult.url,
+              cloudStorageUrl: cloudUrl, // Store as: invoices/2025-08-04/INV-263.pdf
               cloudStorageKey: uploadResult.key 
             });
             
-            console.log(`✅ Invoice PDF uploaded and saved. Redirecting to: ${uploadResult.url}`);
-            return res.redirect(uploadResult.url);
-          } else {
-            throw new Error(uploadResult.error || 'Failed to upload invoice to cloud storage');
+            console.log(`✅ Invoice PDF uploaded and saved. Redirecting to: /${cloudUrl}`);
+            return res.redirect(`/${cloudUrl}`);
           }
         } catch (uploadError: any) {
-          console.error('❌ Failed to generate/upload invoice PDF:', uploadError);
-          // Continue to fallback serving
+          console.error('❌ Failed to upload invoice PDF:', uploadError);
         }
         
-        // Serve PDF directly
+        // Serve PDF directly as final fallback
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`);
         res.send(pdfBuffer);
         
       } catch (pdfError) {
-        // Final fallback - serve a simple error page
+        console.error('❌ PDF generation failed:', pdfError);
         res.status(500).send(`
           <!DOCTYPE html>
           <html>
@@ -2739,6 +2706,7 @@ export async function registerRoutes(app: Express) {
       }
       
     } catch (error) {
+      console.error('❌ Invoice view error:', error);
       res.status(500).send(`
         <!DOCTYPE html>
         <html>
