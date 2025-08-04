@@ -41,6 +41,10 @@ export class EmailService {
       }
 
       console.log(`📧 Sending email: ${emailData.subject}`);
+      console.log(`📧 From: ${messageData.from}`);  
+      console.log(`📧 To: ${messageData.to}`);
+      console.log(`📧 Domain: ${domain}`);
+      
       const result = await this.mailgun.messages.create(domain, messageData);
       
       return {
