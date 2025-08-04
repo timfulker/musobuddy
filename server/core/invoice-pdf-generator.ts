@@ -57,8 +57,8 @@ export async function generateInvoicePDF(
 function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettings | null): string {
   const logoBase64 = getLogoBase64();
   const logoHtml = logoBase64 ? 
-    `<img src="data:image/png;base64,${logoBase64}" alt="MusoBuddy Logo" style="height: 40px; margin-right: 10px; vertical-align: middle;">` : 
-    `<div style="width: 40px; height: 40px; background: #1e3a8a; border-radius: 8px; display: inline-block; margin-right: 10px; vertical-align: middle;"></div>`;
+    `<img src="data:image/png;base64,${logoBase64}" alt="MusoBuddy Logo" style="height: 60px; vertical-align: middle;">` : 
+    `<div style="width: 60px; height: 60px; background: #1e3a8a; border-radius: 8px; display: inline-block; vertical-align: middle;"></div>`;
 
   // Extract business details from user settings
   const businessName = userSettings?.businessName || 'MusoBuddy';
@@ -274,7 +274,6 @@ function generateOptimizedInvoiceHTML(invoice: Invoice, userSettings: UserSettin
       <div class="header no-page-break">
         <div class="logo-section">
           ${logoHtml}
-          <div class="logo">MusoBuddy</div>
         </div>
         <div class="invoice-details">
           <div class="invoice-number">Invoice ${invoice.invoiceNumber}</div>
