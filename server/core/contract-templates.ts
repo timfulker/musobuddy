@@ -544,14 +544,6 @@ export function generateProfessionalContractHTML(contract: any, userSettings: an
 
 // Default professional template (for backward compatibility)
 export const DEFAULT_CONTRACT_TEMPLATE: ContractTemplate = PROFESSIONAL_TEMPLATE;
-        <p><strong>Cancellation Policy:</strong> Any cancellations must be made in writing with reasonable notice.</p>
-        <p><strong>Force Majeure:</strong> Neither party shall be liable for failure to perform due to circumstances beyond their control.</p>
-        <p><strong>Payment Terms:</strong> Payment as specified above. Late payments may incur additional charges.</p>
-        <p><strong>Liability:</strong> The performer's liability is limited to the contract value. Client is responsible for venue safety and compliance.</p>
-      `
-    }
-  ]
-};
 
 // Generate contract content using template
 export function generateContractContent(contract: any, userSettings: any, template: ContractTemplate = DEFAULT_CONTRACT_TEMPLATE) {
