@@ -310,6 +310,7 @@ function generateContractHTML(
       .fee-highlight { background: #e0e7ef !important; color: #3b82f6 !important; }
       .event-table, .fee-highlight, .section-header, .terms-section, .signature-section { page-break-inside: avoid; break-inside: avoid; }
       .section-header.terms { page-break-before: always; break-before: page; }
+      .signature-section { page-break-before: always; break-before: page; }
       .section-header { page-break-after: avoid; break-after: avoid; }
     }
     @media (max-width: 700px) {
@@ -393,7 +394,6 @@ function generateContractHTML(
 
     <!-- Terms & Conditions -->
     <div class="section-header terms">Terms & Conditions</div>
-
     <div class="terms-section">
       <h4>Payment Terms & Conditions</h4>
       <ul>
@@ -403,7 +403,6 @@ function generateContractHTML(
         <li><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</li>
       </ul>
     </div>
-
     <div class="terms-section">
       <h4>Cancellation & Refund Policy</h4>
       <ul>
@@ -418,19 +417,16 @@ function generateContractHTML(
         <li><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</li>
       </ul>
     </div>
-
     <div class="terms-section">
       <h4>Force Majeure</h4>
       <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
     </div>
-
     <div class="terms-section">
       <h4>Performance Contingencies</h4>
       <ul>
         <li>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</li>
       </ul>
     </div>
-
     <div class="terms-section">
       <h4>Professional Performance Standards</h4>
       <ul>
