@@ -572,45 +572,46 @@ function generateContractHTML(
         <div class="section-header terms">Terms & Conditions</div>
 
         <div class="terms-section">
-            <h4>Payment Terms</h4>
-            <p>${contract.paymentInstructions || 'Payment is due within 30 days of the performance date unless otherwise agreed in writing. Payment can be made by bank transfer, cheque, or cash.'}</p>
-            ${userSettings?.bankDetails ? `<p><strong>Payment Details:</strong> ${userSettings.bankDetails}</p>` : ''}
+            <h4>Payment Terms & Conditions</h4>
+            <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee || '0.00'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
+            <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
+            <p><strong>Deposit:</strong> £${contract.deposit || '0.00'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>
+            <p><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</p>
+            ${contract.paymentInstructions ? `<p><strong>Payment Instructions:</strong> ${contract.paymentInstructions}</p>` : ''}
         </div>
 
         <div class="terms-section">
-            <h4>Cancellation Policy</h4>
+            <h4>Cancellation & Refund Policy</h4>
+            <p><strong>Client Cancellation:</strong></p>
             <ul>
-                <li><strong>More than 4 weeks notice:</strong> Full refund of any deposit paid</li>
-                <li><strong>2-4 weeks notice:</strong> 50% of total fee payable</li>
-                <li><strong>Less than 2 weeks notice:</strong> Full fee payable</li>
-                <li><strong>Same day cancellation:</strong> Full fee plus additional costs incurred</li>
+                <li><strong>More than 30 days before event:</strong> Any deposit paid will be refunded minus a £50 administration fee</li>
+                <li><strong>30 days or less before event:</strong> Full performance fee becomes due regardless of cancellation</li>
+                <li><strong>Same day cancellation:</strong> Full fee due plus any additional costs incurred</li>
             </ul>
-        </div>
-
-        <div class="terms-section">
-            <h4>Performance Standards</h4>
-            <ul>
-                <li>Professional entertainment will be provided for the agreed duration</li>
-                <li>Appropriate attire will be worn suitable for the event</li>
-                <li>All equipment will be PAT tested and public liability insurance is held</li>
-                <li>Performance will commence promptly at the agreed time</li>
-            </ul>
+            <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</p>
+            <p><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</p>
         </div>
 
         <div class="terms-section">
             <h4>Force Majeure</h4>
-            <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to acts of God, government restrictions, pandemic measures, extreme weather, or venue closure.</p>
+            <p>Neither party shall be liable for any failure to perform due to circumstances beyond their reasonable control, including but not limited to: severe weather, natural disasters, government restrictions, venue closure, or serious illness.</p>
         </div>
 
         <div class="terms-section">
-            <h4>Additional Terms</h4>
-            <ul>
-                <li>This contract constitutes the entire agreement between the parties</li>
-                <li>Any modifications must be agreed in writing by both parties</li>
-                <li>This contract is governed by the laws of England and Wales</li>
-                <li>Both parties confirm they have the authority to enter into this agreement</li>
-            </ul>
-            ${userSettings?.defaultTerms ? `<p><strong>Additional Terms:</strong> ${userSettings.defaultTerms}</p>` : ''}
+            <h4>Performance Contingencies</h4>
+            <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
+        </div>
+
+        <div class="terms-section">
+            <h4>Professional Performance Standards</h4>
+            <p><strong>Payment Schedule:</strong> The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.</p>
+            <p><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</p>
+            <p><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</p>
+            <p><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</p>
+            <p><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</p>
+            <p><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</p>
+            <p><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</p>
+            <p><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</p>
         </div>
 
         <!-- Signature Section -->
