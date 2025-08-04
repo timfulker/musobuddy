@@ -16,6 +16,7 @@ MusoBuddy is a comprehensive music business management platform designed to help
 - **Address Formatting Fixed**: Invoice addresses now properly display with line breaks - addressLine1, city, county, postcode each on separate lines instead of comma-separated format (August 4, 2025)
 - **Codebase Cleanup**: Removed legacy `pdf-generator.ts` file and updated all references to use dedicated generators, ensuring complete system isolation (August 4, 2025)
 - **Data Compliance**: Added comprehensive Terms & Conditions page addressing GDPR compliance, data processing, and cloud storage transparency. Accessible via footer link on login page (August 4, 2025)
+- **Invoice System Protection**: Locked `invoice-pdf-generator.ts` with read-only permissions and backup copy to prevent accidental modifications. System now stable with 120px logo and professional design (August 4, 2025)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

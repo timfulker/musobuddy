@@ -1,9 +1,3 @@
-// ⚠️  PROTECTED FILE - INVOICE PDF GENERATOR - DO NOT MODIFY ⚠️
-// This file generates professional invoices with optimized CSS and secure R2 storage
-// BACKUP LOCATION: server/core/invoice-pdf-generator.backup.ts
-// LAST STABLE VERSION: August 4, 2025 - 120px logo, midnight blue theme
-// ⚠️  Changes to this file could break invoice generation system ⚠️
-
 import puppeteer from 'puppeteer';
 import { readFileSync } from 'fs';
 import { join } from 'path';
