@@ -793,40 +793,7 @@ function generateContractHTML(
   </div>
 </body>
 </html>`;
-          border-top: 1px solid #ddd;
-          padding-top: 20px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        ${logoHtml}
-        <div class="contract-title">PERFORMANCE CONTRACT</div>
-        <div class="contract-number">Contract Number: ${contract.contractNumber}</div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Parties</div>
-        <div class="details-grid">
-          <div>
-            <div class="detail-item">
-              <span class="detail-label">Performer:</span><br>
-              ${businessName}<br>
-              ${businessAddress ? `${businessAddress}<br>` : ''}
-              ${businessPhone ? `Phone: ${businessPhone}<br>` : ''}
-              ${businessEmail ? `Email: ${businessEmail}` : ''}
-            </div>
-          </div>
-          <div>
-            <div class="detail-item">
-              <span class="detail-label">Client:</span><br>
-              ${contract.clientName}<br>
-              ${contract.clientEmail ? `Email: ${contract.clientEmail}<br>` : ''}
-              ${contract.clientAddress || 'Address not provided'}
-            </div>
-          </div>
-        </div>
-      </div>
+}
 
       <div class="section">
         <div class="section-title">Performance Details</div>
