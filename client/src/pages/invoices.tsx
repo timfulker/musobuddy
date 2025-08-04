@@ -799,7 +799,7 @@ export default function Invoices() {
         case 'download':
           // Download each selected invoice
           for (const invoiceId of selectedInvoices) {
-            window.open(`/api/invoices/${invoiceId}/pdf`, '_blank');
+            window.open(`/api/isolated/invoices/${invoiceId}/pdf`, '_blank');
           }
           setSelectedInvoices([]);
           toast({
@@ -817,7 +817,7 @@ export default function Invoices() {
 
   const handleDownloadInvoice = async (invoice: Invoice) => {
     try {
-      const response = await fetch(`/api/invoices/${invoice.id}/pdf`);
+      const response = await fetch(`/api/isolated/invoices/${invoice.id}/pdf`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
