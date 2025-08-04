@@ -308,6 +308,7 @@ export async function registerRoutes(app: Express) {
     try {
       const userId = req.session?.userId;
       if (!userId) {
+        console.log('❌ Settings fetch: no userId in session');
         return res.status(401).json({ error: 'Authentication required' });
       }
 
@@ -319,6 +320,7 @@ export async function registerRoutes(app: Express) {
       console.log(`✅ Settings retrieved for user ${userId}:`, {
         businessName: userSettings?.businessName,
         primaryInstrument: userSettings?.primaryInstrument,
+        defaultInvoiceDueDays: userSettings?.defaultInvoiceDueDays,
         hasSettings: !!userSettings
       });
       
@@ -383,7 +385,31 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Session restoration route moved to auth-rebuilt.ts to avoid duplication
+  // Session status and restoration endpoint
+  app.get('/api/auth/status', (req: any, res) => {
+    console.log('🔍 Auth status check:', {
+      hasSession: !!req.session,
+      userId: req.session?.userId,
+      email: req.session?.email,
+      headers: {
+        cookie: req.headers.cookie ? 'present' : 'missing',
+        userAgent: req.headers['user-agent']?.substring(0, 50)
+      }
+    });
+    
+    if (req.session?.userId) {
+      res.json({
+        authenticated: true,
+        userId: req.session.userId,
+        email: req.session.email
+      });
+    } else {
+      res.status(401).json({
+        authenticated: false,
+        error: 'No active session'
+      });
+    }
+  });
 
   app.patch('/api/settings', isAuthenticated, async (req: any, res) => {
     try {
