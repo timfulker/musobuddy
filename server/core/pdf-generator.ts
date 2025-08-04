@@ -147,7 +147,7 @@ function generateContractHTML(
     }
     .section {
       margin-bottom: 30px;
-      page-break-inside: avoid;
+      /* page-break-inside: avoid; */
     }
     .section-title {
       font-size: 18px;
@@ -181,7 +181,7 @@ function generateContractHTML(
       margin-top: 30px;
       font-size: 11px;
       line-height: 1.6;
-      page-break-inside: avoid;
+      /* page-break-inside: avoid; */
     }
     .terms-section h3 {
       font-size: 14px;
