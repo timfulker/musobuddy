@@ -2715,7 +2715,38 @@ export async function registerRoutes(app: Express) {
       
       const newInvoice = await storage.createInvoice(invoiceData);
       console.log(`✅ Created invoice #${newInvoice.id} for user ${userId}`);
-      res.json(newInvoice);
+      
+      // Generate and upload PDF immediately after invoice creation (like contracts)
+      try {
+        console.log('🎨 Generating PDF for newly created invoice...');
+        
+        // Get user settings for PDF generation
+        const userSettings = await storage.getUserSettings(userId);
+        
+        // Upload invoice to cloud storage using consistent method
+        const { uploadInvoiceToCloud } = await import('./cloud-storage');
+        const uploadResult = await uploadInvoiceToCloud(newInvoice, userSettings);
+        
+        if (uploadResult.success && uploadResult.url) {
+          console.log('✅ Invoice PDF uploaded to cloud storage:', uploadResult.url);
+          
+          // Update invoice with cloud storage info
+          const updatedInvoice = await storage.updateInvoice(newInvoice.id, { 
+            cloudStorageUrl: uploadResult.url,
+            cloudStorageKey: uploadResult.key 
+          });
+          
+          res.json(updatedInvoice);
+        } else {
+          console.log('⚠️ Invoice created but cloud upload failed:', uploadResult.error);
+          res.json(newInvoice);
+        }
+        
+      } catch (pdfError: any) {
+        console.error('⚠️ PDF generation failed, but invoice was created:', pdfError.message);
+        // Still return the invoice even if PDF generation fails
+        res.json(newInvoice);
+      }
       
     } catch (error: any) {
       console.error('❌ Failed to create invoice:', error);
