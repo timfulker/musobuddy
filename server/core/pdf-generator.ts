@@ -573,23 +573,27 @@ function generateContractHTML(
 
         <div class="terms-section">
             <h4>Payment Terms & Conditions</h4>
-            <p><strong>Payment Due Date:</strong> Full payment of £${contract.fee || '0.00'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</p>
-            <p><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</p>
-            <p><strong>Deposit:</strong> £${contract.deposit || '0.00'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</p>
-            <p><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</p>
-            ${contract.paymentInstructions ? `<p><strong>Payment Instructions:</strong> ${contract.paymentInstructions}</p>` : ''}
+            <ul>
+                <li><strong>Payment Due Date:</strong> Full payment of £${contract.fee || '0.00'} becomes due and payable no later than the day of performance. Payment must be received before or immediately upon completion of the performance.</li>
+                <li><strong>Payment Methods:</strong> Cash or bank transfer to the performer's designated account (details provided separately).</li>
+                <li><strong>Deposit:</strong> £${contract.deposit || '0.00'} deposit required to secure booking. Deposit is non-refundable except as outlined in the cancellation policy below.</li>
+                <li><strong>Late Payment:</strong> Any payment received after the due date may incur a late payment fee of £25 plus interest at 2% per month.</li>
+            </ul>
         </div>
 
         <div class="terms-section">
             <h4>Cancellation & Refund Policy</h4>
-            <p><strong>Client Cancellation:</strong></p>
             <ul>
-                <li><strong>More than 30 days before event:</strong> Any deposit paid will be refunded minus a £50 administration fee</li>
-                <li><strong>30 days or less before event:</strong> Full performance fee becomes due regardless of cancellation</li>
-                <li><strong>Same day cancellation:</strong> Full fee due plus any additional costs incurred</li>
+                <li><strong>Client Cancellation:</strong>
+                    <ul>
+                        <li>More than 30 days before event: Any deposit paid will be refunded minus a £50 administration fee.</li>
+                        <li>30 days or less before event: Full performance fee becomes due regardless of cancellation.</li>
+                        <li>Same day cancellation: Full fee due plus any additional costs incurred.</li>
+                    </ul>
+                </li>
+                <li><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</li>
+                <li><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</li>
             </ul>
-            <p><strong>Performer Cancellation:</strong> In the unlikely event the performer must cancel due to circumstances within their control, all payments will be refunded in full and reasonable assistance will be provided to find a suitable replacement.</p>
-            <p><strong>Rescheduling:</strong> Event may be rescheduled once without penalty if agreed by both parties at least 14 days in advance. Additional rescheduling requests may incur a £25 administrative fee.</p>
         </div>
 
         <div class="terms-section">
@@ -599,19 +603,23 @@ function generateContractHTML(
 
         <div class="terms-section">
             <h4>Performance Contingencies</h4>
-            <p>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</p>
+            <ul>
+                <li>The performer will provide appropriate backup equipment where reasonably possible. If performance cannot proceed due to venue-related issues (power failure, noise restrictions, etc.), the full fee remains due.</li>
+            </ul>
         </div>
 
         <div class="terms-section">
             <h4>Professional Performance Standards</h4>
-            <p><strong>Payment Schedule:</strong> The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.</p>
-            <p><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</p>
-            <p><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</p>
-            <p><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</p>
-            <p><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</p>
-            <p><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</p>
-            <p><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</p>
-            <p><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</p>
+            <ul>
+                <li><strong>Payment Schedule:</strong> The agreed performance fee (including applicable VAT) becomes due and payable on the date of performance of the engagement.</li>
+                <li><strong>Equipment & Instrument Protection:</strong> The equipment and instruments of the performer are not available for use by any other person, except by specific permission of the performer. All musical instruments and equipment remain the exclusive property of the performer.</li>
+                <li><strong>Venue Safety Requirements:</strong> The client shall ensure a safe supply of electricity and the security of the performer and their property at the venue throughout the engagement.</li>
+                <li><strong>Recording & Transmission Policy:</strong> The client shall not make or permit the making of any audio and/or visual recording or transmission of the performer's performance without the prior written consent of the performer.</li>
+                <li><strong>Contract Modifications:</strong> This agreement may not be modified or cancelled except by mutual consent, in writing signed by both parties. Verbal modifications are not binding.</li>
+                <li><strong>Performance Rider:</strong> Any rider attached hereto and signed by both parties shall be deemed incorporated into this agreement.</li>
+                <li><strong>Safe Space Principle:</strong> The client and performer agree to a 'Safe Space' principle to provide a working environment free from harassment and discrimination, maintaining respectful professional standards throughout the engagement.</li>
+                <li><strong>Professional Insurance:</strong> The performer maintains professional liability insurance as required for musical performance engagements.</li>
+            </ul>
         </div>
 
         <!-- Signature Section -->
