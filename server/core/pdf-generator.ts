@@ -178,7 +178,6 @@ function generateContractHTML(
       width: 30%;
     }
     .terms-section {
-      page-break-before: always;
       margin-top: 30px;
       font-size: 11px;
       line-height: 1.6;
