@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Contract, UserSettings } from '@shared/schema';
+import { generateProfessionalContractHTML } from './contract-templates.js';
 
 function getLogoBase64(): string {
   try {
@@ -35,7 +36,7 @@ export async function generateContractPDF(
   
   try {
     const page = await browser.newPage();
-    const html = generateContractHTML(contract, userSettings, signatureDetails);
+    const html = generateProfessionalContractHTML(contract, userSettings);
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ format: 'A4', printBackground: true });
