@@ -47,6 +47,52 @@ const isAuthenticated = async (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express) {
+  // ===== PDF SERVING ROUTE (MUST BE FIRST - BEFORE RATE LIMITING) =====
+  
+  // Serve PDFs from cloud storage - match exact path format
+  app.get('/invoices/:dateFolder/:filename', async (req, res) => {
+    try {
+      const { dateFolder, filename } = req.params;
+      const key = `invoices/${dateFolder}/${filename}`;
+      
+      console.log(`📄 Serving PDF from cloud storage: ${key}`);
+      
+      // Get file from R2
+      const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3');
+      const r2Client = new S3Client({
+        region: 'auto',
+        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+          accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+        },
+      });
+      
+      const command = new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME || 'musobuddy-storage',
+        Key: key,
+      });
+      
+      const response = await r2Client.send(command);
+      
+      if (response.Body) {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+        
+        // Stream the PDF
+        const stream = response.Body as any;
+        stream.pipe(res);
+        console.log(`✅ PDF served successfully: ${filename}`);
+      } else {
+        res.status(404).send('PDF not found');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error serving PDF:', error);
+      res.status(500).send('Error loading PDF');
+    }
+  });
+
   // HARDENING: Apply general rate limiting and slow down protection
   console.log('🛡️ Setting up rate limiting protection...');
   app.use(generalApiRateLimit);
@@ -2570,7 +2616,7 @@ export async function registerRoutes(app: Express) {
       // If invoice has cloud storage URL, redirect to it directly
       if (invoice.cloudStorageUrl) {
         console.log(`✅ Redirecting to cloud storage for invoice #${invoiceId}: ${invoice.cloudStorageUrl}`);
-        return res.redirect(invoice.cloudStorageUrl);
+        return res.redirect(`/${invoice.cloudStorageUrl}`);
       }
       
       // If invoice has cloud storage key but no URL, generate signed URL 
