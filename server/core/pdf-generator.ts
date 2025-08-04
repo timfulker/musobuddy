@@ -342,11 +342,28 @@ async function optimizeInvoiceLayout(invoice: Invoice, userSettings: UserSetting
       max_tokens: 2000, // Reduced to stay within rate limits
       messages: [{
         role: "user",
-        content: `Create professional HTML invoice with CSS. Fix: alignment, spacing, page breaks.
+        content: `Create professional HTML invoice using ONLY the data provided. DO NOT use placeholder text.
 
-Data: ${invoiceData.invoiceNumber}, ${invoiceData.businessName}, ${invoiceData.clientName}, £${invoiceData.amount}, Due: ${invoiceData.dueDate}
+BUSINESS DETAILS (use exactly as provided):
+- Business Name: ${invoiceData.businessName}
+- Address: ${invoiceData.businessAddress}
+- Phone: ${invoiceData.businessPhone}
+- Email: ${invoiceData.businessEmail}
 
-Requirements: Professional header, clean billing section, proper table layout, payment info, terms. A4 format, Arial font, consistent spacing.`
+CLIENT DETAILS:
+- Client: ${invoiceData.clientName}
+- Address: ${invoiceData.clientAddress || 'Not provided'}
+- Venue: ${invoiceData.venueAddress}
+
+INVOICE DETAILS:
+- Invoice Number: ${invoiceData.invoiceNumber}
+- Date: ${invoiceData.invoiceDate}
+- Due Date: ${invoiceData.dueDate}
+- Performance Date: ${invoiceData.performanceDate}
+- Amount: £${invoiceData.amount}
+- Status: ${invoiceData.status}
+
+CRITICAL: Use these EXACT values in the HTML. Do not create placeholder text like "Your Company Ltd" or "123 Business Street". Create complete HTML with proper CSS for A4 printing with good page breaks.`
       }]
     });
 
@@ -381,9 +398,15 @@ export async function generateInvoicePDF(
   try {
     const page = await browser.newPage();
     
-    // Use standard template - AI optimization temporarily disabled due to placeholder data issue
-    console.log('📄 Using standard invoice template...');
-    const html = generateInvoiceHTML(invoice, contract, userSettings);
+    // Use AI-optimized layout with fixed data handling
+    let html: string;
+    if (process.env.ANTHROPIC_API_KEY) {
+      console.log('🤖 Generating AI-optimized invoice layout with real business data...');
+      html = await optimizeInvoiceLayout(invoice, userSettings);
+    } else {
+      console.log('📄 Using standard invoice template...');
+      html = generateInvoiceHTML(invoice, contract, userSettings);
+    }
     
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdf = await page.pdf({ 
