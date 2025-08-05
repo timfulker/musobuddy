@@ -1088,9 +1088,19 @@ async function startServer() {
       }
     });
     
-    // Apply global error handling
+    // Apply global error handling ONLY to API routes
     app.use('/api/*', errorHandler);
     app.use('/api/*', notFoundHandler);
+    
+    // Add a catch-all for non-API routes to prevent 404s on the frontend
+    app.get('*', (req, res, next) => {
+      // Skip API routes - they should be handled above
+      if (req.path.startsWith('/api/')) {
+        return next();
+      }
+      // For non-API routes, let Vite/React Router handle them
+      next();
+    });
     
     console.log('✅ All modular routes registered successfully');
     console.log('🛡️ Phase 1 Security Improvements Applied:');
