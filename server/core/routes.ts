@@ -2252,11 +2252,16 @@ export async function registerRoutes(app: Express) {
       console.log('✅ Contract uploaded to R2:', uploadResult.url);
       
       // Update contract with R2 URL and mark as sent
+      // CRITICAL FIX: Add automatic performer signature when sending contract
       await storage.updateContract(parsedContractId, {
         status: 'sent',
         cloudStorageUrl: uploadResult.url,
         cloudStorageKey: uploadResult.key,
-        sentAt: new Date()
+        sentAt: new Date(),
+        // Automatically sign as performer when sending
+        performerSignature: `Digital signature: ${userSettings?.businessName || 'Performer'} - ${new Date().toISOString()}`,
+        performerSignedAt: new Date(),
+        performerIpAddress: req.ip || 'Server'
       });
       
       // Send email with direct R2 URL - clients can view/sign directly
