@@ -717,14 +717,20 @@ export class IsolatedContractPDFGenerator {
       });
 
       console.log('🎯 Generating PDF...');
+      // Set viewport to ensure proper rendering
+      await page.setViewport({ width: 1200, height: 1600 });
+      
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
+        preferCSSPageSize: false,
+        height: '29.7cm',
+        width: '21cm',
         margin: {
-          top: '1cm',
-          right: '1cm', 
-          bottom: '1cm',
-          left: '1cm'
+          top: '0.5cm',
+          right: '0.5cm', 
+          bottom: '0.5cm',
+          left: '0.5cm'
         },
         timeout: 30000
       });

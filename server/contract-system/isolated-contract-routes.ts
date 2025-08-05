@@ -105,11 +105,15 @@ export function registerIsolatedContractRoutes(app: Express, storage: any, isAut
         }
       }
       
+      // Use signing page URL instead of PDF URL for email links
+      const emailUrl = contract.signingPageUrl || contract.cloudStorageUrl;
+      console.log(`📧 ISOLATED: Using email URL: ${emailUrl}`);
+      
       const subject = `Contract ready for signing - ${contract.contractNumber}`;
       const result = await sendIsolatedContractEmail(
         contract, 
         userSettings, 
-        contract.cloudStorageUrl,
+        emailUrl,
         subject,
         customMessage
       );

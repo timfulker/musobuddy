@@ -116,9 +116,9 @@ function generateContractEmailHTML(
         <p><strong>Fee:</strong> £${parseFloat(contract.fee || '0').toFixed(2)}</p>
       </div>
       
-      <p>Click the button below to view and download your contract:</p>
+      <p>Click the button below to review and digitally sign your contract:</p>
       
-      <a href="${contractUrl}" class="view-button" target="_blank">View Contract PDF</a>
+      <a href="${contractUrl}" class="view-button" target="_blank">Review & Sign Contract</a>
       
       <p style="margin-top: 30px;">If you have any questions about this contract, please don't hesitate to contact us.</p>
       
