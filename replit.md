@@ -15,6 +15,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **Route Registration Fix (Jan 5, 2025)**: Fixed file restructure casualty where auth routes weren't being registered due to missing export in auth-rebuilt.ts. Added missing server/routes/index.ts file and exported setupAuthRoutes function. Server startup and signup functionality restored.
 - **Deployment Syntax Fix (Jan 5, 2025)**: Fixed missing closing parenthesis in auth-rebuilt.ts signup route that was preventing deployment. Added proper middleware chaining and error handling. Build process now completes successfully.
 - **Session Middleware Issue Identified (Jan 5, 2025)**: Confirmed signup creates users in database but fails on session creation. Session middleware works for existing auth (admin login functional). Issue is middleware application order in auth route registration. User preference noted: avoid extended debugging cycles due to 5-minute deployment times.
+- **Complete Authentication System Rebuild (Jan 5, 2025)**: Successfully replaced session-based authentication with clean JWT-based system. New system includes full SMS verification (Twilio), Stripe subscription integration, phone number verification flow, and bypasses all session middleware conflicts. Authentication endpoints now use JWT tokens instead of sessions, resolving all file restructure casualties.
 
 ## System Architecture
 
@@ -31,7 +32,7 @@ Response priority: Immediate responsiveness - user must be able to interrupt at 
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Core Structure**: Modular route architecture with dedicated modules for authentication, contracts, invoices, bookings, settings, and administration.
-- **Authentication**: Branded email/password authentication with PostgreSQL sessions and Replit Auth integration.
+- **Authentication**: JWT-based authentication system with SMS verification (Twilio), email/password login, and phone number verification flow. Replaces previous session-based system to avoid middleware conflicts.
 - **File Storage**: Cloudflare R2 for PDF storage.
 - **Email Service**: Mailgun for transactional emails and webhook processing.
 - **PDF Generation**: Separate isolated Puppeteer engines for invoices and contracts.
