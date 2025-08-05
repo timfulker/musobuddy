@@ -3034,7 +3034,7 @@ export async function registerRoutes(app: Express) {
           
           <p>Please find your invoice attached. The invoice amount is <strong>£${invoice.amount}</strong>.</p>
           
-          <p>${userSettings?.defaultTerms || 'All invoices to be paid on receipt'}</p>
+          <p>Payment is due ${userSettings?.defaultInvoiceDueDays === 1 ? 'on receipt' : `within ${userSettings?.defaultInvoiceDueDays || 1} days of invoice date`}.</p>
           
           <p>If you have any questions about this invoice, please don't hesitate to contact us.</p>
           
