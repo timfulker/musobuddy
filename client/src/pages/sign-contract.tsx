@@ -180,9 +180,34 @@ export default function SignContract() {
       const result = await response.json();
       console.log('🔥 FRONTEND: Success response received:', result);
       
-      console.log('🔥 FRONTEND: Processing successful response...');
+      // Check if contract was already signed
+      if (result.alreadySigned) {
+        console.log('🔥 FRONTEND: Contract already signed, updating state...');
+        
+        // Update contract state to reflect it's already signed
+        const updatedContract = {
+          ...contract,
+          status: 'signed' as const,
+          signedAt: contract.signedAt || new Date().toISOString(),
+        };
+        
+        setContract(updatedContract);
+        setSigned(true);
+        
+        // Show "already signed" message instead of error
+        toast({
+          title: "Contract Already Signed", 
+          description: "This contract has already been signed successfully.",
+          variant: "default", // Not an error, just info
+        });
+        
+        console.log('🔥 FRONTEND: Already signed state updated');
+        return;
+      }
       
-      // CRITICAL FIX: Update local contract state first
+      console.log('🔥 FRONTEND: Processing successful signing response...');
+      
+      // CRITICAL FIX: Update local contract state for new signing
       const updatedContract = {
         ...contract,
         status: 'signed' as const,
@@ -194,7 +219,7 @@ export default function SignContract() {
       setSigned(true);
       console.log('🔥 FRONTEND: Contract state updated to signed, setSigned(true) called');
 
-      // Success notification
+      // Success notification for new signing
       toast({
         title: "Contract Signed Successfully!", 
         description: "Confirmation emails have been sent to both parties.",
