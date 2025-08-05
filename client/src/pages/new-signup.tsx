@@ -39,6 +39,18 @@ export default function NewSignup() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate passwords match
+    const confirmPassword = (e.target as any).confirmPassword?.value;
+    if (confirmPassword && signupData.password !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "The passwords you entered don't match. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -302,6 +314,21 @@ export default function NewSignup() {
                 onChange={(e) => setSignupData({
                   ...signupData,
                   password: e.target.value
+                })}
+                required
+                minLength={6}
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Re-enter your password"
+                value={signupData.confirmPassword || ''}
+                onChange={(e) => setSignupData({
+                  ...signupData,
+                  confirmPassword: e.target.value
                 })}
                 required
                 minLength={6}
